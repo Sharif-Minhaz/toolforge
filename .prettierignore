@@ -1,0 +1,19 @@
+# vendored agent/skill docs — not our code
+.agents
+.claude
+.windsurf
+skills-lock.json
+
+node_modules
+.next
+out
+build
+coverage
+.vercel
+bun.lockb
+package-lock.json
+next-env.d.ts
+*.tsbuildinfo
+src/generated
+prisma/migrations
+public
