@@ -1,0 +1,342 @@
+{
+    "app": {
+        "name": "ToolForge",
+        "tagline": "Developer utilities, forged for speed",
+        "description": "A premium, privacy-first toolbox of developer utilities. Everything runs in your browser — nothing is uploaded, logged, or tracked."
+    },
+    "common": {
+        "copy": "Copy",
+        "copied": "Copied",
+        "copyAll": "Copy all",
+        "download": "Download",
+        "regenerate": "Regenerate",
+        "generate": "Generate",
+        "soon": "Soon",
+        "new": "New",
+        "live": "Live",
+        "openTool": "Open tool",
+        "comingSoon": "Coming soon",
+        "backToOverview": "Back to overview",
+        "skipToContent": "Skip to content",
+        "toolCount": "{count, plural, =0 {No tools} one {# tool} other {# tools}}",
+        "loading": "Loading"
+    },
+    "nav": {
+        "searchPlaceholder": "Search tools…",
+        "searchLabel": "Search tools",
+        "searchClear": "Clear search",
+        "searchEmpty": "Nothing matches “{query}”",
+        "searchEmptyHint": "Try a different keyword, or browse the full catalogue.",
+        "overview": "Overview",
+        "overviewHint": "Dashboard",
+        "sectionGeneral": "General",
+        "sectionTools": "Tools",
+        "collapse": "Collapse sidebar",
+        "expand": "Expand sidebar",
+        "openMenu": "Open navigation",
+        "menuTitle": "Navigation",
+        "menuDescription": "Browse every ToolForge utility.",
+        "primaryLabel": "Primary",
+        "toolsLabel": "Tools",
+        "breadcrumb": "Breadcrumb"
+    },
+    "theme": {
+        "label": "Theme",
+        "light": "Light",
+        "dark": "Dark",
+        "system": "System",
+        "toggle": "Switch theme"
+    },
+    "locale": {
+        "label": "Language",
+        "change": "Change language"
+    },
+    "footer": {
+        "privacy": "Runs fully in your browser",
+        "builtWith": "Built with Next.js and Tailwind CSS",
+        "rights": "ToolForge — free forever"
+    },
+    "categories": {
+        "generators": {
+            "name": "Generators",
+            "description": "Mint identifiers, keys, and sample data on demand."
+        },
+        "encoding": {
+            "name": "Encoding",
+            "description": "Translate between the wire formats your APIs speak."
+        },
+        "formatting": {
+            "name": "Formatting",
+            "description": "Reshape, prettify, and validate structured payloads."
+        },
+        "security": {
+            "name": "Security",
+            "description": "Inspect tokens and derive digests without leaking secrets."
+        },
+        "text": {
+            "name": "Text",
+            "description": "Slice, compare, and reshape strings at speed."
+        }
+    },
+    "tools": {
+        "uuid": {
+            "name": "UUID Generator",
+            "description": "Generate v1, v4, and v7 UUIDs in bulk, then copy or export them."
+        },
+        "base64": {
+            "name": "Base64 Encoder",
+            "description": "Encode and decode Base64 and Base64URL, including files."
+        },
+        "jwt": {
+            "name": "JWT Decoder",
+            "description": "Inspect header, payload, and expiry without sending the token anywhere."
+        },
+        "hash": {
+            "name": "Hash Generator",
+            "description": "Compute SHA-1, SHA-256, SHA-512, and MD5 digests locally."
+        },
+        "json": {
+            "name": "JSON Formatter",
+            "description": "Prettify, minify, and validate JSON with precise error positions."
+        },
+        "url": {
+            "name": "URL Encoder",
+            "description": "Percent-encode and decode URLs and individual query components."
+        },
+        "regex": {
+            "name": "Regex Tester",
+            "description": "Match, highlight, and explain regular expressions as you type."
+        },
+        "lorem": {
+            "name": "Lorem Ipsum",
+            "description": "Generate placeholder paragraphs, sentences, and word counts."
+        },
+        "color": {
+            "name": "Color Converter",
+            "description": "Convert between HEX, RGB, HSL, and OKLCH with live previews."
+        },
+        "cron": {
+            "name": "Cron Parser",
+            "description": "Read a cron expression in plain English and preview its next runs."
+        },
+        "timestamp": {
+            "name": "Timestamp Converter",
+            "description": "Move between Unix epochs, ISO-8601, and human-readable dates."
+        },
+        "password": {
+            "name": "Password Generator",
+            "description": "Create strong passphrases with entropy scoring built in."
+        },
+        "qr": {
+            "name": "QR Generator",
+            "description": "Turn links and text into crisp, downloadable QR codes."
+        },
+        "slug": {
+            "name": "Slug Generator",
+            "description": "Produce clean, URL-safe slugs from any headline."
+        },
+        "diff": {
+            "name": "Diff Checker",
+            "description": "Compare two blocks of text with word-level highlighting."
+        }
+    },
+    "overview": {
+        "meta": {
+            "title": "ToolForge — Premium developer utilities that never leave your browser",
+            "description": "A fast, privacy-first toolbox for developers. Generate UUIDs, encode payloads, inspect tokens and more — every tool runs client-side with zero tracking."
+        },
+        "hero": {
+            "badge": "100% client-side · zero tracking",
+            "titleLead": "The developer toolbox",
+            "titleAccent": "that never phones home",
+            "subtitle": "Every utility runs entirely in your browser. No accounts, no uploads, no analytics on what you paste. Just fast, precise tools with an interface that gets out of your way.",
+            "primaryCta": "Open UUID Generator",
+            "secondaryCta": "Browse all tools",
+            "previewLabel": "Live preview",
+            "previewCaption": "Generated locally, just now"
+        },
+        "stats": {
+            "title": "Built on four promises",
+            "clientSide": {
+                "value": "100%",
+                "label": "Client-side",
+                "hint": "Nothing is ever uploaded"
+            },
+            "tracking": {
+                "value": "0",
+                "label": "Trackers",
+                "hint": "No analytics, no cookies to accept"
+            },
+            "tools": {
+                "value": "{count, number}",
+                "label": "Tools shipping",
+                "hint": "{planned, number} more in the forge"
+            },
+            "cost": {
+                "value": "Free",
+                "label": "Forever",
+                "hint": "No accounts, no paywalls"
+            }
+        },
+        "quickActions": {
+            "title": "Quick actions",
+            "description": "Jump straight into a common task.",
+            "uuidSingle": {
+                "title": "Single UUID",
+                "description": "One v4 identifier, ready to copy."
+            },
+            "uuidBulk": {
+                "title": "Bulk v4 batch",
+                "description": "Generate 100 identifiers at once."
+            },
+            "uuidSortable": {
+                "title": "Sortable v7",
+                "description": "Time-ordered ids for database keys."
+            }
+        },
+        "featured": {
+            "title": "Featured tools",
+            "description": "The utilities developers reach for most.",
+            "viewAll": "See all tools"
+        },
+        "categoriesSection": {
+            "title": "Browse by category",
+            "description": "Every tool, grouped by the job it does."
+        },
+        "recent": {
+            "title": "Recently added",
+            "description": "What just landed, and what is next up."
+        }
+    },
+    "uuid": {
+        "meta": {
+            "title": "Online UUID Generator — v1, v4 and v7",
+            "description": "Generate RFC 9562 compliant UUIDs (v1, v4, v7) in bulk — up to 500 at a time. Copy or export as TXT, CSV, or JSON. Runs entirely in your browser, nothing is sent to a server."
+        },
+        "hero": {
+            "eyebrow": "Generators",
+            "title": "UUID Generator",
+            "subtitle": "Cryptographically random, RFC 9562 compliant identifiers — generated on your device the moment this page loads.",
+            "badgeRfc": "RFC 9562",
+            "badgeOffline": "Works offline",
+            "badgeCrypto": "Web Crypto"
+        },
+        "generator": {
+            "title": "Generate UUIDs",
+            "description": "Pick a version and a quantity. Results update instantly.",
+            "versionLabel": "UUID version",
+            "quantityLabel": "How many",
+            "quantityHint": "Between {min} and {max}",
+            "quantityPresets": "Quick amounts",
+            "generate": "Generate",
+            "regenerate": "Regenerate",
+            "copyAll": "Copy all",
+            "download": "Download",
+            "downloadAs": "Download as {format}",
+            "resultsLabel": "Generated UUIDs",
+            "copySingle": "Copy this UUID",
+            "srAnnouncement": "{count, plural, one {# UUID generated} other {# UUIDs generated}}",
+            "decrease": "Decrease quantity",
+            "increase": "Increase quantity"
+        },
+        "versions": {
+            "v1": {
+                "label": "Version 1",
+                "short": "v1",
+                "tagline": "Timestamp + node",
+                "description": "Encodes the time of creation alongside a per-session node id. Loosely ordered."
+            },
+            "v4": {
+                "label": "Version 4",
+                "short": "v4",
+                "tagline": "Fully random",
+                "description": "122 bits of cryptographic randomness. The safe default when you have no ordering needs."
+            },
+            "v7": {
+                "label": "Version 7",
+                "short": "v7",
+                "tagline": "Sortable by time",
+                "description": "Unix milliseconds in the high bits, so ids sort chronologically and index cleanly."
+            }
+        },
+        "errors": {
+            "quantityRange": "Enter a whole number between {min} and {max}.",
+            "generic": "Something went wrong while generating. Please try again."
+        },
+        "toast": {
+            "copied": "Copied to clipboard",
+            "copiedSingle": "UUID copied",
+            "copiedAll": "{count, plural, one {# UUID copied} other {# UUIDs copied}}",
+            "copyFailedUnsupported": "Your browser blocked clipboard access",
+            "copyFailedDenied": "Clipboard permission was denied",
+            "copyFailedEmpty": "Nothing to copy yet",
+            "downloaded": "Downloaded {filename}",
+            "downloadFailed": "The download could not be started",
+            "generated": "{count, plural, one {# fresh UUID} other {# fresh UUIDs}}"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "Understanding UUIDs",
+                "p1": "A UUID — Universally Unique Identifier — is a 128-bit value written as 32 hexadecimal characters split into five groups of 8-4-4-4-12. With its four hyphens it is exactly 36 characters long, which is why you see it everywhere from database columns to log lines.",
+                "p2": "The reason UUIDs exist is coordination-free uniqueness. Any process, on any machine, can mint one without asking a central authority for the next number in a sequence. Two services that have never spoken to each other can generate identifiers all day and still never collide in practice.",
+                "p3": "The layout is standardised by RFC 9562, which superseded the long-serving RFC 4122. Two fields are fixed by the spec: the version nibble, which is the first character of the third group, and the variant bits at the start of the fourth group. Everything else is filled by the version's own algorithm."
+            },
+            "why": {
+                "title": "Why use UUIDs",
+                "p1": "Auto-incrementing integers are compact and readable, but they force every writer through a single source of truth. UUIDs remove that bottleneck: a mobile client can create records while offline, a queue consumer can assign ids before the row exists, and two shards can merge without renumbering anything.",
+                "p2": "They are also safer to expose. A sequential id in a URL quietly publishes how many records you have and lets anyone walk your dataset by counting upwards. A UUID reveals neither.",
+                "p3": "The trade-offs are real and worth naming. A UUID takes 16 bytes against 8 for a bigint, and 36 bytes if you store the text form. Fully random v4 values also scatter B-tree inserts across the whole index, which hurts write throughput on large tables. Version 7 was standardised precisely to solve that second problem."
+            },
+            "types": {
+                "title": "Types of UUIDs",
+                "intro": "RFC 9562 defines eight versions. Three of them cover almost every real use case, and those are the three this generator produces.",
+                "tableCaption": "Comparison of the UUID versions offered by ToolForge",
+                "colVersion": "Version",
+                "colBasis": "Built from",
+                "colSortable": "Time-sortable",
+                "colBestFor": "Best for",
+                "v1Basis": "60-bit timestamp, clock sequence, node id",
+                "v1Sortable": "Partially",
+                "v1BestFor": "Legacy systems that already expect v1",
+                "v4Basis": "122 random bits",
+                "v4Sortable": "No",
+                "v4BestFor": "General purpose ids, tokens, correlation keys",
+                "v7Basis": "48-bit Unix timestamp, counter, random tail",
+                "v7Sortable": "Yes",
+                "v7BestFor": "Database primary keys and event streams",
+                "others": "The remaining versions are niche: v3 and v5 hash a name into a namespace deterministically, v6 reorders the v1 timestamp so it sorts correctly, and v8 is a deliberately open slot for vendor-specific layouts."
+            },
+            "howItWorks": {
+                "title": "How our generator works",
+                "p1": "Every identifier on this page is produced by the Web Crypto API — specifically crypto.getRandomValues, the same cryptographically secure source your browser uses for TLS. There is no server call, no queue, and no fallback to Math.random.",
+                "p2": "Version 7 gets one extra guarantee. When several ids are minted inside the same millisecond, the twelve rand_a bits are used as a dedicated counter rather than random noise, following the monotonicity method in RFC 9562. A batch of 500 therefore comes back in strictly ascending order.",
+                "p3": "Because the work happens locally, the values you see were never transmitted, never logged, and never stored. Load the page once and it keeps working with the network switched off. The batch size is capped at 500 so a single generation stays imperceptible even on a low-powered device."
+            },
+            "useCases": {
+                "title": "Use cases",
+                "p1": "The most common use is a primary key. Version 7 is the better choice here: it keeps inserts clustered at the right edge of the index the way a sequence would, while still being generated by the client.",
+                "p2": "Idempotency keys are the second big one. Attach a fresh UUID to a payment or a webhook retry and the receiving service can safely discard duplicates without any shared state.",
+                "p3": "Beyond persistence, UUIDs are the default for correlation and trace ids that stitch a request together across services, for object-storage keys that must not collide between uploaders, and for seeded test fixtures where a readable, guaranteed-unique value beats a hand-written string."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Can two UUIDs ever be the same?",
+                "a1": "Mathematically yes, practically no. A version 4 UUID has 122 random bits. You would need to generate roughly 2.7 × 10^18 of them before reaching a one-in-a-billion chance of a single collision.",
+                "q2": "Which version should I pick?",
+                "a2": "Version 7 for anything stored in an indexed column, version 4 for everything else. Only reach for version 1 when an existing system already depends on its layout.",
+                "q3": "Are these UUIDs safe to use as security tokens?",
+                "a3": "Version 4 UUIDs from this page are backed by a cryptographically secure random source, so they are unguessable. Versions 1 and 7 embed a readable timestamp, so treat them as identifiers rather than secrets.",
+                "q4": "Is anything I generate sent to your servers?",
+                "a4": "No. The generator is client-side JavaScript. The page makes no network request while generating, and nothing you copy or download is ever transmitted."
+            }
+        }
+    },
+    "notFound": {
+        "title": "This page has not been forged yet",
+        "description": "The tool you are looking for either moved or has not shipped. Everything that is live is one click away.",
+        "cta": "Back to overview"
+    }
+}
