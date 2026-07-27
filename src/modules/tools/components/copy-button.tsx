@@ -4,13 +4,14 @@ import { IconCheck, IconCopy } from "@tabler/icons-react";
 import { AnimatePresence, motion } from "motion/react";
 import type { ComponentProps } from "react";
 
+import { MOTION_EASE } from "@/components/motion/motion-tokens";
 import { cn } from "@/lib/utils";
 
 const SWAP = {
     initial: { opacity: 0, scale: 0.6 },
     animate: { opacity: 1, scale: 1 },
     exit: { opacity: 0, scale: 0.6 },
-    transition: { duration: 0.16, ease: [0.22, 0.61, 0.36, 1] },
+    transition: { duration: 0.16, ease: MOTION_EASE },
 } as const;
 
 type CopyIconSwapProps = {

@@ -492,6 +492,68 @@ Motion:
   duplicate ids make the indicator jump between the two copies.
 - Respect `useReducedMotion()`; return the plain element rather than animating.
 
+### Animating a server component
+
+`motion/react` is client-only. Importing it into a server component turns that
+component — and everything it renders — into client code. So the animated
+element is always a client component. The only question is how thin you keep
+the boundary around it.
+
+The answer is a **client wrapper**: a small `"use client"` component that
+renders the `motion` element and takes `children`. The server component imports
+the wrapper, not `motion`. Children stay server-rendered and pass straight
+through the RSC boundary.
+
+Everything lives in `src/components/motion/`:
+
+- `motion-tokens.ts` — `MOTION_EASE`, `MOTION_DURATION`, `MOTION_STAGGER`,
+  `staggerDelay()`. Framework-free, so server and client read the same numbers.
+  Never import React or `motion` here.
+- `reveal.tsx` — `Reveal` (fades up on scroll into view) and `FadeIn` (fades in
+  on mount, for above-the-fold content). Both carry the reduced-motion gate.
+- `motion-primitives.tsx` — `MotionDiv`, the escape hatch for a one-off neither
+  wrapper covers. It has no reduced-motion gate, so you own accessibility when
+  you use it. Need another tag? Add a sibling export.
+
+Rules:
+
+- A server component may import `Reveal`, `FadeIn`, `MotionDiv` and the tokens.
+  It may never import `motion/react`.
+- Reach for `Reveal` or `FadeIn` before `MotionDiv`, and `MotionDiv` before a
+  new bespoke wrapper. A new wrapper needs a reason the existing three cannot
+  cover.
+- **Never use `motion/react-client`.** It looks like it animates from a server
+  component; it does not. It resolves to `framer-motion/client`, whose module
+  already carries `"use client"` — same bundle, same boundary. What it costs
+  you: every `initial`/`animate`/`transition` object is serialised into the RSC
+  payload on every render of every element, and a server component cannot call
+  `useReducedMotion()`, so the accessibility gate is unreachable.
+- Pass `as` when the wrapper sits somewhere a `<div>` is invalid. A wrapper
+  directly inside `<ul>` must be `as="li"` — otherwise the markup is invalid
+  and screen readers drop the list semantics. The reduced-motion branch honours
+  `as` too.
+- Stagger with `staggerDelay(index)`, never inline arithmetic. It caps the delay
+  so a long list does not leave the last card waiting a full second.
+- Read durations from `MOTION_DURATION` and easing from `MOTION_EASE`. A
+  literal `[0.22, 0.61, 0.36, 1]` anywhere outside `motion-tokens.ts` is a bug.
+
+```tsx
+// server component — no "use client", no motion import
+import { staggerDelay } from "@/components/motion/motion-tokens";
+import { Reveal } from "@/components/motion/reveal";
+
+<ul className="grid gap-3 sm:grid-cols-2">
+    {tools.map((tool, index) => (
+        <Reveal key={tool.id} as="li" delay={staggerDelay(index)} className="h-full">
+            <ToolCard tool={tool} />
+        </Reveal>
+    ))}
+</ul>;
+```
+
+If you want a genuinely smaller bundle, the lever is `m` + `LazyMotion`, not the
+import path. Neither wrapper style changes how much JS ships.
+
 Interaction:
 
 - Hover-only affordances must stay reachable without a pointer. Gate them on
@@ -692,11 +754,14 @@ Checked by the maintainer, not by an automated browser run (see
 11. Keep `domain/` free of React, `next-intl`, and I/O.
 12. Generate per-request values on the server and pass them down as props.
 13. Restructure code to satisfy a lint rule; never disable the rule.
-14. Never launch a headless browser, dev server, or production build without
+14. Animate a server component through a wrapper from `components/motion/`.
+    Never import `motion/react` into a server component, and never use
+    `motion/react-client`.
+15. Never launch a headless browser, dev server, or production build without
     asking first. Permission is per-run, not standing.
-15. Say plainly when UI work has not been checked in a browser, and list what
+16. Say plainly when UI work has not been checked in a browser, and list what
     needs looking at.
-16. Never commit, push, branch, or open a PR unless that exact action was
+17. Never commit, push, branch, or open a PR unless that exact action was
     asked for in that message.
-17. Keep implementations simple.
-18. Leave the codebase cleaner than you found it.
+18. Keep implementations simple.
+19. Leave the codebase cleaner than you found it.

@@ -13,6 +13,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { MOTION_EASE } from "@/components/motion/motion-tokens";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -277,7 +278,7 @@ export function UuidWorkbench({
                             key={spinToken}
                             initial={reduceMotion ? false : { rotate: -180 }}
                             animate={{ rotate: 0 }}
-                            transition={{ duration: 0.32, ease: [0.22, 0.61, 0.36, 1] }}
+                            transition={{ duration: 0.32, ease: MOTION_EASE }}
                             className="grid place-items-center"
                         >
                             <IconRefresh className="size-4" stroke={1.9} aria-hidden="true" />

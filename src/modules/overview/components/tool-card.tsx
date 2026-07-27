@@ -7,6 +7,7 @@ import { TOOL_ACCENT_VARS, TOOL_ICON_TILE } from "@/modules/tools/components/too
 import { ToolIcon } from "@/modules/tools/components/tool-icon";
 import type { LocalizedTool } from "@/modules/tools/types";
 
+/** Card body only. The caller owns the list item — see `FeaturedTools`. */
 export function ToolCard({ tool }: { tool: LocalizedTool }) {
     const t = useTranslations("common");
     const available = tool.status === "available";
@@ -60,19 +61,15 @@ export function ToolCard({ tool }: { tool: LocalizedTool }) {
 
     if (!available) {
         return (
-            <li>
-                <div aria-disabled="true" className={shell}>
-                    {body}
-                </div>
-            </li>
+            <div aria-disabled="true" className={shell}>
+                {body}
+            </div>
         );
     }
 
     return (
-        <li>
-            <Link href={tool.href} className={shell}>
-                {body}
-            </Link>
-        </li>
+        <Link href={tool.href} className={shell}>
+            {body}
+        </Link>
     );
 }

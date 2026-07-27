@@ -489,7 +489,7 @@
                 "wrapDoes": "Folds the encoded output into 76-character lines.",
                 "wrapWhen": "You are writing a MIME body or a PEM-style block, both of which expect wrapped text.",
                 "dataUriName": "Data URI",
-                "dataUriDoes": "Prefixes the payload with data:<type>;base64, using the file's own media type.",
+                "dataUriDoes": "Prefixes the payload with data:'<type>';base64, using the file's own media type.",
                 "dataUriWhen": "The result is going straight into CSS, HTML, or Markdown as an inline asset.",
                 "charsetNote": "Two things about character sets are worth knowing. Encoding can only write a set this page can also invert, so the multi-byte East Asian sets — Shift_JIS, GBK, GB18030, Big5, EUC-JP, EUC-KR — are offered when decoding but not when encoding. And a set narrower than your text will say so: type an emoji with ASCII selected and you get the exact position that cannot be written, rather than a silently corrupted byte.",
                 "defaultsNote": "The options also constrain each other, and the interface follows suit rather than producing something broken. A data URI describes one continuous standard-alphabet payload, so switching on URL-safe, line wrapping, or per-line conversion greys it out. Encoding a file ignores the character set and line endings entirely, because a file is already bytes and has no line structure to normalise."

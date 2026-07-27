@@ -7,11 +7,10 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 
+import { MOTION_DURATION, MOTION_EASE } from "@/components/motion/motion-tokens";
 import { Button } from "@/components/ui/button";
 import { setAnalyticsConsent } from "@/modules/analytics/actions/set-analytics-consent";
 import type { ConsentValue } from "@/modules/analytics/domain/consent";
-
-const EASE = [0.22, 0.61, 0.36, 1] as const;
 
 /**
  * Non-modal consent prompt. Anchored bottom-right so it clears the sidebar rail
@@ -87,7 +86,7 @@ export function AnalyticsConsentBanner() {
             className={className}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.28, ease: EASE }}
+            transition={{ duration: MOTION_DURATION.reveal, ease: MOTION_EASE }}
         >
             {panel}
         </motion.section>

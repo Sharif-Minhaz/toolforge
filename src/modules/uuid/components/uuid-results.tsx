@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from "motion/react";
 import { useTranslations } from "next-intl";
 
+import { MOTION_EASE } from "@/components/motion/motion-tokens";
 import { cn } from "@/lib/utils";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
 
@@ -24,7 +25,7 @@ export function UuidResults({ uuids, generationId, copiedIndex, onCopy }: UuidRe
         : {
               initial: { opacity: 0, y: 6 },
               animate: { opacity: 1, y: 0 },
-              transition: { duration: 0.22, ease: [0.22, 0.61, 0.36, 1] as const },
+              transition: { duration: 0.22, ease: MOTION_EASE },
           };
 
     return (

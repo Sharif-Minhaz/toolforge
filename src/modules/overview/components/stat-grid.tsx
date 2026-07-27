@@ -1,6 +1,7 @@
 import { IconCurrencyDollarOff, IconEyeOff, IconShieldLock, IconTool } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
 
+import { staggerDelay } from "@/components/motion/motion-tokens";
 import { Reveal } from "@/components/motion/reveal";
 import { getToolCatalogStats } from "@/modules/tools/domain/tool-catalog";
 
@@ -43,23 +44,26 @@ export async function StatGrid() {
         <section aria-label={t("title")}>
             <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {tiles.map((tile, index) => (
-                    <Reveal key={tile.key} delay={index * 0.04}>
-                        <li className="bg-card ring-border/70 flex h-full flex-col gap-1 rounded-2xl p-4 ring-1 ring-inset">
-                            <div className="flex items-center justify-between gap-2">
-                                <span className="font-heading text-2xl font-semibold tracking-tight tabular-nums">
-                                    {tile.value}
-                                </span>
-                                <tile.Icon
-                                    className="text-muted-foreground/70 size-4"
-                                    stroke={1.7}
-                                    aria-hidden="true"
-                                />
-                            </div>
-                            <span className="text-[0.8125rem] font-medium">{tile.label}</span>
-                            <span className="text-muted-foreground text-xs leading-relaxed">
-                                {tile.hint}
+                    <Reveal
+                        key={tile.key}
+                        as="li"
+                        delay={staggerDelay(index)}
+                        className="bg-card ring-border/70 flex h-full flex-col gap-1 rounded-2xl p-4 ring-1 ring-inset"
+                    >
+                        <div className="flex items-center justify-between gap-2">
+                            <span className="font-heading text-2xl font-semibold tracking-tight tabular-nums">
+                                {tile.value}
                             </span>
-                        </li>
+                            <tile.Icon
+                                className="text-muted-foreground/70 size-4"
+                                stroke={1.7}
+                                aria-hidden="true"
+                            />
+                        </div>
+                        <span className="text-[0.8125rem] font-medium">{tile.label}</span>
+                        <span className="text-muted-foreground text-xs leading-relaxed">
+                            {tile.hint}
+                        </span>
                     </Reveal>
                 ))}
             </ul>

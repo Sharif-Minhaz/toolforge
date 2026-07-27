@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
+import { staggerDelay } from "@/components/motion/motion-tokens";
 import { Reveal } from "@/components/motion/reveal";
 import { getFeaturedTools } from "@/modules/tools/domain/tool-catalog";
 import { localizeTools } from "@/modules/tools/presenters/localize-tools";
@@ -18,7 +19,7 @@ export async function FeaturedTools() {
 
             <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {tools.map((tool, index) => (
-                    <Reveal key={tool.id} delay={Math.min(index, 4) * 0.04} className="h-full">
+                    <Reveal key={tool.id} as="li" delay={staggerDelay(index)} className="h-full">
                         <ToolCard tool={tool} />
                     </Reveal>
                 ))}
