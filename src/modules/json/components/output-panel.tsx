@@ -4,18 +4,19 @@ import { IconAlertTriangle, IconClipboardCheck, IconDownload } from "@tabler/ico
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { ByteSize } from "@/modules/tools/components/byte-size";
+import { JsonCode } from "./json-code";
 
 type OutputPanelProps = {
     outputId: string;
     output: string;
     outputBytes: number;
-    /** Already-localised failure message, or `null` when the input converted. */
+    /** Already-localised size comparison, or `null` when there is nothing to compare. */
+    sizeLabel: string | null;
+    /** Already-localised failure message, or `null` when the document parsed. */
     error: string | null;
-    /** True while the debounced input has yet to reach the converter. */
+    /** True while the debounced input has yet to reach the formatter. */
     pending: boolean;
     onCopy: () => void;
     onDownload: () => void;
@@ -25,22 +26,25 @@ export function OutputPanel({
     outputId,
     output,
     outputBytes,
+    sizeLabel,
     error,
     pending,
     onCopy,
     onDownload,
 }: OutputPanelProps) {
-    const t = useTranslations("base64.workbench");
+    const t = useTranslations("json.workbench");
     const empty = output.length === 0;
 
     return (
         <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
-                <Label htmlFor={outputId} className="text-muted-foreground text-xs">
+                {/* Names the code region below. Not a <label>: a <pre> is not a
+                    form control, so there is nothing for one to point at. */}
+                <p id={outputId} className="text-muted-foreground text-xs leading-[1.3]">
                     {t("outputLabel")}
-                </Label>
+                </p>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5">
                     {error === null && (
                         <ByteSize
                             bytes={outputBytes}
@@ -59,25 +63,19 @@ export function OutputPanel({
             </div>
 
             {error === null ? (
-                <Textarea
-                    id={outputId}
-                    readOnly
-                    value={output}
+                <JsonCode
+                    code={output}
+                    labelledBy={outputId}
                     placeholder={t("outputPlaceholder")}
-                    spellCheck={false}
                     // Dimmed rather than emptied while the debounce settles, so
                     // the panel never flashes between two valid results.
-                    className={cn(
-                        "bg-muted/45 max-h-72 min-h-32 resize-y rounded-xl font-mono text-[0.8125rem] leading-6 break-all",
-                        "transition-opacity duration-200",
-                        pending && "opacity-55",
-                    )}
+                    className={cn("transition-opacity duration-200", pending && "opacity-55")}
                 />
             ) : (
                 <p
                     role="alert"
                     className={cn(
-                        "text-destructive ring-destructive/30 bg-destructive/8 flex min-h-32 items-start gap-2.5 rounded-xl p-3 text-[0.8125rem] leading-6 ring-1 ring-inset",
+                        "text-destructive ring-destructive/30 bg-destructive/8 flex min-h-40 items-start gap-2.5 rounded-xl p-3 text-[0.8125rem] leading-6 ring-1 ring-inset",
                         "transition-opacity duration-200",
                         pending && "opacity-55",
                     )}
@@ -87,7 +85,18 @@ export function OutputPanel({
                         stroke={1.9}
                         aria-hidden="true"
                     />
-                    {error}
+                    <span className="min-w-0">{error}</span>
+                </p>
+            )}
+
+            {sizeLabel !== null && error === null && (
+                <p
+                    className={cn(
+                        "text-muted-foreground text-[0.6875rem] leading-normal transition-opacity duration-200",
+                        pending && "opacity-55",
+                    )}
+                >
+                    {sizeLabel}
                 </p>
             )}
         </div>

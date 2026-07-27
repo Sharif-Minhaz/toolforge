@@ -13,9 +13,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
+import { useByteLabel } from "@/modules/tools/components/byte-size";
+import { getByteLength } from "@/modules/tools/domain/byte-size";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
-import { getByteLength } from "../domain/codec";
 import { getCharsetLabel, isEncodable, type CharsetId } from "../domain/charsets";
 import {
     DEFAULT_CHARSET,
@@ -26,7 +27,6 @@ import {
 import { convert, type Base64ConversionResult } from "../domain/convert";
 import { createBase64ExportFile } from "../domain/export";
 import type { Base64Alphabet, Base64ConversionOptions, Base64Mode, Base64Source } from "../types";
-import { useByteLabel } from "./byte-size";
 import { ConversionOptions } from "./conversion-options";
 import { InputPanel, type LoadedFile } from "./input-panel";
 import { ModeSelector } from "./mode-selector";

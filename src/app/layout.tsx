@@ -100,6 +100,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         nav: messages.nav,
         theme: messages.theme,
         locale: messages.locale,
+        units: messages.units,
         analytics: messages.analytics,
         uuid: {
             generator: messages.uuid.generator,
@@ -109,7 +110,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         },
         base64: {
             workbench: messages.base64.workbench,
-            units: messages.base64.units,
             errors: messages.base64.errors,
             toast: messages.base64.toast,
         },
@@ -126,6 +126,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             workbench: messages.hash.workbench,
             errors: messages.hash.errors,
             toast: messages.hash.toast,
+        },
+        json: {
+            workbench: messages.json.workbench,
+            report: messages.json.report,
+            errors: messages.json.errors,
+            toast: messages.json.toast,
         },
     };
 

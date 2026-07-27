@@ -72,16 +72,6 @@ export type Base64ConversionOptions = {
     readonly wrapLines: boolean;
 };
 
-export const BYTE_UNITS = ["b", "kb", "mb"] as const;
-
-export type ByteUnit = (typeof BYTE_UNITS)[number];
-
-/** Locale-free size description; the UI renders the unit from its catalogue. */
-export type ByteSize = {
-    readonly value: number;
-    readonly unit: ByteUnit;
-};
-
 export type Base64ExportRequest = {
     readonly mode: Base64Mode;
     readonly content: string;

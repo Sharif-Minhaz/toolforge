@@ -53,5 +53,3 @@ export const TEXT_MIME_TYPE = "text/plain;charset=utf-8";
 
 /** `data:image/png;base64,` — the header a data URI carries before its payload. */
 export const DATA_URI_PATTERN = /^data:([^;,]*)(;[^,]*)?;base64,/i;
-
-export const BYTES_PER_KILOBYTE = 1024;

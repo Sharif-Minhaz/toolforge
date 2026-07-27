@@ -67,6 +67,11 @@
         "builtWith": "Built with Next.js and Tailwind CSS",
         "rights": "ToolForge — free forever"
     },
+    "units": {
+        "b": "{value} B",
+        "kb": "{value} KB",
+        "mb": "{value} MB"
+    },
     "categories": {
         "generators": {
             "name": "Generators",
@@ -212,9 +217,9 @@
                 "title": "Decode a JWT",
                 "description": "Read a token's claims and check its signature, without leaving the browser."
             },
-            "hashPassword": {
-                "title": "Hash a password",
-                "description": "Run a password through Argon2id with the settings OWASP recommends today."
+            "jsonBeautify": {
+                "title": "Beautify JSON",
+                "description": "Paste a single-line payload and read it properly, with any error pinned to its line."
             }
         },
         "featured": {
@@ -408,11 +413,6 @@
             "dataUriHint": "Prefixes the output with data:mime/type;base64,",
             "dataUriUnavailable": "Needs one unwrapped, standard-alphabet payload",
             "decodeHint": "Decoding accepts either alphabet, with or without padding, and strips a data: URI header for you."
-        },
-        "units": {
-            "b": "{value} B",
-            "kb": "{value} KB",
-            "mb": "{value} MB"
         },
         "errors": {
             "invalidBase64": "This is not valid Base64.",
@@ -1133,6 +1133,253 @@
                 "a6": "For non-adversarial integrity, yes. Checking that a file arrived intact over a flaky connection, or keying a cache, is fine — nobody is crafting a collision to corrupt your cache. It is not safe for anything an attacker touches: colliding MD5 inputs can be produced in seconds on a laptop, which is why it was removed from certificates.",
                 "q7": "Why is the cost factor capped at 14 when bcrypt allows 31?",
                 "a7": "The cap is about this page, not about bcrypt. Hashing runs on the same thread that draws the interface, and each cost step doubles the time — 14 already freezes the tab for about a second. Your server has no such constraint and should generally run 10 to 12."
+            }
+        }
+    },
+    "json": {
+        "meta": {
+            "title": "JSON Formatter and Validator — with exact error positions",
+            "description": "Beautify, minify and validate JSON in your browser. Pick 2, 3 or 4 spaces or a tab, validate against RFC 8259, RFC 7159, RFC 4627 or ECMA-404, repair trailing commas, comments and bare keys, sort keys, and see every problem at its exact line and column. Nothing is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Formatting",
+            "title": "JSON Formatter / Validator",
+            "subtitle": "Paste JSON or open a file, then indent it, compact it, or check it against the specification of your choice — with the exact line and column of anything that is wrong.",
+            "badgeSpec": "RFC 8259",
+            "badgeOffline": "Works offline",
+            "badgeFiles": "Files up to 1 MB"
+        },
+        "workbench": {
+            "title": "Format, minify, or validate",
+            "description": "Paste or open a document, pick what to do with it, and the result updates as you go.",
+            "modeLabel": "Action",
+            "modes": {
+                "beautify": "Beautify",
+                "minify": "Minify",
+                "validate": "Validate"
+            },
+            "inputLabel": "JSON",
+            "outputLabel": "Output",
+            "placeholders": {
+                "beautify": "Paste JSON to lay it out",
+                "minify": "Paste JSON to strip every space from it",
+                "validate": "Paste JSON to check it"
+            },
+            "outputPlaceholder": "Output will appear here",
+            "upload": "Open file",
+            "sample": "Sample",
+            "clear": "Clear input",
+            "removeFile": "Remove file",
+            "copy": "Copy",
+            "download": "Download",
+            "swap": "Send the output back as input",
+            "indentLabel": "Indentation",
+            "indentHint": "What one level of nesting is indented by",
+            "indentMinifyHint": "Minifying removes every space, so there is nothing to indent",
+            "indentValidateHint": "Validating reports on the document instead of rewriting it",
+            "indents": {
+                "space2": "2 spaces",
+                "space3": "3 spaces",
+                "space4": "4 spaces",
+                "tab": "Tab"
+            },
+            "specLabel": "Specification",
+            "specHint": "Which published grammar to hold the document to",
+            "repairLabel": "Repair",
+            "repairHint": "Accepts trailing commas, comments, bare keys and single quotes, and corrects them",
+            "sortKeysLabel": "Sort keys",
+            "sortKeysHint": "Orders every object's members by name",
+            "escapeUnicodeLabel": "Escape non-ASCII",
+            "escapeUnicodeHint": "Rewrites accents and emoji as \\uXXXX, so the output is pure ASCII",
+            "outputOnlyHint": "Validating leaves the document exactly as written",
+            "sizeSmaller": "{percent, number}% smaller",
+            "sizeLarger": "{percent, number}% larger",
+            "sizeSame": "Same size"
+        },
+        "report": {
+            "verdictValid": "Valid JSON",
+            "verdictInvalid": "Not valid JSON",
+            "verdictIdle": "Paste a document to check it",
+            "statsTitle": "What the document holds",
+            "stats": {
+                "objects": "Objects",
+                "arrays": "Arrays",
+                "keys": "Keys",
+                "strings": "Strings",
+                "numbers": "Numbers",
+                "booleans": "Booleans",
+                "nulls": "Nulls",
+                "depth": "Depth"
+            },
+            "advisoriesTitle": "Worth a look",
+            "advisoriesNone": "Nothing else worth flagging.",
+            "advisoriesMore": "{count, plural, one {and # more} other {and # more}}",
+            "advisories": {
+                "duplicate_key": "Line {line, number}: the name “{key}” appears more than once in the same object. Most parsers keep only the last one.",
+                "unpaired_surrogate": "Line {line, number}: a string holds half of a surrogate pair. That is not valid Unicode, and RFC 8259 refuses it outright.",
+                "precision_loss": "Line {line, number}: {literal} is past what a double can hold exactly. This page keeps the literal as written, but anything that runs it through JSON.parse will round it."
+            },
+            "repairsTitle": "Repaired on the way through",
+            "repairsSummary": "{count, plural, one {# problem corrected} other {# problems corrected}}",
+            "repairs": {
+                "trailing_comma": "Trailing commas removed",
+                "missing_comma": "Missing commas inserted",
+                "comment": "Comments stripped",
+                "non_standard_quote": "Single and curly quotes replaced with double quotes",
+                "unquoted_key": "Bare keys quoted",
+                "non_standard_literal": "NaN, Infinity, None and the like mapped onto JSON values",
+                "control_character": "Raw control characters escaped",
+                "invalid_escape": "Unknown escapes unwrapped",
+                "invalid_number": "Number literals rewritten to JSON's grammar"
+            }
+        },
+        "errors": {
+            "too_large": "That document is larger than {limit}. Trim it and try again.",
+            "too_deep": "This nests more than {limit, number} levels deep, which is further than the formatter will walk.",
+            "unexpected_token": "Unexpected {found} at line {line, number}, column {column, number}.",
+            "unexpected_token_expected": "Expected {expected} at line {line, number}, column {column, number} — found {found} instead.",
+            "unexpected_end": "The document ends at line {line, number}, column {column, number} with something still open.",
+            "unexpected_end_expected": "The document ends at line {line, number}, column {column, number}, still waiting for {expected}.",
+            "unterminated_string": "The string opened at line {line, number}, column {column, number} is never closed.",
+            "invalid_escape": "{found} at line {line, number}, column {column, number} is not an escape JSON recognises. The valid ones are \\\" \\\\ \\/ \\b \\f \\n \\r \\t and \\uXXXX.",
+            "invalid_number": "The number at line {line, number}, column {column, number} is not written the way JSON requires. A leading zero, a leading +, and a missing digit either side of the point are all rejected.",
+            "invalid_literal": "{found} at line {line, number}, column {column, number} is not a JSON value. Only true, false and null are spelled out.",
+            "control_character": "A raw control character sits inside the string at line {line, number}, column {column, number}. Tabs and line breaks have to be written as \\t and \\n.",
+            "trailing_content": "The document is already complete at line {line, number}, column {column, number}, but more text follows it.",
+            "trailing_comma": "The comma at line {line, number}, column {column, number} is followed by the closing bracket. JSON has no trailing commas.",
+            "missing_comma": "Two values run together at line {line, number}, column {column, number} with no comma between them.",
+            "comment": "JSON has no comments. One starts at line {line, number}, column {column, number}.",
+            "non_standard_quote": "The string at line {line, number}, column {column, number} is not wrapped in double quotes. JSON has no single quotes and no curly quotes.",
+            "unquoted_key": "The key {found} at line {line, number}, column {column, number} is not quoted. Every JSON name is a double-quoted string.",
+            "non_standard_literal": "{found} at line {line, number}, column {column, number} is not a JSON value. JSON has no NaN, no Infinity and no undefined.",
+            "root_not_container": "RFC 4627 defines a JSON text as an object or an array, so a bare value at the top level is not a document under it. Switch to RFC 8259 to accept it.",
+            "unpaired_surrogate": "The string at line {line, number}, column {column, number} holds half of a surrogate pair. That is not valid Unicode and cannot be written as UTF-8, so RFC 8259 refuses it — the other grammars only warn.",
+            "repairHint": "Turn on Repair and this is corrected for you.",
+            "fileTooLarge": "{name} is larger than {limit}.",
+            "fileUnreadable": "That file could not be read."
+        },
+        "toast": {
+            "copied": "Copied to clipboard",
+            "copyFailedUnsupported": "Your browser blocked clipboard access",
+            "copyFailedDenied": "Clipboard permission was denied",
+            "copyFailedEmpty": "Nothing to copy yet",
+            "downloaded": "Downloaded {filename}",
+            "downloadFailed": "The download could not be started",
+            "fileLoaded": "Loaded {name}",
+            "sampleLoaded": "Loaded a sample document"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "Understanding JSON formatting",
+                "p1": "JSON carries no formatting of its own. Whitespace between tokens has no meaning at all, so the same document can arrive as one unbroken line or spread across a thousand indented ones, and every parser reads them identically. Formatting is entirely for the person looking at it.",
+                "p2": "That is why a formatter is really two tools sharing a parser. Beautifying inserts line breaks and indentation so structure becomes visible at a glance; minifying strips every optional byte so the document costs as little as possible to send. Neither changes what the document says.",
+                "p3": "Validating is the third thing the same parser gives you for free. A document either matches the grammar or it does not, and when it does not, the useful answer is not “invalid” — it is the line and column where the grammar stopped matching, and what was expected there instead."
+            },
+            "whyFormat": {
+                "title": "Why beautify, and why minify",
+                "p1": "Most JSON that reaches a person came from a machine, and machines emit the compact form. An API response, a log line, a config value pulled out of an environment variable: all of them arrive as a single line that is impossible to read past the first nesting level. Beautifying is how you find the one field you came for.",
+                "p2": "Minifying runs the other way, and the wins are real but bounded. Indentation is often a fifth to a third of a pretty-printed document, so stripping it is worth doing on anything that crosses a network many times a day. It is not worth doing on anything a person will read, and it is pointless on a response that is already gzipped, where the compressor removes most of that redundancy anyway.",
+                "p3": "The honest rule is that formatting follows the audience. Files a human edits — configuration, fixtures, seed data — stay beautified and diff cleanly line by line. Payloads only a program reads get minified. Nothing about correctness changes either way, which is exactly why this is a preference rather than a decision to agonise over."
+            },
+            "templates": {
+                "title": "Indentation templates",
+                "intro": "The template decides one thing: what one level of nesting costs. Everything else about the output is the same.",
+                "tableCaption": "The indentation templates this formatter produces and what each suits",
+                "colTemplate": "Template",
+                "colLooks": "One level looks like",
+                "colBestFor": "Best for",
+                "space2Looks": "Two spaces",
+                "space2BestFor": "The default nearly everywhere: JavaScript tooling, npm manifests, most API examples",
+                "space3Looks": "Three spaces",
+                "space3BestFor": "Matching a house style that already uses it; rare outside legacy codebases",
+                "space4Looks": "Four spaces",
+                "space4BestFor": "Deeply nested documents where two spaces stop being distinguishable, and Python-adjacent projects",
+                "tabLooks": "One tab character",
+                "tabBestFor": "Letting each reader choose their own width, and any repository whose editor config uses tabs",
+                "minifiedName": "Minified",
+                "minifiedLooks": "Nothing at all",
+                "minifiedBestFor": "Payloads on the wire, embedded strings, and anything a person will not read",
+                "note": "Minifying is a separate action rather than a fifth template, because it is not an indentation choice — it removes the line breaks too. Switch the action at the top of the tool and the indentation control goes quiet, since there is nothing left for it to act on."
+            },
+            "specs": {
+                "title": "Four specifications, and what actually differs",
+                "intro": "JSON has been standardised four times, which sounds worse than it is. Three of the four describe the same language; only one of them is genuinely stricter, and it is the oldest.",
+                "tableCaption": "How each published JSON specification treats a document",
+                "colSpec": "Specification",
+                "colRoot": "Top-level value",
+                "colHere": "What that changes here",
+                "rfc8259Root": "Any value",
+                "rfc8259Here": "The default. Additionally refuses a string carrying half of a surrogate pair, because that cannot be encoded as UTF-8.",
+                "rfc7159Root": "Any value",
+                "rfc7159Here": "Lifted RFC 4627's restriction on the top level. A lone surrogate is reported as a warning rather than an error.",
+                "rfc4627Root": "Object or array only",
+                "rfc4627Here": "The original definition. A bare string, number, boolean or null at the top level is rejected as not being a JSON text.",
+                "ecma404Root": "Any value",
+                "ecma404Here": "Published alongside RFC 7159 to describe the same grammar, so this tool treats the two identically.",
+                "note": "If you are unsure, leave it on RFC 8259 — it is what every current parser implements and what “JSON” means in 2026. Reach for RFC 4627 only when you are targeting something genuinely old, such as a strict validator written against the 2006 definition, and want to know in advance that a bare value will be refused."
+            },
+            "options": {
+                "title": "Every option, and when to use it",
+                "intro": "The defaults — beautify at two spaces, RFC 8259, repair off, document order, output as-is — are what you want most of the time. The rest exist for the cases where the document is broken, the receiving system is stricter, or the output has to survive a narrower channel.",
+                "tableCaption": "What each control does and when it is worth changing",
+                "colOption": "Option",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "indentName": "Indentation",
+                "indentDoes": "Sets what one nesting level costs: two, three or four spaces, or a tab.",
+                "indentWhen": "The output goes into a repository whose style differs from the two-space default.",
+                "specName": "Specification",
+                "specDoes": "Chooses which published grammar the document is held to.",
+                "specWhen": "You are targeting a parser written against an older definition, or want a lone surrogate treated as fatal.",
+                "repairName": "Repair",
+                "repairDoes": "Accepts the usual non-standard extras — trailing commas, comments, bare keys, single and curly quotes, NaN and Infinity, hex and malformed numbers — and writes valid JSON out.",
+                "repairWhen": "You pasted something that came from a config file, a Python REPL, or a document someone edited by hand.",
+                "sortKeysName": "Sort keys",
+                "sortKeysDoes": "Reorders every object's members by name, all the way down.",
+                "sortKeysWhen": "You are about to diff two documents, or want a stable order for a checksum or a fixture.",
+                "escapeUnicodeName": "Escape non-ASCII",
+                "escapeUnicodeDoes": "Rewrites every character above ASCII as a \\uXXXX escape.",
+                "escapeUnicodeWhen": "The output travels through something that mangles UTF-8 — an old logging pipeline, a terminal paste, a header value.",
+                "interactionNote": "The controls constrain each other, and the interface follows suit rather than lying about it. Minifying removes every space, so the indentation control greys out. Validating reports on the document instead of rewriting it, so indentation, key sorting and Unicode escaping all go quiet — none of them would have anything to act on.",
+                "defaultsNote": "Repair deserves one caveat. It only touches things whose intent is unambiguous: a comma before a closing bracket can only be a trailing comma, and a bare word where a key belongs can only be an unquoted key. It will not guess at an unterminated string, because the closing quote could belong anywhere, and it will not invent a missing bracket. When it does change something, the report says exactly what it changed and how many times."
+            },
+            "reading": {
+                "title": "Reading an error",
+                "p1": "Every failure comes back with a line and a column, counted the way you would count them: from one, in characters. That last part matters more than it sounds. An emoji earlier in the line is one character to you but two units to the engine underneath, and a formatter that counts the engine's way reports every later column one place too far along.",
+                "p2": "The message names what the grammar wanted and what it found instead, because “unexpected token” on its own sends you reading the whole document. Knowing that a colon was expected at line 12, column 9, and a comma turned up, usually points straight at the missing quote two lines above.",
+                "p3": "When the problem is one Repair understands, the message says so rather than leaving you to guess. Trailing commas, comments, bare keys, non-standard quotes and NaN all carry that hint; unterminated strings and missing brackets do not, because no automatic fix for them would be safe."
+            },
+            "howItWorks": {
+                "title": "How our formatter works",
+                "p1": "Everything on this page runs on your device. The document is read by a parser written for this tool rather than handed to the browser's own JSON.parse, and there is no server call and nothing stored.",
+                "p2": "That choice buys three things. JSON.parse reports failures through an error message that every engine words differently — some carry a line and column, some do not — so a formatter built on it gives a different answer in Chrome than in Safari. It also has no lenient mode, which is what Repair needs. And it routes every number through a double, which silently rounds any integer past 9,007,199,254,740,992; keeping the literal exactly as written is the only way a formatter can promise it did not quietly change your data.",
+                "p3": "The rest follows from that. Strings are decoded once and re-escaped canonically on the way out, so the output is byte-identical whichever escapes the input happened to use. A byte order mark at the start is ignored, as the specification permits. Nesting is capped at 512 levels and input at one megabyte, both reported as ordinary messages rather than a frozen tab."
+            },
+            "useCases": {
+                "title": "Use cases",
+                "p1": "Reading an API response is the common one. Paste the single line your terminal printed, beautify it, and the shape you were looking for is visible immediately — including which fields are null and which are missing altogether.",
+                "p2": "Fixing a config file someone hand-edited is the second. A trailing comma in a tsconfig, a comment in a package manifest, smart quotes pasted out of a chat message: turn on Repair, and the output is the same document with the damage undone and a list of what changed.",
+                "p3": "Beyond that: sorting keys before diffing two fixtures so the diff shows real changes rather than reordering, minifying a payload before embedding it in a source file, escaping non-ASCII so a document survives a pipeline that mangles UTF-8, and checking whether a large integer id is one your consumers will round."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Does formatting change what my JSON means?",
+                "a1": "No. Whitespace between tokens carries no meaning in JSON, so beautifying and minifying produce documents that every parser reads identically. Sorting keys is the one option that rewrites something a program could notice — object member order is not significant in JSON, but a few systems do observe it, so it is off by default.",
+                "q2": "Is my document uploaded anywhere?",
+                "a2": "No. Files are read with the browser's File API and everything is parsed and written on your device. The page makes no network request while formatting, and nothing you paste, open, or download is transmitted.",
+                "q3": "Why does my big number survive here but not in my code?",
+                "a3": "Because this tool keeps number literals exactly as written instead of routing them through a double. JSON.parse cannot: any integer past 9,007,199,254,740,992 loses precision the moment it is read, which is why a 19-digit id often comes back off by one. The report flags any literal that would round, so you can see it before your consumers do.",
+                "q4": "What exactly does Repair fix?",
+                "a4": "Trailing commas, missing commas between values, // and /* */ comments, unquoted keys, single and curly quotes, NaN, Infinity, -Infinity, undefined, Python's True, False and None, hex numbers, leading zeros, leading plus signs, a missing digit either side of a decimal point, unknown backslash escapes, and raw control characters inside strings. It stops short of anything ambiguous: it will not close a string for you or invent a missing bracket.",
+                "q5": "Which specification should I choose?",
+                "a5": "RFC 8259 unless you know otherwise — it is what every current parser implements. RFC 7159 and ECMA-404 describe the same grammar and behave identically here. RFC 4627 is the 2006 original and is the only genuinely stricter option: it requires an object or an array at the top level, so a bare string or number is refused.",
+                "q6": "Why is a duplicate key a warning rather than an error?",
+                "a6": "Because the grammar allows it. Every specification says member names SHOULD be unique but none requires it, so a document with a repeated name is valid JSON. What is unpredictable is what a parser does with it — most keep the last occurrence, some keep the first, a few error — which is exactly why it is worth telling you about.",
+                "q7": "Can I share a formatted document as a link?",
+                "a7": "Yes, for short ones. The action, indentation, specification and each toggle all travel in the URL, along with up to 2,048 characters of text, so a link opens on the same settings and the same document. Anything longer is better handed over as a file — and it never leaves your machine either way."
             }
         }
     },

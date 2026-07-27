@@ -2,8 +2,8 @@ import {
     IconArrowRight,
     IconBinary,
     IconBolt,
+    IconBraces,
     IconKey,
-    IconLock,
     IconSortAscending2,
     IconStack2,
 } from "@tabler/icons-react";
@@ -59,11 +59,11 @@ export async function QuickActions() {
             accent: "[--tool-accent:var(--brand-rose)]",
         },
         {
-            key: "hashPassword",
-            href: "/tools/hash?algorithm=argon2id",
-            title: t("hashPassword.title"),
-            description: t("hashPassword.description"),
-            Icon: IconLock,
+            key: "jsonBeautify",
+            href: "/tools/json",
+            title: t("jsonBeautify.title"),
+            description: t("jsonBeautify.description"),
+            Icon: IconBraces,
             accent: "[--tool-accent:var(--brand-violet)]",
         },
     ];

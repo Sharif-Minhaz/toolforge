@@ -4,11 +4,9 @@ import type {
     Base64EncodeOptions,
     Base64Failure,
     Base64FailureReason,
-    ByteSize,
 } from "../types";
 import {
     ALPHABETS,
-    BYTES_PER_KILOBYTE,
     DATA_URI_PATTERN,
     DEFAULT_DATA_URI_MIME_TYPE,
     DEFAULT_ENCODE_OPTIONS,
@@ -103,11 +101,6 @@ export function encodeText(text: string, options?: Base64EncodeOptions): string 
 
     // UTF-8 can represent any string, so this branch is unreachable.
     return encoded.ok ? encodeBytes(encoded.bytes, options) : "";
-}
-
-/** UTF-8 byte length — a size measure, independent of the chosen character set. */
-export function getByteLength(text: string): number {
-    return new TextEncoder().encode(text).length;
 }
 
 /* ---------------------------------------------------------------- decode --- */
@@ -222,26 +215,6 @@ export function decodeToText(input: string): Base64DecodeTextResult {
 }
 
 /* ----------------------------------------------------------------- sizes --- */
-
-function roundToTenth(value: number): number {
-    return Math.round(value * 10) / 10;
-}
-
-/** Locale-free size split into a number and a unit key the UI translates. */
-export function describeByteSize(bytes: number): ByteSize {
-    if (bytes < BYTES_PER_KILOBYTE) {
-        return { value: bytes, unit: "b" };
-    }
-
-    if (bytes < BYTES_PER_KILOBYTE * BYTES_PER_KILOBYTE) {
-        return { value: roundToTenth(bytes / BYTES_PER_KILOBYTE), unit: "kb" };
-    }
-
-    return {
-        value: roundToTenth(bytes / (BYTES_PER_KILOBYTE * BYTES_PER_KILOBYTE)),
-        unit: "mb",
-    };
-}
 
 export function exceedsInputLimit(byteLength: number): boolean {
     return byteLength > MAX_BASE64_INPUT_BYTES;

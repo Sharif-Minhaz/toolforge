@@ -1,6 +1,6 @@
 "use client";
 
-import { IconFileText, IconUpload, IconX } from "@tabler/icons-react";
+import { IconSparkles, IconUpload, IconX } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import type { ChangeEvent } from "react";
 
@@ -9,38 +9,30 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { ByteSize } from "@/modules/tools/components/byte-size";
-import { TOOL_ICON_TILE } from "@/modules/tools/components/tool-accent";
-import type { Base64Mode } from "../types";
-
-export type LoadedFile = {
-    readonly name: string;
-    readonly mimeType: string;
-    readonly bytes: Uint8Array;
-};
+import type { JsonMode } from "../types";
 
 type InputPanelProps = {
-    mode: Base64Mode;
+    mode: JsonMode;
     text: string;
-    file: LoadedFile | null;
     inputId: string;
     inputBytes: number;
     onTextChange: (value: string) => void;
     onFileSelect: (file: File) => void;
+    onSample: () => void;
     onClear: () => void;
 };
 
 export function InputPanel({
     mode,
     text,
-    file,
     inputId,
     inputBytes,
     onTextChange,
     onFileSelect,
+    onSample,
     onClear,
 }: InputPanelProps) {
-    const t = useTranslations("base64.workbench");
-    const empty = file === null && text.length === 0;
+    const t = useTranslations("json.workbench");
 
     function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
         const selected = event.target.files?.[0];
@@ -57,14 +49,23 @@ export function InputPanel({
         <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <Label htmlFor={inputId} className="text-muted-foreground text-xs">
-                    {t("inputLabel")}
+                    <span className="leading-[1.3]">{t("inputLabel")}</span>
                 </Label>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5">
                     <ByteSize
                         bytes={inputBytes}
                         className="text-muted-foreground mr-1 font-mono text-[0.6875rem] tabular-nums"
                     />
+
+                    <button
+                        type="button"
+                        onClick={onSample}
+                        className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                    >
+                        <IconSparkles className="size-3.5" stroke={1.8} aria-hidden="true" />
+                        {t("sample")}
+                    </button>
 
                     {/* A styled label keeps the file picker a real <input>, so it
                         stays keyboard reachable without any imperative click. */}
@@ -78,6 +79,7 @@ export function InputPanel({
                         {t("upload")}
                         <input
                             type="file"
+                            accept=".json,.jsonc,.txt,application/json,text/plain"
                             className="sr-only"
                             onChange={handleFileChange}
                             aria-label={t("upload")}
@@ -87,7 +89,7 @@ export function InputPanel({
                     <button
                         type="button"
                         onClick={onClear}
-                        disabled={empty}
+                        disabled={text.length === 0}
                         className={cn(
                             buttonVariants({ variant: "ghost", size: "icon-sm" }),
                             "text-muted-foreground hover:text-foreground",
@@ -99,41 +101,15 @@ export function InputPanel({
                 </div>
             </div>
 
-            {file ? (
-                <div className="bg-card/70 ring-border/70 flex items-center gap-3 rounded-xl px-3 py-3 ring-1 [--tool-accent:var(--brand-cyan)] ring-inset">
-                    <span className={cn(TOOL_ICON_TILE, "size-9")}>
-                        <IconFileText className="size-4" stroke={1.8} aria-hidden="true" />
-                    </span>
-                    <span className="flex min-w-0 flex-1 flex-col">
-                        <span className="truncate text-[0.8125rem] font-medium">{file.name}</span>
-                        <ByteSize
-                            bytes={file.bytes.length}
-                            className="text-muted-foreground font-mono text-[0.6875rem] tabular-nums"
-                        />
-                    </span>
-                    <button
-                        type="button"
-                        onClick={onClear}
-                        aria-label={t("removeFile")}
-                        className={cn(
-                            buttonVariants({ variant: "ghost", size: "icon-sm" }),
-                            "text-muted-foreground hover:text-foreground",
-                        )}
-                    >
-                        <IconX className="size-4" stroke={1.9} aria-hidden="true" />
-                    </button>
-                </div>
-            ) : (
-                <Textarea
-                    id={inputId}
-                    value={text}
-                    onChange={(event) => onTextChange(event.target.value)}
-                    placeholder={t(`placeholders.${mode}`)}
-                    spellCheck={false}
-                    autoComplete="off"
-                    className="bg-card/70 max-h-72 min-h-32 resize-y rounded-xl font-mono text-[0.8125rem] leading-6 break-all"
-                />
-            )}
+            <Textarea
+                id={inputId}
+                value={text}
+                onChange={(event) => onTextChange(event.target.value)}
+                placeholder={t(`placeholders.${mode}`)}
+                spellCheck={false}
+                autoComplete="off"
+                className="bg-card/70 h-72 min-h-40 resize-y rounded-xl font-mono text-[0.8125rem] leading-6"
+            />
         </div>
     );
 }

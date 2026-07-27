@@ -1,3 +1,4 @@
+import { getByteLength } from "@/modules/tools/domain/byte-size";
 import type {
     Base64ConversionOptions,
     Base64DecodeTextResult,
@@ -6,13 +7,7 @@ import type {
     Base64Source,
 } from "../types";
 import { getCharset } from "./charsets";
-import {
-    buildDataUri,
-    decodeToBytes,
-    encodeBytes,
-    exceedsInputLimit,
-    getByteLength,
-} from "./codec";
+import { buildDataUri, decodeToBytes, encodeBytes, exceedsInputLimit } from "./codec";
 import { TEXT_MIME_TYPE } from "./constants";
 import { applyNewlines, joinLines, splitLines, wrapLines } from "./lines";
 import { bytesToText, textToBytes } from "./text-codec";

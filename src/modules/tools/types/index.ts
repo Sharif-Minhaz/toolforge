@@ -86,6 +86,16 @@ export type LocalizedTool = Tool & {
     readonly categoryLabel: string;
 };
 
+export const BYTE_UNITS = ["b", "kb", "mb"] as const;
+
+export type ByteUnit = (typeof BYTE_UNITS)[number];
+
+/** Locale-free size description; the UI renders the unit from its catalogue. */
+export type ByteSize = {
+    readonly value: number;
+    readonly unit: ByteUnit;
+};
+
 /** A generated file handed to the browser's download flow. */
 export type DownloadFile = {
     readonly filename: string;

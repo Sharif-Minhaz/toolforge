@@ -11,8 +11,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
+import { OptionSwitch } from "@/modules/tools/components/option-controls";
 import {
     ENCODING_LABELS,
     getHashFamily,
@@ -41,46 +40,6 @@ const ENCODING_ITEMS: Record<string, ReactNode> = { ...ENCODING_LABELS };
 
 /** Past this the tab freezes for long enough to be worth warning about. */
 const SLOW_BCRYPT_COST = 13;
-
-type OptionSwitchProps = {
-    label: string;
-    hint: string;
-    checked: boolean;
-    disabled: boolean;
-    onCheckedChange: (checked: boolean) => void;
-};
-
-function OptionSwitch({ label, hint, checked, disabled, onCheckedChange }: OptionSwitchProps) {
-    const labelId = useId();
-    const hintId = useId();
-
-    return (
-        <div
-            className={cn(
-                "bg-card/60 ring-border/70 flex items-start justify-between gap-3 rounded-xl px-3 py-2.5 ring-1 ring-inset",
-                "transition-opacity duration-200",
-                disabled && "opacity-55",
-            )}
-        >
-            <span className="flex min-w-0 flex-col gap-0.5">
-                <span id={labelId} className="text-[0.8125rem] leading-[1.3] font-medium">
-                    {label}
-                </span>
-                <span id={hintId} className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                    {hint}
-                </span>
-            </span>
-            <Switch
-                checked={checked}
-                disabled={disabled}
-                onCheckedChange={(next) => onCheckedChange(next)}
-                aria-labelledby={labelId}
-                aria-describedby={hintId}
-                className="mt-1 shrink-0"
-            />
-        </div>
-    );
-}
 
 type HashOptionsPanelProps = {
     options: HashOptions;

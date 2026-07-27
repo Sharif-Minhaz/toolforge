@@ -2,14 +2,14 @@
 
 import { useFormatter, useTranslations } from "next-intl";
 
-import { describeByteSize } from "../domain/codec";
+import { describeByteSize } from "../domain/byte-size";
 
 /**
  * Formats a byte count for the active locale — Bengali numerals included —
  * while the unit itself comes from the message catalogue.
  */
 export function useByteLabel(): (bytes: number) => string {
-    const t = useTranslations("base64.units");
+    const t = useTranslations("units");
     const format = useFormatter();
 
     return (bytes: number) => {
