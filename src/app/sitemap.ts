@@ -1,0 +1,27 @@
+import type { MetadataRoute } from "next";
+
+import { getAvailableTools } from "@/modules/tools/domain/tool-catalog";
+import { absoluteUrl } from "@/modules/seo/domain/site";
+
+/**
+ * Only shipped tools are listed. A planned tool has no route yet, and pointing
+ * a crawler at a 404 costs crawl budget and trust.
+ */
+export default function sitemap(): MetadataRoute.Sitemap {
+    const tools = getAvailableTools().map((tool) => ({
+        url: absoluteUrl(tool.href),
+        lastModified: new Date(tool.addedOn),
+        changeFrequency: "monthly" as const,
+        priority: 0.8,
+    }));
+
+    return [
+        {
+            url: absoluteUrl("/"),
+            lastModified: new Date(),
+            changeFrequency: "weekly" as const,
+            priority: 1,
+        },
+        ...tools,
+    ];
+}

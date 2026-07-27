@@ -27,6 +27,7 @@
         "searchClear": "Clear search",
         "searchEmpty": "Nothing matches “{query}”",
         "searchEmptyHint": "Try a different keyword, or browse the full catalogue.",
+        "home": "ToolForge home",
         "overview": "Overview",
         "overviewHint": "Dashboard",
         "sectionGeneral": "General",

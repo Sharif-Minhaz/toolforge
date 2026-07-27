@@ -8,6 +8,7 @@ import {
     getRecentTools,
     getToolById,
     getToolCatalogStats,
+    getToolKeywords,
     getTools,
     getToolsByCategory,
 } from "@/modules/tools/domain/tool-catalog";
@@ -19,6 +20,7 @@ const SEARCHABLE = [
         name: "UUID Generator",
         description: "Generate v4 ids",
         categoryLabel: "Generators",
+        keywords: ["guid", "unique id"],
     },
     {
         id: "json",
@@ -105,7 +107,61 @@ describe("matchesToolQuery", () => {
         expect(matchesToolQuery(SEARCHABLE[1], "formatting")).toBe(true);
     });
 
+    test("matches an alternate name the display strings never mention", () => {
+        // "guid" appears in no name, description, category, or id.
+        expect(matchesToolQuery(SEARCHABLE[0], "guid")).toBe(true);
+        expect(matchesToolQuery(SEARCHABLE[0], "GUID")).toBe(true);
+    });
+
+    test("tolerates a tool with no keywords at all", () => {
+        expect(matchesToolQuery(SEARCHABLE[1], "json")).toBe(true);
+        expect(matchesToolQuery(SEARCHABLE[1], "guid")).toBe(false);
+    });
+
     test("returns nothing when the query matches no field", () => {
         expect(filterTools(SEARCHABLE, "kubernetes")).toHaveLength(0);
+    });
+});
+
+describe("tool keywords", () => {
+    test("gives every catalog entry at least one alternate search term", () => {
+        for (const tool of getTools()) {
+            expect(tool.keywords.length).toBeGreaterThan(0);
+        }
+    });
+
+    test("keeps keywords lowercase, since the query is lowercased before matching", () => {
+        for (const tool of getTools()) {
+            for (const keyword of tool.keywords) {
+                expect(keyword).toBe(keyword.toLowerCase());
+            }
+        }
+    });
+
+    test("never repeats a keyword inside one entry", () => {
+        for (const tool of getTools()) {
+            expect(new Set(tool.keywords).size).toBe(tool.keywords.length);
+        }
+    });
+
+    test("collects meta-tag keywords from shipped tools only", () => {
+        const keywords = getToolKeywords();
+        const planned = getTools().filter((tool) => tool.status === "planned");
+
+        expect(keywords).toEqual([...new Set(keywords)]);
+
+        for (const tool of getAvailableTools()) {
+            expect(keywords).toEqual(expect.arrayContaining([...tool.keywords]));
+        }
+
+        // A term only a planned tool claims must not leak into the tag.
+        const shipped = new Set(getAvailableTools().flatMap((tool) => tool.keywords));
+        const plannedOnly = planned
+            .flatMap((tool) => tool.keywords)
+            .filter((keyword) => !shipped.has(keyword));
+
+        for (const keyword of plannedOnly) {
+            expect(keywords).not.toContain(keyword);
+        }
     });
 });

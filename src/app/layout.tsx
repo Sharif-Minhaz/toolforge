@@ -6,7 +6,9 @@ import type { ReactNode } from "react";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { Providers } from "@/components/layout/providers";
-import { SITE_URL } from "@/modules/seo/domain/site";
+import { buildPageMetadata, SITE_ATTRIBUTION } from "@/modules/seo/domain/metadata";
+import { SITE_REPOSITORY, SITE_URL } from "@/modules/seo/domain/site";
+import { getToolKeywords } from "@/modules/tools/domain/tool-catalog";
 import "./globals.css";
 
 const inter = Inter({
@@ -31,33 +33,46 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-    const [t, tApp] = await Promise.all([getTranslations("overview.meta"), getTranslations("app")]);
+    const [t, tApp, locale] = await Promise.all([
+        getTranslations("overview.meta"),
+        getTranslations("app"),
+        getLocale(),
+    ]);
+
+    const shared = buildPageMetadata({
+        title: t("title"),
+        description: t("description"),
+        path: "/",
+        locale,
+        keywords: getToolKeywords(),
+    });
 
     return {
+        ...shared,
+        ...SITE_ATTRIBUTION,
         metadataBase: new URL(SITE_URL),
+        // Child pages set a bare title; the template appends the brand so every
+        // tab and every search result reads "<tool> | ToolForge".
         title: {
             default: t("title"),
             template: `%s | ${tApp("name")}`,
         },
-        description: t("description"),
         applicationName: tApp("name"),
-        keywords: ["developer tools", "uuid generator", "online tools", "privacy first"],
-        openGraph: {
-            type: "website",
-            siteName: tApp("name"),
-            title: t("title"),
-            description: t("description"),
-            url: SITE_URL,
-        },
-        twitter: {
-            card: "summary_large_image",
-            title: t("title"),
-            description: t("description"),
-        },
+        referrer: "origin-when-cross-origin",
+        // Stops iOS Safari turning version numbers and ids into phone links.
+        formatDetection: { telephone: false, address: false, email: false },
         robots: {
             index: true,
             follow: true,
+            googleBot: {
+                index: true,
+                follow: true,
+                "max-image-preview": "large",
+                "max-snippet": -1,
+                "max-video-preview": -1,
+            },
         },
+        other: { "github:repository": SITE_REPOSITORY },
     };
 }
 

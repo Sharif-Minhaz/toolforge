@@ -1,11 +1,13 @@
 import { IconChevronRight, IconShieldCheck, IconSparkles, IconWorldOff } from "@tabler/icons-react";
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import Link from "next/link";
 
 import { FadeIn, Reveal } from "@/components/motion/reveal";
-import { absoluteUrl, SITE_NAME } from "@/modules/seo/domain/site";
+import { buildPageMetadata } from "@/modules/seo/domain/metadata";
+import { buildToolJsonLd } from "@/modules/seo/domain/structured-data";
 import { JsonLd } from "@/modules/seo/components/json-ld";
+import { getToolById } from "@/modules/tools/domain/tool-catalog";
 import { DEFAULT_UUID_QUANTITY, DEFAULT_UUID_VERSION } from "@/modules/uuid/domain/constants";
 import { generateUuids } from "@/modules/uuid/domain/generate";
 import { getUuidFaqEntries, UuidArticle } from "@/modules/uuid/components/uuid-article";
@@ -15,24 +17,15 @@ import { uuidSearchParamsSchema } from "@/modules/uuid/validation/generation-opt
 const TOOL_PATH = "/tools/uuid";
 
 export async function generateMetadata(): Promise<Metadata> {
-    const t = await getTranslations("uuid.meta");
+    const [t, locale] = await Promise.all([getTranslations("uuid.meta"), getLocale()]);
 
-    return {
+    return buildPageMetadata({
         title: t("title"),
         description: t("description"),
-        alternates: { canonical: TOOL_PATH },
-        openGraph: {
-            type: "website",
-            title: t("title"),
-            description: t("description"),
-            url: absoluteUrl(TOOL_PATH),
-        },
-        twitter: {
-            card: "summary_large_image",
-            title: t("title"),
-            description: t("description"),
-        },
-    };
+        path: TOOL_PATH,
+        locale,
+        keywords: getToolById("uuid")?.keywords,
+    });
 }
 
 type UuidPageProps = {
@@ -40,11 +33,12 @@ type UuidPageProps = {
 };
 
 export default async function UuidToolPage({ searchParams }: UuidPageProps) {
-    const [t, tTools, tNav, faqs, params] = await Promise.all([
+    const [t, tTools, tNav, faqs, locale, params] = await Promise.all([
         getTranslations("uuid.hero"),
         getTranslations("tools"),
         getTranslations("nav"),
         getUuidFaqEntries(),
+        getLocale(),
         searchParams,
     ]);
 
@@ -65,46 +59,14 @@ export default async function UuidToolPage({ searchParams }: UuidPageProps) {
     return (
         <>
             <JsonLd
-                data={{
-                    "@context": "https://schema.org",
-                    "@graph": [
-                        {
-                            "@type": "SoftwareApplication",
-                            name: tTools("uuid.name"),
-                            description: tTools("uuid.description"),
-                            applicationCategory: "DeveloperApplication",
-                            operatingSystem: "Any",
-                            url: absoluteUrl(TOOL_PATH),
-                            publisher: { "@type": "Organization", name: SITE_NAME },
-                            offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-                        },
-                        {
-                            "@type": "FAQPage",
-                            mainEntity: faqs.map((faq) => ({
-                                "@type": "Question",
-                                name: faq.question,
-                                acceptedAnswer: { "@type": "Answer", text: faq.answer },
-                            })),
-                        },
-                        {
-                            "@type": "BreadcrumbList",
-                            itemListElement: [
-                                {
-                                    "@type": "ListItem",
-                                    position: 1,
-                                    name: SITE_NAME,
-                                    item: absoluteUrl("/"),
-                                },
-                                {
-                                    "@type": "ListItem",
-                                    position: 2,
-                                    name: tTools("uuid.name"),
-                                    item: absoluteUrl(TOOL_PATH),
-                                },
-                            ],
-                        },
-                    ],
-                }}
+                data={buildToolJsonLd({
+                    name: tTools("uuid.name"),
+                    description: tTools("uuid.description"),
+                    path: TOOL_PATH,
+                    locale,
+                    keywords: getToolById("uuid")?.keywords,
+                    faqs,
+                })}
             />
 
             <div className="flex flex-col gap-10 lg:gap-12">

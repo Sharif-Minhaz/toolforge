@@ -70,6 +70,13 @@ export type Tool = {
     readonly featured: boolean;
     /** Ranking hint used by "popular tools"; higher comes first. */
     readonly popularity: number;
+    /**
+     * Alternate names a person might search for — abbreviations, the underlying
+     * spec, the API they know it by. Feeds both the catalog search and the page
+     * `keywords` meta tag, so it stays lowercase and untranslated: these are
+     * technical terms developers type in English in either locale.
+     */
+    readonly keywords: readonly string[];
 };
 
 /** A catalog entry with its display strings resolved for the active locale. */

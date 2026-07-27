@@ -2,6 +2,17 @@
     "name": "toolforge",
     "version": "0.1.0",
     "private": true,
+    "description": "A privacy-first toolbox of developer utilities. Everything runs in the browser.",
+    "license": "MIT",
+    "author": "Sharif Minhaz",
+    "homepage": "https://github.com/Sharif-Minhaz/toolforge#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Sharif-Minhaz/toolforge.git"
+    },
+    "bugs": {
+        "url": "https://github.com/Sharif-Minhaz/toolforge/issues"
+    },
     "scripts": {
         "dev": "next dev",
         "build": "prisma generate && next build",

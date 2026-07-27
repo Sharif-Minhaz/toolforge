@@ -67,6 +67,10 @@ Go straight to building for a simple tool: one input, one output, a couple of sw
 - Add the entry to `src/modules/tools/domain/tool-catalog.ts`. `href` **must** be
   `/tools/<id>` — a test enforces it. Set `status: "planned"` until it ships, then flip to
   `"available"` in the same change that lands the page.
+- Fill in `keywords`: lowercase, deduplicated, untranslated. These are the terms a person types
+  who does not know your name for the thing — the abbreviation (`b64`), the spec (`rfc 9562`), the
+  API they know it by (`btoa`). They drive both the in-app search and the page keyword tag, and
+  tests enforce the lowercase and no-duplicates rules.
 - Pick an `accent` from the five brand hues and an `icon` from `ToolIconName`. If no icon
   fits, add the key to **both** the union in `types/index.ts` and the map in
   `tool-icon.tsx`.
@@ -109,10 +113,20 @@ current mode cannot use should open on a default, not an error.
 
 Server component. Mirror `src/app/tools/base64/page.tsx`:
 
-- `generateMetadata` from `<tool>.meta`, with `alternates.canonical`, `openGraph`, `twitter`.
-- `JsonLd` with `SoftwareApplication`, `FAQPage`, and `BreadcrumbList`.
+- `generateMetadata` returns **`buildPageMetadata`** from
+  `@/modules/seo/domain/metadata` — never a hand-written object. It supplies the canonical URL, the
+  Open Graph card, the Twitter card, and the keyword list in one place. Pass the translated
+  `<tool>.meta` strings, the active `locale` from `getLocale()`, and
+  `getToolById("<id>")?.keywords`.
+- `JsonLd` takes **`buildToolJsonLd`** from `@/modules/seo/domain/structured-data`, which emits
+  `SoftwareApplication`, `FAQPage`, and `BreadcrumbList` as one graph. Hand-building the graph
+  drifts; the helper does not.
 - Parse search params, compute initial state, pass it to the island **as props**.
 - `loading.tsx` with skeletons matching the real layout block for block.
+
+Next **shallow-merges** metadata: a page that declares `openGraph` replaces the layout's entirely,
+image included. That is the whole reason `buildPageMetadata` exists — a page that skips it silently
+ships without a social card.
 
 ## Step 6 — one small client island
 
@@ -149,6 +163,9 @@ defaults assume. See `base64.article.options`.
   at the single most common task, using search params where they help. Cap the list at six —
   when a seventh arrives, drop the entry for the lowest-`popularity` tool. Give it an accent
   not already used by its neighbours.
+- Nothing to do for `sitemap.ts` or `robots.ts`: the sitemap reads `getAvailableTools()`, so
+  flipping the status is what publishes the route. Confirm it appears rather than assuming it —
+  a tool left at `"planned"` is silently absent from the sitemap.
 
 ## Step 9 — verify, then hand off
 
@@ -257,8 +274,10 @@ they should not.
 | 300 ms debounce | `@/hooks/use-debounced-value` |
 | Hydration-gated UI | `@/hooks/use-is-hydrated` |
 | Entrance motion | `@/components/motion/reveal` |
-| Structured data | `@/modules/seo/components/json-ld` |
-| Canonical URLs | `@/modules/seo/domain/site` |
+| Page metadata (canonical, OG, Twitter, keywords) | `@/modules/seo/domain/metadata` |
+| Tool JSON-LD graph | `@/modules/seo/domain/structured-data` |
+| Structured data `<script>` | `@/modules/seo/components/json-ld` |
+| Canonical URLs, OG image, site constants | `@/modules/seo/domain/site` |
 | Structured logging | `@/modules/observability/domain/logger` |
 
 Shared UI belongs in `modules/tools/`, never inside another tool's module. If a second tool

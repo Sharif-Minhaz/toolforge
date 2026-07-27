@@ -129,8 +129,11 @@ export function ShellFrame({ tools, defaultCollapsed, children }: ShellFrameProp
                             collapsed ? "flex-col items-center gap-1.5" : "items-center",
                         )}
                     >
+                        {/* The mark is decorative and the wordmark disappears in
+                            the collapsed rail, so the name lives on the link. */}
                         <Link
                             href="/"
+                            aria-label={t("home")}
                             className={cn(
                                 "focus-visible:ring-ring flex min-w-0 items-center gap-2 rounded-lg outline-none focus-visible:ring-2",
                                 !collapsed && "flex-1",
@@ -198,6 +201,7 @@ export function ShellFrame({ tools, defaultCollapsed, children }: ShellFrameProp
                 </button>
                 <Link
                     href="/"
+                    aria-label={t("home")}
                     className="focus-visible:ring-ring flex min-w-0 items-center gap-2 rounded-lg outline-none focus-visible:ring-2"
                 >
                     <ToolForgeMark className="size-7" />
