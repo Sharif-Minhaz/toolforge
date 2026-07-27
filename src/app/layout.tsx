@@ -113,6 +113,15 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.base64.errors,
             toast: messages.base64.toast,
         },
+        jwt: {
+            workbench: messages.jwt.workbench,
+            claims: messages.jwt.claims,
+            headerParams: messages.jwt.headerParams,
+            timeStates: messages.jwt.timeStates,
+            findings: messages.jwt.findings,
+            errors: messages.jwt.errors,
+            toast: messages.jwt.toast,
+        },
     };
 
     return (

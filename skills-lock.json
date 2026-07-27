@@ -7,6 +7,24 @@
       "skillPath": "skills/frontend-design/SKILL.md",
       "computedHash": "4eabc66183767153e404b39d1b839b1c37f2d82d86f0a0d7e880a579d8d62336"
     },
+    "jwt-decode": {
+      "source": "jsonwebtoken/jwt-skills",
+      "sourceType": "github",
+      "skillPath": "jwt-decode/SKILL.md",
+      "computedHash": "06fa9eb3730a30c1464893f7d79e828010cbb16c4b2c2a292d2fa517ac8f59fa"
+    },
+    "jwt-encode": {
+      "source": "jsonwebtoken/jwt-skills",
+      "sourceType": "github",
+      "skillPath": "jwt-encode/SKILL.md",
+      "computedHash": "fcb77371b4ac601b7c76def653ed61352685a27331c21475dc4b23857c7a711b"
+    },
+    "jwt-validate": {
+      "source": "jsonwebtoken/jwt-skills",
+      "sourceType": "github",
+      "skillPath": "jwt-validate/SKILL.md",
+      "computedHash": "165ddd0ad5a960266d6dca93b7b237a85c08e9d0e70d54ba0de6b7134dbfb605"
+    },
     "prisma-cli": {
       "source": "prisma/skills",
       "sourceType": "github",

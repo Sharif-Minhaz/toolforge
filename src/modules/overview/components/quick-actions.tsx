@@ -2,6 +2,7 @@ import {
     IconArrowRight,
     IconBinary,
     IconBolt,
+    IconKey,
     IconSortAscending2,
     IconStack2,
 } from "@tabler/icons-react";
@@ -47,6 +48,14 @@ export async function QuickActions() {
             description: t("base64Decode.description"),
             Icon: IconBinary,
             accent: "[--tool-accent:var(--brand-emerald)]",
+        },
+        {
+            key: "jwtDecode",
+            href: "/tools/jwt",
+            title: t("jwtDecode.title"),
+            description: t("jwtDecode.description"),
+            Icon: IconKey,
+            accent: "[--tool-accent:var(--brand-rose)]",
         },
     ];
 

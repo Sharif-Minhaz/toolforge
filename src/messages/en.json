@@ -99,8 +99,8 @@
             "description": "Encode and decode Base64 and Base64URL, including files."
         },
         "jwt": {
-            "name": "JWT Decoder",
-            "description": "Inspect header, payload, and expiry without sending the token anywhere."
+            "name": "JWT Encoder / Decoder",
+            "description": "Decode and verify tokens, or sign new ones — without sending anything anywhere."
         },
         "hash": {
             "name": "Hash Generator",
@@ -207,6 +207,10 @@
             "base64Decode": {
                 "title": "Decode Base64",
                 "description": "Paste an encoded string and read it back."
+            },
+            "jwtDecode": {
+                "title": "Decode a JWT",
+                "description": "Read a token's claims and check its signature, without leaving the browser."
             }
         },
         "featured": {
@@ -520,6 +524,372 @@
                 "a5": "UTF-8 unless you know otherwise — it covers every script and is what the modern web assumes. Reach for another only when the data itself predates that: a Windows-1252 spreadsheet export, an ISO-8859-2 dump, a Shift_JIS log. If a decode comes back as mojibake, the destination character set is usually the thing to change.",
                 "q6": "Why does my output have line breaks in it?",
                 "a6": "Either “Split at 76 chars” is on, which folds the payload the way a MIME body needs, or “Each line separately” is on, which emits one result per input line. Both are off by default; turning them off gives you a single continuous string again."
+            }
+        }
+    },
+    "jwt": {
+        "meta": {
+            "title": "JWT Decoder and Encoder — Inspect, Verify and Sign Tokens",
+            "description": "Decode a JSON Web Token to read its header and claims, verify the signature against a secret or PEM key, and sign new tokens with HS, RS, PS, ES or EdDSA. Runs entirely in your browser — no token is ever uploaded."
+        },
+        "hero": {
+            "eyebrow": "Security",
+            "title": "JWT Encoder / Decoder",
+            "subtitle": "Read a JSON Web Token's header and claims, check its signature against your secret or public key, and sign new tokens for testing. Every byte stays in this tab.",
+            "badgeRfc": "RFC 7519",
+            "badgeOffline": "Works offline",
+            "badgeAlgorithms": "13 algorithms"
+        },
+        "workbench": {
+            "title": "JSON Web Token workbench",
+            "description": "Switch between reading a token and signing one. Signatures are computed by your browser's Web Crypto — nothing is sent anywhere.",
+            "modeLabel": "Mode",
+            "modes": {
+                "decode": "Decoder",
+                "encode": "Encoder"
+            },
+            "segments": {
+                "header": "Header",
+                "payload": "Payload",
+                "signature": "Signature"
+            },
+            "segmentLength": "{count, number} chars",
+            "views": {
+                "json": "JSON",
+                "claims": "Claims"
+            },
+            "exampleLabel": "Example",
+            "exampleAction": "Generate",
+            "exampleReady": "Generated an {algorithm} example",
+            "exampleFailed": "This browser could not generate an example key.",
+            "headerTableCaption": "Header parameters in this token and what each one means",
+            "payloadTableCaption": "Payload claims in this token and what each one means",
+            "colParameter": "Parameter",
+            "colClaim": "Claim",
+            "colValue": "Value",
+            "colMeaning": "Meaning",
+            "customEntry": "Not a registered name — chosen by whoever issued this token.",
+            "decoder": {
+                "description": "Paste a token to read its header and claims. Decoding says nothing about authenticity; add a key below to check the signature too.",
+                "tokenLabel": "Encoded token",
+                "tokenPlaceholder": "Paste a JWT, with or without its Bearer prefix",
+                "copyToken": "Copy token",
+                "clear": "Clear token",
+                "validToken": "Valid token structure",
+                "awaitingToken": "Waiting for a token",
+                "findingsTitle": "What to know about this token",
+                "notEncryptedNote": "A JWT is signed, not encrypted. Anyone holding this token can read every claim in it without any key at all.",
+                "decodedLabel": "Decoded",
+                "decodedPlaceholder": "The header and payload appear here once a token decodes.",
+                "download": "Download",
+                "headerLabel": "Algorithm & token type",
+                "payloadLabel": "Data",
+                "copyHeader": "Copy header",
+                "copyPayload": "Copy payload",
+                "verifyTitle": "Signature verification",
+                "verifyDescription": "Optional. Supply the key the issuer signed with — a shared secret for HMAC, or the matching public key in PEM form.",
+                "expectedAlgorithmLabel": "Expected algorithm",
+                "expectedAlgorithmHint": "Starts from the token's own header. Verification always checks against this one algorithm, never whatever the token asks for.",
+                "algorithmDiffers": "This token declares {declared}, and it is being checked as {expected}. A real verifier should behave exactly like this — pin the algorithm, then reject the mismatch.",
+                "awaitingKey": "Enter a key to check the signature",
+                "verifying": "Checking the signature…",
+                "verified": "Signature verified with {algorithm}",
+                "unsignedToken": "This token declares alg: none, so there is no signature to check. Treat its contents as untrusted."
+            },
+            "encoder": {
+                "description": "Edit the header and payload, supply a key, and the token is signed as you type. Useful for fixtures and local testing, not for issuing production credentials.",
+                "algorithmLabel": "Signing algorithm",
+                "algorithmHint": "Writes alg into the header below, which stays the single source of truth for how the token is signed.",
+                "headerLabel": "Algorithm & token type",
+                "payloadLabel": "Data",
+                "copyHeader": "Copy header",
+                "copyPayload": "Copy payload",
+                "validHeader": "Valid header",
+                "validPayload": "Valid payload",
+                "keyTitle": "Signing key",
+                "keyDescription": "A shared secret for HMAC, or a PKCS#8 private key in PEM form for the RSA, ECDSA and EdDSA families.",
+                "tokenLabel": "Encoded token",
+                "tokenPlaceholder": "The signed token appears here.",
+                "copyToken": "Copy token",
+                "download": "Download",
+                "signing": "Signing…",
+                "signed": "Signed with {algorithm}"
+            },
+            "key": {
+                "secretLabel": "Secret",
+                "secretPlaceholder": "The shared secret this token is signed with",
+                "publicKeyLabel": "Public key (PEM)",
+                "publicKeyPlaceholder": "-----BEGIN PUBLIC KEY-----",
+                "privateKeyLabel": "Private key (PEM)",
+                "privateKeyPlaceholder": "-----BEGIN PRIVATE KEY-----",
+                "base64urlLabel": "Base64url encoded",
+                "base64urlHint": "On when the secret is base64 text standing in for raw bytes, rather than the bytes of the text itself.",
+                "shortSecret": "Shorter than the hash {algorithm} produces. RFC 7518 asks for a secret at least that long; short ones still sign, but with less strength than the name suggests.",
+                "copy": "Copy key"
+            }
+        },
+        "claims": {
+            "iss": "Who issued the token.",
+            "sub": "Who or what the token is about.",
+            "aud": "Who the token is meant for.",
+            "exp": "The instant the token stops being valid.",
+            "nbf": "The instant the token starts being valid.",
+            "iat": "The instant the token was issued.",
+            "jti": "A unique id for this token, used to detect replays."
+        },
+        "headerParams": {
+            "alg": "The algorithm the signature was produced with.",
+            "typ": "The media type of the token as a whole.",
+            "cty": "The media type of the payload, set when it holds another token.",
+            "kid": "Which of the issuer's keys signed this token.",
+            "jku": "A URL the verifier is asked to fetch keys from.",
+            "jwk": "A key supplied inside the token itself.",
+            "x5u": "A URL the verifier is asked to fetch a certificate from.",
+            "x5c": "The certificate chain, embedded in the token.",
+            "x5t": "A fingerprint of the signing certificate.",
+            "crit": "Extensions a verifier must understand or reject the token."
+        },
+        "timeStates": {
+            "valid": "In range",
+            "expired": "Expired",
+            "notYetValid": "Not valid yet",
+            "future": "Issued in the future",
+            "stale": "Issued long ago",
+            "malformed": "Not a valid timestamp"
+        },
+        "findings": {
+            "none": "Nothing to flag: this token is signed, in date, and carries no claim that looks like a credential.",
+            "severity": {
+                "critical": "Critical",
+                "warning": "Warning",
+                "info": "Note"
+            },
+            "algNone": {
+                "title": "Unsigned token (alg: none)",
+                "detail": "There is no signature here, so anyone could have written or altered this token. Verifiers that honour the header's algorithm can be tricked into accepting it — the flaw catalogued as CVE-2015-9235."
+            },
+            "algMissing": {
+                "title": "No algorithm in the header",
+                "detail": "The header does not say how the token was signed, so there is nothing to check against. A verifier has no safe way to accept it."
+            },
+            "expired": {
+                "title": "Token has expired",
+                "detail": "The exp claim is in the past. A correct verifier will reject this token."
+            },
+            "notYetValid": {
+                "title": "Token is not valid yet",
+                "detail": "The nbf claim is in the future. A correct verifier will reject this token until then."
+            },
+            "missingExp": {
+                "title": "No expiry",
+                "detail": "Without exp this token stays valid forever, so a copy taken today still works next year. Give tokens the shortest life the flow can tolerate."
+            },
+            "longLived": {
+                "title": "Very long-lived token",
+                "detail": "The expiry is far enough out that revocation, not expiry, becomes the only way to withdraw access."
+            },
+            "remoteKeyHeader": {
+                "title": "Header points at an external key",
+                "detail": "These parameters ask a verifier to fetch or trust key material named by the token itself. A verifier that follows them can be pointed at an attacker's key."
+            },
+            "nestedToken": {
+                "title": "Payload holds another token",
+                "detail": "The cty header says the payload is itself a JWT, so there is a second token inside this one to inspect."
+            },
+            "sensitiveClaim": {
+                "title": "Claim names suggest a secret in the payload",
+                "detail": "A JWT is only encoded, so every claim is readable by anyone holding the token. Move anything confidential out of the payload."
+            }
+        },
+        "errors": {
+            "decode": {
+                "empty": "Paste a token to decode.",
+                "segment_count": "A JWT has three dot-separated parts; this input has {count, number}. Check for a truncated copy or a stray character.",
+                "encrypted_token": "This is a JWE — an encrypted token with five parts. Its contents cannot be read without the decryption key.",
+                "invalid_base64": "The {segment} part is not valid base64url text.",
+                "invalid_json": "The {segment} part decodes, but is not valid JSON.",
+                "not_an_object": "The {segment} part is valid JSON, but not an object as RFC 7519 requires.",
+                "too_large": "This input is too long to be a token. Trim it to under 32 KB."
+            },
+            "json": {
+                "invalid_json": "Not valid JSON yet.",
+                "not_an_object": "Valid JSON, but a JWT needs an object here."
+            },
+            "verify": {
+                "no_key": "Enter a key to check the signature.",
+                "invalid_key": "This key could not be read, or does not match the chosen algorithm.",
+                "expected_public_key": "That is a private key. Verification needs the matching public key — export one with: openssl pkey -in private.pem -pubout.",
+                "expected_private_key": "Verification needs a public key, not a private one.",
+                "unsupported_pem": "PKCS#1 blocks (BEGIN RSA PRIVATE KEY) are not supported. Convert with: openssl pkcs8 -topk8 -nocrypt -in key.pem.",
+                "malformed_token": "This token is not a well-formed JWS, so there is nothing to verify.",
+                "algorithm_mismatch": "The token was signed with a different algorithm than the one selected. Rejecting this mismatch is exactly what a verifier should do.",
+                "unsupported_algorithm": "This browser cannot verify that algorithm.",
+                "signature_mismatch": "The signature does not match. Either the key is wrong, or the token was altered after it was signed."
+            },
+            "sign": {
+                "no_key": "Enter a key to sign with.",
+                "invalid_key": "This key could not be read, or does not match the algorithm in the header.",
+                "expected_public_key": "Signing needs a private key, not a public one.",
+                "expected_private_key": "That is a public key. Signing needs the matching PKCS#8 private key.",
+                "unsupported_pem": "PKCS#1 blocks (BEGIN RSA PRIVATE KEY) are not supported. Convert with: openssl pkcs8 -topk8 -nocrypt -in key.pem.",
+                "invalid_header_json": "The header is not valid JSON.",
+                "invalid_payload_json": "The payload is not valid JSON.",
+                "header_not_object": "The header must be a JSON object.",
+                "payload_not_object": "The payload must be a JSON object.",
+                "algorithm_missing": "Add an alg parameter to the header.",
+                "unsupported_algorithm": "That algorithm cannot be signed here. alg: none is readable in the decoder but never issued.",
+                "too_large": "The header or payload is too long to sign. Keep each under 16 KB.",
+                "signing_failed": "The browser refused to sign with this key."
+            }
+        },
+        "toast": {
+            "copied": "Copied to clipboard",
+            "copyFailedEmpty": "There is nothing to copy yet.",
+            "copyFailedUnsupported": "This browser does not allow clipboard access.",
+            "copyFailedDenied": "Clipboard permission was denied.",
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The download could not be started."
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "What a JSON Web Token actually is",
+                "p1": "A JSON Web Token is a compact, URL-safe way to carry a set of claims — statements such as who a user is, what they may do, and when the statement stops being true. RFC 7519 defines the format; RFC 7515 defines the signature that makes it trustworthy.",
+                "p2": "The value you paste into this tool is a JWS: three base64url-encoded parts joined by dots. The first two are JSON objects, plainly readable by anyone. The third is a signature over the first two, which is what turns a readable blob into something a server can rely on.",
+                "p3": "That split explains most of what people find surprising about JWTs. Reading one requires nothing. Trusting one requires the key. The tool above keeps those two jobs visibly separate, because conflating them is where real systems go wrong."
+            },
+            "anatomy": {
+                "title": "The three parts",
+                "intro": "Each part is base64url with its padding stripped, so a token survives being pasted into a URL, a header, or a cookie without further escaping.",
+                "tableCaption": "The three segments of a JWS and what each contributes",
+                "colSegment": "Segment",
+                "colHolds": "Holds",
+                "colSigned": "Covered by the signature",
+                "headerName": "Header",
+                "headerHolds": "How the token was signed: alg, typ, and often a kid naming the key.",
+                "headerSigned": "Yes — altering it invalidates the signature.",
+                "payloadName": "Payload",
+                "payloadHolds": "The claims themselves: registered ones such as sub and exp, plus anything the issuer adds.",
+                "payloadSigned": "Yes — altering it invalidates the signature.",
+                "signatureName": "Signature",
+                "signatureHolds": "The MAC or signature over the first two parts, joined by a dot.",
+                "signatureSigned": "It is the signature.",
+                "encoding": "Base64url is an encoding, not a cipher. Decoding a payload takes no key and no permission — which is why the same claim data must never include anything you would not print in a log."
+            },
+            "claims": {
+                "title": "The registered claims",
+                "intro": "RFC 7519 reserves seven claim names. None is mandatory, but a token that omits exp has no way to stop being valid, and one that omits iss and aud is hard to scope to a single service.",
+                "tableCaption": "Registered JWT claims and what each carries",
+                "colClaim": "Claim",
+                "colName": "Name",
+                "colCarries": "What it carries",
+                "issName": "Issuer",
+                "issDetail": "Identifies who minted the token, so a verifier can pick the right key and reject tokens from anyone else.",
+                "subName": "Subject",
+                "subDetail": "Identifies the principal the claims are about — usually a user id, and unique within the issuer.",
+                "audName": "Audience",
+                "audDetail": "Names the recipients the token is for. A service that finds itself absent from aud must reject the token.",
+                "expName": "Expiration time",
+                "expDetail": "Seconds since the Unix epoch after which the token must be rejected. The single most important claim to include.",
+                "nbfName": "Not before",
+                "nbfDetail": "Seconds since the epoch before which the token must be rejected — useful for credentials issued ahead of time.",
+                "iatName": "Issued at",
+                "iatDetail": "When the token was created. Lets a verifier reject anything older than it is willing to accept, independently of exp.",
+                "jtiName": "JWT ID",
+                "jtiDetail": "A unique identifier for the token, so a replayed copy can be spotted and refused.",
+                "privateClaims": "Everything else is a public or private claim, named by whoever issues the token. Prefixing your own claims with a URI or a short vendor namespace keeps them from colliding with a future registered name."
+            },
+            "algorithms": {
+                "title": "Signing algorithms",
+                "intro": "The alg header names one entry from the JOSE registry. The families differ in what the verifier needs to hold: a copy of the signing secret, or only a public key.",
+                "tableCaption": "JWS algorithm families supported by this tool",
+                "colFamily": "Family",
+                "colNames": "Algorithms",
+                "colKey": "Key",
+                "colWhen": "Reach for it when",
+                "hmacName": "HMAC",
+                "hmacKey": "One shared secret, used to sign and to verify.",
+                "hmacWhen": "The same service issues and checks the token, so there is no third party to keep a secret from.",
+                "rsaName": "RSA PKCS#1 v1.5",
+                "rsaKey": "Private key to sign, public key to verify.",
+                "rsaWhen": "Verifiers are separate services, or outside your control, and you need the widest possible library support.",
+                "rsaPssName": "RSA-PSS",
+                "rsaPssKey": "Private key to sign, public key to verify.",
+                "rsaPssWhen": "You want the modern RSA padding and control both ends well enough to know PS is supported.",
+                "ecdsaName": "ECDSA",
+                "ecdsaKey": "Private key to sign, public key to verify.",
+                "ecdsaWhen": "You want asymmetric verification with far smaller keys and signatures than RSA.",
+                "eddsaName": "EdDSA",
+                "eddsaKey": "Private key to sign, public key to verify.",
+                "eddsaWhen": "You control the stack and want the fastest, simplest modern signature — Ed25519 under the hood.",
+                "noneNote": "The registry also lists none, an unsigned token. This tool decodes those and flags them loudly, but will not issue one: a token with no signature is a claim with no evidence, and verifiers that trusted the header's algorithm are exactly how that became a documented attack.",
+                "sizeNote": "For HMAC, RFC 7518 asks for a key at least as long as the hash: 32 bytes for HS256, 48 for HS384, 64 for HS512. A shorter secret still produces a valid-looking token, which is why the workbench points it out rather than quietly accepting it."
+            },
+            "verifying": {
+                "title": "How verification actually works",
+                "p1": "Verifying recomputes the signature over the first two segments, exactly as they appear in the token, and compares it with the third. This is why the tool signs a compacted copy of your payload rather than the indented text in the editor: the bytes that were signed are the bytes that must be checked.",
+                "p2": "The order matters. Check the structure, then the signature, then the claims. A token whose exp has passed is worth rejecting, but only after you know the exp you are reading is one the issuer actually wrote.",
+                "p3": "The rule worth carrying away: never verify with the algorithm the token asks for. Pass your verifier an explicit list of algorithms you accept. A verifier that reads alg from the header can be handed an RS256 token rewritten as HS256, signed with the very public key it publishes — the public key becomes the HMAC secret, and the forgery verifies.",
+                "p4": "That is why the decoder above shows an expected-algorithm control instead of silently following the header. It starts from what the token declares, then checks against your choice, and says so plainly when the two disagree."
+            },
+            "options": {
+                "title": "Every control on this page",
+                "intro": "The workbench has two directions and a small set of controls shared between them.",
+                "tableCaption": "Controls in the JWT workbench, what each does, and when to use it",
+                "colOption": "Control",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "modeName": "Decoder / Encoder",
+                "modeDoes": "Switches between reading a token and signing one.",
+                "modeWhen": "You have a token to inspect, or claims you want to turn into one.",
+                "exampleName": "Example",
+                "exampleDoes": "Signs a sample token, minting a throwaway key pair for the asymmetric families.",
+                "exampleWhen": "You want to try RS, PS, ES or EdDSA without having a key pair to hand.",
+                "viewName": "JSON / Claims",
+                "viewDoes": "Swaps the decoded panels between raw JSON and a table that names each claim and dates the time claims.",
+                "viewWhen": "You want the exact bytes, or you want to know what exp is actually saying.",
+                "expectedAlgorithmName": "Expected algorithm",
+                "expectedAlgorithmDoes": "Fixes the one algorithm the signature is checked against, and swaps the key box to match.",
+                "expectedAlgorithmWhen": "Always. Leave it on the token's own value to confirm a signature; change it to see a mismatch reported.",
+                "secretName": "Secret",
+                "secretDoes": "Holds the shared secret for the HMAC family.",
+                "secretWhen": "The token's alg starts with HS.",
+                "base64urlName": "Base64url encoded",
+                "base64urlDoes": "Decodes the secret from base64 to raw bytes before use, instead of taking the text's own bytes.",
+                "base64urlWhen": "Your issuer stores its secret as base64 — most generated secrets are. Getting this wrong is the usual cause of a signature that will not match.",
+                "pemName": "PEM key",
+                "pemDoes": "Accepts a public key or certificate for verifying, and a PKCS#8 private key for signing.",
+                "pemWhen": "The token's alg starts with RS, PS, ES, or is EdDSA.",
+                "downloadName": "Download",
+                "downloadDoes": "Saves the decoded header, payload and signature as JSON, or the signed token as a text file.",
+                "downloadWhen": "You want the result in a fixture file rather than on the clipboard.",
+                "headerOwnsAlg": "In the encoder, the header is the single source of truth for alg. The algorithm select writes into it rather than sitting beside it, so there is never a second value to fall out of step — edit the header directly and the signing algorithm follows.",
+                "noTokenParam": "There is deliberately no way to put a token in this page's URL. A JWT is a bearer credential, and a URL ends up in browser history, proxy logs, server access logs, and the Referer header of every outbound link. Only the mode and the algorithm travel in a link."
+            },
+            "pitfalls": {
+                "title": "What goes wrong in practice",
+                "p1": "Encoded is not encrypted. Every claim in a JWT is readable by anyone who holds the token, including the user it was issued to. Email addresses, internal ids and role names all leak by design; passwords and API keys in a payload are a live incident, not a code-review nit.",
+                "p2": "Signatures do not expire on their own. A token stays valid until its exp passes, and there is no way to call it back before then. Anything you might need to withdraw quickly — a session, an elevated role — needs either a short life or a revocation list the verifier actually checks.",
+                "p3": "The algorithm is an attacker-controlled field until you pin it. Accept an explicit allowlist in your verifier and treat everything else, none included, as a rejected token.",
+                "p4": "Header parameters that name a key are equally attacker-controlled. jku, jwk and x5u ask a verifier to fetch or trust key material chosen by the token; unless you are certain your library ignores them, assume a token carrying them is trying something.",
+                "p5": "Where the token lives matters as much as what is in it. localStorage is readable by any script on the page, which turns one cross-site scripting bug into stolen credentials. Prefer a cookie with HttpOnly, Secure and SameSite set, and keep the lifetime short."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Is my token sent anywhere?",
+                "a1": "No. Decoding, signing and verification all run in your browser through the Web Crypto API. There is no request to any server, which is also why the tool works with the network switched off. The page has no way to put a token in its URL either, so nothing lands in browser history or server logs.",
+                "q2": "Is a JWT encrypted?",
+                "a2": "No. A standard JWT is signed, which proves it was not altered — it does not hide anything. The header and payload are base64url, an encoding anyone can reverse in one line of code. If the contents must stay private, you want a JWE, the five-part encrypted format, which this tool identifies but cannot open.",
+                "q3": "Why does my signature not verify?",
+                "a3": "Usually the secret is right but its form is wrong. Many issuers store an HMAC secret as base64, and signing with the letters of that string is not the same as signing with the bytes it encodes — the Base64url encoded switch decides which one is used. Otherwise: check that the expected algorithm matches the header, that an RSA or EC key is the public half rather than the private one, and that the token was not truncated in a copy.",
+                "q4": "Can I create a token with alg: none?",
+                "a4": "The decoder reads them and flags them, but the encoder will not issue one. An unsigned token is a set of claims with no evidence behind them, and verifiers that trusted the header's algorithm turned that into a documented attack. If you need one to test a defence, produce it deliberately in your own test code rather than from a public page.",
+                "q5": "What key format does the tool accept?",
+                "a5": "HMAC takes a plain secret, optionally base64url encoded. The RSA, ECDSA and EdDSA families take PEM: a PUBLIC KEY or CERTIFICATE block for verifying, and a PKCS#8 PRIVATE KEY block for signing. PKCS#1 blocks, the ones beginning BEGIN RSA PRIVATE KEY, are not supported by Web Crypto — convert with openssl pkcs8 -topk8 -nocrypt -in key.pem.",
+                "q6": "How long should a token live?",
+                "a6": "Short enough that a stolen copy stops working before it is useful, and long enough not to fight your refresh flow. Minutes for an access token is a common answer; days is a decision to make deliberately. The workbench flags a token with no exp at all, and notes one whose expiry is far enough out that revocation becomes your only way to withdraw it."
             }
         }
     },
