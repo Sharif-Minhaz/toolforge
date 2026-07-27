@@ -57,6 +57,13 @@ describe("tool catalog", () => {
         expect(base64?.href).toBe("/tools/base64");
     });
 
+    test("ships the Markdown editor", () => {
+        const markdown = getToolById("markdown");
+
+        expect(markdown?.status).toBe("available");
+        expect(markdown?.href).toBe("/tools/markdown");
+    });
+
     test("counts available and planned tools consistently", () => {
         const stats = getToolCatalogStats();
 

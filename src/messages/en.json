@@ -123,6 +123,10 @@
             "name": "URL Encoder / Decoder",
             "description": "Percent-encode and decode URLs, query values, and form data, with repeated decoding for doubly-encoded links."
         },
+        "markdown": {
+            "name": "Markdown Preview",
+            "description": "Write markdown and watch it render — Mermaid diagrams, LaTeX maths, and export to HTML or PDF."
+        },
         "regex": {
             "name": "Regex Tester",
             "description": "Match, highlight, and explain regular expressions as you type."
@@ -221,9 +225,9 @@
                 "title": "Bulk v4 batch",
                 "description": "Generate 100 identifiers at once."
             },
-            "urlDecode": {
-                "title": "Decode a URL",
-                "description": "Paste a percent-encoded link and read it back in plain text."
+            "markdownPreview": {
+                "title": "Preview a README",
+                "description": "Paste markdown and read it rendered, side by side"
             },
             "base64Decode": {
                 "title": "Decode Base64",
@@ -1585,6 +1589,234 @@
                 "a5": "No. Both directions run entirely in your browser, file conversions included. Nothing is uploaded, stored, or logged.",
                 "q6": "Why does decoding say the bytes are not valid text?",
                 "a6": "The destination character set does not match the one the data was encoded with. %C3%A9 is é in UTF-8 but two separate characters in ISO-8859-1, and some byte sequences are not valid text at all in a given set. Change the destination set and the same escapes read correctly."
+            }
+        }
+    },
+    "markdown": {
+        "meta": {
+            "title": "Markdown Preview — Live Editor with Mermaid Diagrams and LaTeX Maths",
+            "description": "Write GitHub-flavoured markdown and watch it render as you type. Mermaid diagrams, KaTeX equations, GitHub alerts, tables and task lists, with export to Markdown, HTML, or PDF. Nothing is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Formatting",
+            "title": "Markdown Preview",
+            "subtitle": "Write on the left and read the rendered document on the right. Mermaid diagrams, LaTeX equations, GitHub alerts, tables and task lists all render as you type — in this tab, never on a server.",
+            "badgeOffline": "Works offline",
+            "badgeDiagrams": "Mermaid diagrams",
+            "badgeMath": "LaTeX maths"
+        },
+        "workbench": {
+            "title": "Write and preview",
+            "description": "Type markdown on the left; the preview keeps up as you go.",
+            "viewLabel": "Panes",
+            "views": {
+                "editor": "Editor",
+                "split": "Split",
+                "preview": "Preview"
+            },
+            "editorLabel": "Markdown",
+            "previewLabel": "Preview",
+            "editorPlaceholder": "Start writing markdown…",
+            "previewPlaceholder": "The rendered document will appear here",
+            "syncScroll": "Sync scroll",
+            "fullscreen": "Full screen",
+            "exitFullscreen": "Exit full screen",
+            "fullscreenActive": "The editor and preview are open full screen.",
+            "fullscreenDescription": "The editor and preview at the full size of the window, with the rest of the page hidden. Press Escape to leave.",
+            "reset": "Reset",
+            "copy": "Copy",
+            "downloadMarkdown": "Markdown",
+            "downloadHtml": "HTML",
+            "print": "Print / PDF",
+            "untitled": "Untitled document",
+            "statWords": "{value, number} words",
+            "statCharacters": "{value, number} characters",
+            "statCharactersNoSpaces": "{value, number} without spaces",
+            "statLines": "{value, number} lines",
+            "statReading": "{value, number} min read",
+            "statReadingEmpty": "Nothing to read yet"
+        },
+        "actions": {
+            "heading1": "Heading 1",
+            "heading2": "Heading 2",
+            "heading3": "Heading 3",
+            "bold": "Bold",
+            "italic": "Italic",
+            "strikethrough": "Strikethrough",
+            "inlineCode": "Inline code",
+            "bulletList": "Bulleted list",
+            "orderedList": "Numbered list",
+            "taskList": "Task list",
+            "quote": "Blockquote",
+            "link": "Link",
+            "image": "Image",
+            "codeBlock": "Code block",
+            "table": "Table",
+            "rule": "Horizontal rule"
+        },
+        "placeholders": {
+            "linkLabel": "text",
+            "linkUrl": "https://",
+            "imageAlt": "alt text",
+            "imageUrl": "https://",
+            "tableHeader": "Column",
+            "tableCell": "Cell"
+        },
+        "preview": {
+            "rawHtml": "HTML shown as text, not rendered",
+            "diagramPending": "Drawing diagram…",
+            "diagramFailed": "That diagram could not be drawn.",
+            "taskItem": "Task item"
+        },
+        "alerts": {
+            "note": "Note",
+            "tip": "Tip",
+            "important": "Important",
+            "warning": "Warning",
+            "caution": "Caution"
+        },
+        "errors": {
+            "tooLarge": "That document is {length, number} characters, past the {limit, number} the preview can parse at once. Trim it and the preview comes back."
+        },
+        "toast": {
+            "copied": "Markdown copied to clipboard",
+            "copyFailedUnsupported": "Your browser blocked clipboard access",
+            "copyFailedDenied": "Clipboard permission was denied",
+            "copyFailedEmpty": "Nothing to copy yet",
+            "downloaded": "Downloaded {filename}",
+            "downloadFailed": "The download could not be started",
+            "reset": "Sample document restored"
+        },
+        "sample": {
+            "document": "# Markdown, live\n\nType on the left; it renders on the right as you go. Nothing is uploaded — the parser, the diagrams and the equations all run in this tab.\n\n## Text\n\n**Bold**, _italic_, ~~struck through~~, `inline code`, and [a link](https://example.com).\n\n## Lists\n\n- A bullet\n- Another one\n    - Nested one level\n\n1. First\n2. Second\n\n- [x] Something finished\n- [ ] Something still open\n\n## Quotes and alerts\n\n> An ordinary blockquote.\n\n> [!NOTE]\n> Five flavours are supported: NOTE, TIP, IMPORTANT, WARNING and CAUTION.\n\n> [!WARNING]\n> Raw HTML is printed as text rather than rendered. That is deliberate — see the notes below the tool.\n\n## Code\n\n```ts\nexport function greet(name: string): string {\n    return \"Hello, \" + name;\n}\n```\n\n## Tables\n\n| Feature | Supported | Notes |\n| --- | :-: | --- |\n| GFM tables | yes | Alignment included |\n| Task lists | yes | Read-only in the preview |\n| Footnotes | no | Not yet |\n\n## Maths\n\nInline: $E = mc^2$\n\n$$\\sum_{i=1}^{n} i^2 = \\frac{n(n+1)(2n+1)}{6}$$\n\n$$\\frac{\\partial f}{\\partial x} = \\lim_{h \\to 0} \\frac{f(x+h) - f(x)}{h}$$\n\n## Diagrams\n\n```mermaid\nflowchart LR\n    A[Write] --> B{Renders?}\n    B -->|Yes| C[Ship it]\n    B -->|No| D[Fix it]\n    D --> B\n```\n\n```mermaid\nsequenceDiagram\n    Author->>Editor: Type markdown\n    Editor->>Preview: Parse to nodes\n    Preview->>Author: Render\n```\n\n---\n\nEverything above is editable. Press Reset to bring it back.\n"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "What this tool renders",
+                "p1": "Markdown is plain text with a handful of conventions: a # opens a heading, a - opens a list item, asterisks make emphasis. It reads perfectly well unrendered, which is why it ended up carrying READMEs, changelogs, issue threads and documentation. The trouble is that every renderer disagrees slightly about the edge cases, so the only way to know how a document will look is to look at it.",
+                "p2": "This preview follows CommonMark with the GitHub extensions on top — tables, strikethrough, task lists, autolinks and alerts — and adds two things GitHub also renders: Mermaid diagrams from a ```mermaid fence, and LaTeX maths between dollar signs. That is the same combination a README on GitHub gets.",
+                "p3": "Everything runs in this tab. The document is never uploaded, so it is safe to paste an unreleased changelog or an internal runbook into it, and the tool keeps working with the network off."
+            },
+            "syntax": {
+                "title": "Syntax reference",
+                "intro": "Everything the preview understands, in one table. Anything not listed here is passed through as ordinary text rather than silently dropped.",
+                "tableCaption": "Supported markdown syntax and what each form produces",
+                "colSyntax": "Write",
+                "colDoes": "Get",
+                "heading": "Six heading levels. Each one gets an anchor id derived from its text, so headings are linkable.",
+                "emphasis": "Bold, italic and strikethrough. Underscores are used for italics because GFM will not apply them inside a word.",
+                "code": "A run of code inside a sentence, left exactly as typed.",
+                "fence": "A code block. The word after the fence names the language and is shown as a label; it is not syntax-highlighted.",
+                "link": "A link, with an optional title shown on hover. Links open in a new tab.",
+                "image": "An image, capped at the width of the column.",
+                "bullets": "A bulleted list. Indent by four spaces to nest.",
+                "ordered": "A numbered list. It starts at whatever number you write, not always at one.",
+                "task": "A task list, rendered as read-only checkboxes.",
+                "quote": "A blockquote. Prefix the first line with an alert marker to get a callout instead.",
+                "table": "A table. The colons in the separator row set each column's alignment.",
+                "rule": "A horizontal rule.",
+                "escape": "A backslash keeps the next punctuation mark literal instead of letting it start a formatting run.",
+                "entity": "HTML character references are resolved to the characters they name, for the common ones.",
+                "note": "Reference-style links, autolinks, hard line breaks (two trailing spaces) and nested block structures all work as CommonMark specifies. Footnotes and definition lists do not — they are extensions no two renderers agree on."
+            },
+            "controls": {
+                "title": "Every control",
+                "intro": "Ten controls, and the one that only makes sense with both panes visible goes quiet when they are not.",
+                "tableCaption": "Every workbench control and when to use it",
+                "colControl": "Control",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "viewName": "Panes",
+                "viewDoes": "Shows the editor, the preview, or both side by side.",
+                "viewWhen": "You want the full width for one of them — writing on a phone, or reading a long document.",
+                "syncScrollName": "Sync scroll",
+                "syncScrollDoes": "Keeps the two panes at the same fraction of their own scroll range.",
+                "syncScrollWhen": "You are editing a long document and want the preview to follow the cursor's part of it.",
+                "fullscreenName": "Full screen",
+                "fullscreenDoes": "Opens the editor and preview over the whole window, with the navigation, the article and the page padding hidden.",
+                "fullscreenWhen": "You are writing rather than browsing, and want every pixel going to the two panes.",
+                "toolbarName": "Toolbar",
+                "toolbarDoes": "Applies markdown to the selection, and takes it off again if it is already there.",
+                "toolbarWhen": "You would rather not remember which characters wrap which effect.",
+                "shortcutsName": "Keyboard shortcuts",
+                "shortcutsDoes": "Ctrl/Cmd + B for bold, I for italic, K for a link, applied to the selection.",
+                "shortcutsWhen": "Your hands are already on the keys.",
+                "resetName": "Reset",
+                "resetDoes": "Replaces the document with the sample one this page opened with.",
+                "resetWhen": "You want the syntax examples back after clearing them.",
+                "copyName": "Copy",
+                "copyDoes": "Copies the markdown source, not the rendered output.",
+                "copyWhen": "You are moving the document into a README, an issue, or a pull request.",
+                "downloadMarkdownName": "Markdown",
+                "downloadMarkdownDoes": "Downloads the source as a timestamped .md file.",
+                "downloadMarkdownWhen": "You want the file itself, exactly as typed.",
+                "downloadHtmlName": "HTML",
+                "downloadHtmlDoes": "Downloads the rendered document as a standalone .html file with its own stylesheet.",
+                "downloadHtmlWhen": "You need something that opens in a browser without this tool.",
+                "printName": "Print / PDF",
+                "printDoes": "Opens the browser's print dialogue with only the preview on the page.",
+                "printWhen": "You want a PDF — every browser can print to one.",
+                "viewNote": "Both panes stay mounted whichever view is chosen, because Print and the HTML export read the rendered preview. Choosing Editor hides the preview rather than throwing it away, so both still work.",
+                "fullscreenNote": "Full screen is a dialog, so Escape closes it and focus stays inside while it is open. Moving in or out rebuilds the two panes; the caret is carried across and drawn diagrams are reused, so neither is lost on the way.",
+                "exportNote": "The HTML export carries a small stylesheet of its own and honours the reader's light or dark preference. A document containing maths also links KaTeX's stylesheet from a CDN — that one file is the only thing an exported document ever fetches. Mermaid diagrams are exported as inline SVG and need nothing at all.",
+                "defaultsNote": "The tool opens split, with scroll linking on and the sample document loaded. A ?text= link opens with that content instead, and ?view= and ?sync= override the two switches — a malformed value falls back to the default rather than to an error."
+            },
+            "diagrams": {
+                "title": "Mermaid diagrams",
+                "p1": "A fenced block labelled mermaid is drawn as a diagram instead of shown as source. Flowcharts, sequence diagrams, class diagrams, state diagrams, entity-relationship diagrams, Gantt charts and pie charts are all supported, and the diagram follows the site's light or dark theme.",
+                "p2": "Mermaid measures rendered text to lay a graph out, so it can only run in a browser. It is also about a megabyte of JavaScript, which is why it is loaded on demand: a document with no mermaid fence never downloads it. That is also why a diagram appears a moment after the rest of the page rather than in the first paint.",
+                "p3": "Labels are escaped rather than rendered as HTML, so a diagram cannot smuggle markup into the page. If a diagram fails, the error Mermaid reported is shown in place of it — usually a typo in the node syntax rather than anything structural."
+            },
+            "math": {
+                "title": "LaTeX maths",
+                "p1": "Text between single dollar signs renders inline; text between double dollar signs renders as a centred display equation. Rendering is done by KaTeX, which covers the LaTeX subset used for mathematical notation — fractions, sums, integrals, matrices, Greek, operators, and the rest.",
+                "p2": "Maths is claimed before the ordinary formatting rules run, which is the part that matters: without it, \\frac{a}{b} would lose its braces to escape handling and x_1 … x_2 would turn into italics halfway through the formula.",
+                "p3": "A dollar sign followed by a space or a digit is left alone, so prices survive: $5 and $10 stay currency. Every equation also emits MathML alongside the visual output, which is what a screen reader reads aloud. Broken TeX shows the source in red with KaTeX's own message on the tooltip instead of blanking the paragraph around it."
+            },
+            "alerts": {
+                "title": "GitHub alerts",
+                "intro": "A blockquote whose first line is an alert marker becomes a coloured callout, the same five GitHub renders.",
+                "tableCaption": "The five GitHub alert markers and when to use each",
+                "colMarker": "Marker",
+                "colLabel": "Renders as",
+                "colWhen": "Use it for",
+                "noteWhen": "Something worth knowing that does not change what the reader should do.",
+                "tipWhen": "A shortcut or a better way of doing the thing being described.",
+                "importantWhen": "Something the reader has to know to get the right result.",
+                "warningWhen": "A consequence that is easy to walk into and annoying to undo.",
+                "cautionWhen": "A risk with real cost — data loss, downtime, money.",
+                "note": "The marker has to be the first thing inside the blockquote, on its own line, in capitals. Anything else in that position is left as ordinary quoted text, which is why a blockquote starting with [!SHOUT] renders as a plain quote rather than an error."
+            },
+            "safety": {
+                "title": "Why raw HTML is shown as text",
+                "p1": "Most markdown renderers pass HTML straight through. This one does not: an <img> or a <div> in the source is printed as the characters you typed, in a dashed box, rather than becoming an element.",
+                "p2": "The reason is that this page accepts a document from a link. A ?text= parameter is convenient for sharing a draft, and it is also a way to hand someone a URL that runs script on this origin the moment they open it. Printing HTML instead of running it closes that off completely, rather than relying on a filter to catch every variation.",
+                "p3": "The same reasoning applies to links and images. A javascript: link is rendered as its own label with no link at all, and an SVG data: URL — SVG can carry script — is rendered as its alt text. Ordinary http, https, mailto, tel and relative links are untouched, as are inline PNG, JPEG, GIF, WebP and AVIF data URLs.",
+                "p4": "One trade-off worth naming: remote images are fetched from wherever the document points, so a preview of someone else's markdown will contact those hosts. Nothing is sent to this site either way — but a third-party image server does learn that you loaded its file."
+            },
+            "useCases": {
+                "title": "What people use it for",
+                "p1": "Checking a README before pushing it. GitHub renders on the server, so the usual loop is commit, look, fix, commit again. Pasting the file here shows the tables, alerts, task lists and diagrams the way they will appear, in one pass.",
+                "p2": "Writing documentation with diagrams in it. A flowchart written as six lines of Mermaid stays in version control, reviews as a diff, and never goes stale the way an exported PNG does — and this is where you find out whether it lays out the way you pictured.",
+                "p3": "Turning notes into something to hand over. Write in markdown, then export the rendered document as HTML for someone without the tool, or print it to PDF for a report or a handout."
+            },
+            "faq": {
+                "title": "Common questions",
+                "q1": "Is my document uploaded anywhere?",
+                "a1": "No. The parser, the maths renderer and the diagram renderer all run in this tab, and the tool works with the network off. The one exception is a remote image or the maths stylesheet in an exported HTML file — both are fetched by the browser from wherever they point, never through this site.",
+                "q2": "Which flavour of markdown is this?",
+                "a2": "CommonMark plus the GitHub extensions: tables, strikethrough, task lists, autolinks and the five alert callouts. On top of that it renders Mermaid diagrams and LaTeX maths, which GitHub also does. Footnotes and definition lists are not supported.",
+                "q3": "Why is my HTML showing as text?",
+                "a3": "Deliberately. This page can be opened with a document in the URL, so rendering raw HTML would mean a shared link could run script on this origin. Markdown syntax covers almost everything HTML is normally reached for here; the section above explains the rest.",
+                "q4": "How do I get a PDF?",
+                "a4": "Press Print / PDF and choose \"Save as PDF\" in the browser's print dialogue. Only the rendered preview is printed — the editor, the toolbar and the site's navigation are all left off the page.",
+                "q5": "Why does the diagram appear after everything else?",
+                "a5": "Mermaid has to measure rendered text to lay a graph out, so it cannot run before the page reaches a browser, and it is roughly a megabyte of JavaScript that is only downloaded when a document actually contains a diagram. The rest of the preview renders immediately; the diagram fills in a moment later.",
+                "q6": "How large a document can it handle?",
+                "a6": "Up to 250,000 characters, which is several hundred printed pages. Past that the preview reports the limit rather than locking the tab up: parsing runs on the same thread as the interface, so an unbounded document would stop you typing."
             }
         }
     },

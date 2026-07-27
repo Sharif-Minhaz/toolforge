@@ -4,7 +4,7 @@ import {
     IconBolt,
     IconBraces,
     IconKey,
-    IconLink,
+    IconMarkdown,
     IconStack2,
 } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
@@ -35,11 +35,11 @@ export async function QuickActions() {
             accent: "[--tool-accent:var(--brand-cyan)]",
         },
         {
-            key: "urlDecode",
-            href: "/tools/url?mode=decode",
-            title: t("urlDecode.title"),
-            description: t("urlDecode.description"),
-            Icon: IconLink,
+            key: "markdownPreview",
+            href: "/tools/markdown",
+            title: t("markdownPreview.title"),
+            description: t("markdownPreview.description"),
+            Icon: IconMarkdown,
             accent: "[--tool-accent:var(--brand-amber)]",
         },
         {

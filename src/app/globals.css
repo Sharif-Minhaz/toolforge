@@ -258,6 +258,50 @@
     }
 }
 
+/*
+ * Printing one pane of the page.
+ *
+ * A tool marks the region it wants on paper with `.print-region`; everything
+ * that is neither that element, one of its ancestors, nor one of its
+ * descendants is removed, and the ancestors that survive give up the heights,
+ * scrollbars and padding that would otherwise clip the printed document to the
+ * size of its on-screen box. Every rule is scoped to `body:has(.print-region)`,
+ * so a page without one prints exactly as it did before.
+ */
+@media print {
+    body:has(.print-region) :not(:has(.print-region)):not(.print-region):not(.print-region *) {
+        display: none !important;
+    }
+
+    body:has(.print-region),
+    body:has(.print-region) :has(.print-region) {
+        display: block !important;
+        position: static !important;
+        overflow: visible !important;
+        width: auto !important;
+        max-width: none !important;
+        height: auto !important;
+        max-height: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        background: none !important;
+        box-shadow: none !important;
+    }
+
+    .print-region {
+        display: block !important;
+        overflow: visible !important;
+        height: auto !important;
+        max-height: none !important;
+        color: #000;
+    }
+
+    @page {
+        margin: 16mm;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
