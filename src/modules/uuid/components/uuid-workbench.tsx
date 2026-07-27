@@ -10,7 +10,7 @@ import {
 } from "@tabler/icons-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useFormatter, useTranslations } from "next-intl";
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { LIVE_UPDATE_DEBOUNCE_MS } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
@@ -72,6 +73,7 @@ export function UuidWorkbench({
     const [generationId, setGenerationId] = useState(0);
     const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
     const [spinToken, setSpinToken] = useState(0);
+    const regenerateTimer = useRef<number | null>(null);
 
     const quantityInvalid = !isValidQuantity(Number.parseInt(quantityInput, 10));
 
@@ -103,18 +105,36 @@ export function UuidWorkbench({
         [tErrors],
     );
 
+    const cancelScheduled = useCallback(() => {
+        if (regenerateTimer.current === null) {
+            return;
+        }
+
+        window.clearTimeout(regenerateTimer.current);
+        regenerateTimer.current = null;
+    }, []);
+
+    useEffect(() => cancelScheduled, [cancelScheduled]);
+
     function handleVersionChange(next: UuidVersion) {
         setVersion(next);
+        cancelScheduled();
 
         if (!quantityInvalid) {
             regenerate(next, quantity);
         }
     }
 
-    function handleQuantityChange(raw: string) {
+    /**
+     * `immediate` separates a deliberate choice — a preset, a step, the button
+     * — from typing, where every keystroke would otherwise mint and render a
+     * whole batch on the way to the number the user actually wants.
+     */
+    function applyQuantity(raw: string, immediate: boolean) {
         // 500 is the ceiling, so three digits is all the field ever needs.
         const sanitized = raw.replace(/\D/g, "").slice(0, 3);
         setQuantityInput(sanitized);
+        cancelScheduled();
 
         const parsed = Number.parseInt(sanitized, 10);
 
@@ -123,12 +143,22 @@ export function UuidWorkbench({
         }
 
         setQuantity(parsed);
-        regenerate(version, parsed);
+
+        if (immediate) {
+            regenerate(version, parsed);
+
+            return;
+        }
+
+        regenerateTimer.current = window.setTimeout(() => {
+            regenerateTimer.current = null;
+            regenerate(version, parsed);
+        }, LIVE_UPDATE_DEBOUNCE_MS);
     }
 
     function handleStep(delta: number) {
         const next = Math.min(MAX_UUID_QUANTITY, Math.max(MIN_UUID_QUANTITY, quantity + delta));
-        handleQuantityChange(String(next));
+        applyQuantity(String(next), true);
     }
 
     function handleRegenerate() {
@@ -136,6 +166,7 @@ export function UuidWorkbench({
             return;
         }
 
+        cancelScheduled();
         setSpinToken((current) => current + 1);
         regenerate(version, quantity);
         toast.success(tToast("generated", { count: quantity }));
@@ -224,7 +255,8 @@ export function UuidWorkbench({
                         <QuantityControl
                             value={quantityInput}
                             quantity={quantity}
-                            onChange={handleQuantityChange}
+                            onChange={(raw) => applyQuantity(raw, false)}
+                            onPreset={(preset) => applyQuantity(String(preset), true)}
                             onStep={handleStep}
                             invalid={quantityInvalid}
                             inputId={quantityInputId}

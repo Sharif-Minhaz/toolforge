@@ -48,6 +48,13 @@ describe("tool catalog", () => {
         expect(uuid?.href).toBe("/tools/uuid");
     });
 
+    test("ships the Base64 converter", () => {
+        const base64 = getToolById("base64");
+
+        expect(base64?.status).toBe("available");
+        expect(base64?.href).toBe("/tools/base64");
+    });
+
     test("counts available and planned tools consistently", () => {
         const stats = getToolCatalogStats();
 

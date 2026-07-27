@@ -55,7 +55,9 @@ function NavRow({
             <span
                 className={cn(
                     "min-w-0 flex-1 truncate text-left text-[0.8125rem] font-medium transition-opacity duration-200",
-                    collapsed && "pointer-events-none opacity-0",
+                    // Zero-width rather than faded: a flex-1 label still claims
+                    // space at opacity 0 and shoves the icon off centre.
+                    collapsed && "pointer-events-none w-0 flex-none opacity-0",
                 )}
             >
                 {label}
@@ -81,7 +83,7 @@ function NavRow({
             ? "hover:bg-sidebar-accent/60 focus-visible:ring-2 focus-visible:ring-ring"
             : "cursor-default opacity-55",
         active && "hover:bg-transparent",
-        collapsed && "justify-center",
+        collapsed && "justify-center gap-0",
     );
 
     const row = interactive ? (

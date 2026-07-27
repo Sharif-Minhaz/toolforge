@@ -102,6 +102,19 @@ describe("version 7", () => {
         expect(uuids.toSorted()).toEqual(uuids);
     });
 
+    test("keeps ascending once the counter has borrowed from the next millisecond", () => {
+        // Overflowing the 12-bit counter pushes the timestamp one millisecond
+        // ahead of the clock. Every id after that arrives with a `now` that is
+        // behind the borrowed timestamp, which must not reseed the counter.
+        // `rand_a` is 12 bits, so 4096 values; twice that forces an overflow.
+        const frozen = Date.now();
+        const uuids = Array.from({ length: 4096 * 2 }, () => generateUuid(7, frozen));
+
+        for (let index = 1; index < uuids.length; index += 1) {
+            expect(uuids[index] > uuids[index - 1]).toBe(true);
+        }
+    });
+
     test("stays unique across a full batch", () => {
         const uuids = generateUuids({ version: 7, quantity: MAX_UUID_QUANTITY });
 

@@ -19,8 +19,4 @@ export type UuidExportRequest = {
     readonly generatedAt: Date;
 };
 
-export type DownloadFile = {
-    readonly filename: string;
-    readonly mimeType: string;
-    readonly content: string;
-};
+export type { DownloadFile } from "@/modules/tools/types";

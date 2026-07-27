@@ -9,7 +9,10 @@ import { MAX_UUID_QUANTITY, MIN_UUID_QUANTITY, UUID_QUANTITY_PRESETS } from "../
 type QuantityControlProps = {
     value: string;
     quantity: number;
+    /** Fires per keystroke — the owner debounces before regenerating. */
     onChange: (raw: string) => void;
+    /** A deliberate pick, so the owner regenerates straight away. */
+    onPreset: (preset: number) => void;
     onStep: (delta: number) => void;
     invalid: boolean;
     inputId: string;
@@ -20,6 +23,7 @@ export function QuantityControl({
     value,
     quantity,
     onChange,
+    onPreset,
     onStep,
     invalid,
     inputId,
@@ -80,7 +84,7 @@ export function QuantityControl({
                             key={preset}
                             type="button"
                             aria-pressed={quantity === preset}
-                            onClick={() => onChange(String(preset))}
+                            onClick={() => onPreset(preset)}
                             className={cn(
                                 "h-7 rounded-lg px-2 font-mono text-xs tabular-nums transition-colors duration-200",
                                 "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",

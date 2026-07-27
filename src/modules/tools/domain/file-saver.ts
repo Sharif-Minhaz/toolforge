@@ -1,4 +1,4 @@
-import type { DownloadFile } from "@/modules/uuid/types";
+import type { DownloadFile } from "../types";
 
 /**
  * The three browser calls needed to hand a generated file to the user.

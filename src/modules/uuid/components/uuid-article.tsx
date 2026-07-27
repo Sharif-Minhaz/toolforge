@@ -1,7 +1,8 @@
 import { getTranslations } from "next-intl/server";
-import type { ReactNode } from "react";
 
-import { ArticleToc, type TocItem } from "./article-toc";
+import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
+import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 
 export const UUID_ARTICLE_SECTIONS = [
     { id: "understanding", titleKey: "understanding.title" },
@@ -12,23 +13,8 @@ export const UUID_ARTICLE_SECTIONS = [
     { id: "faq", titleKey: "faq.title" },
 ] as const;
 
-// Capped at a comfortable measure; the comparison table breaks out of it.
-const PROSE_TEXT = "text-muted-foreground max-w-[68ch] text-[0.9375rem] leading-7";
-const PROSE = `flex flex-col gap-4 ${PROSE_TEXT}`;
-
-function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
-    return (
-        <section id={id} className="scroll-mt-24">
-            <h2 className="max-w-[68ch] text-xl font-semibold tracking-tight sm:text-[1.375rem]">
-                {title}
-            </h2>
-            <div className="mt-4">{children}</div>
-        </section>
-    );
-}
-
 /** Question/answer pairs, shared by the FAQ section and its structured data. */
-export async function getUuidFaqEntries() {
+export async function getUuidFaqEntries(): Promise<FaqEntry[]> {
     const t = await getTranslations("uuid.article");
 
     return [
@@ -79,23 +65,23 @@ export async function UuidArticle() {
             </aside>
 
             <article className="flex min-w-0 flex-col gap-12 xl:order-1">
-                <Section id="understanding" title={t("understanding.title")}>
+                <ArticleSection id="understanding" title={t("understanding.title")}>
                     <div className={PROSE}>
                         <p>{t("understanding.p1")}</p>
                         <p>{t("understanding.p2")}</p>
                         <p>{t("understanding.p3")}</p>
                     </div>
-                </Section>
+                </ArticleSection>
 
-                <Section id="why" title={t("why.title")}>
+                <ArticleSection id="why" title={t("why.title")}>
                     <div className={PROSE}>
                         <p>{t("why.p1")}</p>
                         <p>{t("why.p2")}</p>
                         <p>{t("why.p3")}</p>
                     </div>
-                </Section>
+                </ArticleSection>
 
-                <Section id="types" title={t("types.title")}>
+                <ArticleSection id="types" title={t("types.title")}>
                     <div className={PROSE}>
                         <p>{t("types.intro")}</p>
                     </div>
@@ -144,39 +130,27 @@ export async function UuidArticle() {
                     </div>
 
                     <p className={`mt-5 ${PROSE_TEXT}`}>{t("types.others")}</p>
-                </Section>
+                </ArticleSection>
 
-                <Section id="howItWorks" title={t("howItWorks.title")}>
+                <ArticleSection id="howItWorks" title={t("howItWorks.title")}>
                     <div className={PROSE}>
                         <p>{t("howItWorks.p1")}</p>
                         <p>{t("howItWorks.p2")}</p>
                         <p>{t("howItWorks.p3")}</p>
                     </div>
-                </Section>
+                </ArticleSection>
 
-                <Section id="useCases" title={t("useCases.title")}>
+                <ArticleSection id="useCases" title={t("useCases.title")}>
                     <div className={PROSE}>
                         <p>{t("useCases.p1")}</p>
                         <p>{t("useCases.p2")}</p>
                         <p>{t("useCases.p3")}</p>
                     </div>
-                </Section>
+                </ArticleSection>
 
-                <Section id="faq" title={t("faq.title")}>
-                    <dl className="flex max-w-[68ch] flex-col gap-5">
-                        {faqs.map((faq) => (
-                            <div
-                                key={faq.question}
-                                className="bg-card/60 ring-border/70 rounded-xl p-4 ring-1 ring-inset"
-                            >
-                                <dt className="text-[0.9375rem] font-medium">{faq.question}</dt>
-                                <dd className="text-muted-foreground mt-2 text-[0.9375rem] leading-7">
-                                    {faq.answer}
-                                </dd>
-                            </div>
-                        ))}
-                    </dl>
-                </Section>
+                <ArticleSection id="faq" title={t("faq.title")}>
+                    <FaqAccordion items={faqs} />
+                </ArticleSection>
             </article>
         </div>
     );

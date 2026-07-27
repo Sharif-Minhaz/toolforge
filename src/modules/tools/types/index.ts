@@ -79,6 +79,13 @@ export type LocalizedTool = Tool & {
     readonly categoryLabel: string;
 };
 
+/** A generated file handed to the browser's download flow. */
+export type DownloadFile = {
+    readonly filename: string;
+    readonly mimeType: string;
+    readonly content: string;
+};
+
 export type ToolCatalogStats = {
     readonly available: number;
     readonly planned: number;

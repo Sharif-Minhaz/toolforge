@@ -84,6 +84,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.uuid.errors,
             toast: messages.uuid.toast,
         },
+        base64: {
+            workbench: messages.base64.workbench,
+            units: messages.base64.units,
+            errors: messages.base64.errors,
+            toast: messages.base64.toast,
+        },
     };
 
     return (
@@ -92,7 +98,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             suppressHydrationWarning
             className={`${inter.variable} ${notoSansBengali.variable} ${jetBrainsMono.variable} h-full antialiased`}
         >
-            <body className="min-h-full">
+            <body className="min-h-full" suppressHydrationWarning>
                 <Providers>
                     <NextIntlClientProvider locale={locale} messages={clientMessages}>
                         <AppShell>{children}</AppShell>

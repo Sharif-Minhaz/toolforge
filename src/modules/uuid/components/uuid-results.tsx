@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { useTranslations } from "next-intl";
 
 import { cn } from "@/lib/utils";
-import { IconCopyButton } from "./copy-button";
+import { IconCopyButton } from "@/modules/tools/components/copy-button";
 
 type UuidResultsProps = {
     uuids: readonly string[];

@@ -38,6 +38,7 @@
         "menuDescription": "Browse every ToolForge utility.",
         "primaryLabel": "Primary",
         "toolsLabel": "Tools",
+        "soonTooltip": "{name} · Soon",
         "breadcrumb": "Breadcrumb"
     },
     "theme": {
@@ -84,7 +85,7 @@
             "description": "Generate v1, v4, and v7 UUIDs in bulk, then copy or export them."
         },
         "base64": {
-            "name": "Base64 Encoder",
+            "name": "Base64 Encoder / Decoder",
             "description": "Encode and decode Base64 and Base64URL, including files."
         },
         "jwt": {
@@ -192,6 +193,10 @@
             "uuidSortable": {
                 "title": "Sortable v7",
                 "description": "Time-ordered ids for database keys."
+            },
+            "base64Decode": {
+                "title": "Decode Base64",
+                "description": "Paste an encoded string and read it back."
             }
         },
         "featured": {
@@ -331,6 +336,180 @@
                 "a3": "Version 4 UUIDs from this page are backed by a cryptographically secure random source, so they are unguessable. Versions 1 and 7 embed a readable timestamp, so treat them as identifiers rather than secrets.",
                 "q4": "Is anything I generate sent to your servers?",
                 "a4": "No. The generator is client-side JavaScript. The page makes no network request while generating, and nothing you copy or download is ever transmitted."
+            }
+        }
+    },
+    "base64": {
+        "meta": {
+            "title": "Base64 Encoder and Decoder — Text and Files",
+            "description": "Encode text or files to Base64 and decode them back, with 19 character sets, a URL-safe alphabet, optional padding, MIME line wrapping, and data URI output. Runs entirely in your browser — nothing is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Encoding",
+            "title": "Base64 Encoder / Decoder",
+            "subtitle": "Convert text and files to Base64 and back. Pick the character set, choose standard or URL-safe, wrap for MIME, or wrap the result in a data URI.",
+            "badgeRfc": "RFC 4648",
+            "badgeOffline": "Works offline",
+            "badgeFiles": "Files up to 1 MB"
+        },
+        "workbench": {
+            "title": "Convert to and from Base64",
+            "description": "Type or upload something, pick a direction, and the result updates as you go.",
+            "modeLabel": "Direction",
+            "modes": {
+                "encode": "Encode",
+                "decode": "Decode"
+            },
+            "inputLabel": "Input",
+            "outputLabel": "Output",
+            "placeholders": {
+                "encode": "Enter text or upload a file",
+                "decode": "Paste Base64, or a data: URI"
+            },
+            "outputPlaceholder": "Output will appear here",
+            "upload": "Upload file",
+            "clear": "Clear input",
+            "removeFile": "Remove file",
+            "copy": "Copy",
+            "download": "Download",
+            "swap": "Send the output back as input",
+            "charsetSourceLabel": "Source character set",
+            "charsetDestinationLabel": "Destination character set",
+            "charsetFileHint": "A file is already bytes, so no character set applies",
+            "newlineLabel": "Line endings",
+            "perLineLabel": "Each line separately",
+            "perLineHintEncode": "Encodes every input line on its own",
+            "perLineHintDecode": "Decodes every input line on its own",
+            "urlSafeLabel": "URL-safe",
+            "urlSafeHint": "Uses - and _ so the result survives a URL",
+            "paddingLabel": "Padding",
+            "paddingHint": "Pads the output to a multiple of four with =",
+            "wrapLabel": "Split at 76 chars",
+            "wrapHint": "Wraps the output the way MIME expects",
+            "dataUriLabel": "Data URI",
+            "dataUriHint": "Prefixes the output with data:mime/type;base64,",
+            "dataUriUnavailable": "Needs one unwrapped, standard-alphabet payload",
+            "decodeHint": "Decoding accepts either alphabet, with or without padding, and strips a data: URI header for you."
+        },
+        "units": {
+            "b": "{value} B",
+            "kb": "{value} KB",
+            "mb": "{value} MB"
+        },
+        "errors": {
+            "invalidBase64": "This is not valid Base64.",
+            "invalidCharacter": "Not valid Base64 — the character at position {position, number} is outside the alphabet.",
+            "invalidLength": "This Base64 string is cut short. Its length cannot be decoded into whole bytes.",
+            "undecodableText": "The payload unpacked cleanly, but those bytes are not valid {charset} text — try another destination character set, or treat this as binary.",
+            "unencodableCharacter": "The character at position {position, number} cannot be written in {charset}. Switch to UTF-8 to keep it.",
+            "unencodableCharset": "{charset} can only be read, not written. Pick another source character set.",
+            "unsupportedCharset": "{charset} is not available in this browser. Pick another character set — UTF-8 always works.",
+            "onLine": "Line {line, number}: {message}",
+            "tooLarge": "That is more than {limit}. Trim the input and try again.",
+            "fileTooLarge": "{name} is larger than {limit}.",
+            "fileUnreadable": "That file could not be read."
+        },
+        "toast": {
+            "copied": "Copied to clipboard",
+            "copyFailedUnsupported": "Your browser blocked clipboard access",
+            "copyFailedDenied": "Clipboard permission was denied",
+            "copyFailedEmpty": "Nothing to copy yet",
+            "downloaded": "Downloaded {filename}",
+            "downloadFailed": "The download could not be started",
+            "fileLoaded": "Loaded {name}"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "Understanding Base64",
+                "p1": "Base64 is a binary-to-text encoding. It takes arbitrary bytes and rewrites them using 64 printable ASCII characters — A–Z, a–z, 0–9 and two symbols — so the data can travel through any channel that only understands text.",
+                "p2": "The scheme works in groups of three bytes. Twenty-four bits divide evenly into four six-bit numbers, and each number selects one character from the alphabet. When the input does not divide by three, the final group is padded with one or two = characters so the output length stays a multiple of four.",
+                "p3": "That regularity is the whole point. Base64 is neither compression nor encryption: anyone can decode it, and the result is always about a third larger than what went in. It exists so bytes survive a trip through systems that would otherwise mangle them."
+            },
+            "why": {
+                "title": "Why encode to Base64",
+                "p1": "Plenty of formats are text-only by design. Email bodies, JSON payloads, XML documents, HTTP headers and YAML files all expect characters rather than raw bytes. Drop a PNG straight into any of them and the first byte outside the printable range breaks the parser.",
+                "p2": "Base64 gives those bytes a safe disguise. An image can be embedded in a stylesheet, a certificate can be pasted into a config file, and a binary attachment can move through a mail server written decades ago — none of which needed changing.",
+                "p3": "The cost is size and readability. A megabyte of input becomes roughly 1.37 MB of output, and no human can read it. Reach for it when the channel demands text, not out of habit: if you control both ends and they speak binary, send binary."
+            },
+            "variants": {
+                "title": "Variants of Base64",
+                "intro": "The variants in daily use differ in only two places — the last two characters of the alphabet, and whether the output carries its padding.",
+                "tableCaption": "Comparison of the Base64 variants ToolForge produces",
+                "colVariant": "Variant",
+                "colAlphabet": "Alphabet tail",
+                "colPadding": "Padding",
+                "colBestFor": "Best for",
+                "standardAlphabet": "+ and /",
+                "standardPadding": "Required",
+                "standardBestFor": "MIME, email, and most APIs and libraries",
+                "urlSafeAlphabet": "- and _",
+                "urlSafePadding": "Usually dropped",
+                "urlSafeBestFor": "URLs, filenames, and JWT segments",
+                "dataUriAlphabet": "+ and /",
+                "dataUriPadding": "Required",
+                "dataUriBestFor": "Inline images in CSS, HTML, and Markdown",
+                "others": "RFC 4648 also defines base32 and base16 for cases where case-insensitivity matters more than density. Despite the different name, base64url is the same encoding — only the two final symbols change, so a decoder that accepts both, like this one, never has to be told which it is reading."
+            },
+            "options": {
+                "title": "Every option, and when to use it",
+                "intro": "The defaults — UTF-8, standard alphabet, padded, one continuous payload — are what you want most of the time. The rest of the controls exist for the cases where the receiving system is stricter, older, or expects a particular shape.",
+                "tableCaption": "What each converter option does and when it is worth turning on",
+                "colOption": "Option",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "charsetName": "Character set",
+                "charsetDoes": "Decides how text becomes bytes when encoding, and how bytes become text when decoding.",
+                "charsetWhen": "The data is not UTF-8 — a Windows-1252 spreadsheet export, an ISO-8859-2 dump, a Shift_JIS log.",
+                "newlineName": "Line endings",
+                "newlineDoes": "Rewrites every line break in the result to LF, CRLF, or CR, whatever the input used.",
+                "newlineWhen": "The receiver is strict about it, such as Windows tooling or a protocol that demands CRLF.",
+                "perLineName": "Each line separately",
+                "perLineDoes": "Converts one line at a time instead of treating the whole box as a single payload.",
+                "perLineWhen": "You have a list — one token, id, or string per line — and want a result for each.",
+                "urlSafeName": "URL-safe",
+                "urlSafeDoes": "Swaps the final two alphabet characters, + and /, for - and _.",
+                "urlSafeWhen": "The result goes into a URL, a filename, or a JWT segment.",
+                "paddingName": "Padding",
+                "paddingDoes": "Adds the trailing = characters so the length is always a multiple of four.",
+                "paddingWhen": "The receiver expects it. Leave it off for base64url, which conventionally drops it.",
+                "wrapName": "Split at 76 chars",
+                "wrapDoes": "Folds the encoded output into 76-character lines.",
+                "wrapWhen": "You are writing a MIME body or a PEM-style block, both of which expect wrapped text.",
+                "dataUriName": "Data URI",
+                "dataUriDoes": "Prefixes the payload with data:<type>;base64, using the file's own media type.",
+                "dataUriWhen": "The result is going straight into CSS, HTML, or Markdown as an inline asset.",
+                "charsetNote": "Two things about character sets are worth knowing. Encoding can only write a set this page can also invert, so the multi-byte East Asian sets — Shift_JIS, GBK, GB18030, Big5, EUC-JP, EUC-KR — are offered when decoding but not when encoding. And a set narrower than your text will say so: type an emoji with ASCII selected and you get the exact position that cannot be written, rather than a silently corrupted byte.",
+                "defaultsNote": "The options also constrain each other, and the interface follows suit rather than producing something broken. A data URI describes one continuous standard-alphabet payload, so switching on URL-safe, line wrapping, or per-line conversion greys it out. Encoding a file ignores the character set and line endings entirely, because a file is already bytes and has no line structure to normalise."
+            },
+            "howItWorks": {
+                "title": "How our converter works",
+                "p1": "Everything on this page runs on your device. The encoder walks the input three bytes at a time and emits four characters per group; the decoder does the reverse, folding four characters back into three bytes. There is no server call and nothing is stored.",
+                "p2": "Text becomes bytes before it is encoded, and which bytes depends on the source character set. UTF-8 is the default and the only one that carries every script; pick Windows-1252 or ISO-8859-2 and anything outside that set is reported rather than silently mangled. Decoding applies the same choice in reverse, so a payload written in Shift_JIS reads back as Japanese instead of mojibake. Converters built on the browser's own btoa can do none of this — btoa throws on any character above U+00FF.",
+                "p3": "The decoder is deliberately forgiving. It reads either alphabet, ignores line breaks and spaces, tolerates missing padding, and strips a data: URI header when it finds one. What it will not do is guess: a character outside the alphabet is reported with its exact position instead of being silently dropped. Lists can be converted a line at a time, line endings rewritten to LF, CRLF or CR, and encoded output folded at 76 characters the way a MIME body expects."
+            },
+            "useCases": {
+                "title": "Use cases",
+                "p1": "Data URIs are the most visible use. A small icon encoded into a stylesheet saves a request, and an inline preview needs no upload at all.",
+                "p2": "Credentials and keys are the second. HTTP Basic auth is a Base64 pair, JWT headers and payloads are base64url, and PEM certificates are Base64 wrapped at 64 columns between BEGIN and END lines.",
+                "p3": "Beyond that: attaching files to a JSON API with no multipart endpoint, storing small blobs in a column that only accepts text, and moving binaries through logs, webhooks, or a paste into a terminal."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Is Base64 a form of encryption?",
+                "a1": "No. It is a reversible encoding with no key, and every language ships a decoder. Anything you encode is readable by anyone who receives it, so never use it to hide a secret.",
+                "q2": "Why is the encoded output bigger than my file?",
+                "a2": "Every three bytes become four characters, so the output grows by about a third, plus up to two padding characters. That overhead is inherent to the encoding and cannot be tuned away.",
+                "q3": "What is the difference between Base64 and base64url?",
+                "a3": "Only the last two characters of the alphabet. Standard Base64 uses + and /, both of which mean something inside a URL; base64url swaps them for - and _ and usually drops the = padding. Turn on URL-safe above to produce it.",
+                "q4": "Are my files uploaded anywhere?",
+                "a4": "No. Files are read with the browser's File API and converted on your device. The page makes no network request while converting, and nothing you paste, open, or download is ever transmitted.",
+                "q5": "Which character set should I pick?",
+                "a5": "UTF-8 unless you know otherwise — it covers every script and is what the modern web assumes. Reach for another only when the data itself predates that: a Windows-1252 spreadsheet export, an ISO-8859-2 dump, a Shift_JIS log. If a decode comes back as mojibake, the destination character set is usually the thing to change.",
+                "q6": "Why does my output have line breaks in it?",
+                "a6": "Either “Split at 76 chars” is on, which folds the payload the way a MIME body needs, or “Each line separately” is on, which emits one result per input line. Both are off by default; turning them off gives you a single continuous string again."
             }
         }
     },

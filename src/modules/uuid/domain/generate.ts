@@ -160,16 +160,21 @@ const v7State: V7State = { lastMilliseconds: -1, counter: 0 };
  * §6.2, method 1) so ids minted inside the same millisecond stay ordered.
  */
 function generateV7(state: V7State, milliseconds: number): string {
-    if (milliseconds === state.lastMilliseconds) {
+    // Only a genuine forward tick may reseed the counter. Whenever the clock is
+    // at or behind the timestamp already in use — which is exactly where a
+    // counter overflow leaves it, and where an NTP correction can put it — the
+    // counter has to keep climbing, or two ids share a millisecond with the
+    // second one carrying the smaller counter and sorting first.
+    if (milliseconds > state.lastMilliseconds) {
+        state.lastMilliseconds = milliseconds;
+        state.counter = randomInteger(V7_COUNTER_MAX - V7_COUNTER_HEADROOM);
+    } else {
         state.counter += 1;
 
         if (state.counter > V7_COUNTER_MAX) {
             state.lastMilliseconds += 1;
             state.counter = randomInteger(V7_COUNTER_MAX - V7_COUNTER_HEADROOM);
         }
-    } else {
-        state.lastMilliseconds = Math.max(milliseconds, state.lastMilliseconds);
-        state.counter = randomInteger(V7_COUNTER_MAX - V7_COUNTER_HEADROOM);
     }
 
     const timestamp = BigInt(state.lastMilliseconds);

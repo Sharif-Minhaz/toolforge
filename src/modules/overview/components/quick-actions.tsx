@@ -1,4 +1,10 @@
-import { IconArrowRight, IconBolt, IconSortAscending2, IconStack2 } from "@tabler/icons-react";
+import {
+    IconArrowRight,
+    IconBinary,
+    IconBolt,
+    IconSortAscending2,
+    IconStack2,
+} from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 
@@ -32,6 +38,14 @@ export async function QuickActions() {
             description: t("uuidSortable.description"),
             Icon: IconSortAscending2,
             accent: "[--tool-accent:var(--brand-amber)]",
+        },
+        {
+            key: "base64Decode",
+            href: "/tools/base64?mode=decode",
+            title: t("base64Decode.title"),
+            description: t("base64Decode.description"),
+            Icon: IconBinary,
+            accent: "[--tool-accent:var(--brand-emerald)]",
         },
     ];
 
