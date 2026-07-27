@@ -3,6 +3,7 @@ import {
     IconBraces,
     IconCalendarTime,
     IconClockHour4,
+    IconEraser,
     IconFingerprint,
     IconGitCompare,
     IconHash,
@@ -11,8 +12,10 @@ import {
     IconLink,
     IconLock,
     IconPalette,
+    IconPhotoScan,
     IconQrcode,
     IconRegex,
+    IconTextScan2,
     IconTextSize,
     type IconProps,
 } from "@tabler/icons-react";
@@ -36,6 +39,9 @@ const ICONS: Record<ToolIconName, ComponentType<IconProps>> = {
     qrcode: IconQrcode,
     slug: IconLetterCase,
     diff: IconGitCompare,
+    photo: IconPhotoScan,
+    scan: IconTextScan2,
+    eraser: IconEraser,
 };
 
 type ToolIconProps = {

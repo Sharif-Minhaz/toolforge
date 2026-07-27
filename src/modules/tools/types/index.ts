@@ -4,6 +4,7 @@ export const TOOL_CATEGORIES = [
     "formatting",
     "security",
     "text",
+    "ai",
 ] as const;
 
 export type ToolCategory = (typeof TOOL_CATEGORIES)[number];
@@ -28,6 +29,9 @@ export const TOOL_IDS = [
     "qr",
     "slug",
     "diff",
+    "ai-image-detector",
+    "ai-text-detector",
+    "gemini-watermark-remover",
 ] as const;
 
 export type ToolId = (typeof TOOL_IDS)[number];
@@ -56,7 +60,10 @@ export type ToolIconName =
     | "lock"
     | "qrcode"
     | "slug"
-    | "diff";
+    | "diff"
+    | "photo"
+    | "scan"
+    | "eraser";
 
 export type Tool = {
     readonly id: ToolId;
