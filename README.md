@@ -88,6 +88,13 @@ Open [http://localhost:3000](http://localhost:3000).
 | `NEXT_PUBLIC_SITE_URL`                 | No              | Canonical URLs, Open Graph, JSON-LD. Defaults to localhost. |
 | `DATABASE_URL`                         | No              | Pooled connection for app runtime                           |
 | `DIRECT_URL`                           | Migrations only | Non-pooled connection for `db:migrate`, `db:push`, Studio   |
+| `NEXT_PUBLIC_MEASUREMENT_ID`           | No              | GA4 measurement id. Blank means gtag.js is never loaded.    |
+
+> **Analytics is gated three ways.** `gtag.js` only enters the document when a well-formed `G-…` id
+> is configured, the visitor has clicked **Allow** on the consent banner, and the build is
+> production. Development and preview traffic therefore never reaches the live property, while the
+> banner still renders locally so it stays reviewable. `src/modules/analytics/domain/analytics-state.ts`
+> is the single place those rules live.
 
 > **Heads up:** the two Supabase variables are currently required to run the app at all.
 > `src/proxy.ts` refreshes the auth session on every navigation and `@supabase/ssr` throws when the

@@ -30,6 +30,7 @@
     },
     "dependencies": {
         "@base-ui/react": "^1.6.0",
+        "@next/third-parties": "^16.2.12",
         "@prisma/adapter-pg": "^7.9.0",
         "@prisma/client": "^7.9.0",
         "@supabase/ssr": "^0.12.3",

@@ -53,6 +53,15 @@
         "label": "Language",
         "change": "Change language"
     },
+    "analytics": {
+        "consent": {
+            "title": "Anonymous analytics",
+            "description": "May we count page views with Google Analytics? Nothing you type into a tool is ever sent — every tool still runs entirely in your browser.",
+            "accept": "Allow",
+            "decline": "No thanks",
+            "failed": "Could not save your choice. Please try again."
+        }
+    },
     "footer": {
         "privacy": "Runs fully in your browser",
         "builtWith": "Built with Next.js and Tailwind CSS",

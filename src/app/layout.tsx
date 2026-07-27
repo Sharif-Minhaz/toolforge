@@ -6,6 +6,9 @@ import type { ReactNode } from "react";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { Providers } from "@/components/layout/providers";
+import { AnalyticsConsentBanner } from "@/modules/analytics/components/analytics-consent-banner";
+import { AnalyticsScripts } from "@/modules/analytics/components/analytics-scripts";
+import { getAnalyticsState } from "@/modules/analytics/presenters/analytics-state";
 import { buildPageMetadata, SITE_ATTRIBUTION } from "@/modules/seo/domain/metadata";
 import { SITE_REPOSITORY, SITE_URL } from "@/modules/seo/domain/site";
 import { getToolKeywords } from "@/modules/tools/domain/tool-catalog";
@@ -84,7 +87,11 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
-    const [locale, messages] = await Promise.all([getLocale(), getMessages()]);
+    const [locale, messages, analytics] = await Promise.all([
+        getLocale(),
+        getMessages(),
+        getAnalyticsState(),
+    ]);
 
     // Only the strings the interactive shell actually renders. The long-form
     // article copy stays server-side instead of shipping in the RSC payload.
@@ -93,6 +100,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         nav: messages.nav,
         theme: messages.theme,
         locale: messages.locale,
+        analytics: messages.analytics,
         uuid: {
             generator: messages.uuid.generator,
             versions: messages.uuid.versions,
@@ -117,9 +125,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 <Providers>
                     <NextIntlClientProvider locale={locale} messages={clientMessages}>
                         <AppShell>{children}</AppShell>
+                        {analytics.isConsentPending ? <AnalyticsConsentBanner /> : null}
                     </NextIntlClientProvider>
                 </Providers>
             </body>
+            <AnalyticsScripts measurementId={analytics.measurementId} />
         </html>
     );
 }
