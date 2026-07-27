@@ -11,6 +11,8 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
+import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
 import { getKeyFormat, resolveExpectedAlgorithm } from "../domain/algorithms";
@@ -31,9 +33,7 @@ import { AlgorithmSelect } from "./algorithm-select";
 import { ExampleGenerator } from "./example-generator";
 import { JsonBox } from "./json-box";
 import { KeyField } from "./key-field";
-import { StatusStrip, type StatusTone } from "./status-strip";
 import { TokenSegments } from "./token-segments";
-import { useCopyFeedback } from "./use-copy-feedback";
 
 type CopyPanel = "header" | "payload" | "key" | "token";
 

@@ -103,8 +103,8 @@
             "description": "Decode and verify tokens, or sign new ones — without sending anything anywhere."
         },
         "hash": {
-            "name": "Hash Generator",
-            "description": "Compute SHA-1, SHA-256, SHA-512, and MD5 digests locally."
+            "name": "Hash Generator / Verifier",
+            "description": "Hash text with MD5 or SHA, or a password with bcrypt or Argon2 — then check one."
         },
         "json": {
             "name": "JSON Formatter",
@@ -211,6 +211,10 @@
             "jwtDecode": {
                 "title": "Decode a JWT",
                 "description": "Read a token's claims and check its signature, without leaving the browser."
+            },
+            "hashPassword": {
+                "title": "Hash a password",
+                "description": "Run a password through Argon2id with the settings OWASP recommends today."
             }
         },
         "featured": {
@@ -890,6 +894,245 @@
                 "a5": "HMAC takes a plain secret, optionally base64url encoded. The RSA, ECDSA and EdDSA families take PEM: a PUBLIC KEY or CERTIFICATE block for verifying, and a PKCS#8 PRIVATE KEY block for signing. PKCS#1 blocks, the ones beginning BEGIN RSA PRIVATE KEY, are not supported by Web Crypto — convert with openssl pkcs8 -topk8 -nocrypt -in key.pem.",
                 "q6": "How long should a token live?",
                 "a6": "Short enough that a stolen copy stops working before it is useful, and long enough not to fight your refresh flow. Minutes for an access token is a common answer; days is a decision to make deliberately. The workbench flags a token with no exp at all, and notes one whose expiry is far enough out that revocation becomes your only way to withdraw it."
+            }
+        }
+    },
+    "hash": {
+        "meta": {
+            "title": "Hash Generator — MD5, SHA, bcrypt and Argon2, In Your Browser",
+            "description": "Generate MD5, SHA-1, SHA-256 and SHA-512 digests, or hash a password with bcrypt or Argon2id and tune its cost. Paste a hash to check a password against it or compare two checksums. Runs entirely in your browser — nothing is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Security",
+            "title": "Hash Generator",
+            "subtitle": "Digest text with MD5 or the SHA family, or hash a password properly with bcrypt or Argon2. Paste an existing hash and the tool reads its parameters back and checks it for you. Every byte stays in this tab.",
+            "badgeAlgorithms": "8 algorithms",
+            "badgeOffline": "Works offline",
+            "badgePasswords": "bcrypt and Argon2"
+        },
+        "workbench": {
+            "title": "Hash workbench",
+            "description": "Pick an algorithm, type what you want hashed, and the result updates as you go. Switch to Compare to check a password or a checksum against a hash you already have.",
+            "modeLabel": "Mode",
+            "modes": {
+                "generate": "Generate",
+                "compare": "Compare"
+            },
+            "algorithmLabel": "Algorithm",
+            "algorithmHint": "The family decides which settings apply below.",
+            "groups": {
+                "digest": "Fast digests",
+                "password": "Password hashing"
+            },
+            "generate": {
+                "description": "Everything runs in this tab. Nothing typed here is sent anywhere, and no value ever reaches a URL.",
+                "inputLabel": "Text to hash",
+                "inputPlaceholder": "Type or paste anything",
+                "clear": "Clear",
+                "outputLabel": "Hash",
+                "outputPlaceholder": "The hash appears here",
+                "copyOutput": "Copy hash",
+                "download": "Download",
+                "newSalt": "New salt",
+                "newSaltHint": "bcrypt and Argon2 salt every hash, so the same password gives a different result each time. Draw a fresh salt to see that happen.",
+                "saltNotUsed": "This algorithm takes no salt, so the same input always gives the same hash.",
+                "hashing": "Hashing…",
+                "ready": "Hashed with {algorithm}",
+                "awaitingInput": "Waiting for something to hash"
+            },
+            "compare": {
+                "description": "The right-hand box decides what happens. Paste a bcrypt or Argon2 hash and the left box is treated as a password; paste a checksum and it is compared or re-hashed.",
+                "leftLabel": "Password or hash",
+                "leftPlaceholder": "The password to check, or a second checksum",
+                "rightLabel": "Hash to check against",
+                "rightPlaceholder": "$2b$10$… or $argon2id$… or a hex checksum",
+                "clear": "Clear both",
+                "copyLeft": "Copy left value",
+                "copyRight": "Copy hash",
+                "detectedBcrypt": "Detected bcrypt · {prefix} · cost {cost}",
+                "detectedArgon2": "Detected {variant} · v{version} · m={memory} KiB, t={iterations}, p={parallelism}",
+                "detectedDigest": "Detected {algorithm} · {encoding}",
+                "kindVerify": "Checking the left box against this hash",
+                "kindDigest": "Comparing two {algorithm} checksums",
+                "comparing": "Checking…",
+                "match": "Match",
+                "mismatch": "No match",
+                "awaitingInput": "Fill both boxes to compare"
+            },
+            "options": {
+                "title": "Settings",
+                "encodingLabel": "Output encoding",
+                "encodingHint": "How the raw digest bytes are written out.",
+                "encodingDisabled": "bcrypt and Argon2 write their own encoding, parameters included.",
+                "uppercaseLabel": "Upper-case hex",
+                "uppercaseHint": "Some checksum files publish digests in capitals.",
+                "uppercaseDisabled": "Base64 is case-significant, so its case cannot be changed.",
+                "costLabel": "Cost factor",
+                "costHint": "Each step doubles the work. {min, number} to {max, number}; {recommended, number} is the usual starting point.",
+                "costSlow": "At this cost a single hash takes close to a second, and the page cannot redraw while it runs.",
+                "memoryLabel": "Memory (KiB)",
+                "memoryHint": "How much memory a single hash must hold. At least 8 KiB per lane.",
+                "iterationsLabel": "Iterations",
+                "iterationsHint": "How many passes are made over that memory.",
+                "parallelismLabel": "Parallelism",
+                "parallelismHint": "How many lanes the memory is split across.",
+                "hashLengthLabel": "Output length (bytes)",
+                "hashLengthHint": "How many bytes of hash to keep. 32 is the common choice.",
+                "decrease": "Decrease",
+                "increase": "Increase",
+                "presets": "Presets"
+            },
+            "advice": {
+                "collisionBroken": "{algorithm} is broken for collision resistance. It is fine for a checksum you control end to end, and wrong for signatures, certificates, or deduplicating anything an attacker can influence.",
+                "fastForPasswords": "This is a fast digest. If you are hashing a password, switch to bcrypt or Argon2id — speed is exactly what makes a fast hash easy to attack.",
+                "passwordReady": "This is a deliberately slow, salted hash — the right shape for storing a password."
+            }
+        },
+        "errors": {
+            "generate": {
+                "empty_input": "Type something to hash.",
+                "too_large": "That is longer than {limit, number} characters. Trim it and try again.",
+                "empty_password": "Type a password to hash.",
+                "password_too_long": "bcrypt only reads the first 72 bytes; this password is {bytes, number} bytes. Use Argon2id, which has no such limit.",
+                "invalid_cost": "The cost factor must be a whole number between {min, number} and {max, number}.",
+                "invalid_argon2_parameters": "Those Argon2 settings are out of range. Memory must be at least 8 KiB per lane.",
+                "hashing_failed": "The hash could not be computed. Reload the page and try again."
+            },
+            "compare": {
+                "empty_input": "Fill in both boxes to compare them.",
+                "too_large": "That is longer than {limit, number} characters. Trim it and try again.",
+                "unrecognized_hash": "That does not look like a hash this tool recognises. It reads bcrypt, Argon2, and MD5, SHA-1, SHA-256 and SHA-512 digests in hex or base64.",
+                "empty_password": "Type the password to check.",
+                "password_too_long": "bcrypt only reads the first 72 bytes, and this password is longer than that.",
+                "comparison_failed": "The comparison could not be run. Reload the page and try again."
+            }
+        },
+        "toast": {
+            "copied": "Copied to clipboard",
+            "copyFailedEmpty": "There is nothing to copy yet.",
+            "copyFailedUnsupported": "This browser does not allow clipboard access.",
+            "copyFailedDenied": "Clipboard permission was denied.",
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The download could not be started.",
+            "saltRegenerated": "Drew a fresh salt"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "What a hash actually is",
+                "p1": "A hash function takes any amount of input and returns a fixed-length value. The same input always gives the same output, and there is no way to run it backwards — the only way to find an input that produces a given hash is to try inputs until one does. That one-way property is what makes hashes useful for checking things rather than storing them.",
+                "p2": "Two properties matter in practice. Preimage resistance means that, given a hash, you cannot work out an input that produces it. Collision resistance means you cannot find two different inputs that hash to the same value. MD5 and SHA-1 still have their preimage resistance intact, but their collision resistance is thoroughly broken — which is why they survive as checksums and have no business anywhere near a signature.",
+                "p3": "Password hashing is a different job wearing the same word. A digest is designed to be fast, and an attacker with a stolen database wants exactly that speed. bcrypt and Argon2 are built to be slow and memory-hungry on purpose, and they salt every hash so two identical passwords do not produce the same stored value."
+            },
+            "choosing": {
+                "title": "Choosing an algorithm",
+                "intro": "The single most consequential choice here is whether you are hashing data or a password. Everything else follows from that.",
+                "tableCaption": "Hash algorithms, what each is for, and what each should not be used for",
+                "colAlgorithm": "Algorithm",
+                "colFamily": "Family",
+                "colUseFor": "Reach for it when",
+                "colAvoid": "Do not use it for",
+                "familyDigest": "Fast digest",
+                "familyPassword": "Password hashing",
+                "md5UseFor": "Checking a file against a published checksum, or keying a cache where nobody is trying to fool you.",
+                "md5Avoid": "Signatures, certificates, deduplication, or anything an attacker can influence. Colliding MD5 inputs can be produced in seconds.",
+                "sha1UseFor": "Reading legacy systems that already emit it — Git object ids, older TLS chains.",
+                "sha1Avoid": "Anything new. Collisions have been demonstrated in practice since 2017.",
+                "sha256UseFor": "The general-purpose default: content addressing, integrity checks, HMAC keys, signature digests.",
+                "sha256Avoid": "Storing passwords. It is fast, and speed is the attacker's advantage.",
+                "sha512UseFor": "The same work as SHA-256 where a longer digest is required, or on 64-bit hardware where it is often faster.",
+                "sha512Avoid": "Storing passwords, for exactly the same reason.",
+                "bcryptUseFor": "Storing passwords in a system that already uses it, or where you need a format every language has a library for.",
+                "bcryptAvoid": "Passphrases longer than 72 bytes, which it silently truncates. Use Argon2id instead.",
+                "argon2UseFor": "New systems storing passwords. Argon2id is the current first recommendation, and resists both GPU and side-channel attacks.",
+                "argon2Avoid": "Hashing large files or high-volume data — it is slow and memory-hungry by design.",
+                "variantsNote": "Argon2 comes in three variants. Argon2id is the one to pick: it runs the memory-hard, side-channel-resistant Argon2i for its first half pass and the faster, GPU-resistant Argon2d for the rest. Argon2i and Argon2d are here for reproducing hashes that already exist, not for new work.",
+                "shaNote": "SHA-1 and SHA-256 are unrelated designs despite the shared name; SHA-256 and SHA-512 are the same design at different widths. None of them is a password hash."
+            },
+            "passwords": {
+                "title": "Why a fast hash is the wrong tool for a password",
+                "p1": "Suppose a database of SHA-256 password hashes leaks. A consumer graphics card computes billions of SHA-256 hashes a second, so an attacker works through every eight-character password in hours, and every word in every leaked-password list in minutes. The hash function did nothing wrong — it was fast, which is what it was built to be.",
+                "p2": "bcrypt and Argon2 attack this from the other side. A cost factor sets how much work one hash takes, and you raise it as hardware gets faster. bcrypt's cost is exponential: each step doubles the rounds, so cost 12 is four times the work of cost 10. Argon2 adds a memory cost, which matters because memory is the one resource a GPU cannot cheaply multiply — a card with thousands of cores and a few gigabytes of RAM cannot run thousands of 64 MiB hashes at once.",
+                "p3": "Both salt automatically. A salt is a random value mixed into the hash and stored alongside it, so two people with the same password get different stored hashes, and a precomputed table built for one database is useless against another. You never need to generate or manage a salt yourself — it lives inside the $-delimited string the algorithm hands back.",
+                "p4": "That string is the whole record. `$2b$10$` followed by 53 characters carries the bcrypt version, the cost, the salt, and the hash. `$argon2id$v=19$m=19456,t=2,p=1$…` carries the variant, the Argon2 version, all three cost parameters, the salt, and the hash. Store that one string and any correct implementation can verify a password against it years later, whatever settings you have moved on to.",
+                "p5": "Never paste a password you actually use into any web tool, including this one. This page runs entirely in your browser and sends nothing anywhere, but that is a property you would have to verify rather than trust. Use it with test passwords."
+            },
+            "options": {
+                "title": "Every setting, and when it matters",
+                "intro": "Which settings appear depends on the algorithm. A setting that cannot apply is disabled with a note saying why, rather than being quietly ignored.",
+                "tableCaption": "Every setting in the workbench, what it does, and when to reach for it",
+                "colOption": "Setting",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "modeName": "Mode",
+                "modeDoes": "Switches between producing a hash and checking one.",
+                "modeWhen": "You already have a hash and want to know whether something matches it.",
+                "algorithmName": "Algorithm",
+                "algorithmDoes": "Picks the hash function, and with it which settings below apply.",
+                "algorithmWhen": "Always. The digest and password families behave completely differently.",
+                "encodingName": "Output encoding",
+                "encodingDoes": "Writes a raw digest as hex or as base64.",
+                "encodingWhen": "You are matching a system that publishes base64 digests — Subresource Integrity attributes and many package lock files do.",
+                "uppercaseName": "Upper-case hex",
+                "uppercaseDoes": "Capitalises hex output. Disabled under base64, which is case-significant.",
+                "uppercaseWhen": "You are comparing against a checksum file that publishes capitals. The value is the same either way.",
+                "costName": "Cost factor",
+                "costDoes": "Sets bcrypt's work factor. The round count is two to this power.",
+                "costWhen": "Matching an existing system's setting, or working out what your servers can carry. 10 to 12 is the usual range.",
+                "memoryName": "Memory",
+                "memoryDoes": "Sets how much memory one Argon2 hash must hold, in KiB.",
+                "memoryWhen": "This is Argon2's main defence. Raise it as far as your servers allow before raising iterations.",
+                "iterationsName": "Iterations",
+                "iterationsDoes": "Sets how many passes Argon2 makes over that memory.",
+                "iterationsWhen": "You have hit your memory ceiling and still want more work per hash.",
+                "parallelismName": "Parallelism",
+                "parallelismDoes": "Splits the memory into that many lanes.",
+                "parallelismWhen": "Matching a hash that already specifies it. Memory must be at least 8 KiB per lane.",
+                "hashLengthName": "Output length",
+                "hashLengthDoes": "Sets how many bytes of Argon2 output to keep.",
+                "hashLengthWhen": "Matching an existing format. 32 bytes is the common choice and there is little reason to change it.",
+                "newSaltName": "New salt",
+                "newSaltDoes": "Draws fresh random bytes for the salted families, so the same input hashes to something different.",
+                "newSaltWhen": "You want to see that bcrypt and Argon2 never produce the same hash twice for the same password.",
+                "downloadName": "Download",
+                "downloadDoes": "Saves the current result as a timestamped text file.",
+                "downloadWhen": "You are recording a checksum alongside a release artefact.",
+                "saltNote": "The digests take no salt at all, so the salt control does nothing under MD5 or the SHA family and is disabled there. This is not a shortcoming of those algorithms — a checksum has to be reproducible by anyone with the same file, which is exactly what a salt prevents.",
+                "costNote": "The cost factor is capped at 14 here rather than bcrypt's own 31. Hashing runs in this tab, on the same thread that draws the page, and each step doubles the time — cost 14 already takes about a second, and cost 31 would take longer than the machine will be switched on. Production systems are not bound by that cap; a server can run cost 12 comfortably.",
+                "defaultsNote": "The defaults are SHA-256 in lower-case hex, bcrypt at cost 10, and Argon2id at 19456 KiB with two iterations on one lane — the current OWASP first-choice setting."
+            },
+            "comparing": {
+                "title": "How comparing works",
+                "intro": "There is one rule, and the right-hand box decides everything.",
+                "p1": "Whatever you paste on the right is read first. If it is a bcrypt or Argon2 hash, every parameter needed to check it — cost, memory, iterations, lanes, salt — is already inside that string, so the tool reads them back out and uses them. Nothing in the Generate settings affects a comparison, which is what lets you verify a hash made with settings you no longer use.",
+                "p2": "If the right-hand box holds a bare digest instead, its length identifies the algorithm: 32 hex characters is MD5, 40 is SHA-1, 64 is SHA-256, 128 is SHA-512, and base64 has its own four widths. Length is the only signal a bare digest carries. Thirty-two hex characters is equally an MD5, an MD4, or an NTLM hash, and no tool can tell them apart from the string alone.",
+                "p3": "With a digest on the right, what is on the left decides which of two checks runs. If the left box holds a digest of exactly the same algorithm and encoding, the two are compared directly — the checksum-against-checksum case. Otherwise the left box is treated as text, hashed with the detected algorithm, and the results are compared. The tool always names which of the two it ran, so the choice is never silent.",
+                "p4": "Hex comparisons ignore case, because hex digits carry no case. Base64 comparisons do not, because base64 does. Passwords are never trimmed — a leading space is part of a password, and stripping it would turn a mismatch into a match."
+            },
+            "useCases": {
+                "title": "What people use this for",
+                "p1": "Checking a download. A project publishes a SHA-256 sum next to its release; you hash the file's contents and compare. Compare mode does the whole thing in one step: paste the published sum on the right and your computed one on the left.",
+                "p2": "Working out why a login fails. You have a bcrypt hash from a database and a password that should match it. Paste both and find out, without writing a script or standing up a server.",
+                "p3": "Sizing a cost factor. Raise bcrypt's cost or Argon2's memory and watch how long a single hash takes. Your servers are faster than a browser tab, but the shape of the curve is the same, and it makes the trade-off concrete."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Is anything I type sent to a server?",
+                "a1": "No. Every algorithm here runs as WebAssembly inside your browser, and the page makes no network request while hashing. There is also deliberately no URL parameter carrying the text you hash: a value in a URL ends up in browser history, proxy and server logs, and the referrer header of every outbound link. That said, treat any web tool as untrusted with real credentials — use test passwords.",
+                "q2": "Can I get the original text back from a hash?",
+                "a2": "No, and not because this tool refuses to. Hashing discards information; a 128-bit MD5 of a one-megabyte file cannot contain the file. What sites advertising \"MD5 decryption\" actually do is look your hash up in a table of previously computed ones, which finds common passwords and nothing else. That is exactly the attack salting defeats.",
+                "q3": "Why does bcrypt give me a different hash every time?",
+                "a3": "Because it salts. Each run mixes in fresh random bytes, which are stored inside the resulting string, so the same password produces a different hash each time and two users with the same password do not have matching database rows. Use Compare mode rather than eyeballing two hashes — the verifier reads the salt back out and does the right thing.",
+                "q4": "Which should I use, bcrypt or Argon2?",
+                "a4": "Argon2id for anything new. It is the current first recommendation, its memory cost defends against hardware bcrypt cannot, and it has no length limit. Choose bcrypt when you need a format with a mature library in every language, or when you are matching a system that already uses it. Both are enormously better than any fast digest.",
+                "q5": "What does the 72-byte bcrypt limit mean for me?",
+                "a5": "bcrypt hashes the first 72 bytes of a password and ignores the rest, so two long passphrases sharing a 72-byte prefix produce the same hash. This tool refuses input past that limit rather than truncating it silently. Note that it counts bytes, not characters — an emoji is four bytes, so 18 of them reach the ceiling. Argon2id has no such limit.",
+                "q6": "Is MD5 safe for anything?",
+                "a6": "For non-adversarial integrity, yes. Checking that a file arrived intact over a flaky connection, or keying a cache, is fine — nobody is crafting a collision to corrupt your cache. It is not safe for anything an attacker touches: colliding MD5 inputs can be produced in seconds on a laptop, which is why it was removed from certificates.",
+                "q7": "Why is the cost factor capped at 14 when bcrypt allows 31?",
+                "a7": "The cap is about this page, not about bcrypt. Hashing runs on the same thread that draws the interface, and each cost step doubles the time — 14 already freezes the tab for about a second. Your server has no such constraint and should generally run 10 to 12."
             }
         }
     },

@@ -122,6 +122,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.jwt.errors,
             toast: messages.jwt.toast,
         },
+        hash: {
+            workbench: messages.hash.workbench,
+            errors: messages.hash.errors,
+            toast: messages.hash.toast,
+        },
     };
 
     return (

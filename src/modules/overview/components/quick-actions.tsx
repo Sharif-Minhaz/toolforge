@@ -3,6 +3,7 @@ import {
     IconBinary,
     IconBolt,
     IconKey,
+    IconLock,
     IconSortAscending2,
     IconStack2,
 } from "@tabler/icons-react";
@@ -57,6 +58,14 @@ export async function QuickActions() {
             Icon: IconKey,
             accent: "[--tool-accent:var(--brand-rose)]",
         },
+        {
+            key: "hashPassword",
+            href: "/tools/hash?algorithm=argon2id",
+            title: t("hashPassword.title"),
+            description: t("hashPassword.description"),
+            Icon: IconLock,
+            accent: "[--tool-accent:var(--brand-violet)]",
+        },
     ];
 
     return (
@@ -74,7 +83,7 @@ export async function QuickActions() {
                                 aria-hidden="true"
                                 className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,color-mix(in_oklch,var(--tool-accent)_16%,transparent),transparent_70%)] opacity-0 transition-opacity duration-300 group-hover/action:opacity-100"
                             />
-                            <span className="relative grid size-9 shrink-0 place-items-center rounded-[0.6rem] bg-[color-mix(in_oklch,var(--tool-accent)_13%,transparent)] text-[var(--tool-accent)] ring-1 ring-[color-mix(in_oklch,var(--tool-accent)_20%,transparent)] ring-inset">
+                            <span className="relative grid size-9 shrink-0 place-items-center rounded-[0.6rem] bg-[color-mix(in_oklch,var(--tool-accent)_13%,transparent)] text-[--tool-accent] ring-1 ring-[color-mix(in_oklch,var(--tool-accent)_20%,transparent)] ring-inset">
                                 <action.Icon className="size-4.5" stroke={1.8} aria-hidden="true" />
                             </span>
                             <span className="relative flex min-w-0 flex-1 flex-col gap-1">

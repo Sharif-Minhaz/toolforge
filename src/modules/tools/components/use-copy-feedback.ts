@@ -6,8 +6,9 @@ import { useEffect, useState } from "react";
 const COPY_FEEDBACK_MS = 1600;
 
 /**
- * Tracks which panel was copied last, clearing itself shortly after. Shared by
- * both directions so the decoder and the encoder feel the same.
+ * Tracks which panel was copied last, clearing itself shortly after. One hook
+ * per workbench rather than one per button, so every panel in a tool agrees on
+ * how long the check mark lingers.
  */
 export function useCopyFeedback<T extends string>(): [T | null, (panel: T) => void] {
     const [copied, setCopied] = useState<T | null>(null);
