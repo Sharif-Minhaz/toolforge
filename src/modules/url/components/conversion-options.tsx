@@ -12,8 +12,12 @@ import {
 } from "@/modules/tools/domain/charsets";
 import { NEWLINE_LABELS } from "@/modules/tools/domain/lines";
 import { NEWLINE_SEPARATORS } from "@/modules/tools/types";
-import { supportsDataUri } from "../domain/convert";
-import type { Base64ConversionOptions, Base64Mode } from "../types";
+import {
+    URL_ENCODE_PROFILES,
+    type UrlConversionOptions,
+    type UrlEncodeProfile,
+    type UrlMode,
+} from "../types";
 
 function toItems(charsets: readonly Charset[]): Record<string, ReactNode> {
     return Object.fromEntries(charsets.map((charset) => [charset.id, charset.label]));
@@ -22,23 +26,30 @@ function toItems(charsets: readonly Charset[]): Record<string, ReactNode> {
 const NEWLINE_ITEMS: Record<string, ReactNode> = { ...NEWLINE_LABELS };
 
 type ConversionOptionsProps = {
-    mode: Base64Mode;
-    options: Base64ConversionOptions;
+    mode: UrlMode;
+    options: UrlConversionOptions;
     /** A file is already bytes, so the text-side options have nothing to act on. */
     fileSource: boolean;
-    onChange: (patch: Partial<Base64ConversionOptions>) => void;
+    onChange: (patch: Partial<UrlConversionOptions>) => void;
 };
 
 export function ConversionOptions({ mode, options, fileSource, onChange }: ConversionOptionsProps) {
-    const t = useTranslations("base64.workbench");
+    const t = useTranslations("url.workbench");
     const encoding = mode === "encode";
 
     const charsets = encoding ? ENCODABLE_CHARSETS : CHARSETS;
     const charsetItems = useMemo(() => toItems(charsets), [charsets]);
     const charsetValues = useMemo(() => charsets.map((charset) => charset.id), [charsets]);
 
+    const profileItems = useMemo<Record<string, ReactNode>>(
+        () =>
+            Object.fromEntries(
+                URL_ENCODE_PROFILES.map((profile) => [profile, t(`profiles.${profile}`)]),
+            ),
+        [t],
+    );
+
     const textOptionsIdle = encoding && fileSource;
-    const dataUriAvailable = supportsDataUri(options);
 
     return (
         <div className="flex flex-col gap-3">
@@ -60,6 +71,16 @@ export function ConversionOptions({ mode, options, fileSource, onChange }: Conve
                     disabled={textOptionsIdle}
                     onChange={(newline) => onChange({ newline })}
                 />
+                {encoding && (
+                    <OptionSelect<UrlEncodeProfile>
+                        label={t("profileLabel")}
+                        hint={t("profileHint")}
+                        value={options.profile}
+                        items={profileItems}
+                        values={URL_ENCODE_PROFILES}
+                        onChange={(profile) => onChange({ profile })}
+                    />
+                )}
             </div>
 
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
@@ -71,21 +92,13 @@ export function ConversionOptions({ mode, options, fileSource, onChange }: Conve
                     onCheckedChange={(perLine) => onChange({ perLine })}
                 />
 
-                {encoding && (
+                {encoding ? (
                     <>
                         <OptionSwitch
-                            label={t("urlSafeLabel")}
-                            hint={t("urlSafeHint")}
-                            checked={options.alphabet === "urlSafe"}
-                            onCheckedChange={(urlSafe) =>
-                                onChange({ alphabet: urlSafe ? "urlSafe" : "standard" })
-                            }
-                        />
-                        <OptionSwitch
-                            label={t("paddingLabel")}
-                            hint={t("paddingHint")}
-                            checked={options.padded}
-                            onCheckedChange={(padded) => onChange({ padded })}
+                            label={t("uppercaseHexLabel")}
+                            hint={t("uppercaseHexHint")}
+                            checked={options.uppercaseHex}
+                            onCheckedChange={(uppercaseHex) => onChange({ uppercaseHex })}
                         />
                         <OptionSwitch
                             label={t("wrapLabel")}
@@ -93,15 +106,20 @@ export function ConversionOptions({ mode, options, fileSource, onChange }: Conve
                             checked={options.wrapLines}
                             onCheckedChange={(wrapLines) => onChange({ wrapLines })}
                         />
+                    </>
+                ) : (
+                    <>
                         <OptionSwitch
-                            label={t("dataUriLabel")}
-                            // Only meaningful for one continuous standard-alphabet
-                            // payload, so it goes quiet rather than emitting
-                            // something no browser could load.
-                            hint={dataUriAvailable ? t("dataUriHint") : t("dataUriUnavailable")}
-                            checked={options.dataUri && dataUriAvailable}
-                            disabled={!dataUriAvailable}
-                            onCheckedChange={(dataUri) => onChange({ dataUri })}
+                            label={t("plusAsSpaceLabel")}
+                            hint={t("plusAsSpaceHint")}
+                            checked={options.plusAsSpace}
+                            onCheckedChange={(plusAsSpace) => onChange({ plusAsSpace })}
+                        />
+                        <OptionSwitch
+                            label={t("recursiveLabel")}
+                            hint={t("recursiveHint")}
+                            checked={options.recursive}
+                            onCheckedChange={(recursive) => onChange({ recursive })}
                         />
                     </>
                 )}

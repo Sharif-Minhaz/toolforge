@@ -14,7 +14,7 @@ import {
     STANDARD_ALPHABET,
     URL_SAFE_ALPHABET,
 } from "./constants";
-import { bytesToText, textToBytes } from "./text-codec";
+import { bytesToText, textToBytes } from "@/modules/tools/domain/text-codec";
 
 /**
  * RFC 4648 base64, implemented over raw bytes so the same code path runs on the

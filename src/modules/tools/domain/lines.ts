@@ -1,5 +1,10 @@
 import type { NewlineSeparator } from "../types";
 
+/**
+ * Line handling shared by every text tool: splitting on whichever ending the
+ * pasted text happens to use, and writing back the one the user asked for.
+ */
+
 /** MIME wraps base64 bodies at 76 characters (RFC 2045 §6.8). */
 export const MIME_LINE_WIDTH = 76;
 
@@ -7,6 +12,13 @@ export const NEWLINE_CHARACTERS: Record<NewlineSeparator, string> = {
     lf: "\n",
     crlf: "\r\n",
     cr: "\r",
+};
+
+/** Proper names for the three endings — data, so they read the same in every locale. */
+export const NEWLINE_LABELS: Record<NewlineSeparator, string> = {
+    lf: "LF (Unix)",
+    crlf: "CRLF (Windows)",
+    cr: "CR (classic Mac)",
 };
 
 /** Any of the three line endings, whichever the pasted text happens to use. */

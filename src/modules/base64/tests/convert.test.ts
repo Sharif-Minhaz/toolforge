@@ -6,7 +6,7 @@ import {
     supportsDataUri,
     type Base64ConversionRequest,
 } from "@/modules/base64/domain/convert";
-import { textToBytes } from "@/modules/base64/domain/text-codec";
+import { textToBytes } from "@/modules/tools/domain/text-codec";
 import type { Base64ConversionOptions, Base64Source } from "@/modules/base64/types";
 
 const TEXT_SOURCE: Base64Source = { kind: "text", text: "foobar" };

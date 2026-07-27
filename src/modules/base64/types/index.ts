@@ -1,4 +1,5 @@
-import type { CharsetId } from "../domain/charsets";
+import type { CharsetId } from "@/modules/tools/domain/charsets";
+import type { NewlineSeparator, TextCodecFailureReason } from "@/modules/tools/types";
 
 export const BASE64_MODES = ["encode", "decode"] as const;
 
@@ -8,10 +9,6 @@ export const BASE64_ALPHABETS = ["standard", "urlSafe"] as const;
 
 export type Base64Alphabet = (typeof BASE64_ALPHABETS)[number];
 
-export const NEWLINE_SEPARATORS = ["lf", "crlf", "cr"] as const;
-
-export type NewlineSeparator = (typeof NEWLINE_SEPARATORS)[number];
-
 export type Base64EncodeOptions = {
     readonly alphabet: Base64Alphabet;
     /** Whether the output is padded to a multiple of four with `=`. */
@@ -19,16 +16,11 @@ export type Base64EncodeOptions = {
 };
 
 /**
- * Failure channel shared by both directions: text can be unwritable in the
- * chosen character set, and base64 can be malformed or not decode to text.
+ * Failure channel shared by both directions: the shared text codec's three
+ * reasons, widened with the ways base64 itself can be malformed.
  */
 export type Base64FailureReason =
-    | "invalid_character"
-    | "invalid_length"
-    | "undecodable_text"
-    | "unencodable_character"
-    | "unsupported_charset"
-    | "too_large";
+    TextCodecFailureReason | "invalid_character" | "invalid_length" | "too_large";
 
 export type Base64Failure = {
     readonly ok: false;
@@ -43,9 +35,6 @@ export type Base64DecodeBytesResult =
     { readonly ok: true; readonly bytes: Uint8Array } | Base64Failure;
 
 export type Base64DecodeTextResult = { readonly ok: true; readonly text: string } | Base64Failure;
-
-export type Base64EncodeBytesResult =
-    { readonly ok: true; readonly bytes: Uint8Array } | Base64Failure;
 
 /** What the workbench is currently converting: typed text, or an opened file. */
 export type Base64Source =

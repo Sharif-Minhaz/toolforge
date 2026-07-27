@@ -6,11 +6,11 @@ import type {
     Base64Mode,
     Base64Source,
 } from "../types";
-import { getCharset } from "./charsets";
+import { getCharset } from "@/modules/tools/domain/charsets";
 import { buildDataUri, decodeToBytes, encodeBytes, exceedsInputLimit } from "./codec";
 import { TEXT_MIME_TYPE } from "./constants";
-import { applyNewlines, joinLines, splitLines, wrapLines } from "./lines";
-import { bytesToText, textToBytes } from "./text-codec";
+import { applyNewlines, joinLines, splitLines, wrapLines } from "@/modules/tools/domain/lines";
+import { bytesToText, textToBytes } from "@/modules/tools/domain/text-codec";
 
 export type Base64ConversionRequest = {
     readonly mode: Base64Mode;

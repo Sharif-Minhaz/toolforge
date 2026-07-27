@@ -7,8 +7,8 @@ import {
     getCharsetLabel,
     isEncodable,
     type CharsetId,
-} from "@/modules/base64/domain/charsets";
-import { bytesToText, isCharsetSupported, textToBytes } from "@/modules/base64/domain/text-codec";
+} from "@/modules/tools/domain/charsets";
+import { bytesToText, isCharsetSupported, textToBytes } from "@/modules/tools/domain/text-codec";
 
 /**
  * Browsers and Node carry the whole Encoding Standard; Bun, which runs these

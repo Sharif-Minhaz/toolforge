@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { saveFile, type FileSaver } from "@/modules/tools/domain/file-saver";
-import type { DownloadFile } from "@/modules/uuid/types";
+import type { DownloadFile } from "@/modules/tools/types";
 
 const FILE: DownloadFile = {
     filename: "uuid-v4-2-20260727T101500Z.txt",

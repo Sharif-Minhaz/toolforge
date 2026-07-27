@@ -10,7 +10,7 @@ import {
     stripDataUriPrefix,
 } from "@/modules/base64/domain/codec";
 import { MAX_BASE64_INPUT_BYTES } from "@/modules/base64/domain/constants";
-import { bytesToText, textToBytes } from "@/modules/base64/domain/text-codec";
+import { bytesToText, textToBytes } from "@/modules/tools/domain/text-codec";
 import type { Base64EncodeOptions } from "@/modules/base64/types";
 
 const PADDED: Base64EncodeOptions = { alphabet: "standard", padded: true };

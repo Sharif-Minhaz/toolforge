@@ -133,6 +133,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.json.errors,
             toast: messages.json.toast,
         },
+        url: {
+            workbench: messages.url.workbench,
+            errors: messages.url.errors,
+            toast: messages.url.toast,
+        },
     };
 
     return (

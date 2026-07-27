@@ -93,6 +93,32 @@ export type LocalizedTool = Tool & {
     readonly categoryLabel: string;
 };
 
+export const NEWLINE_SEPARATORS = ["lf", "crlf", "cr"] as const;
+
+export type NewlineSeparator = (typeof NEWLINE_SEPARATORS)[number];
+
+/**
+ * How a text ↔ bytes conversion can fail, shared by every tool that moves text
+ * through a character set. Individual tools widen this with reasons of their
+ * own; the codec itself only ever raises these three.
+ */
+export type TextCodecFailureReason =
+    "undecodable_text" | "unencodable_character" | "unsupported_charset";
+
+export type TextCodecFailure = {
+    readonly ok: false;
+    readonly reason: TextCodecFailureReason;
+    /** 1-based index of the offending character, when one can be pinpointed. */
+    readonly position?: number;
+    /** 1-based line, set only while converting each line separately. */
+    readonly line?: number;
+};
+
+export type EncodeBytesResult =
+    { readonly ok: true; readonly bytes: Uint8Array } | TextCodecFailure;
+
+export type DecodeTextResult = { readonly ok: true; readonly text: string } | TextCodecFailure;
+
 export const BYTE_UNITS = ["b", "kb", "mb"] as const;
 
 export type ByteUnit = (typeof BYTE_UNITS)[number];

@@ -1,11 +1,11 @@
+import type { CharsetId } from "@/modules/tools/domain/charsets";
+import type { NewlineSeparator } from "@/modules/tools/types";
 import type {
     Base64Alphabet,
     Base64ConversionOptions,
     Base64EncodeOptions,
     Base64Mode,
-    NewlineSeparator,
 } from "../types";
-import type { CharsetId } from "./charsets";
 
 export const STANDARD_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 

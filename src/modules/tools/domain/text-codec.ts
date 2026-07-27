@@ -1,4 +1,9 @@
-import type { Base64DecodeTextResult, Base64EncodeBytesResult, Base64Failure } from "../types";
+import type {
+    DecodeTextResult,
+    EncodeBytesResult,
+    TextCodecFailure,
+    TextCodecFailureReason,
+} from "../types";
 import { getCharset, type CharsetId } from "./charsets";
 
 /**
@@ -22,7 +27,7 @@ const singleByteTables = new Map<string, Map<string, number>>();
 
 const decoderSupport = new Map<string, boolean>();
 
-function fail(reason: Base64Failure["reason"], position?: number): Base64Failure {
+function fail(reason: TextCodecFailureReason, position?: number): TextCodecFailure {
     return position === undefined ? { ok: false, reason } : { ok: false, reason, position };
 }
 
@@ -84,7 +89,7 @@ function singleByteTable(decoderLabel: string): Map<string, number> {
 
 /* ---------------------------------------------------------------- encode --- */
 
-function encodeByCodePoint(text: string, maxCode: number): Base64EncodeBytesResult {
+function encodeByCodePoint(text: string, maxCode: number): EncodeBytesResult {
     const bytes = new Uint8Array(text.length);
     let count = 0;
     let position = 0;
@@ -104,7 +109,7 @@ function encodeByCodePoint(text: string, maxCode: number): Base64EncodeBytesResu
     return { ok: true, bytes: bytes.slice(0, count) };
 }
 
-function encodeByTable(text: string, table: Map<string, number>): Base64EncodeBytesResult {
+function encodeByTable(text: string, table: Map<string, number>): EncodeBytesResult {
     const bytes = new Uint8Array(text.length);
     let count = 0;
     let position = 0;
@@ -140,7 +145,7 @@ function encodeUtf16(text: string, littleEndian: boolean): Uint8Array {
     return bytes;
 }
 
-export function textToBytes(text: string, charsetId: CharsetId): Base64EncodeBytesResult {
+export function textToBytes(text: string, charsetId: CharsetId): EncodeBytesResult {
     const charset = getCharset(charsetId);
 
     switch (charset.encoder) {
@@ -177,7 +182,7 @@ function decodeLatin1(bytes: Uint8Array): string {
     return text;
 }
 
-export function bytesToText(bytes: Uint8Array, charsetId: CharsetId): Base64DecodeTextResult {
+export function bytesToText(bytes: Uint8Array, charsetId: CharsetId): DecodeTextResult {
     const charset = getCharset(charsetId);
 
     // Latin-1 and ASCII have no faithful TextDecoder label — both fold into
@@ -199,7 +204,7 @@ export function bytesToText(bytes: Uint8Array, charsetId: CharsetId): Base64Deco
     try {
         return { ok: true, text: new TextDecoder(charset.decoder, { fatal: true }).decode(bytes) };
     } catch {
-        // The base64 unpacked fine; those bytes just are not text in this set.
+        // The bytes arrived intact; they simply are not text in this set.
         return fail("undecodable_text");
     }
 }

@@ -9,58 +9,60 @@ import { getLocale, getTranslations } from "next-intl/server";
 import Link from "next/link";
 
 import { FadeIn, Reveal } from "@/components/motion/reveal";
-import { Base64Article, getBase64FaqEntries } from "@/modules/base64/components/base64-article";
-import { Base64Workbench } from "@/modules/base64/components/base64-workbench";
-import { isEncodable } from "@/modules/tools/domain/charsets";
-import {
-    DEFAULT_BASE64_MODE,
-    DEFAULT_CHARSET,
-    DEFAULT_ENCODE_OPTIONS,
-} from "@/modules/base64/domain/constants";
-import { base64SearchParamsSchema } from "@/modules/base64/validation/conversion-options";
 import { JsonLd } from "@/modules/seo/components/json-ld";
 import { buildPageMetadata } from "@/modules/seo/domain/metadata";
 import { buildToolJsonLd } from "@/modules/seo/domain/structured-data";
+import { isEncodable } from "@/modules/tools/domain/charsets";
 import { getToolById } from "@/modules/tools/domain/tool-catalog";
+import { UrlArticle, getUrlFaqEntries } from "@/modules/url/components/url-article";
+import { UrlWorkbench } from "@/modules/url/components/url-workbench";
+import {
+    DEFAULT_URL_CHARSET,
+    DEFAULT_URL_MODE,
+    DEFAULT_URL_PROFILE,
+} from "@/modules/url/domain/constants";
+import { urlSearchParamsSchema } from "@/modules/url/validation/conversion-options";
 
-const TOOL_PATH = "/tools/base64";
+const TOOL_PATH = "/tools/url";
 
 export async function generateMetadata(): Promise<Metadata> {
-    const [t, locale] = await Promise.all([getTranslations("base64.meta"), getLocale()]);
+    const [t, locale] = await Promise.all([getTranslations("url.meta"), getLocale()]);
 
     return buildPageMetadata({
         title: t("title"),
         description: t("description"),
         path: TOOL_PATH,
         locale,
-        keywords: getToolById("base64")?.keywords,
+        keywords: getToolById("url")?.keywords,
     });
 }
 
-type Base64PageProps = {
+type UrlPageProps = {
     searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function Base64ToolPage({ searchParams }: Base64PageProps) {
+export default async function UrlToolPage({ searchParams }: UrlPageProps) {
     const [t, tTools, tNav, faqs, locale, params] = await Promise.all([
-        getTranslations("base64.hero"),
+        getTranslations("url.hero"),
         getTranslations("tools"),
         getTranslations("nav"),
-        getBase64FaqEntries(),
+        getUrlFaqEntries(),
         getLocale(),
         searchParams,
     ]);
 
-    const parsed = base64SearchParamsSchema.safeParse(params);
-    const mode = (parsed.success ? parsed.data.mode : undefined) ?? DEFAULT_BASE64_MODE;
+    const parsed = urlSearchParamsSchema.safeParse(params);
+    const mode = (parsed.success ? parsed.data.mode : undefined) ?? DEFAULT_URL_MODE;
     const text = (parsed.success ? parsed.data.text : undefined) ?? "";
-    const alphabet =
-        (parsed.success ? parsed.data.alphabet : undefined) ?? DEFAULT_ENCODE_OPTIONS.alphabet;
-    const requestedCharset = (parsed.success ? parsed.data.charset : undefined) ?? DEFAULT_CHARSET;
+    const profile = (parsed.success ? parsed.data.profile : undefined) ?? DEFAULT_URL_PROFILE;
+    const requestedCharset =
+        (parsed.success ? parsed.data.charset : undefined) ?? DEFAULT_URL_CHARSET;
     // A link may name a set that can only be read; encoding falls back to UTF-8
     // rather than opening on an error.
     const charset =
-        mode === "encode" && !isEncodable(requestedCharset) ? DEFAULT_CHARSET : requestedCharset;
+        mode === "encode" && !isEncodable(requestedCharset)
+            ? DEFAULT_URL_CHARSET
+            : requestedCharset;
 
     const badges = [
         { label: t("badgeRfc"), Icon: IconShieldCheck },
@@ -72,11 +74,11 @@ export default async function Base64ToolPage({ searchParams }: Base64PageProps) 
         <>
             <JsonLd
                 data={buildToolJsonLd({
-                    name: tTools("base64.name"),
-                    description: tTools("base64.description"),
+                    name: tTools("url.name"),
+                    description: tTools("url.description"),
                     path: TOOL_PATH,
                     locale,
-                    keywords: getToolById("base64")?.keywords,
+                    keywords: getToolById("url")?.keywords,
                     faqs,
                 })}
             />
@@ -127,16 +129,16 @@ export default async function Base64ToolPage({ searchParams }: Base64PageProps) 
                 </FadeIn>
 
                 <FadeIn delay={0.06}>
-                    <Base64Workbench
+                    <UrlWorkbench
                         initialMode={mode}
                         initialText={text}
-                        initialAlphabet={alphabet}
+                        initialProfile={profile}
                         initialCharset={charset}
                     />
                 </FadeIn>
 
                 <Reveal>
-                    <Base64Article />
+                    <UrlArticle />
                 </Reveal>
             </div>
         </>

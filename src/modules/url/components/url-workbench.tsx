@@ -15,65 +15,58 @@ import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { getByteLength } from "@/modules/tools/domain/byte-size";
+import { getCharsetLabel, isEncodable, type CharsetId } from "@/modules/tools/domain/charsets";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
-import { getCharsetLabel, isEncodable, type CharsetId } from "@/modules/tools/domain/charsets";
-import {
-    DEFAULT_CHARSET,
-    DEFAULT_CONVERSION_OPTIONS,
-    DEFAULT_DATA_URI_MIME_TYPE,
-    MAX_BASE64_INPUT_BYTES,
-} from "../domain/constants";
-import { convert, type Base64ConversionResult } from "../domain/convert";
-import { createBase64ExportFile } from "../domain/export";
-import type { Base64Alphabet, Base64ConversionOptions, Base64Mode, Base64Source } from "../types";
+import { DEFAULT_URL_CHARSET, DEFAULT_URL_OPTIONS, MAX_URL_INPUT_BYTES } from "../domain/constants";
+import { convert, type UrlConversionResult } from "../domain/convert";
+import { createUrlExportFile } from "../domain/export";
+import type { UrlConversionOptions, UrlEncodeProfile, UrlMode, UrlSource } from "../types";
 import { ConversionOptions } from "./conversion-options";
 import { InputPanel, type LoadedFile } from "./input-panel";
 import { ModeSelector } from "./mode-selector";
 import { OutputPanel } from "./output-panel";
 
-type Base64WorkbenchProps = {
-    initialMode: Base64Mode;
+type UrlWorkbenchProps = {
+    initialMode: UrlMode;
     initialText: string;
-    initialAlphabet: Base64Alphabet;
+    initialProfile: UrlEncodeProfile;
     initialCharset: CharsetId;
 };
 
-export function Base64Workbench({
+export function UrlWorkbench({
     initialMode,
     initialText,
-    initialAlphabet,
+    initialProfile,
     initialCharset,
-}: Base64WorkbenchProps) {
-    const t = useTranslations("base64.workbench");
-    const tToast = useTranslations("base64.toast");
-    const tErrors = useTranslations("base64.errors");
+}: UrlWorkbenchProps) {
+    const t = useTranslations("url.workbench");
+    const tToast = useTranslations("url.toast");
+    const tErrors = useTranslations("url.errors");
     const byteLabel = useByteLabel();
 
     const modeLabelId = useId();
     const inputId = useId();
     const outputId = useId();
 
-    const [mode, setMode] = useState<Base64Mode>(initialMode);
+    const [mode, setMode] = useState<UrlMode>(initialMode);
     const [text, setText] = useState(initialText);
     const [file, setFile] = useState<LoadedFile | null>(null);
-    const [options, setOptions] = useState<Base64ConversionOptions>({
-        ...DEFAULT_CONVERSION_OPTIONS,
-        alphabet: initialAlphabet,
+    const [options, setOptions] = useState<UrlConversionOptions>({
+        ...DEFAULT_URL_OPTIONS,
+        profile: initialProfile,
         charset: initialCharset,
     });
 
-    function describeFailure(failure: Extract<Base64ConversionResult, { ok: false }>): string {
+    function describeFailure(failure: Extract<UrlConversionResult, { ok: false }>): string {
         const charset = getCharsetLabel(options.charset);
 
         const message = (() => {
             switch (failure.reason) {
-                case "invalid_character":
-                    return failure.position === undefined
-                        ? tErrors("invalidBase64")
-                        : tErrors("invalidCharacter", { position: failure.position });
-                case "invalid_length":
-                    return tErrors("invalidLength");
+                case "invalid_escape":
+                    return tErrors("invalidEscape", { position: failure.position ?? 1 });
+                case "truncated_escape":
+                    return tErrors("truncatedEscape", { position: failure.position ?? 1 });
                 case "undecodable_text":
                     return tErrors("undecodableText", { charset });
                 case "unencodable_character":
@@ -86,7 +79,7 @@ export function Base64Workbench({
                 case "unsupported_charset":
                     return tErrors("unsupportedCharset", { charset });
                 case "too_large":
-                    return tErrors("tooLarge", { limit: byteLabel(MAX_BASE64_INPUT_BYTES) });
+                    return tErrors("tooLarge", { limit: byteLabel(MAX_URL_INPUT_BYTES) });
             }
         })();
 
@@ -95,18 +88,18 @@ export function Base64Workbench({
             : tErrors("onLine", { line: failure.line, message });
     }
 
-    function updateOptions(patch: Partial<Base64ConversionOptions>) {
+    function updateOptions(patch: Partial<UrlConversionOptions>) {
         setOptions((current) => ({ ...current, ...patch }));
     }
 
-    function handleModeChange(next: Base64Mode) {
+    function handleModeChange(next: UrlMode) {
         setMode(next);
 
         // Decode offers sets that cannot be written, so carrying one into the
         // encode direction would leave the picker on a value it no longer
         // lists. UTF-8 is the safe landing spot.
         if (next === "encode" && !isEncodable(options.charset)) {
-            updateOptions({ charset: DEFAULT_CHARSET });
+            updateOptions({ charset: DEFAULT_URL_CHARSET });
         }
     }
 
@@ -116,8 +109,8 @@ export function Base64Workbench({
     const settledText = useDebouncedValue(text);
     const pending = settledText !== text;
 
-    const source: Base64Source = file
-        ? { kind: "file", name: file.name, mimeType: file.mimeType, bytes: file.bytes }
+    const source: UrlSource = file
+        ? { kind: "file", name: file.name, bytes: file.bytes }
         : { kind: "text", text: settledText };
 
     // Pure and deterministic, so the server-rendered pass already carries the
@@ -140,11 +133,11 @@ export function Base64Workbench({
     }
 
     async function handleFileSelect(selected: File) {
-        if (selected.size > MAX_BASE64_INPUT_BYTES) {
+        if (selected.size > MAX_URL_INPUT_BYTES) {
             toast.error(
                 tErrors("fileTooLarge", {
                     name: selected.name,
-                    limit: byteLabel(MAX_BASE64_INPUT_BYTES),
+                    limit: byteLabel(MAX_URL_INPUT_BYTES),
                 }),
             );
 
@@ -154,14 +147,10 @@ export function Base64Workbench({
         try {
             const buffer = await selected.arrayBuffer();
 
-            setFile({
-                name: selected.name,
-                mimeType: selected.type || DEFAULT_DATA_URI_MIME_TYPE,
-                bytes: new Uint8Array(buffer),
-            });
+            setFile({ name: selected.name, bytes: new Uint8Array(buffer) });
             toast.success(tToast("fileLoaded", { name: selected.name }));
         } catch (caught) {
-            logEvent("error", "base64.file_read_failed", { error: describeError(caught) });
+            logEvent("error", "url.file_read_failed", { error: describeError(caught) });
             toast.error(tErrors("fileUnreadable"));
         }
     }
@@ -174,6 +163,14 @@ export function Base64Workbench({
 
         setText(output);
         setFile(null);
+
+        // Form data writes a space as `+`, so reading that output back needs
+        // the matching switch. Only ever turned on — never off, which would
+        // undo a deliberate choice.
+        if (mode === "encode" && options.profile === "form" && !options.plusAsSpace) {
+            updateOptions({ plusAsSpace: true });
+        }
+
         setMode(mode === "encode" ? "decode" : "encode");
     }
 
@@ -201,13 +198,13 @@ export function Base64Workbench({
     }
 
     function handleDownload() {
-        const exported = createBase64ExportFile({ mode, content: output, generatedAt: new Date() });
+        const exported = createUrlExportFile({ mode, content: output, generatedAt: new Date() });
 
         try {
             saveFile(exported);
             toast.success(tToast("downloaded", { filename: exported.filename }));
         } catch (caught) {
-            logEvent("error", "base64.download_failed", { mode, error: describeError(caught) });
+            logEvent("error", "url.download_failed", { mode, error: describeError(caught) });
             toast.error(tToast("downloadFailed"));
         }
     }
@@ -284,6 +281,7 @@ export function Base64Workbench({
                     outputId={outputId}
                     output={output}
                     outputBytes={result.ok ? result.outputBytes : 0}
+                    passes={result.ok ? result.passes : 1}
                     error={error}
                     pending={pending}
                     onCopy={handleCopy}

@@ -1,8 +1,9 @@
 import { z } from "zod";
 
-import { CHARSET_IDS } from "../domain/charsets";
+import { CHARSET_IDS } from "@/modules/tools/domain/charsets";
+import { NEWLINE_SEPARATORS } from "@/modules/tools/types";
 import { MAX_SHARED_TEXT_LENGTH } from "../domain/constants";
-import { BASE64_ALPHABETS, BASE64_MODES, NEWLINE_SEPARATORS } from "../types";
+import { BASE64_ALPHABETS, BASE64_MODES } from "../types";
 
 export const base64ModeSchema = z.enum(BASE64_MODES);
 

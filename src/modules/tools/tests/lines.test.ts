@@ -6,7 +6,7 @@ import {
     MIME_LINE_WIDTH,
     splitLines,
     wrapLines,
-} from "@/modules/base64/domain/lines";
+} from "@/modules/tools/domain/lines";
 
 describe("splitLines", () => {
     test("splits on any of the three line endings", () => {

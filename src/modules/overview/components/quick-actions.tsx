@@ -4,7 +4,7 @@ import {
     IconBolt,
     IconBraces,
     IconKey,
-    IconSortAscending2,
+    IconLink,
     IconStack2,
 } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
@@ -35,11 +35,11 @@ export async function QuickActions() {
             accent: "[--tool-accent:var(--brand-cyan)]",
         },
         {
-            key: "uuidSortable",
-            href: "/tools/uuid?version=7&quantity=10",
-            title: t("uuidSortable.title"),
-            description: t("uuidSortable.description"),
-            Icon: IconSortAscending2,
+            key: "urlDecode",
+            href: "/tools/url?mode=decode",
+            title: t("urlDecode.title"),
+            description: t("urlDecode.description"),
+            Icon: IconLink,
             accent: "[--tool-accent:var(--brand-amber)]",
         },
         {

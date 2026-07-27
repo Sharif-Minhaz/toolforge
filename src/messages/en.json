@@ -120,8 +120,8 @@
             "description": "Prettify, minify, and validate JSON with precise error positions."
         },
         "url": {
-            "name": "URL Encoder",
-            "description": "Percent-encode and decode URLs and individual query components."
+            "name": "URL Encoder / Decoder",
+            "description": "Percent-encode and decode URLs, query values, and form data, with repeated decoding for doubly-encoded links."
         },
         "regex": {
             "name": "Regex Tester",
@@ -221,9 +221,9 @@
                 "title": "Bulk v4 batch",
                 "description": "Generate 100 identifiers at once."
             },
-            "uuidSortable": {
-                "title": "Sortable v7",
-                "description": "Time-ordered ids for database keys."
+            "urlDecode": {
+                "title": "Decode a URL",
+                "description": "Paste a percent-encoded link and read it back in plain text."
             },
             "base64Decode": {
                 "title": "Decode Base64",
@@ -1396,6 +1396,195 @@
                 "a6": "Because the grammar allows it. Every specification says member names SHOULD be unique but none requires it, so a document with a repeated name is valid JSON. What is unpredictable is what a parser does with it — most keep the last occurrence, some keep the first, a few error — which is exactly why it is worth telling you about.",
                 "q7": "Can I share a formatted document as a link?",
                 "a7": "Yes, for short ones. The action, indentation, specification and each toggle all travel in the URL, along with up to 2,048 characters of text, so a link opens on the same settings and the same document. Anything longer is better handed over as a file — and it never leaves your machine either way."
+            }
+        }
+    },
+    "url": {
+        "meta": {
+            "title": "URL Encoder and Decoder — Percent-Encoding for Any Part of a URL",
+            "description": "Percent-encode and decode URLs, query values, and form data in your browser. Three encoding profiles, 19 character sets, repeated decoding for doubly-encoded links, and line wrapping. Nothing is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Encoding",
+            "title": "URL Encoder / Decoder",
+            "subtitle": "Percent-encode text for a query value, a path segment, or a whole address — and read it back. Pick the character set, choose how much structure survives, and unwrap doubly-encoded links.",
+            "badgeRfc": "RFC 3986",
+            "badgeOffline": "Works offline",
+            "badgeFiles": "Files up to 1 MB"
+        },
+        "workbench": {
+            "title": "Convert to and from percent-encoding",
+            "description": "Type or upload something, pick a direction, and the result updates as you go.",
+            "modeLabel": "Direction",
+            "modes": {
+                "encode": "Encode",
+                "decode": "Decode"
+            },
+            "inputLabel": "Input",
+            "outputLabel": "Output",
+            "placeholders": {
+                "encode": "Enter text or upload a file",
+                "decode": "Paste a percent-encoded URL or value"
+            },
+            "outputPlaceholder": "Output will appear here",
+            "upload": "Upload file",
+            "clear": "Clear input",
+            "removeFile": "Remove file",
+            "copy": "Copy",
+            "download": "Download",
+            "swap": "Send the output back as input",
+            "charsetSourceLabel": "Source character set",
+            "charsetDestinationLabel": "Destination character set",
+            "charsetFileHint": "A file is already bytes, so no character set applies",
+            "newlineLabel": "Line endings",
+            "profileLabel": "What to encode",
+            "profileHint": "Decides which characters are left as they are",
+            "profiles": {
+                "component": "Single value",
+                "uri": "Whole URL",
+                "form": "Form data"
+            },
+            "perLineLabel": "Each line separately",
+            "perLineHintEncode": "Encodes every input line on its own",
+            "perLineHintDecode": "Decodes every input line on its own",
+            "uppercaseHexLabel": "Uppercase hex",
+            "uppercaseHexHint": "Writes %2F rather than %2f, as RFC 3986 prefers",
+            "wrapLabel": "Split at 76 chars",
+            "wrapHint": "Breaks long output into lines, never mid-escape",
+            "plusAsSpaceLabel": "+ means space",
+            "plusAsSpaceHint": "Turn on for form data and query strings",
+            "recursiveLabel": "Decode repeatedly",
+            "recursiveHint": "Unwraps up to 16 layers of encoding",
+            "decodeHint": "Decoding accepts either hex case, leaves unescaped characters alone, and joins wrapped lines back into one payload.",
+            "passes": "Unwrapped {passes, number} times"
+        },
+        "errors": {
+            "invalidEscape": "Not valid percent-encoding — the % at position {position, number} is not followed by two hex digits.",
+            "truncatedEscape": "The % at position {position, number} is cut short. A percent escape needs two hex digits after it.",
+            "undecodableText": "The escapes unpacked cleanly, but those bytes are not valid {charset} text — try another destination character set.",
+            "unencodableCharacter": "The character at position {position, number} cannot be written in {charset}. Switch to UTF-8 to keep it.",
+            "unencodableCharset": "{charset} can only be read, not written. Pick another source character set.",
+            "unsupportedCharset": "{charset} is not available in this browser. Pick another character set — UTF-8 always works.",
+            "onLine": "Line {line, number}: {message}",
+            "tooLarge": "That is more than {limit}. Trim the input and try again.",
+            "fileTooLarge": "{name} is larger than {limit}.",
+            "fileUnreadable": "That file could not be read."
+        },
+        "toast": {
+            "copied": "Copied to clipboard",
+            "copyFailedUnsupported": "Your browser blocked clipboard access",
+            "copyFailedDenied": "Clipboard permission was denied",
+            "copyFailedEmpty": "Nothing to copy yet",
+            "downloaded": "Downloaded {filename}",
+            "downloadFailed": "The download could not be started",
+            "fileLoaded": "Loaded {name}"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "What percent-encoding is",
+                "p1": "A URL may only carry a small set of characters. Everything else — a space, an accent, a slash that belongs to a value rather than to the path — has to be written as an escape: a % followed by two hexadecimal digits naming one byte. So a b becomes a%20b, because a space is byte 0x20.",
+                "p2": "An escape describes a byte, not a character. Text becomes bytes first, through a character set, and only then does every byte that cannot appear literally turn into %XX. In UTF-8 an é is two bytes, so it encodes as %C3%A9 — two escapes for one character.",
+                "p3": "RFC 3986 calls the always-safe characters unreserved: A–Z, a–z, 0–9, and the four marks - . _ ~. Everything else is either reserved, meaning it has a structural job somewhere in a URL, or has no business appearing raw at all."
+            },
+            "why": {
+                "title": "Why a value needs encoding",
+                "p1": "Reserved characters are how a URL is parsed. ? opens the query, & separates parameters, # starts the fragment, / separates path segments. A value that contains one of them and is not encoded does not break loudly — it silently means something else. search?q=cats&dogs is one parameter named q and another named dogs.",
+                "p2": "The same goes for the escape marker itself. A literal % in a value has to be written %25, or the two characters after it will be read as hex digits and the value comes back wrong, or not at all.",
+                "p3": "Encoding is also what lets a URL survive being copied through email, chat, and log files, where a raw space would break the link in half."
+            },
+            "reference": {
+                "title": "Character reference",
+                "intro": "Every printable ASCII punctuation mark, its escape, and which profiles leave it alone. Letters and digits are never encoded. Anything above ASCII depends on the character set, which is why the same character can produce a different escape in UTF-8 and in ISO-8859-1.",
+                "tableCaption": "Printable ASCII punctuation and its percent-encoded form",
+                "colCharacter": "Character",
+                "colEncoded": "Encoded",
+                "colKept": "Left as-is by",
+                "keptByNone": "nothing",
+                "spaceLabel": "space",
+                "note": "A space is the one exception: under form data it is written as + rather than %20, and a decoder has to be told to read it back that way. Control characters below 0x20 and everything above 0x7E are always encoded, whichever profile is in use."
+            },
+            "profiles": {
+                "title": "The three profiles",
+                "intro": "How much of the input survives an encode depends on where the result is going.",
+                "tableCaption": "What each encoding profile leaves untouched",
+                "colProfile": "Profile",
+                "colKeeps": "Keeps",
+                "colBestFor": "Best for",
+                "componentName": "Single value",
+                "componentKeeps": "A–Z a–z 0–9 - . _ ~",
+                "componentBestFor": "One query value or path segment — anything going inside a URL",
+                "uriName": "Whole URL",
+                "uriKeeps": "The above, plus : / ? # [ ] @ ! $ & ' ( ) * + , ; =",
+                "uriBestFor": "A complete address that should stay readable and still work",
+                "formName": "Form data",
+                "formKeeps": "A–Z a–z 0–9 * - . _ , with a space written as +",
+                "formBestFor": "A POST body or query string an HTML form would have produced",
+                "note": "Single value is stricter than JavaScript's encodeURIComponent, which leaves ! ' ( ) * alone. Escaping those as well is always legal and always decodes back to the same text, so it is the safer default. If you need byte-for-byte parity with encodeURIComponent, compare the decoded results rather than the encodings."
+            },
+            "options": {
+                "title": "Every option",
+                "intro": "Eight controls, and the ones that only make sense in one direction go quiet in the other.",
+                "tableCaption": "Every conversion option and when to use it",
+                "colOption": "Option",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "charsetName": "Character set",
+                "charsetDoes": "Turns text into bytes before encoding, and bytes back into text after decoding.",
+                "charsetWhen": "The data is not UTF-8 — an older system, or a page declaring a legacy encoding.",
+                "newlineName": "Line endings",
+                "newlineDoes": "Rewrites every line break in the text to LF, CRLF, or CR.",
+                "newlineWhen": "The input and the destination disagree about how a line ends.",
+                "profileName": "What to encode",
+                "profileDoes": "Chooses which characters are left alone: unreserved only, a URL's structure as well, or the form-data set.",
+                "profileWhen": "You know whether the result is one value or a whole address.",
+                "uppercaseHexName": "Uppercase hex",
+                "uppercaseHexDoes": "Writes escapes as %2F rather than %2f.",
+                "uppercaseHexWhen": "Something downstream compares URLs as strings; RFC 3986 prefers uppercase.",
+                "perLineName": "Each line separately",
+                "perLineDoes": "Treats every line as its own payload instead of converting the whole block at once.",
+                "perLineWhen": "You have a list — one URL, value, or entry per line.",
+                "wrapName": "Split at 76 chars",
+                "wrapDoes": "Breaks long output into lines, backing off so a %XX escape is never cut in half.",
+                "wrapWhen": "The result has to sit in a file or message with a line-length limit.",
+                "plusAsSpaceName": "+ means space",
+                "plusAsSpaceDoes": "Reads a + in the input as a space while decoding.",
+                "plusAsSpaceWhen": "The input came from a form or a query string.",
+                "recursiveName": "Decode repeatedly",
+                "recursiveDoes": "Keeps decoding while the text still changes, up to sixteen passes.",
+                "recursiveWhen": "A link was encoded more than once — %2520 where you expected %20.",
+                "charsetNote": "Character set and line endings apply to typed text only. A file is already bytes, so both controls go quiet when one is loaded and its contents are encoded exactly as they are.",
+                "linesNote": "When decoding a whole payload, raw line breaks are joined back up before the escapes are read, so wrapped output pastes straight back in. Switch on Each line separately when the breaks are meaningful.",
+                "defaultsNote": "The defaults encode a single value in UTF-8 with uppercase hex, decode one pass at a time, and leave + alone. That is the faithful RFC 3986 reading; the two decode switches exist because form data is the one common case that departs from it."
+            },
+            "doubleEncoding": {
+                "title": "The double-encoding trap",
+                "p1": "Encoding something twice is the most common URL bug there is. A value is encoded on its way into a link, then the whole link is encoded again as it is handed to a redirect, and %20 becomes %2520 — because the % of the first escape is itself encoded as %25.",
+                "p2": "It shows up as a literal %20 in a page title, a filename with %2F in it, or a redirect landing on a 404 with a suspiciously long path. Decoding once leaves the %20 still visible; that is the tell.",
+                "p3": "Decode repeatedly unwraps it in one go, stopping when the text stops changing. It is off by default because a value that legitimately contains %25 — a literal percent sign — would be unwrapped one layer too far."
+            },
+            "useCases": {
+                "title": "Where you need this",
+                "p1": "Building a query string by hand: every value goes through Single value, and only the & and = you write yourself stay raw. Skip it and a value containing & quietly becomes two parameters.",
+                "p2": "Reading a log or an analytics export, where a full URL arrives escaped and unreadable. Decoding it back is usually enough to see what actually happened.",
+                "p3": "Debugging an OAuth or SSO round-trip, where a redirect_uri is encoded into another URL and frequently encoded twice along the way."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "What is the difference between encodeURI and encodeURIComponent?",
+                "a1": "encodeURI keeps the characters that give a URL its structure, so it can be handed a whole address. encodeURIComponent escapes them, so it is for one value at a time. Whole URL and Single value here are the same split, with Single value additionally escaping ! ' ( ) * — legal, and safer.",
+                "q2": "Why does one character become several escapes?",
+                "a2": "Because an escape names a byte, not a character. A character set turns the text into bytes first, and outside ASCII most characters take more than one byte. é is two bytes in UTF-8 (%C3%A9) and one in ISO-8859-1 (%E9).",
+                "q3": "When is a space + and when is it %20?",
+                "a3": "+ belongs to application/x-www-form-urlencoded — form submissions and the query strings they produce. Everywhere else a space is %20. %20 is safe in both places; + is not, so use it only when the receiving end expects form data.",
+                "q4": "Does the case of the hex digits matter?",
+                "a4": "Not for decoding — %2f and %2F are the same byte, and this tool accepts either. It matters when URLs are compared as strings, and RFC 3986 §6.2.2.1 says to normalise to uppercase, which is what this tool writes by default.",
+                "q5": "Is anything sent to a server?",
+                "a5": "No. Both directions run entirely in your browser, file conversions included. Nothing is uploaded, stored, or logged.",
+                "q6": "Why does decoding say the bytes are not valid text?",
+                "a6": "The destination character set does not match the one the data was encoded with. %C3%A9 is é in UTF-8 but two separate characters in ISO-8859-1, and some byte sequences are not valid text at all in a given set. Change the destination set and the same escapes read correctly."
             }
         }
     },
