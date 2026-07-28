@@ -239,9 +239,9 @@
                 "title": "Beautify JSON",
                 "description": "Paste a single-line payload and read it properly, with any error pinned to its line."
             },
-            "colorConvert": {
-                "title": "Convert a colour",
-                "description": "Paste any HEX, RGB or HSL value and read it back in every other notation."
+            "timestampNow": {
+                "title": "Convert a timestamp",
+                "description": "Read a Unix epoch in your own time zone, UTC, and any city you pin."
             }
         },
         "featured": {
@@ -2607,6 +2607,228 @@
                 "a5": "Yes. Add ?color= to the URL with any value the field accepts, remembering to encode the hash as %23 — /tools/color?color=%23c46895 works, as does /tools/color?color=tomato. You can pin the notation and hex case the same way with ?notation=legacy and ?hexCase=upper.",
                 "q6": "Why is the eyedropper button missing?",
                 "a6": "It only appears where the browser provides the EyeDropper API, which today means Chrome, Edge and other Chromium-based browsers on the desktop. Everywhere else the button is not rendered at all, rather than shown and then failing when pressed."
+            }
+        }
+    },
+    "timestamp": {
+        "meta": {
+            "title": "Timestamp Converter — Unix Epoch, ISO 8601 and Time Zones",
+            "description": "Convert Unix timestamps in seconds, milliseconds, microseconds or nanoseconds to a readable date in your own time zone and any other you pick. Reads ISO 8601, RFC 2822, human dates, UUIDs, MongoDB ObjectIds, Windows FILETIME, .NET ticks and Excel serials. Runs entirely in your browser."
+        },
+        "hero": {
+            "eyebrow": "Formatting",
+            "title": "Timestamp Converter",
+            "subtitle": "Paste a timestamp in almost any shape — an epoch number, ISO 8601, an RFC 2822 date, a UUID, an ObjectId — and read it back in your own time zone, in UTC, and in as many cities as you want to compare.",
+            "badgeFormats": "12 input formats",
+            "badgeZones": "Full IANA database",
+            "badgeOffline": "Works offline"
+        },
+        "workbench": {
+            "title": "Convert a timestamp",
+            "description": "The format is detected as you type. Nothing leaves your browser.",
+            "nowLabel": "Current Unix time",
+            "useNow": "Use now",
+            "pauseClock": "Pause the clock",
+            "resumeClock": "Resume the clock",
+            "inputLabel": "Timestamp or date",
+            "inputPlaceholder": "1785326400, 2026-07-29T12:00:00Z, or \"now\"",
+            "clear": "Clear",
+            "examplesLabel": "Try:",
+            "unitLabel": "Read numbers as",
+            "unitHintAuto": "The scale is chosen from the value's magnitude.",
+            "unitHintExplicit": "Every number is read at this scale, whatever its size.",
+            "units": {
+                "auto": "Detect automatically",
+                "seconds": "Unix seconds",
+                "milliseconds": "Unix milliseconds",
+                "microseconds": "Unix microseconds",
+                "nanoseconds": "Unix nanoseconds",
+                "filetime": "Windows FILETIME",
+                "ticks": ".NET ticks",
+                "excel": "Excel serial date"
+            },
+            "inputZoneRegionLabel": "Input zone region",
+            "inputZoneCityLabel": "Input zone city",
+            "inputZoneApplied": "This input carried no offset, so it was read in the zone above.",
+            "inputZoneIdle": "Used only when the input carries no offset of its own.",
+            "detected": {
+                "now": "the current time",
+                "epoch": "a Unix timestamp",
+                "iso8601": "an ISO 8601 date",
+                "rfc2822": "an RFC 2822 date",
+                "dateString": "a written date",
+                "objectId": "a MongoDB ObjectId",
+                "uuid": "a UUID"
+            },
+            "readAs": "Read as {source}.",
+            "readAsWithZone": "Read as {source}, in {zone}.",
+            "epochTitle": "Epoch values",
+            "download": "Download",
+            "epoch": {
+                "seconds": "Seconds",
+                "milliseconds": "Milliseconds",
+                "microseconds": "Microseconds",
+                "nanoseconds": "Nanoseconds",
+                "isoUtc": "ISO 8601 (UTC)"
+            },
+            "copyValue": "Copy {label}",
+            "zonesTitle": "Time zones",
+            "zonesDescription": "Your zone and UTC are always here. Pin up to four more to compare them side by side.",
+            "localZone": "Your time zone",
+            "daylightTime": "Daylight time",
+            "iso8601": "ISO 8601",
+            "rfc2822": "RFC 2822",
+            "removeZone": "Remove {zone}",
+            "unsupportedZones": "This browser's time zone data does not include {zones}, so they were left out.",
+            "regionLabel": "Region",
+            "cityLabel": "City",
+            "addZone": "Add zone",
+            "boardFull": "The board holds {max, number} pinned zones. Remove one to add another.",
+            "boardRoom": "{left, plural, =0 {No room left} one {Room for # more} other {Room for # more}}.",
+            "suggestedLabel": "Common:",
+            "detailsTitle": "About this date",
+            "details": {
+                "relative": "Relative to now",
+                "dayOfYear": "Day of year",
+                "dayOfYearValue": "{day} of {total}",
+                "isoWeek": "ISO week date",
+                "quarter": "Quarter",
+                "quarterValue": "Q{quarter}",
+                "daysInMonth": "Days in month",
+                "leapYear": "Leap year",
+                "yes": "Yes",
+                "no": "No",
+                "zoneNote": "Counted in {zone}, the first zone on the board."
+            }
+        },
+        "errors": {
+            "empty": "Paste a timestamp or a date to begin.",
+            "tooLong": "That is longer than any timestamp. Trim it and try again.",
+            "unrecognized": "This does not match a timestamp or date this tool can read. Try ISO 8601, such as 2026-07-29T12:00:00Z.",
+            "ambiguousDate": "This could be day-first or month-first, and guessing would be worse than asking. Write it as 2026-07-29 instead.",
+            "invalidComponent": "One part of this date is out of range.",
+            "invalidField": "The {field} in this date is out of range.",
+            "outOfRange": "That lands outside the range a date can hold, roughly 271821 BC to 275760 AD. Check the unit above.",
+            "unknownTimeZone": "That time zone is not in the IANA database.",
+            "fields": {
+                "year": "year",
+                "month": "month",
+                "day": "day",
+                "hour": "hour",
+                "minute": "minute",
+                "second": "second"
+            }
+        },
+        "toast": {
+            "copyFailedUnsupported": "Your browser blocked clipboard access",
+            "copyFailedDenied": "Clipboard permission was denied",
+            "copyFailedEmpty": "Nothing to copy yet",
+            "downloaded": "Downloaded {filename}",
+            "downloadFailed": "The download could not be started",
+            "zoneAdded": "Pinned {zone}"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "What a Unix timestamp actually is",
+                "p1": "A Unix timestamp is a count of seconds since 1 January 1970 at 00:00:00 UTC — an instant on a single, unbroken number line. It names no place and no calendar. That is the whole point: two machines on opposite sides of the planet can agree on the number without agreeing on anything else.",
+                "p2": "Everything readable comes later. \"29 July 2026, 6:00 pm\" is that number after a time zone and a calendar have been applied to it. Change the zone and the wall clock changes; the timestamp does not. This is why storing a timestamp is safe and storing a local time is not.",
+                "p3": "The count ignores leap seconds. A Unix day is exactly 86 400 seconds even on the rare days that were 86 401 seconds long, so the number is a count of nominal seconds rather than of elapsed physical ones. For everything short of satellite navigation, that is the right trade."
+            },
+            "formats": {
+                "title": "Formats this tool reads",
+                "intro": "Paste any of these and the shape is detected for you. Every example below names the same instant, 2026-07-29T12:00:00Z, so you can see how the same moment is spelled in each.",
+                "tableCaption": "Input formats, an example of each, and what to know about them",
+                "colFormat": "Format",
+                "colExample": "Example",
+                "colNotes": "Notes",
+                "epochSecondsName": "Unix seconds",
+                "epochSecondsNotes": "Ten digits today. The default reading for any number below 100 000 000 000.",
+                "epochMillisName": "Unix milliseconds",
+                "epochMillisNotes": "Thirteen digits. What JavaScript's Date.now() and most log formats emit.",
+                "epochNanosName": "Unix nanoseconds",
+                "epochNanosNotes": "Nineteen digits — past what a JavaScript number can hold, so this tool keeps them as exact integers.",
+                "isoName": "ISO 8601 (UTC)",
+                "isoNotes": "The Z means UTC. Fractional seconds to nanosecond depth are kept.",
+                "isoOffsetName": "ISO 8601 with offset",
+                "isoOffsetNotes": "An explicit offset always wins over the input zone setting.",
+                "isoWeekName": "ISO week and ordinal dates",
+                "isoWeekNotes": "Week dates such as 2026-W31-3 and ordinal dates such as 2026-210 both work.",
+                "rfcName": "RFC 2822 and HTTP dates",
+                "rfcNotes": "Also reads what Date.prototype.toString() prints, trailing zone name and all.",
+                "dateTextName": "Dates people type",
+                "dateTextNotes": "Month names in any order, 12-hour clocks, and ordinals such as 29th.",
+                "uuidName": "UUID v1, v6, v7",
+                "uuidNotes": "These versions embed their creation time. Versions 3, 4, 5 and 8 hold none.",
+                "objectIdName": "MongoDB ObjectId",
+                "objectIdNotes": "The leading four bytes are the creation time in seconds.",
+                "filetimeName": "Windows FILETIME and .NET ticks",
+                "filetimeNotes": "Both count 100-nanosecond intervals, from 1601 and from year 1. Pick the unit — their digit counts collide with nanoseconds.",
+                "excelName": "Excel serial date",
+                "excelNotes": "Days since 30 December 1899, phantom leap day included. Pick the unit; a bare number cannot be told apart from an epoch.",
+                "ambiguity": "Two shapes are deliberately refused rather than guessed at. A date such as 07/08/2026 could be 7 August or 8 July, and picking one silently is how a report ends up five weeks out; write it as 2026-07-08 instead. A zone abbreviation such as IST means three different offsets depending on the country, so an abbreviation outside the small set RFC 2822 defines is treated as though no zone were given at all.",
+                "detection": "A bare eight-digit number such as 20260729 is read as an epoch, not as a compact ISO date, because that is what such a number nearly always is in a log file. Write 20260729T000000Z if you meant the date."
+            },
+            "zones": {
+                "title": "Time zones, offsets and daylight saving",
+                "p1": "A time zone is not an offset. \"Asia/Dhaka\" is a zone: a named region with a history of rules. \"+06:00\" is the offset those rules produce at one particular instant. Storing the offset loses the rules, which is why every card here shows the zone and works the offset out for the moment you are looking at.",
+                "p2": "Daylight saving is why that distinction matters. New York is −05:00 in January and −04:00 in July, so an event stored as \"−05:00\" and replayed in summer is an hour wrong. Each card here marks whether the zone is on daylight time at that instant.",
+                "p3": "Two moments each year are genuinely awkward. When clocks spring forward, an hour of wall-clock time never happens; a date written inside that hour is placed just after the jump. When clocks fall back, an hour happens twice; a date written inside it is read as the first of the two. Both choices match what other date libraries do, but if the exact hour matters, write the offset out.",
+                "p4": "The zone list here is the full IANA database, shipped as a fixed list rather than read from your browser. Browsers and servers ship slightly different versions of that database, and a picker whose options depended on which one you were on would break the moment a page rendered on a server and then came alive in a browser. If your browser's data is missing a zone you pinned, the card is left out and the tool says so."
+            },
+            "options": {
+                "title": "The controls",
+                "intro": "Four settings, and only the first two change how your input is read.",
+                "tableCaption": "Every control, what it does, and when to reach for it",
+                "colOption": "Control",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "unitName": "Read numbers as",
+                "unitDoes": "Fixes the scale a plain number is read at, instead of choosing one from its magnitude.",
+                "unitWhen": "The value is a FILETIME, .NET ticks or an Excel serial — or the automatic reading is wrong because the number is unusually small or large.",
+                "inputZoneName": "Input zone",
+                "inputZoneDoes": "Supplies a zone for input that carries none of its own, such as 2026-07-29T12:00:00 or a date you typed.",
+                "inputZoneWhen": "The log you are reading writes local times without an offset. It is ignored entirely when the input names its own.",
+                "pinnedZonesName": "Pinned zones",
+                "pinnedZonesDoes": "Adds up to four more cities to the board, alongside your own zone and UTC.",
+                "pinnedZonesWhen": "You are scheduling across teams, or checking what a deploy timestamp means to somebody else.",
+                "clockName": "The live clock",
+                "clockDoes": "Ticks the current Unix time, and drives the relative and day-count lines further down.",
+                "clockWhen": "You want the epoch for right now. Pause it if a moving number is distracting.",
+                "zoneNote": "The input zone and the pinned zones do different jobs and never interact. One decides how ambiguous input is read; the other decides how the answer is displayed. Changing which cities are on the board can never change the underlying instant.",
+                "defaultsNote": "The defaults read numbers by magnitude and treat zone-less input as UTC. UTC rather than your own zone on purpose: a bare timestamp in a log file is almost always UTC, and a default that changed with whoever opened the link would make a shared URL mean two different things."
+            },
+            "precision": {
+                "title": "Seconds, milliseconds, and the digits in between",
+                "p1": "The same instant is written four ways depending on how much precision the system that produced it kept. Seconds is the classic Unix form; milliseconds is what most languages hand you today; microseconds turns up in databases; nanoseconds in tracing and in Go.",
+                "p2": "Telling them apart is a matter of magnitude. A ten-digit number is seconds until roughly the year 5138; the same digit count in milliseconds would put you in 1973. Because those ranges do not overlap, reading the size of the number is reliable — which is what the automatic setting does.",
+                "p3": "Nanosecond timestamps are nineteen digits, which is more than a JavaScript number can hold exactly: 1785326400123456789 becomes 1785326400123456800 the moment it is treated as a number. Every scale here is computed with exact integers instead, so the digits you paste in are the digits you get back.",
+                "year2038": "A signed 32-bit second counter overflows on 19 January 2038, which is the Year 2038 problem. Nothing here is affected — the counts are arbitrary-precision — but a system that still stores time in a 32-bit integer is, and pasting a date past 2038 into this tool is a quick way to see what value it ought to be holding."
+            },
+            "useCases": {
+                "title": "When you need this",
+                "p1": "Reading a log. A line says 1785326400 and you need to know whether the incident was during business hours in Dhaka or overnight in New York. Paste it, pin both cities, and read both answers at once.",
+                "p2": "Writing a fixture. You need a timestamp for a test that expires next Tuesday, or the exact millisecond value for a date somebody described in prose. Type the date, copy the scale you need.",
+                "p3": "Debugging an id. A UUID v7 or a MongoDB ObjectId carries the moment it was created, so pasting the id tells you when the row was written without opening the database."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Why does my timestamp show a different time here than in my database?",
+                "a1": "Almost always a time zone difference rather than a wrong number. Databases usually display in the server's zone or in UTC, while the first card here shows yours. Compare the UTC card with what your database reports — if those agree, the timestamp is fine and only the display differs.",
+                "q2": "Should I store seconds or milliseconds?",
+                "a2": "Store whatever the systems around you already use, and write it down. Milliseconds is the more common default now and matches what JavaScript, Java and most JSON APIs produce. The real failure is not the choice but the mixture: a field holding seconds in some rows and milliseconds in others is off by a factor of a thousand, which reads as the year 1970 or the year 56000.",
+                "q3": "What time zone is used when my input has no offset?",
+                "a3": "The input zone setting, which defaults to UTC. A date such as 2026-07-29T12:00:00 is genuinely incomplete, so something has to supply the missing piece. This tool never uses your computer's own zone for that, because then the same link would mean different instants for different people.",
+                "q4": "Can I convert a date to a timestamp, rather than the other way round?",
+                "a4": "Yes — it is the same field. Type or paste a date in any of the formats above and the epoch values appear underneath, ready to copy. There is no separate mode to switch into.",
+                "q5": "Why does it refuse to read 07/08/2026?",
+                "a5": "Because that is 7 August in most of the world and 8 July in the United States, and there is no way to tell from the string which was meant. A tool that picks one quietly will eventually be wrong by weeks in a way nobody notices. Write it as 2026-07-08 or as 8 July 2026 and it will be read exactly.",
+                "q6": "Does any of this reach a server?",
+                "a6": "No. The parsing, the zone arithmetic and the formatting all run in your browser, using the time zone database that already ships with it. The page works with your network disconnected.",
+                "q7": "What is the earliest and latest date this handles?",
+                "a7": "Roughly 20 April 271821 BC to 13 September 275760 AD, which is the range a JavaScript date can hold. Anything outside it is reported as out of range rather than quietly wrapping around. Dates before the Gregorian reform are given in the proleptic Gregorian calendar — the modern rules, projected backwards."
             }
         }
     },

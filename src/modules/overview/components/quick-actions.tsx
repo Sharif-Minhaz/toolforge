@@ -3,8 +3,8 @@ import {
     IconBinary,
     IconBolt,
     IconBraces,
+    IconClock,
     IconKey,
-    IconPalette,
     IconStack2,
 } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
@@ -59,12 +59,12 @@ export async function QuickActions() {
             accent: "[--tool-accent:var(--brand-violet)]",
         },
         {
-            key: "colorConvert",
-            href: "/tools/color",
-            title: t("colorConvert.title"),
-            description: t("colorConvert.description"),
-            Icon: IconPalette,
-            accent: "[--tool-accent:var(--brand-amber)]",
+            key: "timestampNow",
+            href: "/tools/timestamp?t=now",
+            title: t("timestampNow.title"),
+            description: t("timestampNow.description"),
+            Icon: IconClock,
+            accent: "[--tool-accent:var(--brand-cyan)]",
         },
     ];
 

@@ -10,7 +10,7 @@ reasoning behind each rule — read it before a substantial change.
 
 ## Ways to contribute
 
-- **Build a planned tool.** Thirteen are listed in the catalogue with `status: "planned"`. This is
+- **Build a planned tool.** Seven are listed in the catalogue with `status: "planned"`. This is
   the most useful thing you can do, and the path is well worn — see [Adding a tool](#adding-a-tool).
 - **Improve a shipped tool.** More formats, better edge-case handling, clearer copy.
 - **Fix a bug.** Open an issue first if it is not obvious, so the fix and the report can be

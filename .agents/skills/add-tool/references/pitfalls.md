@@ -88,6 +88,22 @@ ladder) over invented ones.
   result, so the first paint is not empty.
 - Server and client must render the **same option lists**. Never filter a `<Select>` by a
   runtime capability probe; keep the list static and fail at conversion time instead.
+- **A runtime enumeration is a capability probe wearing a disguise.**
+  `Intl.supportedValuesOf("timeZone")` returns 419 entries in Bun and 418 in Node, and
+  browsers differ again — so a picker built from it renders different options on each side of
+  hydration. Freeze the list into a literal array in `domain/` and absorb the difference where
+  the value is used: probe by *doing the thing*
+  (`isFormattableTimeZone` calls `format` in a `try`), drop what fails, and tell the reader
+  what was dropped. `Intl.supportedValuesOf` for calendars, collations and currencies has the
+  same problem.
+- **`new Date(string)` reads the host's zone.** `new Date("2026-07-29T12:00:00")` — no
+  offset — is parsed against `process.env.TZ` on the server and the reader's zone in the
+  browser, so the same string becomes two different instants. Tokenise the fields yourself
+  and apply an explicit zone. Strings that *do* carry an offset (`Z`, `+06:00`, `GMT`) are
+  safe, but it is easier to have one code path than to remember which is which.
+- Anything the server genuinely cannot know — the reader's zone, their theme — goes behind
+  `useIsHydrated()`, with a fixed fallback for the server pass. Reading `Intl` or
+  `localStorage` during render is the same bug as generating in a `useState` initialiser.
 
 ## 5. Debounce, and what not to debounce
 

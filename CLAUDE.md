@@ -473,6 +473,31 @@ launching a browser:
 
 ---
 
+# Platform APIs That Read the Host
+
+Two platform behaviours look pure and are not. Both break in the same way: the
+server render and the hydration pass disagree, so the page flickers or throws.
+Both were found building the Timestamp tool.
+
+**Never `new Date(string)` on a value that carries no offset.**
+`new Date("2026-07-29T12:00:00")` is parsed against the *host's* zone. On the
+server that is the container's `TZ`, in the browser it is the reader's — the
+same string becomes two different instants. Parse the fields yourself and apply
+an explicit zone. See `timestamp/domain/parse.ts`; `timestamp/domain/zone.ts`
+holds the wall-clock ↔ instant arithmetic, built on `Intl` alone.
+
+**Never build an option list from a runtime enumeration.**
+`Intl.supportedValuesOf("timeZone")` returns 419 entries in Bun and 418 in
+Node, and browsers differ again. A `<Select>` populated from it renders
+different options on each side of hydration. Freeze the list into a literal
+array in `domain/` (`timestamp/domain/time-zone-list.ts`) and catch the
+difference where the value is *used* — `isFormattableTimeZone` probes by doing
+the thing, and the orchestrator drops what the local engine cannot render and
+says which. The same applies to `Intl.supportedValuesOf` for calendars,
+collations and currencies, and to `TextDecoder` labels.
+
+---
+
 # Documentation Is Part of the Change
 
 Code and the documents describing it ship together. Documentation drift is a
@@ -798,6 +823,9 @@ Checked by the maintainer, not by an automated browser run (see
 10. Verify both Light and Dark modes.
 11. Keep `domain/` free of React, `next-intl`, and I/O.
 12. Generate per-request values on the server and pass them down as props.
+    Never parse a zone-less date string with `new Date`, and never build an
+    option list from a runtime enumeration — both read the host and break
+    hydration. See **Platform APIs That Read the Host**.
 13. Restructure code to satisfy a lint rule; never disable the rule.
 14. Animate a server component through a wrapper from `components/motion/`.
     Never import `motion/react` into a server component, and never use
