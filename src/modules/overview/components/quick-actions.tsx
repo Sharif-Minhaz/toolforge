@@ -4,8 +4,8 @@ import {
     IconBolt,
     IconBraces,
     IconKey,
+    IconPalette,
     IconStack2,
-    IconTextScan2,
 } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
@@ -59,11 +59,11 @@ export async function QuickActions() {
             accent: "[--tool-accent:var(--brand-violet)]",
         },
         {
-            key: "aiTextDetector",
-            href: "/tools/ai-text-detector",
-            title: t("aiTextDetector.title"),
-            description: t("aiTextDetector.description"),
-            Icon: IconTextScan2,
+            key: "colorConvert",
+            href: "/tools/color",
+            title: t("colorConvert.title"),
+            description: t("colorConvert.description"),
+            Icon: IconPalette,
             accent: "[--tool-accent:var(--brand-amber)]",
         },
     ];

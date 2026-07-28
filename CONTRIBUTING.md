@@ -376,6 +376,11 @@ Work in this order. Each step has a rule that is easy to skip.
 8. **Wire the overview.** Flip the catalog entry to `status: "available"`, extend the client message
    slice in `src/app/layout.tsx`, and add a Quick Action in
    `src/modules/overview/components/quick-actions.tsx` with copy in both locales.
+9. **Update the docs in the same pull request.** Add the tool to the table in
+   [README.md](README.md#tools) and take it out of the planned list. If it needs configuration of
+   its own, add every variable to `example.env` _and_ the README's environment table; if it changes
+   how contributors work, update this file too. A tool that ships without its documentation is not
+   finished — a reader landing on the README should never be told a shipped tool is still planned.
 
 Reuse what exists rather than rebuilding it:
 

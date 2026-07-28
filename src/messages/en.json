@@ -138,7 +138,7 @@
         },
         "color": {
             "name": "Color Converter",
-            "description": "Convert between HEX, RGB, HSL, and OKLCH with live previews."
+            "description": "Convert between HEX, RGB, HSL, HSV, CMYK and OKLCH, check contrast, and generate a scale."
         },
         "cron": {
             "name": "Cron Parser",
@@ -239,9 +239,9 @@
                 "title": "Beautify JSON",
                 "description": "Paste a single-line payload and read it properly, with any error pinned to its line."
             },
-            "aiTextDetector": {
-                "title": "Check text for AI",
-                "description": "Paste a passage and see whether a language model likely wrote it."
+            "colorConvert": {
+                "title": "Convert a colour",
+                "description": "Paste any HEX, RGB or HSL value and read it back in every other notation."
             }
         },
         "featured": {
@@ -2354,6 +2354,259 @@
                 "a5": "Yes. Every source is public domain, and generated placeholder text carries no rights of its own. Use it in client work, in products, in published templates — no attribution needed.",
                 "q6": "Why are emoji and pangrams in a lorem ipsum tool?",
                 "a6": "Because they catch layout bugs that prose hides. A pangram exercises every letter, which surfaces a missing glyph or an awkward pair in a webfont; emoji are astral characters that stress line height, alignment and any code that counts characters by UTF-16 unit."
+            }
+        }
+    },
+    "color": {
+        "meta": {
+            "title": "Color Converter",
+            "description": "Convert any colour between HEX, RGB, HSL, HSV, CMYK and OKLCH, check WCAG contrast against black and white, generate a 50–950 scale, and browse the full Tailwind and CSS named palettes. Everything runs in your browser."
+        },
+        "hero": {
+            "eyebrow": "Color Converter",
+            "title": "Color Converter",
+            "subtitle": "Paste a colour in any notation, or pick one on the wheel. Read it back as HEX, RGB, HSL, HSV, CMYK or OKLCH, see how it fares against WCAG contrast, and lift a ready-made 50–950 scale straight into your stylesheet.",
+            "badgeFormats": "6 formats",
+            "badgeContrast": "WCAG contrast",
+            "badgeOffline": "Runs offline"
+        },
+        "workbench": {
+            "title": "Pick a colour",
+            "description": "Type any notation the browser understands, drag the square, or pull a swatch out of either palette below.",
+            "inputLabel": "Colour",
+            "inputPlaceholder": "#7c5cff, rgb(124 92 255), hsl(252 100% 68%), tomato…",
+            "hint": "Accepts HEX, RGB, HSL, HSV, CMYK, OKLCH and CSS keywords.",
+            "reading": "Reading…",
+            "readAs": "Read as {syntax}.",
+            "pick": "Pick",
+            "random": "Random",
+            "download": "Export"
+        },
+        "syntaxes": {
+            "hex": "HEX",
+            "rgb": "RGB",
+            "hsl": "HSL",
+            "hsv": "HSV",
+            "cmyk": "CMYK",
+            "oklch": "OKLCH",
+            "named": "a CSS keyword"
+        },
+        "picker": {
+            "field": "Saturation and brightness",
+            "fieldValue": "Saturation {saturation}%, brightness {value}%",
+            "hue": "Hue",
+            "alpha": "Opacity"
+        },
+        "formats": {
+            "copy": "Copy the {format} value",
+            "alphaDropped": "CMYK has no opacity channel, so the alpha is left out.",
+            "hex": {
+                "label": "HEX"
+            },
+            "rgb": {
+                "label": "RGB"
+            },
+            "hsl": {
+                "label": "HSL"
+            },
+            "hsv": {
+                "label": "HSV"
+            },
+            "cmyk": {
+                "label": "CMYK"
+            },
+            "oklch": {
+                "label": "OKLCH"
+            }
+        },
+        "options": {
+            "notation": {
+                "label": "CSS notation",
+                "hint": "OKLCH is always space separated; CSS has never had a comma form for it.",
+                "modern": "Modern — rgb(124 92 255)",
+                "legacy": "Legacy — rgb(124, 92, 255)"
+            },
+            "hexCasing": {
+                "label": "Hex case",
+                "hint": "Affects the HEX row and the generated scale only.",
+                "lower": "Lower case — #7c5cff",
+                "upper": "Upper case — #7C5CFF"
+            }
+        },
+        "matches": {
+            "exact": "Exactly {hex}.",
+            "approximate": "Nearest is {hex}, ΔE {distance}.",
+            "tailwind": {
+                "label": "Closest Tailwind colour"
+            },
+            "css": {
+                "label": "Closest CSS keyword"
+            }
+        },
+        "contrast": {
+            "title": "Contrast",
+            "ratio": "{value}:1",
+            "uiPass": "At least one of the two clears 3:1, so this colour can carry an icon, a border, or a focus ring.",
+            "uiFail": "Neither pairing clears 3:1, so this colour cannot carry an icon, a border, or a focus ring on its own.",
+            "recommendation": {
+                "black": "Black text reads better here.",
+                "white": "White text reads better here."
+            },
+            "sample": {
+                "black": "Black text on this colour",
+                "white": "White text on this colour"
+            },
+            "levels": {
+                "aaa": "AAA — passes everywhere",
+                "aa": "AA — passes for body text",
+                "aaLarge": "AA Large — headings only",
+                "fail": "Fails — not enough contrast"
+            }
+        },
+        "scale": {
+            "title": "Generated scale",
+            "description": "A Tailwind-shaped ladder built from your colour in OKLCH, so the steps stay evenly spaced. The outlined rung is the one nearest what you picked.",
+            "copy": "Copy step {step}, {hex}",
+            "copied": "Copied"
+        },
+        "palette": {
+            "title": "Palette browser",
+            "description": "Every built-in swatch, one click from the picker.",
+            "tailwindNote": "Read straight out of the Tailwind CSS {version} stylesheet.",
+            "cssNote": "All {count} colour keywords defined by CSS Color Module Level 4.",
+            "tabs": {
+                "tailwind": "Tailwind",
+                "css": "CSS keywords"
+            }
+        },
+        "errors": {
+            "tooLong": "That is far longer than any colour value; check what was pasted.",
+            "unrecognised": "That is not a colour this tool recognises."
+        },
+        "toast": {
+            "copied": "Copied {value}.",
+            "copyFailedUnsupported": "This browser will not give the page clipboard access.",
+            "copyFailedDenied": "Clipboard permission was denied.",
+            "copyFailedEmpty": "There is nothing to copy yet.",
+            "downloaded": "Saved {filename}.",
+            "downloadFailed": "The download could not be started."
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "One colour, six ways of writing it down",
+                "p1": "A colour on a screen is three numbers: how much red, green and blue each pixel emits. Every notation on this page describes that same triple — HEX packs it into six digits, RGB spells it out, HSL and HSV rearrange it into something a person can reason about, CMYK restates it as ink, and OKLCH places it on a perceptual axis. Converting between them changes the spelling, not the colour.",
+                "p2": "Which one you reach for depends on what you are about to do. HEX is the shortest thing to paste into a design file. HSL is the one to nudge when you want the same hue a little lighter. OKLCH is the one to build a scale in, because equal steps in it look like equal steps. CMYK is the one your print shop asks for.",
+                "p3": "The tool keeps a single colour in memory and renders it six ways at once, so switching notation costs nothing and nothing drifts between them. Everything is computed in the page — no colour you paste is ever sent anywhere."
+            },
+            "models": {
+                "title": "The six notations",
+                "intro": "What each model measures, and the job it is actually good at.",
+                "tableCaption": "Colour models, their channels, and what each is best suited to",
+                "colModel": "Model",
+                "colChannels": "Channels",
+                "colBestFor": "Best for",
+                "hexName": "HEX",
+                "hexChannels": "#RRGGBB, #RRGGBBAA",
+                "hexBestFor": "Pasting anywhere. The shortest unambiguous form, and the one every design tool accepts.",
+                "rgbName": "RGB",
+                "rgbChannels": "0–255 each",
+                "rgbBestFor": "Talking to code that manipulates pixels directly — canvas, image processing, shaders.",
+                "hslName": "HSL",
+                "hslChannels": "0–360°, 0–100%, 0–100%",
+                "hslBestFor": "Hand-tuning. Hold the hue and move lightness to get a tint or a shade of the same colour.",
+                "hsvName": "HSV",
+                "hsvChannels": "0–360°, 0–100%, 0–100%",
+                "hsvBestFor": "Colour pickers. Saturation and brightness stay independent, which is why the square above uses it.",
+                "cmykName": "CMYK",
+                "cmykChannels": "0–100% each",
+                "cmykBestFor": "Print handoff. A rough separation into cyan, magenta, yellow and key black.",
+                "oklchName": "OKLCH",
+                "oklchChannels": "0–100%, 0–0.4, 0–360°",
+                "oklchBestFor": "Building scales and palettes. Equal steps in lightness look equal, which HSL cannot promise.",
+                "gamutNote": "OKLCH can describe colours no ordinary screen can show. When a value falls outside sRGB, the tool walks its chroma down until it fits rather than clipping the channels — clipping shifts the hue, which is exactly what makes a hand-built scale look wrong at its saturated end.",
+                "cmykNote": "The CMYK figures here are the device-independent conversion every design tool shows, not a colour-managed separation. A real print profile needs an ICC transform and the paper stock it will be printed on; treat these numbers as a starting point to hand to a printer, not as the final plate values."
+            },
+            "controls": {
+                "title": "Every control on the page",
+                "intro": "Nine controls, and what each one is for.",
+                "tableCaption": "Controls, what each does, and when to reach for it",
+                "colControl": "Control",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "inputName": "Colour field",
+                "inputDoes": "Reads HEX, RGB, HSL, HSV, CMYK, OKLCH or a CSS keyword and tells you which one it saw.",
+                "inputWhen": "You already have a value and want it in another notation.",
+                "squareName": "Saturation square",
+                "squareDoes": "Sets saturation left to right and brightness bottom to top, at the current hue.",
+                "squareWhen": "You are looking for a colour rather than converting one.",
+                "hueName": "Hue slider",
+                "hueDoes": "Sweeps the full 360° of hue without touching saturation or brightness.",
+                "hueWhen": "You have the right tone and want a different colour family.",
+                "alphaName": "Opacity slider",
+                "alphaDoes": "Sets alpha from fully clear to fully opaque, carried into every notation that has room for it.",
+                "alphaWhen": "You need a translucent overlay, scrim, or tint.",
+                "notationName": "CSS notation",
+                "notationDoes": "Switches the RGB, HSL, HSV and CMYK rows between the modern space-separated form and the legacy comma form.",
+                "notationWhen": "Your codebase has a house style, or you are supporting a browser that predates the modern syntax.",
+                "hexCasingName": "Hex case",
+                "hexCasingDoes": "Writes hex digits in lower or upper case.",
+                "hexCasingWhen": "Your linter or design system insists on one of them.",
+                "randomName": "Random",
+                "randomDoes": "Jumps to a random colour drawn away from the washed-out greys a uniform draw would land on.",
+                "randomWhen": "You want a starting point rather than a specific colour.",
+                "eyedropperName": "Pick",
+                "eyedropperDoes": "Opens the browser's eyedropper and reads a pixel from anywhere on your screen.",
+                "eyedropperWhen": "The colour you want is on screen but not in a file you can read.",
+                "downloadName": "Export",
+                "downloadDoes": "Downloads a stylesheet holding the colour, the other five notations as a comment, and the whole generated scale as custom properties.",
+                "downloadWhen": "You are ready to drop the scale into a theme.",
+                "alphaNote": "CMYK is the one row that cannot carry opacity — there is no alpha channel in the model. When the colour is translucent, that row says so rather than silently pretending the colour is solid.",
+                "notationNote": "The notation switch deliberately leaves OKLCH alone. CSS has never defined a comma form for it, so writing one would produce a declaration no browser accepts.",
+                "clampNote": "Out-of-range channels are clamped rather than rejected, which is what a browser does with rgb(300 0 0). Pasting what a stylesheet actually contains should show you what the browser actually renders.",
+                "defaultsNote": "The defaults are modern notation and lower-case hex, matching what CSS Color 4 and most linters prefer. Both settings change the spelling only; neither one touches the colour itself, and neither is carried into the eyedropper or the palette browser."
+            },
+            "contrast": {
+                "title": "Contrast, and what the grades mean",
+                "p1": "WCAG measures legibility as a ratio between the relative luminance of two colours, running from 1:1 for identical colours to 21:1 for black on white. Body text needs 4.5:1 to reach AA and 7:1 to reach AAA. Large text — roughly 24px, or 19px bold — only needs 3:1. Icons, borders and focus rings need 3:1 under Success Criterion 1.4.11.",
+                "p2": "The panel checks your colour as a background against the two text colours every design starts from. It grades on the exact ratio and only rounds afterwards: a pairing at 4.497:1 displays as 4.50 but is still a failure, and showing it as a pass would be worse than showing nothing.",
+                "p3": "Opacity is left out of the calculation on purpose. A translucent colour's real contrast depends on whatever sits behind it, which this page cannot know. If you are building a scrim, flatten it against its actual backdrop first and check that colour instead."
+            },
+            "scales": {
+                "title": "How the generated scale is built",
+                "p1": "The ladder borrows its proportions from Tailwind's own palette rather than inventing them. Each rung takes a reference family's lightness outright, and scales your colour's chroma by that rung's share of the family's 500 — so the pale end stays pale without turning muddy, and the dark end keeps its identity.",
+                "p2": "Every step is computed in OKLCH. That matters: an HSL lightness ramp bunches the mid tones together and washes out both ends, because HSL lightness is not perceptual. Stepping through OKLCH gives you rungs that actually look evenly spaced.",
+                "p3": "The outlined rung is whichever step sits nearest your colour on the lightness axis, so you can see where what you picked would land in a Tailwind-shaped theme. Export writes the whole ladder out as custom properties, ready to paste into a :root or @theme block."
+            },
+            "palettes": {
+                "title": "Where the palettes come from",
+                "p1": "The Tailwind swatches are read straight out of the stylesheet shipped with Tailwind CSS {version} in this project, not transcribed from documentation. They are the exact OKLCH values your build compiles, which is why the closest-match badge can be trusted against a real theme.",
+                "p2": "The CSS keywords are the full set defined by CSS Color Module Level 4 — the ones you can write as tomato or rebeccapurple in a stylesheet. Several are aliases of each other: aqua and cyan are the same colour, as are grey and gray, magenta and fuchsia.",
+                "p3": "Closest-match distance is measured in OKLab rather than RGB. RGB distance calls a pair of dark blues further apart than a pair of light greens that plainly differ, which produces obviously wrong answers; OKLab tracks what the eye actually reports."
+            },
+            "useCases": {
+                "title": "What people use it for",
+                "p1": "Translating a handoff. A designer sends HSL, the stylesheet wants OKLCH, and the icon export wants HEX. Paste once and copy whichever row the next tool needs.",
+                "p2": "Checking a brand colour before committing to it. Drop the hex in, look at the contrast panel, and find out immediately whether body text will be legible on it or whether it can only carry headings.",
+                "p3": "Building a theme from a single colour. Pick the brand hue, take the generated 50–950 ladder, and export it as custom properties instead of hand-tuning eleven values.",
+                "close": "Nothing you paste leaves the page. There is no upload, no request, and no log — the whole conversion is a few hundred lines of arithmetic running in your own browser."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Why does the same colour give a different HSL and HSV?",
+                "a1": "They measure different things. HSL's lightness runs from black through the pure hue to white, so a pure red sits at 50%. HSV's value runs from black to the pure hue, so the same red sits at 100%. Neither is wrong; HSV is what colour pickers use because saturation and brightness stay independent of each other.",
+                "q2": "Are the CMYK numbers safe to send to a printer?",
+                "a2": "As a starting point, yes. As final plate values, no. This is the device-independent conversion every design tool shows, with no ICC profile, no paper stock, and no ink limit behind it. Give them to your printer as an indication of intent and let their profile do the real separation.",
+                "q3": "What is OKLCH, and why does the scale use it?",
+                "a3": "OKLCH describes a colour as lightness, chroma and hue on a perceptually uniform axis, which means a ten-point step looks like a ten-point step wherever you take it. HSL does not have that property, so an HSL ramp produces a scale whose middle is crowded and whose ends are washed out. Every modern browser supports oklch() in CSS.",
+                "q4": "Why does the closest Tailwind match sometimes name a colour I do not recognise?",
+                "a4": "The palette is read from the Tailwind version installed in this project, which includes every family that version ships. Several families also round to the same 8-bit value at their palest and darkest ends, so which of them wins a tie is arbitrary — the hex beside the name is what matters.",
+                "q5": "Can I share a link that opens on a specific colour?",
+                "a5": "Yes. Add ?color= to the URL with any value the field accepts, remembering to encode the hash as %23 — /tools/color?color=%23c46895 works, as does /tools/color?color=tomato. You can pin the notation and hex case the same way with ?notation=legacy and ?hexCase=upper.",
+                "q6": "Why is the eyedropper button missing?",
+                "a6": "It only appears where the browser provides the EyeDropper API, which today means Chrome, Edge and other Chromium-based browsers on the desktop. Everywhere else the button is not rendered at all, rather than shown and then failing when pressed."
             }
         }
     },

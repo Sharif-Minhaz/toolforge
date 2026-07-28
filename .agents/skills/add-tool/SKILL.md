@@ -30,7 +30,7 @@ structure; do not invent a second way to do the same thing.
 | A control added, removed, or changed on an existing tool | *When a tool's controls change later* |
 | Restructuring, extracting, renaming, or tidying existing tool code | *Refactoring an existing tool* |
 
-The last two still end at *Step 9 — verify, then hand off*. Every path finishes with the
+The last two still end at *Step 10 — verify, then hand off*. Every path finishes with the
 same checks.
 
 ---
@@ -167,7 +167,28 @@ defaults assume. See `base64.article.options`.
   flipping the status is what publishes the route. Confirm it appears rather than assuming it —
   a tool left at `"planned"` is silently absent from the sitemap.
 
-## Step 9 — verify, then hand off
+## Step 9 — update the documentation
+
+A tool is not shipped until the docs stop describing the repository as it was before it.
+Documentation drift is a defect in *this* change, never a follow-up.
+
+- **`README.md` Tools table** — add the row (name, route, category, one line on what it does)
+  and remove the tool from the planned list underneath.
+- **`example.env` and the README environment table** — together, never one without the other.
+  Say what each variable is for and what degrades when it is blank.
+- **README configuration table** — any new top-level config file, or a change to what an
+  existing one owns.
+- **README Scripts table** — any new `package.json` script.
+- **README project structure** — any new directory under `src/modules/<feature>/`.
+- **`CONTRIBUTING.md`** — only when the tool changes how contributors work: a new shared
+  component worth reusing, a new directory in the module layout, a new verification step.
+- **`CLAUDE.md`** — only when the tool establishes a pattern the next one should follow, or a
+  trap the next author would otherwise walk into.
+
+Re-read the sections you touched and ask whether they are still true. A reader landing on the
+README must never be told a shipped tool is still planned.
+
+## Step 10 — verify, then hand off
 
 Always, and always all four:
 

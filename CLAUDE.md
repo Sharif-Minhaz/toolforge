@@ -447,7 +447,11 @@ server component, never part of the island.
 `id`s and a TOC entry. Cap prose at `max-w-[68ch]`; let tables break out inside
 `overflow-x-auto`.
 
-**8. Verify before calling it done.** These four are cheap — always run them:
+**8. Update the repository documentation in the same change.** A tool is not
+shipped until the docs stop describing the repository as it was before it. See
+**Documentation Is Part of the Change** below for exactly what to touch.
+
+**9. Verify before calling it done.** These four are cheap — always run them:
 
 ```bash
 bun test
@@ -466,6 +470,47 @@ launching a browser:
 - sidebar expanded and collapsed
 - at 390px, `document.documentElement.scrollWidth === window.innerWidth`
   (grid children need `min-w-0` or wide content blows out the page)
+
+---
+
+# Documentation Is Part of the Change
+
+Code and the documents describing it ship together. Documentation drift is a
+defect in the change that caused it, never a follow-up ticket — a reader landing
+on the README should never be told a shipped tool is still planned, or be given
+a variable list that does not start the app.
+
+### When a new tool ships
+
+Flipping a catalog entry to `status: "available"` obliges all of:
+
+- **`README.md`** — add the tool to the **Tools** table with its route, category
+  and a one-line description, and remove it from the planned list underneath.
+- **`example.env`** — every variable the tool reads, with a comment saying what
+  it is for and what happens when it is blank.
+- **`README.md` environment table** — the same variables, with whether they are
+  required and what degrades without them.
+- **`README.md` configuration table** — any new config file, or a change to what
+  an existing one is responsible for.
+- **`CONTRIBUTING.md`** — only when the tool changes how contributors work: a new
+  shared component worth reusing, a new directory in the module layout, a new
+  verification step.
+- **`CLAUDE.md`** — only when the tool establishes a pattern the next one should
+  follow, or a trap the next author would otherwise walk into.
+
+### When anything else changes
+
+- A new script in `package.json` → the **Scripts** table.
+- A new environment variable → `example.env` and the environment table, together.
+- A new directory under `src/modules/<feature>/` → the project-structure block.
+- A new top-level config file → the configuration table.
+- A dependency that changes how the project is run or built → **Getting started**.
+
+### The rule
+
+Before calling any change done, re-read the sections of `README.md` it touches
+and ask whether they are still true. If a table, list, or count has gone stale,
+it is part of this change, not the next one.
 
 ---
 
@@ -763,5 +808,8 @@ Checked by the maintainer, not by an automated browser run (see
     needs looking at.
 17. Never commit, push, branch, or open a PR unless that exact action was
     asked for in that message.
-18. Keep implementations simple.
-19. Leave the codebase cleaner than you found it.
+18. Ship documentation with the code. A new tool updates the README's tool
+    table; a new variable updates `example.env` and the environment table
+    together. Stale docs are a defect in the change that caused them.
+19. Keep implementations simple.
+20. Leave the codebase cleaner than you found it.

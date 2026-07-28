@@ -71,6 +71,13 @@ describe("tool catalog", () => {
         expect(lorem?.href).toBe("/tools/lorem");
     });
 
+    test("ships the colour converter", () => {
+        const color = getToolById("color");
+
+        expect(color?.status).toBe("available");
+        expect(color?.href).toBe("/tools/color");
+    });
+
     test("counts available and planned tools consistently", () => {
         const stats = getToolCatalogStats();
 
