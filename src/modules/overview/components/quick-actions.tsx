@@ -4,7 +4,7 @@ import {
     IconBolt,
     IconBraces,
     IconKey,
-    IconMarkdown,
+    IconRegex,
     IconStack2,
 } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
@@ -35,14 +35,6 @@ export async function QuickActions() {
             accent: "[--tool-accent:var(--brand-cyan)]",
         },
         {
-            key: "markdownPreview",
-            href: "/tools/markdown",
-            title: t("markdownPreview.title"),
-            description: t("markdownPreview.description"),
-            Icon: IconMarkdown,
-            accent: "[--tool-accent:var(--brand-amber)]",
-        },
-        {
             key: "base64Decode",
             href: "/tools/base64?mode=decode",
             title: t("base64Decode.title"),
@@ -65,6 +57,14 @@ export async function QuickActions() {
             description: t("jsonBeautify.description"),
             Icon: IconBraces,
             accent: "[--tool-accent:var(--brand-violet)]",
+        },
+        {
+            key: "regexTest",
+            href: "/tools/regex",
+            title: t("regexTest.title"),
+            description: t("regexTest.description"),
+            Icon: IconRegex,
+            accent: "[--tool-accent:var(--brand-amber)]",
         },
     ];
 

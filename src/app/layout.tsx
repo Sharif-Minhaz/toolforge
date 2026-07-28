@@ -147,6 +147,14 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.markdown.errors,
             toast: messages.markdown.toast,
         },
+        regex: {
+            workbench: messages.regex.workbench,
+            explain: messages.regex.explain,
+            controlEscapes: messages.regex.controlEscapes,
+            matches: messages.regex.matches,
+            errors: messages.regex.errors,
+            toast: messages.regex.toast,
+        },
     };
 
     return (

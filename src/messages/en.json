@@ -129,7 +129,7 @@
         },
         "regex": {
             "name": "Regex Tester",
-            "description": "Match, highlight, and explain regular expressions as you type."
+            "description": "Match, explain, and replace with regular expressions — live, with every capture group listed."
         },
         "lorem": {
             "name": "Lorem Ipsum",
@@ -225,10 +225,6 @@
                 "title": "Bulk v4 batch",
                 "description": "Generate 100 identifiers at once."
             },
-            "markdownPreview": {
-                "title": "Preview a README",
-                "description": "Paste markdown and read it rendered, side by side"
-            },
             "base64Decode": {
                 "title": "Decode Base64",
                 "description": "Paste an encoded string and read it back."
@@ -240,6 +236,10 @@
             "jsonBeautify": {
                 "title": "Beautify JSON",
                 "description": "Paste a single-line payload and read it properly, with any error pinned to its line."
+            },
+            "regexTest": {
+                "title": "Test a regex",
+                "description": "Match a pattern against sample text, with every token explained."
             }
         },
         "featured": {
@@ -1817,6 +1817,318 @@
                 "a5": "Mermaid has to measure rendered text to lay a graph out, so it cannot run before the page reaches a browser, and it is roughly a megabyte of JavaScript that is only downloaded when a document actually contains a diagram. The rest of the preview renders immediately; the diagram fills in a moment later.",
                 "q6": "How large a document can it handle?",
                 "a6": "Up to 250,000 characters, which is several hundred printed pages. Past that the preview reports the limit rather than locking the tab up: parsing runs on the same thread as the interface, so an unbounded document would stop you typing."
+            }
+        }
+    },
+    "regex": {
+        "meta": {
+            "title": "Regex Tester — Match, Explain, and Replace, Live in Your Browser",
+            "description": "Test regular expressions with live match highlighting, a token-by-token explanation, capture-group detail, and substitution and list modes. Share the whole state as a link. Runs on the JavaScript engine, off the main thread, so a runaway pattern cannot freeze the tab. Nothing is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Text",
+            "title": "Regex Tester",
+            "subtitle": "Write a pattern and watch it match as you type — every token explained in plain words, every capture group listed with its position, and a substitution preview that shows exactly what String.replace would produce. Share the whole thing as a link.",
+            "badgeEngine": "JavaScript engine",
+            "badgeOffline": "Works offline",
+            "badgeExplain": "Explains every token"
+        },
+        "workbench": {
+            "title": "Test a regular expression",
+            "description": "Type a pattern, paste something to run it against, and the matches update as you go.",
+            "modeLabel": "Mode",
+            "modes": {
+                "match": "Match",
+                "substitute": "Substitution",
+                "list": "List"
+            },
+            "patternLabel": "Regular expression",
+            "patternPlaceholder": "insert your regular expression here",
+            "copyPattern": "Copy as a literal",
+            "delimiterLabel": "Delimiter",
+            "delimiters": {
+                "slash": "Slash",
+                "tilde": "Tilde",
+                "at": "At sign",
+                "semicolon": "Semicolon",
+                "percent": "Percent",
+                "backtick": "Backtick",
+                "hash": "Hash"
+            },
+            "flagsLabel": "Flags",
+            "noFlags": "none",
+            "flags": {
+                "global": {
+                    "name": "global",
+                    "hint": "Find every match, not only the first"
+                },
+                "multiline": {
+                    "name": "multiline",
+                    "hint": "^ and $ match at line boundaries"
+                },
+                "ignoreCase": {
+                    "name": "insensitive",
+                    "hint": "Case-insensitive matching"
+                },
+                "dotAll": {
+                    "name": "single line",
+                    "hint": "Dot matches line terminators"
+                },
+                "extended": {
+                    "name": "extended",
+                    "hint": "Ignore unescaped whitespace and # comments"
+                },
+                "unicode": {
+                    "name": "unicode",
+                    "hint": "Unicode-aware matching, and \\p{…} properties"
+                },
+                "ungreedy": {
+                    "name": "ungreedy",
+                    "hint": "Quantifiers become lazy by default"
+                },
+                "sticky": {
+                    "name": "sticky",
+                    "hint": "Match only where the last one ended"
+                }
+            },
+            "statMatches": "Matches",
+            "statGroups": "Groups",
+            "statTime": "Time",
+            "statTruncated": "{count, number}+",
+            "milliseconds": "{value} ms",
+            "testStringLabel": "Test string",
+            "testStringPlaceholder": "insert your test string here",
+            "clear": "Clear",
+            "download": "Download",
+            "share": "Share",
+            "substituteLabel": "Substitution",
+            "listLabel": "List",
+            "substitutePlaceholder": "insert your replacement value here",
+            "listPlaceholder": "leave empty to list each match whole",
+            "replacementHint": "Tokens:",
+            "resultLabel": "Result",
+            "resultPlaceholder": "The result will appear here",
+            "copy": "Copy",
+            "explanationTitle": "Explanation",
+            "explanationEmpty": "The explanation appears as soon as there is a pattern to read.",
+            "matchInformationTitle": "Match information",
+            "statusWorking": "Working…",
+            "statusIdle": "Write a pattern to begin.",
+            "statusMatched": "{count, plural, one {# match} other {# matches}} found.",
+            "statusNoMatches": "The pattern is valid, but nothing in the test string matches it."
+        },
+        "explain": {
+            "anchorStartLine": "asserts position at the start of a line",
+            "anchorStartString": "asserts position at the start of the string",
+            "anchorEndLine": "asserts position at the end of a line",
+            "anchorEndString": "asserts position at the end of the string",
+            "wordBoundary": "asserts position at a word boundary",
+            "nonWordBoundary": "asserts position where there is no word boundary",
+            "literalText": "matches the characters {text} literally",
+            "literalChar": "matches the character {char} with index {code} ({hex}) literally",
+            "dot": "matches any character except a line terminator",
+            "dotAll": "matches any character, line terminators included",
+            "shorthandDigit": "matches any digit, equivalent to [0-9]",
+            "shorthandNonDigit": "matches any character that is not a digit",
+            "shorthandWord": "matches any word character, equivalent to [a-zA-Z0-9_]",
+            "shorthandNonWord": "matches any character that is not a word character",
+            "shorthandSpace": "matches any whitespace character",
+            "shorthandNonSpace": "matches any character that is not whitespace",
+            "unicodeProperty": "matches any character carrying the Unicode property {property}",
+            "unicodePropertyNegated": "matches any character not carrying the Unicode property {property}",
+            "controlEscape": "matches a {name} character ({hex})",
+            "controlLetter": "matches the control character named by {letter}",
+            "codePointEscape": "matches the character {char} with index {code} ({hex})",
+            "characterClass": "matches a single character present in the list below",
+            "characterClassNegated": "matches a single character not present in the list below",
+            "classRange": "matches a single character in the range {from} to {to}",
+            "backreference": "matches whatever group {index, number} matched most recently",
+            "namedBackreference": "matches whatever the group named {name} matched most recently",
+            "captureGroup": "capturing group {index, number}",
+            "namedGroup": "capturing group {index, number}, named {name}",
+            "nonCapturingGroup": "groups the tokens below without capturing them",
+            "lookahead": "positive lookahead — asserts that what follows matches",
+            "negativeLookahead": "negative lookahead — asserts that what follows does not match",
+            "lookbehind": "positive lookbehind — asserts that what precedes matches",
+            "negativeLookbehind": "negative lookbehind — asserts that what precedes does not match",
+            "atomicGroup": "atomic group — PCRE only, and not something JavaScript can run",
+            "modifierGroup": "turns on the flags {modifiers} from here on",
+            "recursion": "recursion — PCRE only, and not something JavaScript can run",
+            "comment": "a comment; it matches nothing",
+            "alternation": "matches one of {count, number} alternatives",
+            "alternationBranch": "alternative {index, number}",
+            "quantifierOptional": "matches the previous token zero or one time",
+            "quantifierZeroOrMore": "matches the previous token zero or more times",
+            "quantifierOneOrMore": "matches the previous token one or more times",
+            "quantifierExactly": "matches the previous token exactly {count, number} times",
+            "quantifierAtLeast": "matches the previous token at least {min, number} times",
+            "quantifierBetween": "matches the previous token between {min, number} and {max, number} times",
+            "unknown": "not valid ECMAScript syntax",
+            "greediness": {
+                "greedy": "greedy — as many as possible, giving back as needed",
+                "lazy": "lazy — as few as possible, expanding as needed",
+                "possessive": "possessive — as many as possible, never giving back"
+            }
+        },
+        "controlEscapes": {
+            "newline": "line feed",
+            "carriageReturn": "carriage return",
+            "tab": "tab",
+            "formFeed": "form feed",
+            "verticalTab": "vertical tab",
+            "nul": "null",
+            "backspace": "backspace"
+        },
+        "matches": {
+            "matchOrdinal": "Match {ordinal}",
+            "range": "{start}–{end}",
+            "emptyMatch": "empty match",
+            "groupNumber": "${index}",
+            "groupNamed": "${index} {name}",
+            "didNotParticipate": "did not participate",
+            "emptyString": "empty string",
+            "noMatches": "Nothing in the test string matches this pattern yet.",
+            "blocked": "Fix the pattern above and the matches will appear here.",
+            "truncated": "Stopped after {count} matches. Narrow the pattern or shorten the input to see the rest."
+        },
+        "errors": {
+            "patternTooLong": "That pattern is longer than {limit, number} characters. Trim it and try again.",
+            "inputTooLong": "The test string is longer than {limit, number} characters. Trim it and try again.",
+            "replacementTooLong": "The replacement is longer than {limit, number} characters. Trim it and try again.",
+            "invalidPattern": "The engine rejected this pattern: {detail}",
+            "unsupportedConstruct": "{construct} at position {position} is PCRE syntax. JavaScript has no equivalent, so this pattern cannot run here.",
+            "timedOut": "This pattern took too long and was stopped. It is almost certainly backtracking — see the catastrophic-backtracking section below.",
+            "nestedQuantifier": "{source} nests one quantifier inside another. On input that nearly matches, that shape can take exponential time."
+        },
+        "toast": {
+            "patternCopied": "Pattern copied as a literal",
+            "outputCopied": "Result copied to clipboard",
+            "literalPasted": "Read the pattern, flags, and delimiter from the pasted literal",
+            "copyFailedUnsupported": "Your browser blocked clipboard access",
+            "copyFailedDenied": "Clipboard permission was denied",
+            "copyFailedEmpty": "Nothing to copy yet",
+            "downloaded": "Downloaded {filename}",
+            "downloadFailed": "The download could not be started",
+            "linkCopied": "Link copied — it reopens this pattern, flags, and input",
+            "linkCopiedTrimmed": "Link copied. The test string was too long to include, so the link carries the pattern only.",
+            "linkTooLong": "That pattern is too long to fit in a shareable link."
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "What a regular expression is",
+                "p1": "A regular expression is a small pattern language for describing shapes of text. Instead of asking whether a string equals something, you describe what it must look like — four digits, then a hyphen, then two more digits — and the engine reports every place that shape occurs.",
+                "p2": "Most characters stand for themselves: the pattern cat matches the letters c, a, t. The power comes from the handful that do not. A dot means any character, a plus means one or more of whatever came before, square brackets enclose a set to choose from, and parentheses group a run so a quantifier or an alternation can act on the whole of it.",
+                "p3": "Reading one is a matter of taking it token by token, which is exactly what the Explanation panel does. Every line names one construct and quotes the slice of the pattern it describes, nested so a quantifier sits under the token it repeats."
+            },
+            "syntax": {
+                "title": "The building blocks",
+                "intro": "Ten families cover almost everything you will write. The tokens below are ECMAScript syntax; where another flavour differs, the engine section says so.",
+                "tableCaption": "Regular expression syntax, grouped by what each family does",
+                "colToken": "Tokens",
+                "colMeans": "What it does",
+                "colExample": "For example",
+                "anchorsMeans": "Assert a position without consuming a character.",
+                "anchorsExample": "^cat matches cat only at the start.",
+                "classesMeans": "Match one character out of a set, or out of everything but a set.",
+                "classesExample": "[aeiou] matches any one vowel.",
+                "shorthandsMeans": "Named sets: digit, word character, whitespace, and their negations.",
+                "shorthandsExample": "\\d\\d matches two digits in a row.",
+                "quantifiersMeans": "Repeat the previous token, greedily by default.",
+                "quantifiersExample": "colou?r matches both spellings.",
+                "lazyMeans": "The same repetitions, taking as little as they can.",
+                "lazyExample": "<.+?> stops at the first closing bracket.",
+                "groupsMeans": "Group a run, and capture it so it can be reused or reported.",
+                "groupsExample": "(?<year>\\d{4}) captures four digits as year.",
+                "alternationMeans": "Try the left side, then the right.",
+                "alternationExample": "cat|dog matches either word.",
+                "lookaroundMeans": "Assert that text does or does not appear either side, without consuming it.",
+                "lookaroundExample": "\\d+(?= kg) matches a number only before kg.",
+                "backreferencesMeans": "Match the same text a capture group matched earlier.",
+                "backreferencesExample": "(\\w)\\1 matches a doubled letter.",
+                "escapesMeans": "Write a literal metacharacter, a control character, or a code point.",
+                "escapesExample": "\\. matches a full stop, not any character.",
+                "note": "When you want a metacharacter to be an ordinary character, put a backslash in front of it. That is why an email pattern reads \\. in the middle: an unescaped dot would match any character at all, and the pattern would happily accept name@examplezcom."
+            },
+            "flags": {
+                "title": "Every flag",
+                "intro": "Eight switches, opened from the letters at the right-hand end of the pattern field. Six are real ECMAScript flags the engine reads directly. Two are borrowed from PCRE, and this tool applies them by rewriting the pattern before it compiles.",
+                "tableCaption": "Every flag, what it changes, and when to reach for it",
+                "colFlag": "Flag",
+                "colDoes": "What it changes",
+                "colWhen": "Reach for it when",
+                "globalDoes": "Keeps searching after the first match instead of stopping there.",
+                "globalWhen": "You want every occurrence — which is nearly always, when testing.",
+                "multilineDoes": "Re-points ^ and $ at the start and end of each line rather than the whole string.",
+                "multilineWhen": "The input is a list, one entry per line.",
+                "ignoreCaseDoes": "Matches letters regardless of case.",
+                "ignoreCaseWhen": "The casing carries no meaning — a keyword, a domain name, a header.",
+                "dotAllDoes": "Lets the dot match line terminators, which it otherwise refuses.",
+                "dotAllWhen": "A pattern has to span lines, as when grabbing the body of an HTML element.",
+                "extendedDoes": "Ignores unescaped whitespace and treats # as the start of a comment.",
+                "extendedWhen": "A long pattern needs breathing room and notes; escape a space as \\ to keep it.",
+                "unicodeDoes": "Treats the pattern as code points and enables \\p{…} property escapes and \\u{…}.",
+                "unicodeWhen": "The text is not plain ASCII — emoji, accents, or non-Latin scripts.",
+                "ungreedyDoes": "Inverts every quantifier: greedy ones become lazy, and an explicit ? makes them greedy again.",
+                "ungreedyWhen": "You are porting a PCRE pattern that relied on it; writing +? is clearer in new work.",
+                "stickyDoes": "Anchors each attempt at the position the previous match ended, so a gap stops the search.",
+                "stickyWhen": "Tokenising, where a run of matches must be contiguous.",
+                "rewriteNote": "Extended and ungreedy do not exist in JavaScript. Rather than pretend otherwise, this tool rewrites the pattern: under extended it strips the whitespace and comments the parser ruled inert, and under ungreedy it flips each quantifier in place. The pattern you typed is what gets highlighted and explained; the rewritten one is what the engine runs, and it is shown in full when a compile fails.",
+                "defaultsNote": "Global and multiline are on by default, which is what makes a list of test lines behave the way most people expect. Everything else is off."
+            },
+            "modes": {
+                "title": "Match, substitution, and list",
+                "intro": "The three modes share one pattern and one test string; they differ in what they do with the matches.",
+                "match": "Match highlights each match in place and lists it in the Match information panel with its position and every capture group. A group that took no part in a match is reported as such, which is not the same as a group that matched the empty string — a distinction that decides what $1 inserts.",
+                "substitute": "Substitution rebuilds the whole test string with each match replaced. It follows String.prototype.replace exactly, so what you see in the result box is what that call would return in your own code.",
+                "list": "List gives one line per match, each expanded through the same replacement tokens. Leave the box empty and you get the matches themselves — useful for pulling a column out of a log.",
+                "tableCaption": "Replacement tokens and what each one inserts",
+                "colToken": "Token",
+                "colInserts": "Inserts",
+                "token_wholeMatch": "The whole match.",
+                "token_group": "Capture group 1; use $2, $3, and so on for the rest.",
+                "token_named": "The group declared as (?<name>…).",
+                "token_before": "Everything in the test string before the match.",
+                "token_after": "Everything in the test string after the match.",
+                "token_escaped": "A literal dollar sign.",
+                "zeroNote": "One difference worth knowing if you arrived from regex101: there the whole match is written $0. JavaScript reads $0 literally, and this tool shows what JavaScript does rather than a friendlier fiction, so the whole match is $&. A group number beyond what the pattern declares is likewise left as written — $12 against a pattern with one group inserts group 1 followed by the character 2."
+            },
+            "delimiters": {
+                "title": "Why there is a delimiter picker",
+                "p1": "The delimiter never reaches the engine. It decides how the pattern is written down when it leaves this page — as /…/ in JavaScript, or ~…~ in a PHP codebase that prefers it — and therefore which character has to be escaped inside the literal.",
+                "p2": "That escaping is the practical part. A pattern matching a path is full of slashes, and inside a slash-delimited literal every one of them needs a backslash. Switch the delimiter to a tilde and they can stay as they are, which is why PCRE offers the choice at all.",
+                "p3": "Pasting works the other way round. Drop a complete literal into the pattern field and the delimiter, the body, and the flags are all read off it — so a pattern copied out of source code arrives intact, with its escaping undone. A bare pattern is left exactly as pasted; only a well-formed literal is unwrapped.",
+                "p4": "Sharing goes out the same way. Share copies a link carrying the pattern, the flags, the delimiter, the mode, the replacement, and the test string, so a colleague opens exactly what you are looking at. Only what differs from the defaults is written, which keeps an ordinary link short; a test string too large to fit is left out and the tool says so rather than sending a link that quietly lost half its meaning."
+            },
+            "engine": {
+                "title": "Which engine runs your pattern",
+                "p1": "Matching runs on the JavaScript engine already in your browser. There is no other option: a browser cannot execute PCRE, Python's re, or Go's RE2, and a tool claiming to would be reporting one engine's answers under another's name.",
+                "p2": "Nearly everything is shared. Anchors, classes, shorthands, quantifiers, groups, alternation, backreferences, and all four lookarounds behave the same in JavaScript as in PCRE or Python. What JavaScript does not have is atomic groups, possessive quantifiers, recursion, subroutine calls, and inline flag switches of the (?i) form. Rather than let those fail with a message about an invalid group, this tool names the construct and points at its position before compiling.",
+                "p3": "Two smaller differences are worth remembering when a pattern is going somewhere else. Go's RE2 and Rust's regex crate have no lookaround or backreferences at all, by design — they trade those for a guarantee against the backtracking described below. And \\A, \\z, and \\Z are PCRE anchors; in JavaScript they are ordinary escaped letters, so \\Afoo quietly matches the text Afoo. The Explanation panel says so in as many words."
+            },
+            "performance": {
+                "title": "Catastrophic backtracking, and the limits here",
+                "p1": "A backtracking engine — JavaScript's, PCRE's, Python's — tries alternatives until one fits. Usually that is quick. But nest one unbounded quantifier inside another, as in (a+)+b, and the number of ways to divide the input between them grows exponentially. Against a string of thirty a characters with no b, the engine will still be working long after you have closed the tab.",
+                "p2": "This tool warns about that shape as you type. The warning is a heuristic, not a proof: it fires on a quantified group that contains another quantifier, which is the pattern behind most real incidents, and it will occasionally flag something that is perfectly safe.",
+                "p3": "The real protection is architectural. Matching runs in a web worker rather than on the page, because a running regular expression cannot be interrupted from inside — no timeout, no cancellation, nothing. What the page can do is stop waiting: after two seconds it terminates the worker outright and starts a fresh one on your next keystroke. The tab stays responsive whatever the pattern does.",
+                "p4": "Three ceilings sit underneath that: a pattern of 1,000 characters, a test string of 50,000, and 1,000 matches. When the match cap is reached the panel says so rather than quietly showing a short list. There is also a time budget inside the match loop itself, which stops a global pattern grinding through a long input — though only between matches, never inside one, which is precisely why the worker exists."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Which regex flavour does this use?",
+                "a1": "ECMAScript — the engine in your browser. It is the only one that can run client-side. In practice the difference rarely bites: anchors, classes, quantifiers, groups, alternation, backreferences, and lookaround all behave identically to PCRE and Python. Where JavaScript genuinely lacks something, such as an atomic group or a possessive quantifier, the tool names the construct rather than letting the engine complain about an invalid group.",
+                "q2": "Why does the whole match not respond to $0?",
+                "a2": "Because JavaScript reads $0 as two ordinary characters. regex101 defines it as the whole match, but the substitution preview here is meant to show what String.prototype.replace would actually return, so it follows JavaScript's tokens exactly. Write $& for the whole match.",
+                "q3": "What does the Steps counter show?",
+                "a3": "There isn't one. regex101's step count comes from its own engine; JavaScript's RegExp reports nothing at all about the backtracking it did, so any number here would be invented. Groups takes that slot instead, and the timing is a real measurement of how long the match loop took.",
+                "q4": "Can a bad pattern freeze the page?",
+                "a4": "No. Matching runs in a web worker, and the page terminates it after two seconds — a running regular expression cannot be interrupted any other way. You will see a message saying the pattern was stopped, the highlighting and explanation stay as they were, and the next keystroke starts a fresh worker.",
+                "q5": "Is anything sent to a server?",
+                "a5": "No. The pattern, the test string, and the replacement never leave your browser. Nothing is uploaded, stored, or logged, and the whole tool works offline once the page has loaded.",
+                "q6": "Why does my pattern match one fewer thing than I expected?",
+                "a6": "Two usual causes. Without the global flag the engine reports only the first match, so check the flags at the end of the field. And an unescaped dot matches any character rather than a full stop — the classic reason an email pattern accepts an address it should have refused."
             }
         }
     },
