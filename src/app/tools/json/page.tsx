@@ -7,6 +7,7 @@ import { FadeIn, Reveal } from "@/components/motion/reveal";
 import { getJsonFaqEntries, JsonArticle } from "@/modules/json/components/json-article";
 import { JsonWorkbench } from "@/modules/json/components/json-workbench";
 import { DEFAULT_FORMAT_OPTIONS, DEFAULT_JSON_MODE } from "@/modules/json/domain/constants";
+import { formatJson } from "@/modules/json/domain/format";
 import { jsonSearchParamsSchema } from "@/modules/json/validation/format-options";
 import type { JsonFormatOptions } from "@/modules/json/types";
 import { JsonLd } from "@/modules/seo/components/json-ld";
@@ -54,6 +55,10 @@ export default async function JsonToolPage({ searchParams }: JsonPageProps) {
         sortKeys: link.sortKeys ?? DEFAULT_FORMAT_OPTIONS.sortKeys,
         escapeUnicode: link.escapeUnicode ?? DEFAULT_FORMAT_OPTIONS.escapeUnicode,
     };
+
+    // Cheap here: a shared link caps its document at MAX_SHARED_TEXT_LENGTH, so
+    // this is never the megabyte the worker exists for.
+    const result = formatJson({ mode, input: text, options });
 
     const badges = [
         { label: t("badgeSpec"), Icon: IconShieldCheck },
@@ -120,7 +125,12 @@ export default async function JsonToolPage({ searchParams }: JsonPageProps) {
                 </FadeIn>
 
                 <FadeIn delay={0.06}>
-                    <JsonWorkbench initialMode={mode} initialText={text} initialOptions={options} />
+                    <JsonWorkbench
+                        initialMode={mode}
+                        initialText={text}
+                        initialOptions={options}
+                        initialResult={result}
+                    />
                 </FadeIn>
 
                 <Reveal>

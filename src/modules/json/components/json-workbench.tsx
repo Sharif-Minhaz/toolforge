@@ -23,22 +23,33 @@ import {
     SAMPLE_JSON,
 } from "../domain/constants";
 import { createJsonExportFile } from "../domain/export";
-import { describeSizeDelta, formatJson } from "../domain/format";
+import { describeSizeDelta, type JsonFormatResult } from "../domain/format";
 import type { JsonError, JsonFormatOptions, JsonMode } from "../types";
 import { FormatOptions } from "./format-options";
 import { InputPanel } from "./input-panel";
 import { ModeSelector } from "./mode-selector";
 import { JsonNotices } from "./notices";
 import { OutputPanel } from "./output-panel";
+import { useJsonFormat } from "./use-json-format";
 import { ValidationReport } from "./validation-report";
 
 type JsonWorkbenchProps = {
     initialMode: JsonMode;
     initialText: string;
     initialOptions: JsonFormatOptions;
+    /**
+     * Computed on the server from exactly these values, so the first paint
+     * already carries the result and hydration has nothing to reconcile.
+     */
+    initialResult: JsonFormatResult;
 };
 
-export function JsonWorkbench({ initialMode, initialText, initialOptions }: JsonWorkbenchProps) {
+export function JsonWorkbench({
+    initialMode,
+    initialText,
+    initialOptions,
+    initialResult,
+}: JsonWorkbenchProps) {
     const t = useTranslations("json.workbench");
     const tToast = useTranslations("json.toast");
     const tErrors = useTranslations("json.errors");
@@ -122,14 +133,18 @@ export function JsonWorkbench({ initialMode, initialText, initialOptions }: Json
         setOptions((current) => ({ ...current, ...patch }));
     }
 
-    // Reformatting on every keystroke would reparse the whole document for each
-    // character, which a low-powered device feels immediately.
+    // Reformatting on every keystroke would hand the worker a fresh copy of the
+    // whole document for each character.
     const settledText = useDebouncedValue(text);
-    const pending = settledText !== text;
 
-    // Pure and deterministic, so the server-rendered pass already carries the
-    // result and hydration has nothing to reconcile.
-    const result = formatJson({ mode, input: settledText, options });
+    // Off the main thread: a large document is seconds of uninterruptible
+    // parsing, and on this thread those seconds are a frozen tab.
+    const { result, pending: formatting } = useJsonFormat(
+        { mode, input: settledText, options },
+        initialResult,
+    );
+
+    const pending = settledText !== text || formatting;
 
     const idle = !result.ok && result.error.code === "empty";
     const output = result.ok ? result.output : "";

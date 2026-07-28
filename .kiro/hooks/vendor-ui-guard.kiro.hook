@@ -1,0 +1,14 @@
+{
+    "enabled": true,
+    "name": "Vendor UI guard",
+    "description": "src/components/ui is shadcn vendor code. Flag any edit and propose a wrapper instead.",
+    "version": "1",
+    "when": {
+        "type": "fileEdited",
+        "patterns": ["src/components/ui/**/*.tsx"]
+    },
+    "then": {
+        "type": "askAgent",
+        "prompt": "A file under src/components/ui/ was edited. That directory is shadcn vendor code and must never be hand-modified — the next `bunx --bun shadcn@latest add <component>` will overwrite it.\n\nInspect the change. If it is a genuine customisation, propose moving it out: a wrapper component, a CVA variant, extra props, a slot, or className composition with `cn`. Show the wrapper you would write and where it should live.\n\nIf the change came from the shadcn CLI itself, say so and stop. Do not commit anything."
+    }
+}

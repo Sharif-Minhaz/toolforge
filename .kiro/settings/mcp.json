@@ -1,0 +1,34 @@
+{
+    "mcpServers": {
+        "shadcn": {
+            "command": "bunx",
+            "args": ["--bun", "shadcn@latest", "mcp"],
+            "env": {},
+            "disabled": false,
+            "autoApprove": [
+                "get_project_registries",
+                "list_items_in_registries",
+                "search_items_in_registries",
+                "view_items_in_registries",
+                "get_item_examples_from_registries",
+                "get_audit_checklist"
+            ]
+        },
+        "prisma": {
+            "command": "bunx",
+            "args": ["--bun", "prisma", "mcp"],
+            "env": {},
+            "disabled": true,
+            "autoApprove": []
+        },
+        "supabase": {
+            "command": "bunx",
+            "args": ["--bun", "@supabase/mcp-server-supabase@latest", "--read-only"],
+            "env": {
+                "SUPABASE_ACCESS_TOKEN": ""
+            },
+            "disabled": true,
+            "autoApprove": []
+        }
+    }
+}

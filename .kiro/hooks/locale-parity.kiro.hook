@@ -1,0 +1,14 @@
+{
+    "enabled": true,
+    "name": "Locale parity check",
+    "description": "When a message catalogue changes, verify en.json and bn.json stay key-for-key identical.",
+    "version": "1",
+    "when": {
+        "type": "fileEdited",
+        "patterns": ["src/messages/*.json"]
+    },
+    "then": {
+        "type": "askAgent",
+        "prompt": "A message catalogue under src/messages/ was just edited.\n\nCompare src/messages/en.json and src/messages/bn.json and report any key present in one but missing in the other, including nested keys. src/global.d.ts types AppConfig[\"Messages\"] from en.json, so a missing Bangla key is a compile error.\n\nIf keys are missing, add the missing entries: real Bangla copy for bn.json, real English copy for en.json. Do not leave placeholder text or copy the English string into bn.json. Then run `bunx tsc --noEmit`.\n\nIf the catalogues already match, say so in one line and stop. Do not commit anything."
+    }
+}

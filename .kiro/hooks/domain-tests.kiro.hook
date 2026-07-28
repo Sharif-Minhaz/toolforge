@@ -1,0 +1,14 @@
+{
+    "enabled": true,
+    "name": "Domain change needs tests",
+    "description": "When domain logic changes, update or add the matching bun test and run the suite.",
+    "version": "1",
+    "when": {
+        "type": "fileEdited",
+        "patterns": ["src/modules/*/domain/**/*.ts"]
+    },
+    "then": {
+        "type": "askAgent",
+        "prompt": "A file under src/modules/<feature>/domain/ was just edited.\n\n1. Find the matching tests in src/modules/<feature>/tests/*.test.ts.\n2. If the changed behaviour is untested, add cases: happy path, boundary validation (min, max, off-by-one, NaN, fractional, negative), and the empty case for any serialisation.\n3. Confirm the file stays framework-free — no React, no next-intl, no I/O, no console.*. If it needs getTranslations it belongs in presenters/, not domain/.\n4. Run `bun test`.\n\nPrefer a typed for...of loop over test.each. Report the result briefly. Do not commit anything."
+    }
+}

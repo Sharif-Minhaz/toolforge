@@ -1,0 +1,14 @@
+{
+    "enabled": true,
+    "name": "Run verification gates",
+    "description": "Manual trigger: run the four cheap checks and report what a human still has to review visually.",
+    "version": "1",
+    "when": {
+        "type": "userTriggered",
+        "patterns": []
+    },
+    "then": {
+        "type": "askAgent",
+        "prompt": "Run all four verification gates, in this order, and report each result:\n\n```\nbun test\nbunx tsc --noEmit\nbunx eslint .\nbunx prettier --check \"src/**/*.{ts,tsx,css,json}\"\n```\n\nFix what fails. Never disable a TypeScript or ESLint rule to make a check pass — restructure the code instead.\n\nDo NOT run `next build`, `next dev`, `next start`, or any headless browser. Those need the maintainer's explicit permission each time.\n\nFinish with the visual checklist the maintainer still has to do by hand, and say plainly that UI work is unverified visually:\n- light and dark\n- English and Bangla\n- 390px and 1440px\n- sidebar expanded and collapsed\n- at 390px, document.documentElement.scrollWidth === window.innerWidth\n\nDo not commit anything."
+    }
+}
