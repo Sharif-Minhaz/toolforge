@@ -1,0 +1,188 @@
+import { getTranslations } from "next-intl/server";
+
+import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
+import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
+import { LOREM_CORPORA } from "../domain/corpora";
+import { LOREM_SOURCES } from "../types";
+
+export const LOREM_ARTICLE_SECTIONS = [
+    { id: "understanding", titleKey: "understanding.title" },
+    { id: "why", titleKey: "why.title" },
+    { id: "sources", titleKey: "sources.title" },
+    { id: "options", titleKey: "options.title" },
+    { id: "howItWorks", titleKey: "howItWorks.title" },
+    { id: "useCases", titleKey: "useCases.title" },
+    { id: "faq", titleKey: "faq.title" },
+] as const;
+
+/** Question/answer pairs, shared by the FAQ section and its structured data. */
+export async function getLoremFaqEntries(): Promise<FaqEntry[]> {
+    const t = await getTranslations("lorem.article");
+
+    return [
+        { question: t("faq.q1"), answer: t("faq.a1") },
+        { question: t("faq.q2"), answer: t("faq.a2") },
+        { question: t("faq.q3"), answer: t("faq.a3") },
+        { question: t("faq.q4"), answer: t("faq.a4") },
+        { question: t("faq.q5"), answer: t("faq.a5") },
+        { question: t("faq.q6"), answer: t("faq.a6") },
+    ];
+}
+
+const OPTION_ROWS = ["source", "unit", "amount", "paragraphs", "opener", "html"] as const;
+
+export async function LoremArticle() {
+    const [t, tSources, tToc, faqs] = await Promise.all([
+        getTranslations("lorem.article"),
+        getTranslations("lorem.sources"),
+        getTranslations("lorem.toc"),
+        getLoremFaqEntries(),
+    ]);
+
+    const tocItems: TocItem[] = LOREM_ARTICLE_SECTIONS.map((section) => ({
+        id: section.id,
+        label: t(section.titleKey),
+    }));
+
+    return (
+        <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_14rem] xl:gap-12">
+            <aside className="min-w-0 xl:order-2">
+                <ArticleToc title={tToc("title")} items={tocItems} />
+            </aside>
+
+            <article className="flex min-w-0 flex-col gap-12 xl:order-1">
+                <ArticleSection id="understanding" title={t("understanding.title")}>
+                    <div className={PROSE}>
+                        <p>{t("understanding.p1")}</p>
+                        <p>{t("understanding.p2")}</p>
+                        <p>{t("understanding.p3")}</p>
+                    </div>
+                </ArticleSection>
+
+                <ArticleSection id="why" title={t("why.title")}>
+                    <div className={PROSE}>
+                        <p>{t("why.p1")}</p>
+                        <p>{t("why.p2")}</p>
+                        <p>{t("why.p3")}</p>
+                    </div>
+                </ArticleSection>
+
+                <ArticleSection id="sources" title={t("sources.title")}>
+                    <div className={PROSE}>
+                        <p>{t("sources.intro")}</p>
+                    </div>
+
+                    <div className="ring-border/80 mt-5 overflow-x-auto rounded-xl ring-1 ring-inset">
+                        <table className="w-full min-w-140 border-collapse text-left text-sm">
+                            <caption className="sr-only">{t("sources.tableCaption")}</caption>
+                            <thead>
+                                <tr className="bg-muted/60">
+                                    <th scope="col" className="px-4 py-2.5 font-medium">
+                                        {t("sources.colSource")}
+                                    </th>
+                                    <th scope="col" className="px-4 py-2.5 font-medium">
+                                        {t("sources.colLanguage")}
+                                    </th>
+                                    <th scope="col" className="px-4 py-2.5 font-medium">
+                                        {t("sources.colWhat")}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-border/70 divide-y">
+                                {LOREM_SOURCES.map((source) => (
+                                    <tr key={source} className="align-top">
+                                        <th
+                                            scope="row"
+                                            className="text-primary px-4 py-3 text-[0.8125rem] font-medium whitespace-nowrap"
+                                        >
+                                            {LOREM_CORPORA[source].label}
+                                        </th>
+                                        <td className="text-muted-foreground px-4 py-3 font-mono text-[0.8125rem]">
+                                            {LOREM_CORPORA[source].lang}
+                                        </td>
+                                        <td className="text-muted-foreground px-4 py-3">
+                                            {tSources(`${source}.tagline`)}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p className={`mt-5 ${PROSE_TEXT}`}>{t("sources.publicDomain")}</p>
+                </ArticleSection>
+
+                <ArticleSection id="options" title={t("options.title")}>
+                    <div className={PROSE}>
+                        <p>{t("options.intro")}</p>
+                    </div>
+
+                    <div className="ring-border/80 mt-5 overflow-x-auto rounded-xl ring-1 ring-inset">
+                        <table className="w-full min-w-160 border-collapse text-left text-sm">
+                            <caption className="sr-only">{t("options.tableCaption")}</caption>
+                            <thead>
+                                <tr className="bg-muted/60">
+                                    <th scope="col" className="px-4 py-2.5 font-medium">
+                                        {t("options.colOption")}
+                                    </th>
+                                    <th scope="col" className="px-4 py-2.5 font-medium">
+                                        {t("options.colDoes")}
+                                    </th>
+                                    <th scope="col" className="px-4 py-2.5 font-medium">
+                                        {t("options.colWhen")}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-border/70 divide-y">
+                                {OPTION_ROWS.map((row) => (
+                                    <tr key={row} className="align-top">
+                                        <th
+                                            scope="row"
+                                            className="text-primary px-4 py-3 text-[0.8125rem] font-medium whitespace-nowrap"
+                                        >
+                                            {t(`options.${row}Name`)}
+                                        </th>
+                                        <td className="text-muted-foreground px-4 py-3">
+                                            {t(`options.${row}Does`)}
+                                        </td>
+                                        <td className="text-muted-foreground px-4 py-3">
+                                            {t(`options.${row}When`)}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className={`mt-5 ${PROSE}`}>
+                        <p>{t("options.splitNote")}</p>
+                        <p>{t("options.openerNote")}</p>
+                        <p>{t("options.defaultsNote")}</p>
+                    </div>
+                </ArticleSection>
+
+                <ArticleSection id="howItWorks" title={t("howItWorks.title")}>
+                    <div className={PROSE}>
+                        <p>{t("howItWorks.p1")}</p>
+                        <p>{t("howItWorks.p2")}</p>
+                        <p>{t("howItWorks.p3")}</p>
+                        <p>{t("howItWorks.p4")}</p>
+                    </div>
+                </ArticleSection>
+
+                <ArticleSection id="useCases" title={t("useCases.title")}>
+                    <div className={PROSE}>
+                        <p>{t("useCases.p1")}</p>
+                        <p>{t("useCases.p2")}</p>
+                        <p>{t("useCases.p3")}</p>
+                    </div>
+                </ArticleSection>
+
+                <ArticleSection id="faq" title={t("faq.title")}>
+                    <FaqAccordion items={faqs} />
+                </ArticleSection>
+            </article>
+        </div>
+    );
+}

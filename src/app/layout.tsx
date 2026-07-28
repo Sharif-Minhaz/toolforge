@@ -155,6 +155,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.regex.errors,
             toast: messages.regex.toast,
         },
+        lorem: {
+            workbench: messages.lorem.workbench,
+            units: messages.lorem.units,
+            sources: messages.lorem.sources,
+            errors: messages.lorem.errors,
+            toast: messages.lorem.toast,
+        },
     };
 
     return (

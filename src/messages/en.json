@@ -133,8 +133,8 @@
             "description": "Match, explain, and replace with regular expressions — live, with every capture group listed."
         },
         "lorem": {
-            "name": "Lorem Ipsum",
-            "description": "Generate placeholder paragraphs, sentences, and word counts."
+            "name": "Random Text Generator",
+            "description": "Lorem ipsum, pangrams, emoji and multilingual filler — by word, character, sentence or paragraph."
         },
         "color": {
             "name": "Color Converter",
@@ -239,9 +239,9 @@
                 "title": "Beautify JSON",
                 "description": "Paste a single-line payload and read it properly, with any error pinned to its line."
             },
-            "regexTest": {
-                "title": "Test a regex",
-                "description": "Match a pattern against sample text, with every token explained."
+            "loremText": {
+                "title": "Lorem ipsum paragraphs",
+                "description": "Five paragraphs of classic filler, ready to paste into a mockup."
             }
         },
         "featured": {
@@ -2153,6 +2153,207 @@
                 "a5": "No. The pattern, the test string, and the replacement never leave your browser. Nothing is uploaded, stored, or logged, and the whole tool works offline once the page has loaded.",
                 "q6": "Why does my pattern match one fewer thing than I expected?",
                 "a6": "Two usual causes. Without the global flag the engine reports only the first match, so check the flags at the end of the field. And an unescaped dot matches any character rather than a full stop — the classic reason an email pattern accepts an address it should have refused."
+            }
+        }
+    },
+    "lorem": {
+        "meta": {
+            "title": "Random Text Generator",
+            "description": "Generate lorem ipsum, pangrams, emoji and multilingual placeholder text by word, character, sentence or paragraph. Exact counts, plain text or HTML, entirely in your browser."
+        },
+        "hero": {
+            "eyebrow": "Random Text Generator",
+            "title": "Random Text Generator",
+            "subtitle": "Twelve public-domain sources — classic lorem ipsum, Cicero, Kafka, Bangla, pangrams, even emoji — measured out to the exact word, character, sentence or paragraph count you asked for.",
+            "badgeSources": "12 sources",
+            "badgeOffline": "Runs offline",
+            "badgeExact": "Exact counts"
+        },
+        "workbench": {
+            "title": "Compose placeholder text",
+            "description": "Pick a source, say how much you need, and copy it straight into your layout.",
+            "sourceLabel": "Text source",
+            "unitLabel": "Measure by",
+            "amountLabel": "Amount",
+            "amountHint": "Between {min, number} and {max, number}.",
+            "amountPresets": "Amount presets",
+            "paragraphLabel": "Paragraphs",
+            "paragraphHint": "Spread the amount across {min, number}–{max, number} paragraphs.",
+            "paragraphDisabled": "Already set by the amount above.",
+            "paragraphPresets": "Paragraph presets",
+            "openerLabel": "Start with the classic opening",
+            "openerHint": "Leads the first sentence with the line this source is known for.",
+            "openerUnavailable": "This source has no opening line to lead with.",
+            "htmlLabel": "Wrap each paragraph in HTML",
+            "htmlHint": "Emits one escaped paragraph element per block, ready to paste into markup.",
+            "regenerate": "Regenerate",
+            "copyAll": "Copy all",
+            "download": "Download",
+            "resultsLabel": "Generated text",
+            "copyParagraph": "Copy this paragraph",
+            "srAnnouncement": "Generated {words} words across {paragraphs} paragraphs.",
+            "decrease": "Decrease",
+            "increase": "Increase",
+            "statsLabel": "What was generated",
+            "stats": {
+                "words": "Words",
+                "characters": "Characters",
+                "sentences": "Sentences",
+                "paragraphs": "Paragraphs"
+            }
+        },
+        "units": {
+            "words": {
+                "label": "Words",
+                "description": "Counts whitespace-separated words. The closing sentence is trimmed so the total lands exactly."
+            },
+            "characters": {
+                "label": "Characters",
+                "description": "Counts characters rather than UTF-16 units, and cuts precisely on the number — clipped word included."
+            },
+            "sentences": {
+                "label": "Sentences",
+                "description": "Counts whole sentences, spread as evenly as they divide across the paragraphs."
+            },
+            "paragraphs": {
+                "label": "Paragraphs",
+                "description": "Counts paragraphs; each one gets three to six sentences of its own."
+            }
+        },
+        "sources": {
+            "lorem": {
+                "tagline": "The scrambled Latin that typesetters have leaned on since the 1500s."
+            },
+            "cicero": {
+                "tagline": "Cicero's original Latin from De Finibus — the passage lorem ipsum was scrambled from."
+            },
+            "cicero-en": {
+                "tagline": "The 1914 English translation of that same passage."
+            },
+            "europan": {
+                "tagline": "The Occidental sample text about the European languages."
+            },
+            "europan-en": {
+                "tagline": "The same sample, rendered in English."
+            },
+            "far-far-away": {
+                "tagline": "The blind-text fable, long a favourite of theme and template authors."
+            },
+            "werther": {
+                "tagline": "Goethe's Sorrows of Young Werther, for German diacritics and long words."
+            },
+            "kafka": {
+                "tagline": "The opening of The Metamorphosis, for German with very long compounds."
+            },
+            "bangla": {
+                "tagline": "Bengali prose, for checking Bengali typography, ascenders and line height."
+            },
+            "pangram": {
+                "tagline": "Whole pangrams, each using every letter of the alphabet at least once."
+            },
+            "alphabet": {
+                "tagline": "Random runs of letters and digits, with no language behind them at all."
+            },
+            "emoji": {
+                "tagline": "Random emoji, for testing how a layout handles astral characters."
+            }
+        },
+        "errors": {
+            "amountRange": "Enter a number between {min, number} and {max, number}.",
+            "paragraphRange": "Enter a number between {min, number} and {max, number}.",
+            "generic": "That text could not be generated. Try a smaller amount."
+        },
+        "toast": {
+            "generated": "Fresh text generated.",
+            "copied": "Text copied.",
+            "copiedParagraph": "Paragraph copied.",
+            "copyFailedUnsupported": "This browser will not give the page clipboard access.",
+            "copyFailedDenied": "Clipboard permission was denied.",
+            "copyFailedEmpty": "There is nothing to copy yet.",
+            "downloaded": "Saved {filename}.",
+            "downloadFailed": "The download could not be started."
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "What placeholder text is for",
+                "p1": "Placeholder text is copy that fills a layout without ever being read. It has the shape of language — word lengths, sentence rhythm, paragraph mass — so a design behaves the way it will behave in production, while carrying no meaning anyone could stop and argue about.",
+                "p2": "The classic version is lorem ipsum, and it is older than any software that renders it. A printer in the 1500s scrambled a passage from Cicero's De Finibus Bonorum et Malorum, written in 45 BC, into type specimens. Letraset put it on dry-transfer sheets in the 1960s, desktop publishing shipped it in the 1980s, and it has been the default ever since.",
+                "p3": "That history is why the words look Latin but parse as nothing. It is a feature: a stakeholder who cannot read the copy looks at the layout instead, and nobody ships \"Lorem ipsum dolor\" to production believing it was the real headline."
+            },
+            "why": {
+                "title": "Why not just use real copy",
+                "p1": "Real copy gets read. Put a finished paragraph in a mockup and the review turns into a discussion of the wording, while the column width, the line height and the widow on line four all go unexamined.",
+                "p2": "Real copy in one language also hides how a layout fails in another. English words are short and evenly sized; German compounds overflow a fixed-width button, Bengali ascenders push line boxes taller than Latin ever does, and a single emoji occupies width no Latin glyph accounts for. Generating from those scripts on purpose surfaces the problem while it is still cheap to fix.",
+                "p3": "And exact counts are the real reason to reach for a generator rather than copying a paragraph from somewhere. A field capped at 140 characters, a card clamped to three lines, a summary column budgeted at 50 words — each of those is a specific number, and guessing at it wastes the test."
+            },
+            "sources": {
+                "title": "The twelve sources",
+                "intro": "Every source draws from a different pool, so the output stresses a different part of a layout. Latin and Occidental sit close to the rhythm of English; German brings length and diacritics; Bangla brings a script with taller line boxes and no letter case; pangrams, alphabet runs and emoji abandon prose entirely.",
+                "tableCaption": "Text sources available in the generator",
+                "colSource": "Source",
+                "colLanguage": "Language",
+                "colWhat": "What it is",
+                "publicDomain": "All twelve are public domain. The Latin and its translation predate copyright by centuries, Goethe died in 1832 and Kafka's Metamorphosis was published in 1915, and the remaining sources are either sample texts in long-standing public use or generated from characters. Nothing here needs attribution, and nothing here is stored or transmitted."
+            },
+            "options": {
+                "title": "Every control, and what it changes",
+                "intro": "Six controls, and two of them constrain the others. Rather than listing every pairing, the generator applies one rule per interaction and disables the control it makes meaningless, with a hint saying why.",
+                "tableCaption": "Generator options and when to use each",
+                "colOption": "Option",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "sourceName": "Text source",
+                "sourceDoes": "Chooses which passage, phrase list or character pool the output is drawn from.",
+                "sourceWhen": "You are testing a font, a script, or a language you actually ship.",
+                "unitName": "Measure by",
+                "unitDoes": "Decides what the amount counts: words, characters, sentences or paragraphs.",
+                "unitWhen": "The limit you are checking is expressed in one of those four units.",
+                "amountName": "Amount",
+                "amountDoes": "How many of the chosen unit to emit. The result lands on this number exactly, not near it.",
+                "amountWhen": "Always — it is the number the whole tool is built around.",
+                "paragraphsName": "Paragraphs",
+                "paragraphsDoes": "Spreads the amount across this many paragraphs, dividing evenly and giving any remainder to the first.",
+                "paragraphsWhen": "You need the text broken into blocks rather than delivered as one run.",
+                "openerName": "Start with the classic opening",
+                "openerDoes": "Leads the very first sentence with the line the source is known for, and only that sentence.",
+                "openerWhen": "The placeholder should be obviously recognisable as placeholder.",
+                "htmlName": "Wrap each paragraph in HTML",
+                "htmlDoes": "Emits one escaped paragraph element per block instead of plain text.",
+                "htmlWhen": "You are pasting into markup rather than into a design tool.",
+                "splitNote": "Measuring in paragraphs already sets the paragraph count, so the split control goes quiet rather than silently doing nothing. Asking for fewer units than paragraphs — three words across ten paragraphs — produces three paragraphs rather than seven empty ones.",
+                "openerNote": "Pangrams, alphabet runs and emoji have no opening line, so the opener switch is disabled for them and says so. Where an opener does apply it is never broken by an inserted comma, because a recognisable line with punctuation dropped into the middle of it reads as a bug.",
+                "defaultsNote": "The defaults are lorem ipsum, 100 words spread across 3 paragraphs, the classic opening on, and plain text. Switching to HTML re-renders the passage you already have rather than generating a new one, so you never lose text you were about to copy."
+            },
+            "howItWorks": {
+                "title": "How the text is composed",
+                "p1": "A prose source composes each sentence from its word pool: six to sixteen words drawn at random, a comma placed inside longer sentences about two times in five, a capital on the first letter and a full stop at the end. Bangla is handled on its own terms — it closes with a danda and is never capitalised, because the script has no letter case.",
+                "p2": "Counts are exact rather than approximate. Asking for words fills a paragraph with whole sentences until one more would overshoot, then trims that closing sentence to the remaining words and re-punctuates it. Asking for characters cuts precisely on the number, clipped final word and all — which is the whole point when what you are testing is a field that truncates at 140.",
+                "p3": "Characters are counted as characters, not as UTF-16 code units. One emoji is one character, and a cut never lands between the two halves of a surrogate pair, so the output is always well-formed text no matter where the limit falls.",
+                "p4": "Everything runs on your machine. The first batch is composed on the server so the page is never blank on arrival, every batch after that is composed in the browser, and no text is uploaded, logged or stored at any point."
+            },
+            "useCases": {
+                "title": "When you will want it",
+                "p1": "Filling a mockup, a component library or a staging CMS, where the layout has to be reviewed before the copy exists. Paragraph mode with three to five paragraphs covers most of it.",
+                "p2": "Testing limits. Character mode gives you a string of precisely the length a field, a meta description or a preview clamp is budgeted for, and word mode does the same for a summary column.",
+                "p3": "Checking internationalisation and typography. Generate German for length, Bangla for line height and taller ascenders, emoji for astral characters, and an alphabet run when you want to see raw glyph coverage with no language in the way."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Is lorem ipsum real Latin?",
+                "a1": "Not quite. The individual words are Latin, taken from Cicero's De Finibus, but they were scrambled and clipped centuries ago and the sentences no longer parse. Pick the Cicero source if you want the passage unscrambled, or its English translation if you want to read what it actually says.",
+                "q2": "Why not fill the layout with asdf or a repeated word?",
+                "a2": "Because it does not behave like language. Repeated characters wrap, hyphenate and justify differently from real word lengths, so the line breaks you see are not the line breaks you will ship. Placeholder text is worth generating precisely because it is meaningless while still being shaped like prose.",
+                "q3": "Can I get an exact character count?",
+                "a3": "Yes. Measure by characters and the output is that length exactly, including a final word cut mid-way if that is where the number falls. That is deliberate: the reason to ask for 140 characters is usually to see what a field does at 140.",
+                "q4": "Is anything uploaded?",
+                "a4": "No. The generator is ordinary client-side code with no network calls. The first result is rendered on the server so the page arrives with text already in it, and neither that result nor anything you generate afterwards is stored, logged or sent anywhere.",
+                "q5": "Can I use the generated text commercially?",
+                "a5": "Yes. Every source is public domain, and generated placeholder text carries no rights of its own. Use it in client work, in products, in published templates — no attribution needed.",
+                "q6": "Why are emoji and pangrams in a lorem ipsum tool?",
+                "a6": "Because they catch layout bugs that prose hides. A pangram exercises every letter, which surfaces a missing glyph or an awkward pair in a webfont; emoji are astral characters that stress line height, alignment and any code that counts characters by UTF-16 unit."
             }
         }
     },

@@ -64,6 +64,13 @@ describe("tool catalog", () => {
         expect(markdown?.href).toBe("/tools/markdown");
     });
 
+    test("ships the random text generator", () => {
+        const lorem = getToolById("lorem");
+
+        expect(lorem?.status).toBe("available");
+        expect(lorem?.href).toBe("/tools/lorem");
+    });
+
     test("counts available and planned tools consistently", () => {
         const stats = getToolCatalogStats();
 

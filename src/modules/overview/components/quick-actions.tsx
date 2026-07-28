@@ -4,8 +4,8 @@ import {
     IconBolt,
     IconBraces,
     IconKey,
-    IconRegex,
     IconStack2,
+    IconTextSize,
 } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
@@ -59,11 +59,11 @@ export async function QuickActions() {
             accent: "[--tool-accent:var(--brand-violet)]",
         },
         {
-            key: "regexTest",
-            href: "/tools/regex",
-            title: t("regexTest.title"),
-            description: t("regexTest.description"),
-            Icon: IconRegex,
+            key: "loremText",
+            href: "/tools/lorem?unit=paragraphs&amount=5",
+            title: t("loremText.title"),
+            description: t("loremText.description"),
+            Icon: IconTextSize,
             accent: "[--tool-accent:var(--brand-amber)]",
         },
     ];
