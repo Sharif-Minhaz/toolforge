@@ -32,6 +32,8 @@ const TONE_ICON: Record<StatusTone, ComponentType<IconProps>> = {
 type StatusStripProps = {
     tone: StatusTone;
     message: string;
+    /** Set when an input points at this line through `aria-describedby`. */
+    id?: string;
     className?: string;
 };
 
@@ -40,11 +42,12 @@ type StatusStripProps = {
  * change on every keystroke, and an assertive live region would interrupt a
  * screen reader mid-word.
  */
-export function StatusStrip({ tone, message, className }: StatusStripProps) {
+export function StatusStrip({ tone, message, id, className }: StatusStripProps) {
     const Icon = TONE_ICON[tone];
 
     return (
         <p
+            id={id}
             role="status"
             className={cn(
                 "flex items-start gap-1.5 text-[0.6875rem] leading-normal",

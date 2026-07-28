@@ -239,9 +239,9 @@
                 "title": "Beautify JSON",
                 "description": "Paste a single-line payload and read it properly, with any error pinned to its line."
             },
-            "loremText": {
-                "title": "Lorem ipsum paragraphs",
-                "description": "Five paragraphs of classic filler, ready to paste into a mockup."
+            "aiTextDetector": {
+                "title": "Check text for AI",
+                "description": "Paste a passage and see whether a language model likely wrote it."
             }
         },
         "featured": {
@@ -2354,6 +2354,199 @@
                 "a5": "Yes. Every source is public domain, and generated placeholder text carries no rights of its own. Use it in client work, in products, in published templates — no attribution needed.",
                 "q6": "Why are emoji and pangrams in a lorem ipsum tool?",
                 "a6": "Because they catch layout bugs that prose hides. A pangram exercises every letter, which surfaces a missing glyph or an awkward pair in a webfont; emoji are astral characters that stress line height, alignment and any code that counts characters by UTF-16 unit."
+            }
+        }
+    },
+    "aiTextDetector": {
+        "meta": {
+            "title": "AI Text Detector",
+            "description": "Check whether a passage was written by a language model. Paste up to 10,000 characters, read the sentence and vocabulary signals measured in your browser, and get a labelled confidence score with the reasoning behind it."
+        },
+        "hero": {
+            "eyebrow": "AI Text Detector",
+            "title": "AI Text Detector",
+            "subtitle": "Paste a passage and get an estimate of whether a language model wrote it — the label, how strongly the model holds it, and the reasoning behind the call, next to five text signals measured on your own device.",
+            "badgeModel": "Llama 3.1 on Cloudflare",
+            "badgeChallenge": "Bot-checked",
+            "badgeEstimate": "An estimate, not proof"
+        },
+        "workbench": {
+            "title": "Check a passage",
+            "description": "Paste between 50 and 10,000 characters. The signals are counted in your browser; only the passage itself is sent for analysis.",
+            "inputLabel": "Passage",
+            "placeholder": "Paste the text you want to check…",
+            "characterCount": "{count, number} / {max, number}",
+            "charactersNeeded": "{count, number} more characters needed — the detector wants at least {min, number}.",
+            "blockedWords": "{count, plural, one {Remove this word before analysing: {words}} other {Remove these # words before analysing: {words}}}",
+            "readyToAnalyse": "Ready to analyse.",
+            "challengePending": "Verifying you are human…",
+            "challengeFailed": "The bot check could not finish. Reload the page and try again.",
+            "analysing": "Analysing…",
+            "analyse": "Analyse",
+            "clear": "Clear",
+            "metricsLabel": "Text signals",
+            "verdictLabel": "Detection result",
+            "verdictStale": "The passage changed after this result. Analyse again to refresh it.",
+            "confidenceLabel": "Confidence",
+            "confidenceSummary": "{confidence} — {band}",
+            "copyVerdict": "Copy result",
+            "downloadReport": "Download report",
+            "copySummary": "{label} — {confidence, number}% confidence",
+            "copyMetrics": "{words, number} words across {sentences, number} sentences",
+            "privacyNote": "Unlike the rest of ToolForge, this tool is not offline: the passage is sent to a Cloudflare Worker and passed to a language model. Do not paste anything confidential."
+        },
+        "labels": {
+            "ai-generated": "AI-generated",
+            "human-written": "Human-written",
+            "mixed": "Mixed",
+            "unknown": "Inconclusive"
+        },
+        "bands": {
+            "low": "low confidence",
+            "moderate": "moderate confidence",
+            "high": "high confidence"
+        },
+        "metrics": {
+            "characters": "Characters",
+            "words": "Words",
+            "sentences": "Sentences",
+            "averageSentenceWords": "Words / sentence",
+            "uniqueWordRatio": "Unique words"
+        },
+        "errors": {
+            "empty": "Paste a passage first.",
+            "too_short": "Too short to judge — the detector needs at least {min, number} characters.",
+            "too_long": "Too long — trim the passage to {limit, number} characters or fewer.",
+            "blocked_language": "The passage contains language this tool will not send for analysis. Remove it and try again.",
+            "invalid_request": "That request could not be read. Reload the page and try again.",
+            "challenge_required": "The bot check has to pass before a passage can be analysed.",
+            "challenge_failed": "The bot check failed. Reload the page and try again.",
+            "rate_limited": "Too many checks from this connection. Wait a minute, then try again.",
+            "unauthorized": "The detection service rejected this site's credentials.",
+            "not_configured": "The detector is not configured on this deployment.",
+            "upstream_unavailable": "The detection service is unavailable right now. Try again shortly.",
+            "unreadable_response": "The detection service answered in a form this page could not read."
+        },
+        "toast": {
+            "analysed": "Analysis complete.",
+            "copied": "Result copied.",
+            "copyFailedUnsupported": "This browser will not give the page clipboard access.",
+            "copyFailedDenied": "Clipboard permission was denied.",
+            "copyFailedEmpty": "There is nothing to copy yet.",
+            "downloaded": "Saved {filename}.",
+            "downloadFailed": "The download could not be started."
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "What an AI text detector actually does",
+                "p1": "No detector reads a document and knows who typed it. What this one does is weigh the statistical fingerprints machine-written prose tends to leave: unusually even sentence lengths, a narrow vocabulary, transitions that arrive on schedule, and a fluency that never stumbles. A language model is asked to judge those patterns and to say how strongly it holds its answer.",
+                "p2": "The passage goes to a Cloudflare Worker, which forwards it to Llama 3.1 running on Cloudflare's network. Back comes a label, a figure between 0 and 100, and a sentence of reasoning. ToolForge normalises that answer before showing it — a label it cannot place becomes “Inconclusive” with zero confidence, rather than a guess that looks decisive.",
+                "p3": "Alongside the verdict sit five signals measured in your browser, which never leave it. They are not a second opinion; they are the raw material a careful reader uses to sanity-check the first one."
+            },
+            "reading": {
+                "title": "Reading the result",
+                "intro": "The label is the model's call. The number beside it is how strongly the model holds that call — not the probability that the call is right.",
+                "tableCaption": "What each detection label means and what to do about it",
+                "colLabel": "Label",
+                "colMeans": "What it means",
+                "colDo": "What to do with it",
+                "ai-generatedMeans": "The prose carries the patterns the model associates with machine generation.",
+                "ai-generatedDo": "Treat it as a reason to read closely, not as a finding. Ask the author how the text was drafted before acting on it.",
+                "human-writtenMeans": "The prose has the irregularity and voice the model associates with a person.",
+                "human-writtenDo": "Reasonable reassurance, and no more. Careful editing makes generated text read exactly like this.",
+                "mixedMeans": "Some of it reads as machine-written and some does not — typical of a draft that was generated and then reworked.",
+                "mixedDo": "Check whether AI assistance was allowed at all; that is usually the real question.",
+                "unknownMeans": "The model's answer could not be placed, so nothing is being claimed.",
+                "unknownDo": "Analyse again. If it repeats, the passage is probably too short or too unusual to judge.",
+                "bandsNote": "Confidence is bucketed for display: below 50 reads as low, 50 to 79 as moderate, and 80 or above as high. A high-confidence “AI-generated” means the model is confident about a pattern. It never means a person did not write the text."
+            },
+            "signals": {
+                "title": "The five signals measured in your browser",
+                "intro": "These are computed locally from whatever is in the box, updating shortly after you stop typing. None of them is sent anywhere.",
+                "tableCaption": "Each local text signal, what it measures, and what to watch for",
+                "colSignal": "Signal",
+                "colMeasures": "What it measures",
+                "colWatchFor": "What to watch for",
+                "charactersName": "Characters",
+                "charactersMeasures": "Length of the trimmed passage — the same count the detector's limits are enforced on.",
+                "charactersWatchFor": "Under 50 there is nothing to judge; over 10,000 the passage has to be trimmed.",
+                "wordsName": "Words",
+                "wordsMeasures": "Runs of letters or digits, counting a hyphenated compound or a contraction once. Unicode-aware, so Bangla counts like English.",
+                "wordsWatchFor": "A very short sample makes every other signal unstable.",
+                "sentencesName": "Sentences",
+                "sentencesMeasures": "Breaks at full stops, question and exclamation marks, ellipses, and the Bengali daṛi. A fragment with no terminator counts as one.",
+                "sentencesWatchFor": "A wall of text with no punctuation collapses into a single sentence and skews the average.",
+                "averageSentenceWordsName": "Words / sentence",
+                "averageSentenceWordsMeasures": "Words divided by sentences, to one decimal place.",
+                "averageSentenceWordsWatchFor": "Human prose varies. A passage that sits on one number for pages is worth a second look.",
+                "uniqueWordRatioName": "Unique words",
+                "uniqueWordRatioMeasures": "Distinct words as a share of all words, ignoring capitalisation.",
+                "uniqueWordRatioWatchFor": "A low ratio across a long passage suggests recycled phrasing, which generated filler is prone to.",
+                "note": "None of these proves anything alone. A technical specification legitimately has even sentences and a narrow vocabulary, and so does a careful writer working to a house style."
+            },
+            "controls": {
+                "title": "Every control on this page",
+                "intro": "The tool is deliberately small: one box, one button, and the things you do with a result.",
+                "tableCaption": "Each control, what it does, and when to reach for it",
+                "colControl": "Control",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "inputName": "Passage",
+                "inputDoes": "Holds the text to check. The signals recount shortly after you stop typing, and the box itself is never truncated. It locks while an analysis is in flight, so the verdict always describes the passage that was actually sent.",
+                "inputWhen": "Always — paste between 50 and 10,000 characters.",
+                "analyseName": "Analyse",
+                "analyseDoes": "Sends the trimmed passage for detection. Stays disabled until the length is in range and the bot check has passed.",
+                "analyseWhen": "Once the status line under the box says it is ready.",
+                "clearName": "Clear",
+                "clearDoes": "Empties the box and discards the current result.",
+                "clearWhen": "Before checking a different passage.",
+                "copyName": "Copy result",
+                "copyDoes": "Puts the label, the confidence, the reasoning, and the word and sentence counts on the clipboard as plain text.",
+                "copyWhen": "When the finding is going into an email or a ticket.",
+                "downloadName": "Download report",
+                "downloadDoes": "Saves a JSON file holding the verdict, the local signals, the passage, and a timestamp.",
+                "downloadWhen": "When the check has to be filed alongside the submission.",
+                "challengeName": "Bot check",
+                "challengeDoes": "A Cloudflare Turnstile widget above the buttons. It normally clears itself and settles on a success tick; now and then it asks for a click. Every analysis has to carry the single-use token it issues.",
+                "challengeWhen": "Only when it asks for a click — otherwise it runs on its own and renews after each analysis.",
+                "lengthNote": "The 50-character floor and the 10,000-character ceiling are enforced in the browser and again on the server, and both are measured on the trimmed passage. Padding a short sample with blank lines will not carry it over the floor.",
+                "challengeNote": "A token can only be spent once, so the Analyse button greys out for a moment after each check while a fresh one is issued. If the bot check reports an error, reload the page — the widget cannot recover on its own. Separately, passages containing vulgar or slurring language are refused outright: the offending words are named in masked form under the box, the button stays disabled until they are gone, and the same check runs again on the server so nothing gets past it. Matching is whole-word and sees through spacing, punctuation and letter-swapping, so “Scunthorpe” and “classic” are safe while “f-u-c-k” is not."
+            },
+            "limits": {
+                "title": "What this cannot tell you",
+                "p1": "Every AI text detector, this one included, produces false positives. Writers working in a second language, anyone writing in a plain institutional register, and anyone editing to a rigid style guide all produce prose that reads as machine-like to a statistical judge.",
+                "p2": "The reverse holds just as firmly. A generated draft that has been reworded, reordered, and given a few asides will usually come back as human-written. Detection measures surface patterns, and surface patterns are the easiest thing to change.",
+                "p3": "So a result here is something to talk about, never something to act on alone. Nobody should fail a course, lose a commission, or have work rejected because a model returned a number. Ask the author how the text was written; the answer is worth more than any score."
+            },
+            "privacy": {
+                "title": "What leaves your browser",
+                "p1": "Every other tool on ToolForge runs entirely on your device. This one cannot: detection needs a model, and the model runs on Cloudflare's network. The passage you paste is sent to a ToolForge Worker, which forwards it to Llama 3.1 and returns the verdict.",
+                "p2": "The five local signals — characters, words, sentences, the sentence average, and the unique-word ratio — are computed in your browser and are never transmitted. Neither is anything you type but never analyse.",
+                "p3": "Do not paste anything confidential: unreleased work, personal data, or material under an agreement you would rather not test. When a passage is sensitive, the honest answer is not to check it here."
+            },
+            "useCases": {
+                "title": "Where a detector earns its place",
+                "p1": "Triage. A tutor with ninety submissions and an afternoon can use scores to decide which five to read closely — as long as the reading, and not the score, is what decides anything.",
+                "p2": "Commissioning. Editors buying freelance copy use it as a conversation starter. “How was this drafted?” is a fair question, and a flagged passage is a fair reason to ask it.",
+                "p3": "Self-checking. Writers who use a model for early drafts run the finished piece through to see how much of the machine's cadence survived the rewrite."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "How accurate is this AI text detector?",
+                "a1": "Accurate enough to be useful for triage, and not accurate enough to decide anything on its own. Detectors label human writing as machine-written regularly — plain institutional prose and writing by people working in a second language are the usual casualties — and they miss generated text that has been edited. Treat the label as a reason to look closer.",
+                "q2": "Why does it need at least 50 characters?",
+                "a2": "The signals detection relies on — sentence rhythm, vocabulary spread, how fluency varies — need enough text to be measurable at all. Below a sentence or two, any answer would be noise dressed up as a number, so the tool declines rather than guessing.",
+                "q3": "Is my text stored anywhere?",
+                "a3": "The passage is sent to a Cloudflare Worker and on to the model that judges it. ToolForge does not write it to a database or keep a copy; Cloudflare's own handling is governed by their terms. Because the request does leave your browser, do not paste confidential material.",
+                "q4": "What is the bot check for?",
+                "a4": "Each analysis costs a model call, and the daily allowance is shared by everyone using the page. The Cloudflare Turnstile widget above the buttons makes every request prove it came from a browser, which stops a script spending the whole day's budget in an hour. It usually clears itself without asking you for anything, and shows a tick when it has. There is a per-connection rate limit behind it as well.",
+                "q5": "Which model does the detection?",
+                "a5": "Llama 3.1 8B Instruct, running on Cloudflare Workers AI. The exact identifier is shown beside every result and recorded in the downloadable report, so a filed check says what judged it.",
+                "q6": "Can I check text in Bangla or another language?",
+                "a6": "Yes, and the local signals handle non-Latin scripts correctly — Bengali combining marks and the daṛi are counted properly rather than fragmenting words. The model's judgement is strongest in English, though, so treat a verdict on other languages as weaker evidence still."
             }
         }
     },

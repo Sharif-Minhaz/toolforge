@@ -5,7 +5,7 @@ import {
     IconBraces,
     IconKey,
     IconStack2,
-    IconTextSize,
+    IconTextScan2,
 } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
@@ -59,11 +59,11 @@ export async function QuickActions() {
             accent: "[--tool-accent:var(--brand-violet)]",
         },
         {
-            key: "loremText",
-            href: "/tools/lorem?unit=paragraphs&amount=5",
-            title: t("loremText.title"),
-            description: t("loremText.description"),
-            Icon: IconTextSize,
+            key: "aiTextDetector",
+            href: "/tools/ai-text-detector",
+            title: t("aiTextDetector.title"),
+            description: t("aiTextDetector.description"),
+            Icon: IconTextScan2,
             accent: "[--tool-accent:var(--brand-amber)]",
         },
     ];

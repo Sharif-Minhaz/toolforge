@@ -162,6 +162,14 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.lorem.errors,
             toast: messages.lorem.toast,
         },
+        aiTextDetector: {
+            workbench: messages.aiTextDetector.workbench,
+            labels: messages.aiTextDetector.labels,
+            bands: messages.aiTextDetector.bands,
+            metrics: messages.aiTextDetector.metrics,
+            errors: messages.aiTextDetector.errors,
+            toast: messages.aiTextDetector.toast,
+        },
     };
 
     return (
