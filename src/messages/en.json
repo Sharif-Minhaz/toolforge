@@ -40,7 +40,8 @@
         "primaryLabel": "Primary",
         "toolsLabel": "Tools",
         "soonTooltip": "{name} · Soon",
-        "breadcrumb": "Breadcrumb"
+        "breadcrumb": "Breadcrumb",
+        "repository": "ToolForge on GitHub"
     },
     "theme": {
         "label": "Theme",
@@ -186,8 +187,9 @@
             "titleLead": "The developer toolbox",
             "titleAccent": "that never phones home",
             "subtitle": "Every utility runs entirely in your browser. No accounts, no uploads, no analytics on what you paste. Just fast, precise tools with an interface that gets out of your way.",
-            "primaryCta": "Open UUID Generator",
+            "primaryCta": "UUID Generator",
             "secondaryCta": "Browse all tools",
+            "repoCta": "GitHub",
             "previewLabel": "Live preview",
             "previewCaption": "Generated locally, just now"
         },
@@ -254,6 +256,28 @@
         "recent": {
             "title": "Recently added",
             "description": "What just landed, and what is next up."
+        },
+        "openSource": {
+            "badge": "Open source",
+            "title": "Built in the open — come build it with us",
+            "description": "ToolForge is developed publicly on GitHub. Every tool, translation and bug fix has a contributor behind it, and the next one could be yours. Issues are triaged, pull requests get a real review, and first-time contributors are genuinely welcome.",
+            "primaryCta": "View the repository",
+            "secondaryCta": "Read the contributing guide",
+            "ways": {
+                "star": {
+                    "title": "Star the repo",
+                    "description": "The cheapest way to help. Stars are how other developers find the project."
+                },
+                "issue": {
+                    "title": "Report or request",
+                    "description": "Something broken, or a tool you keep wishing for? Open an issue and it goes on the board."
+                },
+                "pullRequest": {
+                    "title": "Send a pull request",
+                    "description": "Fork it and pick up a tool, a Bangla string, a docs fix — anything that leaves it better."
+                }
+            },
+            "supportNote": "No ads, no paid tier, no upsell — ToolForge stays free. If it saves you time, a star, a clear bug report or a code review is all the support it needs."
         }
     },
     "uuid": {

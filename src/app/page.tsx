@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 
 import { CategoryGrid } from "@/modules/overview/components/category-grid";
 import { FeaturedTools } from "@/modules/overview/components/featured-tools";
+import { OpenSource } from "@/modules/overview/components/open-source";
 import { OverviewHero } from "@/modules/overview/components/overview-hero";
 import { QuickActions } from "@/modules/overview/components/quick-actions";
 import { RecentTools } from "@/modules/overview/components/recent-tools";
@@ -65,6 +66,7 @@ export default async function OverviewPage() {
                 <FeaturedTools />
                 <CategoryGrid />
                 <RecentTools />
+                <OpenSource />
             </div>
         </>
     );

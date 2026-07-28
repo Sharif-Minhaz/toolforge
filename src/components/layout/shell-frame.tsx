@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { persistSidebarState } from "@/modules/preferences/domain/sidebar";
 import { LocaleSwitcher } from "./locale-switcher";
 import type { LocalizedTool } from "@/modules/tools/types";
+import { RepoLink } from "./repo-link";
 import { SidebarNav } from "./sidebar-nav";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -184,7 +185,10 @@ export function ShellFrame({ tools, defaultCollapsed, children }: ShellFrameProp
                             layoutIdPrefix="desktop"
                             className="group-data-[collapsed=true]/shell:flex-col"
                         />
-                        <LocaleSwitcher />
+                        <div className="flex items-center gap-1.5 group-data-[collapsed=true]/shell:flex-col">
+                            <RepoLink />
+                            <LocaleSwitcher />
+                        </div>
                     </div>
                 </div>
             </aside>
@@ -323,7 +327,10 @@ function MobileNavDrawer({ open, onOpenChange, tools }: MobileNavDrawerProps) {
 
                     <div className="border-sidebar-border flex items-center justify-between gap-2 border-t px-4 py-3">
                         <ThemeToggle layoutIdPrefix="mobile-drawer" />
-                        <LocaleSwitcher />
+                        <div className="flex items-center gap-1.5">
+                            <RepoLink />
+                            <LocaleSwitcher />
+                        </div>
                     </div>
 
                     <span

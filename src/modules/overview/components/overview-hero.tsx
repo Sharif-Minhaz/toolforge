@@ -1,14 +1,15 @@
-import { IconArrowRight, IconBolt, IconLayoutGrid } from "@tabler/icons-react";
+import { IconArrowRight, IconBolt, IconBrandGithub, IconLayoutGrid } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 
 import { buttonVariants } from "@/components/ui/button";
 import { FadeIn } from "@/components/motion/reveal";
 import { cn } from "@/lib/utils";
+import { SITE_REPOSITORY } from "@/modules/seo/domain/site";
 import { generateUuid } from "@/modules/uuid/domain/generate";
 
 export async function OverviewHero() {
-    const t = await getTranslations("overview.hero");
+    const [t, tNav] = await Promise.all([getTranslations("overview.hero"), getTranslations("nav")]);
 
     // Rendered server-side, so the sample is real output rather than a mockup —
     // and there is nothing for hydration to reconcile.
@@ -55,6 +56,21 @@ export async function OverviewHero() {
                             <IconLayoutGrid className="size-4" stroke={1.9} aria-hidden="true" />
                             {t("secondaryCta")}
                         </Link>
+                        <a
+                            href={SITE_REPOSITORY}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            // The visible label is trimmed to fit beside the two
+                            // primary CTAs; the full destination lives here.
+                            aria-label={tNav("repository")}
+                            className={cn(
+                                buttonVariants({ variant: "outline" }),
+                                "h-10 px-4 text-[0.9375rem]",
+                            )}
+                        >
+                            <IconBrandGithub className="size-4" stroke={1.9} aria-hidden="true" />
+                            {t("repoCta")}
+                        </a>
                     </div>
                 </FadeIn>
 
