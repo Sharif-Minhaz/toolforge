@@ -3,14 +3,13 @@ import { describe, expect, test } from "bun:test";
 import {
     MAX_DETECTION_TEXT_LENGTH,
     MAX_SUBMITTED_TEXT_LENGTH,
-    MAX_TURNSTILE_TOKEN_LENGTH,
 } from "@/modules/ai-text-detector/domain/constants";
 import {
     aiTextDetectorSearchParamsSchema,
     detectionRequestSchema,
     detectorResponseSchema,
-    turnstileVerificationSchema,
 } from "@/modules/ai-text-detector/validation/detection";
+import { MAX_TURNSTILE_TOKEN_LENGTH } from "@/modules/tools/domain/turnstile";
 
 describe("detectionRequestSchema", () => {
     test("accepts a text and token pair", () => {
@@ -80,22 +79,6 @@ describe("detectorResponseSchema", () => {
 
     test("rejects a response that is not an object", () => {
         expect(detectorResponseSchema.safeParse("Human-written").success).toBe(false);
-    });
-});
-
-describe("turnstileVerificationSchema", () => {
-    test("reads a pass and a fail", () => {
-        expect(turnstileVerificationSchema.safeParse({ success: true }).success).toBe(true);
-        expect(
-            turnstileVerificationSchema.safeParse({
-                success: false,
-                "error-codes": ["timeout-or-duplicate"],
-            }).success,
-        ).toBe(true);
-    });
-
-    test("rejects a reply with no verdict in it", () => {
-        expect(turnstileVerificationSchema.safeParse({}).success).toBe(false);
     });
 });
 

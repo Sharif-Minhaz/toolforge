@@ -5,11 +5,13 @@ import { useTheme } from "next-themes";
 import Script from "next/script";
 import { useEffect, useRef, useState } from "react";
 
-import { TURNSTILE_ACTION, TURNSTILE_SCRIPT_URL } from "../domain/constants";
+import { TURNSTILE_SCRIPT_URL } from "../domain/turnstile";
 import type { TurnstileTheme } from "../types/turnstile";
 
 type TurnstileWidgetProps = {
     siteKey: string;
+    /** Names the widget in Cloudflare's dashboard; one value per tool. */
+    action: string;
     /** A token is single-use: bump this after every attempt to draw a fresh one. */
     resetSignal: number;
     onVerify: (token: string) => void;
@@ -18,15 +20,16 @@ type TurnstileWidgetProps = {
 };
 
 /**
- * Renders the Turnstile challenge that gates every detection request.
+ * Renders the Turnstile challenge that gates a metered upstream request.
  *
  * The widget is drawn explicitly rather than by the script's auto-scan, so its
  * lifetime is tied to this component and a token can be invalidated on demand.
- * It renders visibly, and re-runs after every analysis — watching it return to
- * "Success" is how a reader knows the Analyse button is about to come back.
+ * It renders visibly, and re-runs after every attempt — watching it return to
+ * "Success" is how a reader knows the disabled button is about to come back.
  */
 export function TurnstileWidget({
     siteKey,
+    action,
     resetSignal,
     onVerify,
     onExpire,
@@ -62,11 +65,11 @@ export function TurnstileWidget({
 
         const widgetId = api.render(container, {
             sitekey: siteKey,
-            action: TURNSTILE_ACTION,
+            action,
             theme,
             size: "flexible",
             // Visible rather than `interaction-only`: the challenge gates the
-            // Analyse button, and a control that disables another control has
+            // submit button, and a control that disables another control has
             // to show its own state or the disabled button looks broken.
             appearance: "always",
             language: locale,
@@ -85,7 +88,7 @@ export function TurnstileWidget({
                 widgetIdRef.current = null;
             }
         };
-    }, [scriptReady, siteKey, theme, locale]);
+    }, [scriptReady, siteKey, action, theme, locale]);
 
     useEffect(() => {
         // The first render already carries a fresh token; only a later bump is

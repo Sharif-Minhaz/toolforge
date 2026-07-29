@@ -3,30 +3,13 @@
 import { headers } from "next/headers";
 
 import { logEvent } from "@/modules/observability/domain/logger";
+import { resolveRemoteIp, verifyTurnstileToken } from "@/modules/tools/repository/turnstile";
 import { containsBlockedWords } from "../domain/profanity";
 import { checkDetectionText } from "../domain/text-check";
 import { toDetectionVerdict } from "../domain/verdict";
 import { requestDetection } from "../repository/text-detector";
-import { verifyTurnstileToken } from "../repository/turnstile";
 import type { DetectionResult } from "../types";
 import { detectionRequestSchema, detectorResponseSchema } from "../validation/detection";
-
-/**
- * Cloudflare sets `CF-Connecting-IP`; behind any other proxy the first hop in
- * `X-Forwarded-For` is the closest thing available. Passing it to siteverify is
- * optional, so an absent header simply means a slightly weaker check.
- */
-async function resolveRemoteIp(): Promise<string | undefined> {
-    const inbound = await headers();
-
-    const direct = inbound.get("cf-connecting-ip");
-
-    if (direct) {
-        return direct;
-    }
-
-    return inbound.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined;
-}
 
 /**
  * Runs one passage through the detection model.
@@ -56,7 +39,10 @@ export async function detectAiText(input: unknown): Promise<DetectionResult> {
         return { ok: false, reason: "blocked_language" };
     }
 
-    const challenge = await verifyTurnstileToken(parsed.data.token, await resolveRemoteIp());
+    const challenge = await verifyTurnstileToken(
+        parsed.data.token,
+        resolveRemoteIp(await headers()),
+    );
 
     if (!challenge.ok) {
         return { ok: false, reason: challenge.reason };

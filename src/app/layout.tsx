@@ -187,6 +187,14 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.timestamp.errors,
             toast: messages.timestamp.toast,
         },
+        aiImageDetector: {
+            workbench: messages.aiImageDetector.workbench,
+            labels: messages.aiImageDetector.labels,
+            bands: messages.aiImageDetector.bands,
+            facts: messages.aiImageDetector.facts,
+            errors: messages.aiImageDetector.errors,
+            toast: messages.aiImageDetector.toast,
+        },
         aiTextDetector: {
             workbench: messages.aiTextDetector.workbench,
             labels: messages.aiTextDetector.labels,

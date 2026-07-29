@@ -1,8 +1,8 @@
 import "server-only";
 
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
-import { DETECTION_REQUEST_TIMEOUT_MS, TURNSTILE_VERIFY_URL } from "../domain/constants";
-import { turnstileVerificationSchema } from "../validation/detection";
+import { TURNSTILE_VERIFY_TIMEOUT_MS, TURNSTILE_VERIFY_URL } from "../domain/turnstile";
+import { turnstileVerificationSchema } from "../validation/turnstile";
 
 export type TurnstileVerification =
     | { readonly ok: true }
@@ -13,7 +13,7 @@ export type TurnstileVerification =
 
 /**
  * Confirms a Turnstile token with Cloudflare. The only place `TURNSTILE_SECRET`
- * is read, and the gate that keeps the detector's daily model budget from being
+ * is read, and the gate that keeps a tool's daily model budget from being
  * drained by a script.
  *
  * A token is single-use: the caller must reset the widget after every attempt,
@@ -26,7 +26,7 @@ export async function verifyTurnstileToken(
     const secret = process.env.TURNSTILE_SECRET;
 
     if (!secret) {
-        logEvent("error", "ai_text_detector.turnstile_not_configured");
+        logEvent("error", "turnstile.not_configured");
 
         return { ok: false, reason: "not_configured" };
     }
@@ -43,13 +43,11 @@ export async function verifyTurnstileToken(
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body,
             cache: "no-store",
-            signal: AbortSignal.timeout(DETECTION_REQUEST_TIMEOUT_MS),
+            signal: AbortSignal.timeout(TURNSTILE_VERIFY_TIMEOUT_MS),
         });
 
         if (!response.ok) {
-            logEvent("error", "ai_text_detector.turnstile_unavailable", {
-                status: response.status,
-            });
+            logEvent("error", "turnstile.unavailable", { status: response.status });
 
             return { ok: false, reason: "upstream_unavailable" };
         }
@@ -57,13 +55,13 @@ export async function verifyTurnstileToken(
         const parsed = turnstileVerificationSchema.safeParse(await response.json());
 
         if (!parsed.success) {
-            logEvent("error", "ai_text_detector.turnstile_unreadable");
+            logEvent("error", "turnstile.unreadable");
 
             return { ok: false, reason: "upstream_unavailable" };
         }
 
         if (!parsed.data.success) {
-            logEvent("warn", "ai_text_detector.turnstile_rejected", {
+            logEvent("warn", "turnstile.rejected", {
                 codes: parsed.data["error-codes"]?.join(",") ?? "",
             });
 
@@ -72,10 +70,23 @@ export async function verifyTurnstileToken(
 
         return { ok: true };
     } catch (caught) {
-        logEvent("error", "ai_text_detector.turnstile_request_failed", {
-            error: describeError(caught),
-        });
+        logEvent("error", "turnstile.request_failed", { error: describeError(caught) });
 
         return { ok: false, reason: "upstream_unavailable" };
     }
+}
+
+/**
+ * Cloudflare sets `CF-Connecting-IP`; behind any other proxy the first hop in
+ * `X-Forwarded-For` is the closest thing available. Passing it to siteverify is
+ * optional, so an absent header simply means a slightly weaker check.
+ */
+export function resolveRemoteIp(inbound: Headers): string | undefined {
+    const direct = inbound.get("cf-connecting-ip");
+
+    if (direct) {
+        return direct;
+    }
+
+    return inbound.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined;
 }

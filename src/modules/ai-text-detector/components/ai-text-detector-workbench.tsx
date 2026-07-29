@@ -13,6 +13,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
@@ -21,6 +22,7 @@ import {
     MAX_DETECTION_TEXT_LENGTH,
     MAX_REPORTED_BLOCKED_WORDS,
     MIN_DETECTION_TEXT_LENGTH,
+    TURNSTILE_ACTION,
 } from "../domain/constants";
 import { createDetectionExportFile } from "../domain/export";
 import { findBlockedWords, maskBlockedWord } from "../domain/profanity";
@@ -28,7 +30,6 @@ import { charactersRemaining, checkDetectionText } from "../domain/text-check";
 import { getTextMetrics } from "../domain/text-metrics";
 import type { DetectionFailureReason, DetectionVerdict, TextMetrics } from "../types";
 import { DetectionVerdictPanel } from "./detection-verdict";
-import { TurnstileWidget } from "./turnstile-widget";
 
 const METRIC_KEYS = [
     "characters",
@@ -361,6 +362,7 @@ export function AiTextDetectorWorkbench({ initialText, siteKey }: AiTextDetector
                     <div className="min-h-16 w-full max-w-82 min-w-0">
                         <TurnstileWidget
                             siteKey={siteKey}
+                            action={TURNSTILE_ACTION}
                             resetSignal={resetSignal}
                             onVerify={(next) => {
                                 setToken(next);

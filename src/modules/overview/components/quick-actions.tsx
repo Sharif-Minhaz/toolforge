@@ -3,9 +3,9 @@ import {
     IconBinary,
     IconBolt,
     IconBraces,
-    IconCalendarClock,
     IconClock,
     IconKey,
+    IconPhotoScan,
 } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
@@ -59,11 +59,11 @@ export async function QuickActions() {
             accent: "[--tool-accent:var(--brand-cyan)]",
         },
         {
-            key: "cronExplain",
-            href: "/tools/cron?expr=0+9+*+*+MON-FRI",
-            title: t("cronExplain.title"),
-            description: t("cronExplain.description"),
-            Icon: IconCalendarClock,
+            key: "imageDetect",
+            href: "/tools/ai-image-detector",
+            title: t("imageDetect.title"),
+            description: t("imageDetect.description"),
+            Icon: IconPhotoScan,
             accent: "[--tool-accent:var(--brand-amber)]",
         },
     ];

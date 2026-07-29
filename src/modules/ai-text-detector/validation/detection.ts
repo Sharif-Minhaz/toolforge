@@ -1,10 +1,7 @@
 import { z } from "zod";
 
-import {
-    MAX_DETECTION_TEXT_LENGTH,
-    MAX_SUBMITTED_TEXT_LENGTH,
-    MAX_TURNSTILE_TOKEN_LENGTH,
-} from "../domain/constants";
+import { MAX_TURNSTILE_TOKEN_LENGTH } from "@/modules/tools/domain/turnstile";
+import { MAX_DETECTION_TEXT_LENGTH, MAX_SUBMITTED_TEXT_LENGTH } from "../domain/constants";
 
 /**
  * Payload of the `detectAiText` server action. The text bound is deliberately
@@ -30,12 +27,6 @@ export const detectorResponseSchema = z.object({
     reasoning: z.string().optional(),
     model: z.string().optional(),
     error: z.string().optional(),
-});
-
-/** Cloudflare's siteverify reply; only `success` decides anything. */
-export const turnstileVerificationSchema = z.object({
-    success: z.boolean(),
-    "error-codes": z.array(z.string()).optional(),
 });
 
 /**
