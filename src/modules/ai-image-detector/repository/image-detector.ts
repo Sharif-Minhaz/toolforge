@@ -1,8 +1,8 @@
 import "server-only";
 
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
-import { IMAGE_DETECTION_TIMEOUT_MS, IMAGE_FORM_FIELD } from "../domain/constants";
-import { resolveDetectEndpoint } from "../domain/endpoint";
+import { resolveHttpEndpoint } from "@/modules/tools/domain/endpoint";
+import { DETECT_PATH, IMAGE_DETECTION_TIMEOUT_MS, IMAGE_FORM_FIELD } from "../domain/constants";
 import type { ImageDetectionFailureReason } from "../types";
 
 export type ImageDetectorRequestResult =
@@ -18,7 +18,7 @@ function readConfiguredEndpoint(): string | null {
     const configured =
         process.env.FAKE_IMAGE_DETECTOR_API ?? process.env.NEXT_PUBLIC_FAKE_IMAGE_DETECTOR_API;
 
-    return configured ? resolveDetectEndpoint(configured) : null;
+    return configured ? resolveHttpEndpoint(configured, { defaultPath: DETECT_PATH }) : null;
 }
 
 /** HTTP status → the reason the reader is shown. */

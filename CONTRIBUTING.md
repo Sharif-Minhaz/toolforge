@@ -393,7 +393,11 @@ Reuse what exists rather than rebuilding it:
 | Accent vars, icon tile        | `@/modules/tools/components/tool-accent`     |
 | Region + city zone picker     | `@/modules/tools/components/zone-picker`     |
 | Clipboard, typed result       | `@/modules/tools/domain/clipboard`           |
-| File download                 | `@/modules/tools/domain/file-saver`          |
+| File download, text or blob   | `@/modules/tools/domain/file-saver`          |
+| Upload type and size gate     | `@/modules/tools/domain/image-file`          |
+| Decode an image, read its size| `@/modules/tools/domain/image-element`       |
+| Worker URL from a variable    | `@/modules/tools/domain/endpoint`            |
+| Turnstile widget, verification | `@/modules/tools/components/turnstile-widget` |
 | Wall clock ↔ instant, offsets | `@/modules/tools/domain/zone`                |
 | Frozen IANA zone list         | `@/modules/tools/domain/time-zones`          |
 | Gregorian calendar arithmetic | `@/modules/tools/domain/calendar`            |

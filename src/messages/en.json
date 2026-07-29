@@ -172,9 +172,9 @@
             "name": "AI Text Detector",
             "description": "Estimate how likely a passage was written by a language model."
         },
-        "gemini-watermark-remover": {
-            "name": "Gemini Watermark Remover",
-            "description": "Clear the visible Gemini watermark from images you generated yourself."
+        "watermark-remover": {
+            "name": "Watermark Remover",
+            "description": "Brush over a watermark, logo or unwanted object and have that area repainted — on images you own or have the right to edit."
         }
     },
     "overview": {
@@ -239,9 +239,9 @@
                 "title": "Convert a timestamp",
                 "description": "Read a Unix epoch in your own time zone, UTC, and any city you pin."
             },
-            "imageDetect": {
-                "title": "Check an image",
-                "description": "Upload a picture and see whether a model generated it, with the reasoning."
+            "watermarkRemove": {
+                "title": "Remove a watermark",
+                "description": "Brush over a watermark on your own image and have that area repainted, at the original size."
             }
         },
         "featured": {
@@ -3520,6 +3520,189 @@
                 "a5": "Llama 3.1 8B Instruct, running on Cloudflare Workers AI. The exact identifier is shown beside every result and recorded in the downloadable report, so a filed check says what judged it.",
                 "q6": "Can I check text in Bangla or another language?",
                 "a6": "Yes, and the local signals handle non-Latin scripts correctly — Bengali combining marks and the daṛi are counted properly rather than fragmenting words. The model's judgement is strongest in English, though, so treat a verdict on other languages as weaker evidence still."
+            }
+        }
+    },
+    "watermarkRemover": {
+        "meta": {
+            "title": "Watermark Remover",
+            "description": "Paint over a watermark, logo or unwanted object and have that area repainted out. Takes JPEG, PNG and WebP up to 10 MB, keeps the picture at its original size, and changes nothing outside what you marked. For images you own or have the right to edit."
+        },
+        "hero": {
+            "eyebrow": "Watermark Remover",
+            "title": "Watermark Remover",
+            "subtitle": "Brush over a watermark and an inpainting model repaints what should have been underneath. Only the marked area changes — the rest of the picture keeps its own pixels and its original size. For images you own or hold the rights to.",
+            "badgeModel": "Stable Diffusion inpainting on Cloudflare",
+            "badgeChallenge": "Bot-checked",
+            "badgeResolution": "Original size kept"
+        },
+        "workbench": {
+            "title": "Remove a watermark",
+            "description": "JPEG, PNG or WebP. Only the square you mark is uploaded for repainting; the rest of the picture never leaves your device.",
+            "dropTitle": "Drop an image here, or click to choose one",
+            "dropHint": "JPEG, PNG or WebP — up to {limit}.",
+            "pickPrompt": "Choose an image to clean up — up to {limit}.",
+            "paintPrompt": "Now brush over the watermark you want removed.",
+            "previewAlt": "Preview of {name}, with the mask painted over it",
+            "canvasLabel": "Mask painting canvas",
+            "canvasHint": "Drag to paint over the watermark. Without a pointer: focus this canvas, move the crosshair with the arrow keys — hold Shift for larger jumps — then press Enter or Space to dab.",
+            "brush": "Brush",
+            "undo": "Undo stroke",
+            "clearMask": "Clear mask",
+            "remove": "Remove watermark",
+            "working": "Repainting…",
+            "clear": "Clear",
+            "readyToRemove": "Ready to repaint the marked area.",
+            "challengePending": "Verifying you are human…",
+            "challengeFailed": "The bot check could not finish. Reload the page and try again.",
+            "resultStale": "The picture or the mask changed after this result. Run it again to refresh it.",
+            "rightsNote": "Use this only on pictures you own or have permission to edit. Removing a watermark grants you no rights to the work underneath, and taking a credit or provenance mark off an image you then pass on as your own is not what this tool is for.",
+            "privacyNote": "Unlike most of ToolForge, this tool is not offline: the square you mark is uploaded to a Cloudflare Worker and passed to an image model. Do not upload anything confidential."
+        },
+        "result": {
+            "label": "Before and after",
+            "before": "Original",
+            "after": "Repainted",
+            "beforeAlt": "{name} before the watermark was removed",
+            "afterAlt": "{name} after the watermark was removed",
+            "dimensions": "Dimensions",
+            "pixels": "{width} × {height} px",
+            "size": "Download size",
+            "download": "Download PNG",
+            "note": "The result is a PNG at the original pixel dimensions. Every pixel outside the area you painted is the one you started with — the model's output only ever reaches inside the mask."
+        },
+        "errors": {
+            "missing_image": "Choose an image first.",
+            "missing_mask": "Brush over the watermark before running the removal.",
+            "empty_file": "That file is empty. Choose a picture with something in it.",
+            "unsupported_type": "That format cannot be repainted. Use JPEG, PNG or WebP.",
+            "too_large": "Too large — the remover accepts images up to {limit}.",
+            "empty_mask": "Nothing was marked. Brush over the watermark and try again.",
+            "invalid_request": "That request could not be read. Reload the page and try again.",
+            "challenge_required": "The bot check has to pass before an image can be repainted.",
+            "challenge_failed": "The bot check failed. Reload the page and try again.",
+            "rate_limited": "The repainting service is busy — it accepts five uploads a minute in total, shared by everyone using the page. Wait a minute, then try again.",
+            "unauthorized": "The repainting service rejected this site's credentials.",
+            "not_configured": "The remover is not configured on this deployment.",
+            "upstream_unavailable": "The repainting service is unavailable right now. Try again shortly.",
+            "unreadable_response": "The repainting service answered in a form this page could not read.",
+            "oversized_result": "The repainted square came back far larger than an image of that size should be, so it was discarded.",
+            "compose_failed": "This browser would not give the page a drawing canvas, so the result could not be assembled."
+        },
+        "toast": {
+            "removed": "Marked area repainted.",
+            "downloaded": "Saved {filename}.",
+            "downloadFailed": "The download could not be started."
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "howItWorks": {
+                "title": "How the removal actually works",
+                "p1": "Nothing here erases a watermark. What happens is repainting: you mark the pixels you want gone, and a diffusion model invents plausible pixels to stand in their place, using what surrounds the mark as its guide. What you get back is a good guess at what the picture would have looked like — not a recovery of what was underneath.",
+                "p2": "The model works on a 512-pixel square, which is small. Rather than shrink your whole picture down to fit — which would cost the entire image its detail — this tool crops a square around what you painted, at that area's own resolution, and sends only that. A logo in the corner of a 4000-pixel photograph is therefore repainted at close to its original scale.",
+                "p3": "The crop and a black-and-white mask of your strokes go to a Cloudflare Worker, which passes both to Stable Diffusion 1.5 Inpainting on Cloudflare Workers AI. The square comes back repainted, still 512 pixels square.",
+                "p4": "Your browser then puts it back: the repainted square is scaled to the crop's original size and composited onto the picture through your strokes, with a soft edge so the join does not show. Every pixel you did not paint over is the pixel you started with, at the size you started with, and the download is a PNG at the original dimensions."
+            },
+            "painting": {
+                "title": "Painting a mask that works",
+                "intro": "The mask is the whole job. The model repaints exactly what you mark and nothing else, so a stroke that misses part of a letter leaves that part of the letter behind.",
+                "tableCaption": "How to mask each kind of watermark, and what to expect back",
+                "colSituation": "What you are removing",
+                "colDo": "How to mask it",
+                "colExpect": "What to expect",
+                "cornerLogoName": "A logo in a corner",
+                "cornerLogoDo": "Cover the mark and a little past its edge. Anti-aliased edges fade out further than they look, though the mask sent upstream is already grown slightly to catch them.",
+                "cornerLogoExpect": "The best case by far. Corners are usually sky, wall, grass or blur, and a model continues any of those without trouble.",
+                "tiledTextName": "Text tiled across the whole frame",
+                "tiledTextDo": "Paint over all of it, in as many strokes as it takes. Expect the crop to grow to the picture's shorter side, since the square has to cover everything you marked.",
+                "tiledTextExpect": "The weakest case. Masking the whole frame leaves the model almost nothing unmasked to match against, and the crop is now the whole picture, so detail is lost.",
+                "overSubjectName": "A mark over a face or fine detail",
+                "overSubjectDo": "Mask tightly, one stroke at a time, and run it again if the first attempt is wrong.",
+                "overSubjectExpect": "Diffusion models reproduce faces, hands and text badly. Over a busy or meaningful subject, expect something plausible from a distance and wrong up close.",
+                "largeObjectName": "A whole object you want gone",
+                "largeObjectDo": "Cover the object and its shadow. Missing the shadow is the single most common reason a removal looks wrong.",
+                "largeObjectExpect": "Often convincing against a simple background, and often a smear against a complicated one.",
+                "tightNote": "Two habits help more than anything else. Mask tightly: every pixel you paint is a pixel the model gets to invent, so a generous stroke across a detailed area gives away detail you wanted to keep. And run it more than once — diffusion is not deterministic, so the same mask on the same picture gives a different repaint each time, and it is normal for the third attempt to be the one worth keeping.",
+                "keyboardNote": "The brush slider is measured in screen pixels, so it covers the same visible area whatever the preview is scaled to, while the strokes themselves are stored in the picture's own pixels. Without a pointer, focus the canvas and move the crosshair with the arrow keys — hold Shift to cross the picture faster — then press Enter or Space to dab at that spot. Undo removes one whole stroke; Clear mask removes all of them."
+            },
+            "controls": {
+                "title": "Every control on this page",
+                "intro": "One drop zone, one brush, and the things you do with a result.",
+                "tableCaption": "Each control, what it does, and when to reach for it",
+                "colControl": "Control",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "uploadName": "Image",
+                "uploadDoes": "Holds the picture to clean up. Click the panel or drop a file onto it. Choosing a different file discards the mask and the current result.",
+                "uploadWhen": "Always — one JPEG, PNG or WebP, up to 10 MB.",
+                "brushName": "Brush",
+                "brushDoes": "Sets the brush diameter in screen pixels, from 6 to 96. Strokes are recorded in the picture's own pixels, so resizing the window afterwards cannot move a mark you already painted.",
+                "brushWhen": "Larger for a broad watermark, smaller for tracing around detail you want to keep.",
+                "paintName": "The canvas",
+                "paintDoes": "Drag across the picture to paint the mask. It also takes keyboard focus: arrow keys move a crosshair, Enter or Space dabs at it.",
+                "paintWhen": "After choosing a file, and before the Remove button will do anything.",
+                "undoName": "Undo stroke",
+                "undoDoes": "Removes the last stroke — the whole drag, not part of it.",
+                "undoWhen": "One stroke went too far.",
+                "clearMaskName": "Clear mask",
+                "clearMaskDoes": "Removes every stroke and leaves the picture in place.",
+                "clearMaskWhen": "Starting the mask over on the same picture.",
+                "removeName": "Remove watermark",
+                "removeDoes": "Crops the square around your mask, uploads it with the mask, and composites the repainted square back onto the original. Stays disabled until the file passes the format and size rules, something has been painted, and the bot check has passed.",
+                "removeWhen": "Once the status line under the drop zone says it is ready.",
+                "downloadName": "Download PNG",
+                "downloadDoes": "Saves the composited picture at its original pixel dimensions, named after the file you started from.",
+                "downloadWhen": "When the repaint is one you want to keep.",
+                "clearName": "Clear",
+                "clearDoes": "Drops the picture, the mask and the result.",
+                "clearWhen": "Before cleaning up a different image.",
+                "challengeName": "Bot check",
+                "challengeDoes": "A Cloudflare Turnstile widget above the buttons. It normally clears itself; now and then it asks for a click. Every removal has to carry the single-use token it issues.",
+                "challengeWhen": "Only when it asks for a click — otherwise it runs on its own and renews after each attempt.",
+                "dependencyNote": "Undo and Clear mask stay disabled until something has been painted, and Remove needs all four of a valid file, a painted mask, a solved bot check, and no attempt already running. The status line under the drop zone always names whichever one is missing, so a disabled button is never unexplained.",
+                "challengeNote": "A token can be spent only once, so the Remove button greys out for a moment after each attempt while a fresh one is issued. If the bot check reports an error, reload the page — the widget cannot recover on its own."
+            },
+            "quality": {
+                "title": "What a good result looks like, and what it costs",
+                "p1": "The repaint is generated, so it will not match the original at the pixel level. Over sky, water, foliage, carpet, a plain wall or any soft blur, that is invisible. Over brickwork, printed text, a regular pattern or a face it is obvious, because those are what a diffusion model reproduces worst.",
+                "p2": "The patch also comes back through the model's own encoder, so its grain and sharpness differ slightly from the pixels beside it. The composite fades the edge to hide the join, and confining the change to the mask means the rest of the photograph keeps its original grain rather than being re-encoded along with it.",
+                "p3": "Because the crop is square and taken at native resolution, small marks come back sharp and large ones come back softer: a mask covering most of a picture forces a crop as large as the picture, which the model then sees at 512 pixels. When a result looks soft, the fix is usually a tighter mask rather than another attempt."
+            },
+            "rights": {
+                "title": "What this tool is for",
+                "p1": "This is a general image editor: it repaints a region of a picture you supply, and the watermark case is simply the most common reason to want that. It is meant for your own photographs and for images you hold the rights to — clearing a preview watermark from a frame you have licensed, taking your own overlay off an export whose source file is long gone, removing a date stamp burnt into a holiday photo, deleting a bin or a passer-by from a shot you took, or clearing the visible mark a generator left on an image you made with it.",
+                "p2": "It is not a way around someone else's licence. Removing a watermark grants you no rights to the work underneath, and a watermark is often there precisely because those rights have not been granted. Taking a credit, signature or provenance mark off an image and passing it on as your own is straightforward infringement, and removing rights-management information is separately unlawful in many places. Doing it through a model changes none of that.",
+                "p3": "The judgement is therefore yours, and it cannot be made here: the tool cannot see who owns the picture in front of it. A workable test is whether you would be comfortable telling the person who made the image what you are about to do to it. Anything whose point is to leave someone misled about where an image came from is not a use this tool is for."
+            },
+            "limits": {
+                "title": "What this cannot do",
+                "p1": "It cannot recover what a watermark covered. There is no original underneath to find — those pixels were overwritten before the file ever reached you, and what comes back is invention, however convincing it looks.",
+                "p2": "It cannot remove an invisible watermark. Statistical marks spread across a whole image, SynthID and similar provenance signals among them, are not what this touches; masking a region says nothing about them. It also cannot repaint an animation, which is why GIF is not accepted at all.",
+                "p3": "And it cannot do very much of it. The worker accepts five uploads a minute in total across everyone using the page, not five per person, so a busy moment arrives as a rate-limit message. Repainting runs twenty diffusion steps on a shared queue, so a single attempt can take the better part of a minute.",
+                "formatNote": "JPEG, PNG and WebP, up to 10 MB, one at a time. GIF and BMP are refused because a single still repaint of an animation is not a useful answer, and SVG, AVIF and HEIC because the pipeline cannot decode them — convert to PNG or JPEG first. Both rules are checked in your browser and again on the server. The download is always a PNG whatever went in, because the composite has to be lossless to avoid re-compressing the pixels it did not change."
+            },
+            "privacy": {
+                "title": "What leaves your browser",
+                "p1": "Most tools on ToolForge run entirely on your device. This one cannot: inpainting needs an image model, and the model runs on Cloudflare's network.",
+                "p2": "Only the square you marked is uploaded — cropped in your browser, scaled to 512 pixels, and sent alongside a black-and-white mask of your strokes. The rest of the picture never leaves the page, and nothing at all leaves it until you press Remove. The compositing that produces the final image happens in your browser too, so the full-resolution result exists only on your own device.",
+                "p3": "Do not upload anything confidential. Even a crop can carry a face, a document or an address. When the marked area is sensitive, the honest answer is not to run it here."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Does this really remove the watermark?",
+                "a1": "It replaces it. The marked pixels are repainted by a diffusion model using their surroundings as a guide, so the mark is gone and what stands in its place is invented. Over a plain or soft background that is indistinguishable from a clean photograph; over text, brickwork or a face it usually is not.",
+                "q2": "Will my picture lose quality?",
+                "a2": "Only inside the mask. The download is a PNG at your original pixel dimensions, and every pixel you did not paint over is the one you started with — the repainted square is composited into the mask alone, rather than the whole image being re-encoded.",
+                "q3": "Which formats and sizes can I upload?",
+                "a3": "JPEG, PNG and WebP, up to 10 MB each, one at a time. GIF and BMP are refused because the model would return a single still; SVG, AVIF and HEIC because the pipeline cannot decode them. Convert to PNG or JPEG first.",
+                "q4": "Why does it say the rate limit was hit when I have only run it once?",
+                "a4": "The limit lives on the worker and counts per calling address. Because the page calls the worker from ToolForge's own server rather than from your browser — the API key has to stay secret — everyone using the page shares a single bucket of five uploads a minute. It is not counting you; it is counting everybody. Waiting a minute is the only fix from this side.",
+                "q5": "Can it remove an invisible or SynthID watermark?",
+                "a5": "No. This masks and repaints a region you can see. Invisible watermarks are statistical patterns spread across an entire image, and nothing here detects, reads or removes them.",
+                "q6": "Is it legal to remove a watermark?",
+                "a6": "That depends entirely on whose image it is, and this tool cannot tell. On your own work, or on an image licensed in a way that permits it, this is ordinary editing. On someone else's work it usually is not: the watermark does not hold the rights, but removing it does not grant them either, and stripping rights-management information is separately unlawful in many jurisdictions. When you are unsure, ask whoever made the image."
             }
         }
     },

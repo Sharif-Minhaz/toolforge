@@ -24,12 +24,12 @@ flips to `available` when its page ships.
 ## Shipped tools
 
 `uuid`, `base64`, `jwt`, `hash`, `json`, `url`, `markdown`, `regex`, `lorem`, `color`, `cron`,
-`timestamp`, `ai-text-detector`, `ai-image-detector` — each with a page under
-`src/app/tools/<id>/`.
+`timestamp`, `ai-text-detector`, `ai-image-detector`, `watermark-remover` — each with a page
+under `src/app/tools/<id>/`.
 
 ## Queued (catalogued, page not built)
 
-`password`, `qr`, `slug`, `diff`, `gemini-watermark-remover`.
+`password`, `qr`, `slug`, `diff`.
 
 ## Audience and tone
 

@@ -32,7 +32,7 @@ export const TOOL_IDS = [
     "diff",
     "ai-image-detector",
     "ai-text-detector",
-    "gemini-watermark-remover",
+    "watermark-remover",
 ] as const;
 
 export type ToolId = (typeof TOOL_IDS)[number];
@@ -151,6 +151,12 @@ export type DownloadFile = {
     readonly filename: string;
     readonly mimeType: string;
     readonly content: string;
+};
+
+/** The same, for a file that was never text — the blob carries its own type. */
+export type BlobDownload = {
+    readonly filename: string;
+    readonly blob: Blob;
 };
 
 export type ToolCatalogStats = {

@@ -15,33 +15,20 @@ import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
+import { readImagePixelSize } from "@/modules/tools/domain/image-element";
+import { checkImageFile, normalizeImageType } from "@/modules/tools/domain/image-file";
 import { detectAiImage } from "../actions/detect-image";
 import {
     IMAGE_ACCEPT_ATTRIBUTE,
+    IMAGE_FILE_LIMITS,
     IMAGE_FORM_FIELD,
     MAX_IMAGE_BYTES,
     TOKEN_FORM_FIELD,
     TURNSTILE_ACTION,
 } from "../domain/constants";
 import { createImageReportFile } from "../domain/export";
-import { checkImageFile, normalizeImageType } from "../domain/image-check";
 import type { ImageDetectionFailureReason, ImageFacts, ImageVerdict } from "../types";
 import { ImageVerdictPanel } from "./image-verdict";
-
-/**
- * Decodes just far enough to learn the pixel dimensions. Resolves `null` rather
- * than rejecting: a file the browser cannot decode is still worth sending, and
- * the worker's own answer is the one that matters.
- */
-function readImageSize(url: string): Promise<{ width: number; height: number } | null> {
-    return new Promise((resolve) => {
-        const probe = new Image();
-
-        probe.onload = () => resolve({ width: probe.naturalWidth, height: probe.naturalHeight });
-        probe.onerror = () => resolve(null);
-        probe.src = url;
-    });
-}
 
 /** The picked file, its preview, and everything shown about it. */
 type Picked = {
@@ -99,7 +86,7 @@ export function AiImageDetectorWorkbench({ siteKey }: AiImageDetectorWorkbenchPr
 
     const configured = siteKey !== null;
     const challengeReady = token !== null;
-    const checked = picked === null ? null : checkImageFile(picked.file);
+    const checked = picked === null ? null : checkImageFile(picked.file, IMAGE_FILE_LIMITS);
     const canAnalyse = configured && challengeReady && checked?.ok === true && !checking;
     const stale = analysis !== null && picked !== null && analysis.facts !== picked.facts;
 
@@ -181,7 +168,7 @@ export function AiImageDetectorWorkbench({ siteKey }: AiImageDetectorWorkbenchPr
         }
 
         const url = URL.createObjectURL(file);
-        const size = await readImageSize(url);
+        const size = await readImagePixelSize(url);
 
         setPicked({
             file,

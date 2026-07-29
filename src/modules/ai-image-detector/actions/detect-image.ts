@@ -3,9 +3,9 @@
 import { headers } from "next/headers";
 
 import { logEvent } from "@/modules/observability/domain/logger";
+import { checkImageFile } from "@/modules/tools/domain/image-file";
 import { resolveRemoteIp, verifyTurnstileToken } from "@/modules/tools/repository/turnstile";
-import { IMAGE_FORM_FIELD, TOKEN_FORM_FIELD } from "../domain/constants";
-import { checkImageFile } from "../domain/image-check";
+import { IMAGE_FILE_LIMITS, IMAGE_FORM_FIELD, TOKEN_FORM_FIELD } from "../domain/constants";
 import { toImageVerdict } from "../domain/verdict";
 import { requestImageDetection } from "../repository/image-detector";
 import type { ImageDetectionResult } from "../types";
@@ -37,7 +37,7 @@ export async function detectAiImage(formData: FormData): Promise<ImageDetectionR
     // Re-checked here rather than trusted from the island: the browser gate is
     // one devtools edit away, and this is the point where a request would
     // otherwise reach the model.
-    const checked = checkImageFile({ type: image.type, size: image.size });
+    const checked = checkImageFile({ type: image.type, size: image.size }, IMAGE_FILE_LIMITS);
 
     if (!checked.ok) {
         return { ok: false, reason: checked.reason };

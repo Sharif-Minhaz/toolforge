@@ -4,8 +4,8 @@ import {
     IconBolt,
     IconBraces,
     IconClock,
+    IconEraser,
     IconKey,
-    IconPhotoScan,
 } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
@@ -59,11 +59,11 @@ export async function QuickActions() {
             accent: "[--tool-accent:var(--brand-cyan)]",
         },
         {
-            key: "imageDetect",
-            href: "/tools/ai-image-detector",
-            title: t("imageDetect.title"),
-            description: t("imageDetect.description"),
-            Icon: IconPhotoScan,
+            key: "watermarkRemove",
+            href: "/tools/watermark-remover",
+            title: t("watermarkRemove.title"),
+            description: t("watermarkRemove.description"),
+            Icon: IconEraser,
             accent: "[--tool-accent:var(--brand-amber)]",
         },
     ];

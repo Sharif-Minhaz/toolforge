@@ -501,6 +501,35 @@ collations and currencies, and to `TextDecoder` labels.
 
 ---
 
+# Calling a Metered Worker
+
+Every tool that fronts a Workers AI model reads its endpoint and bearer key in
+`repository/`, on the server, and never from the browser. Two consequences fall
+out of that, both found building the Watermark Remover.
+
+**A per-IP limit upstream becomes a per-deployment limit here.** The worker sees
+this server's address in `CF-Connecting-IP`, not the visitor's, so a
+"five uploads a minute per IP" rule is five a minute for the whole site.
+Setting `X-Forwarded-For` does not help — Cloudflare's own header wins. Either
+have the worker prefer a forwarded-IP header from a trusted caller, or say
+plainly in the copy that the limit is shared. Never describe an upstream
+per-connection limit as if it were per visitor.
+
+**Send the smallest thing that answers the question.** The Watermark Remover
+crops the square around the mask in the browser, sends that at the model's own
+512 px, and composites the reply back onto the full-resolution original through
+the same strokes. The upload is smaller, the model works at near-native detail,
+and every pixel the reader did not mark is still theirs. Reach for the same
+shape before uploading a whole file: the browser has a canvas, and `domain/`
+may hold that glue as long as the arithmetic around it stays pure and tested
+(`watermark-remover/domain/region.ts` is the geometry, `canvas.ts` the glue).
+
+A canvas paint colour is the one place a raw colour literal is correct — it
+sits over the reader's photograph, not over a themed surface, so no token
+applies. Say so in a comment where you write it.
+
+---
+
 # Documentation Is Part of the Change
 
 Code and the documents describing it ship together. Documentation drift is a

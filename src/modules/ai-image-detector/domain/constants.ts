@@ -1,3 +1,5 @@
+import type { ImageFileLimits } from "@/modules/tools/domain/image-file";
+
 /**
  * Ceiling enforced by the detector worker, mirrored here so the browser can
  * refuse a hopeless upload before spending a model call on it — the upstream
@@ -21,6 +23,15 @@ export type AllowedImageType = (typeof ALLOWED_IMAGE_TYPES)[number];
 
 /** `accept` for the file input — a hint to the picker, never a substitute for the check. */
 export const IMAGE_ACCEPT_ATTRIBUTE = ALLOWED_IMAGE_TYPES.join(",");
+
+/**
+ * The pair the shared file check reads, exported as one value so the island and
+ * the server action can never drift into gating uploads differently.
+ */
+export const IMAGE_FILE_LIMITS: ImageFileLimits<AllowedImageType> = {
+    allowedTypes: ALLOWED_IMAGE_TYPES,
+    maxBytes: MAX_IMAGE_BYTES,
+};
 
 /** A long justification is a runaway generation, not a better explanation. */
 export const MAX_IMAGE_REASONING_LENGTH = 600;
