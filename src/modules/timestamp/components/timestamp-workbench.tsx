@@ -1,20 +1,27 @@
 "use client";
 
-import { IconDownload } from "@tabler/icons-react";
+import { IconDownload, IconWorldPlus } from "@tabler/icons-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useIsHydrated } from "@/hooks/use-is-hydrated";
+import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
 import type { StatusTone } from "@/modules/tools/components/status-strip";
+import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
+import { ZonePicker } from "@/modules/tools/components/zone-picker";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
+import {
+    getTimeZoneCity,
+    getTimeZoneRegion,
+    resolveLocalTimeZone,
+} from "@/modules/tools/domain/time-zones";
 import {
     DEFAULT_INPUT_TIME_ZONE,
     MAX_PINNED_TIME_ZONES,
@@ -23,14 +30,12 @@ import {
 import { convert, type TimestampConversionResult } from "../domain/convert";
 import { createTimestampExportFile } from "../domain/export";
 import { renderZone } from "../domain/format";
-import { getTimeZoneCity, getTimeZoneRegion, resolveLocalTimeZone } from "../domain/time-zones";
 import type { EpochUnit, ZonedRendering, ZoneRole, ZoneSlot } from "../types";
 import { DetailsPanel } from "./details-panel";
 import { EpochPanel } from "./epoch-panel";
 import { LiveClock } from "./live-clock";
-import { TimestampInput } from "./timestamp-input";
+import { ReadingOptions, TimestampInput } from "./timestamp-input";
 import { ZoneCard } from "./zone-card";
-import { ZonePicker } from "./zone-picker";
 
 const TICK_MS = 1000;
 
@@ -248,7 +253,7 @@ export function TimestampWorkbench({
     const boardFull = pinned.length >= MAX_PINNED_TIME_ZONES;
 
     return (
-        <div className="flex flex-col gap-6">
+        <div className={cn("flex flex-col gap-6", TOOL_ACCENT_VARS.cyan)}>
             <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
                 <span
                     aria-hidden="true"
@@ -261,170 +266,192 @@ export function TimestampWorkbench({
                 </CardHeader>
 
                 <CardContent className="flex flex-col gap-5">
-                    <LiveClock
-                        nowMs={nowMs}
-                        running={clockRunning}
-                        copied={copiedField === "now"}
-                        onToggle={() => setClockRunning(!clockRunning)}
-                        onCopy={(value) => handleCopy("now", value)}
-                        onUse={setInput}
-                    />
-
                     <TimestampInput
                         value={input}
-                        unit={unit}
-                        inputTimeZone={inputTimeZone}
-                        inputRegion={inputRegion}
                         inputId={inputId}
                         statusId={statusId}
                         statusTone={statusTone}
                         statusMessage={statusMessage}
-                        zoneApplies={result.ok && result.usedInputZone}
+                        clock={
+                            <LiveClock
+                                nowMs={nowMs}
+                                running={clockRunning}
+                                copied={copiedField === "now"}
+                                onToggle={() => setClockRunning(!clockRunning)}
+                                onCopy={(value) => handleCopy("now", value)}
+                                onUse={setInput}
+                            />
+                        }
                         onChange={setInput}
-                        onUnitChange={setUnit}
-                        onInputRegionChange={setInputRegion}
-                        onInputTimeZoneChange={setInputTimeZone}
                         onClear={() => setInput("")}
                     />
 
                     {result.ok && (
-                        <>
-                            <Separator />
-
-                            <div className="flex flex-col gap-2">
-                                <div className="flex flex-wrap items-center justify-between gap-2">
-                                    <h3 className="text-[0.9375rem] leading-[1.3] font-medium">
-                                        {t("epochTitle")}
-                                    </h3>
-                                    <Button variant="outline" size="sm" onClick={handleDownload}>
-                                        <IconDownload
-                                            className="size-3.5"
-                                            stroke={1.8}
-                                            aria-hidden="true"
-                                        />
-                                        {t("download")}
-                                    </Button>
-                                </div>
-
-                                <EpochPanel
-                                    epochs={result.epochs}
-                                    isoUtc={renderZone(result.epochMs, "UTC", locale).iso8601}
-                                    pending={pending}
-                                    copiedField={copiedField}
-                                    onCopy={handleCopy}
-                                />
+                        <div className="flex flex-col gap-2">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <h3 className="text-[0.9375rem] leading-[1.3] font-medium">
+                                    {t("epochTitle")}
+                                </h3>
+                                <Button variant="outline" size="sm" onClick={handleDownload}>
+                                    <IconDownload
+                                        className="size-3.5"
+                                        stroke={1.8}
+                                        aria-hidden="true"
+                                    />
+                                    {t("download")}
+                                </Button>
                             </div>
-                        </>
+
+                            <EpochPanel
+                                epochs={result.epochs}
+                                isoUtc={renderZone(result.epochMs, "UTC", locale).iso8601}
+                                pending={pending}
+                                copiedField={copiedField}
+                                onCopy={handleCopy}
+                            />
+                        </div>
                     )}
+
+                    <ReadingOptions
+                        unit={unit}
+                        inputTimeZone={inputTimeZone}
+                        inputRegion={inputRegion}
+                        zoneApplies={result.ok && result.usedInputZone}
+                        onUnitChange={setUnit}
+                        onInputRegionChange={setInputRegion}
+                        onInputTimeZoneChange={setInputTimeZone}
+                    />
                 </CardContent>
             </Card>
 
             {result.ok && (
-                <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-                    <CardHeader>
-                        <CardTitle className="text-lg">{t("zonesTitle")}</CardTitle>
-                        <CardDescription>{t("zonesDescription")}</CardDescription>
-                    </CardHeader>
+                <>
+                    <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+                        <CardHeader>
+                            <CardTitle className="text-lg">{t("zonesTitle")}</CardTitle>
+                            <CardDescription>{t("zonesDescription")}</CardDescription>
+                        </CardHeader>
 
-                    <CardContent className="flex flex-col gap-5">
-                        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                            {slots.map((slot) => {
-                                const rendering = byTimeZone.get(slot.timeZone);
+                        <CardContent className="flex flex-col gap-4">
+                            <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                                {slots.map((slot) => {
+                                    const rendering = byTimeZone.get(slot.timeZone);
 
-                                if (rendering === undefined) {
-                                    return null;
-                                }
+                                    if (rendering === undefined) {
+                                        return null;
+                                    }
 
-                                return (
-                                    <li key={slot.timeZone} className="min-w-0">
-                                        <ZoneCard
-                                            rendering={rendering}
-                                            role={slot.role}
-                                            pending={pending}
-                                            copiedField={copiedField}
-                                            onCopy={handleCopy}
-                                            onRemove={
-                                                slot.role === "pinned"
-                                                    ? () => handleRemoveZone(slot.timeZone)
-                                                    : undefined
-                                            }
-                                        />
-                                    </li>
-                                );
-                            })}
-                        </ul>
-
-                        {result.unsupportedTimeZones.length > 0 && (
-                            <p
-                                role="status"
-                                className="text-muted-foreground text-xs leading-normal"
-                            >
-                                {t("unsupportedZones", {
-                                    zones: result.unsupportedTimeZones.join(", "),
+                                    return (
+                                        <li key={slot.timeZone} className="min-w-0">
+                                            <ZoneCard
+                                                rendering={rendering}
+                                                role={slot.role}
+                                                pending={pending}
+                                                copiedField={copiedField}
+                                                onCopy={handleCopy}
+                                                onRemove={
+                                                    slot.role === "pinned"
+                                                        ? () => handleRemoveZone(slot.timeZone)
+                                                        : undefined
+                                                }
+                                            />
+                                        </li>
+                                    );
                                 })}
-                            </p>
-                        )}
+                            </ul>
 
-                        <Separator />
-
-                        <div className="flex flex-col gap-3">
-                            <ZonePicker
-                                region={pickerRegion}
-                                timeZone={pickerZone}
-                                regionLabel={t("regionLabel")}
-                                cityLabel={t("cityLabel")}
-                                addLabel={t("addZone")}
-                                onAdd={handleAddZone}
-                                addDisabled={boardFull || pinned.includes(pickerZone)}
-                                addHint={
-                                    boardFull
-                                        ? t("boardFull", { max: MAX_PINNED_TIME_ZONES })
-                                        : t("boardRoom", {
-                                              left: MAX_PINNED_TIME_ZONES - pinned.length,
-                                          })
-                                }
-                                onRegionChange={setPickerRegion}
-                                onTimeZoneChange={setPickerZone}
-                            />
-
-                            {suggestions.length > 0 && !boardFull && (
-                                <div
-                                    role="group"
-                                    aria-label={t("suggestedLabel")}
-                                    className="flex flex-wrap items-center gap-1"
+                            {result.unsupportedTimeZones.length > 0 && (
+                                <p
+                                    role="status"
+                                    className="text-muted-foreground text-xs leading-normal"
                                 >
-                                    <span className="text-muted-foreground mr-0.5 text-[0.6875rem] leading-[1.4]">
-                                        {t("suggestedLabel")}
-                                    </span>
-                                    {suggestions.map((zone) => (
-                                        <button
-                                            key={zone}
-                                            type="button"
-                                            onClick={() => setPinned([...pinned, zone])}
-                                            className="ring-border/70 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring h-7 rounded-lg px-2 text-[0.6875rem] leading-[1.4] ring-1 transition-colors duration-200 ring-inset focus-visible:ring-2 focus-visible:outline-none"
-                                        >
-                                            {getTimeZoneCity(zone)}
-                                        </button>
-                                    ))}
-                                </div>
+                                    {t("unsupportedZones", {
+                                        zones: result.unsupportedTimeZones.join(", "),
+                                    })}
+                                </p>
                             )}
-                        </div>
 
-                        <Separator />
+                            {/* A control, not a result — so it gets a heading and a
+                                surface of its own. Without them it is the second
+                                region-and-city pair on the page and nothing says
+                                which one adds a card. */}
+                            <section
+                                aria-label={t("addZoneTitle")}
+                                className="bg-muted/40 ring-border/60 flex flex-col gap-3 rounded-xl p-3 ring-1 ring-inset sm:p-4"
+                            >
+                                <div className="flex items-center gap-1.5">
+                                    <IconWorldPlus
+                                        className="text-muted-foreground size-3.5 shrink-0"
+                                        stroke={1.9}
+                                        aria-hidden="true"
+                                    />
+                                    <h3 className="text-[0.8125rem] leading-[1.3] font-medium">
+                                        {t("addZoneTitle")}
+                                    </h3>
+                                </div>
 
-                        <div className="flex flex-col gap-2">
-                            <h3 className="text-[0.9375rem] leading-[1.3] font-medium">
-                                {t("detailsTitle")}
-                            </h3>
+                                <ZonePicker
+                                    region={pickerRegion}
+                                    timeZone={pickerZone}
+                                    regionLabel={t("regionLabel")}
+                                    cityLabel={t("cityLabel")}
+                                    addLabel={t("addZone")}
+                                    onAdd={handleAddZone}
+                                    addDisabled={boardFull || pinned.includes(pickerZone)}
+                                    addHint={
+                                        boardFull
+                                            ? t("boardFull", { max: MAX_PINNED_TIME_ZONES })
+                                            : t("boardRoom", {
+                                                  left: MAX_PINNED_TIME_ZONES - pinned.length,
+                                              })
+                                    }
+                                    onRegionChange={setPickerRegion}
+                                    onTimeZoneChange={setPickerZone}
+                                />
+
+                                {suggestions.length > 0 && !boardFull && (
+                                    <div className="flex flex-wrap items-center gap-1">
+                                        <span className="text-muted-foreground mr-0.5 text-[0.6875rem] leading-[1.4]">
+                                            {t("suggestedLabel")}
+                                        </span>
+                                        <div
+                                            role="group"
+                                            aria-label={t("suggestedLabel")}
+                                            className="flex flex-wrap items-center gap-1"
+                                        >
+                                            {suggestions.map((zone) => (
+                                                <button
+                                                    key={zone}
+                                                    type="button"
+                                                    onClick={() => setPinned([...pinned, zone])}
+                                                    className="ring-border/70 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring h-7 rounded-lg px-2 text-[0.6875rem] leading-[1.4] ring-1 transition-colors duration-200 ring-inset focus-visible:ring-2 focus-visible:outline-none"
+                                                >
+                                                    {getTimeZoneCity(zone)}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </section>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+                        <CardHeader>
+                            <CardTitle className="text-lg">{t("detailsTitle")}</CardTitle>
+                            <CardDescription>{t("detailsDescription")}</CardDescription>
+                        </CardHeader>
+
+                        <CardContent>
                             <DetailsPanel
                                 facts={result.facts}
                                 relative={result.relative}
                                 factsTimeZone={result.factsTimeZone}
                                 pending={pending}
                             />
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                </>
             )}
         </div>
     );

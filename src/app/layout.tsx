@@ -175,6 +175,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.color.errors,
             toast: messages.color.toast,
         },
+        cron: {
+            workbench: messages.cron.workbench,
+            explain: messages.cron.explain,
+            presets: messages.cron.presets,
+            errors: messages.cron.errors,
+            toast: messages.cron.toast,
+        },
         timestamp: {
             workbench: messages.timestamp.workbench,
             errors: messages.timestamp.errors,

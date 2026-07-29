@@ -391,8 +391,12 @@ Reuse what exists rather than rebuilding it:
 | FAQ                           | `@/modules/tools/components/faq-accordion`   |
 | Copy button                   | `@/modules/tools/components/copy-button`     |
 | Accent vars, icon tile        | `@/modules/tools/components/tool-accent`     |
+| Region + city zone picker     | `@/modules/tools/components/zone-picker`     |
 | Clipboard, typed result       | `@/modules/tools/domain/clipboard`           |
 | File download                 | `@/modules/tools/domain/file-saver`          |
+| Wall clock ↔ instant, offsets | `@/modules/tools/domain/zone`                |
+| Frozen IANA zone list         | `@/modules/tools/domain/time-zones`          |
+| Gregorian calendar arithmetic | `@/modules/tools/domain/calendar`            |
 | 300 ms debounce               | `@/hooks/use-debounced-value`                |
 | Structured data               | `@/modules/seo/components/json-ld`           |
 | Structured logging            | `@/modules/observability/domain/logger`      |

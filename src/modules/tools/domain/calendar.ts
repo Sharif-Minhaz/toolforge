@@ -1,10 +1,9 @@
-import type { CalendarFacts, ZonedFields } from "../types";
-
 /**
  * Proleptic Gregorian calendar arithmetic, done on integers rather than on
- * `Date`. Keeping it independent means the same functions serve the parser
- * (validating 29 February), the ISO week date reader, and the details panel —
- * and none of them can pick up the host machine's zone by accident.
+ * `Date`. Keeping it independent means the same functions serve the timestamp
+ * parser (validating 29 February), the ISO week date reader, and the cron
+ * scheduler's day walk — and none of them can pick up the host machine's zone
+ * by accident.
  */
 
 const DAYS_IN_MONTH: readonly number[] = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -138,24 +137,10 @@ export function isValidIsoWeek(weekYear: number, week: number): boolean {
     return week >= 1 && week <= isoWeeksInYear(weekYear);
 }
 
-/**
- * Everything the details panel says about the instant that does not depend on
- * how it is written down. `today` is the reader's current wall clock in the
- * same zone, so "3 days from now" counts calendar days rather than 72 hours.
- */
-export function buildCalendarFacts(fields: ZonedFields, today: ZonedFields): CalendarFacts {
-    const { week, weekYear } = getIsoWeek(fields.year, fields.month, fields.day);
+/** 0 = Sunday through 6 = Saturday, the numbering crontab fields use. */
+export function getWeekday(year: number, month: number, day: number): number {
+    const days = daysFromCivil(year, month, day);
 
-    return {
-        dayOfYear: getDayOfYear(fields.year, fields.month, fields.day),
-        isoWeek: week,
-        isoWeekYear: weekYear,
-        isoWeekDate: formatIsoWeekDate(fields.year, fields.month, fields.day),
-        quarter: getQuarter(fields.month),
-        daysInMonth: getDaysInMonth(fields.year, fields.month),
-        leapYear: isLeapYear(fields.year),
-        dayOffsetFromToday:
-            daysFromCivil(fields.year, fields.month, fields.day) -
-            daysFromCivil(today.year, today.month, today.day),
-    };
+    // 1970-01-01 was a Thursday, weekday 4.
+    return (((days + 4) % 7) + 7) % 7;
 }

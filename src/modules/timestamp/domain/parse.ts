@@ -1,17 +1,19 @@
-import type {
-    DetectableEpochUnit,
-    EpochUnit,
-    ParseTimestampResult,
-    TimestampFailure,
-    ZonedFields,
-} from "../types";
 import {
     fromIsoWeekDate,
     fromOrdinalDate,
     getDaysInMonth,
     getDaysInYear,
     isValidIsoWeek,
-} from "./calendar";
+} from "@/modules/tools/domain/calendar";
+import { isKnownTimeZone } from "@/modules/tools/domain/time-zones";
+import { fieldsToUtcMs, zonedFieldsToEpochMs } from "@/modules/tools/domain/zone";
+import type { ZonedFields } from "@/modules/tools/types";
+import type {
+    DetectableEpochUnit,
+    EpochUnit,
+    ParseTimestampResult,
+    TimestampFailure,
+} from "../types";
 import {
     AUTO_UNIT_THRESHOLDS,
     EPOCH_OFFSET_NANOS,
@@ -21,8 +23,6 @@ import {
     NANOS_PER_MILLISECOND,
     NANOS_PER_UNIT,
 } from "./constants";
-import { isKnownTimeZone } from "./time-zones";
-import { fieldsToUtcMs, zonedFieldsToEpochMs } from "./zone";
 
 export type ParseTimestampRequest = {
     readonly input: string;

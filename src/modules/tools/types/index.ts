@@ -95,6 +95,21 @@ export type LocalizedTool = Tool & {
     readonly categoryLabel: string;
 };
 
+/**
+ * Broken-down wall-clock fields, always relative to some named zone. Shared by
+ * every tool that has to reason about a calendar rather than an instant.
+ */
+export type ZonedFields = {
+    readonly year: number;
+    /** 1–12, not the `Date` 0–11. */
+    readonly month: number;
+    readonly day: number;
+    readonly hour: number;
+    readonly minute: number;
+    readonly second: number;
+    readonly millisecond: number;
+};
+
 export const NEWLINE_SEPARATORS = ["lf", "crlf", "cr"] as const;
 
 export type NewlineSeparator = (typeof NEWLINE_SEPARATORS)[number];

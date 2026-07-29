@@ -390,7 +390,9 @@ src/
       validation/             Zod schemas
 ```
 
-Existing feature modules: `tools` (catalog, search, clipboard, file saving),
+Existing feature modules: `tools` (catalog, search, clipboard, file saving,
+plus the shared time-zone and calendar layer: `domain/zone.ts`,
+`domain/time-zones.ts`, `domain/calendar.ts`, `components/zone-picker.tsx`),
 `uuid`, `overview`, `preferences`, `seo`, `observability`.
 
 Rules that keep this honest:
@@ -480,18 +482,19 @@ server render and the hydration pass disagree, so the page flickers or throws.
 Both were found building the Timestamp tool.
 
 **Never `new Date(string)` on a value that carries no offset.**
-`new Date("2026-07-29T12:00:00")` is parsed against the *host's* zone. On the
+`new Date("2026-07-29T12:00:00")` is parsed against the _host's_ zone. On the
 server that is the container's `TZ`, in the browser it is the reader's — the
 same string becomes two different instants. Parse the fields yourself and apply
-an explicit zone. See `timestamp/domain/parse.ts`; `timestamp/domain/zone.ts`
-holds the wall-clock ↔ instant arithmetic, built on `Intl` alone.
+an explicit zone. See `timestamp/domain/parse.ts`; `tools/domain/zone.ts` holds
+the wall-clock ↔ instant arithmetic, built on `Intl` alone, and is shared by
+every tool that needs it.
 
 **Never build an option list from a runtime enumeration.**
 `Intl.supportedValuesOf("timeZone")` returns 419 entries in Bun and 418 in
 Node, and browsers differ again. A `<Select>` populated from it renders
 different options on each side of hydration. Freeze the list into a literal
-array in `domain/` (`timestamp/domain/time-zone-list.ts`) and catch the
-difference where the value is *used* — `isFormattableTimeZone` probes by doing
+array in `domain/` (`tools/domain/time-zone-list.ts`) and catch the
+difference where the value is _used_ — `isFormattableTimeZone` probes by doing
 the thing, and the orchestrator drops what the local engine cannot render and
 says which. The same applies to `Intl.supportedValuesOf` for calendars,
 collations and currencies, and to `TextDecoder` labels.

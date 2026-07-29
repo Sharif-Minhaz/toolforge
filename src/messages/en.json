@@ -223,10 +223,6 @@
                 "title": "Single UUID",
                 "description": "One v4 identifier, ready to copy."
             },
-            "uuidBulk": {
-                "title": "Bulk v4 batch",
-                "description": "Generate 100 identifiers at once."
-            },
             "base64Decode": {
                 "title": "Decode Base64",
                 "description": "Paste an encoded string and read it back."
@@ -242,6 +238,10 @@
             "timestampNow": {
                 "title": "Convert a timestamp",
                 "description": "Read a Unix epoch in your own time zone, UTC, and any city you pin."
+            },
+            "cronExplain": {
+                "title": "Explain a cron schedule",
+                "description": "Read a crontab line as a sentence and see exactly when it fires next."
             }
         },
         "featured": {
@@ -2610,6 +2610,305 @@
             }
         }
     },
+    "cron": {
+        "meta": {
+            "title": "Cron Expression Parser — Explain a Crontab and Preview Its Next Runs",
+            "description": "Paste a cron expression and read it back in plain English, column by column, with the next run times in any IANA time zone. Handles 5-field crontab, 6-field with seconds, 7-field Quartz with a year, the @daily family, and the L, W and # calendar syntax. Runs entirely in your browser."
+        },
+        "hero": {
+            "eyebrow": "Cron Parser",
+            "title": "Cron Expression Parser",
+            "subtitle": "Paste a schedule and find out what it actually does — read as a sentence, broken down column by column, and turned into the next run times in whichever time zone the job runs in.",
+            "badgeQuartz": "Crontab and Quartz",
+            "badgeZones": "Full IANA database",
+            "badgeOffline": "Works offline"
+        },
+        "workbench": {
+            "title": "Cron expression",
+            "description": "Five fields, six with seconds, or seven with a year. Macros such as @daily are expanded to the columns they stand for.",
+            "inputLabel": "Expression",
+            "inputPlaceholder": "*/5 * * * *",
+            "clear": "Clear the expression",
+            "copyExpression": "Copy the expression",
+            "readAs": "Read as {count, number} fields, {base} numbering",
+            "readAsReboot": "Read as a boot-time schedule, with no clock columns",
+            "dayUnionNote": "Both day columns are set, so this fires when either one matches — not when both do.",
+            "fields": {
+                "second": "Second",
+                "minute": "Minute",
+                "hour": "Hour",
+                "dayOfMonth": "Day of month",
+                "month": "Month",
+                "dayOfWeek": "Day of week",
+                "year": "Year"
+            },
+            "bases": {
+                "unix": "Unix",
+                "quartz": "Quartz"
+            },
+            "weekdayBaseLabel": "Weekday numbering",
+            "weekdayBaseHint": "Unix counts Sunday as 0 and accepts 7 for it too. Quartz counts Sunday as 1. Names such as MON mean the same under both.",
+            "regionLabel": "Region",
+            "cityLabel": "City",
+            "useLocalZone": "Use my zone ({zone})",
+            "runCountLabel": "Runs to preview",
+            "runCountHint": "Between {min, number} and {max, number} upcoming runs.",
+            "runCountPresets": "Run count presets",
+            "runCountDecrease": "Show one fewer run",
+            "runCountIncrease": "Show one more run",
+            "runsTitle": "Next runs",
+            "runsDescription": "Counted forward from now, on the wall clock of the zone you picked.",
+            "runsZoneNote": "Times are the wall clock in {zone}.",
+            "copyRun": "Copy this run time",
+            "download": "Download runs",
+            "inDays": "in {days, number}d {hours, number}h",
+            "inHours": "in {hours, number}h {minutes, number}m",
+            "inMinutes": "in {minutes, number}m {seconds, number}s",
+            "neverRuns": "This schedule never runs. Check the day and month columns — 30 February and similar combinations can never be satisfied.",
+            "scheduleExhausted": "No further runs were found within the next hundred years.",
+            "skippedByDst": "{count, plural, one {# run falls on a wall clock that daylight saving erases, so it was skipped.} other {# runs fall on wall clocks that daylight saving erases, so they were skipped.}}",
+            "unsupportedZone": "This browser does not know the zone {zone}, so the runs below are in UTC."
+        },
+        "explain": {
+            "sentence": "Runs {clause}.",
+            "reboot": "Runs once, when the machine boots.",
+            "everyValue": "every value",
+            "listSeparator": ", ",
+            "listLast": " and ",
+            "time": {
+                "everySecond": "every second",
+                "everyNSeconds": "every {step} seconds",
+                "everyMinute": "every minute",
+                "everyNMinutes": "every {step} minutes",
+                "everyMinutePastHours": "every minute of hour {hours}",
+                "everyNMinutesPastHours": "every {step} minutes of hour {hours}",
+                "atTimes": "at {times}",
+                "atMinutesOfEveryHour": "every hour at minute {minutes}",
+                "atMinutesPastHours": "at minute {minutes} of hour {hours}",
+                "atSecondsMinutesHours": "at second {seconds}, minute {minutes}, hour {hours}"
+            },
+            "qualifier": {
+                "dayOfMonth": "on {values} of the month",
+                "month": "in {values}",
+                "dayOfWeek": "on {values}",
+                "year": "in {values}"
+            },
+            "item": {
+                "range": "{from} through {to}",
+                "step": "every {step} from {from} to {to}",
+                "everyStep": "every {step}",
+                "everyStepDays": "every {step} days",
+                "everyStepWeekdays": "every {step} days of the week",
+                "dayNumber": "day {value}",
+                "lastDayOfMonth": "the last day",
+                "lastDayOfMonthOffset": "{offset} days before the last day",
+                "lastWeekday": "the last weekday",
+                "nearestWeekday": "the weekday nearest day {day}",
+                "lastWeekdayOfMonth": "the last {weekday}",
+                "nthWeekday": "the {ordinal} {weekday}"
+            },
+            "ordinals": {
+                "first": "first",
+                "second": "second",
+                "third": "third",
+                "fourth": "fourth",
+                "fifth": "fifth"
+            },
+            "months": {
+                "jan": "January",
+                "feb": "February",
+                "mar": "March",
+                "apr": "April",
+                "may": "May",
+                "jun": "June",
+                "jul": "July",
+                "aug": "August",
+                "sep": "September",
+                "oct": "October",
+                "nov": "November",
+                "dec": "December"
+            },
+            "weekdays": {
+                "sun": "Sunday",
+                "mon": "Monday",
+                "tue": "Tuesday",
+                "wed": "Wednesday",
+                "thu": "Thursday",
+                "fri": "Friday",
+                "sat": "Saturday"
+            }
+        },
+        "presets": {
+            "label": "Examples:",
+            "everyMinute": "Every minute",
+            "everyFiveMinutes": "Every 5 min",
+            "everyFifteenMinutes": "Every 15 min",
+            "hourly": "Hourly",
+            "everyTwoHours": "Every 2 hours",
+            "daily": "Daily at midnight",
+            "weekdayMornings": "Weekdays 9am",
+            "weekly": "Every Sunday",
+            "monthly": "Monthly, 1st",
+            "lastDayOfMonth": "Last day of month",
+            "thirdFriday": "Third Friday",
+            "yearly": "Yearly, 1 Jan"
+        },
+        "errors": {
+            "empty": "Type or paste a cron expression to read it",
+            "tooLong": "A cron expression cannot be longer than {max, number} characters",
+            "fieldCount": "A cron expression needs 5 fields, 6 with a leading seconds column, or 7 with a trailing year",
+            "unknownMacro": "{token} is not one of the cron macros — try @yearly, @monthly, @weekly, @daily, @hourly or @reboot",
+            "emptyTerm": "The {field} column has an empty entry — check for a stray or doubled comma",
+            "invalidTerm": "{token} is not something the {field} column can hold",
+            "outOfRange": "{token} is outside the range the {field} column allows",
+            "reversedRange": "{token} runs backwards — cron ranges do not wrap, so write the days out as a list instead",
+            "invalidStep": "{token} has a step cron cannot use — a step must be a whole number of at least 1",
+            "unsupportedSyntax": "{token} uses calendar syntax the {field} column does not have",
+            "invalidNth": "{token} asks for a weekday no month has — # takes 1 through 5"
+        },
+        "toast": {
+            "copyFailedUnsupported": "Your browser blocked clipboard access",
+            "copyFailedDenied": "Clipboard permission was denied",
+            "copyFailedEmpty": "Nothing to copy yet",
+            "downloaded": "Downloaded {filename}",
+            "downloadFailed": "The download could not be started"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "What a cron expression actually says",
+                "p1": "A cron expression is a filter over the clock, not a countdown. Every minute the scheduler wakes up, looks at the current time, and asks each column whether it matches. When they all agree, the job runs. Nothing anywhere records when the job last ran or when it is due next — which is why an expression alone can never tell you it has drifted.",
+                "p2": "That framing explains the two things people find surprising. A schedule has no start date, so changing the file changes the very next run. And a schedule has no duration, so a job that takes eleven minutes on a five-minute schedule will happily start again before the last copy has finished.",
+                "p3": "This tool reads the expression the way the scheduler does, then says the result out loud and lists the instants it produces. Everything happens in your browser: the expression is never sent anywhere, which matters more than usual because schedules tend to sit in the same files as credentials."
+            },
+            "fields": {
+                "title": "The columns",
+                "intro": "Fields are separated by whitespace and read left to right. The five-field form is what crontab has used since the 1970s; the seconds column in front and the year column behind are later additions that Quartz, Spring and node-cron accept.",
+                "tableCaption": "Cron columns, the values each accepts, and the special characters it allows",
+                "colField": "Column",
+                "colValues": "Values",
+                "colSpecial": "Special",
+                "colNotes": "Notes",
+                "counts": "Which columns you get depends on how many you write. Five fields start at the minute. Six put seconds in front. Seven put seconds in front and a year behind. Anything else is rejected rather than guessed at, because a six-field line read as five would silently move every run by a whole column.",
+                "secondName": "Second",
+                "secondNotes": "Only present in the six- and seven-field forms. A five-field line fires on the zeroth second.",
+                "minuteName": "Minute",
+                "minuteNotes": "The first column of a classic crontab line.",
+                "hourName": "Hour",
+                "hourNotes": "Always a 24-hour clock. There is no AM or PM anywhere in cron.",
+                "dayOfMonthName": "Day of month",
+                "dayOfMonthNotes": "Days that a month does not have are simply never matched — 31 in February costs you nothing, it just does not fire.",
+                "monthName": "Month",
+                "monthNotes": "Accepts JAN through DEC, case-insensitively, as well as 1 through 12.",
+                "dayOfWeekName": "Day of week",
+                "dayOfWeekNotes": "Accepts SUN through SAT. The numbering depends on the dialect, which is what the Weekday numbering control is for.",
+                "yearName": "Year",
+                "yearNotes": "Quartz only, and rarely useful outside a one-off migration job."
+            },
+            "syntax": {
+                "title": "Syntax, one character at a time",
+                "intro": "Each column is a comma-separated list of terms, and each term is one of the shapes below. The last six are Quartz extensions: plain crontab does not know them, so a line using them will not load into a Unix crontab.",
+                "tableCaption": "Cron term syntax, what each means, and which columns accept it",
+                "colToken": "Term",
+                "colMeans": "Means",
+                "colWhere": "Where",
+                "noWrap": "Two things are worth remembering. A range never wraps: FRI-MON is rejected rather than read as the weekend, so write FRI,SAT,SUN,MON instead. And a step counts from the bottom of its column, not from now — */20 in the minute column fires at :00, :20 and :40 whatever time you save the file.",
+                "starMeans": "Every value the column can hold.",
+                "starWhere": "Every column.",
+                "listMeans": "Each listed value, merged and deduplicated.",
+                "listWhere": "Every column.",
+                "rangeMeans": "Every value from the first to the last, inclusive.",
+                "rangeWhere": "Every column. Names may be used where the column accepts them.",
+                "stepMeans": "Every nth value, counting from the bottom of the column.",
+                "stepWhere": "Every column.",
+                "rangeStepMeans": "Every nth value inside a range — 0, 10, 20 and 30 here.",
+                "rangeStepWhere": "Every column.",
+                "openStepMeans": "Every nth value from a starting point to the top of the column — 5, 20, 35 and 50 here.",
+                "openStepWhere": "Every column. A Quartz spelling that most crontabs also accept.",
+                "unspecifiedMeans": "No value of its own; leaves the decision to the other day column.",
+                "unspecifiedWhere": "Day of month and day of week only.",
+                "lastDayMeans": "The last day of the month, whether that is the 28th or the 31st.",
+                "lastDayWhere": "Day of month only.",
+                "lastDayOffsetMeans": "That many days before the last day of the month.",
+                "lastDayOffsetWhere": "Day of month only.",
+                "lastWeekdayMeans": "The last Monday-to-Friday day of the month.",
+                "lastWeekdayWhere": "Day of month only.",
+                "nearestWeekdayMeans": "The weekday nearest that date, without crossing into another month.",
+                "nearestWeekdayWhere": "Day of month only.",
+                "lastNamedWeekdayMeans": "The last Friday of the month. Any weekday number or name works.",
+                "lastNamedWeekdayWhere": "Day of week only.",
+                "nthWeekdayMeans": "The third Friday of the month. The ordinal runs from 1 to 5.",
+                "nthWeekdayWhere": "Day of week only."
+            },
+            "macros": {
+                "title": "The @ macros",
+                "intro": "Vixie cron accepts eight shorthands in place of five fields. They are expanded before anything else, so the breakdown above shows the columns they stand for rather than the macro itself.",
+                "tableCaption": "Cron macros and the five-field expressions they expand to",
+                "colMacro": "Macro",
+                "colEquivalent": "Same as",
+                "colNotes": "Notes",
+                "yearlyNotes": "@annually is a second spelling of the same thing.",
+                "monthlyNotes": "Midnight on the first of every month.",
+                "weeklyNotes": "Midnight on Sunday, whichever numbering the dialect uses.",
+                "dailyNotes": "@midnight is a second spelling of the same thing.",
+                "hourlyNotes": "On the hour, every hour.",
+                "rebootNotes": "Not a clock schedule at all. It fires once, when the daemon starts, so it has no next run to show — and it does not fire again if you merely reload the crontab."
+            },
+            "options": {
+                "title": "The controls",
+                "intro": "Three settings change what the run list means. None of them change how the expression is read except the second, which changes what a bare weekday digit stands for.",
+                "tableCaption": "Cron tool controls, what each does, and when to reach for it",
+                "colOption": "Control",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "timeZoneName": "Time zone",
+                "timeZoneDoes": "Works out the run times against that zone's wall clock, including its daylight saving rules.",
+                "timeZoneWhen": "Always — set it to whatever the machine running the job is set to, which is very often UTC.",
+                "weekdayBaseName": "Weekday numbering",
+                "weekdayBaseDoes": "Decides whether a bare digit in the day-of-week column counts Sunday as 0 or as 1.",
+                "weekdayBaseWhen": "The expression came from Quartz, Spring or Jenkins and uses digits rather than names.",
+                "runCountName": "Runs to preview",
+                "runCountDoes": "How many upcoming run times to list, from 1 to 25.",
+                "runCountWhen": "You need to see a whole week of a daily job, or just confirm the next one.",
+                "zoneNote": "The zone is a property of the machine, not of the expression. A crontab line carries no zone at all; it fires on whatever the host's clock says. Kubernetes CronJob and Quartz can each be told a zone explicitly, and this control is how you model that.",
+                "baseNote": "Weekday numbering only matters for digits. SUN, MON and the rest name the same day under both dialects, which is the strongest argument for always writing names — a schedule that reads the same everywhere cannot be misread when it moves between systems."
+            },
+            "traps": {
+                "title": "Five ways a schedule surprises people",
+                "dayUnion": "When both day columns are restricted, cron fires when either matches, not when both do. 0 0 1 * MON runs on the first of the month and on every Monday — four or five times as often as most people expect. If only one of the two columns is a star, the columns are intersected as usual, which is why the rule is so easy to miss.",
+                "stepFromZero": "A step counts from the bottom of its column, not from the moment you saved the file. */7 in the hour column fires at 00:00, 07:00, 14:00 and 21:00, then jumps back to 00:00 — the gap across midnight is three hours, not seven. Steps that do not divide evenly into their column always have a short interval at the wrap.",
+                "dst": "In a zone that observes daylight saving, an hour goes missing every spring. A job at 02:30 does not run at all on that day, because 02:30 never happens. This tool counts those and tells you underneath the run list rather than quietly listing 03:30 instead.",
+                "zoneless": "In the autumn the same hour happens twice. Most schedulers fire once, on the first pass, which is what the run list shows — but implementations genuinely differ here, and a job that must run exactly once should not be scheduled inside the repeated hour at all.",
+                "overlap": "Cron never waits for the previous run to finish. A five-minute schedule around a job that sometimes takes seven minutes will eventually run two copies at once. Guard it with a lock file, flock, or whatever your runner offers — the schedule cannot do it for you."
+            },
+            "useCases": {
+                "title": "When to reach for this",
+                "p1": "Reviewing a pull request that touches a crontab, a Kubernetes CronJob, or a Quartz trigger. Reading the sentence and the next five runs takes a few seconds and catches the off-by-one-column mistakes that a diff makes almost invisible.",
+                "p2": "Working out why a job ran at the wrong time. Set the zone to the server's, and the run list will usually show the answer straight away — a UTC box firing a report at what the reporter thought was local midnight is the single most common cause.",
+                "p3": "Writing a new schedule from scratch. Start from an example, adjust one column at a time, and watch the sentence and the run times change as you type.",
+                "offline": "Everything runs in your browser. The expression is never uploaded, which matters because schedules usually live beside secrets, hostnames, and internal paths."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Why does my schedule with both a day of month and a weekday run so often?",
+                "a1": "Because cron unions the two day columns rather than intersecting them. When neither column is a star, a day matches if it satisfies either one. To restrict on both at once, pick one column and leave the other as a star — or, in Quartz, as a question mark.",
+                "q2": "What time zone does a cron expression use?",
+                "a2": "None of its own. A classic crontab entry fires on the host's clock, so the answer depends entirely on how the machine is configured — very often UTC on a server and local time on a laptop. Kubernetes CronJob has a timeZone field and Quartz takes a TimeZone on the trigger; the Time zone control here is how you model whichever applies.",
+                "q3": "Is 0 Sunday or is 1 Sunday?",
+                "a3": "Both, depending on the dialect. Unix crontab counts Sunday as 0 and also accepts 7 for it. Quartz counts Sunday as 1 through Saturday as 7. Switch the Weekday numbering control to match where the expression came from, or write SUN and MON instead — names mean the same day everywhere.",
+                "q4": "What are L, W and # for?",
+                "a4": "They are Quartz extensions for schedules a plain range cannot express. L is the last day of the month, LW the last weekday of it, 15W the weekday nearest the 15th, 5L the last Friday, and FRI#3 the third Friday. Plain Unix crontab does not understand any of them, so a line that uses one will not load into a system crontab.",
+                "q5": "Why is my job not running on 31 February?",
+                "a5": "Because there is no such date. Cron matches days that exist, so a day-of-month value a month does not have simply never fires. This tool tells you when a combination can never be satisfied instead of showing an empty list with no explanation.",
+                "q6": "How many fields should I write?",
+                "a6": "Five for anything going into a Unix crontab. Six if your runner takes a seconds column — node-cron, Spring and Quartz all do. Seven only for Quartz, where the last field is a year. If you are unsure, five is right far more often than not.",
+                "q7": "Is my expression sent to a server?",
+                "a7": "No. The parser, the explanation and the run times are all computed in your browser. Nothing about the expression leaves the page, and the tool works with the network switched off."
+            }
+        }
+    },
     "timestamp": {
         "meta": {
             "title": "Timestamp Converter — Unix Epoch, ISO 8601 and Time Zones",
@@ -2634,6 +2933,14 @@
             "inputPlaceholder": "1785326400, 2026-07-29T12:00:00Z, or \"now\"",
             "clear": "Clear",
             "examplesLabel": "Try:",
+            "examples": {
+                "epochSeconds": "Seconds",
+                "epochMillis": "Milliseconds",
+                "iso": "ISO 8601",
+                "rfc": "RFC 2822",
+                "dateText": "Written date",
+                "uuid": "UUID"
+            },
             "unitLabel": "Read numbers as",
             "unitHintAuto": "The scale is chosen from the value's magnitude.",
             "unitHintExplicit": "Every number is read at this scale, whatever its size.",
@@ -2651,6 +2958,7 @@
             "inputZoneCityLabel": "Input zone city",
             "inputZoneApplied": "This input carried no offset, so it was read in the zone above.",
             "inputZoneIdle": "Used only when the input carries no offset of its own.",
+            "readingOptionsTitle": "How the input is read",
             "detected": {
                 "now": "the current time",
                 "epoch": "a Unix timestamp",
@@ -2686,7 +2994,9 @@
             "boardFull": "The board holds {max, number} pinned zones. Remove one to add another.",
             "boardRoom": "{left, plural, =0 {No room left} one {Room for # more} other {Room for # more}}.",
             "suggestedLabel": "Common:",
+            "addZoneTitle": "Add a zone to compare",
             "detailsTitle": "About this date",
+            "detailsDescription": "Facts about the date itself, which no clock can tell you.",
             "details": {
                 "relative": "Relative to now",
                 "dayOfYear": "Day of year",

@@ -3,9 +3,9 @@ import {
     IconBinary,
     IconBolt,
     IconBraces,
+    IconCalendarClock,
     IconClock,
     IconKey,
-    IconStack2,
 } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
@@ -25,14 +25,6 @@ export async function QuickActions() {
             description: t("uuidSingle.description"),
             Icon: IconBolt,
             accent: "[--tool-accent:var(--brand-violet)]",
-        },
-        {
-            key: "uuidBulk",
-            href: "/tools/uuid?quantity=100",
-            title: t("uuidBulk.title"),
-            description: t("uuidBulk.description"),
-            Icon: IconStack2,
-            accent: "[--tool-accent:var(--brand-cyan)]",
         },
         {
             key: "base64Decode",
@@ -65,6 +57,14 @@ export async function QuickActions() {
             description: t("timestampNow.description"),
             Icon: IconClock,
             accent: "[--tool-accent:var(--brand-cyan)]",
+        },
+        {
+            key: "cronExplain",
+            href: "/tools/cron?expr=0+9+*+*+MON-FRI",
+            title: t("cronExplain.title"),
+            description: t("cronExplain.description"),
+            Icon: IconCalendarClock,
+            accent: "[--tool-accent:var(--brand-amber)]",
         },
     ];
 

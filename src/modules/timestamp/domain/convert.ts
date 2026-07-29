@@ -1,3 +1,4 @@
+import { getZonedFields, isFormattableTimeZone } from "@/modules/tools/domain/zone";
 import type {
     CalendarFacts,
     EpochRendering,
@@ -6,10 +7,9 @@ import type {
     TimestampFailure,
     ZonedRendering,
 } from "../types";
-import { buildCalendarFacts } from "./calendar";
+import { buildCalendarFacts } from "./calendar-facts";
 import { renderEpochs, renderRelative, renderZone } from "./format";
 import { parseTimestamp } from "./parse";
-import { isFormattableTimeZone, getZonedFields } from "./zone";
 
 export type TimestampConversionRequest = {
     readonly input: string;

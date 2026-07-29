@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { renderEpochs, renderRelative, renderZone } from "@/modules/timestamp/domain/format";
-import { fieldsToUtcMs } from "@/modules/timestamp/domain/zone";
+import { fieldsToUtcMs } from "@/modules/tools/domain/zone";
 
 const TARGET = Date.UTC(2026, 6, 29, 12, 0, 0);
 

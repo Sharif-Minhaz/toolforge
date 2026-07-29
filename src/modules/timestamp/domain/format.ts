@@ -1,6 +1,4 @@
-import type { EpochRendering, ZonedRendering } from "../types";
-import { getIsoDayOfWeek } from "./calendar";
-import { NANOS_PER_MILLISECOND } from "./constants";
+import { getIsoDayOfWeek } from "@/modules/tools/domain/calendar";
 import {
     formatOffsetLabel,
     formatRfcOffset,
@@ -8,7 +6,9 @@ import {
     getZonedFields,
     isInDaylightTime,
     pad2,
-} from "./zone";
+} from "@/modules/tools/domain/zone";
+import type { EpochRendering, ZonedRendering } from "../types";
+import { NANOS_PER_MILLISECOND } from "./constants";
 
 /**
  * Two kinds of string come out of here and they follow opposite rules.

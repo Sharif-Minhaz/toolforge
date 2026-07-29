@@ -47,12 +47,13 @@ Everything else follows from that:
 | Markdown Preview          | `/tools/markdown`         | Formatting | GFM live preview with Mermaid diagrams and KaTeX maths                                      |
 | Color Converter           | `/tools/color`            | Formatting | HEX, RGB, HSL, HSV, CMYK and OKLCH, WCAG contrast, 50–950 scales, Tailwind and CSS palettes |
 | Timestamp Converter       | `/tools/timestamp`        | Formatting | Unix epochs, ISO 8601, RFC 2822, UUIDs and ObjectIds, read in your zone and any you pin     |
+| Cron Parser               | `/tools/cron`             | Formatting | Explains a crontab or Quartz line column by column and lists its next runs in any zone      |
 | Regex Tester              | `/tools/regex`            | Text       | Match, explain and substitute, with catastrophic-backtracking protection                    |
 | Random Text Generator     | `/tools/lorem`            | Text       | Twelve public-domain sources by word, character, sentence or paragraph                      |
 | AI Text Detector          | `/tools/ai-text-detector` | AI         | Estimates whether a passage was written by a language model                                 |
 
-Planned and already visible in the catalogue: Password Generator, Cron Parser, QR Generator,
-Diff Checker, Slug Generator, AI Image Detector, Gemini Watermark Remover.
+Planned and already visible in the catalogue: Password Generator, QR Generator, Diff Checker,
+Slug Generator, AI Image Detector, Gemini Watermark Remover.
 
 Picking one up is the easiest way to contribute — see
 [Adding a tool](CONTRIBUTING.md#adding-a-tool).

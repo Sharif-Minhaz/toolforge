@@ -10,8 +10,8 @@ import {
     isFormattableTimeZone,
     isInDaylightTime,
     zonedFieldsToEpochMs,
-} from "@/modules/timestamp/domain/zone";
-import type { ZonedFields } from "@/modules/timestamp/types";
+} from "@/modules/tools/domain/zone";
+import type { ZonedFields } from "@/modules/tools/types";
 
 const JULY = Date.UTC(2026, 6, 15, 12, 0, 0);
 const JANUARY = Date.UTC(2026, 0, 15, 12, 0, 0);

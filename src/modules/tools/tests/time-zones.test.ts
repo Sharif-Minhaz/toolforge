@@ -8,8 +8,8 @@ import {
     isKnownTimeZone,
     TIME_ZONES,
     UTC_REGION,
-} from "@/modules/timestamp/domain/time-zones";
-import { isFormattableTimeZone } from "@/modules/timestamp/domain/zone";
+} from "@/modules/tools/domain/time-zones";
+import { isFormattableTimeZone } from "@/modules/tools/domain/zone";
 
 describe("the shipped snapshot", () => {
     test("covers the whole database and holds no duplicates", () => {

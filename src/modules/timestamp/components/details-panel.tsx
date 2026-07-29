@@ -3,7 +3,7 @@
 import { useFormatter, useTranslations } from "next-intl";
 
 import { cn } from "@/lib/utils";
-import { getTimeZoneCity } from "../domain/time-zones";
+import { getTimeZoneCity } from "@/modules/tools/domain/time-zones";
 import type { CalendarFacts } from "../types";
 
 type DetailsPanelProps = {
@@ -24,7 +24,6 @@ export function DetailsPanel({ facts, relative, factsTimeZone, pending }: Detail
     const format = useFormatter();
 
     const rows = [
-        { key: "relative", label: t("details.relative"), value: relative, mono: false },
         {
             key: "dayOfYear",
             label: t("details.dayOfYear"),
@@ -62,6 +61,16 @@ export function DetailsPanel({ facts, relative, factsTimeZone, pending }: Detail
                 pending && "opacity-55",
             )}
         >
+            {/* "in 3 days" is the one line here a person reads rather than
+                looks up, so it leads instead of sitting in the grid as the
+                first of six identically weighted tiles. */}
+            <div className="rounded-xl bg-[color-mix(in_oklch,var(--tool-accent)_10%,transparent)] px-4 py-3 ring-1 ring-[color-mix(in_oklch,var(--tool-accent)_22%,transparent)] ring-inset">
+                <p className="text-muted-foreground text-[0.6875rem] leading-[1.3]">
+                    {t("details.relative")}
+                </p>
+                <p className="mt-0.5 text-lg leading-[1.4] font-medium">{relative}</p>
+            </div>
+
             <dl className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
                 {rows.map((row) => (
                     <div

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
+import { isKnownTimeZone } from "@/modules/tools/domain/time-zones";
 import { MAX_INPUT_LENGTH, MAX_PINNED_TIME_ZONES } from "../domain/constants";
-import { isKnownTimeZone } from "../domain/time-zones";
 import { EPOCH_UNITS } from "../types";
 
 export const epochUnitSchema = z.enum(EPOCH_UNITS);

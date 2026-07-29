@@ -43,6 +43,25 @@ export const TIMESTAMP_SOURCE_KINDS = [
 
 export type TimestampSourceKind = (typeof TIMESTAMP_SOURCE_KINDS)[number];
 
+/** Keys for the one-tap example chips, kept a literal union so the chip's
+ *  message key is checked at compile time. */
+export const TIMESTAMP_EXAMPLE_KEYS = [
+    "epochSeconds",
+    "epochMillis",
+    "iso",
+    "rfc",
+    "dateText",
+    "uuid",
+] as const;
+
+export type TimestampExampleKey = (typeof TIMESTAMP_EXAMPLE_KEYS)[number];
+
+export type TimestampExample = {
+    readonly key: TimestampExampleKey;
+    /** The literal string the parser is handed. Data, not copy. */
+    readonly value: string;
+};
+
 export type TimestampFailureReason =
     /** Nothing to parse yet. */
     | "empty"
@@ -98,18 +117,6 @@ export type ZoneRole = "local" | "utc" | "pinned";
 export type ZoneSlot = {
     readonly timeZone: string;
     readonly role: ZoneRole;
-};
-
-/** Broken-down wall-clock fields, always relative to some named zone. */
-export type ZonedFields = {
-    readonly year: number;
-    /** 1–12, not the `Date` 0–11. */
-    readonly month: number;
-    readonly day: number;
-    readonly hour: number;
-    readonly minute: number;
-    readonly second: number;
-    readonly millisecond: number;
 };
 
 /** One instant, rendered for one zone. Every string is display-ready. */

@@ -1,4 +1,4 @@
-import type { EpochUnit, TimestampOptions } from "../types";
+import type { EpochUnit, TimestampExample, TimestampOptions } from "../types";
 
 /**
  * The widest instant a JavaScript `Date` can hold, ±100 000 000 days from the
@@ -97,14 +97,16 @@ export const SUGGESTED_TIME_ZONES: readonly string[] = [
  * one names the same instant — 2026-07-29T12:00:00Z — so tapping through them
  * demonstrates the detector rather than jumping the reader around the calendar.
  *
- * These are data, not copy: they stay in Western digits in both locales because
- * they mirror machine input.
+ * The chip shows the `key`'s translated name rather than the value: six raw
+ * strings side by side, one of them a 36-character UUID, is a wall of noise
+ * nobody can scan. The value still rides along as the button's title, and
+ * stays in Western digits in both locales because it mirrors machine input.
  */
-export const EXAMPLE_INPUTS: readonly string[] = [
-    "1785326400",
-    "1785326400000",
-    "2026-07-29T12:00:00Z",
-    "Wed, 29 Jul 2026 12:00:00 GMT",
-    "July 29, 2026 12:00 PM",
-    "019fadbe-f200-7abc-9def-0123456789ab",
-];
+export const EXAMPLE_INPUTS = [
+    { key: "epochSeconds", value: "1785326400" },
+    { key: "epochMillis", value: "1785326400000" },
+    { key: "iso", value: "2026-07-29T12:00:00Z" },
+    { key: "rfc", value: "Wed, 29 Jul 2026 12:00:00 GMT" },
+    { key: "dateText", value: "July 29, 2026 12:00 PM" },
+    { key: "uuid", value: "019fadbe-f200-7abc-9def-0123456789ab" },
+] as const satisfies readonly TimestampExample[];

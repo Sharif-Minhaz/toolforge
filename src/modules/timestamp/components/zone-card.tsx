@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
-import { getTimeZoneCity } from "../domain/time-zones";
+import { getTimeZoneCity } from "@/modules/tools/domain/time-zones";
 import type { ZonedRendering, ZoneRole } from "../types";
 
 const ROLE_ICON = {
@@ -26,9 +26,15 @@ type ZoneCardProps = {
 };
 
 /**
- * One instant told in one zone: the sentence a person reads first, then the two
- * strings a machine reads. Every row is copyable on its own, because the reason
- * anyone opens this tool is to paste one of them somewhere else.
+ * One instant told in one zone, in the order a person reads it: the clock
+ * first, then the date, then the zone's own labels, then the two strings a
+ * machine reads.
+ *
+ * The clock is the whole point of the card and it used to be a fragment of one
+ * long sentence — `fullDate` renders as "Wednesday, 29 July 2026 at 18:00:00",
+ * so the number anyone actually came for sat at the end of a line of prose, at
+ * the same weight as everything around it. Splitting it into `timeOnly` and
+ * `weekday`/`dateOnly` costs nothing: the renderer already produced all three.
  */
 export function ZoneCard({
     rendering,
@@ -56,14 +62,14 @@ export function ZoneCard({
             )}
         >
             <div className="flex items-start justify-between gap-2">
-                <div className="flex min-w-0 flex-col gap-1">
+                <div className="flex min-w-0 flex-col gap-0.5">
                     <span className="flex items-center gap-1.5">
                         <Icon
                             className="text-primary size-3.5 shrink-0"
                             stroke={1.9}
                             aria-hidden="true"
                         />
-                        <span className="truncate text-[0.9375rem] leading-[1.3] font-medium">
+                        <span className="truncate text-[0.8125rem] leading-[1.3] font-medium">
                             {title}
                         </span>
                     </span>
@@ -81,6 +87,27 @@ export function ZoneCard({
                     >
                         <IconX className="size-3.5" stroke={2} aria-hidden="true" />
                     </button>
+                )}
+            </div>
+
+            <div className="flex min-w-0 flex-col gap-0.5">
+                {/* `timeOnly` is locale-formatted, so Bangla renders Bengali
+                    numerals here — the line height has to clear their ascenders. */}
+                <p className="truncate font-mono text-2xl leading-[1.35] tabular-nums">
+                    {rendering.timeOnly}
+                </p>
+                {/* `dateOnly` is `dateStyle: "full"`, which already opens with
+                    the weekday — prefixing `weekday` here printed it twice. */}
+                <p className="text-[0.8125rem] leading-[1.45] wrap-break-word">
+                    {rendering.dateOnly}
+                </p>
+                {rendering.zoneName.length > 0 && (
+                    <p
+                        title={rendering.zoneName}
+                        className="text-muted-foreground truncate text-[0.75rem] leading-[1.45]"
+                    >
+                        {rendering.zoneName}
+                    </p>
                 )}
             </div>
 
@@ -102,17 +129,6 @@ export function ZoneCard({
                         <IconSun className="size-3" stroke={2} aria-hidden="true" />
                         {t("daylightTime")}
                     </Badge>
-                )}
-            </div>
-
-            <div className="flex min-w-0 flex-col gap-0.5">
-                <p className="text-[0.9375rem] leading-[1.45] font-medium wrap-break-word">
-                    {rendering.fullDate}
-                </p>
-                {rendering.zoneName.length > 0 && (
-                    <p className="text-muted-foreground text-[0.8125rem] leading-[1.45]">
-                        {rendering.zoneName}
-                    </p>
                 )}
             </div>
 
