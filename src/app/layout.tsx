@@ -201,6 +201,15 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.watermarkRemover.errors,
             toast: messages.watermarkRemover.toast,
         },
+        password: {
+            workbench: messages.password.workbench,
+            strengths: messages.password.strengths,
+            crackTime: messages.password.crackTime,
+            attacks: messages.password.attacks,
+            separators: messages.password.separators,
+            errors: messages.password.errors,
+            toast: messages.password.toast,
+        },
         aiTextDetector: {
             workbench: messages.aiTextDetector.workbench,
             labels: messages.aiTextDetector.labels,

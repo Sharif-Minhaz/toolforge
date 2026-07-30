@@ -239,9 +239,9 @@
                 "title": "Convert a timestamp",
                 "description": "Read a Unix epoch in your own time zone, UTC, and any city you pin."
             },
-            "watermarkRemove": {
-                "title": "Remove a watermark",
-                "description": "Brush over a watermark on your own image and have that area repainted, at the original size."
+            "passwordStrong": {
+                "title": "Generate a strong password",
+                "description": "A 20-character random password with the entropy and crack time it really has."
             }
         },
         "featured": {
@@ -3703,6 +3703,288 @@
                 "a5": "No. This masks and repaints a region you can see. Invisible watermarks are statistical patterns spread across an entire image, and nothing here detects, reads or removes them.",
                 "q6": "Is it legal to remove a watermark?",
                 "a6": "That depends entirely on whose image it is, and this tool cannot tell. On your own work, or on an image licensed in a way that permits it, this is ordinary editing. On someone else's work it usually is not: the watermark does not hold the rights, but removing it does not grant them either, and stripping rights-management information is separately unlawful in many jurisdictions. When you are unsure, ask whoever made the image."
+            }
+        }
+    },
+    "password": {
+        "meta": {
+            "title": "Password Generator — random, memorable or PIN, with real entropy",
+            "description": "Generate strong random passwords, memorable passphrases and PINs in your browser. Exact entropy, a crack-time estimate against an attacker you pick, and no password ever sent to a server."
+        },
+        "hero": {
+            "eyebrow": "Security",
+            "title": "Password Generator",
+            "subtitle": "Random characters, a passphrase you can actually remember, or a PIN — drawn from the Web Crypto API in this tab, scored on the entropy the settings really produce, and timed against an attacker you choose.",
+            "badgeLocal": "Never sent anywhere",
+            "badgeCrypto": "Web Crypto randomness",
+            "badgeCrack": "Assumptions shown"
+        },
+        "workbench": {
+            "title": "Generate a password",
+            "description": "Every value is composed in this browser tab. Nothing is uploaded, logged or saved.",
+            "modeLabel": "Type",
+            "modes": {
+                "random": "Random",
+                "memorable": "Memorable",
+                "pin": "PIN"
+            },
+            "lengthLabel": {
+                "random": "Characters",
+                "memorable": "Words",
+                "pin": "Digits"
+            },
+            "lengthHint": "Between {min, number} and {max, number}.",
+            "charactersGroup": "Characters used",
+            "classes": {
+                "uppercase": "Uppercase",
+                "lowercase": "Lowercase",
+                "numbers": "Numbers",
+                "symbols": "Symbols"
+            },
+            "classesUnavailable": "Only used by a random password.",
+            "exclusionsGroup": "Exclusions",
+            "excludeSimilar": "Exclude look-alikes",
+            "excludeAmbiguous": "Exclude awkward symbols",
+            "passphraseGroup": "Passphrase",
+            "passphraseUnavailable": "Only used by a memorable passphrase.",
+            "separatorLabel": "Separator",
+            "capitalize": "Capitalise each word",
+            "capitalizeHint": "Easier to read. Adds no entropy — it is a rule, not a choice.",
+            "includeNumber": "Add a digit",
+            "includeNumberHint": "One digit on one word, both picked at random.",
+            "attackLabel": "Attacker",
+            "strengthLabel": "Password strength",
+            "crackLabel": "Average time to crack:",
+            "crackAssumption": "assuming {attacker}.",
+            "copy": "Copy password",
+            "regenerate": "New password",
+            "composing": "Composing a password in your browser.",
+            "announcement": "New password ready: {count, number} characters, rated {strength}.",
+            "statsLabel": "Strength figures",
+            "compositionLabel": "What the password contains",
+            "bits": "{value} bits",
+            "stats": {
+                "entropy": "Entropy",
+                "pool": "Drawn from"
+            },
+            "poolUnit": {
+                "random": "{count, number} characters",
+                "memorable": "{count, number} words",
+                "pin": "{count, number} digits"
+            }
+        },
+        "strengths": {
+            "very-weak": "Very weak",
+            "weak": "Weak",
+            "fair": "Fair",
+            "strong": "Strong",
+            "very-strong": "Very strong"
+        },
+        "crackTime": {
+            "instant": "instantly",
+            "beyond": "longer than any number worth writing down",
+            "beyondUniverse": "That is longer than the universe has existed.",
+            "seconds": "{count, plural, one {{value} second} other {{value} seconds}}",
+            "minutes": "{count, plural, one {{value} minute} other {{value} minutes}}",
+            "hours": "{count, plural, one {{value} hour} other {{value} hours}}",
+            "days": "{count, plural, one {{value} day} other {{value} days}}",
+            "months": "{count, plural, one {{value} month} other {{value} months}}",
+            "years": "{count, plural, one {{value} year} other {{value} years}}"
+        },
+        "attacks": {
+            "throttled": {
+                "label": "Rate-limited login",
+                "hint": "Roughly a hundred guesses a second. Nothing has leaked and the attacker is stuck at the front door.",
+                "assumption": "a rate-limited login form, about 10² guesses a second"
+            },
+            "bcrypt": {
+                "label": "Leaked bcrypt hashes",
+                "hint": "Roughly ten thousand guesses a second. bcrypt at cost 12 is slow to compute on purpose.",
+                "assumption": "leaked bcrypt hashes at cost 12, about 10⁴ guesses a second"
+            },
+            "sha256": {
+                "label": "Leaked SHA-256 hashes",
+                "hint": "Roughly a hundred billion guesses a second — a fast hash on a multi-GPU rig.",
+                "assumption": "leaked SHA-256 hashes, about 10¹¹ guesses a second"
+            },
+            "md5": {
+                "label": "Leaked MD5 or NTLM",
+                "hint": "Roughly a trillion guesses a second. The worst case worth planning for.",
+                "assumption": "leaked MD5 or NTLM hashes, about 10¹² guesses a second"
+            }
+        },
+        "separators": {
+            "hyphen": {
+                "label": "Hyphen",
+                "hint": "river-candle-motor — reads well and every field accepts it."
+            },
+            "dot": {
+                "label": "Dot",
+                "hint": "river.candle.motor"
+            },
+            "underscore": {
+                "label": "Underscore",
+                "hint": "river_candle_motor"
+            },
+            "space": {
+                "label": "Space",
+                "hint": "river candle motor — some login forms trim spaces."
+            },
+            "none": {
+                "label": "None",
+                "hint": "rivercandlemotor — shortest, and hardest to read back."
+            }
+        },
+        "errors": {
+            "generic": "Could not generate a password. Try changing the settings.",
+            "noCharacterClass": "Pick at least one character type — there is nothing to draw from."
+        },
+        "toast": {
+            "copied": "Password copied. It stays on your clipboard until something replaces it.",
+            "copyFailedEmpty": "Nothing to copy yet.",
+            "copyFailedUnsupported": "This browser will not let the page use the clipboard. Select the password and copy it by hand.",
+            "copyFailedDenied": "Clipboard permission was denied."
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "What makes a password strong",
+                "p1": "A password is strong when it is hard to guess, and nothing else. Not when it has a capital letter, not when it has a symbol, not when it satisfies a form's validation rules. Those rules were written to nudge people away from dragon and 123456, and what they mostly produced was Dragon1!.",
+                "p2": "What actually resists guessing is unpredictability, and a person cannot supply it. Human-chosen passwords cluster in the same few shapes: a word, a capital at the front, a digit and an exclamation mark at the end. An attacker's dictionary knows that shape, so a nine-character password built that way falls in seconds while a nine-character password drawn at random does not.",
+                "p3": "So the useful question is never how a password looks. It is how many equally likely passwords the thing that made it could have produced instead. This tool draws every character and every word uniformly from the browser's cryptographic generator, then tells you exactly how large that set was."
+            },
+            "entropy": {
+                "title": "Entropy, and what the number means",
+                "p1": "Entropy is that set size, written as a power of two. A password with 40 bits of entropy is one of 2⁴⁰ — about a trillion — equally likely results. Each extra bit doubles the work, so 41 bits is twice as hard as 40, and 60 bits is a million times harder.",
+                "p2": "Bits come from the number of choices multiplied by how many times you make one. A random character out of 94 is log₂(94) ≈ 6.55 bits, so twenty of them is about 131. A word out of the 1024-word list is exactly 10 bits, so six words is exactly 60. A digit is log₂(10) ≈ 3.32 bits, which is why a six-digit PIN comes to 19.9 no matter how carefully it was drawn.",
+                "p3": "The figure describes the generator, not the string that came out of it. That distinction is where most strength meters go wrong: they inspect the characters, find mixed case and a symbol, and award points. But Password1! and a random k7#Qm2vL look similar to a checker and are astronomically far apart in practice, because one came from a list of common shapes and the other from a uniform draw.",
+                "p4": "It also means the number moves when you change a setting, not when you press regenerate. Two passwords made with the same options are exactly as strong as each other, however different they look.",
+                "tableCaption": "Strength bands and the entropy each one opens at",
+                "colBand": "Band",
+                "colBits": "Bits",
+                "colMeans": "Against the default attacker",
+                "bands": {
+                    "very-weak": "Falls in seconds. Fine for nothing.",
+                    "weak": "Falls in minutes to weeks. Not enough for an account.",
+                    "fair": "Months to a few hundred thousand years. Adequate, not comfortable.",
+                    "strong": "Out of reach of a single rig today.",
+                    "very-strong": "Out of reach of any attacker worth modelling."
+                },
+                "guaranteeNote": "One wrinkle, and it goes the honest way. A random password is guaranteed to contain at least one character from every class you switched on, which removes every result that misses a class — so the real keyspace is slightly smaller than the pool size raised to the length. This tool counts the difference by inclusion–exclusion rather than ignoring it. At twenty characters it costs well under a bit; at four characters it is worth knowing about."
+            },
+            "attackers": {
+                "title": "How long it takes to crack",
+                "p1": "There is no such thing as the time to crack a password. The same secret falls in an afternoon or outlasts the sun depending entirely on who is guessing and what they are guessing against, and a tool that shows one number without saying which is hiding the interesting part.",
+                "p2": "So the attacker is a control here rather than a hidden constant. Pick the scenario that matches what you are protecting: a password on a live login form is up against something very different from the same password sitting in a database that leaked.",
+                "tableCaption": "Attacker scenarios and the guess rate each one assumes",
+                "colScenario": "Scenario",
+                "colRate": "Guesses/sec",
+                "colWhen": "What it models",
+                "when": {
+                    "throttled": "Guessing at a login form that rate-limits. Nothing has leaked.",
+                    "bcrypt": "A breach where passwords were hashed with bcrypt at cost 12, attacked offline on a multi-GPU rig.",
+                    "sha256": "A breach where a fast hash was used. The default, because it is the common case.",
+                    "md5": "A breach using MD5 or NTLM — still depressingly common. The worst case worth planning for."
+                },
+                "roundingNote": "The rates are rounded to a power of ten on purpose. They are the order of magnitude of published hashcat-class benchmarks for a multi-GPU rig, not measurements taken here, and each GPU generation moves them. A figure like 164,100,000,000 would imply a precision this estimate does not have. If you need current numbers, run hashcat -b on the hardware you are actually worried about.",
+                "averageNote": "The time shown is the average, not the worst case. A search through a uniformly random secret finds it after half the candidates, so the figure is half the keyspace divided by the rate. Exhausting the whole space takes twice as long — reporting that instead would be the more flattering error.",
+                "knowledgeNote": "The estimate assumes the attacker knows exactly which settings produced the password and searches only that keyspace. That is deliberately pessimistic: not knowing makes their job harder, never easier, so the figure stays a lower bound on the work. It is also why guessing a human-chosen password is so much faster than these numbers suggest — the set a person really draws from is far smaller than they think."
+            },
+            "modes": {
+                "title": "The three types",
+                "intro": "Three ways to make a secret, for three different jobs. The type also decides which of the controls below do anything.",
+                "tableCaption": "Password types, their ranges and what each is for",
+                "colMode": "Type",
+                "colRange": "Range",
+                "colBits": "Bits each",
+                "colWhen": "Reach for it when",
+                "bits": {
+                    "random": "≈6.55 / character",
+                    "memorable": "10 / word",
+                    "pin": "≈3.32 / digit"
+                },
+                "when": {
+                    "random": "Anything a password manager will remember for you. This is the default, and it should stay the default.",
+                    "memorable": "A secret you have to type from memory or read aloud — a device login, a disk passphrase, a Wi-Fi key.",
+                    "pin": "A phone, a card or a lock that limits attempts. Never an account."
+                },
+                "wordlistNote": "The passphrase list holds exactly {words, number} words, and that number is the point: one word is exactly ten bits, so the arithmetic needs no rounding and six words is exactly sixty. Every word is three to eight lowercase letters and common enough to retype after reading it once — a passphrase you cannot remember is a passphrase you will replace with something worse.",
+                "pinNote": "A PIN has no options beyond its length, and that is not an oversight. Every rule you might add — no repeats, no runs, no birthdays — removes candidates and makes it weaker, not stronger. A six-digit PIN is one of a million, which an offline attacker clears instantly. It is safe only behind a device that locks after a handful of tries."
+            },
+            "options": {
+                "title": "Every control, and what it changes",
+                "intro": "Nine controls. Three of them belong to a random password, three to a passphrase, and the rest apply throughout — so a control that cannot do anything in the current type is disabled and says why, rather than sitting there being ignored.",
+                "tableCaption": "Generator options and when each one helps",
+                "colOption": "Option",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "modeName": "Type",
+                "modeDoes": "Switches between random characters, a wordlist passphrase and a numeric PIN. Each counts its length differently.",
+                "modeWhen": "Start here — it decides which of the controls below are live.",
+                "lengthName": "Length",
+                "lengthDoes": "Characters, words or digits, depending on the type. The one lever that always increases strength.",
+                "lengthWhen": "Before reaching for anything else. Length beats complexity at every size.",
+                "classesName": "Characters used",
+                "classesDoes": "Which of the four alphabets a random password draws from. At least one character of every class you switch on is guaranteed to appear.",
+                "classesWhen": "Turn symbols off when a system rejects them — then add length back to make up for the smaller pool.",
+                "excludeSimilarName": "Exclude look-alikes",
+                "excludeSimilarDoes": "Drops the glyphs that read as each other in most fonts.",
+                "excludeSimilarWhen": "Someone will read the password off a screen and type it somewhere else.",
+                "excludeAmbiguousName": "Exclude awkward symbols",
+                "excludeAmbiguousDoes": "Drops brackets, quotes, slashes and punctuation that shells, CSV columns and JSON strings mangle.",
+                "excludeAmbiguousWhen": "The password is going into a config file, a connection string or a command line.",
+                "separatorName": "Separator",
+                "separatorDoes": "What goes between the words of a passphrase.",
+                "separatorWhen": "Hyphen unless something downstream objects. It adds no entropy either way.",
+                "capitalizeName": "Capitalise each word",
+                "capitalizeDoes": "Upper-cases the first letter of every word in a passphrase.",
+                "capitalizeWhen": "A form demands a capital. It adds nothing to the strength.",
+                "includeNumberName": "Add a digit",
+                "includeNumberDoes": "Appends one digit to one randomly chosen word.",
+                "includeNumberWhen": "A form demands a number. Worth about six extra bits at six words.",
+                "attackName": "Attacker",
+                "attackDoes": "Chooses the guess rate the crack-time estimate assumes.",
+                "attackWhen": "Match it to the threat you actually care about. It never changes the password itself.",
+                "modeGatingNote": "The gating follows one rule rather than a list of pairs: character classes and both exclusions need a character pool to trim, and only a random password has one. A passphrase is drawn from a wordlist and a PIN from the ten digits, so in those types the whole panel goes quiet. The three passphrase controls are the mirror of that.",
+                "similarSetNote": "Excluding look-alikes drops {characters} — the classic seven plus the pipe, which is indistinguishable from a lowercase L in several common terminal faces.",
+                "ambiguousSetNote": "Excluding awkward symbols drops {characters}. Both exclusions cost entropy by shrinking the pool: all four classes together give 94 characters, and both exclusions leave 67. The meter accounts for it, so raise the length if the band drops.",
+                "capitalizeNote": "Capitalising every word adds exactly zero bits, and the entropy figure says so. A rule the attacker can apply themselves is not a secret — it turns one candidate into one different candidate, and the set does not grow. The separator is the same kind of nothing. The digit is different: both the word it lands on and its value are drawn at random, so it really is worth log₂(words × 10) bits.",
+                "separatorNote": "What the separator does change is what the password contains. A hyphen is a symbol, so river-candle-motor satisfies a form demanding a symbol without any of the character controls being involved. The composition row under the generator counts it, because the finished string genuinely does contain it.",
+                "defaultsNote": "The defaults are a twenty-character random password using all four classes with no exclusions, scored against leaked SHA-256 hashes. That comes to about 131 bits, which none of the attackers in the table gets close to. Switch to a passphrase and the default is six words — sixty bits — because that is the shortest passphrase that is not honestly weak."
+            },
+            "privacy": {
+                "title": "Where the password goes",
+                "p1": "Nowhere. Every password on this page is composed in your browser: there is no request to generate one, no request after one is made, and no server that has ever seen one.",
+                "p2": "That is why the box is briefly empty when the page loads. Every other generator on this site renders its first result on the server and sends it down with the HTML, and this one deliberately does not. A generated secret in an HTTP response body is a secret that can end up in an access log, in a proxy that terminates TLS, or in whatever buffered the response on the way. The page ships a placeholder, and the first password appears a moment later, made locally.",
+                "p3": "The link carries your settings and never the result. A URL like ?mode=memorable&length=8 is safe to share or bookmark; a password in a query string would land in browser history, in the referrer header of the next page you visit, and in every log between here and there.",
+                "p4": "There is no download button either, and that is on purpose. Every other tool here offers one. Writing a secret into your downloads folder as a plain-text file, where it sits until you remember to delete it, is not a feature.",
+                "p5": "The one exposure worth knowing about is the clipboard. Copying puts the password somewhere any application on your machine can read it, and it stays there until something replaces it. Paste it into your password manager, then copy something harmless."
+            },
+            "practices": {
+                "title": "What to do with it",
+                "p1": "Use a password manager, and let it hold a long random password for every account. That is the whole recommendation, and it makes most of the rest academic: a password you never type can be thirty characters of noise, and the only one you have to remember is the one that unlocks the manager.",
+                "p2": "Make that one a passphrase. Six words from this list is sixty bits and you can memorise it in a couple of minutes; the same effort spent on random characters gets you about nine of them, which is worse. Length is the lever that always works — one more character on a random password is worth more than every complexity rule ever written.",
+                "p3": "Reuse is the failure that actually happens. Strength does not help if the same twenty-character password is also on a site that stored it badly: the attacker does not crack it, they read it and try it everywhere else. Unique per account is worth more than strong.",
+                "p4": "Turn on two-factor authentication wherever it is offered, and stop rotating passwords on a schedule. Forced expiry moves people from a strong password they chose once to a weak one they increment every quarter. Change a password when you have reason to think it leaked, not because ninety days elapsed."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Is it safe to generate a password on a website?",
+                "a1": "On this one the password is never transmitted: it is composed in your browser by the platform's cryptographic generator and stays there. You do still have to trust that the page you loaded is the page we published, which is the trust any web tool asks for. If you would rather not extend it, a local password manager's generator does the same job — the arithmetic on this page is here so you can check that whatever you use is telling you the truth.",
+                "q2": "Where does the randomness come from?",
+                "a2": "crypto.getRandomValues, the browser's cryptographically secure generator, seeded by the operating system. Math.random is never used anywhere in this tool: it is fast and predictable, and a predictable password generator is not one. Selections use rejection sampling rather than a modulo, so no character in the pool is very slightly more likely than another.",
+                "q3": "How accurate is the crack-time figure?",
+                "a3": "The keyspace is exact — counted rather than estimated, including the cost of guaranteeing one character per class. The guess rate is rounded to a power of ten, because it depends on the attacker's hardware and on the hash the target chose, and both change. So read the result as an order of magnitude against the scenario you picked. The distance between the four scenarios tells you far more than the digits inside any one of them.",
+                "q4": "Why is a six-digit PIN called very weak?",
+                "a4": "Because there are only a million of them, and a machine allowed to try them offline finishes before you let go of the mouse. That is not a flaw in the PIN, it is what a PIN is. It works because the phone or card behind it locks after a few wrong tries, not because the number is hard to guess — so never use one where an attacker can guess as fast as they like.",
+                "q5": "Is a passphrase really as strong as random characters?",
+                "a5": "It can be, but it takes more of it. Six words from the 1024-word list is sixty bits; ten random characters across all four classes is about sixty-six. The trade is memorability against length, and a passphrase you can hold in your head beats a stronger one you write on a sticky note. For anything a manager remembers for you, use random characters.",
+                "q6": "Why does capitalising the words not make it stronger?",
+                "a6": "Because it is a rule, and an attacker searching this keyspace applies the same rule for free. Upper-casing the first letter of every word turns one candidate into exactly one different candidate — the set does not grow. Any transformation you could describe in a sentence costs them nothing. Only choices made at random count, which is why the digit option adds bits and the capitalisation option does not.",
+                "q7": "Can I reuse a strong password across sites?",
+                "a7": "No. Strength protects against guessing, and reuse is not a guessing problem: when a site is breached and had stored passwords badly, the attacker gets yours directly and tries it on your email. A unique password per account is the highest-value habit here, and it is only practical with a manager."
             }
         }
     },
