@@ -23,6 +23,7 @@ const CONTROL_ROWS = [
     "undo",
     "clearMask",
     "remove",
+    "compare",
     "download",
     "clear",
     "challenge",
