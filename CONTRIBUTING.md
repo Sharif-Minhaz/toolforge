@@ -392,6 +392,7 @@ Reuse what exists rather than rebuilding it:
 | Copy button                   | `@/modules/tools/components/copy-button`     |
 | Accent vars, icon tile        | `@/modules/tools/components/tool-accent`     |
 | Region + city zone picker     | `@/modules/tools/components/zone-picker`     |
+| Calendar + clock, one field   | `@/modules/tools/components/date-time-picker` |
 | Clipboard, typed result       | `@/modules/tools/domain/clipboard`           |
 | File download, text or blob   | `@/modules/tools/domain/file-saver`          |
 | Upload type and size gate     | `@/modules/tools/domain/image-file`          |

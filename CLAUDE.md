@@ -505,11 +505,18 @@ collations and currencies, and to `TextDecoder` labels.
 nothing more, so it means a different instant depending on who reads it. Parse
 the fields with a regex — never `new Date(value)` — and hand them to
 `zonedFieldsToEpochMs` with a zone read **inside an event handler**, where there
-is only one host to ask. `shortener/domain/local-datetime.ts` does both
+is only one host to ask. `tools/domain/local-datetime.ts` does both
 directions and rejects a rolled-over field rather than letting the arithmetic
 absorb it. Where a stored instant has to _prefill_ such a field, derive it
 during render behind `useIsHydrated()` — UTC on the server and through
 hydration, the reader's own zone a tick later — never from an effect.
+
+`tools/components/date-time-picker.tsx` is the control that speaks that string,
+and it is the shape to copy. Its trigger label is formatted from `Date.UTC`
+fields **in UTC**, so the typed wall clock renders identically on any host; the
+calendar itself — which reasons in local date components and marks the host's
+own "today" — lives inside the popover, so it never mounts during SSR and
+hydration never sees it.
 
 ---
 
