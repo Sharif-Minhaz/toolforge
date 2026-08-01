@@ -21,8 +21,8 @@ import {
     PASSWORD_MODES,
     PASSWORD_SEPARATORS,
     type PasswordOptions,
-    type RandomBytes,
 } from "@/modules/password/types";
+import type { RandomBytes } from "@/modules/tools/types";
 
 /** Deterministic byte source, so every assertion below is reproducible. */
 function seededBytes(seed: number): RandomBytes {

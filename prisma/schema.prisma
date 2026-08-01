@@ -13,3 +13,22 @@ datasource db {
   // Connection URLs live in prisma.config.ts as of Prisma 7.
   // https://pris.ly/d/config-datasource
 }
+
+/// A dynamic QR code: the short link that was printed, and where it currently
+/// points. The slug is the primary key because it is the only thing a scan
+/// carries — a surrogate id would be a second identity nothing ever uses.
+///
+/// `editTokenHash` is a SHA-256 digest, never the token itself. Whoever holds
+/// the token can re-point a printed code, so a database dump must not hand that
+/// ability over.
+model QrLink {
+  slug          String    @id
+  target        String
+  editTokenHash String    @unique @map("edit_token_hash")
+  scans         Int       @default(0)
+  lastScanAt    DateTime? @map("last_scan_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@map("qr_links")
+}

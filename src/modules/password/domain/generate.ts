@@ -1,9 +1,9 @@
+import type { RandomBytes } from "@/modules/tools/types";
 import type {
     PasswordGenerationResult,
     PasswordMode,
     PasswordOptions,
     PasswordSeparator,
-    RandomBytes,
 } from "../types";
 import { buildAlphabet, countComposition, type Alphabet } from "./alphabets";
 import { PASSWORD_LENGTH_RANGE } from "./constants";
@@ -14,7 +14,13 @@ import {
     passphraseEntropyBits,
     pinEntropyBits,
 } from "./entropy";
-import { cryptoRandomBytes, pick, pickCharacter, randomIndex, shuffle } from "./random";
+import {
+    cryptoRandomBytes,
+    pick,
+    pickCharacter,
+    randomIndex,
+    shuffle,
+} from "@/modules/tools/domain/random";
 import { PASSPHRASE_WORDS } from "./wordlist";
 
 /**

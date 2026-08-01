@@ -3,9 +3,9 @@ import {
     IconBinary,
     IconBolt,
     IconBraces,
-    IconClock,
     IconKey,
     IconLockPassword,
+    IconQrcode,
 } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
@@ -51,11 +51,11 @@ export async function QuickActions() {
             accent: "[--tool-accent:var(--brand-violet)]",
         },
         {
-            key: "timestampNow",
-            href: "/tools/timestamp?t=now",
-            title: t("timestampNow.title"),
-            description: t("timestampNow.description"),
-            Icon: IconClock,
+            key: "qrWifi",
+            href: "/tools/qr?kind=wifi",
+            title: t("qrWifi.title"),
+            description: t("qrWifi.description"),
+            Icon: IconQrcode,
             accent: "[--tool-accent:var(--brand-cyan)]",
         },
         {

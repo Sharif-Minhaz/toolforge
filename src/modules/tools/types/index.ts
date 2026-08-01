@@ -179,3 +179,10 @@ export type LocalizedCategoryGroup = {
     readonly tools: readonly LocalizedTool[];
     readonly availableCount: number;
 };
+
+/**
+ * Injected wherever randomness is used, so every branch — including the
+ * rejection-sampling retry — can be pinned by a test. The browser default is
+ * `crypto.getRandomValues`; nothing here ever falls back to `Math.random`.
+ */
+export type RandomBytes = (length: number) => Uint8Array;

@@ -6,8 +6,8 @@ import {
     randomIndex,
     RandomSourceError,
     shuffle,
-} from "@/modules/password/domain/random";
-import type { RandomBytes } from "@/modules/password/types";
+} from "@/modules/tools/domain/random";
+import type { RandomBytes } from "@/modules/tools/types";
 
 /**
  * Hands out the given 32-bit draws in order, repeating the last one forever, and

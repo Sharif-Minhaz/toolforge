@@ -392,8 +392,9 @@ src/
 
 Existing feature modules: `tools` (catalog, search, clipboard, file saving,
 plus the shared time-zone and calendar layer: `domain/zone.ts`,
-`domain/time-zones.ts`, `domain/calendar.ts`, `components/zone-picker.tsx`),
-`uuid`, `overview`, `preferences`, `seo`, `observability`.
+`domain/time-zones.ts`, `domain/calendar.ts`, `components/zone-picker.tsx`, and
+the injectable random source `domain/random.ts`), `uuid`, `overview`,
+`preferences`, `seo`, `observability`.
 
 Rules that keep this honest:
 
@@ -500,6 +501,58 @@ says which. The same applies to `Intl.supportedValuesOf` for calendars,
 collations and currencies, and to `TextDecoder` labels.
 
 ---
+
+# Verifying a Codec Against Something That Is Not You
+
+A generator that also owns its own tests proves nothing. A wrong entry in a
+table, or an off-by-one in an interleaver, still produces output that looks
+exactly like the real thing — self-consistent, plausible, and unreadable by
+anything else. The QR encoder's placement loop skipped the timing column by one
+column too few, and every structural assertion written about it passed.
+
+What caught it was a **round trip through an independent implementation**. The
+matrix is rasterised into an RGBA buffer by a pure function and handed to
+`jsqr`, the same decoder the reader half of the tool uses. One test per version
+and error-correction level, so every row of the block tables and every
+alignment-pattern layout is actually exercised rather than assumed.
+
+Two things that made the failure legible once it appeared:
+
+- **Test the whole domain, not a sample.** The bug only broke three of the
+  160 version/level pairs — the ones with a single error-correction block and
+  the least parity. A handful of hand-picked payloads would have shipped it.
+- **When output decodes on some inputs and not others, suspect placement before
+  arithmetic.** Higher error-correction levels were masking a systematic
+  corruption; the levels that failed were simply the ones with no redundancy
+  left to spend on it.
+
+Reach for the same shape whenever a tool emits a format somebody else has to
+read: encode, decode with a different implementation, assert you got back what
+you put in.
+
+# Redirecting, and What a Route Handler Is For
+
+`/q/<slug>` is the only Route Handler in the repository, and the exception
+proves the rule: the client is a phone's camera app following a printed link,
+there is no UI to render, and what it needs is an HTTP redirect carrying headers
+a page cannot set. Everything about it is deliberate and worth copying if a
+second one ever appears:
+
+- **`302`, never `301`.** A permanent redirect is cached indefinitely by every
+  browser that followed it once, which is the exact opposite of what a
+  re-pointable code is for. `Cache-Control: no-store` for the same reason.
+- **`X-Robots-Tag: noindex, nofollow` and `Referrer-Policy: no-referrer`.** The
+  destination belongs to whoever created the code. This origin lends it none of
+  its ranking, and the destination learns nothing about the scan.
+- **Validate the slug before the query and the target before the header.** The
+  first keeps a scripted walk of the keyspace away from the database; the second
+  is because a stored value becoming a `Location` header is not a place to
+  assume anything.
+
+A user-creatable redirect is an abuse surface before it is a feature. Creation
+sits behind Turnstile, destinations are `http:`/`https:` only, and a short link
+may not point at another short link on this host — without all three, the
+service is a phishing host that happens to draw QR codes.
 
 # Calling a Metered Worker
 

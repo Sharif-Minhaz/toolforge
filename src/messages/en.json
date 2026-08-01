@@ -153,8 +153,8 @@
             "description": "Create strong passphrases with entropy scoring built in."
         },
         "qr": {
-            "name": "QR Generator",
-            "description": "Turn links and text into crisp, downloadable QR codes."
+            "name": "QR Code Generator / Reader",
+            "description": "Build styled QR codes for links, Wi-Fi and contacts, then read them back."
         },
         "slug": {
             "name": "Slug Generator",
@@ -235,13 +235,13 @@
                 "title": "Beautify JSON",
                 "description": "Paste a single-line payload and read it properly, with any error pinned to its line."
             },
-            "timestampNow": {
-                "title": "Convert a timestamp",
-                "description": "Read a Unix epoch in your own time zone, UTC, and any city you pin."
-            },
             "passwordStrong": {
                 "title": "Generate a strong password",
                 "description": "A 20-character random password with the entropy and crack time it really has."
+            },
+            "qrWifi": {
+                "title": "Wi-Fi QR code",
+                "description": "Turn your network name and password into a code guests can scan."
             }
         },
         "featured": {
@@ -3991,6 +3991,420 @@
                 "a6": "Because it is a rule, and an attacker searching this keyspace applies the same rule for free. Upper-casing the first letter of every word turns one candidate into exactly one different candidate — the set does not grow. Any transformation you could describe in a sentence costs them nothing. Only choices made at random count, which is why the digit option adds bits and the capitalisation option does not.",
                 "q7": "Can I reuse a strong password across sites?",
                 "a7": "No. Strength protects against guessing, and reuse is not a guessing problem: when a site is breached and had stored passwords badly, the attacker gets yours directly and tries it on your email. A unique password per account is the highest-value habit here, and it is only practical with a manager."
+            }
+        }
+    },
+    "qr": {
+        "meta": {
+            "title": "QR Code Generator & Reader — logos, colours and editable codes",
+            "description": "Generate QR codes for links, Wi-Fi, contacts, SMS, email and plain text. Add a logo, choose colours, dot and eye styles, download PNG or SVG, and read codes back with your camera. Every code is drawn in your browser."
+        },
+        "hero": {
+            "eyebrow": "Generators",
+            "title": "QR Code Generator & Reader",
+            "subtitle": "Seven kinds of payload, styled the way you want them, drawn in this tab and never uploaded. Read codes back with the camera or from a picture — and make a code you can re-point after it has been printed.",
+            "badgeOffline": "Drawn in your browser",
+            "badgeTypes": "Seven payload types",
+            "badgeReader": "Camera and image reader",
+            "missingCode": "That short link does not point anywhere. It may have been mistyped, or the code it belonged to was never created here."
+        },
+        "kinds": {
+            "url": "URL",
+            "text": "Text",
+            "wifi": "Wi-Fi",
+            "contact": "Contact",
+            "sms": "SMS",
+            "email": "Email",
+            "phone": "Phone"
+        },
+        "errorLevels": {
+            "L": "L — Low",
+            "M": "M — Medium",
+            "Q": "Q — Quartile",
+            "H": "H — High"
+        },
+        "dotStyles": {
+            "square": "Square",
+            "rounded": "Rounded",
+            "smooth": "Smooth"
+        },
+        "eyeStyles": {
+            "square": "Square",
+            "rounded": "Rounded",
+            "dot": "Dot"
+        },
+        "wifiEncryptions": {
+            "WPA": "WPA/WPA2",
+            "WEP": "WEP",
+            "nopass": "Open — no password"
+        },
+        "scannedFields": {
+            "url": "Link",
+            "text": "Text",
+            "ssid": "Network name",
+            "password": "Password",
+            "encryption": "Security",
+            "hidden": "Hidden network",
+            "fullName": "Name",
+            "organization": "Organisation",
+            "phone": "Phone",
+            "email": "Email",
+            "address": "Address",
+            "subject": "Subject",
+            "body": "Body",
+            "message": "Message"
+        },
+        "workbench": {
+            "title": "Create your QR code",
+            "description": "Choose what the code should carry, style it, then take it away as a PNG or an SVG.",
+            "tabs": {
+                "generate": "Generate",
+                "read": "Read"
+            },
+            "kindLabel": "QR code type",
+            "dynamicLocked": "This code now carries your short link. Change where it goes from the edit link instead.",
+            "fields": {
+                "url": {
+                    "label": "Website URL",
+                    "hint": "A bare domain gets https:// added for you.",
+                    "placeholder": "https://your-website.com"
+                },
+                "text": {
+                    "label": "Text content",
+                    "hint": "Any plain text. Scanners show it rather than acting on it.",
+                    "placeholder": "Enter any text you want to encode"
+                },
+                "wifi": {
+                    "ssid": "Network name (SSID)",
+                    "ssidHint": "Exactly as it appears in the list of networks, including case.",
+                    "ssidPlaceholder": "MyWiFiNetwork",
+                    "password": "Password",
+                    "passwordPlaceholder": "Enter the Wi-Fi password",
+                    "encryption": "Security",
+                    "hidden": "Hidden network",
+                    "hiddenHint": "Turn on only if the network does not broadcast its name."
+                },
+                "contact": {
+                    "fullName": "Full name",
+                    "fullNamePlaceholder": "John Doe",
+                    "organization": "Organisation",
+                    "organizationPlaceholder": "Company name",
+                    "phone": "Phone",
+                    "phonePlaceholder": "+1 234 567 8900",
+                    "email": "Email",
+                    "emailPlaceholder": "john@example.com",
+                    "url": "Website",
+                    "urlPlaceholder": "https://example.com",
+                    "address": "Address",
+                    "addressPlaceholder": "123 Main St, City, State"
+                },
+                "sms": {
+                    "phone": "Phone number",
+                    "phonePlaceholder": "+1 234 567 8900",
+                    "message": "Message",
+                    "messagePlaceholder": "Enter your message"
+                },
+                "email": {
+                    "address": "Email address",
+                    "addressPlaceholder": "recipient@example.com",
+                    "subject": "Subject",
+                    "subjectPlaceholder": "Email subject",
+                    "body": "Body",
+                    "bodyPlaceholder": "Email message body"
+                },
+                "phone": {
+                    "number": "Phone number",
+                    "hint": "Include the country code for international numbers.",
+                    "placeholder": "+1 234 567 8900"
+                }
+            },
+            "design": {
+                "title": "Customise design",
+                "foreground": "Foreground",
+                "background": "Background",
+                "transparent": "Transparent background",
+                "transparentHint": "The code keeps whatever is behind it. PNG exports keep the transparency.",
+                "contrastWarning": "These two colours are close enough that some cameras will struggle. Darken the foreground or lighten the background.",
+                "dotStyle": "Dot style",
+                "eyeStyle": "Corner eye style",
+                "errorLevel": "Error correction",
+                "errorLevelHint": "Higher levels survive more damage but make the code denser.",
+                "errorLevelLocked": "Locked to H while a logo is set — that is what lets a scanner reconstruct the covered modules.",
+                "margin": "Quiet zone",
+                "marginHint": "Blank modules around the code. Four is the specification minimum; below that some scanners miss it entirely.",
+                "logo": "Logo",
+                "logoPick": "Upload PNG, JPEG or WebP",
+                "logoReplace": "Replace logo",
+                "logoRemove": "Remove",
+                "logoHint": "Placed in the centre on an opaque patch. SVG is not accepted, because an SVG can carry script.",
+                "logoScale": "Logo size",
+                "logoScaleHint": "Larger logos cover more modules. Test the printed code before you order a thousand of them.",
+                "pixelSize": "PNG size",
+                "pixelSizeHint": "Only affects the PNG. The SVG is resolution-free and scales to any size."
+            },
+            "preview": {
+                "alt": "QR code",
+                "empty": "Fill in the fields and your code appears here.",
+                "summary": "Version {version, number} · {modules, number}×{modules, number} modules · level {level}",
+                "downloadPng": "Download PNG",
+                "downloadSvg": "Download SVG",
+                "copyPayload": "Copy payload"
+            }
+        },
+        "dynamic": {
+            "title": "Make this code editable",
+            "badge": "Dynamic",
+            "description": "The code carries a short link instead of your URL, so you can point it somewhere else after it has been printed. Scans are counted.",
+            "unavailable": "This deployment has no database or no challenge key configured, so dynamic codes are switched off. Static codes still work exactly as they should.",
+            "create": "Create short link",
+            "challengePending": "Solve the challenge to create the link.",
+            "shortUrlLabel": "Printed link",
+            "copyShortUrl": "Copy short link",
+            "editUrlWarning": "Save this link now — it is shown once and it is the only way to change where the code goes. Anyone who has it can re-point your code.",
+            "copyEditUrl": "Copy edit link"
+        },
+        "reader": {
+            "tabs": {
+                "camera": "Scan with camera",
+                "upload": "Upload an image"
+            },
+            "videoLabel": "Camera preview",
+            "start": "Start scanner",
+            "stop": "Stop scanner",
+            "cameraHint": "The video never leaves this tab — frames are decoded here and discarded. The scanner stops as soon as a code is found.",
+            "dropHint": "Drop a picture of a QR code here, or pick one.",
+            "pickFile": "Choose an image",
+            "copy": "Copy decoded content",
+            "rawLabel": "Show raw payload",
+            "open": "Open the link",
+            "openWarning": "Check the address before opening it. A QR code hides where it goes, which is exactly what makes it useful for phishing.",
+            "errors": {
+                "no_code": "No QR code was found in that image. Try a closer or sharper picture.",
+                "unreadable_image": "That file could not be read as an image.",
+                "camera_denied": "Camera access was refused. Allow it in your browser settings, or upload a picture instead.",
+                "camera_missing": "No camera is available in this browser. Upload a picture instead."
+            }
+        },
+        "edit": {
+            "metaTitle": "Edit dynamic QR code",
+            "metaDescription": "Change where an already-printed dynamic QR code points.",
+            "breadcrumb": "QR Code Generator",
+            "eyebrow": "Edit code",
+            "title": "Edit your dynamic code",
+            "description": "The printed code never changes. Only the destination behind it does.",
+            "shortUrl": "Printed link",
+            "shortUrlHint": "This is what the code contains. It stays the same forever.",
+            "copyShortUrl": "Copy short link",
+            "target": "Destination",
+            "targetHint": "Where scanners are sent. Takes effect immediately, everywhere the code is printed.",
+            "save": "Save destination",
+            "scans": "Scans",
+            "created": "Created",
+            "lastScan": "Last scan",
+            "never": "Never",
+            "notFoundTitle": "No code matches that link",
+            "notFoundBody": "The edit link may have been mistyped or truncated. Edit links are shown once, when the code is created, and cannot be recovered afterwards.",
+            "notConfiguredTitle": "Dynamic codes are switched off here",
+            "notConfiguredBody": "This deployment has no database configured, so there is nowhere for a dynamic code to live.",
+            "backToTool": "Back to the QR tool"
+        },
+        "errors": {
+            "tooLong": "That payload is longer than {limit, number} characters, which is more than a QR code can carry. Shorten it, or link to it instead.",
+            "logo": {
+                "empty_file": "That file is empty.",
+                "unsupported_type": "Logos have to be PNG, JPEG or WebP.",
+                "too_large": "That logo is too large. Keep it under 512 KB.",
+                "unreadable": "That logo could not be read."
+            },
+            "dynamic": {
+                "not_configured": "Dynamic codes are not available on this deployment.",
+                "invalid_target": "Enter the address the code should point at.",
+                "target_too_long": "That address is too long to store.",
+                "unsupported_scheme": "A short link can only point at an http or https address.",
+                "self_referential": "A short link cannot point at another short link on this site.",
+                "challenge_required": "Solve the challenge first.",
+                "challenge_failed": "The challenge could not be verified. Try again.",
+                "not_found": "No code matches that edit link.",
+                "storage_unavailable": "The code could not be saved. Try again in a moment."
+            }
+        },
+        "toast": {
+            "copied": "Copied to clipboard",
+            "copyFailed": "Nothing was copied",
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The file could not be saved",
+            "dynamicCreated": "Short link created",
+            "dynamicUpdated": "Destination updated"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "What a QR code actually holds",
+                "p1": "A QR code is a grid of black and white squares, called modules, that encodes bytes. Nothing more. The three large squares in the corners tell a scanner where the code is and which way up it sits; the rest is data, error-correction codewords, and a handful of fields describing how to read them.",
+                "p2": "The grid comes in {versions, number} sizes, called versions. Version 1 is 21 modules across and version {versions, number} is 177. This tool picks the smallest version your content fits into, so a short link stays a coarse, forgiving code rather than a dense one.",
+                "p3": "Because the payload is only bytes, the meaning of a code is a convention between whoever wrote it and whoever reads it. A phone offers to join a network when it sees a string beginning WIFI:, and to save a contact when it sees BEGIN:VCARD. That is why picking the right type matters more than it looks."
+            },
+            "types": {
+                "title": "The seven types, and what a phone does with each",
+                "p1": "Each type writes a different string into the same kind of code. The behaviour column is what a modern iOS or Android camera app offers when it sees one.",
+                "p2": "Whatever the type, the payload is capped at {limit, number} characters here. Longer content technically fits in the largest codes, but the result is so dense that phone cameras and consumer printers both start to struggle — at that point a link to the content beats the content itself.",
+                "columnKind": "Type",
+                "columnPayload": "Payload begins",
+                "columnBehaviour": "What a scanner offers",
+                "rows": {
+                    "url": {
+                        "payload": "https://",
+                        "behaviour": "Opens the address, usually after showing it first."
+                    },
+                    "text": {
+                        "payload": "(plain text)",
+                        "behaviour": "Shows the text. Nothing is opened or dialled."
+                    },
+                    "wifi": {
+                        "payload": "WIFI:",
+                        "behaviour": "Offers to join the network, password included."
+                    },
+                    "contact": {
+                        "payload": "BEGIN:VCARD",
+                        "behaviour": "Offers to save a new contact."
+                    },
+                    "sms": {
+                        "payload": "SMSTO:",
+                        "behaviour": "Opens the messaging app with the number and text filled in."
+                    },
+                    "email": {
+                        "payload": "mailto:",
+                        "behaviour": "Opens a draft with the address, subject and body filled in."
+                    },
+                    "phone": {
+                        "payload": "tel:",
+                        "behaviour": "Offers to dial the number."
+                    }
+                }
+            },
+            "errorCorrection": {
+                "title": "Error correction, and why it is not free",
+                "p1": "Every QR code carries Reed–Solomon parity alongside its data, so a scanner can rebuild modules that are scratched, smudged, or hidden. The level decides how much of the code can be lost and still decode.",
+                "p2": "The parity is not magic — it is extra codewords, and they take space. Moving from L to H roughly halves how much content fits in a given version, which pushes the code to a larger version and makes every module smaller at the same printed size. A denser code on cheap paper can scan worse than a sparser one with less parity.",
+                "p3": "Level M is the default here because it survives ordinary handling without inflating the grid. Reach for H when something is going to sit on top of the code — which is exactly why setting a logo forces H and takes the choice away.",
+                "columnLevel": "Level",
+                "columnRecovery": "Recoverable",
+                "columnUse": "Reach for it when",
+                "rows": {
+                    "L": "The code lives on a screen, or on print you control and can reprint.",
+                    "M": "Ordinary printing: posters, packaging, business cards. The default.",
+                    "Q": "Industrial or outdoor labels that will collect dirt and scuffs.",
+                    "H": "Anything with a logo over it, or a surface that will be handled hard."
+                }
+            },
+            "design": {
+                "title": "Every option, and when to change it",
+                "p1": "Styling a QR code is a trade against the one thing it has to do. These are the controls, what each one changes, and the case that justifies it.",
+                "p2": "Contrast is the setting people get wrong most often. A scanner has no context to fall back on: it thresholds the image and reads squares. This tool warns below about {ratio, number}:1, well above the 4.5:1 that body text needs, because a camera in a badly lit room is working with far less than your monitor showed you. Dark on light also beats light on dark — some older scanners will not attempt an inverted code at all.",
+                "p3": "Logo size ranges from {min, number}% to {max, number}% of the code width. Even at the top of that range and level H, the covered modules plus a scratch can be more than the parity can rebuild, so print one and scan it before committing to a run.",
+                "p4": "The quiet zone runs from {min, number} to {max, number} modules. The specification says four, and that is the default. Dropping it is a design decision to make deliberately: the blank border is how a scanner finds the code’s edge against a busy background.",
+                "columnOption": "Option",
+                "columnEffect": "What it does",
+                "columnWhen": "Reach for it when",
+                "rows": {
+                    "kind": {
+                        "name": "QR code type",
+                        "effect": "Chooses which string is written into the code.",
+                        "when": "Always — it decides what a phone offers to do."
+                    },
+                    "foreground": {
+                        "name": "Foreground",
+                        "effect": "Colour of the dark modules.",
+                        "when": "Matching a brand. Keep it dark."
+                    },
+                    "background": {
+                        "name": "Background",
+                        "effect": "Colour behind the modules.",
+                        "when": "Sitting the code on a tinted surface. Keep it light."
+                    },
+                    "transparent": {
+                        "name": "Transparent background",
+                        "effect": "Draws no background at all, so whatever is behind shows through.",
+                        "when": "Compositing the code onto artwork you already have. Make sure what is behind it stays pale and even."
+                    },
+                    "dotStyle": {
+                        "name": "Dot style",
+                        "effect": "Square, individually rounded, or fused into continuous ribbons.",
+                        "when": "Softening the look. Smooth reads best at larger sizes."
+                    },
+                    "eyeStyle": {
+                        "name": "Corner eye style",
+                        "effect": "Shape of the three finder patterns.",
+                        "when": "A distinctive look. Square is the safest with older scanners."
+                    },
+                    "errorLevel": {
+                        "name": "Error correction",
+                        "effect": "How much of the code can be lost and still decode.",
+                        "when": "The code will be printed, handled, or partly covered."
+                    },
+                    "margin": {
+                        "name": "Quiet zone",
+                        "effect": "Blank modules around the code.",
+                        "when": "Fitting the code into a tight layout — reluctantly."
+                    },
+                    "logo": {
+                        "name": "Logo",
+                        "effect": "Places an image in the centre on an opaque patch, and forces level H.",
+                        "when": "The code has to be recognisably yours."
+                    },
+                    "logoScale": {
+                        "name": "Logo size",
+                        "effect": "How much of the code the logo covers.",
+                        "when": "The logo is unreadable at the default size. Test the result."
+                    },
+                    "pixelSize": {
+                        "name": "PNG size",
+                        "effect": "Side of the exported PNG in pixels.",
+                        "when": "You need a raster of a particular size. Otherwise take the SVG."
+                    }
+                }
+            },
+            "dynamic": {
+                "title": "Dynamic codes: changing a printed code",
+                "p1": "A static QR code is permanent. The bytes are in the ink, and the only way to change where it goes is to reprint it. A dynamic code solves that by encoding a short link on this site, which redirects to wherever you point it — so the paper stays valid while the destination moves.",
+                "p2": "Creating one gives you two links. The printed link is short — {length, number} characters after the domain, drawn from an alphabet with no vowels and no look-alike glyphs, so it survives being read aloud or typed by hand.",
+                "p3": "The other is the edit link, and it is a credential rather than a URL. It carries a {length, number}-character token, it is shown exactly once, and it is stored here only as a SHA-256 digest — so a copy of the database does not let anyone re-point your codes. Losing it means the code keeps working and can never be changed again.",
+                "p4": "Every scan is counted, along with the time of the most recent one. That is the whole of it: no location, no device, no visitor identifier, and nothing that could distinguish one scanner from another.",
+                "p5": "There are real trade-offs to weigh before choosing dynamic over static:",
+                "point1": "A dynamic code stops working if this site does. A static code works forever and needs nothing from anyone.",
+                "point2": "Scanners see a link to this domain, not to yours. Where that matters for trust, print the destination beside the code.",
+                "point3": "A short link can point anywhere its owner later chooses, which is why creating one is behind a challenge, why the destination must be http or https, and why a chain of short links pointing at each other is refused."
+            },
+            "reading": {
+                "title": "Reading codes back",
+                "p1": "The reader decodes with your camera or from a picture you pick. Camera frames are drawn to a canvas in this tab, decoded, and discarded — no frame is uploaded, recorded, or kept, and the scanner stops the moment it finds a code.",
+                "p2": "What comes back is split into labelled fields, so a Wi-Fi password appears on its own row rather than buried in a WIFI:T:WPA;S:… string. The raw payload is always available underneath, because sometimes that is exactly what you needed to see.",
+                "p3": "Links found in a scanned code are never opened automatically, and never made clickable unless they are http or https. A QR code hides its destination by design, which is what makes it good for posters and equally good for phishing — read the address before you follow it."
+            },
+            "privacy": {
+                "title": "What leaves your browser",
+                "p1": "Generating never does. The encoder, the Reed–Solomon parity, the styling and the PNG rasteriser all run in this tab. Your Wi-Fi password, your contact details and your links are turned into a code on your own machine, and no request is made while you type.",
+                "p2": "Reading never does either. Both the camera and the upload path decode locally, and your logo is embedded straight into the SVG as data rather than being uploaded anywhere.",
+                "p3": "Dynamic codes are the one exception, and they are opt-in. Choosing one sends the destination to this server, which stores it against a short slug so that scans can be redirected and counted. Everything else on this page stays where you typed it."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Do QR codes expire?",
+                "a1": "Static ones never do. The data is in the pattern itself, so a code printed today will still scan in twenty years if the ink survives. A dynamic code depends on the redirect behind it and stops working if that goes away.",
+                "q2": "Why did my code stop scanning after I changed the colours?",
+                "a2": "Almost always contrast. Scanners threshold the image into light and dark before they read anything, so two mid-tone colours become one. Keep the foreground dark, the background light, and pay attention to the warning under the colour fields.",
+                "q3": "Can I put my logo in the middle?",
+                "a3": "Yes, and doing so forces error correction to level H, which is what lets a scanner rebuild the modules the logo covers. Keep the logo modest and print a test — parity spent on your logo is parity that is no longer available for a scratch.",
+                "q4": "Is a Wi-Fi QR code safe to put on the wall?",
+                "a4": "It contains the password in plain text, so treat it exactly like writing the password on the wall. That is fine for a guest network and a bad idea for the one your file server is on.",
+                "q5": "PNG or SVG?",
+                "a5": "SVG for anything that will be printed or resized — it is vector, so it stays sharp at any size. PNG for places that will not take an SVG, such as some social platforms and older design tools.",
+                "q6": "What happens if I lose the edit link?",
+                "a6": "The code keeps working and keeps redirecting to wherever it last pointed, but nobody can change it again. The token is stored only as a hash, so it cannot be looked up or recovered — save it somewhere durable the moment it is shown.",
+                "q7": "Does this tool track the codes I make?",
+                "a7": "Static codes are never sent anywhere, so there is nothing to track. Dynamic codes store the destination, a count of scans and the time of the last one. No location, device, or visitor identity is recorded with them."
             }
         }
     },

@@ -401,6 +401,7 @@ Reuse what exists rather than rebuilding it:
 | Wall clock ↔ instant, offsets | `@/modules/tools/domain/zone`                |
 | Frozen IANA zone list         | `@/modules/tools/domain/time-zones`          |
 | Gregorian calendar arithmetic | `@/modules/tools/domain/calendar`            |
+| Uniform random draws, injectable | `@/modules/tools/domain/random`           |
 | 300 ms debounce               | `@/hooks/use-debounced-value`                |
 | Structured data               | `@/modules/seo/components/json-ld`           |
 | Structured logging            | `@/modules/observability/domain/logger`      |

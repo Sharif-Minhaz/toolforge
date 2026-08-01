@@ -91,10 +91,12 @@ export function CleanedResult({
                 <span
                     aria-hidden="true"
                     style={{ left: `${reveal}%` }}
-                    className="pointer-events-none absolute top-1/2 grid size-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-black/45 text-white ring-1 ring-white/70 backdrop-blur-[2px] transition-transform duration-200 group-focus-within/compare:scale-110"
+                    className="pointer-events-none absolute top-1/2 grid size-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-black/55 text-white shadow-[0_2px_10px_rgba(0,0,0,0.45)] ring-1 ring-white/80 backdrop-blur-[2px] transition-transform duration-200 group-focus-within/compare:scale-110"
                 >
-                    <IconChevronLeft className="size-3.5" stroke={2.2} />
-                    <IconChevronRight className="absolute size-3.5 translate-x-1.5" stroke={2.2} />
+                    <span className="flex items-center -space-x-1">
+                        <IconChevronLeft className="size-3.5" stroke={2.4} />
+                        <IconChevronRight className="size-3.5" stroke={2.4} />
+                    </span>
                 </span>
 
                 <span className="pointer-events-none absolute top-2 left-2 rounded-md bg-black/55 px-2 py-1 text-[0.6875rem] leading-[1.3] font-medium text-white">
