@@ -393,8 +393,9 @@ src/
 Existing feature modules: `tools` (catalog, search, clipboard, file saving,
 plus the shared time-zone and calendar layer: `domain/zone.ts`,
 `domain/time-zones.ts`, `domain/calendar.ts`, `components/zone-picker.tsx`, and
-the injectable random source `domain/random.ts`), `uuid`, `overview`,
-`preferences`, `seo`, `observability`.
+the injectable random source `domain/random.ts`), `short-links` (every
+re-pointable link on the site — see below), `uuid`, `overview`, `preferences`,
+`seo`, `observability`.
 
 Rules that keep this honest:
 
@@ -500,6 +501,69 @@ the thing, and the orchestrator drops what the local engine cannot render and
 says which. The same applies to `Intl.supportedValuesOf` for calendars,
 collations and currencies, and to `TextDecoder` labels.
 
+**A `datetime-local` value has no offset either.** It is a wall clock and
+nothing more, so it means a different instant depending on who reads it. Parse
+the fields with a regex — never `new Date(value)` — and hand them to
+`zonedFieldsToEpochMs` with a zone read **inside an event handler**, where there
+is only one host to ask. `shortener/domain/local-datetime.ts` does both
+directions and rejects a rolled-over field rather than letting the arithmetic
+absorb it. Where a stored instant has to _prefill_ such a field, derive it
+during render behind `useIsHydrated()` — UTC on the server and through
+hydration, the reader's own zone a tick later — never from an effect.
+
+---
+
+# Remembering Something in the Reader's Browser
+
+`shortener/domain/history.ts` and `shortener/components/use-link-history.ts` are
+the pattern for anything a tool has to remember between visits. Three parts, and
+each solves a failure the obvious version has:
+
+- **Storage is a parameter with a browser default**, exactly like
+  `tools/domain/clipboard.ts`. That is what makes a full quota, a blocked
+  profile, and a hand-edited value reachable from a test with no DOM. Reading
+  `window.localStorage` can itself throw, so even the lookup is in a `try`.
+- **Every read is defensive and total.** Absent, unparseable, an object where an
+  array belongs, one bad row among good ones — each degrades to what can still
+  be read. A convenience list is never worth throwing a page away for, so the
+  parser filters rather than validates.
+- **The React binding is `useSyncExternalStore`, not state seeded from an
+  effect.** It has a separate server snapshot, so the server render and the
+  hydration pass both see an empty list and hydration cannot mismatch; and it
+  can subscribe to `storage`, so a second tab stays in step. The snapshot is
+  cached at module scope because `getSnapshot` must return a stable reference —
+  re-parsing on every call hands React a new array each time and spins forever.
+
+If what you are storing is a credential — the shortener keeps each link's edit
+URL, because a one-time link nobody saved is a feature nobody can use — then say
+so in the UI, cap the list, and give it a button that empties it. Do it quietly
+and the tool is a credential store that never admitted to being one.
+
+---
+
+# One Short Link Layer, Two Tools
+
+`src/modules/short-links/` owns every re-pointable link on this site: slug and
+alias generation, edit tokens, link passwords, schedule windows, the redirect
+decision, and the single `short_links` table. The QR tool's dynamic codes and
+the URL Shortener are the same row behind the slug and differ only in which pair
+of paths a view is built from — `TOOL_PREFIXES[tool]`, keyed by
+`SHORT_LINK_TOOLS`.
+
+What that buys, and what to preserve:
+
+- **One `decideRedirect`.** Both `/q/[slug]` and `/s/[slug]` are ten lines over
+  `resolveShortLink`, so a window or a password cannot behave differently
+  depending on which address was shared. A third feature adds a prefix pair, not
+  a second route handler with its own idea of what expired means.
+- **Read and count are two statements.** A gated link is read twice — once to
+  discover it needs a password, once after the visitor types it — and a single
+  counting read would score that as two visits. `countVisit` still does its
+  `increment` in the database, so concurrent visits cannot lose one.
+- **Every refusal keeps its own name.** `missing`, `pending` and `expired` reach
+  the tool page as separate states, because "this expired" and "you mistyped it"
+  are different things for the reader to do next.
+
 ---
 
 # Verifying a Codec Against Something That Is Not You
@@ -532,27 +596,32 @@ you put in.
 
 # Redirecting, and What a Route Handler Is For
 
-`/q/<slug>` is the only Route Handler in the repository, and the exception
-proves the rule: the client is a phone's camera app following a printed link,
-there is no UI to render, and what it needs is an HTTP redirect carrying headers
-a page cannot set. Everything about it is deliberate and worth copying if a
-second one ever appears:
+`/q/<slug>` and `/s/<slug>` are the only Route Handlers in the repository, and
+the exception proves the rule: the client is a phone's camera app or somebody
+else's browser following a link, there is no UI to render, and what it needs is
+an HTTP redirect carrying headers a page cannot set. They are ten lines each
+over `resolveShortLink`, and every header is deliberate:
 
 - **`302`, never `301`.** A permanent redirect is cached indefinitely by every
   browser that followed it once, which is the exact opposite of what a
-  re-pointable code is for. `Cache-Control: no-store` for the same reason.
+  re-pointable link is for — and it would outlive an expiry window outright.
+  `Cache-Control: no-store` for the same reason.
 - **`X-Robots-Tag: noindex, nofollow` and `Referrer-Policy: no-referrer`.** The
-  destination belongs to whoever created the code. This origin lends it none of
-  its ranking, and the destination learns nothing about the scan.
+  destination belongs to whoever created the link. This origin lends it none of
+  its ranking, and the destination learns nothing about the visit.
 - **Validate the slug before the query and the target before the header.** The
   first keeps a scripted walk of the keyspace away from the database; the second
   is because a stored value becoming a `Location` header is not a place to
   assume anything.
+- **A password gate is a page, not a header.** `/unlock/<slug>` renders from the
+  slug alone; the destination stays on the server until the action verifies the
+  password. Anything that needs words on it does not belong in a route handler.
 
 A user-creatable redirect is an abuse surface before it is a feature. Creation
-sits behind Turnstile, destinations are `http:`/`https:` only, and a short link
-may not point at another short link on this host — without all three, the
-service is a phishing host that happens to draw QR codes.
+sits behind Turnstile, destinations are `http:`/`https:` only, aliases that read
+like a lure (`login`, `verify`, `secure`, …) are reserved, and a short link may
+not point at another short link on this host — on either prefix. Without all
+four, the service is a phishing host that happens to shorten URLs.
 
 # Calling a Metered Worker
 

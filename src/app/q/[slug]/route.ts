@@ -1,67 +1,42 @@
-import { isValidSlug, parseTargetUrl } from "@/modules/qr/domain/short-code";
-import { resolveScan } from "@/modules/qr/repository/qr-links";
+import { UNLOCK_PREFIX } from "@/modules/short-links/domain/constants";
+import { redirectResponse } from "@/modules/short-links/domain/redirect";
+import { countVisit } from "@/modules/short-links/repository/links";
+import { resolveShortLink } from "@/modules/short-links/repository/resolve";
 
 /**
  * Where a printed dynamic code actually lands.
  *
- * A Route Handler rather than a page, and the one place in this repository where
- * that is the right call: the client is a phone's camera app following a link,
- * there is no UI to render, and what it needs is a real HTTP redirect carrying
- * headers a page cannot set. `resolveScan` counts the scan in the same statement
- * that reads the destination.
+ * A Route Handler rather than a page, and one of only two in this repository
+ * where that is the right call: the client is a phone's camera app following a
+ * link, there is no UI to render, and what it needs is a real HTTP redirect
+ * carrying headers a page cannot set. Its twin at `/s/[slug]` resolves the same
+ * table through the same `resolveShortLink`.
  */
 
-/** Every scan has to reach the database, or a re-pointed code keeps its old target. */
+/** Every visit has to reach the database, or a re-pointed link keeps its old target. */
 export const dynamic = "force-dynamic";
 
-const NOT_FOUND_PATH = "/tools/qr?code=missing";
-
-function redirect(location: string, status: 302 | 307): Response {
-    return new Response(null, {
-        status,
-        headers: {
-            Location: location,
-            // A short link is a pointer, not content. Caching it anywhere would
-            // outlive the next time its owner re-points it.
-            "Cache-Control": "no-store, max-age=0",
-            // The destination belongs to whoever created the code, so this
-            // origin lends it none of its own search ranking.
-            "X-Robots-Tag": "noindex, nofollow",
-            // The destination has no business knowing which slug sent the visitor.
-            "Referrer-Policy": "no-referrer",
-        },
-    });
-}
+const TOOL_PATH = "/tools/qr";
 
 export async function GET(
     _request: Request,
     { params }: { params: Promise<{ slug: string }> },
 ): Promise<Response> {
     const { slug } = await params;
+    const decision = await resolveShortLink(slug);
 
-    // Checked before the query, so a scan of a mangled code — or a scripted walk
-    // of the keyspace — never reaches the database.
-    if (!isValidSlug(slug)) {
-        return redirect(NOT_FOUND_PATH, 307);
+    switch (decision.kind) {
+        case "redirect":
+            // Counted only once the destination is actually handed over, so a
+            // gated link does not score a visit for arriving at its own gate.
+            await countVisit(slug);
+
+            return redirectResponse(decision.target, 302);
+        case "password":
+            return redirectResponse(`${UNLOCK_PREFIX}/${slug}`, 307);
+        default:
+            // `pending` and `expired` are carried to a page rather than
+            // explained here — a redirect has nowhere to put words.
+            return redirectResponse(`${TOOL_PATH}?state=${decision.kind}`, 307);
     }
-
-    const target = await resolveScan(slug);
-
-    if (target === null) {
-        return redirect(NOT_FOUND_PATH, 307);
-    }
-
-    // Re-checked on the way out as well as on the way in. The stored value was
-    // validated when the code was created, but this is the line that becomes a
-    // `Location` header, and a header is not the place to assume anything.
-    const parsed = parseTargetUrl(target);
-
-    if (!parsed.ok) {
-        return redirect(NOT_FOUND_PATH, 307);
-    }
-
-    // 302 rather than 301: the whole point of a dynamic code is that this
-    // destination changes, and a permanent redirect is cached indefinitely by
-    // every browser that has already followed it once.
-    return redirect(parsed.url, 302);
 }

@@ -12,7 +12,8 @@ import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { copyText } from "@/modules/tools/domain/clipboard";
 import { saveBlob, saveFile } from "@/modules/tools/domain/file-saver";
 import { checkImageFile } from "@/modules/tools/domain/image-file";
-import { createDynamicQr } from "../actions/create-dynamic-qr";
+import { createLink } from "@/modules/short-links/actions/create-link";
+import type { ShortLinkCreatedView, ShortLinkFailureReason } from "@/modules/short-links/types";
 import { renderSvgToPng } from "../domain/canvas";
 import { DEFAULT_LOGO_SCALE, LOGO_FILE_LIMITS, MAX_PAYLOAD_LENGTH } from "../domain/constants";
 import { encodeQr } from "../domain/encoder";
@@ -20,13 +21,7 @@ import { createQrSvgFile, buildQrFilename } from "../domain/export";
 import { hasScannableContrast, resolveErrorLevel } from "../domain/options";
 import { buildDraftText } from "../domain/payload";
 import { renderQrSvg } from "../domain/render-svg";
-import type {
-    DynamicQrCreatedView,
-    DynamicQrFailureReason,
-    QrDraft,
-    QrOptions,
-    QrPayloadKind,
-} from "../types";
+import type { QrDraft, QrOptions, QrPayloadKind } from "../types";
 import { QrDesignPanel } from "./qr-design-panel";
 import { QrDynamicPanel } from "./qr-dynamic-panel";
 import { QrPayloadFields } from "./qr-payload-fields";
@@ -53,6 +48,7 @@ export function QrWorkbench({
 }: QrWorkbenchProps) {
     const t = useTranslations("qr.workbench");
     const tErrors = useTranslations("qr.errors");
+    const tShortLinkErrors = useTranslations("shortLinks.errors");
     const tToast = useTranslations("qr.toast");
 
     const kindLabelId = useId();
@@ -65,9 +61,9 @@ export function QrWorkbench({
     const [dynamicEnabled, setDynamicEnabled] = useState(false);
     const [challengeToken, setChallengeToken] = useState<string | null>(null);
     const [challengeReset, setChallengeReset] = useState(0);
-    const [created, setCreated] = useState<DynamicQrCreatedView | null>(null);
+    const [created, setCreated] = useState<ShortLinkCreatedView | null>(null);
     const [creating, setCreating] = useState(false);
-    const [dynamicFailure, setDynamicFailure] = useState<DynamicQrFailureReason | null>(null);
+    const [dynamicFailure, setDynamicFailure] = useState<ShortLinkFailureReason | null>(null);
 
     // Only the typed value settles; presets, toggles and pickers are single
     // events and act straight away.
@@ -205,7 +201,15 @@ export function QrWorkbench({
         setDynamicFailure(null);
 
         try {
-            const result = await createDynamicQr({ target: draft.url, token: challengeToken });
+            const result = await createLink({
+                tool: "qr",
+                target: draft.url,
+                alias: null,
+                password: null,
+                startsAt: null,
+                expiresAt: null,
+                token: challengeToken,
+            });
 
             if (!result.ok) {
                 setDynamicFailure(result.reason);
@@ -292,7 +296,7 @@ export function QrWorkbench({
                                         error={
                                             dynamicFailure === null
                                                 ? null
-                                                : tErrors(`dynamic.${dynamicFailure}`)
+                                                : tShortLinkErrors(dynamicFailure)
                                         }
                                         onToggle={(next) => {
                                             setDynamicEnabled(next);

@@ -3,13 +3,8 @@ import { getTranslations } from "next-intl/server";
 import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
-import {
-    EDIT_TOKEN_LENGTH,
-    LOGO_SCALE_RANGE,
-    MAX_PAYLOAD_LENGTH,
-    MARGIN_RANGE,
-    SLUG_LENGTH,
-} from "../domain/constants";
+import { EDIT_TOKEN_LENGTH, SLUG_LENGTH } from "@/modules/short-links/domain/constants";
+import { LOGO_SCALE_RANGE, MAX_PAYLOAD_LENGTH, MARGIN_RANGE } from "../domain/constants";
 import { QR_MAX_VERSION } from "../domain/qr-tables";
 import { MIN_SCAN_CONTRAST } from "../domain/options";
 import {

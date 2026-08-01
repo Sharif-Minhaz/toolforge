@@ -10,7 +10,7 @@ import { IconCopyButton } from "@/modules/tools/components/copy-button";
 import { StatusStrip } from "@/modules/tools/components/status-strip";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
 import { TURNSTILE_ACTION } from "../domain/constants";
-import type { DynamicQrCreatedView } from "../types";
+import type { ShortLinkCreatedView } from "@/modules/short-links/types";
 
 type QrDynamicPanelProps = {
     enabled: boolean;
@@ -22,7 +22,7 @@ type QrDynamicPanelProps = {
     resetSignal: number;
     /** The destination the code would point at, already typed by the reader. */
     hasTarget: boolean;
-    created: DynamicQrCreatedView | null;
+    created: ShortLinkCreatedView | null;
     creating: boolean;
     error: string | null;
     onToggle: (enabled: boolean) => void;

@@ -5,9 +5,10 @@ import Link from "next/link";
 
 import { FadeIn } from "@/components/motion/reveal";
 import { DynamicQrEditor } from "@/modules/qr/components/dynamic-qr-editor";
-import { toLinkView } from "@/modules/qr/domain/dynamic-view";
-import { isValidEditToken } from "@/modules/qr/domain/short-code";
-import { findQrLinkByEditToken } from "@/modules/qr/repository/qr-links";
+import { QR_REDIRECT_PREFIX } from "@/modules/short-links/domain/constants";
+import { isValidEditToken } from "@/modules/short-links/domain/slug";
+import { toLinkView } from "@/modules/short-links/domain/view";
+import { findShortLinkByEditToken } from "@/modules/short-links/repository/links";
 import { SITE_URL } from "@/modules/seo/domain/site";
 
 /**
@@ -37,7 +38,7 @@ export default async function DynamicQrEditPage({ params }: EditPageProps) {
 
     // Checked before the query, so a mangled link never reaches the database.
     const found = isValidEditToken(token)
-        ? await findQrLinkByEditToken(token)
+        ? await findShortLinkByEditToken(token)
         : ({ ok: false, reason: "not_found" } as const);
 
     return (
@@ -76,7 +77,10 @@ export default async function DynamicQrEditPage({ params }: EditPageProps) {
 
             <FadeIn delay={0.06}>
                 {found.ok ? (
-                    <DynamicQrEditor editToken={token} link={toLinkView(found.value, SITE_URL)} />
+                    <DynamicQrEditor
+                        editToken={token}
+                        link={toLinkView(found.value, SITE_URL, QR_REDIRECT_PREFIX)}
+                    />
                 ) : (
                     <div className="bg-card ring-border/70 flex flex-col gap-3 rounded-xl p-5 ring-1 ring-inset sm:p-6">
                         <p className="text-[0.9375rem] font-medium">

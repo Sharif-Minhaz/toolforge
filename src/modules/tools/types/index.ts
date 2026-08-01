@@ -28,6 +28,7 @@ export const TOOL_IDS = [
     "timestamp",
     "password",
     "qr",
+    "shortener",
     "slug",
     "diff",
     "ai-image-detector",
@@ -61,6 +62,7 @@ export type ToolIconName =
     | "calendar"
     | "lock"
     | "qrcode"
+    | "scissors"
     | "slug"
     | "diff"
     | "photo"

@@ -405,10 +405,18 @@ Reuse what exists rather than rebuilding it:
 | 300 ms debounce               | `@/hooks/use-debounced-value`                |
 | Structured data               | `@/modules/seo/components/json-ld`           |
 | Structured logging            | `@/modules/observability/domain/logger`      |
+| Re-pointable short links      | `@/modules/short-links/`                     |
 
 Shared UI belongs in `src/modules/tools/`, never inside another tool's module. If a second tool
 needs something the first one owns, lift it with `git mv` and update the first tool's imports in the
 same change.
+
+`src/modules/short-links/` is the exception that proves that rule: it is not UI, it is a whole
+domain and repository layer — slugs, aliases, edit tokens, link passwords, schedule windows, the
+redirect decision, and the single `short_links` table. It grew out of the QR tool's dynamic codes
+and was lifted when the URL Shortener needed the same thing. If a third feature ever wants a
+re-pointable link, add a prefix pair to `TOOL_PREFIXES` and a member to `SHORT_LINK_TOOLS`; do not
+write a second redirect.
 
 **The UUID and Base64 modules are the reference implementations.** Read the closer one before you
 start: Base64 for input→output converters, UUID for generators.

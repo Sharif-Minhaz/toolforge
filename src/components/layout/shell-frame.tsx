@@ -7,6 +7,7 @@ import {
 } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
     useCallback,
     useEffect,
@@ -21,6 +22,7 @@ import { ToolForgeMark, ToolForgeWordmark } from "@/components/brand/toolforge-m
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { persistSidebarState } from "@/modules/preferences/domain/sidebar";
+import { UNLOCK_PREFIX } from "@/modules/short-links/domain/constants";
 import { LocaleSwitcher } from "./locale-switcher";
 import type { LocalizedTool } from "@/modules/tools/types";
 import { RepoLink } from "./repo-link";
@@ -32,6 +34,22 @@ const COLLAPSED_WIDTH = "4.75rem";
 /** Matches the CSS transition below so the rail and the content move as one. */
 const SHELL_EASING = "transition-[width,padding] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]";
 const SWIPE_CLOSE_THRESHOLD = 72;
+
+/**
+ * Routes that render without the application chrome.
+ *
+ * `/unlock/<slug>` is not a page of this app — it belongs to whoever created
+ * the link, and the visitor arrived by following one. A rail full of tools they
+ * never asked for is noise in front of the single thing they came to do, so the
+ * gate gets the whole viewport and nothing to wander off into.
+ */
+const STANDALONE_PREFIXES: readonly string[] = [UNLOCK_PREFIX];
+
+function isStandalonePath(pathname: string): boolean {
+    return STANDALONE_PREFIXES.some(
+        (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+    );
+}
 
 type ShellFrameProps = {
     tools: readonly LocalizedTool[];
@@ -47,6 +65,12 @@ export function ShellFrame({ tools, defaultCollapsed, children }: ShellFrameProp
     const [mobileOpen, setMobileOpen] = useState(false);
     const searchRef = useRef<HTMLInputElement>(null);
     const focusSearchOnExpand = useRef(false);
+
+    // The rail state lives here rather than in the chrome below, so stepping
+    // through a standalone route and back does not quietly expand a rail the
+    // reader had collapsed — this component stays mounted across navigation,
+    // and `defaultCollapsed` is only ever read on the first render.
+    const standalone = isStandalonePath(usePathname());
 
     const setCollapsedState = useCallback((next: boolean) => {
         setCollapsed(next);
@@ -76,6 +100,13 @@ export function ShellFrame({ tools, defaultCollapsed, children }: ShellFrameProp
     }, [collapsed]);
 
     useEffect(() => {
+        // No rail and no search box to reach, so the browser keeps its own
+        // Ctrl+B. Hijacking a shortcut on a page that shows none of our chrome
+        // would be taking something and giving nothing back.
+        if (standalone) {
+            return;
+        }
+
         function handleKeyDown(event: KeyboardEvent) {
             if (!event.metaKey && !event.ctrlKey) {
                 return;
@@ -95,7 +126,21 @@ export function ShellFrame({ tools, defaultCollapsed, children }: ShellFrameProp
         window.addEventListener("keydown", handleKeyDown);
 
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [collapsed, requestSearchFocus, setCollapsedState]);
+    }, [collapsed, requestSearchFocus, setCollapsedState, standalone]);
+
+    if (standalone) {
+        return (
+            <div className="relative isolate">
+                <ShellBackdrop />
+                <main
+                    id="main-content"
+                    className="flex min-h-dvh w-full flex-col items-center justify-center px-4 py-10 sm:px-6"
+                >
+                    {children}
+                </main>
+            </div>
+        );
+    }
 
     return (
         <div

@@ -158,60 +158,6 @@ export type QrOptions = QrStyle & {
     readonly pixelSize: number;
 };
 
-/* --------------------------------------------------------------- dynamic --- */
-
-export type DynamicQrLink = {
-    readonly slug: string;
-    readonly target: string;
-    readonly scans: number;
-    readonly createdAt: Date;
-    readonly lastScanAt: Date | null;
-};
-
-/**
- * A link plus the token that lets its owner edit it. Returned exactly once, by
- * the action that created it — the token is only ever stored hashed.
- */
-export type DynamicQrCreation = {
-    readonly link: DynamicQrLink;
-    readonly editToken: string;
-};
-
-export type DynamicQrFailureReason =
-    | "not_configured"
-    | "invalid_target"
-    | "target_too_long"
-    | "unsupported_scheme"
-    | "self_referential"
-    | "challenge_required"
-    | "challenge_failed"
-    | "not_found"
-    | "storage_unavailable";
-
-export type DynamicQrResult<T> =
-    | { readonly ok: true; readonly value: T }
-    | { readonly ok: false; readonly reason: DynamicQrFailureReason };
-
-/**
- * A stored link on its way to the browser. Timestamps are ISO strings rather
- * than `Date`s: this shape crosses a server-action boundary, and a string is
- * the one representation that survives it unchanged in every runtime.
- */
-export type DynamicQrLinkView = {
-    readonly slug: string;
-    /** The absolute link a scanner follows, and the one that gets printed. */
-    readonly shortUrl: string;
-    readonly target: string;
-    readonly scans: number;
-    readonly createdAt: string;
-    readonly lastScanAt: string | null;
-};
-
-/** The same, plus the one-time link that lets the owner re-point the code. */
-export type DynamicQrCreatedView = DynamicQrLinkView & {
-    readonly editUrl: string;
-};
-
 /* ---------------------------------------------------------------- reader --- */
 
 /**

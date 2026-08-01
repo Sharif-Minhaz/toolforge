@@ -11,7 +11,9 @@ import {
     DEFAULT_OPTIONS,
     DEFAULT_PAYLOAD_KIND,
 } from "@/modules/qr/domain/constants";
-import { isDynamicQrConfigured } from "@/modules/qr/repository/dynamic-config";
+import { LinkStateNotice } from "@/modules/short-links/components/link-state-notice";
+import { isShortLinkStorageConfigured } from "@/modules/short-links/repository/config";
+import { linkStateSchema } from "@/modules/short-links/validation";
 import { qrSearchParamsSchema } from "@/modules/qr/validation/qr-options";
 import { JsonLd } from "@/modules/seo/components/json-ld";
 import { buildPageMetadata } from "@/modules/seo/domain/metadata";
@@ -74,10 +76,11 @@ export default async function QrToolPage({ searchParams }: QrPageProps) {
     // `process.env` and an unconfigured deployment says so rather than offering
     // a control that could never work.
     const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_KEY ?? null;
-    const dynamicStorageReady = isDynamicQrConfigured();
+    const dynamicStorageReady = isShortLinkStorageConfigured();
 
-    // Set by the redirect route when a scanned short link names no live code.
-    const missingCode = params.code === "missing";
+    // Set by the redirect route when a scanned short link had nowhere to send
+    // the visitor — never existed, not live yet, or already over.
+    const linkState = linkStateSchema.parse(params.state);
 
     const badges = [
         { label: t("badgeOffline"), Icon: IconWorldOff },
@@ -143,14 +146,9 @@ export default async function QrToolPage({ searchParams }: QrPageProps) {
                     </ul>
                 </FadeIn>
 
-                {missingCode && (
+                {linkState !== undefined && (
                     <FadeIn delay={0.03}>
-                        <p
-                            role="status"
-                            className="border-brand-amber/40 bg-brand-amber/8 text-brand-amber rounded-xl border px-4 py-3 text-[0.8125rem] leading-relaxed"
-                        >
-                            {t("missingCode")}
-                        </p>
+                        <LinkStateNotice state={linkState} />
                     </FadeIn>
                 )}
 

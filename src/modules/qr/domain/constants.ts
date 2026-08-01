@@ -74,22 +74,6 @@ export const CAMERA_SCAN_INTERVAL_MS = 180;
 /** Names this tool's Turnstile challenge in Cloudflare's dashboard. */
 export const TURNSTILE_ACTION = "qr-dynamic";
 
-/** Characters a short code is drawn from: no vowels, no look-alike glyphs. */
-export const SLUG_ALPHABET = "23456789bcdfghjkmnpqrstvwxz";
-
-export const SLUG_LENGTH = 8;
-
-/** 40 characters of the same alphabet, roughly 190 bits. */
-export const EDIT_TOKEN_LENGTH = 40;
-
-/** Where a dynamic code points scanners. Kept short — it is printed. */
-export const DYNAMIC_REDIRECT_PREFIX = "/q";
-
-/** Where the owner goes to re-point a printed code. */
-export const DYNAMIC_EDIT_PREFIX = "/tools/qr/edit";
-
-export const MAX_TARGET_URL_LENGTH = 2_000;
-
 export const DEFAULT_DRAFT: QrDraft = {
     url: "",
     text: "",

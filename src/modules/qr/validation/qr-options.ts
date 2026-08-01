@@ -1,13 +1,6 @@
 import { z } from "zod";
 
-import {
-    MAX_FIELD_LENGTH,
-    MAX_PAYLOAD_LENGTH,
-    MAX_TARGET_URL_LENGTH,
-    MAX_WIFI_FIELD_LENGTH,
-} from "../domain/constants";
-import { EDIT_TOKEN_LENGTH, SLUG_LENGTH } from "../domain/constants";
-import { isValidEditToken, isValidSlug } from "../domain/short-code";
+import { MAX_FIELD_LENGTH, MAX_PAYLOAD_LENGTH, MAX_WIFI_FIELD_LENGTH } from "../domain/constants";
 import {
     QR_DOT_STYLES,
     QR_ERROR_LEVELS,
@@ -82,26 +75,3 @@ export const qrSearchParamsSchema = z.object({
 });
 
 export type QrSearchParams = z.infer<typeof qrSearchParamsSchema>;
-
-/* --------------------------------------------------------------- dynamic --- */
-
-export const targetUrlSchema = z.string().trim().min(1).max(MAX_TARGET_URL_LENGTH);
-
-export const slugSchema = z.string().length(SLUG_LENGTH).refine(isValidSlug);
-
-export const editTokenSchema = z.string().length(EDIT_TOKEN_LENGTH).refine(isValidEditToken);
-
-/**
- * What the create action accepts. The Turnstile token is required here and not
- * merely checked in the action, so a request that forgot it is rejected before
- * anything touches the database.
- */
-export const createDynamicQrSchema = z.object({
-    target: targetUrlSchema,
-    token: z.string().min(1),
-});
-
-export const updateDynamicQrSchema = z.object({
-    editToken: editTokenSchema,
-    target: targetUrlSchema,
-});

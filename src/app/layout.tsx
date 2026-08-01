@@ -224,6 +224,20 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.qr.errors,
             toast: messages.qr.toast,
         },
+        // Shared by the QR tool's dynamic codes, the URL Shortener, and the
+        // unlock gate — one vocabulary of failures, so the same problem never
+        // reads two different ways.
+        shortLinks: {
+            errors: messages.shortLinks.errors,
+            unlock: messages.shortLinks.unlock,
+        },
+        shortener: {
+            workbench: messages.shortener.workbench,
+            result: messages.shortener.result,
+            history: messages.shortener.history,
+            edit: messages.shortener.edit,
+            toast: messages.shortener.toast,
+        },
         aiTextDetector: {
             workbench: messages.aiTextDetector.workbench,
             labels: messages.aiTextDetector.labels,

@@ -13,12 +13,12 @@ import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
 import { StatusStrip } from "@/modules/tools/components/status-strip";
 import { copyText } from "@/modules/tools/domain/clipboard";
-import { updateDynamicQr } from "../actions/update-dynamic-qr";
-import type { DynamicQrFailureReason, DynamicQrLinkView } from "../types";
+import { updateLink } from "@/modules/short-links/actions/update-link";
+import type { ShortLinkFailureReason, ShortLinkView } from "@/modules/short-links/types";
 
 type DynamicQrEditorProps = {
     editToken: string;
-    link: DynamicQrLinkView;
+    link: ShortLinkView;
 };
 
 /**
@@ -27,7 +27,7 @@ type DynamicQrEditorProps = {
  */
 export function DynamicQrEditor({ editToken, link }: DynamicQrEditorProps) {
     const t = useTranslations("qr.edit");
-    const tErrors = useTranslations("qr.errors");
+    const tErrors = useTranslations("shortLinks.errors");
     const tToast = useTranslations("qr.toast");
     const format = useFormatter();
 
@@ -36,7 +36,7 @@ export function DynamicQrEditor({ editToken, link }: DynamicQrEditorProps) {
     const [current, setCurrent] = useState(link);
     const [target, setTarget] = useState(link.target);
     const [saving, setSaving] = useState(false);
-    const [failure, setFailure] = useState<DynamicQrFailureReason | null>(null);
+    const [failure, setFailure] = useState<ShortLinkFailureReason | null>(null);
     const [copied, setCopied] = useState(false);
 
     async function handleSave() {
@@ -44,7 +44,13 @@ export function DynamicQrEditor({ editToken, link }: DynamicQrEditorProps) {
         setFailure(null);
 
         try {
-            const result = await updateDynamicQr({ editToken, target });
+            const result = await updateLink({
+                tool: "qr",
+                editToken,
+                target,
+                startsAt: current.startsAt,
+                expiresAt: current.expiresAt,
+            });
 
             if (!result.ok) {
                 setFailure(result.reason);
@@ -119,9 +125,7 @@ export function DynamicQrEditor({ editToken, link }: DynamicQrEditorProps) {
                     </p>
                 </div>
 
-                {failure !== null && (
-                    <StatusStrip tone="error" message={tErrors(`dynamic.${failure}`)} />
-                )}
+                {failure !== null && <StatusStrip tone="error" message={tErrors(failure)} />}
 
                 <Button
                     type="button"
