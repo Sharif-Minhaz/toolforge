@@ -112,6 +112,10 @@
             "name": "Text",
             "description": "Slice, compare, and reshape strings at speed."
         },
+        "media": {
+            "name": "Media",
+            "description": "Compress, convert, and clean up images without leaving the tab."
+        },
         "ai": {
             "name": "AI",
             "description": "Check what a model made, and clean up what it left behind."
@@ -189,6 +193,10 @@
         "diff": {
             "name": "Diff Checker",
             "description": "Compare two blocks of text with word-level highlighting."
+        },
+        "image-compressor": {
+            "name": "Image Compressor",
+            "description": "Shrink JPG, PNG, WebP and AVIF in your browser with the encoders Squoosh uses — batch, resize, and download the lot as a ZIP."
         },
         "ai-image-detector": {
             "name": "AI Image Detector",
@@ -270,9 +278,9 @@
                 "title": "Wi-Fi QR code",
                 "description": "Turn your network name and password into a code guests can scan."
             },
-            "diffCompare": {
-                "title": "Compare two versions",
-                "description": "Paste an original and a changed text and see every difference, down to the word."
+            "imageCompress": {
+                "title": "Compress a batch of images",
+                "description": "Drop in photographs, pick WebP, and download the lot as one archive."
             }
         },
         "featured": {
@@ -5132,6 +5140,202 @@
                 "a5": "Yes, provided the file you apply it to is the text you put in the left box. It is a standard unified diff with three lines of context, including the no-newline marker where a side needs one. Give it real filenames by renaming the download, or paste it wherever you would paste any patch.",
                 "q6": "Can I compare two files instead of pasting?",
                 "a6": "Yes — each side has an upload button that reads a text file into that box. It is read in your browser like everything else, so nothing is transferred, and the same size limits apply once the text is in."
+            }
+        }
+    },
+    "imageCompressor": {
+        "meta": {
+            "title": "Image Compressor — shrink JPG, PNG, WebP and AVIF in your browser",
+            "description": "Compress and convert images with MozJPEG, libwebp, libaom and OxiPNG — the encoders Squoosh uses. Drag in a batch, pick a quality, download one file or the whole set as a ZIP. Nothing is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Image Compressor",
+            "title": "Image Compressor",
+            "subtitle": "Drop in photographs or screenshots and get them back smaller. Every file is decoded, resized and re-encoded in this tab by the same WebAssembly codecs Squoosh uses, so nothing you drop here ever leaves your machine.",
+            "badgeCodecs": "MozJPEG · libwebp · libaom · OxiPNG",
+            "badgeOffline": "Runs offline",
+            "badgeBatch": "{count} files at a time"
+        },
+        "workbench": {
+            "title": "Compress images",
+            "description": "Pick a quality, a format and a size cap. Files are compressed one after another so the tab stays usable while it works.",
+            "dropTitle": "Drop your images here",
+            "dropHint": "JPG, PNG, WebP, AVIF, GIF or BMP · up to {limit} each · {count} files at a time",
+            "selectFiles": "Select files",
+            "qualityLabel": "Quality",
+            "qualityHint": "Higher keeps more detail and costs more bytes. {value} suits most photographs.",
+            "qualityHintLossless": "PNG is lossless here, so quality changes nothing. Choose WebP or AVIF to make a photograph smaller.",
+            "qualityHintMixed": "Applies to every file except the PNGs, which stay lossless under Match the original.",
+            "formatLabel": "Output format",
+            "resizeLabel": "Longest edge",
+            "resizeHint": "Scales down only. A picture already inside the cap is left at its own size.",
+            "resizeOriginal": "Keep original size",
+            "resizePreset": "{value} px",
+            "compress": "Compress",
+            "recompress": "Compress again",
+            "working": "Compressing {done} of {total}…",
+            "clear": "Clear all",
+            "downloadAll": "Download all (ZIP)",
+            "packing": "Packing…",
+            "rowDownload": "Download {name}",
+            "rowRemove": "Remove {name}",
+            "previewAlt": "Preview of {name}",
+            "rowPending": "Waiting",
+            "rowWorking": "Compressing…",
+            "rowSaved": "{percent}% smaller",
+            "rowGrew": "{percent}% larger",
+            "rowUnchanged": "Same size",
+            "rowFlattened": "Transparency flattened onto white",
+            "rowResized": "Resized to {width}×{height}",
+            "summaryFiles": "{count, plural, =1 {# image} other {# images}}",
+            "summarySaved": "{percent}% smaller overall",
+            "summaryGrew": "{percent}% larger overall",
+            "summaryUnchanged": "No change overall",
+            "statusIdle": "Nothing picked yet. Drop images above, or use Select files.",
+            "statusWorking": "Compressing {done} of {total}. Leave this tab open.",
+            "statusReady": "{count, plural, =1 {# image ready} other {# images ready}} to compress.",
+            "statusStale": "Settings changed since these results. Compress again to apply them.",
+            "statusDone": "Done. {percent}% smaller than what you dropped in.",
+            "statusDoneNoSaving": "Done, but nothing got smaller — your originals were already well compressed.",
+            "statusFailed": "{count, plural, =1 {# file was skipped} other {# files were skipped}}. The reason is on each row.",
+            "metadataNote": "Re-encoding drops EXIF, GPS and colour profiles. Camera rotation is applied to the pixels first, so nothing comes back sideways.",
+            "privacyNote": "Every file is decoded and encoded in this tab. Nothing is uploaded and nothing is stored."
+        },
+        "formats": {
+            "auto": "Match the original",
+            "smallest": "Smallest of all four",
+            "webp": "WebP",
+            "avif": "AVIF",
+            "jpeg": "JPEG",
+            "png": "PNG",
+            "autoHint": "Each file keeps the format it arrived in. Predictable, and never breaks a link that expects a .jpg.",
+            "smallestHint": "Encodes each file with every codec that suits it and keeps the shortest result. Slowest, and usually the smallest.",
+            "webpHint": "Smaller than JPEG at the same quality, with transparency. Read by every current browser.",
+            "avifHint": "The smallest of the four on photographs, and the slowest to encode. Safari 16.4 and later.",
+            "jpegHint": "MozJPEG with trellis quantisation. No transparency — anything see-through is flattened onto white.",
+            "pngHint": "Lossless, so the pixels are untouched and only the file is optimised. Best for flat graphics, worst for photographs."
+        },
+        "errors": {
+            "empty_file": "That file is empty.",
+            "unsupported_type": "That is not an image this tool can read. Try JPG, PNG, WebP, AVIF, GIF or BMP.",
+            "too_large": "That file is over the {limit} limit.",
+            "too_many_files": "Only {count} files can be queued at once.",
+            "too_many_pixels": "That picture is larger than {count} megapixels, which is more than one browser tab can hold.",
+            "undecodable": "The browser could not decode that image.",
+            "encode_failed": "Every encoder refused that image."
+        },
+        "toast": {
+            "compressed": "{count, plural, =1 {# image compressed} other {# images compressed}}",
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The download could not be started.",
+            "archiveFailed": "The archive could not be built.",
+            "rejected": "{count, plural, =1 {# file was skipped} other {# files were skipped}}"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "howItWorks": {
+                "title": "How this compressor works",
+                "p1": "Every file you drop is decoded to raw pixels, optionally scaled down, and handed to a WebAssembly build of a real production encoder — MozJPEG, libwebp, libaom or OxiPNG. These are the same codecs Squoosh ships, and they are meaningfully better than the one built into your browser: `canvas.toBlob` gives you the browser's default JPEG writer with a single quality knob and no way to ask for anything else.",
+                "p2": "The difference is not marketing. MozJPEG runs trellis quantisation, which searches for the set of coefficients with the best size-to-distortion trade at your chosen quality instead of taking the first one the quantiser produces. libwebp is set to its slowest analysis mode with sharp YUV conversion, which removes the coloured fringing on saturated edges that people usually mistake for WebP looking worse than JPEG. Both are off by default in a browser because both cost encoding time, and here you are the one waiting.",
+                "p3": "Downscaling goes through a Lanczos3 filter in linear light rather than through the canvas. Drawing an image smaller with `drawImage` gives you whatever your GPU driver does, which on a large reduction is a box filter and visible aliasing. Doing the arithmetic in linear light also stops the picture darkening as it shrinks, which is the artefact you see when a bright checkerboard turns grey instead of staying bright.",
+                "p4": "All of that runs in this tab. There is no upload, no queue on somebody else's server, and no limit imposed by a plan — the ceiling is your own machine's memory, which is why the file count and megapixel caps exist."
+            },
+            "formats": {
+                "title": "Choosing a format",
+                "intro": "The format decides more than the quality slider does. A photograph in PNG will always be larger than the same photograph in WebP, whatever the quality is set to, because PNG has no way to throw away what the eye will not miss.",
+                "tableCaption": "Output formats and when each is the right answer",
+                "colFormat": "Format",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "autoDoes": "Keeps each file in the format it arrived in, so a JPG comes back a JPG.",
+                "autoWhen": "Something downstream expects the extension it already has.",
+                "smallestDoes": "Encodes each file with every codec that suits it and keeps the shortest result.",
+                "smallestWhen": "Size is what matters and you can wait — this is three or four encodes per file.",
+                "webpDoes": "Lossy or transparent, roughly 25–35% smaller than JPEG at a matched quality.",
+                "webpWhen": "You want one format that is smaller than JPEG and read everywhere current.",
+                "avifDoes": "Usually the smallest of the four on photographs, at several times the encoding cost.",
+                "avifWhen": "The file is served to browsers you control, and bytes matter more than encode time.",
+                "jpegDoes": "MozJPEG with trellis quantisation and a progressive scan order.",
+                "jpegWhen": "The file has to open in anything, including software from before 2010.",
+                "pngDoes": "Rewrites the file losslessly with OxiPNG — same pixels, fewer bytes.",
+                "pngWhen": "The image is a logo, a diagram or a screenshot of text, where a lossy artefact is obvious.",
+                "alphaNote": "JPEG has no alpha channel. Send it a transparent image and this tool composites the picture onto white first and says so on the row, rather than letting the encoder keep whatever colour happened to sit under the transparency — usually black.",
+                "smallestNote": "Under Smallest of all four, JPEG only competes for an image that is fully opaque, and PNG only competes against a source that was already lossless. Both exclusions save an encode that could not have won."
+            },
+            "controls": {
+                "title": "Every control",
+                "intro": "Three settings decide the output, and they are applied in the order listed: the picture is scaled first, then encoded at the quality you chose, in the format you chose.",
+                "tableCaption": "What each control does and when to move it",
+                "colControl": "Control",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "qualityName": "Quality",
+                "qualityDoes": "Sets the encoder's quality parameter from 10 to 100. Ignored by PNG, which is lossless here.",
+                "qualityWhen": "The default is visibly soft on your image, or is leaving more bytes than you need.",
+                "formatName": "Output format",
+                "formatDoes": "Picks the encoder, or asks for all of them and keeps the smallest result.",
+                "formatWhen": "See the table above — this is the setting with the largest effect on size.",
+                "resizeName": "Longest edge",
+                "resizeDoes": "Scales the picture so its longer side is at most the value you pick, keeping the aspect ratio.",
+                "resizeWhen": "A 12-megapixel photograph is going into a page that will display it 800 pixels wide.",
+                "compressName": "Compress",
+                "compressDoes": "Runs the queue, one file at a time, and reports progress as it goes.",
+                "compressWhen": "You changed a setting after a run — new files start on their own.",
+                "downloadName": "Download",
+                "downloadDoes": "Saves one result under the original name with -min and the new extension.",
+                "downloadWhen": "You only wanted the one file.",
+                "downloadAllName": "Download all (ZIP)",
+                "downloadAllDoes": "Packs every finished result into one archive, numbering any names that would collide.",
+                "downloadAllWhen": "There is more than one result and you would rather not click through them.",
+                "removeName": "Remove",
+                "removeDoes": "Drops a single file from the queue along with its result.",
+                "removeWhen": "One file in a batch was picked by mistake.",
+                "clearName": "Clear all",
+                "clearDoes": "Empties the queue and releases every preview.",
+                "clearWhen": "You are done, or want to start from nothing.",
+                "orderNote": "Because scaling happens before encoding, a size cap and a lower quality compound: halving the longest edge quarters the pixel count before the encoder ever sees it, which is why the cap usually saves more than the slider does.",
+                "staleNote": "Changing a setting does not silently rewrite results you already have. The finished rows dim, the status line says so, and nothing is re-encoded until you ask."
+            },
+            "quality": {
+                "title": "Picking a quality",
+                "p1": "Quality numbers are not comparable between codecs. MozJPEG at 75 and libwebp at 75 do not target the same distortion, and AVIF's scale is different again — libaom's own default is 50, which on most photographs looks like JPEG at somewhere in the seventies. Compare the output, never the number.",
+                "p2": "For photographs, 70 to 80 is the range where the saving is large and the artefacts are hard to find without flicking between the two at full size. Below about 60 the flat areas of sky and skin start to band, and the edges around text pick up a halo. Above 90 the file grows quickly for a difference almost nobody sees.",
+                "p3": "Images with hard edges — screenshots, diagrams, anything with text in it — behave differently. A lossy codec spends its bits on the edge and leaves ringing beside it, which is far more visible than the same artefact in foliage. Those are the images to keep as PNG, or to push to 90 and up if they must be lossy."
+            },
+            "metadata": {
+                "title": "What happens to metadata",
+                "p1": "A re-encode starts from decoded pixels, so nothing that was attached to the original file survives: EXIF, GPS coordinates, camera and lens details, capture time, copyright fields, and any embedded colour profile are all gone from the result. That is a privacy improvement most of the time and a loss if you were relying on it — export the metadata first if you need it.",
+                "p2": "One tag is applied rather than dropped. A phone usually records a rotated photograph the right way up in the pixels and writes an orientation tag saying which way to turn it. Discarding the tag without acting on it is why so many compressed photographs come back sideways, so the decode step applies the rotation to the pixels before anything else happens.",
+                "p3": "The missing colour profile matters for images that were not sRGB to begin with. A photograph exported in Display P3 or Adobe RGB is decoded to those numbers and written back without the profile that explains them, so a wide-gamut original can come back looking flat. Convert to sRGB before compressing if the source was not sRGB already."
+            },
+            "limits": {
+                "title": "Limits, and why they exist",
+                "p1": "Up to 40 files can be queued at once, each up to 25 MB, and each up to 40 megapixels once decoded. The last of those is the one that catches people out: a 2 MB PNG can hold a hundred megapixels, and decoded pixels cost four bytes each regardless of how small the file was.",
+                "p2": "Files are compressed one after another rather than all at once. A parallel run would be faster on paper and would also hold every decoded image in memory simultaneously, which is how a tab crashes halfway through a batch. Sequential work also means the progress count is honest.",
+                "p3": "AVIF is slow. A large photograph can take several seconds per file, and Smallest of all four runs AVIF alongside the others. That is the trade for the smallest output; if you want a quick answer for a large batch, choose WebP outright."
+            },
+            "privacy": {
+                "title": "Where your images go",
+                "p1": "Nowhere. The codecs are WebAssembly modules running inside this page, so the decode, the resize and the encode all happen on your own machine. There is no request carrying your file, which is why the tool keeps working after the page has loaded and the network has gone.",
+                "p2": "Nothing is stored either. The queue lives in the page for as long as the tab is open, and the preview thumbnails are object URLs released when you remove a file or leave. Reloading the page loses everything, on purpose.",
+                "p3": "This matters more for images than for text. A photograph carries where it was taken and often which device took it, and an ordinary online compressor has both the moment you upload. Here the only copy of your file is the one you already had."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Is this better than compressing with an online service?",
+                "a1": "For output quality it is comparable — the encoders are the same ones most services run, at settings tuned past their defaults. For privacy it is not close: nothing is uploaded, so there is no copy on a server to be retained, indexed or leaked, and there is no per-day limit to hit.",
+                "q2": "Why did my file get bigger?",
+                "a2": "Because it was already compressed well. Re-encoding an image that was written at a high quality by a good encoder cannot find much left to remove, and the second encode adds its own overhead. When that happens the row shows a negative saving rather than hiding it, so you can keep the original.",
+                "q3": "Does compressing twice lose more quality?",
+                "a3": "Yes, for any lossy format. Each encode discards detail the previous one kept, and the losses accumulate — a JPEG re-saved five times looks visibly worse than the same image encoded once at the lowest of those five qualities. Always compress from the original, not from an earlier result.",
+                "q4": "Why is AVIF so much slower than the rest?",
+                "a4": "It is doing far more work. libaom searches many more ways of predicting each block than a JPEG or WebP encoder does, and that search is what buys the smaller file. Running it in WebAssembly costs a further factor on top. It is worth it for images you will serve many times, and rarely worth it for a one-off.",
+                "q5": "Can I compress an animated GIF?",
+                "a5": "Not as an animation. A GIF is decoded to its first frame and written back as a still image, so the animation is lost. Nothing here writes an animated format.",
+                "q6": "What happens to a transparent PNG if I choose JPEG?",
+                "a6": "It is composited onto white before encoding and the row tells you so. JPEG has no alpha channel, and the alternative — handing transparent pixels straight to the encoder — produces the black boxes you sometimes see where a logo used to be."
             }
         }
     },

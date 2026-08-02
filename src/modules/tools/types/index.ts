@@ -4,6 +4,7 @@ export const TOOL_CATEGORIES = [
     "formatting",
     "security",
     "text",
+    "media",
     "ai",
 ] as const;
 
@@ -32,6 +33,7 @@ export const TOOL_IDS = [
     "shortener",
     "slug",
     "diff",
+    "image-compressor",
     "ai-image-detector",
     "ai-text-detector",
     "watermark-remover",
@@ -69,7 +71,8 @@ export type ToolIconName =
     | "diff"
     | "photo"
     | "scan"
-    | "eraser";
+    | "eraser"
+    | "compress";
 
 export type Tool = {
     readonly id: ToolId;

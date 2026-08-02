@@ -357,7 +357,9 @@ Work in this order. Each step has a rule that is easy to skip.
 1. **Register it.** Add the id to `TOOL_IDS` in `src/modules/tools/types/index.ts`, then the entry
    in `src/modules/tools/domain/tool-catalog.ts` with `status: "planned"` until it ships. `href`
    must be `/tools/<id>` — a test enforces this. Pick an `accent` from the five brand hues and an
-   `icon` from `ToolIconName`.
+   `icon` from `ToolIconName`. The sidebar groups tools under their category heading, so a tool in
+   a category that does not exist yet needs `TOOL_CATEGORIES` widened and `categories.<id>.name`
+   and `.description` added to **both** locales, or the heading renders empty.
 2. **Add copy to both locales.** `tools.<id>.name` and `tools.<id>.description` in `en.json` _and_
    `bn.json`. Name the tool for everything it does — a converter is `"X Encoder / Decoder"`, not
    `"X Encoder"`, because the sidebar label is the only name most users ever see.

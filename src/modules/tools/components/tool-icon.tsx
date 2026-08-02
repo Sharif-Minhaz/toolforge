@@ -1,4 +1,5 @@
 import {
+    IconArrowsMinimize,
     IconBinary,
     IconBraces,
     IconCalendarTime,
@@ -48,6 +49,7 @@ const ICONS: Record<ToolIconName, ComponentType<IconProps>> = {
     photo: IconPhotoScan,
     scan: IconTextScan2,
     eraser: IconEraser,
+    compress: IconArrowsMinimize,
 };
 
 type ToolIconProps = {

@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { TOOL_ACCENT_VARS, TOOL_ICON_TILE } from "@/modules/tools/components/tool-accent";
 import { ToolIcon } from "@/modules/tools/components/tool-icon";
 import { filterTools } from "@/modules/tools/domain/search";
-import type { LocalizedTool } from "@/modules/tools/types";
+import { TOOL_CATEGORIES, type LocalizedTool } from "@/modules/tools/types";
 
 const INDICATOR_SPRING = { type: "spring", stiffness: 460, damping: 38, mass: 0.7 } as const;
 
@@ -183,7 +183,44 @@ export function SidebarNav({
 
     const filtered = useMemo(() => filterTools(tools, query), [tools, query]);
 
+    // Grouped only while browsing. A search is already a ranking, and slicing
+    // three matches across five headings buries them.
+    const groups = useMemo(
+        () =>
+            TOOL_CATEGORIES.map((category) => ({
+                category,
+                label: filtered.find((tool) => tool.category === category)?.categoryLabel ?? "",
+                tools: filtered.filter((tool) => tool.category === category),
+            })).filter((group) => group.tools.length > 0),
+        [filtered],
+    );
+
     const overviewActive = pathname === "/";
+
+    function renderRow(tool: LocalizedTool) {
+        const available = tool.status === "available";
+
+        return (
+            <NavRow
+                key={tool.id}
+                label={tool.name}
+                href={available ? tool.href : undefined}
+                active={available && pathname === tool.href}
+                collapsed={collapsed}
+                layoutIdPrefix={layoutIdPrefix}
+                onNavigate={onNavigate}
+                accentClass={TOOL_ACCENT_VARS[tool.accent]}
+                icon={<ToolIcon name={tool.icon} className="size-4" />}
+                badge={
+                    available ? undefined : (
+                        <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-1 text-[0.625rem] leading-[1.3] font-medium">
+                            {tCommon("soon")}
+                        </span>
+                    )
+                }
+            />
+        );
+    }
 
     return (
         <div className="flex min-h-0 flex-1 flex-col">
@@ -266,51 +303,46 @@ export function SidebarNav({
                     </>
                 )}
 
-                <SectionLabel
-                    ruleWhenCollapsed
-                    trailing={
-                        <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 font-mono text-[0.625rem] leading-none tabular-nums">
-                            {format.number(filtered.length)}
-                        </span>
-                    }
-                >
-                    {t("sectionTools")}
-                </SectionLabel>
-
                 {filtered.length === 0 ? (
-                    <p className="text-muted-foreground px-2 py-6 text-center text-xs group-data-[collapsed=true]/shell:hidden">
-                        {t("searchEmpty", { query })}
-                        <span className="text-muted-foreground/70 mt-1 block">
-                            {t("searchEmptyHint")}
-                        </span>
-                    </p>
+                    <>
+                        <SectionLabel ruleWhenCollapsed>{t("sectionTools")}</SectionLabel>
+                        <p className="text-muted-foreground px-2 py-6 text-center text-xs group-data-[collapsed=true]/shell:hidden">
+                            {t("searchEmpty", { query })}
+                            <span className="text-muted-foreground/70 mt-1 block">
+                                {t("searchEmptyHint")}
+                            </span>
+                        </p>
+                    </>
+                ) : query.length > 0 ? (
+                    <>
+                        <SectionLabel
+                            ruleWhenCollapsed
+                            trailing={
+                                <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 font-mono text-[0.625rem] leading-none tabular-nums">
+                                    {format.number(filtered.length)}
+                                </span>
+                            }
+                        >
+                            {t("sectionTools")}
+                        </SectionLabel>
+                        <ul className="flex flex-col gap-0.5">{filtered.map(renderRow)}</ul>
+                    </>
                 ) : (
-                    <ul className="flex flex-col gap-0.5">
-                        {filtered.map((tool) => {
-                            const available = tool.status === "available";
-
-                            return (
-                                <NavRow
-                                    key={tool.id}
-                                    label={tool.name}
-                                    href={available ? tool.href : undefined}
-                                    active={available && pathname === tool.href}
-                                    collapsed={collapsed}
-                                    layoutIdPrefix={layoutIdPrefix}
-                                    onNavigate={onNavigate}
-                                    accentClass={TOOL_ACCENT_VARS[tool.accent]}
-                                    icon={<ToolIcon name={tool.icon} className="size-4" />}
-                                    badge={
-                                        available ? undefined : (
-                                            <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-1 text-[0.625rem] leading-[1.3] font-medium">
-                                                {tCommon("soon")}
-                                            </span>
-                                        )
-                                    }
-                                />
-                            );
-                        })}
-                    </ul>
+                    groups.map((group) => (
+                        <div key={group.category}>
+                            <SectionLabel
+                                ruleWhenCollapsed
+                                trailing={
+                                    <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 font-mono text-[0.625rem] leading-none tabular-nums">
+                                        {format.number(group.tools.length)}
+                                    </span>
+                                }
+                            >
+                                {group.label}
+                            </SectionLabel>
+                            <ul className="flex flex-col gap-0.5">{group.tools.map(renderRow)}</ul>
+                        </div>
+                    ))
                 )}
             </nav>
         </div>

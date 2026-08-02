@@ -406,12 +406,18 @@ src/
       validation/             Zod schemas
 ```
 
+Categories are a literal union too (`TOOL_CATEGORIES`), and the sidebar groups
+its list under one heading per category. A new category needs the union widened
+**and** `categories.<id>.name`/`.description` in both locales, or the rail
+renders a heading with no words in it.
+
 Existing feature modules: `tools` (catalog, search, clipboard, file saving,
 plus the shared time-zone and calendar layer: `domain/zone.ts`,
 `domain/time-zones.ts`, `domain/calendar.ts`, `components/zone-picker.tsx`, and
 the injectable random source `domain/random.ts`), `short-links` (every
-re-pointable link on the site — see below), `uuid`, `overview`, `preferences`,
-`seo`, `observability`.
+re-pointable link on the site — see below), `image-compressor` (WebAssembly
+codecs, a batch queue and the shared ZIP writer), `uuid`, `overview`,
+`preferences`, `seo`, `observability`.
 
 Rules that keep this honest:
 
@@ -677,6 +683,49 @@ nothing can read. When you emit a format, write down which model each side of
 the boundary uses before writing the converter — and note that a *context* line
 means identical in both files, terminator included, so a final line the two
 sides end differently has to be printed as a removal and an addition instead.
+
+# When the Platform's Own Encoder Is Not Good Enough
+
+`canvas.toBlob` writes a JPEG. It is also the browser's default writer with one
+knob, no way to ask for trellis quantisation, progressive scans, sharp YUV, or
+anything else a real encoder exposes — and `drawImage` at a smaller size is
+whatever the GPU driver does, which on a large reduction is a box filter. The
+Image Compressor is the shape to copy when the platform API is present but the
+output is the product: reach for the actual codec, compiled to WebAssembly.
+
+- **Import each codec on demand, inside the function that uses it.**
+  `await import("@jsquash/avif/encode")` means a reader who only ever writes
+  WebP never downloads libaom. A static import at the top of `domain/codec.ts`
+  would pull every encoder into the island's first chunk.
+- **The wasm is resolved by the bundler, not by you.** Every jSquash module
+  locates its binary with `new URL("x.wasm", import.meta.url)`, which webpack
+  and Turbopack both understand as an asset reference. Copying `.wasm` files
+  into `public/` and passing `locateFile` is the workaround for a bundler that
+  cannot do this; ours can, so do not.
+- **`bun test` cannot reach any of it** — the codecs need `ImageData` and fetch
+  their binary by URL. Test the pure layer (`options`, `pixels`, `savings`,
+  `filenames`, `archive`) and verify the codecs in a throwaway Node script that
+  compiles the `.wasm` itself and passes it to each package's `init(module)`,
+  then check the output with something that is not you: `file`, ImageMagick's
+  `identify`, Pillow. That is the same rule as the QR encoder, applied to four
+  formats at once — and it is what proves an option profile is *accepted*, not
+  just plausible.
+- **Say what the re-encode destroys.** Decoding to pixels drops EXIF, GPS and
+  the colour profile, and *applies* the orientation tag rather than dropping it
+  — skip that last step and every phone photograph comes back sideways. All
+  three belong in the copy, not only in the code.
+
+Two smaller rules the batch queue settled:
+
+- **Staleness is derived, not stored.** `optionsSignature(options)` is written
+  onto a row when its result is produced; a row whose signature no longer
+  matches the panel is dimmed and the button says "compress again". Nothing is
+  silently re-encoded, and there is no `isStale` flag to keep in step.
+- **Work the queue sequentially and say which file you are on.** Running every
+  encode at once holds every decoded image in memory simultaneously, which is
+  how a tab dies halfway through a batch — four bytes a pixel is the real cost,
+  not the file size. Sequential work is also the only way the progress count is
+  true.
 
 # Redirecting, and What a Route Handler Is For
 

@@ -1,9 +1,9 @@
 import {
     IconArrowRight,
+    IconArrowsMinimize,
     IconBinary,
     IconBolt,
     IconBraces,
-    IconGitCompare,
     IconKey,
     IconQrcode,
 } from "@tabler/icons-react";
@@ -59,12 +59,12 @@ export async function QuickActions() {
             accent: "[--tool-accent:var(--brand-cyan)]",
         },
         {
-            key: "diffCompare",
-            href: "/tools/diff",
-            title: t("diffCompare.title"),
-            description: t("diffCompare.description"),
-            Icon: IconGitCompare,
-            accent: "[--tool-accent:var(--brand-rose)]",
+            key: "imageCompress",
+            href: "/tools/image-compressor?format=webp",
+            title: t("imageCompress.title"),
+            description: t("imageCompress.description"),
+            Icon: IconArrowsMinimize,
+            accent: "[--tool-accent:var(--brand-emerald)]",
         },
     ];
 
