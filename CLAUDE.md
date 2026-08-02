@@ -441,7 +441,12 @@ malformed link degrades to defaults instead of a 500.
 - Generate initial results **on the server** and pass them to the client island
   as props. Never generate in `useState` initialisers — server and client
   produce different values and hydration breaks.
-- Add `loading.tsx` with skeletons that match the real layout block for block.
+- Close the page with `<RelatedTools toolId="<id>" />` from
+  `src/modules/tools/components/related-tools.tsx`, below the article. It picks
+  its own suggestions — same category first, then popularity — and renders
+  nothing rather than a stub heading when there is nothing to suggest.
+- Add `loading.tsx` with skeletons that match the real layout block for block,
+  including the three related-tool cards at the foot.
 
 **6. Keep the client island small.** One interactive component per tool holding
 state; everything static stays a server component. Long-form content is a

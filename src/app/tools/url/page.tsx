@@ -12,6 +12,7 @@ import { FadeIn, Reveal } from "@/components/motion/reveal";
 import { JsonLd } from "@/modules/seo/components/json-ld";
 import { buildPageMetadata } from "@/modules/seo/domain/metadata";
 import { buildToolJsonLd } from "@/modules/seo/domain/structured-data";
+import { RelatedTools } from "@/modules/tools/components/related-tools";
 import { isEncodable } from "@/modules/tools/domain/charsets";
 import { getToolById } from "@/modules/tools/domain/tool-catalog";
 import { UrlArticle, getUrlFaqEntries } from "@/modules/url/components/url-article";
@@ -140,6 +141,8 @@ export default async function UrlToolPage({ searchParams }: UrlPageProps) {
                 <Reveal>
                     <UrlArticle />
                 </Reveal>
+
+                <RelatedTools toolId="url" />
             </div>
         </>
     );

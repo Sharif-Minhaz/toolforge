@@ -6,6 +6,7 @@ import {
     getFeaturedTools,
     getPopularTools,
     getRecentTools,
+    getRelatedTools,
     getToolById,
     getToolCatalogStats,
     getToolKeywords,
@@ -117,6 +118,51 @@ describe("tool catalog", () => {
     test("honours the requested limit", () => {
         expect(getPopularTools(3)).toHaveLength(3);
         expect(getRecentTools(2)).toHaveLength(2);
+    });
+});
+
+describe("getRelatedTools", () => {
+    test("suggests three shipped tools by default", () => {
+        const related = getRelatedTools("uuid");
+
+        expect(related).toHaveLength(3);
+
+        for (const tool of related) {
+            expect(tool.status).toBe("available");
+        }
+    });
+
+    test("never suggests the tool the reader is already on", () => {
+        for (const tool of getAvailableTools()) {
+            expect(getRelatedTools(tool.id).map((related) => related.id)).not.toContain(tool.id);
+        }
+    });
+
+    test("leads with neighbours from the same category", () => {
+        // Base64 is the other shipped encoding tool, and less popular than
+        // several tools elsewhere in the catalog — so category has to win.
+        expect(getRelatedTools("url")[0]?.id).toBe("base64");
+    });
+
+    test("falls back to popularity once the category runs out", () => {
+        const related = getRelatedTools("url", 3);
+        const beyondCategory = related.filter((tool) => tool.category !== "encoding");
+        const popularity = beyondCategory.map((tool) => tool.popularity);
+
+        expect(beyondCategory.length).toBeGreaterThan(0);
+        expect(popularity).toEqual(popularity.toSorted((a, b) => b - a));
+    });
+
+    test("honours the requested limit", () => {
+        expect(getRelatedTools("uuid", 2)).toHaveLength(2);
+        expect(getRelatedTools("uuid", 0)).toHaveLength(0);
+    });
+
+    test("still suggests something for a tool that has not shipped yet", () => {
+        const related = getRelatedTools("diff");
+
+        expect(related).toHaveLength(3);
+        expect(related.map((tool) => tool.id)).not.toContain("diff");
     });
 });
 

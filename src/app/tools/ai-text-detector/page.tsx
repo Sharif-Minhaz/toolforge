@@ -13,6 +13,7 @@ import { aiTextDetectorSearchParamsSchema } from "@/modules/ai-text-detector/val
 import { JsonLd } from "@/modules/seo/components/json-ld";
 import { buildPageMetadata } from "@/modules/seo/domain/metadata";
 import { buildToolJsonLd } from "@/modules/seo/domain/structured-data";
+import { RelatedTools } from "@/modules/tools/components/related-tools";
 import { getToolById } from "@/modules/tools/domain/tool-catalog";
 
 const TOOL_PATH = "/tools/ai-text-detector";
@@ -122,6 +123,8 @@ export default async function AiTextDetectorToolPage({ searchParams }: AiTextDet
                 <Reveal>
                     <AiTextDetectorArticle />
                 </Reveal>
+
+                <RelatedTools toolId="ai-text-detector" />
             </div>
         </>
     );

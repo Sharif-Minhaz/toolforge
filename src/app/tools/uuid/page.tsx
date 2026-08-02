@@ -7,6 +7,7 @@ import { FadeIn, Reveal } from "@/components/motion/reveal";
 import { buildPageMetadata } from "@/modules/seo/domain/metadata";
 import { buildToolJsonLd } from "@/modules/seo/domain/structured-data";
 import { JsonLd } from "@/modules/seo/components/json-ld";
+import { RelatedTools } from "@/modules/tools/components/related-tools";
 import { getToolById } from "@/modules/tools/domain/tool-catalog";
 import { DEFAULT_UUID_QUANTITY, DEFAULT_UUID_VERSION } from "@/modules/uuid/domain/constants";
 import { generateUuids } from "@/modules/uuid/domain/generate";
@@ -125,6 +126,8 @@ export default async function UuidToolPage({ searchParams }: UuidPageProps) {
                 <Reveal>
                     <UuidArticle />
                 </Reveal>
+
+                <RelatedTools toolId="uuid" />
             </div>
         </>
     );

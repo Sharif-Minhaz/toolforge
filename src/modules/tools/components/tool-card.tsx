@@ -3,9 +3,9 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
-import { TOOL_ACCENT_VARS, TOOL_ICON_TILE } from "@/modules/tools/components/tool-accent";
-import { ToolIcon } from "@/modules/tools/components/tool-icon";
-import type { LocalizedTool } from "@/modules/tools/types";
+import type { LocalizedTool } from "../types";
+import { TOOL_ACCENT_VARS, TOOL_ICON_TILE } from "./tool-accent";
+import { ToolIcon } from "./tool-icon";
 
 /** Card body only. The caller owns the list item — see `FeaturedTools`. */
 export function ToolCard({ tool }: { tool: LocalizedTool }) {

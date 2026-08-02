@@ -12,6 +12,7 @@ import { AiImageDetectorWorkbench } from "@/modules/ai-image-detector/components
 import { JsonLd } from "@/modules/seo/components/json-ld";
 import { buildPageMetadata } from "@/modules/seo/domain/metadata";
 import { buildToolJsonLd } from "@/modules/seo/domain/structured-data";
+import { RelatedTools } from "@/modules/tools/components/related-tools";
 import { getToolById } from "@/modules/tools/domain/tool-catalog";
 
 const TOOL_PATH = "/tools/ai-image-detector";
@@ -113,6 +114,8 @@ export default async function AiImageDetectorToolPage() {
                 <Reveal>
                     <AiImageDetectorArticle />
                 </Reveal>
+
+                <RelatedTools toolId="ai-image-detector" />
             </div>
         </>
     );

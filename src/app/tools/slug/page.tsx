@@ -11,6 +11,7 @@ import { getSlugFaqEntries, SlugArticle } from "@/modules/slug/components/slug-a
 import { SlugWorkbench } from "@/modules/slug/components/slug-workbench";
 import { DEFAULT_SLUG_OPTIONS } from "@/modules/slug/domain/constants";
 import { slugSearchParamsSchema } from "@/modules/slug/validation/slug-options";
+import { RelatedTools } from "@/modules/tools/components/related-tools";
 import { getToolById } from "@/modules/tools/domain/tool-catalog";
 
 const TOOL_PATH = "/tools/slug";
@@ -123,6 +124,8 @@ export default async function SlugToolPage({ searchParams }: SlugPageProps) {
                 <Reveal>
                     <SlugArticle />
                 </Reveal>
+
+                <RelatedTools toolId="slug" />
             </div>
         </>
     );

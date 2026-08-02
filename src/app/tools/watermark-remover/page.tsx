@@ -7,6 +7,7 @@ import { FadeIn, Reveal } from "@/components/motion/reveal";
 import { JsonLd } from "@/modules/seo/components/json-ld";
 import { buildPageMetadata } from "@/modules/seo/domain/metadata";
 import { buildToolJsonLd } from "@/modules/seo/domain/structured-data";
+import { RelatedTools } from "@/modules/tools/components/related-tools";
 import { getToolById } from "@/modules/tools/domain/tool-catalog";
 import {
     getWatermarkRemoverFaqEntries,
@@ -113,6 +114,8 @@ export default async function WatermarkRemoverToolPage() {
                 <Reveal>
                     <WatermarkRemoverArticle />
                 </Reveal>
+
+                <RelatedTools toolId="watermark-remover" />
             </div>
         </>
     );

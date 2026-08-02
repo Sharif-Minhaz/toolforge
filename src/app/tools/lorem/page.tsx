@@ -13,6 +13,7 @@ import { loremSearchParamsSchema } from "@/modules/lorem/validation/generation-o
 import { JsonLd } from "@/modules/seo/components/json-ld";
 import { buildPageMetadata } from "@/modules/seo/domain/metadata";
 import { buildToolJsonLd } from "@/modules/seo/domain/structured-data";
+import { RelatedTools } from "@/modules/tools/components/related-tools";
 import { getToolById } from "@/modules/tools/domain/tool-catalog";
 
 const TOOL_PATH = "/tools/lorem";
@@ -141,6 +142,8 @@ export default async function LoremToolPage({ searchParams }: LoremPageProps) {
                 <Reveal>
                     <LoremArticle />
                 </Reveal>
+
+                <RelatedTools toolId="lorem" />
             </div>
         </>
     );

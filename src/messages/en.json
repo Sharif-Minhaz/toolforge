@@ -184,6 +184,11 @@
         "watermark-remover": {
             "name": "Watermark Remover",
             "description": "Brush over a watermark, logo or unwanted object and have that area repainted — on images you own or have the right to edit."
+        },
+        "related": {
+            "title": "Popular tools",
+            "description": "Other utilities from the toolbox, ready when you need them.",
+            "all": "Browse all tools"
         }
     },
     "overview": {

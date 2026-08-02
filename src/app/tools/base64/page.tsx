@@ -11,6 +11,7 @@ import Link from "next/link";
 import { FadeIn, Reveal } from "@/components/motion/reveal";
 import { Base64Article, getBase64FaqEntries } from "@/modules/base64/components/base64-article";
 import { Base64Workbench } from "@/modules/base64/components/base64-workbench";
+import { RelatedTools } from "@/modules/tools/components/related-tools";
 import { isEncodable } from "@/modules/tools/domain/charsets";
 import {
     DEFAULT_BASE64_MODE,
@@ -138,6 +139,8 @@ export default async function Base64ToolPage({ searchParams }: Base64PageProps) 
                 <Reveal>
                     <Base64Article />
                 </Reveal>
+
+                <RelatedTools toolId="base64" />
             </div>
         </>
     );

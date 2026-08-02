@@ -567,6 +567,27 @@ export function getPopularTools(limit = 4): readonly Tool[] {
     return TOOLS.toSorted((a, b) => b.popularity - a.popularity).slice(0, limit);
 }
 
+/**
+ * Suggestions for the foot of a tool page.
+ *
+ * Shipped tools only — a "planned" card at the end of a page is a dead end, not
+ * a next step. Neighbours from the same category lead, because someone who just
+ * decoded a JWT is likelier to want a hash than a lorem generator; the rest of
+ * the toolbox follows by popularity.
+ */
+export function getRelatedTools(id: ToolId, limit = 3): readonly Tool[] {
+    const category = getToolById(id)?.category;
+
+    return getAvailableTools()
+        .filter((tool) => tool.id !== id)
+        .toSorted((a, b) => {
+            const byCategory = Number(b.category === category) - Number(a.category === category);
+
+            return byCategory !== 0 ? byCategory : b.popularity - a.popularity;
+        })
+        .slice(0, limit);
+}
+
 /** Newest first, so the overview can surface what just landed. */
 export function getRecentTools(limit = 4): readonly Tool[] {
     return TOOLS.toSorted((a, b) => b.addedOn.localeCompare(a.addedOn)).slice(0, limit);

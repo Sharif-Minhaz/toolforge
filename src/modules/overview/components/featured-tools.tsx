@@ -2,10 +2,10 @@ import { getTranslations } from "next-intl/server";
 
 import { staggerDelay } from "@/components/motion/motion-tokens";
 import { Reveal } from "@/components/motion/reveal";
+import { ToolCard } from "@/modules/tools/components/tool-card";
 import { getFeaturedTools } from "@/modules/tools/domain/tool-catalog";
 import { localizeTools } from "@/modules/tools/presenters/localize-tools";
 import { SectionHeading } from "./section-heading";
-import { ToolCard } from "./tool-card";
 
 export async function FeaturedTools() {
     const [t, tools] = await Promise.all([

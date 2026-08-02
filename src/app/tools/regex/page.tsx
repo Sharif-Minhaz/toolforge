@@ -19,6 +19,7 @@ import { regexSearchParamsSchema } from "@/modules/regex/validation/regex-option
 import { JsonLd } from "@/modules/seo/components/json-ld";
 import { buildPageMetadata } from "@/modules/seo/domain/metadata";
 import { buildToolJsonLd } from "@/modules/seo/domain/structured-data";
+import { RelatedTools } from "@/modules/tools/components/related-tools";
 import { getToolById } from "@/modules/tools/domain/tool-catalog";
 
 const TOOL_PATH = "/tools/regex";
@@ -145,6 +146,8 @@ export default async function RegexToolPage({ searchParams }: RegexPageProps) {
                 <Reveal>
                     <RegexArticle />
                 </Reveal>
+
+                <RelatedTools toolId="regex" />
             </div>
         </>
     );

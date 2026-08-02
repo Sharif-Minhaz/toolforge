@@ -17,6 +17,7 @@ import {
 } from "@/modules/shortener/components/shortener-article";
 import { ShortenerWorkbench } from "@/modules/shortener/components/shortener-workbench";
 import { shortenerSearchParamsSchema } from "@/modules/shortener/validation";
+import { RelatedTools } from "@/modules/tools/components/related-tools";
 import { getToolById } from "@/modules/tools/domain/tool-catalog";
 
 const TOOL_PATH = "/tools/shortener";
@@ -144,6 +145,8 @@ export default async function ShortenerToolPage({ searchParams }: ShortenerPageP
                 <Reveal>
                     <ShortenerArticle />
                 </Reveal>
+
+                <RelatedTools toolId="shortener" />
             </div>
         </>
     );

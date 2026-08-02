@@ -374,6 +374,8 @@ Work in this order. Each step has a rule that is easy to skip.
    ignoring it.
 7. **Write the article after the tool.** Semantic sections with stable `id`s and a TOC entry, prose
    capped at `max-w-[68ch]`, tables breaking out inside `overflow-x-auto`. Document every control.
+   Close the page with `<RelatedTools toolId="<id>" />` after the article, and give `loading.tsx` a
+   matching three-card block — every tool page ends the same way.
 8. **Wire the overview.** Flip the catalog entry to `status: "available"`, extend the client message
    slice in `src/app/layout.tsx`, and add a Quick Action in
    `src/modules/overview/components/quick-actions.tsx` with copy in both locales.
@@ -387,6 +389,8 @@ Reuse what exists rather than rebuilding it:
 
 | Need                          | Import                                       |
 | ----------------------------- | -------------------------------------------- |
+| Foot-of-page tool suggestions | `@/modules/tools/components/related-tools`   |
+| Tool card, accent and status  | `@/modules/tools/components/tool-card`      |
 | Article section, prose widths | `@/modules/tools/components/article-section` |
 | Sticky table of contents      | `@/modules/tools/components/article-toc`     |
 | FAQ                           | `@/modules/tools/components/faq-accordion`   |

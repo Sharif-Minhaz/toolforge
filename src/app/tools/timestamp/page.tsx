@@ -14,6 +14,7 @@ import {
 } from "@/modules/timestamp/components/timestamp-article";
 import { TimestampWorkbench } from "@/modules/timestamp/components/timestamp-workbench";
 import { timestampSearchParamsSchema } from "@/modules/timestamp/validation/timestamp-options";
+import { RelatedTools } from "@/modules/tools/components/related-tools";
 import { getToolById } from "@/modules/tools/domain/tool-catalog";
 
 const TOOL_PATH = "/tools/timestamp";
@@ -128,6 +129,8 @@ export default async function TimestampToolPage({ searchParams }: TimestampPageP
                 <Reveal>
                     <TimestampArticle />
                 </Reveal>
+
+                <RelatedTools toolId="timestamp" />
             </div>
         </>
     );
