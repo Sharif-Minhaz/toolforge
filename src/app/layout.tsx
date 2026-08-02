@@ -238,6 +238,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             edit: messages.shortener.edit,
             toast: messages.shortener.toast,
         },
+        slug: {
+            workbench: messages.slug.workbench,
+            separators: messages.slug.separators,
+            errors: messages.slug.errors,
+            toast: messages.slug.toast,
+        },
         aiTextDetector: {
             workbench: messages.aiTextDetector.workbench,
             labels: messages.aiTextDetector.labels,

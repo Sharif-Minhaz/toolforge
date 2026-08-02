@@ -4642,6 +4642,163 @@
             }
         }
     },
+    "slug": {
+        "meta": {
+            "title": "Slug Generator — Clean, URL-Safe Slugs from Any Heading",
+            "description": "Turn a headline into a clean, URL-safe slug. Choose a dash, underscore, dot or tilde separator — or type your own — fold accents to plain letters, drop stop words and numbers, cap the length, and slugify a whole list in one pass. Runs entirely in your browser."
+        },
+        "hero": {
+            "eyebrow": "Text",
+            "title": "Slug Generator",
+            "subtitle": "Turn a heading into a slug a URL can carry. Pick a separator or type your own, fold accents to plain letters, drop stop words, cap the length, and convert a whole list at once.",
+            "badgeStandard": "RFC 3986 safe",
+            "badgeOffline": "Works offline",
+            "badgeBulk": "Bulk mode"
+        },
+        "workbench": {
+            "title": "Build a slug",
+            "description": "Type or paste a heading. The slug updates as you go, and never leaves this tab.",
+            "inputLabel": "Heading",
+            "placeholderSingle": "How to Build a Modern Website with Next.js",
+            "placeholderPerLine": "One heading per line",
+            "clear": "Clear the heading",
+            "separatorLabel": "Separator",
+            "customSeparatorLabel": "Type a separator",
+            "customSeparatorHint": "Up to three characters, drawn from {characters}. Leave it empty to run the words together.",
+            "lowercaseLabel": "Lowercase",
+            "lowercaseHint": "Sends the whole slug to lower case.",
+            "asciiLabel": "ASCII only",
+            "asciiHint": "Folds é to e and ß to ss, then drops what has no ASCII form.",
+            "stopWordsLabel": "Drop English stop words",
+            "stopWordsHint": "Removes a, the, of, with and their neighbours.",
+            "numbersLabel": "Drop numbers",
+            "numbersHint": "Strips every digit, and any word that was only digits.",
+            "perLineLabel": "One slug per line",
+            "perLineHint": "Treats each line as its own heading, keeping blanks in place.",
+            "maxLengthLabel": "Maximum length",
+            "maxLengthHint": "0 leaves the slug uncapped; up to {max} characters.",
+            "maxLengthHintPerLine": "0 leaves each line uncapped; up to {max} characters per line.",
+            "maxLengthPresets": "Length presets",
+            "maxLengthDecrease": "Shorten by one character",
+            "maxLengthIncrease": "Lengthen by one character",
+            "outputLabel": "Slug",
+            "outputPlaceholder": "The slug appears here",
+            "copy": "Copy",
+            "download": "Download",
+            "statusEmpty": "Type a heading to see its slug.",
+            "statusReady": "{characters} characters, {words} words.",
+            "statusTruncated": "Cut to {characters} characters by the {max}-character ceiling."
+        },
+        "separators": {
+            "dash": "Dash",
+            "underscore": "Underscore",
+            "dot": "Dot",
+            "tilde": "Tilde",
+            "custom": "Custom"
+        },
+        "errors": {
+            "unsafeSeparator": "“{character}” would have to be escaped in a URL. A separator can only use {characters}.",
+            "separatorTooLong": "A separator can be at most {max} characters.",
+            "emptyResult": "Nothing is left to build a slug from. Loosen the options, or try a longer heading.",
+            "tooLong": "That is longer than {max} characters. Shorten it, or paste it in batches."
+        },
+        "toast": {
+            "copied": "Slug copied",
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The download could not start.",
+            "copyFailedEmpty": "There is nothing to copy yet.",
+            "copyFailedUnsupported": "This browser will not let the page reach the clipboard.",
+            "copyFailedDenied": "Clipboard access was refused. Copy from the box instead."
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "What a slug actually is",
+                "p1": "A slug is the human-readable part of a URL that names one page: the how-to-build-a-website in example.com/blog/how-to-build-a-website. It is not the title and it is not an id. It is a short, stable label that a reader and a crawler can both make sense of at a glance.",
+                "p2": "RFC 3986 sorts URL characters into groups. Letters, digits and four marks — hyphen, full stop, underscore and tilde — are unreserved: they travel through a URL untouched. Everything else either means something to the parser or has to be percent-encoded, which is how a space becomes %20 and a readable address turns into a wall of digits. A slug is what is left once you keep only the safe part.",
+                "p3": "Which makes a slug generator mostly a set of decisions rather than an algorithm: what separates the words, whether the accents survive, how long is too long. Each of those is a control on this page, and the sections below say what each one costs."
+            },
+            "separators": {
+                "title": "Choosing a separator",
+                "intro": "The separator is the only character that appears between words, so it is the one choice that shows up in every slug you make. All four below are unreserved, so none of them is ever escaped and none of them can break a link.",
+                "tableCaption": "The four separator characters a URL leaves untouched",
+                "colCharacter": "Character",
+                "colDoes": "What it signals",
+                "colWhen": "Reach for it when",
+                "dashDoes": "The web's default. Search engines have read it as a word boundary for as long as they have parsed URLs.",
+                "dashWhen": "Almost always — articles, docs, product pages, anything someone might read aloud.",
+                "underscoreDoes": "Just as safe, but historically read as part of a word rather than a break between two.",
+                "underscoreWhen": "File names, database identifiers, and anywhere the slug has to match a symbol in code.",
+                "dotDoes": "Legal in a path segment, and also how file extensions are written.",
+                "dotWhen": "Rarely — it can make the last word look like a file type.",
+                "tildeDoes": "Unreserved and uncommon, which is exactly what makes it unambiguous.",
+                "tildeWhen": "Internal or generated links, where you want the shape to stand out from editorial ones.",
+                "custom": "Choosing Custom hands the field over: type up to three characters and the words are joined with exactly what you typed, so a double dash or an underscore between dashes is yours to make. An empty field is a real answer too — it runs the words together, which is what onelongword needs.",
+                "refused": "The field accepts only those four marks. Type a space, an ampersand or a slash and the tool names the character and stops, rather than handing back a slug that a URL would immediately percent-encode into something nobody can read."
+            },
+            "options": {
+                "title": "Every option, and what it costs",
+                "intro": "Seven controls, and no hidden behaviour behind any of them. The defaults produce the shape most publishing tools expect, so the fastest way to use this page is to type a heading and copy the result.",
+                "tableCaption": "Every option the slug generator exposes",
+                "colOption": "Option",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "separatorName": "Separator",
+                "separatorDoes": "The character placed between words, chosen from four presets or typed by hand.",
+                "separatorWhen": "Set it once and forget it. The dash suits nearly every public page.",
+                "lowercaseName": "Lowercase",
+                "lowercaseDoes": "Sends the whole slug to lower case, using the invariant rules rather than your device's locale.",
+                "lowercaseWhen": "Leave it on. A URL path is case-sensitive, so /About and /about are two pages to a crawler.",
+                "asciiName": "ASCII only",
+                "asciiDoes": "Folds accents to plain letters, spells out letters such as ß and æ, then drops whatever has no ASCII form.",
+                "asciiWhen": "On, unless the slug has to keep letters from a script that ASCII cannot represent.",
+                "stopWordsName": "Drop English stop words",
+                "stopWordsDoes": "Removes about thirty function words — a, the, of, with — once the heading has been split.",
+                "stopWordsWhen": "Long headings that would otherwise make a slug nobody reads to the end.",
+                "numbersName": "Drop numbers",
+                "numbersDoes": "Strips every digit, and with it any word that was only digits.",
+                "numbersWhen": "Titles carrying a year or a count you would rather not freeze into the URL.",
+                "maxLengthName": "Maximum length",
+                "maxLengthDoes": "Caps the slug, cutting on a word boundary instead of mid-word. Zero removes the cap.",
+                "maxLengthWhen": "A house style fixes a limit; 60 to 80 characters is a common one.",
+                "perLineName": "One slug per line",
+                "perLineDoes": "Treats each input line as its own heading and answers with one slug per line, blanks included.",
+                "perLineWhen": "Converting a list of titles, a sitemap or a spreadsheet column in one pass.",
+                "orderNote": "The order the steps run in is fixed, and it shows up in the output. The text is normalised and folded first, then split into words, then digits go, then the case changes, then stop words are dropped, and only then are the words joined and cut to length. That is why dropping numbers can remove a whole word — 2026 has nothing left once its digits go — while html5 simply becomes html.",
+                "lengthNote": "The ceiling counts the separators it emits, not only the letters, and in bulk mode it is spent per line rather than across the batch. A single word longer than the whole budget is cut rather than dropped: half a word still points at the right page, and nothing at all does not.",
+                "defaultsNote": "The defaults are a dash, lowercase, ASCII only, no filters and no ceiling. If a combination leaves nothing behind, the tool says so instead of handing back an empty slug that looks like it worked."
+            },
+            "scripts": {
+                "title": "Accents, and everything ASCII cannot hold",
+                "p1": "ASCII only does two jobs. First it decomposes the text, so é becomes a plain e with a separate accent mark that is then discarded — the same trick handles ü, ñ, å and the rest of the accented Latin range. Then it spells out the letters that have no accent to remove, because they were never accented letters: ß is not an s with a mark, so it becomes ss, while æ becomes ae, ø becomes o and þ becomes th.",
+                "p2": "What it does not do is romanise. Bangla, Chinese, Cyrillic, Greek, Arabic and Hebrew have no single agreed spelling in Latin letters — the answer depends on the language, and often on the country. Rather than guess on your behalf, the tool drops what it cannot fold, and tells you plainly when nothing survived.",
+                "p3": "Switch ASCII only off and those letters stay. Every modern browser and host accepts them: the link is percent-encoded on the wire and shown as the original letters in the address bar. It is a real choice, not a fallback — a Bangla heading gets a Bangla slug, and combining vowel marks stay attached to their consonants instead of being treated as word breaks."
+            },
+            "useCases": {
+                "title": "Where slugs show up",
+                "p1": "Slugs turn up wherever a machine needs a name a person also has to read: article and documentation routes, product and category pages, anchor ids inside a long page, branch names, files in a repository, and the keys in a translation catalogue.",
+                "p2": "Two habits are worth more than any option here. Keep a slug stable once it is published — changing it breaks every link that pointed at the old one, so the fix is a redirect rather than an edit. And keep it short enough to survive being pasted into an email, a chat message or a printed page.",
+                "p3": "If what you actually need is a link whose destination can change later, that is a different job: the URL Shortener makes a short address you can re-point after it has been shared."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Should I use a dash or an underscore?",
+                "a1": "A dash, unless you have a specific reason not to. Search engines have long read a hyphen as a word boundary and an underscore as part of a word, so learn-css reads as two words where learn_css can read as one. The difference is smaller than it once was, but the safer choice costs nothing.",
+                "q2": "Why does Next.js become next-js rather than nextjs?",
+                "a2": "Because the tool follows one rule: anything that is not a letter or a digit ends a word. The full stop in Next.js is a boundary like any other, so the two halves are joined by your separator. If you want nextjs, take the dot out of the heading first, or edit the result — this is a deliberate call rather than a guess about which dots are meaningful.",
+                "q3": "Can I use any character I like as a separator?",
+                "a3": "Only the four that RFC 3986 leaves unreserved: hyphen, underscore, full stop and tilde. Anything else — a space, a slash, an ampersand, a percent sign — either means something to a URL parser or is percent-encoded on the way out, which turns a readable slug into an unreadable one. Type one of those and the tool names the character and refuses, rather than quietly rewriting your choice.",
+                "q4": "What happens to a Bangla or Chinese heading?",
+                "a4": "With ASCII only switched on those letters have no ASCII form to fold to, so they are dropped — and if that leaves nothing at all, the tool says so instead of handing back an empty slug. Switch ASCII only off and the letters are kept exactly as typed, which every modern browser and host will accept.",
+                "q5": "How long should a slug be?",
+                "a5": "Short enough to read at a glance, long enough to say what the page is. Three to six words, or roughly 40 to 70 characters, covers most pages. The ceiling here cuts on a word boundary, so a capped slug still ends on a whole word.",
+                "q6": "Does any of this leave my browser?",
+                "a6": "No. Every character is transformed by JavaScript running in this tab. Nothing is uploaded, the page keeps no record of what you typed, and the tool works with the network disconnected."
+            }
+        }
+    },
     "notFound": {
         "title": "This page has not been forged yet",
         "description": "The tool you are looking for either moved or has not shipped. Everything that is live is one click away.",

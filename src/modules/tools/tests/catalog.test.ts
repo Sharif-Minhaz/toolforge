@@ -78,6 +78,13 @@ describe("tool catalog", () => {
         expect(color?.href).toBe("/tools/color");
     });
 
+    test("ships the slug generator", () => {
+        const slug = getToolById("slug");
+
+        expect(slug?.status).toBe("available");
+        expect(slug?.href).toBe("/tools/slug");
+    });
+
     test("counts available and planned tools consistently", () => {
         const stats = getToolCatalogStats();
 
