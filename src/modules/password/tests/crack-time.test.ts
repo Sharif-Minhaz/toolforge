@@ -74,7 +74,7 @@ describe("estimateCrackTime", () => {
             kind: "duration",
             unit: "seconds",
             value: 5.5,
-            beyondUniverse: false,
+            universeMultiple: null,
         });
     });
 
@@ -82,7 +82,37 @@ describe("estimateCrackTime", () => {
         expect(estimateCrackTime(60, "sha256")).toMatchObject({ unit: "months", value: 2.2 });
     });
 
-    test("flags a figure that has outrun the age of the universe", () => {
+    test("promotes a figure that rounding carried into the next unit", () => {
+        const rate = ATTACK_GUESSES_PER_SECOND.throttled;
+        const seconds = (value: number) => Math.log2(2 * value * rate);
+
+        // 59.8 seconds rounds to "60 seconds", which is a minute.
+        expect(estimateCrackTime(seconds(59.8), "throttled")).toMatchObject({
+            unit: "minutes",
+            value: 1,
+        });
+        // 23.9 hours rounds to "24 hours", which is a day.
+        expect(estimateCrackTime(seconds(23.9 * 3600), "throttled")).toMatchObject({
+            unit: "days",
+            value: 1,
+        });
+        // 11.99 months rounds to "12 months", which is a year.
+        expect(
+            estimateCrackTime(seconds(11.99 * ((365.25 * 86400) / 12)), "throttled"),
+        ).toMatchObject({ unit: "years", value: 1 });
+    });
+
+    test("leaves a figure that only rounds within its own unit alone", () => {
+        const rate = ATTACK_GUESSES_PER_SECOND.throttled;
+
+        // A month is 30.44 days, so 29.8 days is genuinely still days.
+        expect(estimateCrackTime(Math.log2(2 * 29.8 * 86400 * rate), "throttled")).toMatchObject({
+            unit: "days",
+            value: 30,
+        });
+    });
+
+    test("says how many times the age of the universe a figure comes to", () => {
         const result = estimateCrackTime(128, "sha256");
 
         expect(result.kind).toBe("duration");
@@ -93,19 +123,26 @@ describe("estimateCrackTime", () => {
 
         expect(result.unit).toBe("years");
         expect(result.value).toBeGreaterThan(AGE_OF_UNIVERSE_YEARS);
-        expect(result.beyondUniverse).toBe(true);
+        expect(result.universeMultiple).toBe(
+            roundToTwoSignificantDigits(result.value / AGE_OF_UNIVERSE_YEARS),
+        );
     });
 
-    test("does not flag the universe for a figure that fits inside it", () => {
+    test("leaves the multiple off a figure that fits inside the universe", () => {
         // ~187 years at 10¹¹ guesses a second.
         expect(estimateCrackTime(70, "sha256")).toMatchObject({
             unit: "years",
-            beyondUniverse: false,
+            universeMultiple: null,
         });
     });
 
-    test("gives up on a number rather than print twenty digits of it", () => {
-        expect(estimateCrackTime(838, "md5")).toEqual({ kind: "beyond" });
+    test("reports a magnitude the names have run out for rather than giving up", () => {
+        // A 128-character random password: no name reaches 10²³³, but the
+        // figure is still exact enough to print as a power of ten.
+        expect(estimateCrackTime(838, "md5")).toMatchObject({ unit: "years" });
+    });
+
+    test("gives up only when the keyspace has outrun a double", () => {
         expect(estimateCrackTime(100_000, "md5")).toEqual({ kind: "beyond" });
     });
 

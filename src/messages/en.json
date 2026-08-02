@@ -24,6 +24,19 @@
             "placeholder": "Pick a date",
             "time": "Time",
             "clear": "Clear"
+        },
+        "magnitude": {
+            "million": "{value} million",
+            "billion": "{value} billion",
+            "trillion": "{value} trillion",
+            "quadrillion": "{value} quadrillion",
+            "quintillion": "{value} quintillion",
+            "sextillion": "{value} sextillion",
+            "septillion": "{value} septillion",
+            "octillion": "{value} octillion",
+            "nonillion": "{value} nonillion",
+            "decillion": "{value} decillion",
+            "power": "{value} × 10{exponent}"
         }
     },
     "nav": {
@@ -3953,7 +3966,7 @@
         "crackTime": {
             "instant": "instantly",
             "beyond": "longer than any number worth writing down",
-            "beyondUniverse": "That is longer than the universe has existed.",
+            "beyondUniverse": "That is about {multiple} times as long as the universe has existed.",
             "seconds": "{count, plural, one {{value} second} other {{value} seconds}}",
             "minutes": "{count, plural, one {{value} minute} other {{value} minutes}}",
             "hours": "{count, plural, one {{value} hour} other {{value} hours}}",
@@ -4059,6 +4072,7 @@
                     "md5": "A breach using MD5 or NTLM — still depressingly common. The worst case worth planning for."
                 },
                 "roundingNote": "The rates are rounded to a power of ten on purpose. They are the order of magnitude of published hashcat-class benchmarks for a multi-GPU rig, not measurements taken here, and each GPU generation moves them. A figure like 164,100,000,000 would imply a precision this estimate does not have. If you need current numbers, run hashcat -b on the hardware you are actually worried about.",
+                "magnitudeNote": "The result is written out rather than abbreviated: 410 quintillion years, not 4.1E20 and not 410,000,000T. Both of those are the same figure, and neither is a quantity anyone can picture. Past a decillion — 10³³ — the names stop helping too, so the estimate switches to 10ⁿ notation, and once it has outrun the age of the universe it says by how many times rather than leaving you to divide.",
                 "averageNote": "The time shown is the average, not the worst case. A search through a uniformly random secret finds it after half the candidates, so the figure is half the keyspace divided by the rate. Exhausting the whole space takes twice as long — reporting that instead would be the more flattering error.",
                 "knowledgeNote": "The estimate assumes the attacker knows exactly which settings produced the password and searches only that keyspace. That is deliberately pessimistic: not knowing makes their job harder, never easier, so the figure stays a lower bound on the work. It is also why guessing a human-chosen password is so much faster than these numbers suggest — the set a person really draws from is far smaller than they think."
             },

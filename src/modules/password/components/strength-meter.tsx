@@ -7,12 +7,12 @@ import {
     type IconProps,
 } from "@tabler/icons-react";
 import { motion, useReducedMotion } from "motion/react";
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import type { ComponentType } from "react";
 
 import { MOTION_EASE } from "@/components/motion/motion-tokens";
+import { useReadableNumber } from "@/modules/tools/components/use-readable-number";
 import { cn } from "@/lib/utils";
-import { COMPACT_NOTATION_CEILING } from "../domain/crack-time";
 import {
     PASSWORD_STRENGTHS,
     type AttackModel,
@@ -43,12 +43,13 @@ const TONE_ICON: Record<PasswordStrength, ComponentType<IconProps>> = {
 
 /**
  * The figure alone, formatted for the reader's locale. The universe note is not
- * part of it: the sentence reads "… 2.4T years assuming leaked SHA-256 hashes",
- * and dropping an aside into the middle of that breaks it in both languages.
+ * part of it: the sentence reads "… 410 quintillion years assuming leaked
+ * SHA-256 hashes", and dropping an aside into the middle of that breaks it in
+ * both languages.
  */
 function CrackTimeText({ crackTime }: { crackTime: CrackTime }) {
     const t = useTranslations("password.crackTime");
-    const formatter = useFormatter();
+    const readable = useReadableNumber();
 
     if (crackTime.kind === "instant") {
         return <span className="font-medium">{t("instant")}</span>;
@@ -62,14 +63,9 @@ function CrackTimeText({ crackTime }: { crackTime: CrackTime }) {
         <span className="font-medium">
             {t(crackTime.unit, {
                 // `count` picks the plural category; `value` carries the
-                // already-formatted figure, so the notation survives.
+                // already-formatted figure, so the magnitude name survives.
                 count: crackTime.value,
-                value: formatter.number(crackTime.value, {
-                    // Past the ceiling, compact notation runs out of names and
-                    // reads as "410,000,000T". Scientific stays legible.
-                    notation: crackTime.value < COMPACT_NOTATION_CEILING ? "compact" : "scientific",
-                    maximumFractionDigits: 1,
-                }),
+                value: readable(crackTime.value),
             })}
         </span>
     );
@@ -88,6 +84,7 @@ export function StrengthMeter({ strength, crackTime, attack, stale }: StrengthMe
     const tCrack = useTranslations("password.crackTime");
     const tStrengths = useTranslations("password.strengths");
     const tAttacks = useTranslations("password.attacks");
+    const readable = useReadableNumber();
     const reduceMotion = useReducedMotion();
 
     const filled = PASSWORD_STRENGTHS.indexOf(strength) + 1;
@@ -141,8 +138,13 @@ export function StrengthMeter({ strength, crackTime, attack, stale }: StrengthMe
                 <span className="opacity-80">
                     {t("crackAssumption", { attacker: tAttacks(`${attack}.assumption`) })}
                 </span>
-                {crackTime.kind === "duration" && crackTime.beyondUniverse ? (
-                    <> {tCrack("beyondUniverse")}</>
+                {crackTime.kind === "duration" && crackTime.universeMultiple !== null ? (
+                    <>
+                        {" "}
+                        {tCrack("beyondUniverse", {
+                            multiple: readable(crackTime.universeMultiple),
+                        })}
+                    </>
                 ) : null}
             </p>
         </div>

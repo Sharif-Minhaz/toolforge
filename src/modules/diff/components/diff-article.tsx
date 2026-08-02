@@ -51,7 +51,7 @@ export async function DiffArticle() {
 
     return (
         <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_14rem] xl:gap-12">
-            <aside className="min-w-0 xl:order-2">
+            <aside className="hidden min-w-0 xl:order-2 xl:block">
                 <ArticleToc title={tToc("title")} items={tocItems} />
             </aside>
 

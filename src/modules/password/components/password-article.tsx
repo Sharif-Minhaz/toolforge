@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
+import { superscript } from "@/modules/tools/domain/magnitude";
 import { AMBIGUOUS_CHARACTERS, SIMILAR_CHARACTERS } from "../domain/alphabets";
 import {
     ATTACK_GUESSES_PER_SECOND,
@@ -55,12 +56,6 @@ function formatRate(guessesPerSecond: number): string {
     return `10${superscript(Math.round(Math.log10(guessesPerSecond)))}`;
 }
 
-const SUPERSCRIPTS = "⁰¹²³⁴⁵⁶⁷⁸⁹";
-
-function superscript(value: number): string {
-    return [...String(value)].map((digit) => SUPERSCRIPTS[Number(digit)]).join("");
-}
-
 export async function PasswordArticle() {
     const [t, tModes, tAttacks, tStrengths, tToc, faqs] = await Promise.all([
         getTranslations("password.article"),
@@ -78,7 +73,7 @@ export async function PasswordArticle() {
 
     return (
         <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_14rem] xl:gap-12">
-            <aside className="min-w-0 xl:order-2">
+            <aside className="hidden min-w-0 xl:order-2 xl:block">
                 <ArticleToc title={tToc("title")} items={tocItems} />
             </aside>
 
@@ -184,6 +179,7 @@ export async function PasswordArticle() {
 
                     <div className={`mt-5 ${PROSE}`}>
                         <p>{t("attackers.roundingNote")}</p>
+                        <p>{t("attackers.magnitudeNote")}</p>
                         <p>{t("attackers.averageNote")}</p>
                         <p>{t("attackers.knowledgeNote")}</p>
                     </div>

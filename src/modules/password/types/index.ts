@@ -60,8 +60,9 @@ export const CRACK_TIME_UNITS = ["seconds", "minutes", "hours", "days", "months"
 export type CrackTimeUnit = (typeof CRACK_TIME_UNITS)[number];
 
 /**
- * Locale-free crack-time estimate. The UI formats `value` through
- * `Intl.NumberFormat`, so Bangla gets Bengali digits and Bengali magnitudes.
+ * Locale-free crack-time estimate. The UI names `value`'s magnitude through
+ * `tools/domain/magnitude.ts` and formats the digits through `Intl`, so Bangla
+ * gets Bengali digits and both locales get "410 quintillion" over "4.1E20".
  */
 export type CrackTime =
     /** Under a second: no useful number to show. */
@@ -70,10 +71,13 @@ export type CrackTime =
           readonly kind: "duration";
           readonly unit: CrackTimeUnit;
           readonly value: number;
-          /** Past 1.38 × 10¹⁰ years, where the figure stops meaning anything. */
-          readonly beyondUniverse: boolean;
+          /**
+           * How many times the age of the universe the figure comes to, or
+           * `null` while it still fits inside one.
+           */
+          readonly universeMultiple: number | null;
       }
-    /** So large that even a rounded year count is noise. */
+    /** Past what a double can hold, so there is no number left to report. */
     | { readonly kind: "beyond" };
 
 export type PasswordFailureReason =

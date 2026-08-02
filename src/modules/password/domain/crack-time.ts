@@ -36,12 +36,6 @@ const SECONDS_PER_MONTH = SECONDS_PER_YEAR / 12;
 /** 13.8 billion years. Past this the figure has left anything a reader can hold. */
 export const AGE_OF_UNIVERSE_YEARS = 1.38e10;
 
-/**
- * Where a year count stops being information. Beyond this the UI says so in
- * words instead of printing a number with twenty digits behind it.
- */
-const MAX_REPORTABLE_YEARS = 1e21;
-
 /** Ladder walked from the top down, so the largest fitting unit wins. */
 const LADDER: readonly { readonly unit: CrackTimeUnit; readonly seconds: number }[] = [
     { unit: "years", seconds: SECONDS_PER_YEAR },
@@ -51,15 +45,6 @@ const LADDER: readonly { readonly unit: CrackTimeUnit; readonly seconds: number 
     { unit: "minutes", seconds: SECONDS_PER_MINUTE },
     { unit: "seconds", seconds: 1 },
 ];
-
-/**
- * Above this many of a unit, compact notation stops being compact: English CLDR
- * runs out of names after "T", so 4.1 × 10²⁰ years renders as "410,000,000T" and
- * Bangla as an equally unreadable string of lakh-crores. The UI switches to
- * scientific notation from here up. Presentation reads it; the threshold lives
- * with the rest of the crack-time reasoning.
- */
-export const COMPACT_NOTATION_CEILING = 1e15;
 
 /**
  * Two significant figures, because the guess rates are rounded to a power of ten
@@ -83,29 +68,56 @@ export function averageGuessSeconds(entropyBits: number, model: AttackModel): nu
     return 2 ** (entropyBits - 1) / ATTACK_GUESSES_PER_SECOND[model];
 }
 
+/**
+ * How many times the age of the universe a year count comes to, or `null` while
+ * it still fits inside one. "Longer than the universe has existed" is true of
+ * almost every strong password and therefore says almost nothing; the multiple
+ * is the part that distinguishes them.
+ */
+function universeMultiple(unit: CrackTimeUnit, value: number): number | null {
+    if (unit !== "years" || value <= AGE_OF_UNIVERSE_YEARS) {
+        return null;
+    }
+
+    return roundToTwoSignificantDigits(value / AGE_OF_UNIVERSE_YEARS);
+}
+
 export function estimateCrackTime(entropyBits: number, model: AttackModel): CrackTime {
     const seconds = averageGuessSeconds(entropyBits, model);
+
+    // Past ~1024 bits the keyspace overflows a double. Nothing this generator
+    // can produce reaches it, but an estimate is not the place to print `NaN`.
+    if (!Number.isFinite(seconds)) {
+        return { kind: "beyond" };
+    }
 
     if (seconds < 1) {
         return { kind: "instant" };
     }
 
-    if (seconds / SECONDS_PER_YEAR > MAX_REPORTABLE_YEARS) {
-        return { kind: "beyond" };
-    }
-
-    for (const step of LADDER) {
+    for (const [index, step] of LADDER.entries()) {
         if (seconds < step.seconds) {
             continue;
         }
 
-        const value = roundToTwoSignificantDigits(seconds / step.seconds);
+        const rounded = roundToTwoSignificantDigits(seconds / step.seconds);
+
+        // Rounding can carry into the unit above: 59.8 seconds becomes "60
+        // seconds", which is a minute, and 11.99 months becomes "12 months",
+        // which is a year. Promote instead of printing the carried figure. One
+        // level is enough — a carry cannot cross two rungs.
+        const larger = LADDER[index - 1];
+        const promote = larger !== undefined && rounded * step.seconds >= larger.seconds;
+        const unit = promote ? larger.unit : step.unit;
+        const value = promote
+            ? roundToTwoSignificantDigits((rounded * step.seconds) / larger.seconds)
+            : rounded;
 
         return {
             kind: "duration",
-            unit: step.unit,
+            unit,
             value,
-            beyondUniverse: step.unit === "years" && value > AGE_OF_UNIVERSE_YEARS,
+            universeMultiple: universeMultiple(unit, value),
         };
     }
 

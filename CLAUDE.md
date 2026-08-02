@@ -221,6 +221,22 @@ Bengali numerals. Raw JSX numbers do not.
 Keep Western digits only where the number mirrors machine input: form field
 values, quantity presets, and result-list row indices.
 
+A number too big for a grouping separator needs a name, not a notation.
+`Intl`'s two options both fail past a point: compact runs out of CLDR names
+after "T", so 4.1 × 10²⁰ renders as `410,000,000T` in English and as a string of
+lakh-crores in Bangla, and scientific renders it as `4.1E20`, which is exact and
+tells a non-specialist nothing. `tools/domain/magnitude.ts` classifies the
+magnitude — plain under a million, a short-scale name up to a decillion, `10ⁿ`
+above that — and `tools/components/use-readable-number.ts` turns that into
+"410 quintillion" from the `common.magnitude` messages. The names are translated
+because CLDR's are not reachable this high; the digits still go through `Intl`.
+
+It returns a `string`, not a node, because the result is nearly always an ICU
+argument — `"{value} years"` is one message and a `ReactNode` cannot be passed
+into it. That is also why the exponent uses Unicode superscript glyphs: they
+survive inside a translated string, and Unicode has no Bengali superscripts, so
+they stay Latin in both locales exactly as the Bangla copy already writes 10¹¹.
+
 ### Bangla typography
 
 Inter carries no Bengali glyphs. `--font-sans` falls through to

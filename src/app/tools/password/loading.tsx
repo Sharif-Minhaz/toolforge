@@ -91,7 +91,7 @@ export default function PasswordLoading() {
             </div>
 
             <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_14rem] xl:gap-12">
-                <div className="xl:order-2">
+                <div className="hidden xl:order-2 xl:block">
                     <Skeleton className="h-64 w-full rounded-xl" />
                 </div>
                 <div className="flex flex-col gap-10 xl:order-1">
