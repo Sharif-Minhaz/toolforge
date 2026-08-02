@@ -20,6 +20,7 @@ export const TOOL_IDS = [
     "hash",
     "json",
     "url",
+    "url-parser",
     "markdown",
     "regex",
     "lorem",
@@ -54,6 +55,7 @@ export type ToolIconName =
     | "hash"
     | "braces"
     | "link"
+    | "world"
     | "markdown"
     | "regex"
     | "text"

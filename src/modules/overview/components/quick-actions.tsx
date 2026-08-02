@@ -3,9 +3,9 @@ import {
     IconBinary,
     IconBolt,
     IconBraces,
+    IconGitCompare,
     IconKey,
     IconQrcode,
-    IconScissors,
 } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
@@ -59,12 +59,12 @@ export async function QuickActions() {
             accent: "[--tool-accent:var(--brand-cyan)]",
         },
         {
-            key: "shortenerLink",
-            href: "/tools/shortener",
-            title: t("shortenerLink.title"),
-            description: t("shortenerLink.description"),
-            Icon: IconScissors,
-            accent: "[--tool-accent:var(--brand-emerald)]",
+            key: "diffCompare",
+            href: "/tools/diff",
+            title: t("diffCompare.title"),
+            description: t("diffCompare.description"),
+            Icon: IconGitCompare,
+            accent: "[--tool-accent:var(--brand-rose)]",
         },
     ];
 

@@ -138,6 +138,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.url.errors,
             toast: messages.url.toast,
         },
+        urlParser: {
+            workbench: messages.urlParser.workbench,
+            parts: messages.urlParser.parts,
+            params: messages.urlParser.params,
+            errors: messages.urlParser.errors,
+            toast: messages.urlParser.toast,
+        },
         markdown: {
             workbench: messages.markdown.workbench,
             actions: messages.markdown.actions,
@@ -243,6 +250,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             separators: messages.slug.separators,
             errors: messages.slug.errors,
             toast: messages.slug.toast,
+        },
+        diff: {
+            workbench: messages.diff.workbench,
+            errors: messages.diff.errors,
+            toast: messages.diff.toast,
         },
         aiTextDetector: {
             workbench: messages.aiTextDetector.workbench,

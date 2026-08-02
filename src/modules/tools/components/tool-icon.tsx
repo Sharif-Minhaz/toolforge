@@ -19,6 +19,7 @@ import {
     IconRegex,
     IconTextScan2,
     IconTextSize,
+    IconWorldWww,
     type IconProps,
 } from "@tabler/icons-react";
 import type { ComponentType } from "react";
@@ -32,6 +33,7 @@ const ICONS: Record<ToolIconName, ComponentType<IconProps>> = {
     hash: IconHash,
     braces: IconBraces,
     link: IconLink,
+    world: IconWorldWww,
     markdown: IconMarkdown,
     regex: IconRegex,
     text: IconTextSize,

@@ -560,6 +560,36 @@ true, and copy that overstates teaches readers to skip the copy that does not.
 
 ---
 
+# A Tool That Edits Its Own Input
+
+The URL Parser has two editors over one value: the URL box, and the query
+parameter table underneath it. `src/modules/url-parser/` is the shape to copy
+whenever a tool offers more than one way to change the same thing.
+
+- **One piece of state; everything else derived.** The URL string is the only
+  `useState`. The parts list and the parameter rows come from `parseUrl(url)`
+  during render, and a row edit writes back through `applyParams`. Two states
+  held in step by an effect is the version that drifts, and it drifts on the
+  input nobody tested.
+- **A two-way editor cannot sit behind a debounce.** `useDebouncedValue` is the
+  default for typed input and it is wrong here: the row inputs are controlled by
+  the settled parse, so a keystroke would be reverted for 300 ms and then
+  reappear. The rule it comes from is about expensive derivations, and this one
+  is a single bounded `new URL()`. Match the debounce to the cost, and say in a
+  comment why it is absent.
+- **The blank row is not state either.** The table renders `params.length + 1`
+  rows, `editParam` appends when the index lands past the end, and
+  `buildQueryString` drops a pair with neither half. "Add a parameter" then
+  needs no button and no draft object.
+
+`new URL()` is the rare platform API that is safe to call during render on both
+sides of hydration — it is specified rather than host-derived, unlike the
+enumerations and zone-less dates above. What it *is* is normalising: lowercased
+scheme and host, punycoded IDN, default port dropped, empty path written as `/`.
+Tell the reader when that changed their text instead of swapping it silently.
+
+---
+
 # One Short Link Layer, Two Tools
 
 `src/modules/short-links/` owns every re-pointable link on this site: slug and
@@ -612,6 +642,25 @@ Two things that made the failure legible once it appeared:
 Reach for the same shape whenever a tool emits a format somebody else has to
 read: encode, decode with a different implementation, assert you got back what
 you put in.
+
+The Diff Checker's unified patch is the second instance, and it sharpened the
+rule twice. The independent implementation does not have to be a library — it
+can be a **program already on the machine**. Piping every generated patch
+through `patch(1)` in a throwaway script found two shapes of input that
+`git apply` would have rejected outright, and a hand-written applier in the test
+file had passed both, because it had inherited the assumption it was supposed to
+be checking.
+
+That assumption is the second lesson, and it generalises past patches: **a
+format's idea of a line may differ from yours by exactly one.** The row model
+shows a text ending in a newline as having a final empty line, because a reader
+expects to see it. A unified diff counts one line fewer and marks any side whose
+last line lost its ending with `\ No newline at end of file`. Either model alone
+is coherent; a hunk header counted in one and applied in the other is a patch
+nothing can read. When you emit a format, write down which model each side of
+the boundary uses before writing the converter — and note that a *context* line
+means identical in both files, terminator included, so a final line the two
+sides end differently has to be printed as a removal and an addition instead.
 
 # Redirecting, and What a Route Handler Is For
 

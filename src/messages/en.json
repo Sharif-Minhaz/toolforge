@@ -129,6 +129,10 @@
             "name": "URL Encoder / Decoder",
             "description": "Percent-encode and decode URLs, query values, and form data, with repeated decoding for doubly-encoded links."
         },
+        "url-parser": {
+            "name": "URL Parser",
+            "description": "Break a link into its protocol, host, port, path, query and fragment, and edit its query parameters in place."
+        },
         "markdown": {
             "name": "Markdown Preview",
             "description": "Write markdown and watch it render — Mermaid diagrams, LaTeX maths, and export to HTML or PDF."
@@ -253,9 +257,9 @@
                 "title": "Wi-Fi QR code",
                 "description": "Turn your network name and password into a code guests can scan."
             },
-            "shortenerLink": {
-                "title": "Shorten a link",
-                "description": "Turn a long URL into a short one you can re-point later"
+            "diffCompare": {
+                "title": "Compare two versions",
+                "description": "Paste an original and a changed text and see every difference, down to the word."
             }
         },
         "featured": {
@@ -1627,6 +1631,152 @@
                 "a5": "No. Both directions run entirely in your browser, file conversions included. Nothing is uploaded, stored, or logged.",
                 "q6": "Why does decoding say the bytes are not valid text?",
                 "a6": "The destination character set does not match the one the data was encoded with. %C3%A9 is é in UTF-8 but two separate characters in ISO-8859-1, and some byte sequences are not valid text at all in a given set. Change the destination set and the same escapes read correctly."
+            }
+        }
+    },
+    "urlParser": {
+        "meta": {
+            "title": "URL Parser — Break Any Link Into Its Parts",
+            "description": "Paste a URL and read it part by part: protocol, credentials, host, port, path, query and fragment. Edit, add or remove query parameters and the link rebuilds itself. Uses your browser's own WHATWG parser, and nothing is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Encoding",
+            "title": "URL Parser",
+            "subtitle": "Paste a link and read it part by part — protocol, host, port, path, query and fragment — then edit its query parameters and copy the rebuilt URL.",
+            "badgeStandard": "WHATWG URL",
+            "badgeOffline": "Works offline",
+            "badgeEditable": "Editable query"
+        },
+        "workbench": {
+            "title": "Read a link, and edit its query",
+            "description": "Paste or type a URL. Everything below updates as you go, and editing a parameter rewrites the link above.",
+            "inputLabel": "URL",
+            "placeholder": "https://example.com/path?key=value#section",
+            "clear": "Clear URL",
+            "example": "Try an example",
+            "copyUrl": "Copy URL",
+            "copyJson": "Copy JSON",
+            "download": "Download JSON",
+            "useSuggestion": "Use {url}",
+            "tabs": {
+                "params": "Params",
+                "detail": "Detail"
+            },
+            "statusEmpty": "Paste a URL to see it broken down.",
+            "statusReady": "Parsed. {params, plural, =0 {No query parameters} one {# query parameter} other {# query parameters}}.",
+            "statusNormalized": "Normalised to {href}. {params, plural, =0 {No query parameters} one {# query parameter} other {# query parameters}}.",
+            "copyPart": "Copy {part}",
+            "empty": "None"
+        },
+        "parts": {
+            "protocol": "Protocol",
+            "username": "Username",
+            "password": "Password",
+            "hostname": "Host",
+            "port": "Port",
+            "path": "Path",
+            "query": "Query",
+            "fragment": "Fragment",
+            "origin": "Origin"
+        },
+        "params": {
+            "keyHeader": "Keys",
+            "valueHeader": "Values",
+            "keyLabel": "Key for parameter {index, number}",
+            "valueLabel": "Value for parameter {index, number}",
+            "keyPlaceholder": "key",
+            "valuePlaceholder": "value",
+            "remove": "Remove {key}",
+            "removeBlank": "Remove parameter",
+            "clearAll": "Clear all",
+            "empty": "No query parameters yet. Type in the row below to add one.",
+            "unavailable": "Parameters appear once the URL above can be read."
+        },
+        "errors": {
+            "tooLong": "That is longer than {max} characters — longer than any link meant to be read.",
+            "relativePath": "That is a path, not a whole URL. It needs a scheme and a host in front of it.",
+            "missingScheme": "That has no scheme. Did you mean {url}?",
+            "invalidUrl": "That cannot be read as a URL."
+        },
+        "toast": {
+            "copiedUrl": "URL copied",
+            "copiedJson": "JSON copied",
+            "copiedPart": "{part} copied",
+            "copyFailedEmpty": "There is nothing to copy yet",
+            "copyFailedUnsupported": "This browser will not let a page write to the clipboard",
+            "copyFailedDenied": "Clipboard permission was refused",
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The download could not be started"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "What a URL is actually made of",
+                "p1": "A URL looks like one string, but it is a small structured record: a scheme, optional credentials, a host, an optional port, a path, a query string, and a fragment. Each piece has its own rules about which characters it may hold and who is allowed to read it, and most URL bugs are one piece landing in the wrong slot.",
+                "p2": "This tool hands your text to the same WHATWG URL parser your browser already runs — the one behind new URL(), fetch(), and the address bar. What you see here is what a browser will do with the link, not what a regular expression guesses about it.",
+                "p3": "Nothing is uploaded. The parse, the query editing and the export all happen in this tab; close it and nothing is left behind."
+            },
+            "parts": {
+                "title": "Every part, one at a time",
+                "intro": "The Detail tab lists every part on its own line, empty ones included — a part with nothing in it is information too.",
+                "tableCaption": "The parts of a URL and what each one holds",
+                "colPart": "Part",
+                "colHolds": "What it holds",
+                "colWatch": "Watch for",
+                "protocolHolds": "The scheme and the colon after it — https:, mailto:, ftp:.",
+                "protocolWatch": "It is lowercased for you. Text with no scheme is not a URL at all, so the tool offers to add https:// rather than assuming it.",
+                "usernameHolds": "The user half of credentials written into the URL itself.",
+                "usernameWatch": "Proxies and server logs record these. Treat a link that carries one as a password you have just pasted somewhere.",
+                "passwordHolds": "The password half of the same credentials.",
+                "passwordWatch": "It travels in the clear inside the URL and lands in logs and browser history. If one appears here, rotate it.",
+                "hostnameHolds": "The domain or IP address, without the port.",
+                "hostnameWatch": "It is lowercased, and an international domain becomes its punycode form — münchen.de reads back as xn--mnchen-3ya.de. An IPv6 address keeps its square brackets.",
+                "portHolds": "The port number, when the URL names one.",
+                "portWatch": "Empty means the scheme's default: 443 for https, 80 for http. Writing the default out is allowed, but the parser drops it again.",
+                "pathHolds": "Everything from the first slash up to the query string.",
+                "pathWatch": "Unlike the host it is case-sensitive, and it stays percent-encoded here: /a%20b is one segment with a space in it.",
+                "queryHolds": "The raw query string, question mark included.",
+                "queryWatch": "This is the text exactly as written. The Params tab shows the same thing decoded and split into pairs.",
+                "fragmentHolds": "The #hash at the end.",
+                "fragmentWatch": "It never leaves the browser, so a server never sees it. Wrong place for anything the server must act on; right place for an anchor.",
+                "originHolds": "Scheme, host and port together.",
+                "originWatch": "This is the unit that same-origin policy, CORS and cookies reason about. A scheme with no origin — mailto:, urn: — shows nothing here."
+            },
+            "params": {
+                "title": "Editing the query string",
+                "p1": "The Params tab splits the query into pairs and decodes each one, so a value reads as café bar rather than caf%C3%A9%20bar. Edit a key or a value and the URL above rebuilds itself; the blank row at the bottom becomes a parameter as soon as you type in it, and the cross beside a row removes it.",
+                "p2": "Repeated keys are kept, in order. ?tag=a&tag=b is two parameters, not one that overwrote the other — which is how most servers read it — so the table shows two rows.",
+                "p3": "Rebuilding encodes the way an HTML form does: a space becomes +, and a literal plus becomes %2B. That round-trips cleanly and is what a query parser on the far end expects. A pair with a key but no value (k=) is kept, because an empty value and an absent parameter are different things.",
+                "p4": "Only the query is rewritten. Credentials, port, path and fragment come back exactly as they were."
+            },
+            "normalisation": {
+                "title": "What the parser changes without asking",
+                "p1": "The parser is not a passive reader; it canonicalises. The scheme and host are lowercased, an international domain is punycoded, a default port is dropped, and an empty path becomes /. Whenever that changes the text you pasted, the line under the box says so and shows the result.",
+                "p2": "It matters when URLs are compared as strings — a cache key, a signature, an allow-list. HTTPS://Example.com and https://example.com are one URL to a browser and two different strings to a naive comparison.",
+                "p3": "What it does not touch: the path's case, the path's percent-encoding, and the order of the query parameters. All three are significant, and a tool that tidied them would be changing what your link means."
+            },
+            "useCases": {
+                "title": "When you would reach for it",
+                "p1": "Reading a link somebody sent you before you click it: which host it really points at, whether it carries credentials, and what is sitting in the query.",
+                "p2": "Working on tracking parameters — drop the utm_ rows, rename a campaign, add one, and copy the rebuilt link straight out.",
+                "p3": "Debugging a redirect or an OAuth callback, where the interesting part is usually a whole URL percent-encoded inside another one's query. Copy the decoded value out of the Params tab and paste it back in the box to go one level deeper."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Does anything I paste get sent anywhere?",
+                "a1": "No. The parse, the query editing and the export all run in this tab. There is no request to make — the parser is already in your browser.",
+                "q2": "Why did my URL change when I pasted it?",
+                "a2": "The WHATWG parser canonicalises: lowercased scheme and host, punycode for international domains, default ports dropped, an empty path written as /. The status line names the result whenever it differs from what you typed.",
+                "q3": "Why is the path still percent-encoded when query values are decoded?",
+                "a3": "Because the path's encoding is part of its meaning: /a%2Fb is one segment containing a slash, and /a/b is two segments. Query values have somewhere safe to be shown decoded — the Params tab, one pair per row.",
+                "q4": "Where did my plus sign go?",
+                "a4": "A + in a query value means a space, per application/x-www-form-urlencoded, so the table shows a space. Rebuilding the URL turns it back into a +. A plus you meant literally is %2B, and that is what the tool writes.",
+                "q5": "My server never sees the fragment. Why?",
+                "a5": "It never leaves the browser. Everything after # is for the page itself — an anchor, a client-side route, a token some flows deliberately put there. If a server has to see it, it belongs in the query.",
+                "q6": "It says my URL is missing a scheme. What does it want?",
+                "a6": "The https:// (or mailto:, or ftp:) at the front. Without one, example.com/page is ambiguous — it could just as well be a path on the current site. The tool shows what it would become with https:// in front and lets you accept that in one click, rather than rewriting what you typed."
             }
         }
     },
@@ -4801,6 +4951,173 @@
                 "a5": "Short enough to read at a glance, long enough to say what the page is. Three to six words, or roughly 40 to 70 characters, covers most pages. The ceiling here cuts on a word boundary, so a capped slug still ends on a whole word.",
                 "q6": "Does any of this leave my browser?",
                 "a6": "No. Every character is transformed by JavaScript running in this tab. Nothing is uploaded, the page keeps no record of what you typed, and the tool works with the network disconnected."
+            }
+        }
+    },
+    "diff": {
+        "meta": {
+            "title": "Diff Checker — Compare Two Texts Side by Side",
+            "description": "Paste two versions and see exactly what changed: line by line, down to the word or the character. Split or unified view, ignore case or whitespace, fold away what did not move, and export a unified patch. Everything runs in your browser."
+        },
+        "hero": {
+            "eyebrow": "Text",
+            "title": "Diff Checker",
+            "subtitle": "Paste two versions of anything — code, config, a contract — and see what changed. Line by line, down to the word, side by side or as a patch.",
+            "badgeOffline": "Works offline",
+            "badgeInline": "Word-level",
+            "badgePatch": "Unified patch"
+        },
+        "workbench": {
+            "title": "Compare two texts",
+            "description": "Paste or upload each side. The comparison updates as you type, and nothing is uploaded anywhere.",
+            "leftLabel": "Original",
+            "rightLabel": "Changed",
+            "leftPlaceholder": "Paste the original text",
+            "rightPlaceholder": "Paste the changed text",
+            "upload": "Upload",
+            "uploadSide": "Upload a file as the {side} text",
+            "clearSide": "Clear the {side} text",
+            "clear": "Clear both",
+            "example": "Try an example",
+            "swap": "Swap sides",
+            "viewLabel": "View",
+            "views": {
+                "split": "Split",
+                "unified": "Unified"
+            },
+            "precisionLabel": "Diff precision",
+            "precisionHint": "How finely a changed line is compared against its other half.",
+            "precisions": {
+                "line": "Line",
+                "word": "Word",
+                "char": "Character"
+            },
+            "ignoreCase": {
+                "label": "Ignore case",
+                "hint": "Treats Alpha and alpha as the same line."
+            },
+            "ignoreWhitespace": {
+                "label": "Ignore whitespace",
+                "hint": "Folds runs of spaces and tabs into one, and trims both ends."
+            },
+            "hideUnchanged": {
+                "label": "Hide unchanged lines",
+                "hint": "Keeps {context, number} lines either side of every change and folds the rest away.",
+                "hintDisabled": "Nothing to fold — every line here is already beside a change."
+            },
+            "statusEmpty": "Paste text into both boxes to compare them.",
+            "statusIdentical": "No differences. The two texts match.",
+            "statusSummary": "{added, plural, =0 {Nothing added} one {# line added} other {# lines added}}, {removed, plural, =0 {nothing removed} one {# removed} other {# removed}}, {changed, plural, =0 {nothing rewritten} one {# rewritten} other {# rewritten}}.",
+            "ignoredNote": "{count, plural, one {# line matches} other {# lines match}} only because an ignore option is on — shown as unchanged, and left out of the patch.",
+            "gap": "{count, plural, one {# unchanged line hidden} other {# unchanged lines hidden}}",
+            "previousChange": "Previous change",
+            "nextChange": "Next change",
+            "changePosition": "Change {index, number} of {total, number}",
+            "copyPatch": "Copy patch",
+            "download": "Download patch",
+            "noChanges": "Nothing to show — the two texts match.",
+            "unavailable": "The comparison appears once both boxes hold text.",
+            "rowTypes": {
+                "equal": "Unchanged",
+                "insert": "Added",
+                "delete": "Removed",
+                "replace": "Changed"
+            },
+            "ignoredMarker": "Matched only because an ignore option is on",
+            "blankLine": "Blank line",
+            "noLine": "No line on this side"
+        },
+        "errors": {
+            "tooLong": "Each side is capped at {max} characters. Trim the text, or compare the files on your own machine.",
+            "tooManyLines": "Each side is capped at {max} lines. Compare a section at a time.",
+            "tooLarge": "These two texts are too different at this size to line up — the comparison would need more than {max} cells. Compare a smaller section."
+        },
+        "toast": {
+            "copiedPatch": "Patch copied",
+            "copyFailedEmpty": "There is nothing to copy yet",
+            "copyFailedUnsupported": "This browser will not let a page write to the clipboard",
+            "copyFailedDenied": "Clipboard permission was refused",
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The download could not be started",
+            "nothingToExport": "There is nothing to export — the two texts match",
+            "fileLoaded": "Loaded {filename}",
+            "fileTooLarge": "{filename} is larger than {max} — pick a smaller file",
+            "fileUnreadable": "{filename} could not be read as text"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "howItWorks": {
+                "title": "What a diff actually computes",
+                "p1": "Comparing two texts is not a matter of walking both from the top and reporting the first place they stop matching. Insert one line at the start of a file and every line after it moves down by one; a naive comparison would call the whole file rewritten. What a diff looks for instead is the longest sequence of lines the two texts still share, in order. Everything in that sequence is unchanged, and everything else is an insertion or a deletion.",
+                "p2": "That is the whole model: two operations, insert and delete. A rewritten line is a deletion and an insertion that happen to land in the same place, which is why this tool pairs them back up before drawing anything — a deletion sitting next to an insertion is shown as one changed row with both halves on it, and the leftovers stay a plain addition or removal.",
+                "p3": "Once a pair is on the same row, the same comparison runs again inside it, over words or characters instead of lines. That is what makes only the changed part of a line light up rather than the whole thing, and it is the difference between reading a diff and hunting through one.",
+                "p4": "Nothing here reaches the network. The comparison runs in your browser, on text that never leaves it — which is why a contract draft or a production config is as safe to paste here as a code snippet."
+            },
+            "options": {
+                "title": "Every control, and when to reach for it",
+                "intro": "Five controls, and each one changes a different thing. Two change what counts as a difference, one changes how closely a difference is examined, and two change how the result is laid out.",
+                "tableCaption": "The Diff Checker's controls and what each one does",
+                "colOption": "Control",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "viewName": "View",
+                "viewDoes": "Puts the two texts in facing columns, or in one column with removals and additions marked.",
+                "viewWhen": "You are reading on a phone, or you want something that reads like a patch.",
+                "precisionName": "Diff precision",
+                "precisionDoes": "Sets what a changed line is compared by inside itself: nothing, whole words, or single characters.",
+                "precisionWhen": "A line changed by one character and you want to see which, or the highlighting is too noisy and you want it off.",
+                "ignoreCaseName": "Ignore case",
+                "ignoreCaseDoes": "Compares lines and words with case folded away.",
+                "ignoreCaseWhen": "One side has been through a formatter, or you are comparing values from case-insensitive systems.",
+                "ignoreWhitespaceName": "Ignore whitespace",
+                "ignoreWhitespaceDoes": "Folds every run of spaces and tabs into one and trims both ends before comparing.",
+                "ignoreWhitespaceWhen": "Indentation changed, or one side was re-wrapped, and you only care about the content.",
+                "hideUnchangedName": "Hide unchanged lines",
+                "hideUnchangedDoes": "Keeps a few lines either side of every change and folds the rest into a marker saying how many are hidden.",
+                "hideUnchangedWhen": "Two long files differ in three places and you do not want to scroll past the rest.",
+                "p1": "The two ignore options are the ones worth being careful with, because they make differences disappear. A line that matches only after case or whitespace was folded away is still marked, quietly, on the row itself and counted in the line under the boxes — so \"no differences\" never means \"no differences, as long as you do not look too closely\".",
+                "p2": "They apply inside a line as well as between lines. With case ignored, a word that differs only in case is not highlighted either; anything else would be a comparison that disagrees with itself depending on how far you zoom in.",
+                "p3": "Precision is the one control that cannot change the verdict. Line, word or character, the same lines are added, removed and rewritten — all it changes is how much of a rewritten line is tinted."
+            },
+            "views": {
+                "title": "Split or unified",
+                "p1": "The split view puts the two texts in facing columns with their own line numbers, which is the layout to reach for when you want to read both versions. A changed line sits on one row with the old text on the left and the new text on the right, so your eye can move across rather than up and down.",
+                "p2": "The unified view puts everything in one column: removals first, then additions, each marked with the leading minus or plus that every patch file uses. It is narrower, which is why it is the better choice on a phone, and it is the same shape as the patch the export button hands you.",
+                "p3": "Both views fold unchanged runs the same way when you ask them to, and both let you step between changes with the arrows rather than scrolling for them."
+            },
+            "patch": {
+                "title": "Exporting a unified patch",
+                "p1": "Copy or download gives you a unified diff — the format git apply and patch read, with a header naming each side, one hunk per region that changed, and three lines of context around each. It is built from the same comparison on screen, so what lands on disk cannot disagree with what you were looking at.",
+                "p2": "One detail is worth knowing, because it trips people up in every diff tool. A text ending in a newline is shown here with a final blank line, because that blank line is really there. A patch describes the same thing differently: it counts one fewer line and marks any side whose last line has no ending with “\\ No newline at end of file”. The export converts between the two, which is why the patch can have one line fewer than the screen does.",
+                "p3": "Lines that matched only because an ignore option was on are context in the patch, not changes — the patch describes what has to happen to the text, and folding case or whitespace away is a way of reading it, not an edit to make."
+            },
+            "limits": {
+                "title": "How big a comparison can get",
+                "p1": "Lining up two texts costs work in proportion to the size of both multiplied together, so there are limits: 200,000 characters and 5,000 lines a side, and a ceiling on the comparison itself. Identical runs at the start and end are matched off before any of that is measured, which is why two long files that differ in a few places sit well inside the limits while two entirely different ones of the same size may not.",
+                "p2": "When a limit is hit the tool says which one rather than hanging or silently truncating. The answer is usually to compare the part you care about: a section, a function, a single object out of a config."
+            },
+            "useCases": {
+                "title": "What people compare here",
+                "p1": "Two responses from an API before and after a deployment. A config file against the one that actually shipped. Two exports of the same table. A contract draft against the version that came back from the other side. A block of generated code against the block it replaced.",
+                "p2": "It is also the fastest way to answer \"are these two things the same?\" for anything long enough that reading both is not an option — two keys, two long identifiers, two minified bundles. Turn precision up to character and the answer is a single tinted run.",
+                "p3": "For anything where the two sides are versions of a file you keep, a real version control system will always tell you more. This is for the two things in front of you right now, neither of which is in a repository."
+            },
+            "faq": {
+                "title": "Questions people ask",
+                "q1": "Does anything I paste leave my browser?",
+                "a1": "No. The comparison, the highlighting and the patch are all computed in your browser, and the page has nothing to send them to. Uploading a file reads it locally too. You can put the page in a tab, disconnect, and it will keep working.",
+                "q2": "What does diff precision actually change?",
+                "a2": "Only what happens inside a line that already changed. At line precision the whole line is tinted. At word precision the comparison runs again over the words in it, so only the words that differ light up. At character precision it runs over single characters, which is what you want for a one-character difference and too noisy for a rewritten sentence. The set of changed lines is the same in all three.",
+                "q3": "I moved a block of lines and it says they were deleted and added. Why?",
+                "a3": "Because that is what a diff is: a list of insertions and deletions that turn one text into the other. A moved block is a deletion in one place and an insertion in another, and no ordering of those two operations describes it as a move. Some tools guess at moves afterwards; this one shows you the edit script, which is what a patch has to carry anyway.",
+                "q4": "Why is a line shown as unchanged when the two sides clearly differ?",
+                "a4": "An ignore option is on. Ignoring case or whitespace makes lines that differ only that way count as the same line — the row is marked and the count under the boxes says how many, so you can tell at a glance whether the match is real or the option's doing.",
+                "q5": "Will the patch apply cleanly with git?",
+                "a5": "Yes, provided the file you apply it to is the text you put in the left box. It is a standard unified diff with three lines of context, including the no-newline marker where a side needs one. Give it real filenames by renaming the download, or paste it wherever you would paste any patch.",
+                "q6": "Can I compare two files instead of pasting?",
+                "a6": "Yes — each side has an upload button that reads a text file into that box. It is read in your browser like everything else, so nothing is transferred, and the same size limits apply once the text is in."
             }
         }
     },
