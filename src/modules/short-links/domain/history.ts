@@ -1,8 +1,13 @@
-import type { LinkHistoryEntry } from "../types";
-import { HISTORY_STORAGE_KEY, MAX_HISTORY_ENTRIES } from "./constants";
+import { HISTORY_STORAGE_KEYS, MAX_HISTORY_ENTRIES } from "./constants";
+import type { LinkHistoryEntry, ShortLinkTool } from "../types";
 
 /**
  * The recent-links list, kept in this browser and nowhere else.
+ *
+ * One list per tool, under its own key: a QR code and a shortened URL are the
+ * same row in the database, but they are two different things to the person who
+ * made them, and a single merged list would put a poster and a campaign link in
+ * the same pile.
  *
  * Storage arrives as a parameter with a browser default, the same shape
  * `tools/domain/clipboard.ts` uses, so every branch below is reachable from a
@@ -29,6 +34,10 @@ function browserStorage(): HistoryStorage | undefined {
 
 const EMPTY: readonly LinkHistoryEntry[] = [];
 
+export function historyStorageKey(tool: ShortLinkTool): string {
+    return HISTORY_STORAGE_KEYS[tool];
+}
+
 function isEntry(value: unknown): value is LinkHistoryEntry {
     if (typeof value !== "object" || value === null) {
         return false;
@@ -53,6 +62,7 @@ function isEntry(value: unknown): value is LinkHistoryEntry {
  * convenience is never worth throwing a page away for.
  */
 export function readHistory(
+    tool: ShortLinkTool,
     storage: HistoryStorage | undefined = browserStorage(),
 ): readonly LinkHistoryEntry[] {
     if (!storage) {
@@ -62,7 +72,7 @@ export function readHistory(
     let raw: string | null;
 
     try {
-        raw = storage.getItem(HISTORY_STORAGE_KEY);
+        raw = storage.getItem(historyStorageKey(tool));
     } catch {
         return EMPTY;
     }
@@ -82,6 +92,7 @@ export function readHistory(
 
 /** Silent on failure: a full quota must not stop a link from being created. */
 export function writeHistory(
+    tool: ShortLinkTool,
     entries: readonly LinkHistoryEntry[],
     storage: HistoryStorage | undefined = browserStorage(),
 ): void {
@@ -90,7 +101,7 @@ export function writeHistory(
     }
 
     try {
-        storage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(entries));
+        storage.setItem(historyStorageKey(tool), JSON.stringify(entries));
     } catch {
         // Quota exceeded, or a private window that refuses writes.
     }
@@ -101,38 +112,43 @@ export function writeHistory(
  * same slug — re-pointing a link should update its row, not grow a second one.
  */
 export function rememberLink(
+    tool: ShortLinkTool,
     entry: LinkHistoryEntry,
     storage: HistoryStorage | undefined = browserStorage(),
 ): readonly LinkHistoryEntry[] {
     const next = [
         entry,
-        ...readHistory(storage).filter((existing) => existing.slug !== entry.slug),
+        ...readHistory(tool, storage).filter((existing) => existing.slug !== entry.slug),
     ].slice(0, MAX_HISTORY_ENTRIES);
 
-    writeHistory(next, storage);
+    writeHistory(tool, next, storage);
 
     return next;
 }
 
 export function forgetLink(
+    tool: ShortLinkTool,
     slug: string,
     storage: HistoryStorage | undefined = browserStorage(),
 ): readonly LinkHistoryEntry[] {
-    const next = readHistory(storage).filter((entry) => entry.slug !== slug);
+    const next = readHistory(tool, storage).filter((entry) => entry.slug !== slug);
 
-    writeHistory(next, storage);
+    writeHistory(tool, next, storage);
 
     return next;
 }
 
-/** Empties the list, including every edit link in it. */
-export function clearHistory(storage: HistoryStorage | undefined = browserStorage()): void {
+/** Empties one tool's list, including every edit link in it. */
+export function clearHistory(
+    tool: ShortLinkTool,
+    storage: HistoryStorage | undefined = browserStorage(),
+): void {
     if (!storage) {
         return;
     }
 
     try {
-        storage.removeItem(HISTORY_STORAGE_KEY);
+        storage.removeItem(historyStorageKey(tool));
     } catch {
         // Nothing to do — the caller renders an empty list either way.
     }

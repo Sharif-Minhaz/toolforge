@@ -23,7 +23,7 @@ import {
     localDateTimeToInstant,
 } from "@/modules/tools/domain/local-datetime";
 import { SCHEDULE_DEFAULT_TIME } from "../domain/constants";
-import { useLinkHistory } from "./use-link-history";
+import { useLinkHistory } from "@/modules/short-links/components/use-link-history";
 
 type ShortLinkEditorProps = {
     editToken: string;
@@ -50,7 +50,7 @@ export function ShortLinkEditor({ editToken, editUrl, link }: ShortLinkEditorPro
     const startsId = useId();
     const expiresId = useId();
 
-    const history = useLinkHistory();
+    const history = useLinkHistory("shortener");
 
     // The reader's zone is a host value, so it is only consulted once hydration
     // has happened. Until then both the server and the hydration pass render the

@@ -229,12 +229,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         // reads two different ways.
         shortLinks: {
             errors: messages.shortLinks.errors,
+            result: messages.shortLinks.result,
+            history: messages.shortLinks.history,
             unlock: messages.shortLinks.unlock,
         },
         shortener: {
             workbench: messages.shortener.workbench,
-            result: messages.shortener.result,
-            history: messages.shortener.history,
             edit: messages.shortener.edit,
             toast: messages.shortener.toast,
         },

@@ -14,6 +14,7 @@ import { IconCopyButton } from "@/modules/tools/components/copy-button";
 import { StatusStrip } from "@/modules/tools/components/status-strip";
 import { copyText } from "@/modules/tools/domain/clipboard";
 import { updateLink } from "@/modules/short-links/actions/update-link";
+import { useLinkHistory } from "@/modules/short-links/components/use-link-history";
 import type { ShortLinkFailureReason, ShortLinkView } from "@/modules/short-links/types";
 
 type DynamicQrEditorProps = {
@@ -30,6 +31,7 @@ export function DynamicQrEditor({ editToken, link }: DynamicQrEditorProps) {
     const tErrors = useTranslations("shortLinks.errors");
     const tToast = useTranslations("qr.toast");
     const format = useFormatter();
+    const history = useLinkHistory("qr");
 
     const targetId = useId();
 
@@ -60,6 +62,18 @@ export function DynamicQrEditor({ editToken, link }: DynamicQrEditorProps) {
 
             setCurrent(result.value);
             setTarget(result.value.target);
+            // The row in this browser's list still names the old destination,
+            // and the list is the only record there is.
+            history.remember({
+                slug: result.value.slug,
+                shortUrl: result.value.shortUrl,
+                target: result.value.target,
+                editUrl: `${window.location.origin}${window.location.pathname}`,
+                hasPassword: result.value.hasPassword,
+                startsAt: result.value.startsAt,
+                expiresAt: result.value.expiresAt,
+                createdAt: result.value.createdAt,
+            });
             toast.success(tToast("dynamicUpdated"));
         } catch (caught) {
             logEvent("error", "qr.dynamic_update_failed", { error: describeError(caught) });

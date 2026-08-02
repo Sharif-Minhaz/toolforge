@@ -82,6 +82,23 @@ export const QR_EDIT_PREFIX = "/tools/qr/edit";
 
 export const SHORTENER_EDIT_PREFIX = "/tools/shortener/edit";
 
+/**
+ * Where each tool's recent-links list lives. Namespaced by app and tool so a
+ * reader clearing one by hand knows what they are looking at, and so a poster's
+ * codes and a campaign's links never end up in the same pile.
+ */
+export const HISTORY_STORAGE_KEYS: Record<ShortLinkTool, string> = {
+    qr: "toolforge.qr.history",
+    shortener: "toolforge.shortener.history",
+};
+
+/**
+ * How many links a browser remembers per tool. Small on purpose: the list holds
+ * edit credentials, so the oldest entries falling off is a feature rather than a
+ * limitation. Anyone who needs one kept forever should save its edit link.
+ */
+export const MAX_HISTORY_ENTRIES = 20;
+
 /** Where a visitor is sent to type a link's password. */
 export const UNLOCK_PREFIX = "/unlock";
 

@@ -9,8 +9,8 @@ import {
     MAX_TARGET_URL_LENGTH,
     PASSWORD_LENGTH,
     SLUG_LENGTH,
+    MAX_HISTORY_ENTRIES,
 } from "@/modules/short-links/domain/constants";
-import { MAX_HISTORY_ENTRIES } from "../domain/constants";
 
 export const SHORTENER_ARTICLE_SECTIONS = [
     { id: "understanding", titleKey: "understanding.title" },

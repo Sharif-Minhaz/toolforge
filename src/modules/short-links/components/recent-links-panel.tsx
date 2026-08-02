@@ -19,7 +19,7 @@ type RecentLinksPanelProps = {
 };
 
 /**
- * Links this browser remembers.
+ * Links this browser remembers, for whichever tool made them.
  *
  * The list is local storage and nothing else — there are no accounts here, so
  * "recent" means "recent in this browser". It holds each link's edit URL, which
@@ -27,7 +27,7 @@ type RecentLinksPanelProps = {
  * the warning and the clear button are not optional decoration.
  */
 export function RecentLinksPanel({ entries, onCopy, onForget, onClear }: RecentLinksPanelProps) {
-    const t = useTranslations("shortener.history");
+    const t = useTranslations("shortLinks.history");
     const format = useFormatter();
     const hydrated = useIsHydrated();
 

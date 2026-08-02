@@ -4162,14 +4162,10 @@
         "dynamic": {
             "title": "Make this code editable",
             "badge": "Dynamic",
-            "description": "The code carries a short link instead of your URL, so you can point it somewhere else after it has been printed. Scans are counted.",
+            "description": "The code carries a short link instead of your URL, so you can point it somewhere else after it has been printed. Scans are counted, and this browser remembers the code so you can change it later without hunting for the edit link.",
             "unavailable": "This deployment has no database or no challenge key configured, so dynamic codes are switched off. Static codes still work exactly as they should.",
             "create": "Create short link",
-            "challengePending": "Solve the challenge to create the link.",
-            "shortUrlLabel": "Printed link",
-            "copyShortUrl": "Copy short link",
-            "editUrlWarning": "Save this link now — it is shown once and it is the only way to change where the code goes. Anyone who has it can re-point your code.",
-            "copyEditUrl": "Copy edit link"
+            "challengePending": "Solve the challenge to create the link."
         },
         "reader": {
             "tabs": {
@@ -4211,7 +4207,7 @@
             "lastScan": "Last scan",
             "never": "Never",
             "notFoundTitle": "No code matches that link",
-            "notFoundBody": "The edit link may have been mistyped or truncated. Edit links are shown once, when the code is created, and cannot be recovered afterwards.",
+            "notFoundBody": "The edit link may have been mistyped or truncated. It is shown once when the code is created and stored here only as a digest, so this service cannot recover it — but the browser you made the code in keeps a copy in its recent list.",
             "notConfiguredTitle": "Dynamic codes are switched off here",
             "notConfiguredBody": "This deployment has no database configured, so there is nowhere for a dynamic code to live.",
             "backToTool": "Back to the QR tool"
@@ -4367,7 +4363,7 @@
                 "title": "Dynamic codes: changing a printed code",
                 "p1": "A static QR code is permanent. The bytes are in the ink, and the only way to change where it goes is to reprint it. A dynamic code solves that by encoding a short link on this site, which redirects to wherever you point it — so the paper stays valid while the destination moves.",
                 "p2": "Creating one gives you two links. The printed link is short — {length, number} characters after the domain, drawn from an alphabet with no vowels and no look-alike glyphs, so it survives being read aloud or typed by hand.",
-                "p3": "The other is the edit link, and it is a credential rather than a URL. It carries a {length, number}-character token, it is shown exactly once, and it is stored here only as a SHA-256 digest — so a copy of the database does not let anyone re-point your codes. Losing it means the code keeps working and can never be changed again.",
+                "p3": "The other is the edit link, and it is a credential rather than a URL. It carries a {length, number}-character token, it is shown once, and it is stored here only as a SHA-256 digest — so a copy of the database does not let anyone re-point your codes. The browser that created the code also keeps a copy in its recent-codes list, which is how most people find it again; clear that list, or use another device, and the token is gone for good.",
                 "p4": "Every scan is counted, along with the time of the most recent one. That is the whole of it: no location, no device, no visitor identifier, and nothing that could distinguish one scanner from another.",
                 "p5": "There are real trade-offs to weigh before choosing dynamic over static:",
                 "point1": "A dynamic code stops working if this site does. A static code works forever and needs nothing from anyone.",
@@ -4399,7 +4395,7 @@
                 "q5": "PNG or SVG?",
                 "a5": "SVG for anything that will be printed or resized — it is vector, so it stays sharp at any size. PNG for places that will not take an SVG, such as some social platforms and older design tools.",
                 "q6": "What happens if I lose the edit link?",
-                "a6": "The code keeps working and keeps redirecting to wherever it last pointed, but nobody can change it again. The token is stored only as a hash, so it cannot be looked up or recovered — save it somewhere durable the moment it is shown.",
+                "a6": "The code keeps working and keeps redirecting to wherever it last pointed, but nobody can change it again. The token is stored only as a hash, so this service cannot look it up or recover it. The recent-codes list in the browser you created it from keeps a copy, which is the practical answer for most people — save it elsewhere too if the code is going on something you cannot reprint.",
                 "q7": "Does this tool track the codes I make?",
                 "a7": "Static codes are never sent anywhere, so there is nothing to track. Dynamic codes store the destination, a count of scans and the time of the last one. No location, device, or visitor identity is recorded with them."
             }
@@ -4423,6 +4419,27 @@
             "challenge_failed": "The challenge could not be verified. Try again.",
             "not_found": "No link matches that edit link.",
             "storage_unavailable": "The link could not be saved. Try again in a moment."
+        },
+        "result": {
+            "shortUrlLabel": "Your short link",
+            "shortUrlHint": "Share this. Where it goes can change; the link itself never does.",
+            "copyShortUrl": "Copy short link",
+            "editUrlLabel": "Edit link.",
+            "editUrlNote": "This browser keeps a copy in the list below, so you can come back and change the destination from here. Save it somewhere else if you might edit from another browser or device — anyone who has it can re-point this link.",
+            "copyEditUrl": "Copy edit link"
+        },
+        "history": {
+            "title": "Links from this browser",
+            "description": "Kept in this browser's storage. There are no accounts here, so this list is your record.",
+            "empty": "Nothing yet. Links you create will show up here when you come back.",
+            "copy": "Copy short link",
+            "forget": "Remove from this list",
+            "edit": "Change destination",
+            "protected": "Password protected",
+            "created": "Created {date}",
+            "expires": "Expires {date}",
+            "clear": "Clear this list",
+            "credentialWarning": "Each row keeps its edit link, which is what lets you change a destination later. Anyone with access to this browser profile can use them, so clear the list on a shared machine."
         },
         "states": {
             "missingTitle": "That link does not exist",
@@ -4494,26 +4511,6 @@
             "storageUnavailable": "This deployment has no database configured, so there is nowhere for a short link to live.",
             "historyNote": "This link was added to the list below, in this browser only."
         },
-        "result": {
-            "shortUrlLabel": "Your short link",
-            "shortUrlHint": "Share this. Where it goes can change; the link itself never does.",
-            "copyShortUrl": "Copy short link",
-            "editUrlWarning": "Save this link now — it is shown once and it is the only way to change where yours link goes. Anyone who has it can re-point your link.",
-            "copyEditUrl": "Copy edit link"
-        },
-        "history": {
-            "title": "Links from this browser",
-            "description": "Kept in this browser's storage. There are no accounts here, so this list is the only record you get.",
-            "empty": "Nothing yet. Links you create will show up here when you come back.",
-            "copy": "Copy short link",
-            "forget": "Remove from this list",
-            "edit": "Change destination",
-            "protected": "Password protected",
-            "created": "Created {date}",
-            "expires": "Expires {date}",
-            "clear": "Clear this list",
-            "credentialWarning": "This list holds each link's edit URL, which is what lets you change a destination later. Anyone with access to this browser profile can use them. Clear the list on a shared machine."
-        },
         "edit": {
             "metaTitle": "Edit short link",
             "metaDescription": "Change where an existing short link points, and the password or window in front of it.",
@@ -4543,7 +4540,7 @@
             "lastVisit": "Last visit",
             "never": "Never",
             "notFoundTitle": "No link matches that address",
-            "notFoundBody": "The edit link may have been mistyped or truncated. Edit links are shown once, when the link is created, and cannot be recovered afterwards.",
+            "notFoundBody": "The edit link may have been mistyped or truncated. It is shown once when the link is created and stored here only as a digest, so this service cannot recover it — but the browser you made the link in keeps a copy in its recent list.",
             "notConfiguredTitle": "Short links are switched off here",
             "notConfiguredBody": "This deployment has no database configured, so there is nowhere for a short link to live.",
             "backToTool": "Back to the URL Shortener"

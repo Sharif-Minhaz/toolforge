@@ -1,32 +1,48 @@
 import { describe, expect, test } from "bun:test";
 
-import { HISTORY_STORAGE_KEY, MAX_HISTORY_ENTRIES } from "@/modules/shortener/domain/constants";
+import { HISTORY_STORAGE_KEYS, MAX_HISTORY_ENTRIES } from "@/modules/short-links/domain/constants";
 import {
     clearHistory,
     forgetLink,
+    historyStorageKey,
     readHistory,
     rememberLink,
     writeHistory,
     type HistoryStorage,
-} from "@/modules/shortener/domain/history";
-import type { LinkHistoryEntry } from "@/modules/shortener/types";
+} from "@/modules/short-links/domain/history";
+import {
+    SHORT_LINK_TOOLS,
+    type LinkHistoryEntry,
+    type ShortLinkTool,
+} from "@/modules/short-links/types";
 
-/** A `Storage` stand-in, so none of this needs a DOM. */
-function fakeStorage(initial: string | null = null): HistoryStorage & { value: string | null } {
+/** The tool every single-tool assertion below is written against. */
+const TOOL: ShortLinkTool = "shortener";
+
+/**
+ * A `Storage` stand-in, so none of this needs a DOM. It holds one value per key
+ * rather than one value outright, which is what lets the per-tool isolation
+ * test below mean anything.
+ */
+function fakeStorage(initial: string | null = null): HistoryStorage & {
+    readonly values: Map<string, string>;
+} {
+    const values = new Map<string, string>();
+
+    if (initial !== null) {
+        values.set(historyStorageKey(TOOL), initial);
+    }
+
     return {
-        value: initial,
+        values,
         getItem(key) {
-            return key === HISTORY_STORAGE_KEY ? this.value : null;
+            return values.get(key) ?? null;
         },
         setItem(key, next) {
-            if (key === HISTORY_STORAGE_KEY) {
-                this.value = next;
-            }
+            values.set(key, next);
         },
         removeItem(key) {
-            if (key === HISTORY_STORAGE_KEY) {
-                this.value = null;
-            }
+            values.delete(key);
         },
     };
 }
@@ -60,25 +76,25 @@ function entry(slug: string, overrides: Partial<LinkHistoryEntry> = {}): LinkHis
 
 describe("readHistory", () => {
     test("no storage at all reads as an empty list", () => {
-        expect(readHistory(undefined)).toEqual([]);
+        expect(readHistory(TOOL, undefined)).toEqual([]);
     });
 
     test("nothing stored yet reads as an empty list", () => {
-        expect(readHistory(fakeStorage())).toEqual([]);
+        expect(readHistory(TOOL, fakeStorage())).toEqual([]);
     });
 
     test("round-trips what was written", () => {
         const storage = fakeStorage();
         const entries = [entry("abcd2345"), entry("summer-sale")];
 
-        writeHistory(entries, storage);
+        writeHistory(TOOL, entries, storage);
 
-        expect(readHistory(storage)).toEqual(entries);
+        expect(readHistory(TOOL, storage)).toEqual(entries);
     });
 
     test("a hand-edited value degrades instead of throwing", () => {
         for (const raw of ["", "not json", "{}", '"a string"', "null", "42"]) {
-            expect(readHistory(fakeStorage(raw))).toEqual([]);
+            expect(readHistory(TOOL, fakeStorage(raw))).toEqual([]);
         }
     });
 
@@ -87,7 +103,10 @@ describe("readHistory", () => {
             JSON.stringify([entry("abcd2345"), { slug: "broken" }, null, entry("summer-sale")]),
         );
 
-        expect(readHistory(storage).map((row) => row.slug)).toEqual(["abcd2345", "summer-sale"]);
+        expect(readHistory(TOOL, storage).map((row) => row.slug)).toEqual([
+            "abcd2345",
+            "summer-sale",
+        ]);
     });
 
     test("a row missing its edit link is dropped, not half-rendered", () => {
@@ -95,7 +114,7 @@ describe("readHistory", () => {
         delete withoutEditUrl.editUrl;
         const storage = fakeStorage(JSON.stringify([withoutEditUrl]));
 
-        expect(readHistory(storage)).toEqual([]);
+        expect(readHistory(TOOL, storage)).toEqual([]);
     });
 
     test("a nullable field may be null but not a number", () => {
@@ -106,7 +125,7 @@ describe("readHistory", () => {
             ]),
         );
 
-        expect(readHistory(storage).map((row) => row.slug)).toEqual(["keeper"]);
+        expect(readHistory(TOOL, storage).map((row) => row.slug)).toEqual(["keeper"]);
     });
 
     test("a stored list longer than the cap is trimmed on the way out", () => {
@@ -114,7 +133,7 @@ describe("readHistory", () => {
             entry(`slug-${index}`),
         );
 
-        expect(readHistory(fakeStorage(JSON.stringify(overflowing)))).toHaveLength(
+        expect(readHistory(TOOL, fakeStorage(JSON.stringify(overflowing)))).toHaveLength(
             MAX_HISTORY_ENTRIES,
         );
     });
@@ -128,7 +147,7 @@ describe("readHistory", () => {
             removeItem() {},
         };
 
-        expect(readHistory(throwing)).toEqual([]);
+        expect(readHistory(TOOL, throwing)).toEqual([]);
     });
 });
 
@@ -136,19 +155,20 @@ describe("rememberLink", () => {
     test("puts the newest link first", () => {
         const storage = fakeStorage();
 
-        rememberLink(entry("first"), storage);
-        const next = rememberLink(entry("second"), storage);
+        rememberLink(TOOL, entry("first"), storage);
+        const next = rememberLink(TOOL, entry("second"), storage);
 
         expect(next.map((row) => row.slug)).toEqual(["second", "first"]);
-        expect(readHistory(storage).map((row) => row.slug)).toEqual(["second", "first"]);
+        expect(readHistory(TOOL, storage).map((row) => row.slug)).toEqual(["second", "first"]);
     });
 
     test("re-pointing a link updates its row rather than adding a second", () => {
         const storage = fakeStorage();
 
-        rememberLink(entry("abcd2345"), storage);
-        rememberLink(entry("other"), storage);
+        rememberLink(TOOL, entry("abcd2345"), storage);
+        rememberLink(TOOL, entry("other"), storage);
         const next = rememberLink(
+            TOOL,
             entry("abcd2345", { target: "https://example.com/moved" }),
             storage,
         );
@@ -162,10 +182,10 @@ describe("rememberLink", () => {
         const storage = fakeStorage();
 
         for (let index = 0; index <= MAX_HISTORY_ENTRIES; index += 1) {
-            rememberLink(entry(`slug-${index}`), storage);
+            rememberLink(TOOL, entry(`slug-${index}`), storage);
         }
 
-        const stored = readHistory(storage);
+        const stored = readHistory(TOOL, storage);
 
         expect(stored).toHaveLength(MAX_HISTORY_ENTRIES);
         expect(stored[0].slug).toBe(`slug-${MAX_HISTORY_ENTRIES}`);
@@ -173,11 +193,11 @@ describe("rememberLink", () => {
     });
 
     test("a store that refuses writes still answers with the list it would have kept", () => {
-        expect(rememberLink(entry("abcd2345"), readOnlyStorage())).toHaveLength(1);
+        expect(rememberLink(TOOL, entry("abcd2345"), readOnlyStorage())).toHaveLength(1);
     });
 
     test("no storage at all is not an error", () => {
-        expect(rememberLink(entry("abcd2345"), undefined)).toEqual([entry("abcd2345")]);
+        expect(rememberLink(TOOL, entry("abcd2345"), undefined)).toEqual([entry("abcd2345")]);
     });
 });
 
@@ -185,18 +205,18 @@ describe("forgetLink", () => {
     test("removes one row and leaves the rest", () => {
         const storage = fakeStorage();
 
-        rememberLink(entry("keep"), storage);
-        rememberLink(entry("drop"), storage);
+        rememberLink(TOOL, entry("keep"), storage);
+        rememberLink(TOOL, entry("drop"), storage);
 
-        expect(forgetLink("drop", storage).map((row) => row.slug)).toEqual(["keep"]);
+        expect(forgetLink(TOOL, "drop", storage).map((row) => row.slug)).toEqual(["keep"]);
     });
 
     test("forgetting something that is not there changes nothing", () => {
         const storage = fakeStorage();
 
-        rememberLink(entry("keep"), storage);
+        rememberLink(TOOL, entry("keep"), storage);
 
-        expect(forgetLink("absent", storage).map((row) => row.slug)).toEqual(["keep"]);
+        expect(forgetLink(TOOL, "absent", storage).map((row) => row.slug)).toEqual(["keep"]);
     });
 });
 
@@ -204,14 +224,47 @@ describe("clearHistory", () => {
     test("empties the list, edit links and all", () => {
         const storage = fakeStorage();
 
-        rememberLink(entry("abcd2345"), storage);
-        clearHistory(storage);
+        rememberLink(TOOL, entry("abcd2345"), storage);
+        clearHistory(TOOL, storage);
 
-        expect(storage.value).toBeNull();
-        expect(readHistory(storage)).toEqual([]);
+        expect(storage.values.has(historyStorageKey(TOOL))).toBe(false);
+        expect(readHistory(TOOL, storage)).toEqual([]);
     });
 
     test("survives a store that refuses to remove", () => {
-        expect(() => clearHistory(readOnlyStorage())).not.toThrow();
+        expect(() => clearHistory(TOOL, readOnlyStorage())).not.toThrow();
+    });
+});
+
+describe("one list per tool", () => {
+    test("every tool has its own key, and no two collide", () => {
+        const keys = SHORT_LINK_TOOLS.map(historyStorageKey);
+
+        expect(new Set(keys).size).toBe(keys.length);
+
+        for (const tool of SHORT_LINK_TOOLS) {
+            expect(historyStorageKey(tool)).toBe(HISTORY_STORAGE_KEYS[tool]);
+        }
+    });
+
+    test("a code remembered by the QR tool never shows up in the shortener's list", () => {
+        const storage = fakeStorage();
+
+        rememberLink("qr", entry("printed"), storage);
+        rememberLink("shortener", entry("shared"), storage);
+
+        expect(readHistory("qr", storage).map((row) => row.slug)).toEqual(["printed"]);
+        expect(readHistory("shortener", storage).map((row) => row.slug)).toEqual(["shared"]);
+    });
+
+    test("clearing one list leaves the other alone", () => {
+        const storage = fakeStorage();
+
+        rememberLink("qr", entry("printed"), storage);
+        rememberLink("shortener", entry("shared"), storage);
+        clearHistory("shortener", storage);
+
+        expect(readHistory("qr", storage)).toHaveLength(1);
+        expect(readHistory("shortener", storage)).toEqual([]);
     });
 });

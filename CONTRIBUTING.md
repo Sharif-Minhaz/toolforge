@@ -407,6 +407,7 @@ Reuse what exists rather than rebuilding it:
 | Structured data               | `@/modules/seo/components/json-ld`           |
 | Structured logging            | `@/modules/observability/domain/logger`      |
 | Re-pointable short links      | `@/modules/short-links/`                     |
+| Browser-remembered link list  | `@/modules/short-links/components/use-link-history` |
 
 Shared UI belongs in `src/modules/tools/`, never inside another tool's module. If a second tool
 needs something the first one owns, lift it with `git mv` and update the first tool's imports in the

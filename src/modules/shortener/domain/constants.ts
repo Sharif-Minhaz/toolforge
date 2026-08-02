@@ -3,20 +3,6 @@ import type { ShortenerDraft, ShortenerToggles } from "../types";
 /** Names this tool's Turnstile challenge in Cloudflare's dashboard. */
 export const TURNSTILE_ACTION = "shortener-create";
 
-/**
- * Where the recent-links list lives. Namespaced by app and tool so a second
- * tool storing something one day cannot collide with it, and so a reader
- * clearing it by hand knows what they are looking at.
- */
-export const HISTORY_STORAGE_KEY = "toolforge.shortener.history";
-
-/**
- * How many links this browser remembers. Small on purpose: the list holds edit
- * credentials, so the oldest entries falling off is a feature rather than a
- * limitation. Anyone who needs a link kept forever should save its edit link.
- */
-export const MAX_HISTORY_ENTRIES = 20;
-
 export const DEFAULT_DRAFT: ShortenerDraft = {
     target: "",
     alias: "",

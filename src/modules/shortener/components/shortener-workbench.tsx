@@ -11,6 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { createLink } from "@/modules/short-links/actions/create-link";
+import { CreatedLinkCard } from "@/modules/short-links/components/created-link-card";
+import { RecentLinksPanel } from "@/modules/short-links/components/recent-links-panel";
+import { useLinkHistory } from "@/modules/short-links/components/use-link-history";
 import type { ShortLinkCreatedView, ShortLinkFailureReason } from "@/modules/short-links/types";
 import { DateTimePicker } from "@/modules/tools/components/date-time-picker";
 import { OptionSwitch } from "@/modules/tools/components/option-controls";
@@ -25,9 +28,6 @@ import {
 } from "../domain/constants";
 import { localDateTimeToInstant } from "@/modules/tools/domain/local-datetime";
 import type { ShortenerDraft, ShortenerToggles } from "../types";
-import { CreatedLinkCard } from "./created-link-card";
-import { RecentLinksPanel } from "./recent-links-panel";
-import { useLinkHistory } from "./use-link-history";
 
 type ShortenerWorkbenchProps = {
     /** `toolforge.example/s/` — shown in front of the alias field. */
@@ -68,7 +68,7 @@ export function ShortenerWorkbench({
     const expiresId = useId();
     const errorId = useId();
 
-    const history = useLinkHistory();
+    const history = useLinkHistory("shortener");
 
     const [draft, setDraft] = useState<ShortenerDraft>({
         ...DEFAULT_DRAFT,

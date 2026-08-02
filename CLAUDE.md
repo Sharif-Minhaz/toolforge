@@ -522,8 +522,8 @@ hydration never sees it.
 
 # Remembering Something in the Reader's Browser
 
-`shortener/domain/history.ts` and `shortener/components/use-link-history.ts` are
-the pattern for anything a tool has to remember between visits. Three parts, and
+`short-links/domain/history.ts` and `short-links/components/use-link-history.ts`
+are the pattern for anything a tool has to remember between visits. Three parts, and
 each solves a failure the obvious version has:
 
 - **Storage is a parameter with a browser default**, exactly like
@@ -541,10 +541,17 @@ each solves a failure the obvious version has:
   cached at module scope because `getSnapshot` must return a stable reference —
   re-parsing on every call hands React a new array each time and spins forever.
 
-If what you are storing is a credential — the shortener keeps each link's edit
-URL, because a one-time link nobody saved is a feature nobody can use — then say
-so in the UI, cap the list, and give it a button that empties it. Do it quietly
-and the tool is a credential store that never admitted to being one.
+One list per tool, under its own key, because a poster and a campaign link are
+two different things to the person who made them even though they are one row in
+the database. `historyStorageKey(tool)` is the only place that mapping lives.
+
+If what you are storing is a credential — both short-link tools keep each link's
+edit URL, because a one-time link nobody saved is a feature nobody can use —
+then say so in the UI, cap the list, and give it a button that empties it. Do it
+quietly and the tool is a credential store that never admitted to being one.
+It also obliges the surrounding copy to stop overstating the stakes: once the
+browser keeps a copy, "shown once, save it now or lose it forever" is no longer
+true, and copy that overstates teaches readers to skip the copy that does not.
 
 ---
 

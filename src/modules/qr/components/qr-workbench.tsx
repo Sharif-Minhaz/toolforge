@@ -13,6 +13,8 @@ import { copyText } from "@/modules/tools/domain/clipboard";
 import { saveBlob, saveFile } from "@/modules/tools/domain/file-saver";
 import { checkImageFile } from "@/modules/tools/domain/image-file";
 import { createLink } from "@/modules/short-links/actions/create-link";
+import { RecentLinksPanel } from "@/modules/short-links/components/recent-links-panel";
+import { useLinkHistory } from "@/modules/short-links/components/use-link-history";
 import type { ShortLinkCreatedView, ShortLinkFailureReason } from "@/modules/short-links/types";
 import { renderSvgToPng } from "../domain/canvas";
 import { DEFAULT_LOGO_SCALE, LOGO_FILE_LIMITS, MAX_PAYLOAD_LENGTH } from "../domain/constants";
@@ -49,6 +51,8 @@ export function QrWorkbench({
     const t = useTranslations("qr.workbench");
     const tErrors = useTranslations("qr.errors");
     const tShortLinkErrors = useTranslations("shortLinks.errors");
+
+    const history = useLinkHistory("qr");
     const tToast = useTranslations("qr.toast");
 
     const kindLabelId = useId();
@@ -218,6 +222,16 @@ export function QrWorkbench({
             }
 
             setCreated(result.value);
+            history.remember({
+                slug: result.value.slug,
+                shortUrl: result.value.shortUrl,
+                target: result.value.target,
+                editUrl: result.value.editUrl,
+                hasPassword: result.value.hasPassword,
+                startsAt: result.value.startsAt,
+                expiresAt: result.value.expiresAt,
+                createdAt: result.value.createdAt,
+            });
             toast.success(tToast("dynamicCreated"));
         } catch (caught) {
             logEvent("error", "qr.dynamic_create_failed", { error: describeError(caught) });
@@ -235,109 +249,122 @@ export function QrWorkbench({
     const lowContrast = !hasScannableContrast(options);
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
+        <div className="flex flex-col gap-6">
+            <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+                <span
+                    aria-hidden="true"
+                    className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
+                />
 
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-            </CardHeader>
+                <CardHeader>
+                    <CardTitle className="text-lg">{t("title")}</CardTitle>
+                    <CardDescription>{t("description")}</CardDescription>
+                </CardHeader>
 
-            <CardContent>
-                <Tabs defaultValue="generate">
-                    <TabsList className="w-full">
-                        <TabsTrigger value="generate">{t("tabs.generate")}</TabsTrigger>
-                        <TabsTrigger value="read">{t("tabs.read")}</TabsTrigger>
-                    </TabsList>
+                <CardContent>
+                    <Tabs defaultValue="generate">
+                        <TabsList className="w-full">
+                            <TabsTrigger value="generate">{t("tabs.generate")}</TabsTrigger>
+                            <TabsTrigger value="read">{t("tabs.read")}</TabsTrigger>
+                        </TabsList>
 
-                    <TabsContent value="generate" className="pt-4">
-                        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:gap-8">
-                            <div className="flex min-w-0 flex-col gap-4">
-                                <div className="flex flex-col gap-2">
-                                    <Label
-                                        id={kindLabelId}
-                                        className="text-muted-foreground text-xs"
-                                    >
-                                        <span className="leading-[1.3]">{t("kindLabel")}</span>
-                                    </Label>
-                                    <QrTypeSelector
-                                        value={kind}
-                                        labelId={kindLabelId}
-                                        onChange={handleKindChange}
+                        <TabsContent value="generate" className="pt-4">
+                            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:gap-8">
+                                <div className="flex min-w-0 flex-col gap-4">
+                                    <div className="flex flex-col gap-2">
+                                        <Label
+                                            id={kindLabelId}
+                                            className="text-muted-foreground text-xs"
+                                        >
+                                            <span className="leading-[1.3]">{t("kindLabel")}</span>
+                                        </Label>
+                                        <QrTypeSelector
+                                            value={kind}
+                                            labelId={kindLabelId}
+                                            onChange={handleKindChange}
+                                        />
+                                    </div>
+
+                                    <QrPayloadFields
+                                        kind={kind}
+                                        draft={draft}
+                                        disabled={kind === "url" && created !== null}
+                                        onChange={patchDraft}
+                                    />
+
+                                    {kind === "url" && created !== null && (
+                                        <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                                            {t("dynamicLocked")}
+                                        </p>
+                                    )}
+
+                                    {kind === "url" && (
+                                        <QrDynamicPanel
+                                            enabled={dynamicEnabled}
+                                            available={dynamicAvailable}
+                                            siteKey={turnstileSiteKey}
+                                            token={challengeToken}
+                                            resetSignal={challengeReset}
+                                            hasTarget={draft.url.trim().length > 0}
+                                            created={created}
+                                            creating={creating}
+                                            error={
+                                                dynamicFailure === null
+                                                    ? null
+                                                    : tShortLinkErrors(dynamicFailure)
+                                            }
+                                            onToggle={(next) => {
+                                                setDynamicEnabled(next);
+                                                setDynamicFailure(null);
+                                            }}
+                                            onVerify={setChallengeToken}
+                                            onChallengeCleared={() => setChallengeToken(null)}
+                                            onCreate={() => void handleCreateDynamic()}
+                                            onCopy={(value) => void handleCopy(value)}
+                                        />
+                                    )}
+
+                                    <QrDesignPanel
+                                        options={options}
+                                        lowContrast={lowContrast}
+                                        onChange={patchOptions}
+                                        onLogoPick={(file) => void handleLogoPick(file)}
                                     />
                                 </div>
 
-                                <QrPayloadFields
-                                    kind={kind}
-                                    draft={draft}
-                                    disabled={kind === "url" && created !== null}
-                                    onChange={patchDraft}
-                                />
-
-                                {kind === "url" && created !== null && (
-                                    <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                                        {t("dynamicLocked")}
-                                    </p>
-                                )}
-
-                                {kind === "url" && (
-                                    <QrDynamicPanel
-                                        enabled={dynamicEnabled}
-                                        available={dynamicAvailable}
-                                        siteKey={turnstileSiteKey}
-                                        token={challengeToken}
-                                        resetSignal={challengeReset}
-                                        hasTarget={draft.url.trim().length > 0}
-                                        created={created}
-                                        creating={creating}
-                                        error={
-                                            dynamicFailure === null
-                                                ? null
-                                                : tShortLinkErrors(dynamicFailure)
-                                        }
-                                        onToggle={(next) => {
-                                            setDynamicEnabled(next);
-                                            setDynamicFailure(null);
-                                        }}
-                                        onVerify={setChallengeToken}
-                                        onChallengeCleared={() => setChallengeToken(null)}
-                                        onCreate={() => void handleCreateDynamic()}
-                                        onCopy={(value) => void handleCopy(value)}
+                                <div className="min-w-0 lg:sticky lg:top-8 lg:self-start">
+                                    <QrPreview
+                                        svg={svg}
+                                        matrix={matrix}
+                                        payloadLength={payload.length}
+                                        error={error}
+                                        pending={pending}
+                                        downloading={downloading}
+                                        onDownloadPng={() => void handleDownloadPng()}
+                                        onDownloadSvg={handleDownloadSvg}
+                                        onCopyPayload={() => void handleCopy(payload)}
                                     />
-                                )}
-
-                                <QrDesignPanel
-                                    options={options}
-                                    lowContrast={lowContrast}
-                                    onChange={patchOptions}
-                                    onLogoPick={(file) => void handleLogoPick(file)}
-                                />
+                                </div>
                             </div>
+                        </TabsContent>
 
-                            <div className="min-w-0 lg:sticky lg:top-8 lg:self-start">
-                                <QrPreview
-                                    svg={svg}
-                                    matrix={matrix}
-                                    payloadLength={payload.length}
-                                    error={error}
-                                    pending={pending}
-                                    downloading={downloading}
-                                    onDownloadPng={() => void handleDownloadPng()}
-                                    onDownloadSvg={handleDownloadSvg}
-                                    onCopyPayload={() => void handleCopy(payload)}
-                                />
-                            </div>
-                        </div>
-                    </TabsContent>
+                        <TabsContent value="read" className="pt-4">
+                            <QrReaderPanel />
+                        </TabsContent>
+                    </Tabs>
+                </CardContent>
+            </Card>
 
-                    <TabsContent value="read" className="pt-4">
-                        <QrReaderPanel />
-                    </TabsContent>
-                </Tabs>
-            </CardContent>
-        </Card>
+            {/* Only once this browser has a code to show. A reader who never made a
+            dynamic one should not be handed an empty panel about them. */}
+            {history.entries.length > 0 && (
+                <RecentLinksPanel
+                    entries={history.entries}
+                    onCopy={(value) => void handleCopy(value)}
+                    onForget={history.forget}
+                    onClear={history.clear}
+                />
+            )}
+        </div>
     );
 }
