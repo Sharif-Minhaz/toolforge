@@ -3,6 +3,12 @@ import { zipSync, type Zippable } from "fflate";
 import type { ArchiveEntry } from "../types";
 
 /**
+ * A path separator inside an entry name makes a folder, which is how a batch
+ * whose members each produce several files stays readable once unzipped.
+ */
+export const ARCHIVE_PATH_SEPARATOR = "/";
+
+/**
  * Packs the results into one ZIP.
  *
  * Stored, not deflated: every member is already a JPEG, WebP, AVIF or

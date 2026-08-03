@@ -1,11 +1,11 @@
 import {
     IconArrowRight,
-    IconArrowsMinimize,
     IconBinary,
     IconBolt,
     IconBraces,
     IconKey,
     IconQrcode,
+    IconTransform,
 } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
@@ -59,11 +59,11 @@ export async function QuickActions() {
             accent: "[--tool-accent:var(--brand-cyan)]",
         },
         {
-            key: "imageCompress",
-            href: "/tools/image-compressor?format=webp",
-            title: t("imageCompress.title"),
-            description: t("imageCompress.description"),
-            Icon: IconArrowsMinimize,
+            key: "faviconPack",
+            href: "/tools/image-converter?target=favicon",
+            title: t("faviconPack.title"),
+            description: t("faviconPack.description"),
+            Icon: IconTransform,
             accent: "[--tool-accent:var(--brand-emerald)]",
         },
     ];

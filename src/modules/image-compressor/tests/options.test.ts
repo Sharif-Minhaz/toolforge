@@ -14,14 +14,10 @@ import {
     isRetryableFailure,
     optionsSignature,
     qualityApplies,
-    resolveTargetSize,
 } from "@/modules/image-compressor/domain/options";
-import {
-    ENCODED_FORMATS,
-    type CompressionFailureReason,
-    type EncodedFormat,
-    type PixelSize,
-} from "@/modules/image-compressor/types";
+import type { CompressionFailureReason } from "@/modules/image-compressor/types";
+import { fitWithinEdge } from "@/modules/tools/domain/pixels";
+import { RASTER_FORMATS, type RasterFormat } from "@/modules/tools/types";
 
 describe("clampQuality", () => {
     test("holds values inside the range untouched", () => {
@@ -49,7 +45,7 @@ describe("clampQuality", () => {
 });
 
 describe("formatForSourceType", () => {
-    const cases: readonly (readonly [string, EncodedFormat])[] = [
+    const cases: readonly (readonly [string, RasterFormat])[] = [
         ["image/jpeg", "jpeg"],
         ["image/webp", "webp"],
         ["image/avif", "avif"],
@@ -74,7 +70,7 @@ describe("candidateFormats", () => {
     });
 
     test("an explicit format ignores the source entirely", () => {
-        for (const format of ENCODED_FORMATS) {
+        for (const format of RASTER_FORMATS) {
             expect(candidateFormats(format, "image/gif", false)).toEqual([format]);
         }
     });
@@ -111,7 +107,7 @@ describe("candidateFormats", () => {
 
 describe("quality applicability", () => {
     test("only PNG is lossless", () => {
-        for (const format of ENCODED_FORMATS) {
+        for (const format of RASTER_FORMATS) {
             expect(isLosslessFormat(format)).toBe(format === "png");
         }
     });
@@ -164,52 +160,10 @@ describe("isRetryableFailure", () => {
     });
 });
 
-describe("resolveTargetSize", () => {
-    const landscape: PixelSize = { width: 4000, height: 3000 };
-    const portrait: PixelSize = { width: 3000, height: 4000 };
-
-    test("keeps the picture when no cap is set", () => {
-        expect(resolveTargetSize(landscape, null)).toEqual(landscape);
-    });
-
-    test("never upscales", () => {
-        expect(resolveTargetSize({ width: 800, height: 600 }, 1920)).toEqual({
-            width: 800,
-            height: 600,
-        });
-    });
-
-    test("a cap equal to the longest edge is a no-op", () => {
-        expect(resolveTargetSize(landscape, 4000)).toEqual(landscape);
-    });
-
-    test("caps the longest edge whichever way round the picture is", () => {
-        expect(resolveTargetSize(landscape, 1920)).toEqual({ width: 1920, height: 1440 });
-        expect(resolveTargetSize(portrait, 1920)).toEqual({ width: 1440, height: 1920 });
-    });
-
-    test("keeps a square square", () => {
-        expect(resolveTargetSize({ width: 2000, height: 2000 }, 800)).toEqual({
-            width: 800,
-            height: 800,
-        });
-    });
-
-    test("floors the short edge at one pixel on an extreme panorama", () => {
-        const result = resolveTargetSize({ width: 20000, height: 3 }, 800);
-
-        expect(result.width).toBe(800);
-        expect(result.height).toBe(1);
-    });
-
-    test("treats a nonsensical cap as no cap", () => {
-        expect(resolveTargetSize(landscape, 0)).toEqual(landscape);
-        expect(resolveTargetSize(landscape, -100)).toEqual(landscape);
-    });
-
+describe("fitWithinEdge — this tool's presets", () => {
     test("every preset shrinks a 4K photograph to its own longest edge", () => {
         for (const edge of RESIZE_EDGES) {
-            const result = resolveTargetSize(landscape, edge);
+            const result = fitWithinEdge({ width: 4000, height: 3000 }, edge);
 
             expect(Math.max(result.width, result.height)).toBe(edge ?? 4000);
         }

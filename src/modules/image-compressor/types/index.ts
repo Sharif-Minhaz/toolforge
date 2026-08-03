@@ -1,3 +1,5 @@
+import type { PixelSize, RasterFormat } from "@/modules/tools/types";
+
 /**
  * What the reader picks in the format control.
  *
@@ -9,27 +11,6 @@
 export const OUTPUT_FORMATS = ["auto", "smallest", "webp", "avif", "jpeg", "png"] as const;
 
 export type OutputFormat = (typeof OUTPUT_FORMATS)[number];
-
-/** A format something can actually be written as, once `auto` has been resolved. */
-export const ENCODED_FORMATS = ["webp", "avif", "jpeg", "png"] as const;
-
-export type EncodedFormat = (typeof ENCODED_FORMATS)[number];
-
-/**
- * The types the tool accepts. Wider than what it writes: a GIF or a BMP is
- * decodable by every browser and worth re-encoding, but nothing here emits
- * either, so both resolve to PNG under `auto`.
- */
-export const SOURCE_IMAGE_TYPES = [
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-    "image/avif",
-    "image/gif",
-    "image/bmp",
-] as const;
-
-export type SourceImageType = (typeof SOURCE_IMAGE_TYPES)[number];
 
 export type CompressionOptions = {
     /** 10–100. Ignored by PNG, which this tool only ever writes losslessly. */
@@ -53,11 +34,6 @@ export type CompressionFailureReason =
     | "undecodable"
     | "encode_failed";
 
-export type PixelSize = {
-    readonly width: number;
-    readonly height: number;
-};
-
 /** What is known about a picked file before anything is encoded. */
 export type SourceFacts = PixelSize & {
     readonly name: string;
@@ -66,7 +42,7 @@ export type SourceFacts = PixelSize & {
 };
 
 export type CompressedImage = PixelSize & {
-    readonly format: EncodedFormat;
+    readonly format: RasterFormat;
     readonly bytes: number;
     readonly blob: Blob;
     /** True when a transparent source was flattened onto white to fit JPEG. */
@@ -87,10 +63,4 @@ export type SavingsSummary = {
     /** Negative when the batch grew, which a lossless re-encode can do. */
     readonly savedBytes: number;
     readonly percent: number;
-};
-
-/** One member of the ZIP the "download all" button builds. */
-export type ArchiveEntry = {
-    readonly name: string;
-    readonly bytes: Uint8Array;
 };

@@ -20,6 +20,7 @@ import {
     IconRegex,
     IconTextScan2,
     IconTextSize,
+    IconTransform,
     IconWorldWww,
     type IconProps,
 } from "@tabler/icons-react";
@@ -50,6 +51,7 @@ const ICONS: Record<ToolIconName, ComponentType<IconProps>> = {
     scan: IconTextScan2,
     eraser: IconEraser,
     compress: IconArrowsMinimize,
+    transform: IconTransform,
 };
 
 type ToolIconProps = {

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { flattenOntoMatte, isOpaque } from "@/modules/image-compressor/domain/pixels";
+import { fitWithinEdge, flattenOntoMatte, isOpaque } from "@/modules/tools/domain/pixels";
+import type { PixelSize } from "@/modules/tools/types";
 
 function pixels(...bytes: number[]) {
     return { data: Uint8ClampedArray.from(bytes) };
@@ -73,5 +74,49 @@ describe("flattenOntoMatte", () => {
 
     test("handles an empty buffer", () => {
         expect(flattenOntoMatte(pixels()).length).toBe(0);
+    });
+});
+
+describe("fitWithinEdge", () => {
+    const landscape: PixelSize = { width: 4000, height: 3000 };
+    const portrait: PixelSize = { width: 3000, height: 4000 };
+
+    test("keeps the picture when no cap is set", () => {
+        expect(fitWithinEdge(landscape, null)).toEqual(landscape);
+    });
+
+    test("never upscales", () => {
+        expect(fitWithinEdge({ width: 800, height: 600 }, 1920)).toEqual({
+            width: 800,
+            height: 600,
+        });
+    });
+
+    test("a cap equal to the longest edge is a no-op", () => {
+        expect(fitWithinEdge(landscape, 4000)).toEqual(landscape);
+    });
+
+    test("caps the longest edge whichever way round the picture is", () => {
+        expect(fitWithinEdge(landscape, 1920)).toEqual({ width: 1920, height: 1440 });
+        expect(fitWithinEdge(portrait, 1920)).toEqual({ width: 1440, height: 1920 });
+    });
+
+    test("keeps a square square", () => {
+        expect(fitWithinEdge({ width: 2000, height: 2000 }, 800)).toEqual({
+            width: 800,
+            height: 800,
+        });
+    });
+
+    test("floors the short edge at one pixel on an extreme panorama", () => {
+        const result = fitWithinEdge({ width: 20000, height: 3 }, 800);
+
+        expect(result.width).toBe(800);
+        expect(result.height).toBe(1);
+    });
+
+    test("treats a nonsensical cap as no cap", () => {
+        expect(fitWithinEdge(landscape, 0)).toEqual(landscape);
+        expect(fitWithinEdge(landscape, -100)).toEqual(landscape);
     });
 });

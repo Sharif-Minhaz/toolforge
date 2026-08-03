@@ -1,231 +1,15 @@
-import { loadImageElement } from "@/modules/tools/domain/image-element";
 import {
-    AVIF_ENCODE_OPTIONS,
-    JPEG_ENCODE_OPTIONS,
-    MAX_PIXELS,
-    PNG_OPTIMISE_OPTIONS,
-    RESIZE_OPTIONS,
-    WEBP_ENCODE_OPTIONS,
-} from "./constants";
-import { FORMAT_MIME_TYPES } from "./filenames";
-import { candidateFormats, resolveTargetSize } from "./options";
-import { flattenOntoMatte, isOpaque } from "./pixels";
-import type {
-    CompressedImage,
-    CompressionOptions,
-    CompressionOutcome,
-    EncodedFormat,
-} from "../types";
-
-/**
- * The browser glue this tool cannot do without, kept in one file so the
- * arithmetic around it stays pure and testable. Injectable for the same reason
- * `clipboard.ts` and `file-saver.ts` are.
- */
-export type CanvasFactory = (width: number, height: number) => HTMLCanvasElement;
-
-export const browserCanvasFactory: CanvasFactory = (width, height) => {
-    const canvas = document.createElement("canvas");
-
-    canvas.width = width;
-    canvas.height = height;
-
-    return canvas;
-};
-
-/**
- * Decodes a picked file to raw pixels.
- *
- * `createImageBitmap` with `imageOrientation: "from-image"` is what applies the
- * EXIF rotation a phone writes instead of rotating the pixels — without it, a
- * portrait photograph re-encodes sideways, because the tag is dropped along
- * with the rest of the metadata. The `<img>` fallback covers the browsers that
- * lack the option; they apply the orientation themselves when decoding into an
- * element, so both paths agree.
- */
-export async function decodeToPixels(
-    blob: Blob,
-    createCanvas: CanvasFactory = browserCanvasFactory,
-): Promise<ImageData | null> {
-    const source = await decodeToDrawable(blob);
-
-    if (source === null) {
-        return null;
-    }
-
-    try {
-        const width = "naturalWidth" in source ? source.naturalWidth : source.width;
-        const height = "naturalHeight" in source ? source.naturalHeight : source.height;
-
-        if (width <= 0 || height <= 0) {
-            return null;
-        }
-
-        const canvas = createCanvas(width, height);
-        const context = canvas.getContext("2d");
-
-        if (context === null) {
-            return null;
-        }
-
-        context.drawImage(source, 0, 0);
-
-        return context.getImageData(0, 0, width, height);
-    } finally {
-        if ("close" in source) {
-            source.close();
-        }
-    }
-}
-
-async function decodeToDrawable(blob: Blob): Promise<ImageBitmap | HTMLImageElement | null> {
-    if (typeof createImageBitmap === "function") {
-        try {
-            return await createImageBitmap(blob, { imageOrientation: "from-image" });
-        } catch {
-            // Falls through to the element path rather than failing the file:
-            // some browsers reject the option instead of ignoring it.
-        }
-    }
-
-    const url = URL.createObjectURL(blob);
-
-    try {
-        return await loadImageElement(url);
-    } finally {
-        URL.revokeObjectURL(url);
-    }
-}
-
-/** Lanczos3 in linear light — the reason not to hand a downscale to `drawImage`. */
-async function resizePixels(pixels: ImageData, width: number, height: number): Promise<ImageData> {
-    const { default: resize } = await import("@jsquash/resize");
-
-    return resize(pixels, { ...RESIZE_OPTIONS, width, height });
-}
-
-/**
- * AVIF and PNG reach past their package entry point. Both `@jsquash/avif/encode`
- * and `@jsquash/oxipng/optimise` pick between a single-threaded build and a
- * multithreaded one at runtime, and to do that they import **both** — so the
- * pthread build of libaom and the wasm-bindgen-rayon build of OxiPNG enter the
- * module graph even though neither can ever run here.
- *
- * That is not merely wasted bytes. Each of those two files is the only place in
- * the whole dependency that constructs a `new Worker`, and a worker constructor
- * makes the bundler open a nested compilation. Building this route through the
- * package entry points deadlocks `next build`: every process parks in `ep_poll`
- * with no CPU and no I/O, indefinitely.
- *
- * Neither multithreaded build would have been chosen anyway. `avif_enc_mt` is
- * skipped outside a worker context, and OxiPNG's parallel build is skipped
- * unless `self instanceof WorkerGlobalScope` — and this runs on the main
- * thread. Importing the single-threaded codec directly is therefore the same
- * encoder with the same output, minus a compilation that hangs.
- *
- * The instances are memoised because instantiating a WebAssembly module per
- * file would re-download and re-compile several megabytes for every image in
- * the batch.
- */
-let avifEncoder: Promise<AvifEncoderModule> | undefined;
-let oxipngCodec: Promise<OxipngCodec> | undefined;
-
-type AvifEncoderModule = Awaited<
-    ReturnType<Awaited<typeof import("@jsquash/avif/codec/enc/avif_enc.js")>["default"]>
->;
-
-type OxipngCodec = typeof import("@jsquash/oxipng/codec/pkg/squoosh_oxipng.js");
-
-function loadAvifEncoder(): Promise<AvifEncoderModule> {
-    avifEncoder ??= import("@jsquash/avif/codec/enc/avif_enc.js").then(
-        ({ default: moduleFactory }) => moduleFactory({ noInitialRun: true }),
-    );
-
-    return avifEncoder;
-}
-
-function loadOxipngCodec(): Promise<OxipngCodec> {
-    oxipngCodec ??= import("@jsquash/oxipng/codec/pkg/squoosh_oxipng.js").then(async (codec) => {
-        await codec.default();
-
-        return codec;
-    });
-
-    return oxipngCodec;
-}
-
-/**
- * Runs one encoder over one set of pixels.
- *
- * Each codec is imported on demand, so a reader who only ever writes WebP never
- * downloads libaom. PNG goes through OxiPNG's raw entry point, which builds the
- * file and optimises it in one pass — there is no separate PNG encoder here
- * because there is no reason to write a file only to rewrite it.
- */
-export async function encodePixels(
-    pixels: ImageData,
-    format: EncodedFormat,
-    quality: number,
-): Promise<ArrayBuffer> {
-    switch (format) {
-        case "jpeg": {
-            const { default: encode } = await import("@jsquash/jpeg/encode");
-
-            return encode(pixels, { ...JPEG_ENCODE_OPTIONS, quality });
-        }
-        case "webp": {
-            const { default: encode } = await import("@jsquash/webp/encode");
-
-            return encode(pixels, { ...WEBP_ENCODE_OPTIONS, quality });
-        }
-        case "avif": {
-            const [encoder, { defaultOptions }] = await Promise.all([
-                loadAvifEncoder(),
-                import("@jsquash/avif/meta.js"),
-            ]);
-
-            const encoded = encoder.encode(
-                // libaom reads the buffer directly rather than the clamped view.
-                new Uint8Array(pixels.data.buffer),
-                pixels.width,
-                pixels.height,
-                { ...defaultOptions, ...AVIF_ENCODE_OPTIONS, quality },
-            );
-
-            if (encoded === null) {
-                throw new Error("AVIF encoding failed");
-            }
-
-            return toArrayBuffer(encoded);
-        }
-        case "png": {
-            const codec = await loadOxipngCodec();
-
-            return toArrayBuffer(
-                codec.optimise_raw(
-                    pixels.data,
-                    pixels.width,
-                    pixels.height,
-                    PNG_OPTIMISE_OPTIONS.level,
-                    PNG_OPTIMISE_OPTIONS.interlace,
-                    PNG_OPTIMISE_OPTIONS.optimiseAlpha,
-                ),
-            );
-        }
-    }
-}
-
-/**
- * Copies a codec's view of wasm memory out into a buffer of its own.
- *
- * `.buffer` on what these two return is the module's entire linear memory, and
- * the next encode in the batch writes over it. The package entry points handed
- * back that live view; taking a slice is what makes a queued result still be
- * the image it was when it finished.
- */
-function toArrayBuffer(view: Uint8Array): ArrayBuffer {
-    return view.slice().buffer;
-}
+    browserCanvasFactory,
+    decodeToPixels,
+    encodePixels,
+    RASTER_FORMAT_MIME_TYPES,
+    resizePixels,
+    type CanvasFactory,
+} from "@/modules/tools/domain/image-codec";
+import { fitWithinEdge, flattenOntoMatte, isOpaque } from "@/modules/tools/domain/pixels";
+import { MAX_PIXELS } from "./constants";
+import { candidateFormats } from "./options";
+import type { CompressedImage, CompressionOptions, CompressionOutcome } from "../types";
 
 /**
  * Compresses one file end to end.
@@ -251,9 +35,9 @@ export async function compressImage(
         return { ok: false, reason: "too_many_pixels" };
     }
 
-    const target = resolveTargetSize(decoded, options.maxEdge);
+    const target = fitWithinEdge(decoded, options.maxEdge);
     const resized = target.width !== decoded.width || target.height !== decoded.height;
-    const pixels = resized ? await resizePixels(decoded, target.width, target.height) : decoded;
+    const pixels = resized ? await resizePixels(decoded, target) : decoded;
 
     const opaque = isOpaque(pixels);
     const candidates = candidateFormats(options.format, file.type, opaque);
@@ -290,7 +74,7 @@ export async function compressImage(
             bytes: encoded.byteLength,
             width: pixels.width,
             height: pixels.height,
-            blob: new Blob([encoded], { type: FORMAT_MIME_TYPES[format] }),
+            blob: new Blob([encoded], { type: RASTER_FORMAT_MIME_TYPES[format] }),
             flattened,
             resized,
         };

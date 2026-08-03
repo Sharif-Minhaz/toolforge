@@ -1,11 +1,6 @@
+import type { RasterFormat } from "@/modules/tools/types";
 import { MAX_QUALITY, MIN_QUALITY } from "./constants";
-import type {
-    CompressionFailureReason,
-    CompressionOptions,
-    EncodedFormat,
-    OutputFormat,
-    PixelSize,
-} from "../types";
+import type { CompressionFailureReason, CompressionOptions, OutputFormat } from "../types";
 
 export function clampQuality(value: number): number {
     if (!Number.isFinite(value)) {
@@ -23,7 +18,7 @@ export function clampQuality(value: number): number {
  * both land on PNG, which is at least lossless. Anything unrecognised does too,
  * because PNG is the only choice that cannot make a picture worse.
  */
-export function formatForSourceType(sourceType: string): EncodedFormat {
+export function formatForSourceType(sourceType: string): RasterFormat {
     switch (sourceType) {
         case "image/jpeg":
             return "jpeg";
@@ -36,7 +31,7 @@ export function formatForSourceType(sourceType: string): EncodedFormat {
     }
 }
 
-export function isLosslessFormat(format: EncodedFormat): boolean {
+export function isLosslessFormat(format: RasterFormat): boolean {
     return format === "png";
 }
 
@@ -55,7 +50,7 @@ export function candidateFormats(
     format: OutputFormat,
     sourceType: string,
     opaque: boolean,
-): readonly EncodedFormat[] {
+): readonly RasterFormat[] {
     if (format === "auto") {
         return [formatForSourceType(sourceType)];
     }
@@ -64,7 +59,7 @@ export function candidateFormats(
         return [format];
     }
 
-    const candidates: EncodedFormat[] = ["webp", "avif"];
+    const candidates: RasterFormat[] = ["webp", "avif"];
 
     if (opaque) {
         candidates.push("jpeg");
@@ -110,26 +105,4 @@ export function optionsSignature(options: CompressionOptions): string {
  */
 export function isRetryableFailure(reason: CompressionFailureReason): boolean {
     return reason === "encode_failed";
-}
-
-/**
- * Scales a size down so its longest edge is at most `maxEdge`.
- *
- * Never upscales — a cap larger than the picture returns the picture. The short
- * edge is rounded and floored at one pixel, so an extreme panorama still yields
- * a decodable image rather than a zero-height one.
- */
-export function resolveTargetSize(size: PixelSize, maxEdge: number | null): PixelSize {
-    const longest = Math.max(size.width, size.height);
-
-    if (maxEdge === null || maxEdge <= 0 || longest <= maxEdge) {
-        return size;
-    }
-
-    const scale = maxEdge / longest;
-
-    return {
-        width: Math.max(1, Math.round(size.width * scale)),
-        height: Math.max(1, Math.round(size.height * scale)),
-    };
 }

@@ -262,6 +262,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.imageCompressor.errors,
             toast: messages.imageCompressor.toast,
         },
+        imageConverter: {
+            workbench: messages.imageConverter.workbench,
+            targets: messages.imageConverter.targets,
+            backgrounds: messages.imageConverter.backgrounds,
+            errors: messages.imageConverter.errors,
+            toast: messages.imageConverter.toast,
+        },
         aiTextDetector: {
             workbench: messages.aiTextDetector.workbench,
             labels: messages.aiTextDetector.labels,

@@ -1,4 +1,4 @@
-import { JPEG_MATTE_RGB } from "./constants";
+import type { MatteColor, PixelSize } from "../types";
 
 /**
  * The part of `ImageData` these functions read. A plain shape rather than the
@@ -8,18 +8,17 @@ export type RgbaPixels = {
     readonly data: Uint8ClampedArray;
 };
 
-export type MatteColor = {
-    readonly r: number;
-    readonly g: number;
-    readonly b: number;
-};
+/** What a format with no alpha channel gets flattened onto unless told otherwise. */
+export const WHITE_MATTE: MatteColor = { r: 255, g: 255, b: 255 };
+
+export const BLACK_MATTE: MatteColor = { r: 0, g: 0, b: 0 };
 
 /**
  * True when every pixel is fully opaque.
  *
  * Scanned in full rather than sampled: one translucent pixel is the difference
  * between a JPEG that is correct and a JPEG with a black square in it, and the
- * answer also decides whether JPEG competes at all under `smallest`.
+ * answer also decides whether JPEG is worth encoding at all.
  */
 export function isOpaque(pixels: RgbaPixels): boolean {
     const { data } = pixels;
@@ -44,7 +43,7 @@ export function isOpaque(pixels: RgbaPixels): boolean {
  */
 export function flattenOntoMatte(
     pixels: RgbaPixels,
-    matte: MatteColor = JPEG_MATTE_RGB,
+    matte: MatteColor = WHITE_MATTE,
 ): Uint8ClampedArray<ArrayBuffer> {
     const source = pixels.data;
     const output = new Uint8ClampedArray(source.length);
@@ -60,4 +59,26 @@ export function flattenOntoMatte(
     }
 
     return output;
+}
+
+/**
+ * Scales a size down so its longest edge is at most `maxEdge`.
+ *
+ * Never upscales — a cap larger than the picture returns the picture. The short
+ * edge is rounded and floored at one pixel, so an extreme panorama still yields
+ * a decodable image rather than a zero-height one.
+ */
+export function fitWithinEdge(size: PixelSize, maxEdge: number | null): PixelSize {
+    const longest = Math.max(size.width, size.height);
+
+    if (maxEdge === null || maxEdge <= 0 || longest <= maxEdge) {
+        return size;
+    }
+
+    const scale = maxEdge / longest;
+
+    return {
+        width: Math.max(1, Math.round(size.width * scale)),
+        height: Math.max(1, Math.round(size.height * scale)),
+    };
 }

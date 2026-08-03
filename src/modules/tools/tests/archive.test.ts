@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { buildZipArchive } from "@/modules/image-compressor/domain/archive";
+import { buildZipArchive } from "@/modules/tools/domain/archive";
 
 const STAMP = new Date("2026-08-03T10:15:00.000Z");
 

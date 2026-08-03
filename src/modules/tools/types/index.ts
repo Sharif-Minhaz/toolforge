@@ -34,6 +34,7 @@ export const TOOL_IDS = [
     "slug",
     "diff",
     "image-compressor",
+    "image-converter",
     "ai-image-detector",
     "ai-text-detector",
     "watermark-remover",
@@ -72,7 +73,8 @@ export type ToolIconName =
     | "photo"
     | "scan"
     | "eraser"
-    | "compress";
+    | "compress"
+    | "transform";
 
 export type Tool = {
     readonly id: ToolId;
@@ -142,6 +144,49 @@ export type EncodeBytesResult =
     { readonly ok: true; readonly bytes: Uint8Array } | TextCodecFailure;
 
 export type DecodeTextResult = { readonly ok: true; readonly text: string } | TextCodecFailure;
+
+/**
+ * The four still-image formats this site can write, shared by every tool that
+ * hands pixels to a codec. Ordered lossy-first, which is the order the format
+ * pickers read in.
+ */
+export const RASTER_FORMATS = ["webp", "avif", "jpeg", "png"] as const;
+
+export type RasterFormat = (typeof RASTER_FORMATS)[number];
+
+/**
+ * The image types `tools/domain/image-codec.ts` can decode. Wider than
+ * `RASTER_FORMATS`: a GIF or a BMP is readable by every browser and worth
+ * re-encoding, but nothing here writes either.
+ */
+export const DECODABLE_IMAGE_TYPES = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/avif",
+    "image/gif",
+    "image/bmp",
+] as const;
+
+export type DecodableImageType = (typeof DECODABLE_IMAGE_TYPES)[number];
+
+export type PixelSize = {
+    readonly width: number;
+    readonly height: number;
+};
+
+/** A flattening colour for pixels on their way into a format with no alpha. */
+export type MatteColor = {
+    readonly r: number;
+    readonly g: number;
+    readonly b: number;
+};
+
+/** One member of a ZIP built by `tools/domain/archive.ts`. */
+export type ArchiveEntry = {
+    readonly name: string;
+    readonly bytes: Uint8Array;
+};
 
 export const BYTE_UNITS = ["b", "kb", "mb"] as const;
 

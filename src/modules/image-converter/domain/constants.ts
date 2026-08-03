@@ -1,15 +1,16 @@
 import { DECODABLE_IMAGE_TYPES, type DecodableImageType } from "@/modules/tools/types";
-import type { CompressionOptions } from "../types";
+import type { ConversionOptions, IconSize } from "../types";
 
 export const MIN_QUALITY = 10;
 export const MAX_QUALITY = 100;
 
 /**
- * MozJPEG's own default, and close to where libwebp stops paying for itself.
- * High enough that a photograph survives a side-by-side comparison, low enough
- * that the first result is a real saving rather than a rounding error.
+ * Higher than the compressor's 75, because the jobs are different. Someone
+ * compressing has asked for a smaller file; someone converting has asked for a
+ * different format and expects the picture to survive the trip, including when
+ * the source was already lossy and the re-encode compounds with it.
  */
-export const DEFAULT_QUALITY = 75;
+export const DEFAULT_QUALITY = 80;
 
 export const MAX_FILES = 40;
 
@@ -34,12 +35,17 @@ export const IMAGE_ACCEPT_ATTRIBUTE = DECODABLE_IMAGE_TYPES.join(",");
  * Longest-edge presets, largest first. `null` keeps the original size and is
  * rendered as its own entry rather than as a magic number.
  */
-export const RESIZE_EDGES = [null, 3840, 2560, 1920, 1280, 800] as const;
+export const RESIZE_EDGES = [null, 3840, 2560, 1920, 1280, 800, 512] as const;
 
 export type ResizeEdge = (typeof RESIZE_EDGES)[number];
 
-export const DEFAULT_OPTIONS: CompressionOptions = {
+/** The three sizes Windows and every browser actually read out of an `.ico`. */
+export const DEFAULT_ICON_SIZES: readonly IconSize[] = [16, 32, 48];
+
+export const DEFAULT_OPTIONS: ConversionOptions = {
+    target: "webp",
     quality: DEFAULT_QUALITY,
-    format: "auto",
     maxEdge: null,
+    background: "transparent",
+    iconSizes: DEFAULT_ICON_SIZES,
 };

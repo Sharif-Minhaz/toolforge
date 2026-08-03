@@ -413,11 +413,20 @@ renders a heading with no words in it.
 
 Existing feature modules: `tools` (catalog, search, clipboard, file saving,
 plus the shared time-zone and calendar layer: `domain/zone.ts`,
-`domain/time-zones.ts`, `domain/calendar.ts`, `components/zone-picker.tsx`, and
-the injectable random source `domain/random.ts`), `short-links` (every
-re-pointable link on the site — see below), `image-compressor` (WebAssembly
-codecs, a batch queue and the shared ZIP writer), `uuid`, `overview`,
-`preferences`, `seo`, `observability`.
+`domain/time-zones.ts`, `domain/calendar.ts`, `components/zone-picker.tsx`, the
+injectable random source `domain/random.ts`, and the shared image layer:
+`domain/image-codec.ts`, `domain/pixels.ts`, `domain/archive.ts`,
+`domain/filenames.ts`), `short-links` (every re-pointable link on the site — see
+below), `image-compressor` (a batch queue and a smallest-of-four search),
+`image-converter` (a named target per batch, plus the ICO container and the
+favicon pack), `uuid`, `overview`, `preferences`, `seo`, `observability`.
+
+The two image tools are the worked example of the "lift it the moment a second
+tool needs it" rule. Everything they share — decoding, the four tuned encoder
+profiles, Lanczos3 resizing, alpha flattening, the ZIP writer, filename
+cleaning — lives in `tools/domain/`. What stays in each module is the part that
+differs: the compressor searches for the smallest result, the converter writes
+the target you named.
 
 Rules that keep this honest:
 
@@ -661,6 +670,23 @@ Two things that made the failure legible once it appeared:
   corruption; the levels that failed were simply the ones with no redundancy
   left to spend on it.
 
+The Image Converter's `.ico` is the third instance, and it names the cheapest
+form of the rule: **the independent implementation can be three programs already
+on the machine.** Every size combination is written out and read back by
+`file(1)`, ImageMagick's `identify` and Pillow — the last of which seeks to each
+offset the directory records and decodes what it finds there, which is precisely
+the round trip a wrong offset or length would break. A structural assertion
+written against your own writer cannot do that.
+
+It also cost two rounds of chasing assertions that were wrong while the file was
+right, which is its own lesson: **when an independent reader disagrees with you,
+find out what it actually said before changing the code.** `identify` labels an
+ICO frame by the codec inside it (`PNG 16x16`), not by the container; `file(1)`
+describes only the first couple of directory entries and stops; and Pillow
+reports a PNG that OxiPNG losslessly reduced from RGBA to RGB-plus-`tRNS` as
+mode `RGB`, which looks exactly like lost transparency until you convert and read
+the alpha extrema. Three "failures", zero defects.
+
 Reach for the same shape whenever a tool emits a format somebody else has to
 read: encode, decode with a different implementation, assert you got back what
 you put in.
@@ -689,14 +715,18 @@ sides end differently has to be printed as a removal and an addition instead.
 `canvas.toBlob` writes a JPEG. It is also the browser's default writer with one
 knob, no way to ask for trellis quantisation, progressive scans, sharp YUV, or
 anything else a real encoder exposes — and `drawImage` at a smaller size is
-whatever the GPU driver does, which on a large reduction is a box filter. The
-Image Compressor is the shape to copy when the platform API is present but the
-output is the product: reach for the actual codec, compiled to WebAssembly.
+whatever the GPU driver does, which on a large reduction is a box filter.
+`tools/domain/image-codec.ts` is the shape to copy when the platform API is
+present but the output is the product: reach for the actual codec, compiled to
+WebAssembly. It lives in `tools/` rather than in either image tool because both
+of them drive the same four encoders, and two copies of the trap notes below is
+one copy too many.
 
 - **Import each codec on demand, inside the function that uses it.**
   `await import("@jsquash/avif/encode")` means a reader who only ever writes
-  WebP never downloads libaom. A static import at the top of `domain/codec.ts`
-  would pull every encoder into the island's first chunk.
+  WebP never downloads libaom. A static import at the top of
+  `tools/domain/image-codec.ts` would pull every encoder into the island's
+  first chunk.
 - **The wasm is resolved by the bundler, not by you.** Every jSquash module
   locates its binary with `new URL("x.wasm", import.meta.url)`, which webpack
   and Turbopack both understand as an asset reference. Copying `.wasm` files
@@ -728,13 +758,14 @@ output is the product: reach for the actual codec, compiled to WebAssembly.
   view; `view.slice().buffer` is what makes a queued result still be the image
   it was when it finished.
 - **`bun test` cannot reach any of it** — the codecs need `ImageData` and fetch
-  their binary by URL. Test the pure layer (`options`, `pixels`, `savings`,
-  `filenames`, `archive`) and verify the codecs in a throwaway Node script that
-  compiles the `.wasm` itself and passes it to each package's `init(module)`,
-  then check the output with something that is not you: `file`, ImageMagick's
-  `identify`, Pillow. That is the same rule as the QR encoder, applied to four
-  formats at once — and it is what proves an option profile is *accepted*, not
-  just plausible.
+  their binary by URL. Test the pure layer (`tools/domain/pixels.ts`,
+  `tools/domain/filenames.ts`, `tools/domain/archive.ts`, and each tool's own
+  `options`/`targets`, `savings`, `ico`, `icon-layout`, `favicon`) and verify the
+  codecs in a throwaway Node script that compiles the `.wasm` itself and passes
+  it to each package's `init(module)`, then check the output with something that
+  is not you: `file`, ImageMagick's `identify`, Pillow. That is the same rule as
+  the QR encoder, applied to four formats at once — and it is what proves an
+  option profile is *accepted*, not just plausible.
 - **Say what the re-encode destroys.** Decoding to pixels drops EXIF, GPS and
   the colour profile, and *applies* the orientation tag rather than dropping it
   — skip that last step and every phone photograph comes back sideways. All
@@ -745,12 +776,26 @@ Two smaller rules the batch queue settled:
 - **Staleness is derived, not stored.** `optionsSignature(options)` is written
   onto a row when its result is produced; a row whose signature no longer
   matches the panel is dimmed and the button says "compress again". Nothing is
-  silently re-encoded, and there is no `isStale` flag to keep in step.
+  silently re-encoded, and there is no `isStale` flag to keep in step. Build
+  that signature from **only the options the current target actually reads** —
+  the converter's version appends the quality, the size cap and the icon sizes
+  each behind its own `…Applies(target)` predicate, so nudging the quality
+  slider while PNG is selected cannot dim a row it could not have changed. The
+  same predicates disable the control, so there is one answer to "does this
+  setting apply", not two that can drift.
 - **Work the queue sequentially and say which file you are on.** Running every
   encode at once holds every decoded image in memory simultaneously, which is
   how a tab dies halfway through a batch — four bytes a pixel is the real cost,
   not the file size. Sequential work is also the only way the progress count is
   true.
+- **A row may produce more than one file, and the ZIP layout has to say so.**
+  The favicon pack is seven files from one picture. `buildArchivePaths` is the
+  whole rule: a row with one output stays at the archive root, a row with
+  several gets a folder named after its source, and the flat list then goes
+  through `uniqueFilenames`. Flatten it instead and five packs arrive as
+  `favicon.ico` through `favicon-5.ico`, which tells nobody which picture each
+  came from. Return the pack as its members, never as a nested ZIP — the row's
+  own download button is what packs a single reader's copy.
 
 # Redirecting, and What a Route Handler Is For
 

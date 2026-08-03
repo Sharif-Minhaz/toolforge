@@ -1,10 +1,10 @@
 "use client";
 
 import {
-    IconArrowsMinimize,
     IconFileZip,
     IconLoader2,
     IconPhotoPlus,
+    IconTransform,
     IconTrash,
 } from "@tabler/icons-react";
 import { useFormatter, useTranslations } from "next-intl";
@@ -17,13 +17,14 @@ import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
+import { IconCopyButton } from "@/modules/tools/components/copy-button";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
 import { buildZipArchive } from "@/modules/tools/domain/archive";
-import { uniqueFilenames } from "@/modules/tools/domain/filenames";
+import { copyText } from "@/modules/tools/domain/clipboard";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
 import { checkImageFile } from "@/modules/tools/domain/image-file";
-import { compressImage } from "../domain/codec";
 import {
     IMAGE_ACCEPT_ATTRIBUTE,
     IMAGE_FILE_LIMITS,
@@ -34,24 +35,30 @@ import {
     MIN_QUALITY,
     RESIZE_EDGES,
 } from "../domain/constants";
-import { buildArchiveFilename, buildOutputFilename } from "../domain/filenames";
+import { convertImage } from "../domain/convert";
+import { buildFaviconHeadHtml, FAVICON_ICO_SIZES } from "../domain/favicon";
+import { buildArchiveFilename, buildPackFilename } from "../domain/filenames";
+import { buildArchivePaths } from "../domain/outputs";
 import {
+    backgroundValues,
     clampQuality,
-    formatForSourceType,
-    isLosslessFormat,
+    iconSizesApply,
     isRetryableFailure,
     optionsSignature,
     qualityApplies,
-} from "../domain/options";
-import { summariseSavings } from "../domain/savings";
+    resizeApplies,
+} from "../domain/targets";
+import { IconSizeMenu } from "./icon-size-menu";
+import { ConversionRow } from "./conversion-row";
 import {
-    OUTPUT_FORMATS,
-    type CompressedImage,
-    type CompressionFailureReason,
-    type CompressionOptions,
-    type OutputFormat,
+    CONVERSION_TARGETS,
+    type BackgroundChoice,
+    type ConversionFailureReason,
+    type ConversionOptions,
+    type ConversionTarget,
+    type ConvertedImage,
+    type IconSize,
 } from "../types";
-import { CompressionRow } from "./compression-row";
 
 /** One picked file and everything the queue knows about it. */
 type QueueItem = {
@@ -59,8 +66,8 @@ type QueueItem = {
     readonly file: File;
     readonly previewUrl: string;
     readonly status: "queued" | "working" | "done" | "failed";
-    readonly result: CompressedImage | null;
-    readonly reason: CompressionFailureReason | null;
+    readonly result: ConvertedImage | null;
+    readonly reason: ConversionFailureReason | null;
     /** The settings this result was produced under, or `null` if there is none. */
     readonly signature: string | null;
 };
@@ -70,6 +77,8 @@ const ORIGINAL_EDGE = "original";
 
 const RESIZE_VALUES = RESIZE_EDGES.map((edge) => (edge === null ? ORIGINAL_EDGE : String(edge)));
 
+const SNIPPET_KEY = "favicon-head";
+
 function toMaxEdge(value: string): number | null {
     return value === ORIGINAL_EDGE ? null : Number(value);
 }
@@ -78,25 +87,27 @@ function fromMaxEdge(maxEdge: number | null): string {
     return maxEdge === null ? ORIGINAL_EDGE : String(maxEdge);
 }
 
-type ImageCompressorWorkbenchProps = {
+type ImageConverterWorkbenchProps = {
     /** Parsed from the search params on the server, so a shared link opens ready. */
-    initialOptions: CompressionOptions;
+    initialOptions: ConversionOptions;
 };
 
-export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWorkbenchProps) {
-    const t = useTranslations("imageCompressor.workbench");
-    const tFormats = useTranslations("imageCompressor.formats");
-    const tErrors = useTranslations("imageCompressor.errors");
-    const tToast = useTranslations("imageCompressor.toast");
+export function ImageConverterWorkbench({ initialOptions }: ImageConverterWorkbenchProps) {
+    const t = useTranslations("imageConverter.workbench");
+    const tTargets = useTranslations("imageConverter.targets");
+    const tBackgrounds = useTranslations("imageConverter.backgrounds");
+    const tErrors = useTranslations("imageConverter.errors");
+    const tToast = useTranslations("imageConverter.toast");
     const format = useFormatter();
     const byteLabel = useByteLabel();
+    const [copied, markCopied] = useCopyFeedback<typeof SNIPPET_KEY>();
 
     const inputId = useId();
     const hintId = useId();
     const qualityId = useId();
 
     const [items, setItems] = useState<readonly QueueItem[]>([]);
-    const [options, setOptions] = useState<CompressionOptions>(initialOptions);
+    const [options, setOptions] = useState<ConversionOptions>(initialOptions);
     const [dragging, setDragging] = useState(false);
     const [working, setWorking] = useState(false);
     const [progress, setProgress] = useState({ done: 0, total: 0 });
@@ -123,24 +134,25 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
     }, []);
 
     const signature = optionsSignature(options);
-    const results = items.flatMap((item) =>
-        item.result === null
-            ? []
-            : [{ originalBytes: item.file.size, outputBytes: item.result.bytes }],
+    const finished = items.filter((item) => item.result !== null);
+    const outputCount = finished.reduce(
+        (total, item) => total + (item.result?.files.length ?? 0),
+        0,
     );
-    const summary = summariseSavings(results);
     const stale = items.some((item) => item.result !== null && item.signature !== signature);
     const failedCount = items.filter((item) => item.status === "failed").length;
     const pendingCount = items.filter((item) => needsWork(item, signature)).length;
-    const canCompress = !working && pendingCount > 0;
-    // `auto` keeps a PNG a PNG, so the slider is live for the batch but dead for
-    // part of it — worth saying, and different from PNG being forced on everything.
-    const losslessOnly = !qualityApplies(options.format);
-    const mixedLossless =
-        options.format === "auto" &&
-        items.some((item) => isLosslessFormat(formatForSourceType(item.file.type)));
+    const canConvert = !working && pendingCount > 0;
 
-    function describeFailure(reason: CompressionFailureReason): string {
+    const backgrounds = backgroundValues(options.target);
+    const qualityLive = qualityApplies(options.target);
+    const resizeLive = resizeApplies(options.target);
+    const sizesLive = iconSizesApply(options.target);
+    // The pack's sizes are fixed, so the disabled control shows what will
+    // actually be written rather than whatever was last chosen for an ICO.
+    const shownSizes = options.target === "favicon" ? FAVICON_ICO_SIZES : options.iconSizes;
+
+    function describeFailure(reason: ConversionFailureReason): string {
         switch (reason) {
             case "empty_file":
                 return tErrors("empty_file");
@@ -184,27 +196,41 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
             return { tone: "idle", message: t("statusReady", { count: pendingCount }) };
         }
 
-        if (failedCount > 0 && summary.count === 0) {
+        if (failedCount > 0 && outputCount === 0) {
             return { tone: "error", message: t("statusFailed", { count: failedCount }) };
         }
 
-        if (summary.count === 0) {
+        if (outputCount === 0) {
             return { tone: "idle", message: t("statusIdle") };
         }
 
-        return summary.percent > 0
-            ? {
-                  tone: "success",
-                  message: t("statusDone", { percent: format.number(summary.percent) }),
-              }
-            : { tone: "warning", message: t("statusDoneNoSaving") };
+        return { tone: "success", message: t("statusDone", { count: outputCount }) };
     }
 
-    function patchOptions(patch: Partial<CompressionOptions>) {
-        setOptions((current) => ({ ...current, ...patch }));
+    function patchOptions(patch: Partial<ConversionOptions>) {
+        setOptions((current) => {
+            const next = { ...current, ...patch };
+            // Switching to JPG removes `transparent` from the list, so a value
+            // that is no longer offered has to move rather than sit unrendered.
+            const allowed = backgroundValues(next.target);
+
+            return allowed.includes(next.background) ? next : { ...next, background: allowed[0] };
+        });
     }
 
-    async function run(queue: readonly QueueItem[], activeOptions: CompressionOptions) {
+    function toggleIconSize(size: IconSize) {
+        setOptions((current) => {
+            const next = current.iconSizes.includes(size)
+                ? current.iconSizes.filter((entry) => entry !== size)
+                : [...current.iconSizes, size];
+
+            // The menu disables the last checked item, so this is belt and
+            // braces rather than the path a click can take.
+            return next.length === 0 ? current : { ...current, iconSizes: next };
+        });
+    }
+
+    async function run(queue: readonly QueueItem[], activeOptions: ConversionOptions) {
         if (running.current) {
             return;
         }
@@ -220,7 +246,7 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
         setWorking(true);
         setProgress({ done: 0, total: pending.length });
 
-        let compressed = 0;
+        let converted = 0;
 
         try {
             for (const [index, item] of pending.entries()) {
@@ -229,9 +255,9 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
 
                 // Caught per file rather than per run: one picture the decoder
                 // chokes on should not abandon the twenty queued behind it.
-                const outcome = await compressImage(item.file, activeOptions).catch(
+                const outcome = await convertImage(item.file, activeOptions).catch(
                     (caught: unknown) => {
-                        logEvent("error", "image_compressor.compress_threw", {
+                        logEvent("error", "image_converter.convert_threw", {
                             error: describeError(caught),
                         });
 
@@ -240,7 +266,7 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
                 );
 
                 if (outcome.ok) {
-                    compressed += 1;
+                    converted += 1;
                     setItems((current) =>
                         replaceItem(current, item.id, {
                             status: "done",
@@ -250,9 +276,7 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
                         }),
                     );
                 } else {
-                    logEvent("warn", "image_compressor.compress_failed", {
-                        reason: outcome.reason,
-                    });
+                    logEvent("warn", "image_converter.convert_failed", { reason: outcome.reason });
                     setItems((current) =>
                         replaceItem(current, item.id, {
                             status: "failed",
@@ -264,8 +288,8 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
                 }
             }
 
-            if (compressed > 0) {
-                toast.success(tToast("compressed", { count: compressed }));
+            if (converted > 0) {
+                toast.success(tToast("converted", { count: converted }));
             }
         } finally {
             running.current = false;
@@ -351,43 +375,68 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
         setItems([]);
     }
 
-    function handleDownload(id: string) {
+    /** One row: a lone file saves as itself, a pack is zipped on the way out. */
+    async function handleDownload(id: string) {
         const item = items.find((candidate) => candidate.id === id);
+        const result = item?.result;
 
-        if (item?.result == null) {
+        if (item === undefined || result == null || result.files.length === 0) {
             return;
         }
 
-        const filename = buildOutputFilename(item.file.name, item.result.format);
-
         try {
-            saveBlob({ filename, blob: item.result.blob });
+            if (result.files.length === 1) {
+                const [only] = result.files;
+
+                saveBlob({ filename: only.name, blob: only.blob });
+                toast.success(tToast("downloaded", { filename: only.name }));
+
+                return;
+            }
+
+            const filename = buildPackFilename(item.file.name);
+            const stamp = new Date();
+            const entries = await Promise.all(
+                result.files.map(async (entry) => ({
+                    name: entry.name,
+                    bytes: new Uint8Array(await entry.blob.arrayBuffer()),
+                })),
+            );
+
+            saveBlob({
+                filename,
+                blob: new Blob([buildZipArchive(entries, stamp)], { type: "application/zip" }),
+            });
             toast.success(tToast("downloaded", { filename }));
         } catch (caught) {
-            logEvent("error", "image_compressor.download_failed", { error: describeError(caught) });
+            logEvent("error", "image_converter.download_failed", { error: describeError(caught) });
             toast.error(tToast("downloadFailed"));
         }
     }
 
     async function handleDownloadAll() {
-        const finished = items.flatMap((item) =>
-            item.result === null ? [] : [{ name: item.file.name, result: item.result }],
+        const rows = items.flatMap((item) =>
+            item.result === null ? [] : [{ sourceName: item.file.name, files: item.result.files }],
         );
 
-        if (finished.length === 0) {
+        if (rows.length === 0) {
             return;
         }
 
         setPacking(true);
 
         try {
-            const names = uniqueFilenames(
-                finished.map((entry) => buildOutputFilename(entry.name, entry.result.format)),
+            const paths = buildArchivePaths(
+                rows.map((row) => ({
+                    sourceName: row.sourceName,
+                    fileNames: row.files.map((file) => file.name),
+                })),
             );
+            const blobs = rows.flatMap((row) => row.files.map((file) => file.blob));
             const entries = await Promise.all(
-                finished.map(async (entry, index) => ({
-                    name: names[index],
-                    bytes: new Uint8Array(await entry.result.blob.arrayBuffer()),
+                blobs.map(async (blob, index) => ({
+                    name: paths[index],
+                    bytes: new Uint8Array(await blob.arrayBuffer()),
                 })),
             );
 
@@ -400,11 +449,25 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
             });
             toast.success(tToast("downloaded", { filename }));
         } catch (caught) {
-            logEvent("error", "image_compressor.archive_failed", { error: describeError(caught) });
+            logEvent("error", "image_converter.archive_failed", { error: describeError(caught) });
             toast.error(tToast("archiveFailed"));
         } finally {
             setPacking(false);
         }
+    }
+
+    async function handleCopySnippet() {
+        const result = await copyText(buildFaviconHeadHtml());
+
+        if (result.ok) {
+            markCopied(SNIPPET_KEY);
+            toast.success(tToast("snippetCopied"));
+
+            return;
+        }
+
+        logEvent("error", "image_converter.snippet_copy_failed", { reason: result.reason });
+        toast.error(tToast("snippetCopyFailed"));
     }
 
     const status = describeStatus();
@@ -472,6 +535,18 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
                 </div>
 
                 <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <OptionSelect<ConversionTarget>
+                        label={t("targetLabel")}
+                        hint={tTargets(`${options.target}Hint`)}
+                        value={options.target}
+                        values={CONVERSION_TARGETS}
+                        disabled={working}
+                        items={Object.fromEntries(
+                            CONVERSION_TARGETS.map((value) => [value, tTargets(value)]),
+                        )}
+                        onChange={(next) => patchOptions({ target: next })}
+                    />
+
                     <div className="flex min-w-0 flex-col gap-1.5">
                         <span
                             id={qualityId}
@@ -485,13 +560,15 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
                                 value={options.quality}
                                 min={MIN_QUALITY}
                                 max={MAX_QUALITY}
-                                disabled={working || losslessOnly}
+                                disabled={working || !qualityLive}
                                 onValueChange={(next) =>
                                     patchOptions({
                                         quality: clampQuality(
                                             Array.isArray(next)
                                                 ? (next[0] ?? options.quality)
                                                 : next,
+                                            MIN_QUALITY,
+                                            MAX_QUALITY,
                                         ),
                                     })
                                 }
@@ -502,32 +579,36 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
                             </span>
                         </div>
                         <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                            {losslessOnly
-                                ? t("qualityHintLossless")
-                                : mixedLossless
-                                  ? t("qualityHintMixed")
-                                  : t("qualityHint", { value: options.quality })}
+                            {qualityLive
+                                ? t("qualityHint", { value: options.quality })
+                                : options.target === "png"
+                                  ? t("qualityHintLossless")
+                                  : t("qualityHintIcon")}
                         </p>
                     </div>
 
-                    <OptionSelect<OutputFormat>
-                        label={t("formatLabel")}
-                        hint={tFormats(`${options.format}Hint`)}
-                        value={options.format}
-                        values={OUTPUT_FORMATS}
+                    <OptionSelect<BackgroundChoice>
+                        label={t("backgroundLabel")}
+                        hint={
+                            options.target === "jpeg"
+                                ? t("backgroundHintJpeg")
+                                : t("backgroundHint")
+                        }
+                        value={options.background}
+                        values={backgrounds}
                         disabled={working}
                         items={Object.fromEntries(
-                            OUTPUT_FORMATS.map((value) => [value, tFormats(value)]),
+                            backgrounds.map((value) => [value, tBackgrounds(value)]),
                         )}
-                        onChange={(next) => patchOptions({ format: next })}
+                        onChange={(next) => patchOptions({ background: next })}
                     />
 
                     <OptionSelect<string>
                         label={t("resizeLabel")}
-                        hint={t("resizeHint")}
+                        hint={resizeLive ? t("resizeHint") : t("resizeHintIcon")}
                         value={fromMaxEdge(options.maxEdge)}
                         values={RESIZE_VALUES}
-                        disabled={working}
+                        disabled={working || !resizeLive}
                         items={Object.fromEntries(
                             RESIZE_VALUES.map((value) => [
                                 value,
@@ -538,7 +619,37 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
                         )}
                         onChange={(next) => patchOptions({ maxEdge: toMaxEdge(next) })}
                     />
+
+                    <IconSizeMenu
+                        value={shownSizes}
+                        disabled={working || !sizesLive}
+                        hint={sizesLive ? t("sizesHint") : t("sizesHintFixed")}
+                        onToggle={toggleIconSize}
+                    />
                 </div>
+
+                {options.target === "favicon" && (
+                    <div className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-2 rounded-xl px-3 py-2.5 ring-1 ring-inset">
+                        <div className="flex min-w-0 items-start justify-between gap-2">
+                            <span className="flex min-w-0 flex-col gap-0.5">
+                                <span className="text-[0.8125rem] leading-[1.3] font-medium">
+                                    {t("snippetTitle")}
+                                </span>
+                                <span className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                                    {t("snippetDescription")}
+                                </span>
+                            </span>
+                            <IconCopyButton
+                                copied={copied === SNIPPET_KEY}
+                                aria-label={t("snippetCopy")}
+                                onClick={() => void handleCopySnippet()}
+                            />
+                        </div>
+                        <pre className="min-w-0 overflow-x-auto font-mono text-[0.6875rem] leading-[1.6]">
+                            <code>{buildFaviconHeadHtml().trimEnd()}</code>
+                        </pre>
+                    </div>
+                )}
 
                 {working && (
                     <div
@@ -564,17 +675,13 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
                     <Button
                         onClick={() => void run(items, options)}
-                        disabled={!canCompress}
+                        disabled={!canConvert}
                         className="h-9 px-3.5"
                     >
                         {working ? (
                             <IconLoader2 className="size-4 animate-spin" aria-hidden="true" />
                         ) : (
-                            <IconArrowsMinimize
-                                className="size-4"
-                                stroke={1.9}
-                                aria-hidden="true"
-                            />
+                            <IconTransform className="size-4" stroke={1.9} aria-hidden="true" />
                         )}
                         {working
                             ? t("working", {
@@ -582,14 +689,14 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
                                   total: format.number(progress.total),
                               })
                             : stale
-                              ? t("recompress")
-                              : t("compress")}
+                              ? t("reconvert")
+                              : t("convert")}
                     </Button>
 
                     <Button
                         variant="outline"
                         onClick={() => void handleDownloadAll()}
-                        disabled={summary.count === 0 || packing || working}
+                        disabled={finished.length === 0 || packing || working}
                         className="h-9 px-3.5"
                     >
                         {packing ? (
@@ -611,7 +718,7 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
                     </Button>
                 </div>
 
-                {summary.count > 0 && (
+                {finished.length > 0 && (
                     <div
                         className={cn(
                             "bg-card/60 ring-border/70 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 rounded-xl px-3 py-2.5 ring-1 ring-inset",
@@ -620,26 +727,18 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
                         )}
                     >
                         <span className="text-[0.8125rem] leading-[1.3] font-medium">
-                            {t("summaryFiles", { count: summary.count })}
+                            {t("summaryFiles", { count: finished.length })}
+                        </span>
+                        <span className="text-muted-foreground text-[0.8125rem] leading-[1.3]">
+                            {t("summaryOutputs", { count: outputCount })}
                         </span>
                         <span className="text-muted-foreground text-[0.8125rem] leading-[1.3] tabular-nums">
-                            {byteLabel(summary.originalBytes)} → {byteLabel(summary.outputBytes)}
-                        </span>
-                        <span
-                            className={cn(
-                                "rounded-md px-1.5 py-0.5 text-[0.6875rem] leading-[1.3] font-medium tabular-nums",
-                                summary.percent > 0
-                                    ? "bg-[color-mix(in_oklch,var(--color-success)_14%,transparent)] text-[var(--color-success)]"
-                                    : "bg-muted text-muted-foreground",
+                            {byteLabel(
+                                finished.reduce(
+                                    (total, item) => total + (item.result?.totalBytes ?? 0),
+                                    0,
+                                ),
                             )}
-                        >
-                            {summary.percent > 0
-                                ? t("summarySaved", { percent: format.number(summary.percent) })
-                                : summary.percent < 0
-                                  ? t("summaryGrew", {
-                                        percent: format.number(Math.abs(summary.percent)),
-                                    })
-                                  : t("summaryUnchanged")}
                         </span>
                     </div>
                 )}
@@ -647,7 +746,7 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
                 {items.length > 0 && (
                     <ul className="flex min-w-0 flex-col gap-2">
                         {items.map((item) => (
-                            <CompressionRow
+                            <ConversionRow
                                 key={item.id}
                                 item={{
                                     id: item.id,
@@ -660,7 +759,7 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
                                     stale: item.result !== null && item.signature !== signature,
                                 }}
                                 describeFailure={describeFailure}
-                                onDownload={handleDownload}
+                                onDownload={(id) => void handleDownload(id)}
                                 onRemove={handleRemove}
                             />
                         ))}
@@ -679,7 +778,7 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
     );
 }
 
-/** Rows that the next run should touch: never-compressed, or compressed under other settings. */
+/** Rows the next run should touch: never converted, or converted under other settings. */
 function needsWork(item: QueueItem, signature: string): boolean {
     if (item.status === "failed") {
         return (
