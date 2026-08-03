@@ -14,12 +14,18 @@ import {
     STANDARD_ALPHABET,
     URL_SAFE_ALPHABET,
 } from "./constants";
+import { bytesToBase64 } from "@/modules/tools/domain/base64";
 import { bytesToText, textToBytes } from "@/modules/tools/domain/text-codec";
 
 /**
  * RFC 4648 base64, implemented over raw bytes so the same code path runs on the
  * server and in the browser and never depends on `btoa`, which is limited to
  * Latin-1. Nothing here touches the network or the DOM.
+ *
+ * The encoder itself lives in `tools/domain/base64.ts` — a `data:` URI needs
+ * the same bytes-to-sextets loop and does not need this tool's alphabet and
+ * padding options. Everything below is the part that is about *reading* what a
+ * person pasted, which is this tool's job and nobody else's.
  */
 
 const SEXTET_BITS = 6;
@@ -56,43 +62,7 @@ export function encodeBytes(
     bytes: Uint8Array,
     options: Base64EncodeOptions = DEFAULT_ENCODE_OPTIONS,
 ): string {
-    const alphabet = ALPHABETS[options.alphabet];
-    const parts: string[] = [];
-    let index = 0;
-
-    for (; index + 2 < bytes.length; index += 3) {
-        const chunk = (bytes[index] << 16) | (bytes[index + 1] << 8) | bytes[index + 2];
-
-        parts.push(
-            alphabet[(chunk >>> 18) & 63] +
-                alphabet[(chunk >>> 12) & 63] +
-                alphabet[(chunk >>> 6) & 63] +
-                alphabet[chunk & 63],
-        );
-    }
-
-    const remaining = bytes.length - index;
-
-    if (remaining === 1) {
-        const chunk = bytes[index] << 16;
-
-        parts.push(
-            alphabet[(chunk >>> 18) & 63] +
-                alphabet[(chunk >>> 12) & 63] +
-                (options.padded ? `${PAD}${PAD}` : ""),
-        );
-    } else if (remaining === 2) {
-        const chunk = (bytes[index] << 16) | (bytes[index + 1] << 8);
-
-        parts.push(
-            alphabet[(chunk >>> 18) & 63] +
-                alphabet[(chunk >>> 12) & 63] +
-                alphabet[(chunk >>> 6) & 63] +
-                (options.padded ? PAD : ""),
-        );
-    }
-
-    return parts.join("");
+    return bytesToBase64(bytes, ALPHABETS[options.alphabet], options.padded);
 }
 
 /** UTF-8 convenience wrapper; every other set goes through `text-codec`. */

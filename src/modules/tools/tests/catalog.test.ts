@@ -145,7 +145,9 @@ describe("getRelatedTools", () => {
     });
 
     test("falls back to popularity once the category runs out", () => {
-        const related = getRelatedTools("url", 3);
+        // The limit has to exceed the category, or there is no fallback to
+        // observe — encoding has grown since this was first written.
+        const related = getRelatedTools("url", 8);
         const beyondCategory = related.filter((tool) => tool.category !== "encoding");
         const popularity = beyondCategory.map((tool) => tool.popularity);
 

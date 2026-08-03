@@ -1,6 +1,7 @@
 import {
     IconArrowsMinimize,
     IconBinary,
+    IconBlur,
     IconBraces,
     IconCalendarTime,
     IconClockHour4,
@@ -18,6 +19,7 @@ import {
     IconQrcode,
     IconScissors,
     IconRegex,
+    IconTerminal2,
     IconTextScan2,
     IconTextSize,
     IconTransform,
@@ -52,6 +54,8 @@ const ICONS: Record<ToolIconName, ComponentType<IconProps>> = {
     eraser: IconEraser,
     compress: IconArrowsMinimize,
     transform: IconTransform,
+    blur: IconBlur,
+    terminal: IconTerminal2,
 };
 
 type ToolIconProps = {

@@ -50,6 +50,18 @@
     --color-brand-rose: var(--brand-rose);
     --color-brand-emerald: var(--brand-emerald);
 
+    /* Syntax highlighting. A separate set from the brand hues, and not a
+       convenience: those are tuned for chips, icons and 12px labels sitting on
+       a tinted surface. Code is 13px monospace on a near-white card in light
+       mode, where brand amber measures 2.8:1 and brand cyan 3.4:1 — below the
+       4.5:1 small text needs. These clear 4.5:1 on both code surfaces in both
+       themes, keeping as much of each hue's chroma as the gamut allows. */
+    --color-syntax-string: var(--syntax-string);
+    --color-syntax-number: var(--syntax-number);
+    --color-syntax-keyword: var(--syntax-keyword);
+    --color-syntax-key: var(--syntax-key);
+    --color-syntax-call: var(--syntax-call);
+
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
     --radius-lg: var(--radius);
@@ -129,6 +141,15 @@
     --brand-rose: oklch(0.6 0.19 15);
     --brand-emerald: oklch(0.58 0.135 158);
 
+    /* Darker than the brand hues at the same angles, which is what buys the
+       contrast on a near-white card. Measured against both code surfaces:
+       lowest is 4.59:1, on bg-muted/45. */
+    --syntax-string: oklch(0.538 0.125 158);
+    --syntax-number: oklch(0.558 0.12 70);
+    --syntax-keyword: oklch(0.57 0.225 277);
+    --syntax-key: oklch(0.543 0.092 210);
+    --syntax-call: oklch(0.575 0.19 15);
+
     --sidebar: oklch(0.976 0.003 264);
     --sidebar-foreground: oklch(0.28 0.015 265);
     --sidebar-primary: oklch(0.53 0.225 277);
@@ -177,6 +198,15 @@
     --brand-amber: oklch(0.79 0.14 70);
     --brand-rose: oklch(0.71 0.165 15);
     --brand-emerald: oklch(0.72 0.13 158);
+
+    /* On a dark card the brand hues already clear it comfortably — 5.86:1 at
+       worst, for the violet — so these match them rather than inventing a
+       second dark palette nobody would keep in step. */
+    --syntax-string: oklch(0.72 0.13 158);
+    --syntax-number: oklch(0.79 0.14 70);
+    --syntax-keyword: oklch(0.68 0.175 277);
+    --syntax-key: oklch(0.75 0.115 210);
+    --syntax-call: oklch(0.71 0.165 15);
 
     --sidebar: oklch(0.168 0.009 264);
     --sidebar-foreground: oklch(0.885 0.006 264);

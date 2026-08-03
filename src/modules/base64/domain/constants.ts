@@ -1,3 +1,4 @@
+import { STANDARD_BASE64_ALPHABET, URL_SAFE_BASE64_ALPHABET } from "@/modules/tools/domain/base64";
 import type { CharsetId } from "@/modules/tools/domain/charsets";
 import type { NewlineSeparator } from "@/modules/tools/types";
 import type {
@@ -7,10 +8,10 @@ import type {
     Base64Mode,
 } from "../types";
 
-export const STANDARD_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+export const STANDARD_ALPHABET = STANDARD_BASE64_ALPHABET;
 
 /** RFC 4648 §5: `+` and `/` swapped for `-` and `_` so the text survives a URL. */
-export const URL_SAFE_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+export const URL_SAFE_ALPHABET = URL_SAFE_BASE64_ALPHABET;
 
 export const ALPHABETS: Record<Base64Alphabet, string> = {
     standard: STANDARD_ALPHABET,

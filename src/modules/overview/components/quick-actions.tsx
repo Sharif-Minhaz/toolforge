@@ -4,7 +4,7 @@ import {
     IconBolt,
     IconBraces,
     IconKey,
-    IconQrcode,
+    IconTerminal2,
     IconTransform,
 } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
@@ -51,20 +51,22 @@ export async function QuickActions() {
             accent: "[--tool-accent:var(--brand-violet)]",
         },
         {
-            key: "qrWifi",
-            href: "/tools/qr?kind=wifi",
-            title: t("qrWifi.title"),
-            description: t("qrWifi.description"),
-            Icon: IconQrcode,
-            accent: "[--tool-accent:var(--brand-cyan)]",
-        },
-        {
             key: "faviconPack",
             href: "/tools/image-converter?target=favicon",
             title: t("faviconPack.title"),
             description: t("faviconPack.description"),
             Icon: IconTransform,
             accent: "[--tool-accent:var(--brand-emerald)]",
+        },
+        // The list is capped at six. Blur Placeholder made way for this one,
+        // being the lowest-popularity tool that was represented here.
+        {
+            key: "curlToFetch",
+            href: "/tools/curl",
+            title: t("curlToFetch.title"),
+            description: t("curlToFetch.description"),
+            Icon: IconTerminal2,
+            accent: "[--tool-accent:var(--brand-rose)]",
         },
     ];
 

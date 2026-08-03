@@ -150,6 +150,10 @@
             "name": "URL Parser",
             "description": "Break a link into its protocol, host, port, path, query and fragment, and edit its query parameters in place."
         },
+        "curl": {
+            "name": "cURL ↔ Fetch Converter",
+            "description": "Turn a cURL command into working fetch, axios or node:https — and back again. Headers, query, cookies, auth, every body form, redirects, timeouts and TLS flags, with a plain list of anything that could not carry across."
+        },
         "markdown": {
             "name": "Markdown Preview",
             "description": "Write markdown and watch it render — Mermaid diagrams, LaTeX maths, and export to HTML or PDF."
@@ -201,6 +205,10 @@
         "image-converter": {
             "name": "Image Converter",
             "description": "Convert between PNG, JPG, WebP and AVIF, or turn one picture into a favicon.ico and a full favicon pack — all in your browser."
+        },
+        "blur-placeholder": {
+            "name": "Blur Placeholder Generator",
+            "description": "Turn a picture into a BlurHash string and a blurDataURL you can paste straight into next/image — or decode a hash back into a preview."
         },
         "ai-image-detector": {
             "name": "AI Image Detector",
@@ -278,13 +286,13 @@
                 "title": "Beautify JSON",
                 "description": "Paste a single-line payload and read it properly, with any error pinned to its line."
             },
-            "qrWifi": {
-                "title": "Wi-Fi QR code",
-                "description": "Turn your network name and password into a code guests can scan."
-            },
             "faviconPack": {
                 "title": "Make a favicon",
                 "description": "Turn one logo into favicon.ico, every icon size, and the HTML to link them."
+            },
+            "curlToFetch": {
+                "title": "cURL to fetch",
+                "description": "Paste a command from your network panel and get the JavaScript that makes the same request."
             }
         },
         "featured": {
@@ -1802,6 +1810,320 @@
                 "a5": "It never leaves the browser. Everything after # is for the page itself — an anchor, a client-side route, a token some flows deliberately put there. If a server has to see it, it belongs in the query.",
                 "q6": "It says my URL is missing a scheme. What does it want?",
                 "a6": "The https:// (or mailto:, or ftp:) at the front. Without one, example.com/page is ambiguous — it could just as well be a path on the current site. The tool shows what it would become with https:// in front and lets you accept that in one click, rather than rewriting what you typed."
+            }
+        }
+    },
+    "curl": {
+        "meta": {
+            "title": "cURL ↔ Fetch Converter — Turn Any Command Into Code",
+            "description": "Paste a cURL command and get working fetch, axios or node:https — headers, query string, cookies, auth, JSON, form and multipart bodies, redirects, timeouts and TLS flags all carried across. Paste a fetch snippet to get the command back. Reads bash, Windows cmd and PowerShell, and says plainly what each language cannot express."
+        },
+        "hero": {
+            "eyebrow": "Encoding",
+            "title": "cURL ↔ Fetch Converter",
+            "subtitle": "Paste a command copied from your browser's network panel and read it back as fetch, axios or node:https — or paste a snippet and get the command. Every flag is either carried across or named as lost.",
+            "badgeShells": "bash, cmd, PowerShell",
+            "badgeOffline": "Works offline",
+            "badgeHonest": "Says what it drops"
+        },
+        "workbench": {
+            "title": "One request, written two ways",
+            "description": "Everything below updates as you type. Nothing is uploaded — the parsing, the writing and the export all happen in this tab.",
+            "directionLabel": "Direction",
+            "inputLabelCurl": "cURL command",
+            "inputLabelCode": "fetch snippet",
+            "placeholderCurl": "curl https://api.example.com/v1/users -H 'Accept: application/json'",
+            "placeholderCode": "await fetch(\"https://api.example.com/v1/users\")",
+            "example": "Try an example",
+            "clear": "Clear input",
+            "outputLabel": "Output",
+            "outputPlaceholder": "The converted request appears here.",
+            "copy": "Copy",
+            "download": "Download",
+            "swap": "Send the output back as input",
+            "tabs": {
+                "output": "Output",
+                "request": "Request"
+            },
+            "optionsTitle": "Output options",
+            "detected": "Read as {shell}.",
+            "statusEmpty": "Paste a command to convert it.",
+            "statusReady": "Converted. {notes, plural, =0 {Everything carried across} one {# thing did not carry across} other {# things did not carry across}}.",
+            "target": "Language",
+            "targetHint": "fetch is also read back; the other two are written only.",
+            "runtime": "Runs on",
+            "runtimeHint": "Node can set a dispatcher and a Cookie header; a browser can do neither.",
+            "runtimeUnavailable": "node:https only runs on Node.",
+            "style": "Shape",
+            "styleHint": "await reads better; a chain suits code that cannot be async.",
+            "styleUnavailable": "node:https is callback-driven, so neither shape applies.",
+            "headersStyle": "Headers as",
+            "headersStyleHint": "A Headers instance normalises names and merges duplicates.",
+            "headersStyleUnavailable": "Only fetch takes a Headers instance.",
+            "includeResponse": "Handle the response",
+            "includeResponseHint": "Adds the status check and the call that reads the body.",
+            "includeResponseUnavailable": "node:https always shows its response handler.",
+            "indent": "Indent",
+            "indentHint": "Spaces per level in the snippet.",
+            "shell": "Shell",
+            "shellHint": "Quoting differs completely between the three, and so does what they can carry.",
+            "longFlags": "Long flag names",
+            "longFlagsHint": "Writes --header rather than -H. Easier to read, longer to type.",
+            "multiLine": "One flag per line",
+            "multiLineHint": "Breaks the command with the shell's own continuation mark.",
+            "explicitMethod": "Always write -X",
+            "explicitMethodHint": "Spells out the method even where curl would have inferred it.",
+            "notesTitle": "What did not carry across",
+            "notesEmpty": "Every flag in that command has an equivalent here.",
+            "kindDropped": "Dropped",
+            "kindAdapted": "Adapted"
+        },
+        "directions": {
+            "curlToCode": "cURL → code",
+            "codeToCurl": "fetch → cURL"
+        },
+        "targets": {
+            "fetch": "fetch",
+            "axios": "axios",
+            "nodeHttp": "node:https"
+        },
+        "runtimes": {
+            "browser": "Browser",
+            "node": "Node"
+        },
+        "styles": {
+            "asyncAwait": "async / await",
+            "promiseChain": "Promise chain"
+        },
+        "headersStyles": {
+            "object": "Plain object",
+            "headersInstance": "Headers instance"
+        },
+        "indents": {
+            "two": "2 spaces",
+            "four": "4 spaces"
+        },
+        "shells": {
+            "posix": "bash / zsh",
+            "cmd": "Windows cmd",
+            "powershell": "PowerShell"
+        },
+        "request": {
+            "title": "What the command actually asks for",
+            "description": "The request both sides are built from. Neither syntax is consulted here — this is the model in between.",
+            "method": "Method",
+            "url": "URL",
+            "query": "Query",
+            "headers": "Headers",
+            "cookies": "Cookies",
+            "auth": "Credentials",
+            "body": "Body",
+            "transfer": "Transfer",
+            "empty": "None",
+            "enabled": "on",
+            "nameHeader": "Name",
+            "valueHeader": "Value",
+            "bodyKinds": {
+                "none": "No body",
+                "raw": "Raw text",
+                "json": "JSON",
+                "urlencoded": "Form fields",
+                "multipart": "Multipart form",
+                "file": "From a file"
+            },
+            "authSchemes": {
+                "basic": "Basic",
+                "bearer": "Bearer",
+                "digest": "Digest",
+                "ntlm": "NTLM",
+                "negotiate": "Negotiate"
+            },
+            "authUser": "as {user}",
+            "authToken": "token",
+            "partFile": "file: {filename}",
+            "fileBody": "reads {path}"
+        },
+        "notes": {
+            "insecureTls": "--insecure has no equivalent here. The snippet will refuse a certificate curl would have accepted.",
+            "insecureViaDispatcher": "--insecure became an agent with certificate checking switched off. Every request that uses that agent stops verifying, not just this one.",
+            "proxy": "--proxy {detail} was dropped. This target has no proxy setting.",
+            "proxyViaDispatcher": "--proxy became a ProxyAgent, which needs the undici package installed.",
+            "maxRedirects": "--max-redirs {detail} was dropped. fetch can follow, refuse, or hand back a redirect — it cannot count them.",
+            "redirectManual": "curl only follows a redirect when you pass -L, so the snippet says redirect manual to match. Left alone, fetch would have followed.",
+            "redirectFollows": "curl does not follow redirects without -L, but fetch does. Saying redirect manual in a browser makes the response opaque — status gone, body unreadable — so it was left out. Expect the snippet to follow where the command would have stopped.",
+            "redirectsNotFollowed": "-L was dropped. Node's own HTTP client never follows a redirect; you have to read the Location header and ask again.",
+            "httpVersion": "The HTTP version flag was dropped. Nothing here lets you choose one — the runtime negotiates it.",
+            "clientCert": "The client certificate {detail} was dropped. This target cannot present one.",
+            "caCert": "The certificate authority file {detail} was dropped.",
+            "unixSocket": "--unix-socket {detail} was dropped.",
+            "cookieFile": "-b {detail} names a cookie jar file, which nothing here can read. Copy the cookies you need into the request instead.",
+            "cookieHeaderForbidden": "Cookie is a forbidden header in a browser. The snippet asks for credentials include instead, which sends whatever cookies the browser already holds — not the ones in the command.",
+            "bodyFromFile": "The body is read from {detail}. This target cannot open a file; supply the contents yourself.",
+            "multipartFile": "A file part cannot carry its path or its declared type into JavaScript. Put a real File or Blob where the placeholder variable is.",
+            "multipartBoundary": "The multipart Content-Type was left out deliberately. Whatever sends the body picks the boundary, and a header written by hand would name one the body does not contain.",
+            "multipartUnsupported": "Node's own HTTP client has no multipart writer. Build the body with undici's FormData or the form-data package.",
+            "digestAuth": "{detail} authentication is a challenge and a response, so there is no header to work out in advance. The credentials were dropped.",
+            "negotiateAuth": "Negotiate authentication needs a Kerberos or SPNEGO exchange, which nothing here can perform.",
+            "netrc": "--netrc was dropped. Reading credentials from a .netrc file is curl's own idea.",
+            "outputFile": "{detail} only says where curl writes the reply. The snippet hands you the response instead.",
+            "transportOnly": "{detail} changed what curl printed, never what it sent.",
+            "compressedAutomatic": "--compressed is automatic here. Every runtime already asks for compression and unpacks the reply.",
+            "interfaceName": "--interface {detail} was dropped.",
+            "resolveHost": "--resolve {detail} was dropped. Nothing here can override DNS for a single request.",
+            "retry": "--retry {detail} was dropped. The retry loop is yours to write.",
+            "headOnly": "-I asks for the headers alone. The method is HEAD either way, so the same request goes out — but the snippet does not stop reading at the headers.",
+            "connectTimeout": "--connect-timeout {detail} was dropped. Only the whole-transfer limit carries across.",
+            "timeoutAsSignal": "--max-time became an abort signal, which cancels the request outright rather than merely ending the transfer.",
+            "implicitContentType": "The snippet named no Content-Type, so fetch sends {detail} — even though the payload reads as JSON. That is genuinely what goes out, and it is the usual reason a request that works in curl comes back rejected once it is rewritten.",
+            "getWithBody": "-G folded the data into the query string, which is what curl does with it. There is no request body.",
+            "refererAsOption": "Referer is a forbidden header in a browser, so it became the referrer option — which the browser's own policy may still shorten or drop.",
+            "credentialsIgnored": "credentials {detail} has no curl equivalent. curl sends only the cookies you hand it.",
+            "fetchOnlyInit": "{detail} is a fetch idea with no curl equivalent, and was dropped.",
+            "unknownFlag": "{detail} is not a flag this tool knows. It was skipped, along with whatever it was going to do.",
+            "nextRequest": "--next begins a second request. Only the first one was read.",
+            "shellCannotQuoteNewline": "A value spans more than one line, and Windows cmd cannot hold a line break inside a single argument. Pick another shell, or read that value from a file.",
+            "shellCannotQuotePercent": "A value contains something shaped like %name%, which cmd expands as a variable before curl sees it. Pick another shell, or set that value another way.",
+            "templatePlaceholder": "An expression was left as written, because {detail} only has a value once the code runs."
+        },
+        "errors": {
+            "tooLong": "That is longer than {max} characters — longer than any request meant to be read.",
+            "notCurl": "That does not look like a curl command. It has to start with curl.",
+            "unbalancedQuote": "A quote is opened and never closed, so where each argument ends cannot be worked out.",
+            "missingValue": "{token} needs a value, and nothing follows it.",
+            "noUrl": "There is no address in that command.",
+            "invalidUrl": "That address cannot be read as a URL.",
+            "noRequestCall": "No fetch call was found in that snippet.",
+            "unsupportedExpression": "The address is an expression rather than a literal, so its value is only known when the code runs."
+        },
+        "toast": {
+            "copied": "Copied",
+            "copiedRequest": "Request copied as JSON",
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The download could not be started",
+            "copyFailedEmpty": "There is nothing to copy yet",
+            "copyFailedUnsupported": "This browser will not let a page write to the clipboard",
+            "copyFailedDenied": "Clipboard permission was refused"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "Why this needs a model in the middle",
+                "p1": "A curl command and a fetch call describe the same thing: one HTTP request. They agree on almost nothing about how to write it down. curl has around two hundred flags, several of which mean nothing on the wire at all; fetch has one options object, a dozen keys, and a browser's security policy sitting on top of it.",
+                "p2": "So this tool never rewrites one syntax into the other. It reads the command into a plain description of the request — method, address, query, headers, cookies, credentials, body, transfer settings — and then writes that description out in whichever language you asked for. Both directions meet at the same model, which is what stops them developing separate opinions about what a flag means.",
+                "p3": "It also means the Request tab is not a second parse. It is the very thing both sides are built from, so what you see there is exactly what the output was written from.",
+                "p4": "Nothing is uploaded. The parsing, the writing and the export all happen in this tab; close it and nothing is left behind."
+            },
+            "dialects": {
+                "title": "Three shells, three ways to escape a quote",
+                "intro": "Every browser offers Copy as cURL, and on Windows it offers it three times. The same JSON body arrives with the double quotes escaped completely differently, and read with the wrong rules it becomes a different string — so the shell is detected first and the rules picked from that.",
+                "tableCaption": "How each shell writes the same argument",
+                "colShell": "Shell",
+                "colQuote": "How a quote is escaped",
+                "colContinue": "Line continuation",
+                "colWatch": "Watch for",
+                "posixQuote": "Single quotes hold everything literally; a single quote inside is written by closing, escaping it outside, and reopening.",
+                "posixContinue": "A backslash at the end of the line.",
+                "posixWatch": "Chrome switches to the dollar-quote form the moment a value holds a newline or a non-ASCII byte, and the escapes inside that form are C's, not the shell's.",
+                "cmdQuote": "Double quotes, with the backslash escapes curl's own C runtime reads — and carets on top, which the shell strips first.",
+                "cmdContinue": "A caret at the end of the line.",
+                "cmdWatch": "Two layers resolve in order, which is why a copied body looks like backslash-caret-quote. cmd also cannot hold a line break inside one argument, and expands anything shaped like a percent-name-percent before curl runs.",
+                "powershellQuote": "Literal strings double the quote; expandable strings use a backtick.",
+                "powershellContinue": "A backtick at the end of the line.",
+                "powershellWatch": "PowerShell aliases curl to Invoke-WebRequest, which takes none of these flags — so anything generated for it says curl.exe, and so does the output here.",
+                "p1": "Paste from any of the three and the detected shell is shown under the box. The shell picker on the output side is independent: you can read a command copied from Chrome on Windows and write it back out for bash."
+            },
+            "coverage": {
+                "title": "What each language can express",
+                "intro": "curl is the superset. Going from a command to code always loses something, and the three targets lose different things — this table is the whole map. A dash means there is no way to say it, and the tool will tell you so under the output rather than quietly leaving it out.",
+                "tableCaption": "Which curl flags survive into each language",
+                "colFeature": "What it does",
+                "colCurl": "curl",
+                "colFetch": "fetch",
+                "colAxios": "axios",
+                "colNode": "node:https",
+                "none": "—",
+                "method": "Method",
+                "query": "Query string",
+                "headers": "Headers",
+                "cookies": "Cookies",
+                "basicAuth": "Basic credentials",
+                "bodyForm": "Form body",
+                "bodyJson": "JSON body",
+                "bodyMultipart": "Multipart upload",
+                "followRedirects": "Follow redirects",
+                "maxRedirects": "Redirect limit",
+                "timeout": "Whole-transfer timeout",
+                "connectTimeout": "Connect timeout",
+                "insecure": "Skip certificate checks",
+                "clientCert": "Client certificate",
+                "proxy": "Proxy",
+                "unixSocket": "Unix socket",
+                "httpVersion": "HTTP version",
+                "retry": "Retries",
+                "p1": "Two of those rows are Node-only even where the cell is filled in. axios reads proxy, maxRedirects and httpsAgent only when it is running on Node — in a browser it is XHR underneath and quietly ignores all three. Switch Runs on to Browser and they move into the notes instead of the snippet.",
+                "p2": "Everything a browser refuses outright is in the same place. Cookie and Referer are forbidden headers: setting them from a page does nothing, so cookies become a request for the browser's own jar and Referer becomes the referrer option."
+            },
+            "options": {
+                "title": "Every control, and when to reach for it",
+                "tableCaption": "The output options and what each one changes",
+                "colOption": "Option",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "targetDoes": "Picks the language the request is written in. fetch is also the only one that can be read back.",
+                "targetWhen": "You want axios for its redirect limits, timeouts and TLS agent, or node:https to add no dependency at all.",
+                "runtimeDoes": "Decides whether the snippet may use Node-only escapes — a dispatcher, an https agent, a Cookie header.",
+                "runtimeWhen": "Always set it to match where the code will run. On Browser the same flags become notes instead of lines.",
+                "styleDoes": "Writes the call with await, or as a then and catch chain.",
+                "styleWhen": "Pick the chain for code that cannot be inside an async function.",
+                "headersStyleDoes": "Writes the headers as a plain object, or wrapped in a Headers instance.",
+                "headersStyleWhen": "The instance is worth it when names arrive in mixed case or repeat, since it normalises and merges them.",
+                "includeResponseDoes": "Adds the status check and the call that reads the body after the request.",
+                "includeResponseWhen": "Turn it off when you only want the call itself to paste into code you already have.",
+                "indentDoes": "Spaces per level in the generated snippet.",
+                "indentWhen": "Match whatever the file you are pasting into uses.",
+                "shellDoes": "Chooses the quoting and the continuation mark for the command.",
+                "shellWhen": "Set it to the shell you will paste into, not the one you copied from — the two are independent.",
+                "longFlagsDoes": "Writes --header and --location rather than -H and -L.",
+                "longFlagsWhen": "The command is going into a script or a README somebody else has to read.",
+                "multiLineDoes": "Puts each flag on its own line with the shell's continuation mark.",
+                "multiLineWhen": "Turn it off when the command has to survive being pasted into a single-line field.",
+                "explicitMethodDoes": "Writes -X even where curl would have used that method anyway.",
+                "explicitMethodWhen": "You want the method visible at a glance rather than implied by the presence of a body.",
+                "p1": "Four of these apply to some targets and not others, and the ones that do not apply are disabled with the reason under them rather than left to do nothing. node:https ignores the shape, the headers style and the response handling; only fetch takes a Headers instance; and Runs on has no meaning for node:https, which is Node by definition.",
+                "p2": "The shell options only apply in the fetch to cURL direction, and the code options only in the other. The panel shows the set that matches the direction you are working in."
+            },
+            "gotchas": {
+                "title": "Where the two genuinely behave differently",
+                "p1": "Redirects are the first. curl does not follow one unless you pass -L; fetch follows by default. Converting a command with no -L therefore has to say something, and what it says depends on where the code will run: on Node it writes redirect manual, which behaves exactly like curl. In a browser that same line makes the response opaque — no status, no headers, no readable body — so it is left out and the difference is reported instead.",
+                "p2": "Content types are the second, and this one bites hardest. curl sends form encoding with -d unless you say otherwise. fetch sends text/plain for any string body — including one that came out of JSON.stringify. Neither is a bug and both are invisible until a server rejects the request, so the tool writes the implicit header out in full rather than leaving you to discover it.",
+                "p3": "Then there are the headers a browser will not let a page set at all. Cookie is one, so cookies from -b become a request for the browser's own jar, which is not the same cookies. Referer is another, and becomes the referrer option, which the browser's referrer policy may still shorten or drop. Neither substitution is silent.",
+                "p4": "Multipart is the fourth. A curl command names files by path and may declare a type per part; FormData in JavaScript takes a File or a Blob and reads the type off it. The path becomes a placeholder variable, the declared type is lost, and the Content-Type header is deliberately left out, because whatever sends the body picks the boundary and a hand-written header would name a different one.",
+                "p5": "Last, a flag that changes nothing on the wire is still worth naming. -v, -s, -i and -o only changed what curl printed. They cannot survive, they were never part of the request, and the notes say so rather than leaving you wondering where they went."
+            },
+            "useCases": {
+                "title": "What people use this for",
+                "p1": "Reproducing a request the browser already made is the common one. Open the network panel, copy the failing call as cURL, paste it here, and you have the fetch that makes the same request — headers, cookies and body included — to drop into the code you were debugging.",
+                "p2": "The other direction is for support and for bug reports. A fetch call in your codebase becomes a command anyone can run in a terminal, with no build step, no project and no credentials of yours beyond what the request already carried.",
+                "p3": "Both directions are worth reading even when you already know the answer, because the notes are where the surprises are. A request that works in the browser and fails from Node is very often one of the four differences above, and the list under the output names them without you having to go looking."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Does anything get uploaded?",
+                "a1": "No. The whole conversion runs in your browser — parsing, writing and the file export. Commands routinely carry session cookies and bearer tokens, which is exactly why this tool has no server to send them to.",
+                "q2": "Which flags does it understand?",
+                "a2": "Around a hundred and thirty, covering the request line, headers, cookies, every body form, credentials, redirects, proxies, TLS, timeouts, retries and the output flags. Anything outside that list is skipped and named in the notes rather than guessed at, because guessing whether a flag takes a value is how a parser ends up swallowing the address.",
+                "q3": "Can it read a command copied from Windows?",
+                "a3": "Yes, all three forms. Chrome and Edge offer Copy as cURL in bash, cmd and PowerShell, and each escapes quotes differently. The shell is detected from the text and shown under the input box, and you can write the result back out for any of the three regardless of which one you pasted.",
+                "q4": "Why is my JSON body labelled raw text?",
+                "a4": "Because the request says so. If a fetch snippet passes JSON.stringify output as the body without setting Content-Type, fetch sends it as text/plain — the payload is JSON but the request does not claim to be. The tool shows what actually goes on the wire, and flags the mismatch in the notes.",
+                "q5": "Can I paste axios or node:https back in?",
+                "a5": "Not at present. fetch is the only one read back, because a reliable round trip needs a parser per language and axios alone has several spellings for most of its options. The other two are written only.",
+                "q6": "Why does the converted snippet behave differently from the command?",
+                "a6": "Check the list under the output first. Every flag that could not be carried across is named there, with what it did and what the snippet does instead. The four that catch people most often are redirects, the implicit Content-Type, the headers a browser refuses to set, and the multipart boundary.",
+                "q7": "Is the generated code safe to paste as-is?",
+                "a7": "It is syntactically valid and self-contained, but read it before you run it. A converted command may carry a live token or session cookie, and where a body or a file part came from disk the snippet leaves a placeholder variable for you to fill in."
             }
         }
     },
@@ -5587,6 +5909,203 @@
                 "a6": "libaom is a slow encoder, and it is running in WebAssembly on one thread. That is the price of AVIF's size. On a large photograph, expect seconds rather than an instant; on a batch, expect to leave the tab open. WebP gets most of the saving for a fraction of the time.",
                 "q7": "Does converting a JPG to PNG make it better quality?",
                 "a7": "No, and this is worth being clear about. PNG is lossless, so it will preserve exactly what the JPG contained, artefacts included, usually in a much larger file. Detail lost in the original compression is gone; nothing can reconstruct it. Convert to PNG to stop further loss, not to undo loss already taken."
+            }
+        }
+    },
+    "blurPlaceholder": {
+        "meta": {
+            "title": "Blur Placeholder Generator — BlurHash and blurDataURL in your browser",
+            "description": "Turn any picture into a BlurHash string and a base64 blurDataURL for next/image, react-blurhash or plain CSS. Decode a hash back into a preview. Runs entirely in your browser."
+        },
+        "hero": {
+            "eyebrow": "Image Blur Placeholder",
+            "title": "Image Blur Placeholder Generator",
+            "subtitle": "Drop in a picture and get back a BlurHash — a short string that fits in a database column — plus the base64 blurDataURL next/image asks for and the snippet to paste it into. The grid is fitted to your picture's proportions, and the blur is painted beside it at full size so you can see whether it actually resembles the original. Everything happens in this tab.",
+            "badgeFormat": "BlurHash · base83",
+            "badgeOffline": "Runs offline",
+            "badgeCodec": "PNG written by OxiPNG"
+        },
+        "modes": {
+            "encode": "From an image",
+            "decode": "From a hash"
+        },
+        "workbench": {
+            "title": "Blur placeholder",
+            "description": "Pick a picture to make a hash, or paste a hash to see it painted. Both directions produce the same three things: the string, the data URI and the code to use them.",
+            "modeLabel": "Start from",
+            "dropTitle": "Drop an image here",
+            "dropHint": "JPG, PNG, WebP, AVIF, GIF or BMP · up to {limit}",
+            "hashInputLabel": "BlurHash string",
+            "hashPlaceholder": "LEHV6nWB2yk8pyo0adR*.7kCMdnj",
+            "sourceAlt": "Preview of {name}",
+            "sourceSize": "{width} × {height} px",
+            "clear": "Remove",
+            "componentXLabel": "Detail across",
+            "componentXHint": "Cosine terms left to right, fitted to your picture when you drop one in.",
+            "componentYLabel": "Detail down",
+            "componentYHint": "Cosine terms top to bottom. Change either one and the pair stays as you set it.",
+            "componentsHintDecode": "Read from the hash you pasted — the first character records both.",
+            "ratioLabel": "Shape",
+            "ratioHint": "A hash carries no proportions, so the preview needs to be told.",
+            "ratioHintEncode": "Taken from the picture you dropped in.",
+            "edgeLabel": "Placeholder size",
+            "edgeHint": "Longest edge of the PNG behind the data URI. Bigger is smoother and longer.",
+            "edgeValue": "{value} px",
+            "punchLabel": "Punch",
+            "punchHint": "Contrast while decoding. It never changes the hash, only what is painted from it.",
+            "statusPickImage": "Nothing picked yet. Drop an image above, or use the box to choose one.",
+            "statusPasteHash": "Paste a BlurHash to see what it paints.",
+            "statusReading": "Reading your picture…",
+            "statusWorking": "Working…",
+            "statusDone": "Done. {count} characters of hash, {size} of data URI.",
+            "compareOriginal": "Your picture",
+            "previewAlt": "The decoded blur placeholder",
+            "previewCaption": "The hash painted at full size. The PNG behind the data URI is {width} × {height} px.",
+            "hashLabel": "BlurHash",
+            "hashHint": "{count} characters · {x} × {y} components. This is what you store.",
+            "copyHash": "Copy the hash",
+            "dataUriLabel": "blurDataURL",
+            "dataUriHint": "{size} inlined into your HTML, every time the page is served.",
+            "copyDataUri": "Copy the data URI",
+            "copySnippet": "Copy snippet",
+            "privacyNote": "Your picture is decoded in this tab and never uploaded. The hash is arithmetic over the pixels, and the PNG is written here too."
+        },
+        "snippets": {
+            "label": "Snippet",
+            "next": "next/image",
+            "react": "react-blurhash",
+            "css": "CSS",
+            "nextHint": "next/image never sees the hash — it reads blurDataURL and nothing else.",
+            "reactHint": "react-blurhash decodes in the browser, so it wants the hash instead.",
+            "cssHint": "No framework at all: the data URI as a background, cropped rather than stretched."
+        },
+        "errors": {
+            "empty_file": "That file is empty.",
+            "unsupported_type": "That is not an image this tool can read. Try JPG, PNG, WebP, AVIF, GIF or BMP.",
+            "too_large": "That file is larger than {limit}.",
+            "too_many_pixels": "That picture holds more than {count} megapixels, which is more than a browser tab can decode safely.",
+            "undecodable": "The browser could not decode that picture. It may be damaged, or an image type it does not support.",
+            "encode_failed": "Something went wrong writing the placeholder. Try another picture or another size.",
+            "empty_hash": "Paste a BlurHash to decode.",
+            "invalid_character": "Character {position} is not one a BlurHash uses. Check for a stray quote or space.",
+            "too_short": "A BlurHash is at least six characters long. That one is shorter.",
+            "length_mismatch": "That hash says it should be {expected} characters long, and it is not. It looks truncated."
+        },
+        "toast": {
+            "copied_hash": "Hash copied.",
+            "copied_dataUri": "Data URI copied.",
+            "copied_snippet": "Snippet copied.",
+            "copyFailed": "Could not copy that."
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "whatItIs": {
+                "title": "What a blur placeholder is for",
+                "p1": "An image that has not loaded yet leaves a hole. Fill it with nothing and the text below jumps when the picture arrives; fill it with a grey box and the page looks broken rather than loading. A blur placeholder fills it with the picture's own colours, in roughly the right places, so the layout is settled before a single byte of the real file has arrived and the load reads as a photograph coming into focus.",
+                "p2": "BlurHash is one way of writing that down. It is a short string — twenty to thirty characters for the usual settings — that encodes the low frequencies of a picture and nothing else. It is short enough to sit in a database column beside the image's URL, to travel in the same JSON response as the rest of the record, and to be rendered from server-side markup with no extra request.",
+                "p3": "That last point is the whole trick. A placeholder that needs its own HTTP request is a placeholder that arrives after the thing it was standing in for. A hash inlined in the response has already arrived by the time the browser reads it.",
+                "p4": "This tool does both directions. Give it a picture and it produces the hash, the base64 blurDataURL that next/image wants, and the snippet to use either one. Give it a hash somebody else made and it paints it back, so you can see what a string in your database actually looks like."
+            },
+            "howItWorks": {
+                "title": "How the encoding works",
+                "p1": "The picture is decoded to pixels, converted from sRGB into linear light, and projected onto a small grid of cosine basis functions — the same transform JPEG uses, stopped early. Each basis function has a coefficient per colour channel: how much of that particular wave the picture contains.",
+                "p2": "Only the first few coefficients are kept. Four across and three down means twelve of them, and everything finer than that is thrown away — which is exactly the point, because what is left is the blur.",
+                "p3": "Those coefficients are then quantised hard and written in base83. The alphabet is 83 characters chosen because every one of them survives being written inside a JSON string, an HTML attribute and a URL query with no escaping. That is why a hash can be pasted anywhere without a second thought.",
+                "p4": "The average colour gets four characters of its own and full precision, because it is the one value the eye will notice being wrong. Every other coefficient gets two characters, expressed as a fraction of a scale that is itself stored in the hash.",
+                "p5": "Working in linear light rather than in sRGB matters more than it sounds. Averaging gamma-encoded values darkens the result — a blur of a bright picture comes out muddy — so the conversion happens on the way in and again on the way out."
+            },
+            "controls": {
+                "title": "Every control on this page",
+                "intro": "Controls that cannot affect what you are doing are disabled rather than left live and quietly ignored, and the hint underneath each one says why it went grey.",
+                "tableCaption": "The generator's controls and what each one does",
+                "colControl": "Control",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "modeName": "Start from",
+                "modeDoes": "Switches between making a hash from a picture and painting a hash you already have.",
+                "modeWhen": "Always — it decides which of the two inputs below is shown.",
+                "sourceName": "Image",
+                "sourceDoes": "Decodes a picture in this tab and keeps it, so changing a setting costs a transform rather than a re-read.",
+                "sourceWhen": "You have the picture and want the string.",
+                "hashName": "BlurHash string",
+                "hashDoes": "Takes a hash and paints it. Waits for you to stop typing before redrawing.",
+                "hashWhen": "You have a string in a database and want to know what it looks like.",
+                "componentXName": "Detail across",
+                "componentXDoes": "How many cosine terms are kept left to right, 1 to 9. Each one adds two characters. Fitted to the picture until you set it yourself.",
+                "componentXWhen": "The fit is not what you want — you are matching an existing hash's shape, or trading detail for a shorter string.",
+                "componentYName": "Detail down",
+                "componentYDoes": "The same, top to bottom.",
+                "componentYWhen": "Same reason, the other way. Keep the pair near the picture's proportions.",
+                "ratioName": "Shape",
+                "ratioDoes": "Chooses the proportions the preview is painted at. Live only when decoding.",
+                "ratioWhen": "You are looking at a bare hash and know what shape the real picture is.",
+                "edgeName": "Placeholder size",
+                "edgeDoes": "Sets the longest edge of the PNG inside the data URI, from 16 to 64 pixels.",
+                "edgeWhen": "The data URI is longer than you want, or the blur looks blocky rather than soft.",
+                "punchName": "Punch",
+                "punchDoes": "Multiplies every coefficient except the average, pulling the colours further apart.",
+                "punchWhen": "The placeholder looks washed out next to the real picture.",
+                "snippetName": "Snippet tabs",
+                "snippetDoes": "Switches between the next/image, react-blurhash and plain CSS forms of the same result.",
+                "snippetWhen": "You know where this is going and want it in the right shape.",
+                "disabledNote": "Two controls change meaning with the mode. The detail counts are yours to set when encoding and are read out of the hash when decoding, because the first character of every hash records them. The shape is the opposite: the picture you dropped in already has proportions, so the control only opens up when there is no picture to ask.",
+                "punchNote": "Punch is the one setting that does not touch the hash. It is applied while painting, which means it is also a decision your reader's browser makes rather than one you bake in — react-blurhash takes it as a prop, and the PNG this page writes has it baked in because a PNG has no coefficients left to scale. Change punch and the hash above it stays exactly the same string."
+            },
+            "components": {
+                "title": "Choosing how much detail to keep",
+                "p1": "The two detail numbers are the only real quality knob, and the trade is straightforward: each extra component costs two characters and buys one more cosine term in that direction. Drop a picture in and both are chosen for you from its proportions; change either one and the pair stays where you put it.",
+                "p2": "That fit matters more than it sounds, and it is why the old flat default of four by three is not used here. A 16:9 photograph given a four-by-three grid spends a third of its coefficients on vertical detail that is not there and starves the direction that is; the same picture at seven by four resolves three separate rock formations where the smaller grid showed one red band. The pairs are matched on the ratio of the two numbers, so a portrait gets the mirror image of what its landscape rotation would.",
+                "p3": "Nine by nine is the format's ceiling — the size flag is a single base83 character holding both numbers, so a tenth column has nowhere to go — and at 166 characters it is well past the point of usefulness. If you find yourself wanting that much detail, what you want is a real thumbnail, not a hash.",
+                "p4": "Detail beyond about six by six also stops being visible once the placeholder is blurred by the browser scaling it up, which it always is. The picture is 32 pixels on its longest edge and it is being drawn across a card."
+            },
+            "aspect": {
+                "title": "A hash has no shape",
+                "p1": "This surprises people, and it is worth being explicit about: a BlurHash records coefficients and nothing else. No width, no height, no aspect ratio. The same string is a perfectly good 16:9 banner and a perfectly good square avatar, and it will paint happily at either.",
+                "p2": "That is why this page asks you for a shape when you paste a hash, and why it does not when you drop in a picture. It also means the shape is your application's problem at render time: store the real image's dimensions alongside the hash, or the placeholder will be the right colours in the wrong box and the layout will still shift.",
+                "p3": "The same freedom is what makes the size control cheap, and it is why the preview here is not the PNG. A hash is a continuous function sampled onto a grid, so painting it at 384 pixels rather than 32 costs nothing but arithmetic — there is no source resolution to run out of. Stretching the 32-pixel PNG across a card instead would show you bilinear interpolation between 32 samples rather than the curve they came from, which hides most of what raising the detail bought you. The PNG stays small because it is inlined into your HTML; the preview does not have to be."
+            },
+            "usage": {
+                "title": "Using the result",
+                "p1": "For next/image, take the blurDataURL. Next's blur placeholder reads a data URI and has no idea what BlurHash is, which is why this tool writes a PNG as well as a string. Store the hash if you want to re-render at other sizes later; ship the data URI if you just want it working.",
+                "p2": "For react-blurhash, take the hash. It decodes in the reader's browser onto a canvas, so nothing is inlined into your HTML — cheaper markup, slightly later paint, and punch becomes a prop you can change without regenerating anything.",
+                "p3": "For anything else, the CSS form is a background image and two lines. It works in an email template, a static site generator, a server-rendered template with no JavaScript at all.",
+                "p4": "Whichever you pick, generate at upload time and store the result, not on every request. The transform is fast but it is not free, and the answer never changes for a given picture."
+            },
+            "alternatives": {
+                "title": "BlurHash, ThumbHash and a tiny JPEG",
+                "p1": "The oldest approach is a genuinely small JPEG — twenty pixels wide, quality 20, inlined as a data URI. It is simple, it needs no library, and it costs a few hundred bytes of markup per image. Its weakness is that it is still an image file, with a header and a decoder, and it cannot be stored as a short string in a text column.",
+                "p2": "ThumbHash is the closer relative: the same idea with a better transform, roughly the same length, and it carries the aspect ratio and an alpha channel, both of which BlurHash lacks. If you are starting fresh and nothing in your stack expects BlurHash, it is worth a look.",
+                "p3": "BlurHash's advantage is that it arrived first and is everywhere — Wolt's original, react-blurhash, plus ports in Swift, Kotlin, Python, Rust, PHP and Go. A hash written by this page is read by all of them, which is the reason this implementation is checked against the reference one rather than only against itself."
+            },
+            "limits": {
+                "title": "Limits, and why they are where they are",
+                "p1": "Twenty-five megabytes per file and a forty-megapixel ceiling. Both are about memory in one browser tab rather than bandwidth, because nothing here is uploaded — a decoded picture costs four bytes per pixel whatever the file size.",
+                "p2": "Before the transform runs, the picture is scaled down so its longest edge is 128 pixels. Encoding costs width × height × components, so a camera original at nine by nine components would be hundreds of millions of operations and a frozen tab. Nothing survives the downscale that could have survived the transform: at most 81 cosine coefficients come out the other end.",
+                "p3": "The hash also loses everything that was not colour. No EXIF, no colour profile, no transparency — BlurHash has no alpha channel, so a picture with a transparent background is encoded as though the transparent parts were black."
+            },
+            "privacy": {
+                "title": "Privacy",
+                "p1": "No picture you drop here is uploaded, and no server is involved. The image is decoded by the browser, the transform is arithmetic in this tab, and the PNG behind the data URI is written by a WebAssembly build of OxiPNG fetched once from this site.",
+                "p2": "Nothing is stored either. Close the page and the picture, the hash and the data URI are gone with it — so copy what you want before you leave."
+            },
+            "faq": {
+                "title": "Questions people actually ask",
+                "q1": "Does this produce the same hash as blurha.sh?",
+                "a1": "Yes, character for character. This implementation follows the JavaScript reference implementation exactly, down to which rounding it uses and which order it sums the pixels in, and it is tested against that library across every combination of detail settings. A hash from here is read by react-blurhash, and by the Swift, Kotlin, Python and Rust ports, without qualification.",
+                "q2": "Why do I get a hash and a data URI rather than just one?",
+                "a2": "Because the two ecosystems want different things. react-blurhash and the mobile ports want the string and decode it themselves. next/image and plain CSS want a data URI and have never heard of BlurHash. Storing the hash and generating the data URI from it is the flexible answer; storing both is the fast one.",
+                "q3": "Should I store the hash or the blurDataURL in my database?",
+                "a3": "The hash, if you can. It is a quarter the length, it does not change when you decide the placeholder should be 48 pixels instead of 32, and you can always produce a data URI from it later. Store the data URI when the thing rendering it cannot run a decoder — a static export, an email, a template with no JavaScript.",
+                "q4": "Why is my transparent PNG's placeholder black behind the logo?",
+                "a4": "BlurHash has no alpha channel. Transparent pixels are read as whatever sits underneath them, which in a decoded canvas is black. Flatten the picture onto the background colour you actually use before generating the hash — the Image Converter on this site will do that — or use ThumbHash, which does carry alpha.",
+                "q5": "How long should the hash be?",
+                "a5": "Let the fit decide, which lands between forty-four and sixty characters depending on the shape. That is longer than the four-by-three, twenty-eight-character hash a lot of code ships, and it is deliberate: at twenty-eight characters a landscape photograph is a smudge with the right colours in roughly the right places, and the difference is plain when the two sit side by side. If storage genuinely matters, dial the pair down and watch the preview — two by two is a gradient, which is sometimes exactly right for a hero image.",
+                "q6": "Does the punch setting change what I store?",
+                "a6": "No. Punch is applied while painting, never while encoding, so the hash is identical at every punch value. What it does change is the PNG this page writes, because a PNG is pixels and has no coefficients left to scale — so if you are shipping the data URI, punch is baked in, and if you are shipping the hash, it is a prop your renderer sets.",
+                "q7": "Can I generate these on my server instead?",
+                "a7": "Yes, and for a real application you should — at upload time, once per picture, stored beside the URL. The blurhash package on npm does exactly what this page does, and there are equivalents for most languages. This tool is for the cases where you want to see one, check one, or produce a handful by hand."
             }
         }
     },

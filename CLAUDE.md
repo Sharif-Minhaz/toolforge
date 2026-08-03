@@ -416,17 +416,28 @@ plus the shared time-zone and calendar layer: `domain/zone.ts`,
 `domain/time-zones.ts`, `domain/calendar.ts`, `components/zone-picker.tsx`, the
 injectable random source `domain/random.ts`, and the shared image layer:
 `domain/image-codec.ts`, `domain/pixels.ts`, `domain/archive.ts`,
-`domain/filenames.ts`), `short-links` (every re-pointable link on the site — see
-below), `image-compressor` (a batch queue and a smallest-of-four search),
-`image-converter` (a named target per batch, plus the ICO container and the
-favicon pack), `uuid`, `overview`, `preferences`, `seo`, `observability`.
+`domain/base64.ts`, `domain/filenames.ts`), `short-links` (every re-pointable
+link on the site — see below), `image-compressor` (a batch queue and a
+smallest-of-four search), `image-converter` (a named target per batch, plus the
+ICO container and the favicon pack), `blur-placeholder` (the BlurHash codec and
+the `blurDataURL` it writes), `curl` (the shell tokenizer, the request model and
+the four writers around it), `uuid`, `overview`, `preferences`, `seo`,
+`observability`.
 
-The two image tools are the worked example of the "lift it the moment a second
+The three image tools are the worked example of the "lift it the moment a second
 tool needs it" rule. Everything they share — decoding, the four tuned encoder
 profiles, Lanczos3 resizing, alpha flattening, the ZIP writer, filename
-cleaning — lives in `tools/domain/`. What stays in each module is the part that
-differs: the compressor searches for the smallest result, the converter writes
-the target you named.
+cleaning, and the bytes-to-base64 loop a `data:` URI needs — lives in
+`tools/domain/`. What stays in each module is the part that differs: the
+compressor searches for the smallest result, the converter writes the target you
+named, the placeholder generator throws away everything but the low
+frequencies.
+
+`tools/domain/base64.ts` is the newest lift and shows where the seam goes. The
+Base64 tool still owns everything about *reading* what a person pasted — the
+alphabets it names, the whitespace it tolerates, the positions it reports. What
+moved is the encoder alone, because a data URI needs the same sextets and none
+of the options.
 
 Rules that keep this honest:
 
@@ -621,6 +632,107 @@ Tell the reader when that changed their text instead of swapping it silently.
 
 ---
 
+# Converting Between Two Syntaxes That Describe One Thing
+
+`src/modules/curl/` is the shape to copy whenever a tool reads one notation and
+writes another — and especially when it does both directions.
+
+**Never rewrite one syntax into the other.** A command is parsed into an
+`HttpRequest` and the request is written back out; `curl → fetch` and
+`fetch → curl` share that model and touch nothing else of each other's. Two
+direct translators is two places for "what does `-L` mean" to be answered
+differently, and the disagreement only shows up on the input nobody tested. It
+also buys the Request tab for free: it is not a second parse, it is the object
+both sides were built from.
+
+**The one thing a tolerant parser may not guess is arity.** curl has around two
+hundred flags. Guessing that an unknown one takes a value eats the URL; guessing
+it takes none promotes its value to one. `flags.ts` records arity even for flags
+nothing acts on, precisely so being *ignored* stays survivable and being
+*mis-split* stays impossible — and the fallback for a flag outside the table
+consumes the next token only when it can be neither a flag nor an address.
+
+**Detect the dialect before tokenising, never during.** "Copy as cURL" is three
+languages: `{"a":1}` arrives as `'{"a":1}'` from bash, `^"{\^"a\^":1}^"` from
+cmd, and `"{`"a`":1}"` from PowerShell. One forgiving pass that tries to satisfy
+all three reads two of them wrong and produces a request nobody made. cmd is two
+layers in a fixed order — the shell resolves `^`, then curl's own C runtime
+resolves `\"` — and conflating them is what makes hand-rolled readers get `^"`
+wrong.
+
+**A quoter can be checked by something that is not you, cheaply.** Emit the
+command, define `curl() { for a in "$@"; do printf '%s\0' "$a"; done; }`, and
+pipe the whole thing to `/bin/sh`. Real word-splitting, no dependency, and it
+covers `bash` and `dash` in the same script. Say in the handoff which dialects
+that could *not* reach — cmd and PowerShell have no interpreter on Linux, so
+their guarantee is only the round trip through this repo's own reader.
+
+**Round-trip at the model, not at the text.** `-d` and `--data-raw` say the same
+thing, so byte equality is the wrong invariant; `parse(emit(parse(x)))` equalling
+`parse(x)` is the right one. That test found a real defect nothing else would
+have: an empty header emitted as `Name: ` reparses as a *removal*, because
+`Name:` with nothing after it is how curl is told to drop a header it would
+otherwise add. The spelling that means "send this, empty" is `Name;`.
+
+**Defaults that differ are the bugs nobody sees.** curl does not follow a
+redirect without `-L`; `fetch` follows unless told not to. curl sends
+`application/x-www-form-urlencoded` with `-d`; `fetch` sends `text/plain` for any
+string body, `JSON.stringify` output included. Neither is visible until a server
+refuses the request. Both are written out explicitly rather than left implicit —
+carrying the *default* across, not the silence.
+
+**Naming what was dropped is half the tool.** curl is a superset of every target,
+so a conversion always loses something, and each language loses a different
+third. `notes.ts` takes a capability record per target and turns everything
+unsupported into a typed note the UI lists under the output. A `fetch` that
+quietly lost `--insecure` looks correct right up to the first self-signed
+certificate. The same mechanism carries the *adapted* cases, which matter just as
+much: `-m 15` becoming `AbortSignal.timeout(15000)` is not a loss, but it is not
+recognisable either.
+
+**Where being faithful would produce a worse snippet, say so instead.** The
+honest translation of "no `-L`" is `redirect: "manual"`, and on Node that is
+exactly right. In a browser the same line makes the response *opaque* — status 0,
+headers gone, body unreadable — so a snippet that cannot read its own reply is
+the worse answer. There it is left out and the difference becomes a note. Decide
+per runtime, and write down which way and why.
+
+**Highlighting a textarea means painting behind it, and the alignment is the
+whole job.** `curl/components/code-editor.tsx` is the pattern: a `<pre>` holding
+the coloured copy, `absolute inset-0`, with the textarea's own glyphs set to
+`text-transparent` and only its caret and selection left visible. The textarea
+stays a real textarea, so undo, IME, autofill and screen readers are untouched.
+Four things hold the two in register, and each is a bug if it drifts:
+
+- **One shared metrics constant**, not two class lists that match today. Font,
+  size, line height, padding, wrap rule — `CODE_TEXT` and `CODE_PADDING`.
+- **Both elements positioned.** An `absolute` child paints above a `static`
+  sibling whatever the DOM order, so the textarea needs `relative` too or the
+  backdrop swallows every click.
+- **`scrollbar-gutter-stable` on both.** A classic scrollbar takes its width out
+  of the content box, so the instant the textarea overflows it is narrower than
+  the backdrop and every wrapped line breaks a word early.
+- **A trailing `"\n"` in the backdrop**, or a value ending in a newline leaves
+  the caret on a line the backdrop does not have.
+
+The tokenizer for it is a *different* tokenizer from the one that reads the
+command — `highlight.ts`, not `tokenize.ts` — because the two want opposite
+things. The parser resolves escapes and discards quotes; the highlighter must
+return every character it was given, in order. That is the invariant to test:
+`tokens.map((t) => t.text).join("") === input`, over deliberately awkward input.
+And highlighting cannot be debounced when it sits behind a caret, so it needs a
+length ceiling instead — above `MAX_HIGHLIGHT_LENGTH` it returns one plain
+token, because losing the colour beats losing the typing.
+
+**A hand-rolled reader for a language degrades; it does not fail.** `js-value.ts`
+reads the slice of JavaScript a `fetch` init is written in and returns anything
+else as `raw` — the source text, untouched. A real parser is a dependency and a
+far larger surface for the sake of expressions almost nobody writes. Two traps it
+cost: `await` has to be skipped as a prefix or `const r = await fetch(…)` comes
+back as one opaque expression with the call buried inside it, and a call inside a
+declaration is still a call, so the scanner has to walk the value tree rather
+than only the statement list.
+
 # One Short Link Layer, Two Tools
 
 `src/modules/short-links/` owns every re-pointable link on this site: slug and
@@ -709,6 +821,83 @@ nothing can read. When you emit a format, write down which model each side of
 the boundary uses before writing the converter — and note that a *context* line
 means identical in both files, terminator included, so a final line the two
 sides end differently has to be printed as a removal and an addition instead.
+
+The BlurHash codec is the fourth instance, and it adds the part none of the
+others had to face: **the reference implementation is also code, and some of
+what it does is a bug.** `blurhash@2` opens its decoder with `punch = punch | 1`
+— which reads like a default and is not one, since it truncates to an integer
+and sets the low bit, so 2 and 2.5 both become 3. Its encoder takes
+`Math.max` of the *signed* AC coefficients where the C reference takes the
+largest magnitude.
+
+Matching it blindly ships its defects; ignoring it costs the byte-exact
+comparison that makes the test worth running. So decide per behaviour, and write
+down which way and why:
+
+- **Match anything that changes the bytes other people read.** The signed
+  maximum is matched, because a hash that differs from what `blurha.sh` and
+  every npm consumer produce is a worse answer than one that spends a fraction
+  of a quantiser step. Matching also means matching the *arithmetic*: the
+  encoder walks columns-outside-rows because the reference does, and
+  floating-point addition is not associative, so the other order lands a hair
+  away and rounds a byte over a boundary. `Math.trunc(x + 0.5)` is kept for the
+  same reason — it is `Math.round(x)`, and `Math.round(x + 0.5)` is not.
+- **Never match a defect in a control the reader turns.** Punch is implemented
+  correctly here, and the cross-check simply does not compare at any value where
+  the reference mangles it — 1, where the expression is a no-op, still exercises
+  the entire basis loop for every pixel. The tool's own tests then pin the
+  behaviour the reference cannot: three distinct punches render three distinct
+  pictures.
+
+The comment at each of those three lines says which rule it is following. A
+constant that looks wrong and is deliberate needs that, or the next reader
+"fixes" it and the cross-check goes red with no explanation of what it was for.
+
+# A Byte-Exact Codec Can Still Be a Bad Tool
+
+The BlurHash encoder was verified against the reference across all 81 detail
+settings, character for character, and the first thing a reader said about the
+page was that the blur did not look like their picture. Both were true. A
+cross-check proves you implemented the format; it says nothing about whether the
+tool built on it is any good, and no amount of staring at the codec finds a
+defect that is not in the codec.
+
+**Render the output and look at it.** `Read` displays an image, so a throwaway
+script that writes PNGs is a real review: encode the picture, decode it, write
+both, and put them side by side. That is what found all three of the problems
+below, and it took less time than the round of theorising it replaced. A minimal
+PNG writer is forty lines over `node:zlib`, Pillow and ImageMagick are already
+on the machine for reading real photographs in, and none of it belongs in the
+repository afterwards.
+
+**Measure against the right reference, or the number lies.** RMS against the
+sharp original barely moved between a good blur and a bad one — the error is
+dominated by the band limit both share. Against a Gaussian of the source, the
+same change showed up properly. A metric that cannot separate the two states you
+are choosing between is worse than no metric, because it reads as evidence.
+
+The three defects, and the rules they leave behind:
+
+- **Do not stretch a sampled function; evaluate it.** The preview was the
+  32-pixel `blurDataURL` in an `<img>`, blown up twenty times. That is bilinear
+  interpolation between 32 samples rather than the curve they came from, and it
+  flattened the difference between 4 × 3 and 8 × 6 — so the one control that
+  decides whether the blur resembles the picture appeared to do nothing.
+  `PREVIEW_EDGE` paints the hash at display size instead. The shipped artefact
+  stays small; the thing on screen is the truth about it.
+- **A default that ignores the input is a bug with good manners.** A flat 4 × 3
+  grid over a 16:9 photograph starves the axis that carries the picture.
+  `fitComponents` matches the grid to the aspect ratio on `log(x / y)`, so a
+  portrait gets the mirror of its landscape rotation, and a budget picks how much
+  to spend. The budget is 28 because that is where three rock formations stop
+  merging into one red band — a number read off the output, not chosen for being
+  round.
+- **A working size chosen for speed is a quality setting in disguise.** The
+  encode was downscaling to 128 px, which is defensible, and 256 px costs 31 ms
+  at 9 × 9. Measure the thing you are trading against before picking the trade.
+
+When a reader says the output is not good enough, take it as a claim about the
+output. Reach for the renderer before the debugger.
 
 # When the Platform's Own Encoder Is Not Good Enough
 
@@ -915,6 +1104,15 @@ Tokens live in `src/app/globals.css`. Use them; do not introduce raw colours.
 - Five accents: `--brand-{violet,cyan,amber,rose,emerald}`. A component opts in
   by applying `TOOL_ACCENT_VARS[accent]`, which sets `--tool-accent`; every
   tinted surface then reads that one variable.
+- Five syntax colours: `--syntax-{string,number,keyword,key,call}`, for code and
+  nothing else. They exist because the brand hues are **not** usable as
+  foreground text at 13px: on a near-white card in light mode `--brand-amber`
+  measures 2.8:1 and `--brand-cyan` 3.4:1, both under the 4.5:1 small text
+  needs. The syntax set is darker at the same hue angles and clears 4.5:1 on
+  every surface code sits on, in both themes. Reaching for `text-brand-*` inside
+  a code block is the mistake this family exists to prevent — and the general
+  rule it comes from is that a token tuned for a chip is not thereby tuned for
+  body text.
 - Custom utilities: `bg-grid`, `panel-sheen`, `text-gradient`. From the shadcn
   preset: `scroll-fade-*`, `shimmer`, `no-scrollbar`.
 - Radii scale from `--radius: 0.7rem`. Cards use `rounded-2xl`, controls

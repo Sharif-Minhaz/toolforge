@@ -340,6 +340,17 @@ Two conventions worth keeping:
 - Anything touching the DOM or clipboard takes its dependency as a parameter with a browser default
   (`copyText(text, clipboard = …)`), so tests pass a fake instead of needing a DOM.
 
+Fixtures shared by more than one test file go in a plain module beside them —
+`src/modules/blur-placeholder/tests/images.ts` is the example. `bun test` only collects
+`*.test.ts`, so the module is never run as a suite, and two files comparing the same codec against
+each other have to be fed byte-identical input or the comparison proves nothing.
+
+**When a tool emits a format somebody else has to read, test it against an implementation that is
+not ours.** The QR encoder round-trips through `jsqr`, the ICO writer through `file(1)`, ImageMagick
+and Pillow, the unified patch through `patch(1)`, and the BlurHash codec against the reference
+`blurhash` package — a devDependency that ships nowhere. Cover the whole domain rather than a
+sample: the QR bug that survived every structural assertion broke 3 of 160 version/level pairs.
+
 **An intermittent failure is a bug report, not noise.** Do not rerun until it goes green. It usually
 means module-level mutable state plus a real clock. Reproduce it deterministically by injecting the
 clock, fix the cause, and prove the new test catches it by reverting the fix.

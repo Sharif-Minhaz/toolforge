@@ -22,6 +22,7 @@ export const TOOL_IDS = [
     "json",
     "url",
     "url-parser",
+    "curl",
     "markdown",
     "regex",
     "lorem",
@@ -35,6 +36,7 @@ export const TOOL_IDS = [
     "diff",
     "image-compressor",
     "image-converter",
+    "blur-placeholder",
     "ai-image-detector",
     "ai-text-detector",
     "watermark-remover",
@@ -74,7 +76,9 @@ export type ToolIconName =
     | "scan"
     | "eraser"
     | "compress"
-    | "transform";
+    | "transform"
+    | "blur"
+    | "terminal";
 
 export type Tool = {
     readonly id: ToolId;
