@@ -1353,6 +1353,19 @@ bunx eslint .
 bunx prettier --check "src/**/*.{ts,tsx,css,json}"
 ```
 
+**Judge each of them by its exit code, and never filter `tsc`'s output.** This
+one shipped a broken build. `tsconfig.json` includes `.next/dev/types/**/*.ts`,
+and an interrupted `next dev` can leave a truncated file there — an unterminated
+string literal is a _syntax_ error, and TypeScript stops after the grammar pass
+when it meets one, so it never reaches semantic checking at all. Piping the
+output through `grep -v "^\.next/"` therefore prints nothing and looks exactly
+like success, while three real type errors in `src/` sit unreported until Vercel
+runs the same command without the filter.
+
+If `tsc` reports anything under `.next/`, that is a blocking condition, not
+noise: `rm -rf .next/dev/types` and run it again. The directory is regenerated
+by the next `next dev`.
+
 That combination catches type errors, lint violations, formatting drift, and
 domain-logic regressions. It does not catch layout, contrast, or overflow
 problems — so when work is UI-visible, say plainly that it is unverified

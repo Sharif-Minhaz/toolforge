@@ -82,7 +82,7 @@ export async function fetchCertificate(
             finish({ ok: false, reason: "timeout" });
         });
 
-        socket.once("error", (caught) => {
+        socket.once("error", (caught: Error) => {
             logEvent("warn", "domain_inspector.tls_failed", {
                 hostname,
                 error: describeError(caught),

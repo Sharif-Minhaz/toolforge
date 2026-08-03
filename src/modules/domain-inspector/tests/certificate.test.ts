@@ -13,7 +13,7 @@ const NOW = new Date("2026-08-04T00:00:00.000Z");
 
 const LEAF: PeerCertificateLike = {
     subject: { CN: "example.com" },
-    issuer: { CN: "R11", O: "Let's Encrypt", C: "US" },
+    issuer: { CN: "R11", O: "Let's Encrypt" },
     subjectaltname: "DNS:example.com, DNS:*.example.com",
     valid_from: "Jul  6 09:12:00 2026 GMT",
     valid_to: "Oct  4 09:11:59 2026 GMT",

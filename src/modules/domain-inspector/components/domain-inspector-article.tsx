@@ -244,7 +244,7 @@ export async function DomainInspectorArticle() {
                 </ArticleSection>
 
                 <ArticleSection id="faq" title={t("faq.title")}>
-                    <FaqAccordion entries={faqs} />
+                    <FaqAccordion items={faqs} />
                 </ArticleSection>
             </article>
         </div>
