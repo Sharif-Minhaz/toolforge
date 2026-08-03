@@ -6,8 +6,8 @@
 
 **Developer utilities, forged for speed.**
 
-A privacy-first toolbox of developer utilities. Every tool runs entirely in your browser —
-nothing is uploaded, logged, or tracked.
+A privacy-first toolbox of developer utilities. Almost every tool runs entirely in your browser —
+nothing is uploaded, logged, or tracked. The handful that cannot say so on the page.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-8b5cf6.svg)](LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000.svg?logo=nextdotjs)](https://nextjs.org)
@@ -36,42 +36,66 @@ Everything else follows from that:
 
 ## Tools
 
-| Tool                      | Route                     | Category   | What it does                                                                                |
-| ------------------------- | ------------------------- | ---------- | ------------------------------------------------------------------------------------------- |
-| UUID Generator            | `/tools/uuid`             | Generators | v1, v4 and v7 identifiers in bulk, with every export format                                 |
-| Base64 Encoder / Decoder  | `/tools/base64`           | Encoding   | Text and files, standard or URL-safe, data URIs, per-line mode, 19 character sets           |
-| URL Encoder / Decoder     | `/tools/url`              | Encoding   | Percent-encoding across component, path and query profiles, with double-encoding detection  |
-| URL Parser                | `/tools/url-parser`       | Encoding   | Splits a link into protocol, credentials, host, port, path, query, fragment and origin, and edits its query parameters in place |
-| cURL ↔ Fetch Converter    | `/tools/curl`             | Encoding   | Turns a cURL command into working `fetch`, axios or `node:https` and back again — headers, query, cookies, credentials, every body form, redirects, timeouts and TLS flags — reading bash, Windows cmd and PowerShell, and naming every flag that could not carry across |
-| JWT Encoder / Decoder     | `/tools/jwt`              | Security   | Inspect claims, verify a signature, or sign a fresh token (HMAC, RSA, ECDSA)                |
-| Hash Generator / Verifier | `/tools/hash`             | Security   | SHA family, MD5, bcrypt and Argon2, plus constant-time comparison                           |
-| Password Generator        | `/tools/password`         | Security   | Random passwords, wordlist passphrases and PINs, with exact entropy and a crack-time estimate against an attacker you pick |
-| JSON Formatter            | `/tools/json`             | Formatting | Beautify, minify, validate and sort keys — large payloads run in a worker                   |
-| Markdown Preview          | `/tools/markdown`         | Formatting | GFM live preview with Mermaid diagrams and KaTeX maths                                      |
-| Color Converter           | `/tools/color`            | Formatting | HEX, RGB, HSL, HSV, CMYK and OKLCH, WCAG contrast, 50–950 scales, Tailwind and CSS palettes |
-| Timestamp Converter       | `/tools/timestamp`        | Formatting | Unix epochs, ISO 8601, RFC 2822, UUIDs and ObjectIds, read in your zone and any you pin     |
-| Cron Parser               | `/tools/cron`             | Formatting | Explains a crontab or Quartz line column by column and lists its next runs in any zone      |
-| Regex Tester              | `/tools/regex`            | Text       | Match, explain and substitute, with catastrophic-backtracking protection                    |
-| Random Text Generator     | `/tools/lorem`            | Text       | Twelve public-domain sources by word, character, sentence or paragraph                      |
-| Slug Generator            | `/tools/slug`             | Text       | URL-safe slugs with a dash, underscore, dot, tilde or hand-typed separator, accent folding, stop-word and number filters, a length ceiling and a bulk one-per-line mode |
-| Diff Checker              | `/tools/diff`             | Text       | Compares two texts line by line with word or character highlighting inside a changed line, split or unified, ignoring case or whitespace on request, folding away what did not move, and exporting a unified patch |
-| QR Code Generator / Reader | `/tools/qr`              | Generators | Seven payload types (link, Wi-Fi, vCard, SMS, email, phone, text) with colours, dot and eye styles and a logo; reads codes back from the camera or an image; optional dynamic codes that can be re-pointed after printing, remembered in your browser |
-| URL Shortener             | `/tools/shortener`        | Generators | Short links whose destination can be changed later, with an optional custom name, password gate and start/expiry window; every link you make is kept in your own browser |
-| Image Compressor          | `/tools/image-compressor` | Media      | Batch-compresses images with MozJPEG, libwebp, libaom and OxiPNG, converts between JPEG, WebP, AVIF and PNG or picks whichever comes out smallest, caps the longest edge with a Lanczos3 downscale, and packs the results into one ZIP |
-| Image Converter           | `/tools/image-converter`  | Media      | Converts a batch to PNG, JPG, WebP or AVIF with the same four encoders, or builds a `favicon.ico` at the sizes you pick — or a whole favicon pack with every PNG size, a `site.webmanifest` and the `<link>` tags to install it |
-| Image Blur Placeholder Generator | `/tools/blur-placeholder` | Media | Turns a picture into a BlurHash string and a base64 `blurDataURL`, with snippets for `next/image`, react-blurhash and plain CSS — or paints a hash you already have back into a preview |
-| AI Text Detector          | `/tools/ai-text-detector` | AI         | Estimates whether a passage was written by a language model                                 |
-| AI Image Detector         | `/tools/ai-image-detector`| AI         | Estimates whether a picture was generated by a model, with the model's own reasoning        |
-| Watermark Remover         | `/tools/watermark-remover`| AI         | Brush over a watermark, logo or unwanted object and have that square repainted by an inpainting model, composited back at the original size |
+| Tool                             | Route                      | Category   | What it does                                                                                                                                                                                                                                                                                                                                               |
+| -------------------------------- | -------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UUID Generator                   | `/tools/uuid`              | Generators | v1, v4 and v7 identifiers in bulk, with every export format                                                                                                                                                                                                                                                                                                |
+| Base64 Encoder / Decoder         | `/tools/base64`            | Encoding   | Text and files, standard or URL-safe, data URIs, per-line mode, 19 character sets                                                                                                                                                                                                                                                                          |
+| URL Encoder / Decoder            | `/tools/url`               | Encoding   | Percent-encoding across component, path and query profiles, with double-encoding detection                                                                                                                                                                                                                                                                 |
+| URL Parser                       | `/tools/url-parser`        | Encoding   | Splits a link into protocol, credentials, host, port, path, query, fragment and origin, and edits its query parameters in place                                                                                                                                                                                                                            |
+| cURL ↔ Fetch Converter           | `/tools/curl`              | Encoding   | Turns a cURL command into working `fetch`, axios or `node:https` and back again — headers, query, cookies, credentials, every body form, redirects, timeouts and TLS flags — reading bash, Windows cmd and PowerShell, and naming every flag that could not carry across                                                                                   |
+| JWT Encoder / Decoder            | `/tools/jwt`               | Security   | Inspect claims, verify a signature, or sign a fresh token (HMAC, RSA, ECDSA)                                                                                                                                                                                                                                                                               |
+| Hash Generator / Verifier        | `/tools/hash`              | Security   | SHA family, MD5, bcrypt and Argon2, plus constant-time comparison                                                                                                                                                                                                                                                                                          |
+| Password Generator               | `/tools/password`          | Security   | Random passwords, wordlist passphrases and PINs, with exact entropy and a crack-time estimate against an attacker you pick                                                                                                                                                                                                                                 |
+| JSON Formatter                   | `/tools/json`              | Formatting | Beautify, minify, validate and sort keys — large payloads run in a worker                                                                                                                                                                                                                                                                                  |
+| Markdown Preview                 | `/tools/markdown`          | Formatting | GFM live preview with Mermaid diagrams and KaTeX maths                                                                                                                                                                                                                                                                                                     |
+| Color Converter                  | `/tools/color`             | Formatting | HEX, RGB, HSL, HSV, CMYK and OKLCH, WCAG contrast, 50–950 scales, Tailwind and CSS palettes                                                                                                                                                                                                                                                                |
+| Timestamp Converter              | `/tools/timestamp`         | Formatting | Unix epochs, ISO 8601, RFC 2822, UUIDs and ObjectIds, read in your zone and any you pin                                                                                                                                                                                                                                                                    |
+| Cron Parser                      | `/tools/cron`              | Formatting | Explains a crontab or Quartz line column by column and lists its next runs in any zone                                                                                                                                                                                                                                                                     |
+| Regex Tester                     | `/tools/regex`             | Text       | Match, explain and substitute, with catastrophic-backtracking protection                                                                                                                                                                                                                                                                                   |
+| Random Text Generator            | `/tools/lorem`             | Text       | Twelve public-domain sources by word, character, sentence or paragraph                                                                                                                                                                                                                                                                                     |
+| Slug Generator                   | `/tools/slug`              | Text       | URL-safe slugs with a dash, underscore, dot, tilde or hand-typed separator, accent folding, stop-word and number filters, a length ceiling and a bulk one-per-line mode                                                                                                                                                                                    |
+| Diff Checker                     | `/tools/diff`              | Text       | Compares two texts line by line with word or character highlighting inside a changed line, split or unified, ignoring case or whitespace on request, folding away what did not move, and exporting a unified patch                                                                                                                                         |
+| QR Code Generator / Reader       | `/tools/qr`                | Generators | Seven payload types (link, Wi-Fi, vCard, SMS, email, phone, text) with colours, dot and eye styles and a logo; reads codes back from the camera or an image; optional dynamic codes that can be re-pointed after printing, remembered in your browser                                                                                                      |
+| URL Shortener                    | `/tools/shortener`         | Generators | Short links whose destination can be changed later, with an optional custom name, password gate and start/expiry window; every link you make is kept in your own browser                                                                                                                                                                                   |
+| Image Compressor                 | `/tools/image-compressor`  | Media      | Batch-compresses images with MozJPEG, libwebp, libaom and OxiPNG, converts between JPEG, WebP, AVIF and PNG or picks whichever comes out smallest, caps the longest edge with a Lanczos3 downscale, and packs the results into one ZIP                                                                                                                     |
+| Image Converter                  | `/tools/image-converter`   | Media      | Converts a batch to PNG, JPG, WebP or AVIF with the same four encoders, or builds a `favicon.ico` at the sizes you pick — or a whole favicon pack with every PNG size, a `site.webmanifest` and the `<link>` tags to install it                                                                                                                            |
+| Image Blur Placeholder Generator | `/tools/blur-placeholder`  | Media      | Turns a picture into a BlurHash string and a base64 `blurDataURL`, with snippets for `next/image`, react-blurhash and plain CSS — or paints a hash you already have back into a preview                                                                                                                                                                    |
+| AI Text Detector                 | `/tools/ai-text-detector`  | AI         | Estimates whether a passage was written by a language model                                                                                                                                                                                                                                                                                                |
+| AI Image Detector                | `/tools/ai-image-detector` | AI         | Estimates whether a picture was generated by a model, with the model's own reasoning                                                                                                                                                                                                                                                                       |
+| Watermark Remover                | `/tools/watermark-remover` | AI         | Brush over a watermark, logo or unwanted object and have that square repainted by an inpainting model, composited back at the original size                                                                                                                                                                                                                |
+| DNS & Domain Inspector           | `/tools/domain-inspector`  | Network    | One lookup returns seven panels: the name split against the Public Suffix List, DNS records with TTLs plus SPF, DMARC and MTA-STS, RDAP registration and expiry, the ASN and registry record behind every address, the TLS certificate, the redirect chain and security headers, and the technologies the site runs — each with the licence it ships under |
 
 Every tool in the catalogue has shipped. Adding another is the easiest way to
 contribute — see [Adding a tool](CONTRIBUTING.md#adding-a-tool).
 
-Every tool except the three AI tools runs entirely in the browser. Those three call a Cloudflare
+Every tool except the three AI tools and the Domain Inspector runs entirely in the browser. The AI
+tools call a Cloudflare
 Workers AI endpoint behind a Turnstile challenge, which is why they have environment variables of
 their own. The Watermark Remover splits the work: cropping the marked square, building the mask, and
 compositing the repaint back onto the full-resolution original all happen in the browser, so only
 that square is ever uploaded.
+
+The **DNS & Domain Inspector** is the one tool that could never be browser-only, and it needs no
+variable of its own beyond the Turnstile pair. A page cannot make a DNS query, cannot speak RDAP,
+and cannot open a raw TLS connection to read a certificate, so all of that happens on the server:
+DNS over HTTPS to whichever public resolver the reader picks, RDAP over the IANA bootstrap
+redirector, Team Cymru's origin zones for ASNs, one TLS handshake on port 443, and one `GET` for the
+home page identified as `ToolForgeBot`. Nothing is stored; the report lives only in the tab. The
+technologies panel is this repository's own signature table
+(`src/modules/domain-inspector/domain/fingerprints.ts`) rather than a Wappalyzer package — the
+upstream one now says in its own description that it is unmaintained — and every entry carries an
+SPDX identifier or the literal `Proprietary`, because "what is this built on" and "may I build on
+it" are the same question asked twice.
+
+> **An endpoint that fetches a stranger's hostname is an SSRF surface first and a feature second.**
+> Names are resolved before anything is connected to, and the connection is made to the address that
+> was checked rather than by re-resolving the name, so a record that changes in between cannot slip
+> past the check. Private, loopback, link-local, carrier-grade-NAT, documentation and reserved ranges
+> are refused outright — including the IPv4 address hidden inside an IPv4-mapped, NAT64 or 6to4 IPv6
+> literal — and the check runs on every redirect hop rather than only the first. Response bodies are
+> capped at 512 KB and never echoed back. `src/modules/domain-inspector/domain/ip.ts` holds the
+> classification and is unit-tested against both families;
+> `src/modules/domain-inspector/repository/address-guard.ts` is the only gate that opens.
 
 The **Image Compressor** and the **Image Converter** are browser-only with no exception at all. They
 share one codec layer (`src/modules/tools/domain/image-codec.ts`) whose four encoders — MozJPEG,
@@ -177,22 +201,22 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ### Environment variables
 
-| Variable                                 | Required          | Purpose                                                                                        |
-| ---------------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`               | **Yes**           | Read by the proxy on every navigation                                                          |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`   | **Yes**           | Same                                                                                           |
-| `NEXT_PUBLIC_SITE_URL`                   | No                | Canonical URLs, Open Graph, JSON-LD. Defaults to localhost.                                    |
-| `DATABASE_URL`                           | Short links       | Pooled connection for app runtime. Blank, and the URL Shortener says it has nowhere to store a link and the QR tool's dynamic option renders disabled; every other tool is unaffected. |
-| `DIRECT_URL`                             | Migrations only   | Non-pooled connection for `db:migrate`, `db:push`, Studio                                      |
-| `NEXT_PUBLIC_MEASUREMENT_ID`             | No                | GA4 measurement id. Blank means gtag.js is never loaded.                                       |
-| `NEXT_PUBLIC_TEXT_DETECTOR_API`          | AI Text Detector  | Cloudflare Workers AI endpoint. `TEXT_DETECTOR_API` overrides it server-side.                  |
-| `TEXT_DETECTOR_API_KEY`                  | AI Text Detector  | Bearer token for that endpoint. Server-only — never exposed to the client.                     |
-| `NEXT_PUBLIC_FAKE_IMAGE_DETECTOR_API`    | AI Image Detector | The worker's `/detect` URL; a bare origin gets `/detect` appended. `FAKE_IMAGE_DETECTOR_API` overrides it server-side. |
-| `FAKE_IMAGE_DETECTOR_API_KEY`            | AI Image Detector | Bearer token for that endpoint. Server-only — never exposed to the client.                     |
-| `NEXT_PUBLIC_WATERMARK_REMOVER_API`      | Watermark Remover | Full URL of the worker fronting the inpainting model. No path is appended — the worker answers `POST` wherever it is mounted. `WATERMARK_REMOVER_API` overrides it server-side. |
-| `WATERMARK_REMOVER_API_KEY`              | Watermark Remover | Bearer token for that endpoint. Server-only — never exposed to the client.                      |
-| `NEXT_PUBLIC_TURNSTILE_KEY`              | AI tools, short links | Turnstile site key. Absent, and those features render disabled rather than unprotected.    |
-| `TURNSTILE_SECRET`                       | AI tools, short links | Turnstile secret, read only by `src/modules/tools/repository/turnstile.ts`.                 |
+| Variable                               | Required                                | Purpose                                                                                                                                                                                |
+| -------------------------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`             | **Yes**                                 | Read by the proxy on every navigation                                                                                                                                                  |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | **Yes**                                 | Same                                                                                                                                                                                   |
+| `NEXT_PUBLIC_SITE_URL`                 | No                                      | Canonical URLs, Open Graph, JSON-LD. Defaults to localhost.                                                                                                                            |
+| `DATABASE_URL`                         | Short links                             | Pooled connection for app runtime. Blank, and the URL Shortener says it has nowhere to store a link and the QR tool's dynamic option renders disabled; every other tool is unaffected. |
+| `DIRECT_URL`                           | Migrations only                         | Non-pooled connection for `db:migrate`, `db:push`, Studio                                                                                                                              |
+| `NEXT_PUBLIC_MEASUREMENT_ID`           | No                                      | GA4 measurement id. Blank means gtag.js is never loaded.                                                                                                                               |
+| `NEXT_PUBLIC_TEXT_DETECTOR_API`        | AI Text Detector                        | Cloudflare Workers AI endpoint. `TEXT_DETECTOR_API` overrides it server-side.                                                                                                          |
+| `TEXT_DETECTOR_API_KEY`                | AI Text Detector                        | Bearer token for that endpoint. Server-only — never exposed to the client.                                                                                                             |
+| `NEXT_PUBLIC_FAKE_IMAGE_DETECTOR_API`  | AI Image Detector                       | The worker's `/detect` URL; a bare origin gets `/detect` appended. `FAKE_IMAGE_DETECTOR_API` overrides it server-side.                                                                 |
+| `FAKE_IMAGE_DETECTOR_API_KEY`          | AI Image Detector                       | Bearer token for that endpoint. Server-only — never exposed to the client.                                                                                                             |
+| `NEXT_PUBLIC_WATERMARK_REMOVER_API`    | Watermark Remover                       | Full URL of the worker fronting the inpainting model. No path is appended — the worker answers `POST` wherever it is mounted. `WATERMARK_REMOVER_API` overrides it server-side.        |
+| `WATERMARK_REMOVER_API_KEY`            | Watermark Remover                       | Bearer token for that endpoint. Server-only — never exposed to the client.                                                                                                             |
+| `NEXT_PUBLIC_TURNSTILE_KEY`            | AI tools, short links, Domain Inspector | Turnstile site key. Absent, and those features render disabled rather than unprotected.                                                                                                |
+| `TURNSTILE_SECRET`                     | AI tools, short links, Domain Inspector | Turnstile secret, read only by `src/modules/tools/repository/turnstile.ts`.                                                                                                            |
 
 > **Analytics is gated three ways.** `gtag.js` only enters the document when a well-formed `G-…` id
 > is configured, the visitor has clicked **Allow** on the consent banner, and the build is
@@ -206,8 +230,10 @@ Open [http://localhost:3000](http://localhost:3000).
 > project is enough; nothing is written to it.
 
 > **The AI tools degrade rather than break.** Leave their variables blank and the rest of the
-> app runs normally; those three tools render with their controls disabled and say why. Every other
-> tool is pure browser arithmetic and needs no configuration at all.
+> app runs normally; those three tools render with their controls disabled and say why. The Domain
+> Inspector behaves the same way without the Turnstile pair, since the challenge is what keeps a
+> public lookup endpoint from becoming somebody's free scanner. Every other tool is pure browser
+> arithmetic and needs no configuration at all.
 
 > **The Watermark Remover's rate limit is shared, not per visitor.** Its worker limits uploads by
 > calling address, and the page calls the worker from this server — the API key has to stay secret —
@@ -235,14 +261,14 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ### Configuration files
 
-| File                   | What lives there                                                                                          |
-| ---------------------- | --------------------------------------------------------------------------------------------------------- |
+| File                   | What lives there                                                                                                                                                                                       |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `next.config.ts`       | The `next-intl` plugin pointed at `src/i18n/request.ts`, the React Compiler (`reactCompiler: true`), and a `serverActions.bodySizeLimit` of `11mb` so the AI Image Detector can forward a 10 MB upload |
-| `prisma.config.ts`     | Prisma 7 config. It loads `.env.local` then `.env` itself, and supplies `DIRECT_URL` to CLI commands only |
-| `prisma/schema.prisma` | Schema only — connection URLs moved to `prisma.config.ts` in Prisma 7. Holds one model, `QrLink` |
-| `prisma/migrations/`   | SQL migrations, applied with `bun run db:deploy`. `20260801000000_add_qr_links` creates `qr_links` |
-| `components.json`      | shadcn settings: `base-nova` style, Tabler icons, `src/app/globals.css` as the token source               |
-| `example.env`          | The template to copy to `.env.local`. Every variable in the table above appears there with a comment      |
+| `prisma.config.ts`     | Prisma 7 config. It loads `.env.local` then `.env` itself, and supplies `DIRECT_URL` to CLI commands only                                                                                              |
+| `prisma/schema.prisma` | Schema only — connection URLs moved to `prisma.config.ts` in Prisma 7. Holds one model, `QrLink`                                                                                                       |
+| `prisma/migrations/`   | SQL migrations, applied with `bun run db:deploy`. `20260801000000_add_qr_links` creates `qr_links`                                                                                                     |
+| `components.json`      | shadcn settings: `base-nova` style, Tabler icons, `src/app/globals.css` as the token source                                                                                                            |
+| `example.env`          | The template to copy to `.env.local`. Every variable in the table above appears there with a comment                                                                                                   |
 
 ## Scripts
 

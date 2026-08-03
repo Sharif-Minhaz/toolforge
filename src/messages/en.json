@@ -119,6 +119,10 @@
         "ai": {
             "name": "AI",
             "description": "Check what a model made, and clean up what it left behind."
+        },
+        "network": {
+            "name": "Network",
+            "description": "Ask what a name resolves to, and who answers when you do."
         }
     },
     "tools": {
@@ -226,6 +230,10 @@
             "title": "Popular tools",
             "description": "Other utilities from the toolbox, ready when you need them.",
             "all": "Browse all tools"
+        },
+        "domain-inspector": {
+            "name": "DNS & Domain Inspector",
+            "description": "Look up DNS records, registration, hosting, TLS certificate, and the stack a site is built on."
         }
     },
     "overview": {
@@ -290,9 +298,9 @@
                 "title": "Make a favicon",
                 "description": "Turn one logo into favicon.ico, every icon size, and the HTML to link them."
             },
-            "curlToFetch": {
-                "title": "cURL to fetch",
-                "description": "Paste a command from your network panel and get the JavaScript that makes the same request."
+            "domainInspect": {
+                "title": "Inspect a domain",
+                "description": "DNS records, registrar, hosting and stack, from one lookup."
             }
         },
         "featured": {
@@ -6113,5 +6121,322 @@
         "title": "This page has not been forged yet",
         "description": "The tool you are looking for either moved or has not shipped. Everything that is live is one click away.",
         "cta": "Back to overview"
+    },
+    "domainInspector": {
+        "meta": {
+            "title": "DNS & Domain Inspector — WHOIS, DNS, TLS and Tech Stack",
+            "description": "Look up a domain's DNS records, RDAP registration, hosting network, TLS certificate, security headers, and the technologies it runs — each with the licence it ships under."
+        },
+        "hero": {
+            "eyebrow": "Domain Inspector",
+            "title": "DNS & Domain Inspector",
+            "subtitle": "One name in, seven answers out: how it resolves, who registered it, whose network it sits on, what certificate it presents, what headers it sends, and what it is built from.",
+            "badgeDns": "DNS over HTTPS",
+            "badgeRegistry": "RDAP registration",
+            "badgeChallenge": "Challenge protected"
+        },
+        "workbench": {
+            "title": "Look up a domain",
+            "description": "A hostname, a full URL, or an IP address. Everything else is read from the name.",
+            "hostLabel": "Domain or URL",
+            "hostPlaceholder": "example.com",
+            "hint": "Press Inspect to run the lookup.",
+            "inspect": "Inspect",
+            "inspecting": "Looking up…",
+            "clear": "Clear",
+            "copy": "Copy summary",
+            "download": "Download JSON",
+            "challengePending": "Waiting for the challenge to pass.",
+            "challengeFailed": "The challenge failed. It will draw a fresh one on its own.",
+            "checkedAt": "Checked at {time}.",
+            "resolverLabel": "Resolver",
+            "resolverHint": "Which public resolver answers the DNS queries.",
+            "probeLabel": "Fetch the site",
+            "probeHint": "Opens a TLS connection and requests the home page — the certificate, headers and stack come from it.",
+            "serverNote": "This tool runs on our server rather than in your browser: a page cannot make a DNS query, speak RDAP, or open a raw TLS connection. The name you type is sent to us, to the resolver you picked, to the registry, and — with the site fetch on — to the host itself. Nothing is stored."
+        },
+        "common": {
+            "absent": "—"
+        },
+        "resolvers": {
+            "cloudflare": "Cloudflare (1.1.1.1)",
+            "google": "Google (8.8.8.8)",
+            "dnssb": "DNS.SB (185.222.222.222)"
+        },
+        "panels": {
+            "overview": "Name breakdown",
+            "dns": "DNS records",
+            "registration": "Registration",
+            "hosting": "Hosting",
+            "certificate": "TLS certificate",
+            "http": "HTTP response",
+            "technologies": "Technologies"
+        },
+        "overview": {
+            "title": "Name breakdown",
+            "hostname": "Hostname",
+            "unicode": "Unicode form",
+            "subdomain": "Subdomain",
+            "registrable": "Registrable domain",
+            "suffix": "Public suffix",
+            "labels": "Labels",
+            "kind": "Kind",
+            "kindIp": "IP address"
+        },
+        "dns": {
+            "title": "DNS records",
+            "tableCaption": "DNS records by type, with their time to live",
+            "colType": "Type",
+            "colValue": "Value",
+            "colTtl": "TTL",
+            "dnssecValidated": "DNSSEC validated",
+            "dnssecUnsigned": "No DNSSEC",
+            "spf": "SPF",
+            "dmarc": "DMARC",
+            "mtaSts": "MTA-STS",
+            "spfRecord": "SPF policy",
+            "dmarcRecord": "DMARC policy"
+        },
+        "recordTypes": {
+            "A": "The IPv4 address this name resolves to.",
+            "AAAA": "The IPv6 address this name resolves to.",
+            "CNAME": "Another name this one is an alias for.",
+            "MX": "Where mail for this domain is delivered, lowest preference first.",
+            "NS": "The nameservers the registry delegates this zone to.",
+            "TXT": "Free-form text, which is where SPF, domain verification and much else live.",
+            "SOA": "The zone's start of authority: its primary nameserver and its refresh timings.",
+            "CAA": "Which certificate authorities are allowed to issue for this name.",
+            "DS": "The delegation signer that ties this zone into the DNSSEC chain."
+        },
+        "registration": {
+            "title": "Registration",
+            "registrar": "Registrar",
+            "created": "Registered",
+            "expires": "Expires",
+            "updated": "Last changed",
+            "country": "Registrant country",
+            "abuse": "Abuse contact",
+            "nameservers": "Nameservers",
+            "source": "RDAP server",
+            "statuses": "Status codes",
+            "expiresIn": "{days, plural, =0 {Expires today} one {# day left} other {# days left}}",
+            "lapsed": "{days, plural, one {Expired # day ago} other {Expired # days ago}}",
+            "dnssecSigned": "DNSSEC delegated",
+            "dnssecUnsigned": "DNSSEC not delegated"
+        },
+        "hosting": {
+            "title": "Hosting",
+            "asn": "AS",
+            "prefix": "Prefix",
+            "reverse": "Reverse name",
+            "network": "Network",
+            "org": "Organisation",
+            "registry": "Registry"
+        },
+        "certificate": {
+            "title": "TLS certificate",
+            "expired": "Expired",
+            "daysLeft": "{days, plural, =0 {Expires today} one {# day left} other {# days left}}",
+            "nameMatches": "Covers this name",
+            "nameMismatch": "Does not cover this name",
+            "subject": "Subject",
+            "issuer": "Issuer",
+            "validFrom": "Valid from",
+            "validTo": "Valid to",
+            "key": "Key",
+            "cipher": "Cipher",
+            "serial": "Serial",
+            "fingerprint": "SHA-256 fingerprint",
+            "chain": "Chain",
+            "altNames": "Subject alternative names"
+        },
+        "http": {
+            "title": "HTTP response",
+            "finalUrl": "Final URL",
+            "server": "Server",
+            "poweredBy": "Powered by",
+            "pageTitle": "Page title",
+            "declaredLicense": "Declared licence",
+            "redirects": "{count, plural, one {# redirect} other {# redirects}}"
+        },
+        "grades": {
+            "strong": "Headers: strong",
+            "partial": "Headers: partial",
+            "weak": "Headers: weak"
+        },
+        "securityHeaders": {
+            "present": "sent",
+            "missing": "not sent"
+        },
+        "technologies": {
+            "title": "Technologies",
+            "none": "Nothing recognised. A site behind a CDN that strips its headers, or one rendered entirely by script, usually looks like this from outside.",
+            "license": "Licence"
+        },
+        "techCategories": {
+            "server": "Web server",
+            "cdn": "CDN",
+            "hosting": "Hosting",
+            "dns": "DNS",
+            "cms": "CMS",
+            "framework": "Framework",
+            "ecommerce": "Commerce",
+            "javascript": "Front end",
+            "analytics": "Analytics",
+            "security": "Bot defence",
+            "mail": "Mail"
+        },
+        "evidence": {
+            "header": "Response header",
+            "cookie": "Cookie",
+            "html": "Page markup",
+            "generator": "Generator tag",
+            "mx": "MX record",
+            "ns": "NS record"
+        },
+        "errors": {
+            "empty_input": "Type a domain, a URL, or an IP address first.",
+            "too_long": "That is longer than a hostname is allowed to be.",
+            "invalid_hostname": "That is not a hostname. Try example.com, or paste a full URL.",
+            "unknown_suffix": "That top-level domain does not exist. Names like localhost or .internal mean something different on every machine, so there is nothing public to look up.",
+            "private_address": "That address is on a private or reserved range, so there is nothing public to look up.",
+            "challenge_failed": "The challenge could not be verified. Wait for it to reset and try again.",
+            "not_configured": "This tool is not configured on this deployment.",
+            "upstream_unavailable": "The challenge service did not answer. Try again shortly.",
+            "lookup_failed": "The lookup could not be completed."
+        },
+        "panelErrors": {
+            "skipped": "The site fetch is switched off, so nothing was attempted here.",
+            "timeout": "This lookup took too long and was given up on.",
+            "network_error": "The upstream service did not answer.",
+            "nxdomain": "This name does not exist.",
+            "no_records": "Nothing is published here.",
+            "unsupported_tld": "This registry runs no RDAP service, so its records are only available through its own WHOIS.",
+            "unreadable_response": "The answer came back in a shape this could not read.",
+            "no_address": "This name resolves to no address, so there was nothing to connect to.",
+            "blocked_address": "This name resolves only to private or reserved addresses, which are never connected to.",
+            "tls_failed": "No TLS connection could be made on port 443.",
+            "http_failed": "The page could not be fetched."
+        },
+        "toast": {
+            "done": "Inspected {host}.",
+            "copied": "Summary copied.",
+            "downloaded": "Saved {filename}.",
+            "downloadFailed": "The report could not be saved.",
+            "copyFailedEmpty": "There is nothing to copy.",
+            "copyFailedUnsupported": "This browser will not allow copying.",
+            "copyFailedDenied": "Clipboard access was denied."
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "what": {
+                "title": "What this answers",
+                "p1": "A domain is several independent systems wearing one name. A registry knows who registered it and when it lapses. Its nameservers know what it resolves to. The network it resolves into belongs to somebody else again. And the machine at the far end presents a certificate, sends headers, and serves a page built out of software with its own licences.",
+                "p2": "Asking each of them separately is four tools and a terminal. This asks all of them at once and puts the answers side by side, which is usually where the interesting part is: an expiry date next to a certificate date, a nameserver next to the CDN it points at, an SPF record next to the MX records it is supposed to cover.",
+                "p3": "Nothing here is privileged information. Every answer comes from a service that publishes it deliberately — the DNS, the registry, the routing registries, and the site's own responses."
+            },
+            "panels": {
+                "title": "The seven panels",
+                "intro": "Each panel answers one question, from one source.",
+                "tableCaption": "What each panel shows and where it comes from",
+                "colPanel": "Panel",
+                "colShows": "Shows",
+                "colSource": "Read from",
+                "overviewShows": "The hostname split into subdomain, registrable domain and public suffix, with the Unicode form of an internationalised name.",
+                "overviewSource": "The Public Suffix List, offline.",
+                "dnsShows": "A, AAAA, CNAME, MX, NS, TXT, SOA, CAA and DS records with their TTLs, plus SPF, DMARC and MTA-STS.",
+                "dnsSource": "DNS over HTTPS, from the resolver you pick.",
+                "registrationShows": "Registrar and IANA id, creation, change and expiry dates, EPP status codes, delegated nameservers, DNSSEC, and the abuse contact.",
+                "registrationSource": "RDAP, the protocol that replaced WHOIS.",
+                "hostingShows": "For each address: its reverse name, the autonomous system announcing it, the announced prefix, and the registry record for the block.",
+                "hostingSource": "Reverse DNS, Team Cymru's origin zones, and RDAP.",
+                "certificateShows": "Issuer, validity window, days remaining, whether it covers the name you asked for, key type, negotiated cipher, and the issuing chain.",
+                "certificateSource": "A TLS handshake on port 443.",
+                "httpShows": "The redirect chain, the final URL, the server headers, six security headers, the page title, and any licence the page declares for itself.",
+                "httpSource": "One GET request for the home page.",
+                "technologiesShows": "Servers, CDNs, frameworks, content systems, analytics and mail providers, each with its version where one is exposed and the licence it ships under.",
+                "technologiesSource": "Patterns matched against headers, cookies, markup and delegation.",
+                "independence": "No panel can fail another. A registered domain that serves nothing shows a full registration panel and four refusals, each naming the lookup that could not be made and why — which is more useful than one blank page."
+            },
+            "records": {
+                "title": "The records it asks for",
+                "intro": "Nine types are queried at the apex, and every answer keeps its TTL, so you can see how long an old answer will linger after a change.",
+                "tableCaption": "DNS record types and what each one means",
+                "colType": "Type",
+                "colMeans": "What it says",
+                "srvNote": "SRV is deliberately absent. It is only ever published under a _service._proto prefix, so a query at the apex returns nothing — and an empty row would read as “this domain publishes no SRV records” rather than “that is the wrong name to ask”. DMARC and MTA-STS are the exception that proves it: both have fixed prefixes, so they are queried at _dmarc and _mta-sts and folded into the mail chips."
+            },
+            "controls": {
+                "title": "Every control",
+                "intro": "Two settings and three buttons. Nothing else changes what is looked up.",
+                "tableCaption": "Controls, what each does, and when to reach for it",
+                "colOption": "Control",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "hostName": "Domain or URL",
+                "hostDoes": "Takes a hostname, a full URL, or an IP address. A URL is reduced to its host: scheme, port, path, query and credentials are dropped.",
+                "hostWhen": "Always. Paste whatever you happen to have.",
+                "resolverName": "Resolver",
+                "resolverDoes": "Chooses which public resolver answers the DNS queries — Cloudflare, Google, or DNS.SB.",
+                "resolverWhen": "You suspect an answer is stale, or one resolver filters what another does not.",
+                "probeName": "Fetch the site",
+                "probeDoes": "Opens a TLS connection and requests the home page. Feeds the certificate, HTTP and technologies panels.",
+                "probeWhen": "Leave it on, unless you want only the DNS and registry answers, or the host should not see a request.",
+                "copyName": "Copy summary",
+                "copyDoes": "Puts the short form on the clipboard: addresses, registrar, expiry, network, certificate and stack.",
+                "copyWhen": "Pasting into a ticket or a chat.",
+                "downloadName": "Download JSON",
+                "downloadDoes": "Saves the whole report, including the panels that failed and the reason each gave.",
+                "downloadWhen": "Filing a before-and-after record of a migration.",
+                "probeCaveat": "Turning the site fetch off does not empty the technologies panel: mail and DNS providers are still named from the MX and NS delegation. What goes is everything that needs a connection — the certificate, the response headers, and anything read out of the page.",
+                "resolverCaveat": "The resolver setting changes the record panel and everything built on it, because the reverse names and ASN lookups ride the same transport. It does not change RDAP or the site fetch, which are ordinary HTTPS requests to the registry and to the host."
+            },
+            "licensing": {
+                "title": "Licences, and where they come from",
+                "p1": "Every technology this recognises carries the licence it ships under: an SPDX identifier where the project publishes one, and the literal Proprietary where none exists. WordPress is GPL-2.0-or-later, nginx is BSD-2-Clause, Cloudflare is not licensed to anybody. Each identifier links to its own SPDX page.",
+                "p2": "That is the licence of the software, not of the words on the page. Where a site declares terms for its own material — a rel=\"license\" link, or the older meta tag — it is shown separately in the HTTP panel, exactly as the publisher wrote it.",
+                "p3": "Both are claims worth checking rather than facts to rely on. A version is whatever a header or a filename admitted to, a licence is what that project used at the time this table was written, and neither is legal advice. Read the project's own LICENSE before you build on it."
+            },
+            "privacy": {
+                "title": "This one does not run in your browser",
+                "p1": "Every other tool here is offline by design. This one cannot be. A web page cannot make a DNS query, cannot speak RDAP, and cannot open a raw TLS connection to read a certificate — all of that happens on our server, on your behalf.",
+                "p2": "In practice: the name you type is sent to us, and from there to the resolver you picked, to the registry's RDAP service, and — if the site fetch is on — to the host itself, which sees one request from our address identifying itself as ToolForgeBot. Nothing is written to a database, and the report exists only in the tab in front of you.",
+                "p3": "The challenge is there for the same reason. An endpoint that fetches whatever host a stranger names is a scanner and an open proxy if it is left unguarded, and the traffic would arrive at other people's servers carrying this site's name. Addresses on private, loopback, link-local and reserved ranges are refused outright — on every redirect hop, not only the first."
+            },
+            "limits": {
+                "title": "What it will not tell you",
+                "p1": "Where the machine physically is. The country shown is the one the routing registry records for the address block, which is where it was allocated rather than where it is plugged in. City-level geolocation needs a commercial database, and is still a guess.",
+                "p2": "Whether a site is safe, or whether a header is any good. The header grade counts how many of six were sent; it says nothing about whether a Content-Security-Policy is meaningfully restrictive or an HSTS max-age is long enough. Grading contents is a different tool, and a confident letter on a guess would be worse than no letter at all.",
+                "p3": "Anything a registry declines to publish. Registrant names and addresses have been redacted from gTLD records since 2018, and some country registries run no RDAP service at all — those say so, and point you at the registry's own WHOIS."
+            },
+            "useCases": {
+                "title": "What people use it for",
+                "intro": "The lookups that actually get run:",
+                "migration": "Checking a DNS change has spread — compare the same name across two resolvers, and read the TTL to see how long the old answer will linger.",
+                "expiry": "Catching a domain or a certificate about to lapse, before somebody else notices first.",
+                "mail": "Confirming SPF, DMARC and MTA-STS are published, and seeing which provider the MX records actually point at.",
+                "diligence": "Working out what a site is built on before quoting for work on it — including whether its stack is something you may legally build on.",
+                "incident": "Finding somebody to contact: the abuse address at the registrar, and the organisation holding the network the address sits in."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Is this WHOIS?",
+                "a1": "It is RDAP, which is what replaced WHOIS. The same data, published as JSON over HTTPS instead of as free text on port 43 — which is why the fields here are read rather than guessed at out of prose. Every gTLD is required to run one; a few country registries still do not, and those are reported as such.",
+                "q2": "Why is the registration panel empty for my .de domain?",
+                "a2": "Because that registry publishes no RDAP service, so there is nothing to query. The panel says so instead of showing a blank record, and the registry's own WHOIS page has the answer.",
+                "q3": "Why is the registrant's name hidden?",
+                "a3": "Since GDPR came into force in 2018, gTLD registries have redacted personal data from public records. The registrar, the dates, the status codes and an abuse contact stay public; the person does not.",
+                "q4": "The technologies panel found nothing — is the site hiding?",
+                "a4": "Possibly, and possibly it is just quiet. A CDN configured to strip identifying headers, a page rendered entirely by script after load, and a stack with no fingerprint of its own all look identical from outside. Absence of evidence is the honest reading.",
+                "q5": "Can I look up an IP address?",
+                "a5": "Yes. The name breakdown, hosting, certificate and HTTP panels all work. Forward DNS and domain registration do not apply to an address and say so. Private and reserved addresses are refused.",
+                "q6": "Does the site I inspect know about it?",
+                "a6": "If the site fetch is on, yes: it receives one GET request for its home page from our server, identified as ToolForgeBot. Turn the switch off and only the resolver and the registry are contacted.",
+                "q7": "Why is there a challenge on a read-only lookup?",
+                "a7": "Because the alternative is a public endpoint that fetches whatever host anyone names, from our address. Without the challenge it would be somebody's free scanner within a day, and the complaints would arrive here."
+            }
+        }
     }
 }

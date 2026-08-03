@@ -298,6 +298,28 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.aiTextDetector.errors,
             toast: messages.aiTextDetector.toast,
         },
+        // Seven panels' worth of labels, which is why this slice is the
+        // largest here — everything under `article` still stays on the server.
+        domainInspector: {
+            workbench: messages.domainInspector.workbench,
+            common: messages.domainInspector.common,
+            resolvers: messages.domainInspector.resolvers,
+            overview: messages.domainInspector.overview,
+            dns: messages.domainInspector.dns,
+            recordTypes: messages.domainInspector.recordTypes,
+            registration: messages.domainInspector.registration,
+            hosting: messages.domainInspector.hosting,
+            certificate: messages.domainInspector.certificate,
+            http: messages.domainInspector.http,
+            grades: messages.domainInspector.grades,
+            securityHeaders: messages.domainInspector.securityHeaders,
+            technologies: messages.domainInspector.technologies,
+            techCategories: messages.domainInspector.techCategories,
+            evidence: messages.domainInspector.evidence,
+            errors: messages.domainInspector.errors,
+            panelErrors: messages.domainInspector.panelErrors,
+            toast: messages.domainInspector.toast,
+        },
     };
 
     return (

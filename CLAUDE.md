@@ -421,8 +421,9 @@ link on the site — see below), `image-compressor` (a batch queue and a
 smallest-of-four search), `image-converter` (a named target per batch, plus the
 ICO container and the favicon pack), `blur-placeholder` (the BlurHash codec and
 the `blurDataURL` it writes), `curl` (the shell tokenizer, the request model and
-the four writers around it), `uuid`, `overview`, `preferences`, `seo`,
-`observability`.
+the four writers around it), `domain-inspector` (the address guard, the DoH
+transport and the signature table — see below), `uuid`, `overview`,
+`preferences`, `seo`, `observability`.
 
 The three image tools are the worked example of the "lift it the moment a second
 tool needs it" rule. Everything they share — decoding, the four tuned encoder
@@ -434,7 +435,7 @@ named, the placeholder generator throws away everything but the low
 frequencies.
 
 `tools/domain/base64.ts` is the newest lift and shows where the seam goes. The
-Base64 tool still owns everything about *reading* what a person pasted — the
+Base64 tool still owns everything about _reading_ what a person pasted — the
 alphabets it names, the whitespace it tolerates, the positions it reports. What
 moved is the encoder alone, because a data URI needs the same sextets and none
 of the options.
@@ -626,7 +627,7 @@ whenever a tool offers more than one way to change the same thing.
 
 `new URL()` is the rare platform API that is safe to call during render on both
 sides of hydration — it is specified rather than host-derived, unlike the
-enumerations and zone-less dates above. What it *is* is normalising: lowercased
+enumerations and zone-less dates above. What it _is_ is normalising: lowercased
 scheme and host, punycoded IDN, default port dropped, empty path written as `/`.
 Tell the reader when that changed their text instead of swapping it silently.
 
@@ -648,8 +649,8 @@ both sides were built from.
 **The one thing a tolerant parser may not guess is arity.** curl has around two
 hundred flags. Guessing that an unknown one takes a value eats the URL; guessing
 it takes none promotes its value to one. `flags.ts` records arity even for flags
-nothing acts on, precisely so being *ignored* stays survivable and being
-*mis-split* stays impossible — and the fallback for a flag outside the table
+nothing acts on, precisely so being _ignored_ stays survivable and being
+_mis-split_ stays impossible — and the fallback for a flag outside the table
 consumes the next token only when it can be neither a flag nor an address.
 
 **Detect the dialect before tokenising, never during.** "Copy as cURL" is three
@@ -664,13 +665,13 @@ wrong.
 command, define `curl() { for a in "$@"; do printf '%s\0' "$a"; done; }`, and
 pipe the whole thing to `/bin/sh`. Real word-splitting, no dependency, and it
 covers `bash` and `dash` in the same script. Say in the handoff which dialects
-that could *not* reach — cmd and PowerShell have no interpreter on Linux, so
+that could _not_ reach — cmd and PowerShell have no interpreter on Linux, so
 their guarantee is only the round trip through this repo's own reader.
 
 **Round-trip at the model, not at the text.** `-d` and `--data-raw` say the same
 thing, so byte equality is the wrong invariant; `parse(emit(parse(x)))` equalling
 `parse(x)` is the right one. That test found a real defect nothing else would
-have: an empty header emitted as `Name: ` reparses as a *removal*, because
+have: an empty header emitted as `Name: ` reparses as a _removal_, because
 `Name:` with nothing after it is how curl is told to drop a header it would
 otherwise add. The spelling that means "send this, empty" is `Name;`.
 
@@ -679,20 +680,20 @@ redirect without `-L`; `fetch` follows unless told not to. curl sends
 `application/x-www-form-urlencoded` with `-d`; `fetch` sends `text/plain` for any
 string body, `JSON.stringify` output included. Neither is visible until a server
 refuses the request. Both are written out explicitly rather than left implicit —
-carrying the *default* across, not the silence.
+carrying the _default_ across, not the silence.
 
 **Naming what was dropped is half the tool.** curl is a superset of every target,
 so a conversion always loses something, and each language loses a different
 third. `notes.ts` takes a capability record per target and turns everything
 unsupported into a typed note the UI lists under the output. A `fetch` that
 quietly lost `--insecure` looks correct right up to the first self-signed
-certificate. The same mechanism carries the *adapted* cases, which matter just as
+certificate. The same mechanism carries the _adapted_ cases, which matter just as
 much: `-m 15` becoming `AbortSignal.timeout(15000)` is not a loss, but it is not
 recognisable either.
 
 **Where being faithful would produce a worse snippet, say so instead.** The
 honest translation of "no `-L`" is `redirect: "manual"`, and on Node that is
-exactly right. In a browser the same line makes the response *opaque* — status 0,
+exactly right. In a browser the same line makes the response _opaque_ — status 0,
 headers gone, body unreadable — so a snippet that cannot read its own reply is
 the worse answer. There it is left out and the difference becomes a note. Decide
 per runtime, and write down which way and why.
@@ -715,7 +716,7 @@ Four things hold the two in register, and each is a bug if it drifts:
 - **A trailing `"\n"` in the backdrop**, or a value ending in a newline leaves
   the caret on a line the backdrop does not have.
 
-The tokenizer for it is a *different* tokenizer from the one that reads the
+The tokenizer for it is a _different_ tokenizer from the one that reads the
 command — `highlight.ts`, not `tokenize.ts` — because the two want opposite
 things. The parser resolves escapes and discards quotes; the highlighter must
 return every character it was given, in order. That is the invariant to test:
@@ -818,7 +819,7 @@ expects to see it. A unified diff counts one line fewer and marks any side whose
 last line lost its ending with `\ No newline at end of file`. Either model alone
 is coherent; a hunk header counted in one and applied in the other is a patch
 nothing can read. When you emit a format, write down which model each side of
-the boundary uses before writing the converter — and note that a *context* line
+the boundary uses before writing the converter — and note that a _context_ line
 means identical in both files, terminator included, so a final line the two
 sides end differently has to be printed as a removal and an addition instead.
 
@@ -827,7 +828,7 @@ others had to face: **the reference implementation is also code, and some of
 what it does is a bug.** `blurhash@2` opens its decoder with `punch = punch | 1`
 — which reads like a default and is not one, since it truncates to an integer
 and sets the low bit, so 2 and 2.5 both become 3. Its encoder takes
-`Math.max` of the *signed* AC coefficients where the C reference takes the
+`Math.max` of the _signed_ AC coefficients where the C reference takes the
 largest magnitude.
 
 Matching it blindly ships its defects; ignoring it costs the byte-exact
@@ -837,7 +838,7 @@ down which way and why:
 - **Match anything that changes the bytes other people read.** The signed
   maximum is matched, because a hash that differs from what `blurha.sh` and
   every npm consumer produce is a worse answer than one that spends a fraction
-  of a quantiser step. Matching also means matching the *arithmetic*: the
+  of a quantiser step. Matching also means matching the _arithmetic_: the
   encoder walks columns-outside-rows because the reference does, and
   floating-point addition is not associative, so the other order lands a hair
   away and rounds a byte over a boundary. `Math.trunc(x + 0.5)` is kept for the
@@ -924,7 +925,7 @@ one copy too many.
 - **Import the single-threaded codec directly, never the package entry point,
   when the package has a multithreaded twin.** This one cost a build.
   `@jsquash/avif/encode` and `@jsquash/oxipng/optimise` choose between a
-  single-threaded and a pthread/rayon build *at runtime*, so they import both —
+  single-threaded and a pthread/rayon build _at runtime_, so they import both —
   and `avif_enc_mt.js` and `oxipng/codec/pkg-parallel/…/workerHelpers.js` are
   the only two files in the whole dependency that construct a `new Worker`. A
   worker constructor makes the bundler open a nested compilation, and that
@@ -954,9 +955,9 @@ one copy too many.
   it to each package's `init(module)`, then check the output with something that
   is not you: `file`, ImageMagick's `identify`, Pillow. That is the same rule as
   the QR encoder, applied to four formats at once — and it is what proves an
-  option profile is *accepted*, not just plausible.
+  option profile is _accepted_, not just plausible.
 - **Say what the re-encode destroys.** Decoding to pixels drops EXIF, GPS and
-  the colour profile, and *applies* the orientation tag rather than dropping it
+  the colour profile, and _applies_ the orientation tag rather than dropping it
   — skip that last step and every phone photograph comes back sideways. All
   three belong in the copy, not only in the code.
 
@@ -1024,6 +1025,55 @@ sits behind Turnstile, destinations are `http:`/`https:` only, aliases that read
 like a lure (`login`, `verify`, `secure`, …) are reserved, and a short link may
 not point at another short link on this host — on either prefix. Without all
 four, the service is a phishing host that happens to shorten URLs.
+
+# Fetching Something the Reader Named
+
+`src/modules/domain-inspector/` is the shape to copy whenever a tool reaches a
+host chosen by whoever is typing. It is a different problem from calling a
+worker whose URL is in the environment: there, the destination is ours. Here it
+is a stranger's, and the tool is an SSRF surface before it is a feature.
+
+**Resolve first, then connect to the address you checked.** Checking the _name_
+proves nothing — `metadata.attacker.example` is a perfectly public name that
+resolves to `169.254.169.254`. And checking the name's addresses and then
+connecting by name re-resolves it, so a record with a one-second TTL can answer
+publicly for the check and privately for the connection. `address-guard.ts`
+returns a list of addresses rather than a boolean for exactly that reason, and
+`tls.ts` connects to `host: address, servername: hostname` while `http-probe.ts`
+pins the same address through the `lookup` option. `fetch` cannot be told which
+address to use, which is why the page probe is `node:https` by hand.
+
+**Every redirect hop is a new host and a new decision.** Following redirects
+automatically hands the decision to whoever wrote the `Location` header. The
+probe follows them itself, guarding each one, capping the chain, and capping the
+body — 512 KB of a page is every signature worth having and none of the
+bandwidth this server would otherwise spend on a stranger's behalf.
+
+**The range list is longer than the three everybody remembers.** Loopback and
+RFC 1918 are the obvious ones. What actually gets used is `169.254.169.254`, and
+what gets missed is the IPv4 address hiding inside an IPv6 literal — a
+`::ffff:127.0.0.1`, a NAT64 `64:ff9b::`, a 6to4 `2002:`. `domain/ip.ts` unpacks
+all three and classifies the embedded address, and it is strict where the
+boundary is fuzzy: an octal-ambiguous `010.0.0.1` is rejected rather than
+normalised, because an address two resolvers disagree about is precisely what a
+filter exists to catch.
+
+**Say the tool is not private, in the tool.** Everything else here runs in the
+browser and the site says so on its front page. One that cannot must carry that
+in its own copy — what is sent, to whom, and what the inspected host will see in
+its log — rather than leaving the site-wide promise to cover it.
+
+**A signature table is code, not a dependency.** Detecting what a site runs is a
+list of patterns and something to run them over headers, cookies, markup and
+delegation; every published Wappalyzer-shaped package is either unmaintained —
+`wappalyzer-core` says so in its own npm description — or arrives with a
+headless DOM and an HTTP client attached. `domain/fingerprints.ts` is data in
+`domain/`, matched by a pure function, and unit-tested against fixtures. Two
+rules keep it honest: **no `g` flag on any pattern**, because a `RegExp` with
+`lastIndex` is module-level mutable state shared by every request the server
+handles; and **every entry carries a licence**, SPDX or the literal
+`Proprietary`, because "what is this built on" and "may I build on it" are the
+same question asked twice.
 
 # Calling a Metered Worker
 

@@ -4,7 +4,7 @@ import {
     IconBolt,
     IconBraces,
     IconKey,
-    IconTerminal2,
+    IconRadar2,
     IconTransform,
 } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
@@ -58,15 +58,15 @@ export async function QuickActions() {
             Icon: IconTransform,
             accent: "[--tool-accent:var(--brand-emerald)]",
         },
-        // The list is capped at six. Blur Placeholder made way for this one,
+        // The list is capped at six. The cURL converter made way for this one,
         // being the lowest-popularity tool that was represented here.
         {
-            key: "curlToFetch",
-            href: "/tools/curl",
-            title: t("curlToFetch.title"),
-            description: t("curlToFetch.description"),
-            Icon: IconTerminal2,
-            accent: "[--tool-accent:var(--brand-rose)]",
+            key: "domainInspect",
+            href: "/tools/domain-inspector",
+            title: t("domainInspect.title"),
+            description: t("domainInspect.description"),
+            Icon: IconRadar2,
+            accent: "[--tool-accent:var(--brand-cyan)]",
         },
     ];
 

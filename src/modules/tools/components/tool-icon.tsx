@@ -17,6 +17,7 @@ import {
     IconPalette,
     IconPhotoScan,
     IconQrcode,
+    IconRadar2,
     IconScissors,
     IconRegex,
     IconTerminal2,
@@ -56,6 +57,7 @@ const ICONS: Record<ToolIconName, ComponentType<IconProps>> = {
     transform: IconTransform,
     blur: IconBlur,
     terminal: IconTerminal2,
+    radar: IconRadar2,
 };
 
 type ToolIconProps = {
