@@ -139,6 +139,41 @@ export function optionsSignature(options: ConversionOptions): string {
     return parts.join(":");
 }
 
+/** What the queue rule needs to know about one row. */
+export type ConversionQueueRow = {
+    /** True once a conversion has produced files for this row. */
+    readonly hasResult: boolean;
+    /** Why the last attempt failed, or `null` if it did not fail. */
+    readonly reason: ConversionFailureReason | null;
+    /** The settings the last attempt ran under, or `null` before the first. */
+    readonly signature: string | null;
+};
+
+/**
+ * Whether pressing Convert should touch this row.
+ *
+ * A row that already produced files is never run again by the batch button,
+ * not even once the panel has moved on. The reader asked for that result under
+ * the settings that were live at the time, and dropping a second file in with
+ * a different target is not a request to spend another conversion replacing the
+ * first one. Redoing a finished row is its own per-row button.
+ *
+ * A failure is retried only when it is the encoder's own refusal *and* a
+ * setting has moved since, so the same file cannot fail against the same
+ * options twice for one press.
+ */
+export function needsWork(row: ConversionQueueRow, signature: string): boolean {
+    if (row.hasResult) {
+        return false;
+    }
+
+    if (row.reason !== null) {
+        return isRetryableFailure(row.reason) && row.signature !== signature;
+    }
+
+    return true;
+}
+
 export function clampQuality(value: number, min: number, max: number): number {
     if (!Number.isFinite(value)) {
         return min;

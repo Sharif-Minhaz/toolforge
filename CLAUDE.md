@@ -773,11 +773,21 @@ one copy too many.
 
 Two smaller rules the batch queue settled:
 
+- **Nothing encodes until the reader asks, and a finished row is finished.**
+  Picking files fills the queue and stops there; the batch button is what starts
+  work, and it runs **only the rows that have no result yet**. A result already
+  in hand is never replaced by a batch press, because dropping a second picture
+  in at a different quality is not a request to redo the first one — and on a
+  queue of twenty that mistake is twenty encodes the reader did not ask for.
+  Redoing one is a per-row button, shown only while that row is stale.
+  `needsWork` in `domain/` is that whole rule, and it is unit-tested.
 - **Staleness is derived, not stored.** `optionsSignature(options)` is written
   onto a row when its result is produced; a row whose signature no longer
-  matches the panel is dimmed and the button says "compress again". Nothing is
-  silently re-encoded, and there is no `isStale` flag to keep in step. Build
-  that signature from **only the options the current target actually reads** —
+  matches the panel is dimmed and offers "compress again". Nothing is silently
+  re-encoded, and there is no `isStale` flag to keep in step. What is dimmed is
+  the row, never the summary — every file counted there is one the reader keeps,
+  whatever the panel says now. Build that signature from **only the options the
+  current target actually reads** —
   the converter's version appends the quality, the size cap and the icon sizes
   each behind its own `…Applies(target)` predicate, so nudging the quality
   slider while PNG is selected cannot dim a row it could not have changed. The

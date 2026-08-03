@@ -94,6 +94,41 @@ export function optionsSignature(options: CompressionOptions): string {
     return `${options.format}:${options.quality}:${options.maxEdge ?? "original"}`;
 }
 
+/** What the queue rule needs to know about one row. */
+export type CompressionQueueRow = {
+    /** True once an encode has produced a file for this row. */
+    readonly hasResult: boolean;
+    /** Why the last attempt failed, or `null` if it did not fail. */
+    readonly reason: CompressionFailureReason | null;
+    /** The settings the last attempt ran under, or `null` before the first. */
+    readonly signature: string | null;
+};
+
+/**
+ * Whether pressing Compress should touch this row.
+ *
+ * A row that already produced a file is never run again by the batch button,
+ * not even once the panel has moved on. The reader asked for that result under
+ * the settings that were live at the time, and dropping a second file in with
+ * a different quality is not a request to spend another encode replacing the
+ * first one. Redoing a finished row is its own per-row button.
+ *
+ * A failure is retried only when it is the encoder's own refusal *and* a
+ * setting has moved since, so the same file cannot fail against the same
+ * options twice for one press.
+ */
+export function needsWork(row: CompressionQueueRow, signature: string): boolean {
+    if (row.hasResult) {
+        return false;
+    }
+
+    if (row.reason !== null) {
+        return isRetryableFailure(row.reason) && row.signature !== signature;
+    }
+
+    return true;
+}
+
 /**
  * Whether a failed file is worth attempting again when the settings change.
  *

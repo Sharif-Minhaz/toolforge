@@ -1,6 +1,12 @@
 "use client";
 
-import { IconAlertTriangle, IconDownload, IconLoader2, IconX } from "@tabler/icons-react";
+import {
+    IconAlertTriangle,
+    IconDownload,
+    IconLoader2,
+    IconRefresh,
+    IconX,
+} from "@tabler/icons-react";
 import { useFormatter, useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -23,7 +29,10 @@ export type CompressionRowItem = {
 
 type CompressionRowProps = {
     item: CompressionRowItem;
+    /** True while the queue is running, so a second encode cannot be asked for. */
+    busy: boolean;
     describeFailure: (reason: CompressionFailureReason) => string;
+    onRecompress: (id: string) => void;
     onDownload: (id: string) => void;
     onRemove: (id: string) => void;
 };
@@ -38,7 +47,9 @@ type CompressionRowProps = {
  */
 export function CompressionRow({
     item,
+    busy,
     describeFailure,
+    onRecompress,
     onDownload,
     onRemove,
 }: CompressionRowProps) {
@@ -136,6 +147,22 @@ export function CompressionRow({
             )}
 
             <div className="flex shrink-0 items-center gap-0.5">
+                {/*
+                 * Only on a row the panel has moved on from: the settings are
+                 * the only thing that makes redoing this file mean anything,
+                 * and nothing else on the page will replace it.
+                 */}
+                {item.stale && (
+                    <Button
+                        variant="ghost"
+                        aria-label={t("rowRecompress", { name: item.name })}
+                        disabled={busy}
+                        onClick={() => onRecompress(item.id)}
+                        className="size-8 p-0"
+                    >
+                        <IconRefresh className="size-4" stroke={1.8} aria-hidden="true" />
+                    </Button>
+                )}
                 <Button
                     variant="ghost"
                     aria-label={t("rowDownload", { name: item.name })}

@@ -39,9 +39,10 @@ import {
     clampQuality,
     formatForSourceType,
     isLosslessFormat,
-    isRetryableFailure,
+    needsWork,
     optionsSignature,
     qualityApplies,
+    type CompressionQueueRow,
 } from "../domain/options";
 import { summariseSavings } from "../domain/savings";
 import {
@@ -131,7 +132,7 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
     const summary = summariseSavings(results);
     const stale = items.some((item) => item.result !== null && item.signature !== signature);
     const failedCount = items.filter((item) => item.status === "failed").length;
-    const pendingCount = items.filter((item) => needsWork(item, signature)).length;
+    const pendingCount = items.filter((item) => needsWork(queueRow(item), signature)).length;
     const canCompress = !working && pendingCount > 0;
     // `auto` keeps a PNG a PNG, so the slider is live for the batch but dead for
     // part of it — worth saying, and different from PNG being forced on everything.
@@ -176,12 +177,14 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
             return { tone: "idle", message: t("statusIdle") };
         }
 
-        if (stale) {
-            return { tone: "warning", message: t("statusStale") };
-        }
-
+        // Ahead of staleness: what the button will do next matters more than
+        // what earlier settings produced, and only unfinished rows are pending.
         if (pendingCount > 0) {
             return { tone: "idle", message: t("statusReady", { count: pendingCount }) };
+        }
+
+        if (stale) {
+            return { tone: "warning", message: t("statusStale") };
         }
 
         if (failedCount > 0 && summary.count === 0) {
@@ -204,17 +207,13 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
         setOptions((current) => ({ ...current, ...patch }));
     }
 
-    async function run(queue: readonly QueueItem[], activeOptions: CompressionOptions) {
-        if (running.current) {
+    /** Encode the rows handed in, one after another, under the settings given. */
+    async function run(pending: readonly QueueItem[], activeOptions: CompressionOptions) {
+        if (running.current || pending.length === 0) {
             return;
         }
 
         const activeSignature = optionsSignature(activeOptions);
-        const pending = queue.filter((item) => needsWork(item, activeSignature));
-
-        if (pending.length === 0) {
-            return;
-        }
 
         running.current = true;
         setWorking(true);
@@ -273,6 +272,23 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
         }
     }
 
+    /** The batch button: everything not compressed yet, and nothing else. */
+    function handleCompress() {
+        void run(
+            items.filter((item) => needsWork(queueRow(item), signature)),
+            options,
+        );
+    }
+
+    /** One row, on request — the only path that replaces a result already in hand. */
+    function handleRecompress(id: string) {
+        const item = items.find((candidate) => candidate.id === id);
+
+        if (item !== undefined) {
+            void run([item], options);
+        }
+    }
+
     function handlePick(picked: FileList | null) {
         if (picked === null || working) {
             return;
@@ -314,10 +330,9 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
             toast.error(tToast("rejected", { count: rejected }));
         }
 
-        const queue = [...items, ...added];
-
-        setItems(queue);
-        void run(queue, options);
+        // Deliberately not started here: picking files fills the queue, pressing
+        // Compress is what spends the reader's battery on them.
+        setItems([...items, ...added]);
     }
 
     function handleDrop(event: DragEvent<HTMLLabelElement>) {
@@ -562,11 +577,7 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
                 )}
 
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <Button
-                        onClick={() => void run(items, options)}
-                        disabled={!canCompress}
-                        className="h-9 px-3.5"
-                    >
+                    <Button onClick={handleCompress} disabled={!canCompress} className="h-9 px-3.5">
                         {working ? (
                             <IconLoader2 className="size-4 animate-spin" aria-hidden="true" />
                         ) : (
@@ -581,9 +592,7 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
                                   done: format.number(progress.done + 1),
                                   total: format.number(progress.total),
                               })
-                            : stale
-                              ? t("recompress")
-                              : t("compress")}
+                            : t("compress")}
                     </Button>
 
                     <Button
@@ -611,14 +620,13 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
                     </Button>
                 </div>
 
+                {/*
+                 * Not dimmed when a row is stale, unlike the rows themselves.
+                 * Every result counted here is a finished file the reader keeps,
+                 * whatever the panel says now.
+                 */}
                 {summary.count > 0 && (
-                    <div
-                        className={cn(
-                            "bg-card/60 ring-border/70 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 rounded-xl px-3 py-2.5 ring-1 ring-inset",
-                            "transition-opacity duration-200",
-                            stale && "opacity-55",
-                        )}
-                    >
+                    <div className="bg-card/60 ring-border/70 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 rounded-xl px-3 py-2.5 ring-1 ring-inset">
                         <span className="text-[0.8125rem] leading-[1.3] font-medium">
                             {t("summaryFiles", { count: summary.count })}
                         </span>
@@ -659,7 +667,9 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
                                     reason: item.reason,
                                     stale: item.result !== null && item.signature !== signature,
                                 }}
+                                busy={working}
                                 describeFailure={describeFailure}
+                                onRecompress={handleRecompress}
                                 onDownload={handleDownload}
                                 onRemove={handleRemove}
                             />
@@ -679,15 +689,13 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
     );
 }
 
-/** Rows that the next run should touch: never-compressed, or compressed under other settings. */
-function needsWork(item: QueueItem, signature: string): boolean {
-    if (item.status === "failed") {
-        return (
-            item.reason !== null && isRetryableFailure(item.reason) && item.signature !== signature
-        );
-    }
-
-    return item.signature !== signature;
+/** The three facts `needsWork` reads, without the file or the preview URL. */
+function queueRow(item: QueueItem): CompressionQueueRow {
+    return {
+        hasResult: item.result !== null,
+        reason: item.reason,
+        signature: item.signature,
+    };
 }
 
 function replaceItem(

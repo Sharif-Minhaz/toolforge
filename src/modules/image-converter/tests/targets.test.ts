@@ -8,6 +8,7 @@ import {
     iconSizesApply,
     isRetryableFailure,
     isSingleFileTarget,
+    needsWork,
     optionsSignature,
     qualityApplies,
     resizeApplies,
@@ -249,5 +250,44 @@ describe("the default options are internally consistent", () => {
 
     test("the default icon sizes are never empty", () => {
         expect(DEFAULT_OPTIONS.iconSizes.length).toBeGreaterThan(0);
+    });
+});
+
+describe("needsWork", () => {
+    const settings = optionsSignature(DEFAULT_OPTIONS);
+    const other = optionsSignature({ ...DEFAULT_OPTIONS, target: "png" });
+
+    test("a picked file that has never run is pending", () => {
+        expect(needsWork({ hasResult: false, reason: null, signature: null }, settings)).toBe(true);
+    });
+
+    test("a finished row is left alone, whatever the panel says now", () => {
+        const done = { hasResult: true, reason: null, signature: settings } as const;
+
+        expect(needsWork(done, settings)).toBe(false);
+        expect(needsWork({ ...done, signature: other }, settings)).toBe(false);
+    });
+
+    test("adding a file after a run picks up only the new one", () => {
+        const queue = [
+            { hasResult: true, reason: null, signature: other },
+            { hasResult: false, reason: null, signature: null },
+        ] as const;
+
+        expect(queue.filter((row) => needsWork(row, settings))).toHaveLength(1);
+    });
+
+    test("an encode failure is retried once the settings move, not before", () => {
+        const failed = { hasResult: false, reason: "encode_failed", signature: settings } as const;
+
+        expect(needsWork(failed, settings)).toBe(false);
+        expect(needsWork(failed, other)).toBe(true);
+    });
+
+    test("a rejection the settings cannot fix is never retried", () => {
+        const failed = { hasResult: false, reason: "too_large", signature: settings } as const;
+
+        expect(needsWork(failed, settings)).toBe(false);
+        expect(needsWork(failed, other)).toBe(false);
     });
 });

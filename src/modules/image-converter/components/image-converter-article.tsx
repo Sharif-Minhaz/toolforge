@@ -55,6 +55,7 @@ export async function ImageConverterArticle() {
         "background",
         "sizes",
         "convert",
+        "redo",
         "download",
         "downloadAll",
         "remove",

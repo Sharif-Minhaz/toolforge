@@ -1,6 +1,12 @@
 "use client";
 
-import { IconAlertTriangle, IconDownload, IconLoader2, IconX } from "@tabler/icons-react";
+import {
+    IconAlertTriangle,
+    IconDownload,
+    IconLoader2,
+    IconRefresh,
+    IconX,
+} from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -22,7 +28,10 @@ export type ConversionRowItem = {
 
 type ConversionRowProps = {
     item: ConversionRowItem;
+    /** True while the queue is running, so a second conversion cannot be asked for. */
+    busy: boolean;
     describeFailure: (reason: ConversionFailureReason) => string;
+    onReconvert: (id: string) => void;
     onDownload: (id: string) => void;
     onRemove: (id: string) => void;
 };
@@ -35,7 +44,14 @@ type ConversionRowProps = {
  * favicon at 44 pixels would be a comparison nobody can make, and it would mean
  * holding a second object URL per row for a picture too small to judge.
  */
-export function ConversionRow({ item, describeFailure, onDownload, onRemove }: ConversionRowProps) {
+export function ConversionRow({
+    item,
+    busy,
+    describeFailure,
+    onReconvert,
+    onDownload,
+    onRemove,
+}: ConversionRowProps) {
     const t = useTranslations("imageConverter.workbench");
     const tTargets = useTranslations("imageConverter.targets");
     const byteLabel = useByteLabel();
@@ -113,6 +129,22 @@ export function ConversionRow({ item, describeFailure, onDownload, onRemove }: C
             )}
 
             <div className="flex shrink-0 items-center gap-0.5">
+                {/*
+                 * Only on a row the panel has moved on from: the settings are
+                 * the only thing that makes redoing this file mean anything,
+                 * and nothing else on the page will replace it.
+                 */}
+                {item.stale && (
+                    <Button
+                        variant="ghost"
+                        aria-label={t("rowReconvert", { name: item.name })}
+                        disabled={busy}
+                        onClick={() => onReconvert(item.id)}
+                        className="size-8 p-0"
+                    >
+                        <IconRefresh className="size-4" stroke={1.8} aria-hidden="true" />
+                    </Button>
+                )}
                 <Button
                     variant="ghost"
                     aria-label={t("rowDownload", { name: item.name })}

@@ -49,6 +49,7 @@ export async function ImageCompressorArticle() {
         "format",
         "resize",
         "compress",
+        "redo",
         "download",
         "downloadAll",
         "remove",

@@ -12,6 +12,7 @@ import {
     formatForSourceType,
     isLosslessFormat,
     isRetryableFailure,
+    needsWork,
     optionsSignature,
     qualityApplies,
 } from "@/modules/image-compressor/domain/options";
@@ -167,5 +168,43 @@ describe("fitWithinEdge — this tool's presets", () => {
 
             expect(Math.max(result.width, result.height)).toBe(edge ?? 4000);
         }
+    });
+});
+
+describe("needsWork", () => {
+    const settings = "webp:75:original";
+
+    test("a picked file that has never run is pending", () => {
+        expect(needsWork({ hasResult: false, reason: null, signature: null }, settings)).toBe(true);
+    });
+
+    test("a finished row is left alone, whatever the panel says now", () => {
+        const done = { hasResult: true, reason: null, signature: settings } as const;
+
+        expect(needsWork(done, settings)).toBe(false);
+        expect(needsWork({ ...done, signature: "avif:40:800" }, settings)).toBe(false);
+    });
+
+    test("adding a file after a run picks up only the new one", () => {
+        const queue = [
+            { hasResult: true, reason: null, signature: "png:75:original" },
+            { hasResult: false, reason: null, signature: null },
+        ] as const;
+
+        expect(queue.filter((row) => needsWork(row, settings))).toHaveLength(1);
+    });
+
+    test("an encode failure is retried once the settings move, not before", () => {
+        const failed = { hasResult: false, reason: "encode_failed", signature: settings } as const;
+
+        expect(needsWork(failed, settings)).toBe(false);
+        expect(needsWork(failed, "avif:75:original")).toBe(true);
+    });
+
+    test("a rejection the settings cannot fix is never retried", () => {
+        const failed = { hasResult: false, reason: "too_large", signature: settings } as const;
+
+        expect(needsWork(failed, settings)).toBe(false);
+        expect(needsWork(failed, "avif:75:original")).toBe(false);
     });
 });
