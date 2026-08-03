@@ -105,6 +105,56 @@ async function resizePixels(pixels: ImageData, width: number, height: number): P
 }
 
 /**
+ * AVIF and PNG reach past their package entry point. Both `@jsquash/avif/encode`
+ * and `@jsquash/oxipng/optimise` pick between a single-threaded build and a
+ * multithreaded one at runtime, and to do that they import **both** — so the
+ * pthread build of libaom and the wasm-bindgen-rayon build of OxiPNG enter the
+ * module graph even though neither can ever run here.
+ *
+ * That is not merely wasted bytes. Each of those two files is the only place in
+ * the whole dependency that constructs a `new Worker`, and a worker constructor
+ * makes the bundler open a nested compilation. Building this route through the
+ * package entry points deadlocks `next build`: every process parks in `ep_poll`
+ * with no CPU and no I/O, indefinitely.
+ *
+ * Neither multithreaded build would have been chosen anyway. `avif_enc_mt` is
+ * skipped outside a worker context, and OxiPNG's parallel build is skipped
+ * unless `self instanceof WorkerGlobalScope` — and this runs on the main
+ * thread. Importing the single-threaded codec directly is therefore the same
+ * encoder with the same output, minus a compilation that hangs.
+ *
+ * The instances are memoised because instantiating a WebAssembly module per
+ * file would re-download and re-compile several megabytes for every image in
+ * the batch.
+ */
+let avifEncoder: Promise<AvifEncoderModule> | undefined;
+let oxipngCodec: Promise<OxipngCodec> | undefined;
+
+type AvifEncoderModule = Awaited<
+    ReturnType<Awaited<typeof import("@jsquash/avif/codec/enc/avif_enc.js")>["default"]>
+>;
+
+type OxipngCodec = typeof import("@jsquash/oxipng/codec/pkg/squoosh_oxipng.js");
+
+function loadAvifEncoder(): Promise<AvifEncoderModule> {
+    avifEncoder ??= import("@jsquash/avif/codec/enc/avif_enc.js").then(
+        ({ default: moduleFactory }) => moduleFactory({ noInitialRun: true }),
+    );
+
+    return avifEncoder;
+}
+
+function loadOxipngCodec(): Promise<OxipngCodec> {
+    oxipngCodec ??= import("@jsquash/oxipng/codec/pkg/squoosh_oxipng.js").then(async (codec) => {
+        await codec.default();
+
+        return codec;
+    });
+
+    return oxipngCodec;
+}
+
+/**
  * Runs one encoder over one set of pixels.
  *
  * Each codec is imported on demand, so a reader who only ever writes WebP never
@@ -129,16 +179,52 @@ export async function encodePixels(
             return encode(pixels, { ...WEBP_ENCODE_OPTIONS, quality });
         }
         case "avif": {
-            const { default: encode } = await import("@jsquash/avif/encode");
+            const [encoder, { defaultOptions }] = await Promise.all([
+                loadAvifEncoder(),
+                import("@jsquash/avif/meta.js"),
+            ]);
 
-            return encode(pixels, { ...AVIF_ENCODE_OPTIONS, quality });
+            const encoded = encoder.encode(
+                // libaom reads the buffer directly rather than the clamped view.
+                new Uint8Array(pixels.data.buffer),
+                pixels.width,
+                pixels.height,
+                { ...defaultOptions, ...AVIF_ENCODE_OPTIONS, quality },
+            );
+
+            if (encoded === null) {
+                throw new Error("AVIF encoding failed");
+            }
+
+            return toArrayBuffer(encoded);
         }
         case "png": {
-            const { default: optimise } = await import("@jsquash/oxipng/optimise");
+            const codec = await loadOxipngCodec();
 
-            return optimise(pixels, PNG_OPTIMISE_OPTIONS);
+            return toArrayBuffer(
+                codec.optimise_raw(
+                    pixels.data,
+                    pixels.width,
+                    pixels.height,
+                    PNG_OPTIMISE_OPTIONS.level,
+                    PNG_OPTIMISE_OPTIONS.interlace,
+                    PNG_OPTIMISE_OPTIONS.optimiseAlpha,
+                ),
+            );
         }
     }
+}
+
+/**
+ * Copies a codec's view of wasm memory out into a buffer of its own.
+ *
+ * `.buffer` on what these two return is the module's entire linear memory, and
+ * the next encode in the batch writes over it. The package entry points handed
+ * back that live view; taking a slice is what makes a queued result still be
+ * the image it was when it finished.
+ */
+function toArrayBuffer(view: Uint8Array): ArrayBuffer {
+    return view.slice().buffer;
 }
 
 /**

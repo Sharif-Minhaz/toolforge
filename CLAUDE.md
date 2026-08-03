@@ -702,6 +702,31 @@ output is the product: reach for the actual codec, compiled to WebAssembly.
   and Turbopack both understand as an asset reference. Copying `.wasm` files
   into `public/` and passing `locateFile` is the workaround for a bundler that
   cannot do this; ours can, so do not.
+- **Import the single-threaded codec directly, never the package entry point,
+  when the package has a multithreaded twin.** This one cost a build.
+  `@jsquash/avif/encode` and `@jsquash/oxipng/optimise` choose between a
+  single-threaded and a pthread/rayon build *at runtime*, so they import both —
+  and `avif_enc_mt.js` and `oxipng/codec/pkg-parallel/…/workerHelpers.js` are
+  the only two files in the whole dependency that construct a `new Worker`. A
+  worker constructor makes the bundler open a nested compilation, and that
+  deadlocked `next build`: five processes parked in `ep_poll`, zero CPU, zero
+  I/O, forever. Neither multithreaded build could ever have run — both are
+  gated on being inside a worker, and this runs on the main thread — so
+  `@jsquash/avif/codec/enc/avif_enc.js` and
+  `@jsquash/oxipng/codec/pkg/squoosh_oxipng.js` give byte-identical output with
+  no compilation that hangs. MozJPEG, libwebp and the resizer have no worker
+  and are imported normally.
+- **A hung build and a slow build look nothing alike — measure before you
+  guess.** Expensive bundling pegs CPU. Read `/proc/<pid>/io` twice a few
+  seconds apart: if `read_bytes` and `write_bytes` have not moved and nothing
+  new has landed in `.next`, it is deadlocked, and no amount of waiting or
+  tuning will finish it. Bisect by moving the suspect route out of
+  `src/app/tools/` and building — that is a one-minute answer.
+- **Copy the bytes out of wasm memory before returning them.** `.buffer` on
+  what a codec hands back is the module's whole linear memory, and the next
+  file in the batch overwrites it. The package entry points returned that live
+  view; `view.slice().buffer` is what makes a queued result still be the image
+  it was when it finished.
 - **`bun test` cannot reach any of it** — the codecs need `ImageData` and fetch
   their binary by URL. Test the pure layer (`options`, `pixels`, `savings`,
   `filenames`, `archive`) and verify the codecs in a throwaway Node script that
