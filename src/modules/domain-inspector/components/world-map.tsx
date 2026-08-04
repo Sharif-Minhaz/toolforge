@@ -51,15 +51,40 @@ export type MapPin = {
 };
 
 /**
+ * A pin is three concentric circles, not one dot: a target ring wide enough to
+ * find at world zoom, and a small solid core that says exactly where.
+ *
  * Leaflet writes `fill` and `stroke` as presentation attributes, which any CSS
  * rule outranks — so a class is all it takes to put a pin on a design token.
  * Written as whole literals because Tailwind reads the source, not the values.
  */
-const PIN_CLASSES: Record<MapPinTone, string> = {
-    agreed: "[fill:var(--brand-emerald)] [stroke:var(--card)] [fill-opacity:0.9]",
-    differs: "[fill:var(--brand-amber)] [stroke:var(--card)] [fill-opacity:0.95]",
-    silent: "[fill:var(--muted-foreground)] [stroke:var(--card)] [fill-opacity:0.55]",
+const PIN_RING: Record<MapPinTone, string> = {
+    agreed: "[fill:var(--brand-emerald)] [fill-opacity:0.16] [stroke:var(--brand-emerald)] [stroke-opacity:0.55]",
+    differs:
+        "[fill:var(--brand-amber)] [fill-opacity:0.2] [stroke:var(--brand-amber)] [stroke-opacity:0.7]",
+    silent: "[fill:var(--muted-foreground)] [fill-opacity:0.07] [stroke:var(--muted-foreground)] [stroke-opacity:0.6]",
 };
+
+const PIN_CORE: Record<MapPinTone, string> = {
+    agreed: "[fill:var(--brand-emerald)] [stroke:var(--card)]",
+    differs: "[fill:var(--brand-amber)] [stroke:var(--card)]",
+    silent: "[fill:var(--muted-foreground)] [fill-opacity:0.7] [stroke:var(--card)]",
+};
+
+/**
+ * `transform-box` is the load-bearing half: without it an SVG path scales about
+ * the viewport origin rather than its own centre, and the ring flies off the
+ * map instead of expanding out of the pin.
+ */
+const PIN_BEACON = cn(
+    "[fill:none] [stroke:var(--brand-amber)] [stroke-opacity:0.8]",
+    "animate-beacon [transform-box:fill-box] [transform-origin:center]",
+);
+
+/** Wide enough to hover at world zoom without swallowing its neighbour. */
+const RING_RADIUS = 11;
+
+const CORE_RADIUS = 4;
 
 /**
  * CARTO's basemaps, which exist as a matched light/dark pair — the reason they
@@ -67,10 +92,16 @@ const PIN_CLASSES: Record<MapPinTone, string> = {
  * would leave one of this site's two themes with a glaring white rectangle in
  * it. Both are free for this volume and both require the attribution below,
  * which Leaflet's own control renders.
+ *
+ * The label-free variants, because a pin sits on a country centroid and the
+ * caller's own list names every one of them. What the labelled tiles add at
+ * this zoom is a second typeface and a second language — CARTO renders each
+ * region in its local script, so one card ends up carrying `AFRIKA`, `亚洲` and
+ * `AMÉRICA DO SUL` at once, none of which is the reader's chosen locale.
  */
 const TILES = {
-    light: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-    dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    light: "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
+    dark: "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
 } as const;
 
 const ATTRIBUTION =
@@ -78,6 +109,28 @@ const ATTRIBUTION =
 
 /** Past this the basemap promises a precision country centroids do not have. */
 const MAX_ZOOM = 6;
+
+/** The full Web Mercator extent, which is also what `maxBounds` allows. */
+const WORLD_EDGE_LATITUDE = 85;
+
+/** Web Mercator renders the world as a square of this many pixels at zoom 0. */
+const WORLD_TILE_SIZE = 256;
+
+/**
+ * The zoom at which the world covers the frame in both axes.
+ *
+ * Below it the container's own background shows as pale bands above and below
+ * the map — which is what made it look like a picture pasted into the card
+ * rather than a panel fitted to it. Used as the floor for `minZoom`, so no
+ * combination of fitting, pinching or resizing can put them back.
+ */
+function coverZoom(container: HTMLElement): number {
+    const edge = Math.max(container.clientWidth, container.clientHeight);
+
+    // Before the first layout there is nothing to cover; the resize handler
+    // recomputes this the moment there is.
+    return edge === 0 ? 1 : Math.log2(edge / WORLD_TILE_SIZE);
+}
 
 /**
  * Leaflet ships its own CSS, and it hard-codes white panels and black text.
@@ -87,17 +140,63 @@ const MAX_ZOOM = 6;
  * `globals.css`.
  */
 const LEAFLET_THEME = cn(
-    "[&_.leaflet-container]:!bg-muted [&_.leaflet-container]:!font-sans",
+    // `&.`, not `&_`. Leaflet puts `.leaflet-container` on the element it is
+    // handed — this one — so the descendant form silently matched nothing and
+    // left Leaflet's own `#ddd` as the backdrop.
+    "[&.leaflet-container]:!bg-card [&.leaflet-container]:!font-sans",
+
+    /*
+     * Dark Matter and Positron are both built as quiet backdrops for bright
+     * data overlays, and the tiles are pure neutral greys: dark is water
+     * `#262626` over land `#090909`, light is water `#d4dadc` under land
+     * `#fafaf8`. Two things follow, and both are why the raw tiles look wrong
+     * on this card rather than merely dark.
+     *
+     * The card sits at `oklch(0.187)`, which in dark mode falls *between* the
+     * two — so land and water are each within a few values of their own frame
+     * and the whole thing mushes. The fix is not "make it brighter": it is to
+     * move land below `--background` and water above `--muted`, so the map
+     * reads against the card from both sides.
+     *
+     * And because the source is neutral, a colour matrix on it collapses to
+     * three constant per-channel gains — which means `sepia -> hue-rotate ->
+     * saturate` is exactly a tint, and can be solved rather than eyeballed.
+     * These land on the app's own hue (264) at its own chroma: dark water
+     * resolves to `#2b2e36` at `oklch(0.302 0.015 269)`, dark land to
+     * `#070809`; light water to `#cdcfd4`, light land to `#f3f3f4`, which is
+     * `--muted` to within a value. Retune by rerunning the solver, not by
+     * nudging digits — the numbers are coupled and the light theme clips to
+     * flat white a long way before it looks wrong in the source.
+     *
+     * The light theme's low `saturate` earns its keep twice over: Positron
+     * draws administrative borders in a salmon pink that belongs to nothing
+     * else on this site, and this is what returns them to grey.
+     */
+    "[&_.leaflet-tile-pane]:[filter:brightness(0.72)_contrast(1.53)_sepia(0.98)_hue-rotate(180deg)_saturate(0.1)]",
+    "dark:[&_.leaflet-tile-pane]:[filter:brightness(1.11)_contrast(1.03)_sepia(0.78)_hue-rotate(184deg)_saturate(0.9)]",
+
     "[&_.leaflet-tooltip]:!bg-foreground [&_.leaflet-tooltip]:!text-background",
     "[&_.leaflet-tooltip]:!border-0 [&_.leaflet-tooltip]:!shadow-none",
     "[&_.leaflet-tooltip]:!rounded-md [&_.leaflet-tooltip]:!px-2.5 [&_.leaflet-tooltip]:!py-1.5",
     "[&_.leaflet-tooltip-top]:before:!border-t-[var(--color-foreground)]",
     "[&_.leaflet-tooltip-bottom]:before:!border-b-[var(--color-foreground)]",
-    "[&_.leaflet-bar_a]:!bg-card [&_.leaflet-bar_a]:!text-foreground",
-    "[&_.leaflet-bar_a]:!border-border [&_.leaflet-bar]:!border-border",
-    "[&_.leaflet-bar_a:hover]:!bg-muted",
-    "[&_.leaflet-control-attribution]:!bg-card/80 [&_.leaflet-control-attribution]:!text-muted-foreground",
+
+    // Chrome, kept quiet. Leaflet's defaults put a near-white slab and a
+    // 22px glyph in the corner, which on this card is the highest-contrast
+    // thing in the frame — brighter than the reading it is framing.
+    "[&_.leaflet-bar]:!rounded-lg [&_.leaflet-bar]:!border-0 [&_.leaflet-bar]:!shadow-none",
+    "[&_.leaflet-bar]:!overflow-hidden [&_.leaflet-bar]:!ring-1 [&_.leaflet-bar]:!ring-border",
+    "[&_.leaflet-bar_a]:!bg-card/70 [&_.leaflet-bar_a]:!text-muted-foreground",
+    "[&_.leaflet-bar_a]:!border-border/60 [&_.leaflet-bar_a]:!text-base",
+    "[&_.leaflet-bar_a]:!backdrop-blur-sm",
+    "[&_.leaflet-bar_a:hover]:!bg-card [&_.leaflet-bar_a:hover]:!text-foreground",
+
+    "[&_.leaflet-control-attribution]:!bg-card/70 [&_.leaflet-control-attribution]:!backdrop-blur-sm",
+    "[&_.leaflet-control-attribution]:!text-muted-foreground",
+    "[&_.leaflet-control-attribution]:!rounded-tl-md [&_.leaflet-control-attribution]:!px-1.5",
+    "[&_.leaflet-control-attribution]:!text-[0.5625rem] [&_.leaflet-control-attribution]:!leading-[1.6]",
     "[&_.leaflet-control-attribution_a]:!text-muted-foreground",
+    "[&_.leaflet-control-attribution_a:hover]:!text-foreground",
 );
 
 function buildTooltip(pin: MapPin): HTMLElement {
@@ -168,9 +267,19 @@ export function WorldMap({
 
                 map = L.map(container, {
                     zoomControl: true,
-                    attributionControl: true,
-                    minZoom: 1,
+                    // Built by hand below so the prefix can be dropped.
+                    attributionControl: false,
+                    minZoom: coverZoom(container),
                     maxZoom: MAX_ZOOM,
+                    /*
+                     * Leaflet's default snaps every zoom to a whole number, and
+                     * `fitBounds` snaps *down* — so a frame the world nearly
+                     * fills gets the next size smaller and a band of backdrop
+                     * around it. Off, the fit is exact. It costs slightly soft
+                     * tiles at fractional scales, which is a better trade than
+                     * a pale border on every report.
+                     */
+                    zoomSnap: 0,
                     // Wheeling over a full-width map should scroll the page, not
                     // swallow the gesture and zoom. The control and a double
                     // click still zoom, so nothing is unreachable.
@@ -179,11 +288,23 @@ export function WorldMap({
                     fadeAnimation: reducedMotion !== true,
                     markerZoomAnimation: reducedMotion !== true,
                     maxBounds: [
-                        [-85, -180],
-                        [85, 180],
+                        [-WORLD_EDGE_LATITUDE, -180],
+                        [WORLD_EDGE_LATITUDE, 180],
                     ],
                     maxBoundsViscosity: 1,
                 });
+
+                // The frame changes size with the layout — a sidebar collapsing
+                // is enough — and the zoom that covered the old one may not
+                // cover the new one. `setMinZoom` zooms out of range views for
+                // us, so this is the whole of keeping the bands gone.
+                map.on("resize", () => map?.setMinZoom(coverZoom(container)));
+
+                // `prefix: false` drops Leaflet's own "Leaflet" credit, which
+                // its BSD-2 licence does not ask for and which arrives with a
+                // flag emoji nobody chose. OpenStreetMap and CARTO do require
+                // theirs, and those are what the tile layer contributes.
+                L.control.attribution({ prefix: false, position: "bottomright" }).addTo(map);
 
                 L.tileLayer(resolvedTheme === "dark" ? TILES.dark : TILES.light, {
                     subdomains: "abcd",
@@ -193,24 +314,58 @@ export function WorldMap({
                 }).addTo(map);
 
                 for (const pin of pins) {
-                    L.circleMarker([pin.latitude, pin.longitude], {
-                        // Every pin is one location, so size carries no meaning
-                        // and is set for legibility at world zoom alone.
-                        radius: 7,
-                        weight: 2,
-                        className: PIN_CLASSES[pin.tone],
+                    const at: [number, number] = [pin.latitude, pin.longitude];
+
+                    /*
+                     * Divergence is the one thing on this card worth walking
+                     * across the room for, so it is the one thing that moves.
+                     * Everything else holds still — a map where every pin
+                     * pulses says nothing about which pin to look at.
+                     */
+                    if (pin.tone === "differs" && reducedMotion !== true) {
+                        L.circleMarker(at, {
+                            radius: RING_RADIUS,
+                            weight: 1.5,
+                            interactive: false,
+                            className: PIN_BEACON,
+                        }).addTo(map);
+                    }
+
+                    // The ring carries the tooltip rather than the core: it is
+                    // the larger target, and a 4px hover area is not one.
+                    L.circleMarker(at, {
+                        radius: RING_RADIUS,
+                        weight: 1,
+                        // A resolver that never answered gets a broken ring,
+                        // not a fainter one. Absence should read as absence and
+                        // still be the pin you can find.
+                        dashArray: pin.tone === "silent" ? "2 4" : undefined,
+                        className: PIN_RING[pin.tone],
                     })
                         .bindTooltip(buildTooltip(pin), {
                             direction: "top",
-                            offset: [0, -8],
+                            offset: [0, -RING_RADIUS],
                             opacity: 1,
                         })
                         .addTo(map);
+
+                    L.circleMarker(at, {
+                        radius: CORE_RADIUS,
+                        weight: 2,
+                        interactive: false,
+                        className: PIN_CORE[pin.tone],
+                    }).addTo(map);
                 }
 
+                // Clamped up to `minZoom` when the pins would fit inside the
+                // frame, which is the one case where showing every pin and
+                // filling the frame cannot both hold. Filling wins: a pin that
+                // needs a drag to reach is a smaller loss than a border the
+                // reader reads as a rendering fault.
                 map.fitBounds(
                     pins.map((pin) => [pin.latitude, pin.longitude]),
-                    { padding: [36, 36], maxZoom: 4, animate: false },
+                    // Enough padding that a ring at the edge is not half a ring.
+                    { padding: [28, 28], maxZoom: 4, animate: false },
                 );
             } catch (caught) {
                 if (!cancelled) {
@@ -248,7 +403,11 @@ export function WorldMap({
                 // `isolate` is load-bearing: Leaflet gives its panes z-index 400
                 // and up, which without a stacking context here would paint the
                 // map over the app's sticky chrome.
-                "bg-muted ring-border/70 relative isolate h-56 w-full overflow-hidden rounded-xl ring-1 ring-inset sm:h-72",
+                //
+                // `bg-card`, not `bg-muted`: the filtered ocean lands at close
+                // to the card's own value, so the area outside the world at low
+                // zoom should match it rather than draw a second rectangle.
+                "bg-card ring-border/70 relative isolate h-64 w-full overflow-hidden rounded-xl ring-1 ring-inset sm:h-80",
                 LEAFLET_THEME,
                 className,
             )}
