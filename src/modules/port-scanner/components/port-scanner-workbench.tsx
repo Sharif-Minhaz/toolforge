@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
+import { ScanRadar } from "@/modules/tools/components/scan-radar";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
@@ -187,8 +188,13 @@ export function PortScannerWorkbench({
             return;
         }
 
-        setRunning(true);
+        // The previous result goes *now*, not when the next one lands. Leaving
+        // it up while a new scan runs shows a table of ports for a host that
+        // may no longer be the one in the field — and the moment it swaps, a
+        // reader has no way to tell which scan they are looking at.
+        setReport(null);
         setFailure(null);
+        setRunning(true);
         scrollToResult();
 
         try {
@@ -384,23 +390,36 @@ export function PortScannerWorkbench({
                                 onChange={(event) => setSpec(event.target.value)}
                                 className="min-h-16 resize-y rounded-xl font-mono text-[0.8125rem]"
                             />
+                            {/* Not the preset's hint again — that is already
+                                under the select two inches away, and printing
+                                it twice reads as a rendering bug. A disabled
+                                field's caption is for saying why it is
+                                disabled. */}
                             <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
                                 {preset === "custom"
                                     ? t("portsHint", { max: MAX_PORTS_PER_SCAN })
-                                    : tPresetHints(preset)}
+                                    : t("portsDisabled", { preset: tPresets("custom") })}
                             </p>
                         </div>
                     </div>
 
                     {siteKey !== null && (
-                        <TurnstileWidget
-                            siteKey={siteKey}
-                            action={TURNSTILE_ACTION}
-                            resetSignal={resetSignal}
-                            onVerify={setToken}
-                            onExpire={() => setToken(null)}
-                            onError={() => setToken(null)}
-                        />
+                        // The widget draws at `size: "flexible"`, so it fills
+                        // whatever box it is given — unconstrained, it spans the
+                        // whole card with its content stranded at one end. The
+                        // cap is the widget's own comfortable width; `min-h`
+                        // holds the space while the script loads so the button
+                        // below does not jump.
+                        <div className="min-h-16 w-full max-w-82 min-w-0">
+                            <TurnstileWidget
+                                siteKey={siteKey}
+                                action={TURNSTILE_ACTION}
+                                resetSignal={resetSignal}
+                                onVerify={setToken}
+                                onExpire={() => setToken(null)}
+                                onError={() => setToken(null)}
+                            />
+                        </div>
                     )}
 
                     <div className="flex flex-wrap items-center gap-3">
@@ -449,7 +468,27 @@ export function PortScannerWorkbench({
             </Card>
 
             <div ref={resultRef} className="scroll-mt-6">
-                {report !== null && (
+                {/*
+                 * The radar occupies the slot the result will take, so the swap
+                 * reads as one instrument settling rather than two components
+                 * trading places. It mounts in the same commit the scroll fires
+                 * in, which is why scrolling early is right here: the reader
+                 * arrives at the sweep rather than at a gap.
+                 *
+                 * One caption, not a cycle. A port scan is a single round trip
+                 * whose progress cannot be observed from here, and inventing
+                 * stages to animate would be a lie told at 1.4-second
+                 * intervals.
+                 */}
+                {running && (
+                    <ScanRadar
+                        label={host.trim()}
+                        captions={[t("statusScanning", { count: portCount })]}
+                        restingCaption={t("statusScanning", { count: portCount })}
+                    />
+                )}
+
+                {!running && report !== null && (
                     <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
                         <CardHeader>
                             <CardTitle className="text-base">{t("resultsTitle")}</CardTitle>
@@ -541,7 +580,7 @@ export function PortScannerWorkbench({
                 {/* A complaint about the *lookup* belongs where the answer would
                     have been, or the reader arrives somewhere empty and has to
                     scroll back to learn why. */}
-                {report === null && failure !== null && !showSyntaxComplaintHere && (
+                {!running && report === null && failure !== null && !showSyntaxComplaintHere && (
                     <Card className="[--card-spacing:--spacing(5)]">
                         <CardContent>
                             <p

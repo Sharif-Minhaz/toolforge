@@ -1,55 +1,68 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { MOTION_EASE } from "@/components/motion/motion-tokens";
 import { cn } from "@/lib/utils";
 
 /**
- * The scan, while it is happening.
+ * A scan, while it is happening.
  *
- * This is the one place the tool spends any boldness, and it earns the space by
- * occupying it honestly: a lookup is four round trips to four different
- * services and genuinely takes seconds, so the alternative is a spinner over an
- * empty box. The radar sits in the exact slot the summary strip will take, so
- * the swap reads as one instrument settling rather than two components trading
- * places.
+ * This is the one place a tool spends any boldness, and it earns the space by
+ * occupying it honestly: the work behind it is several round trips and
+ * genuinely takes seconds, so the alternative is a spinner over an empty box.
+ * The radar sits in the exact slot the result will take, so the swap reads as
+ * one instrument settling rather than two components trading places.
  *
  * Everything is drawn from `--tool-accent`, which the page sets to the tool's
  * catalog hue, so it is themed in both palettes without a single literal
  * colour. The sweep is a conic gradient on a rotating layer, masked to a circle
  * — no SVG, no canvas, no per-frame work in React.
+ *
+ * Lifted out of the Domain Inspector when the Port Scanner needed the same
+ * thing. Captions arrive already translated rather than as a namespace: the two
+ * tools are doing different work behind the same sweep, and a component that
+ * reached for one tool's messages would be that tool's component living in the
+ * shared folder.
  */
-
-/** The lookups actually in flight, cycled as a caption. Message keys. */
-const STAGES = ["dns", "registry", "network", "tls", "page"] as const;
 
 const STAGE_MS = 1_400;
 
 type ScanRadarProps = {
     /** Shown under the sweep, so the reader knows what is being scanned. */
-    hostname: string;
+    label: string;
+    /**
+     * Cycled one a stage while the sweep runs. Pass the stages genuinely in
+     * flight; a single entry simply holds still, which is the honest choice
+     * when the work is one round trip whose progress cannot be observed.
+     */
+    captions: readonly string[];
+    /** Shown in place of the cycle when the reader has asked for less motion. */
+    restingCaption: string;
     className?: string;
 };
 
-export function ScanRadar({ hostname, className }: ScanRadarProps) {
-    const t = useTranslations("domainInspector.scan");
+export function ScanRadar({ label, captions, restingCaption, className }: ScanRadarProps) {
     const reduceMotion = useReducedMotion();
     const [stage, setStage] = useState(0);
 
+    const cycles = reduceMotion !== true && captions.length > 1;
+
     useEffect(() => {
-        if (reduceMotion === true) {
+        if (!cycles) {
             return;
         }
 
         const timer = setInterval(() => setStage((current) => current + 1), STAGE_MS);
 
         return () => clearInterval(timer);
-    }, [reduceMotion]);
+    }, [cycles]);
 
-    const caption = reduceMotion === true ? t("working") : t(STAGES[stage % STAGES.length]);
+    const caption =
+        reduceMotion === true
+            ? restingCaption
+            : (captions[stage % captions.length] ?? restingCaption);
 
     return (
         <section
@@ -66,7 +79,7 @@ export function ScanRadar({ hostname, className }: ScanRadarProps) {
             />
 
             <div aria-hidden="true" className="relative grid size-40 place-items-center sm:size-48">
-                {/* Range rings. Four, because four services are being asked. */}
+                {/* Range rings, at the weights an instrument would use. */}
                 {[1, 0.72, 0.46, 0.22].map((scale, index) => (
                     <span
                         key={scale}
@@ -127,7 +140,7 @@ export function ScanRadar({ hostname, className }: ScanRadarProps) {
             </div>
 
             <div className="relative flex min-w-0 flex-col items-center gap-1.5 text-center">
-                <p className="max-w-full min-w-0 truncate font-mono text-sm">{hostname}</p>
+                <p className="max-w-full min-w-0 truncate font-mono text-sm">{label}</p>
                 <p className="text-muted-foreground text-[0.6875rem] leading-normal tracking-[0.14em] uppercase">
                     {caption}
                 </p>

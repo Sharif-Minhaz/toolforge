@@ -419,7 +419,8 @@ injectable random source `domain/random.ts`, and the shared image layer:
 `domain/base64.ts`, `domain/hex.ts`, `domain/filenames.ts`, and the shared code
 layer: `domain/highlight.ts` with `components/code-editor.tsx` and
 `components/code-block.tsx`, and the shared network layer: `domain/ip.ts`,
-`domain/host-syntax.ts`, `repository/address-guard.ts`), `short-links` (every re-pointable
+`domain/host-syntax.ts`, `repository/address-guard.ts`,
+`components/scan-radar.tsx`), `short-links` (every re-pointable
 link on the site — see below), `image-compressor` (a batch queue and a
 smallest-of-four search), `image-converter` (a named target per batch, plus the
 ICO container and the favicon pack), `blur-placeholder` (the BlurHash codec and
@@ -1547,8 +1548,9 @@ Interaction:
     page on every keystroke.
 
     **Never scroll to a destination that can turn out empty.** The Domain
-    Inspector scrolls when the scan _starts_, because the radar mounts in that
-    same commit and watching the sweep beats watching a gap — and that bought a
+    Inspector and the Port Scanner both scroll when the scan _starts_, because
+    `tools/components/scan-radar.tsx` mounts in that same commit and watching
+    the sweep beats watching a gap — and that bought a
     bug: an unparseable hostname left the reader parked at a blank slot with the
     reason sitting off-screen beside the input they had to fix. Scrolling early
     is allowed, but only with both halves of the fix:

@@ -6737,6 +6737,7 @@
             "portsLabel": "Port numbers",
             "portsPlaceholder": "80, 443, 8000-8100",
             "portsHint": "Commas, spaces or line breaks. Ranges with a hyphen. At most {max, number} ports per scan.",
+            "portsDisabled": "Pick {preset} to type your own list or ranges.",
             "portsCount": "{count, plural, one {# port} other {# ports}} selected",
             "scan": "Scan ports",
             "scanning": "Scanning…",

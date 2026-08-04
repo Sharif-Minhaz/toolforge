@@ -436,6 +436,7 @@ Reuse what exists rather than rebuilding it:
 | Uniform random draws, injectable      | `@/modules/tools/domain/random`                     |
 | 300 ms debounce                       | `@/hooks/use-debounced-value`                       |
 | Scroll a pressed-for result into view | `@/modules/tools/components/use-result-scroll`      |
+| Sweep shown while a scan runs         | `@/modules/tools/components/scan-radar`             |
 | Structured data                       | `@/modules/seo/components/json-ld`                  |
 | Structured logging                    | `@/modules/observability/domain/logger`             |
 | Re-pointable short links              | `@/modules/short-links/`                            |

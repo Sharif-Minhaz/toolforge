@@ -37,11 +37,14 @@ import {
     type InspectionOptions,
 } from "../types";
 import { DomainReportView } from "./report-panels";
-import { ScanRadar } from "./scan-radar";
+import { ScanRadar } from "@/modules/tools/components/scan-radar";
 
 /** The small-caps label the result panels use, so the form matches them. */
 const FIELD_LABEL =
     "text-muted-foreground text-[0.625rem] leading-normal tracking-[0.14em] uppercase";
+
+/** The lookups actually in flight, cycled under the sweep. Message keys. */
+const SCAN_STAGES = ["dns", "registry", "network", "tls", "page"] as const;
 
 const SYNTAX_FAILURES: readonly HostSyntaxFailure[] = [
     "empty_input",
@@ -70,6 +73,7 @@ export function DomainInspectorWorkbench({
     const tResolvers = useTranslations("domainInspector.resolvers");
     const tErrors = useTranslations("domainInspector.errors");
     const tToast = useTranslations("domainInspector.toast");
+    const tScan = useTranslations("domainInspector.scan");
     const format = useFormatter();
 
     const inputId = useId();
@@ -416,7 +420,13 @@ export function DomainInspectorWorkbench({
             </Card>
 
             <div ref={resultRef} className="min-w-0 scroll-mt-6">
-                {scanning && <ScanRadar hostname={host.trim()} />}
+                {scanning && (
+                    <ScanRadar
+                        label={host.trim()}
+                        captions={SCAN_STAGES.map((stage) => tScan(stage))}
+                        restingCaption={tScan("working")}
+                    />
+                )}
 
                 {!scanning && report !== null && <DomainReportView report={report} />}
 
