@@ -15,6 +15,7 @@ import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
+import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
 import { detectAiText } from "../actions/detect-text";
@@ -73,6 +74,7 @@ export function AiTextDetectorWorkbench({ initialText, siteKey }: AiTextDetector
     const [analysis, setAnalysis] = useState<Analysis | null>(null);
     const [failure, setFailure] = useState<DetectionFailureReason | null>(null);
     const [copied, setCopied] = useCopyFeedback<"verdict">();
+    const { ref: resultRef, scrollToResult } = useResultScroll();
 
     // Counting settles with the typing rather than re-measuring the passage on
     // every keystroke — and the button gates on the same value, so the strip
@@ -216,6 +218,7 @@ export function AiTextDetectorWorkbench({ initialText, siteKey }: AiTextDetector
             }
 
             setAnalysis({ text: checked.text, metrics, verdict: result.verdict });
+            scrollToResult();
             toast.success(tToast("analysed"));
         } catch (caught) {
             setAnalysis(null);
@@ -404,6 +407,7 @@ export function AiTextDetectorWorkbench({ initialText, siteKey }: AiTextDetector
 
                 {analysis !== null && (
                     <div
+                        ref={resultRef}
                         className={cn(
                             "min-w-0 transition-opacity duration-200",
                             stale && "opacity-55",

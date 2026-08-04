@@ -13,6 +13,7 @@ import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
+import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
 import { readImagePixelSize } from "@/modules/tools/domain/image-element";
@@ -70,6 +71,7 @@ export function AiImageDetectorWorkbench({ siteKey }: AiImageDetectorWorkbenchPr
     const [analysis, setAnalysis] = useState<Analysis | null>(null);
     const [failure, setFailure] = useState<ImageDetectionFailureReason | null>(null);
     const [copied, setCopied] = useCopyFeedback<"verdict">();
+    const { ref: resultRef, scrollToResult } = useResultScroll();
 
     // Revoking on the way out rather than in the picker: the cleanup fires both
     // when the preview is replaced and when the page is left, so there is one
@@ -217,6 +219,7 @@ export function AiImageDetectorWorkbench({ siteKey }: AiImageDetectorWorkbenchPr
             }
 
             setAnalysis({ facts: picked.facts, verdict: result.verdict });
+            scrollToResult();
             toast.success(tToast("analysed"));
         } catch (caught) {
             setAnalysis(null);
@@ -455,6 +458,7 @@ export function AiImageDetectorWorkbench({ siteKey }: AiImageDetectorWorkbenchPr
 
                 {analysis !== null && (
                     <div
+                        ref={resultRef}
                         className={cn(
                             "min-w-0 transition-opacity duration-200",
                             stale && "opacity-55",

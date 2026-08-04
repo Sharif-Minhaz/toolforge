@@ -1,6 +1,13 @@
 "use client";
 
-import { IconDownload, IconLoader2, IconRadar2, IconTrash } from "@tabler/icons-react";
+import {
+    IconAlertTriangle,
+    IconDownload,
+    IconLoader2,
+    IconRadar2,
+    IconTrash,
+    IconWorldSearch,
+} from "@tabler/icons-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useId, useState } from "react";
 import { toast } from "sonner";
@@ -15,10 +22,13 @@ import { OptionSelect, OptionSwitch } from "@/modules/tools/components/option-co
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
+import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
+import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
 import { inspectDomain } from "../actions/inspect-domain";
 import { TURNSTILE_ACTION } from "../domain/constants";
+import { checkHostSyntax, type HostSyntaxFailure } from "../domain/host-syntax";
 import { createDomainReportFile, summarizeReport } from "../domain/export";
 import {
     DNS_RESOLVERS,
@@ -26,15 +36,22 @@ import {
     type InspectionFailureReason,
     type InspectionOptions,
 } from "../types";
-import {
-    CertificatePanel,
-    DnsPanel,
-    HostingPanel,
-    HttpPanel,
-    OverviewPanel,
-    RegistrationPanel,
-    TechnologiesPanel,
-} from "./report-panels";
+import { DomainReportView } from "./report-panels";
+import { ScanRadar } from "./scan-radar";
+
+/** The small-caps label the result panels use, so the form matches them. */
+const FIELD_LABEL =
+    "text-muted-foreground text-[0.625rem] leading-normal tracking-[0.14em] uppercase";
+
+const SYNTAX_FAILURES: readonly HostSyntaxFailure[] = [
+    "empty_input",
+    "too_long",
+    "invalid_hostname",
+];
+
+function isSyntaxFailure(reason: InspectionFailureReason): boolean {
+    return SYNTAX_FAILURES.some((candidate) => candidate === reason);
+}
 
 type DomainInspectorWorkbenchProps = {
     /** From `?host=`, so a shared link opens on the domain it names. */
@@ -70,6 +87,7 @@ export function DomainInspectorWorkbench({
     const [report, setReport] = useState<DomainReport | null>(null);
     const [failure, setFailure] = useState<InspectionFailureReason | null>(null);
     const [copied, setCopied] = useCopyFeedback<"summary">();
+    const { ref: resultRef, scrollToResult } = useResultScroll();
 
     const configured = siteKey !== null;
     const canInspect = configured && token !== null && host.trim().length > 0 && !running;
@@ -123,8 +141,22 @@ export function DomainInspectorWorkbench({
             return;
         }
 
+        // Checked here rather than only on the server, because everything
+        // below this line costs something the reader should not pay for a
+        // typo: a Turnstile token, a round trip, and a scroll away from the
+        // field they need to fix.
+        const syntax = checkHostSyntax(host);
+
+        if (syntax !== null) {
+            setReport(null);
+            setFailure(syntax);
+
+            return;
+        }
+
         setRunning(true);
         setFailure(null);
+        scrollToResult();
 
         try {
             const result = await inspectDomain({
@@ -195,8 +227,26 @@ export function DomainInspectorWorkbench({
 
     const status = describeStatus();
 
+    // The scan and the report are the same instrument in two states, so the
+    // radar keeps the exact slot the summary strip will take.
+    const scanning = running && host.trim().length > 0;
+
+    /**
+     * A failure the *lookup* produced, as opposed to one the field produced.
+     * Only these belong in the result slot: a syntax complaint is answered by
+     * editing the input, so it stays beside the input and never moves the page.
+     */
+    const lookupFailure = failure !== null && !isSyntaxFailure(failure) ? failure : null;
+
     return (
-        <div className="flex min-w-0 flex-col gap-5">
+        <div
+            className={cn(
+                "flex min-w-0 flex-col gap-4",
+                // One accent for the whole tool, so the radar, the rails and the
+                // chips all read one variable instead of five class maps.
+                TOOL_ACCENT_VARS.emerald,
+            )}
+        >
             <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
                 <span
                     aria-hidden="true"
@@ -210,66 +260,93 @@ export function DomainInspectorWorkbench({
 
                 <CardContent className="flex min-w-0 flex-col gap-5">
                     <div className="flex min-w-0 flex-col gap-2">
-                        <label
-                            htmlFor={inputId}
-                            className="text-muted-foreground text-xs leading-[1.3]"
-                        >
+                        <label htmlFor={inputId} className={FIELD_LABEL}>
                             {t("hostLabel")}
                         </label>
-                        <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
-                            <Input
-                                id={inputId}
-                                value={host}
-                                onChange={(event) => setHost(event.target.value)}
-                                onKeyDown={(event) => {
-                                    if (event.key === "Enter") {
-                                        void handleInspect();
-                                    }
-                                }}
-                                disabled={running}
-                                spellCheck={false}
-                                autoCapitalize="none"
-                                autoCorrect="off"
-                                inputMode="url"
-                                aria-describedby={hintId}
-                                placeholder={t("hostPlaceholder")}
-                                className="min-w-0 flex-1 font-mono"
+                        {/*
+                         * Field, action and verdict share one frame. Three
+                         * loose elements stacked with gaps read as a generic
+                         * form; one console reads as the instrument the rest of
+                         * this page is, and the focus ring moves to the frame so
+                         * the whole unit lights up together.
+                         */}
+                        <div className="ring-border/70 bg-background/40 focus-within:ring-ring/60 flex min-w-0 flex-col rounded-xl ring-1 transition-[box-shadow] duration-200 ring-inset focus-within:ring-2">
+                            <div className="flex min-w-0 items-center gap-1.5 p-1.5">
+                                <IconWorldSearch
+                                    className="text-muted-foreground ml-2 size-4 shrink-0"
+                                    stroke={1.7}
+                                    aria-hidden="true"
+                                />
+                                <Input
+                                    id={inputId}
+                                    value={host}
+                                    onChange={(event) => setHost(event.target.value)}
+                                    onKeyDown={(event) => {
+                                        if (event.key === "Enter") {
+                                            void handleInspect();
+                                        }
+                                    }}
+                                    disabled={running}
+                                    spellCheck={false}
+                                    autoCapitalize="none"
+                                    autoCorrect="off"
+                                    inputMode="url"
+                                    aria-describedby={hintId}
+                                    placeholder={t("hostPlaceholder")}
+                                    className="h-8 min-w-0 flex-1 border-0 bg-transparent px-1 font-mono shadow-none focus-visible:ring-0"
+                                />
+                                <Button
+                                    onClick={() => void handleInspect()}
+                                    disabled={!canInspect}
+                                    className="h-8 shrink-0 px-3"
+                                >
+                                    {running ? (
+                                        <IconLoader2
+                                            className="size-4 animate-spin"
+                                            aria-hidden="true"
+                                        />
+                                    ) : (
+                                        <IconRadar2
+                                            className="size-4"
+                                            stroke={1.9}
+                                            aria-hidden="true"
+                                        />
+                                    )}
+                                    {running ? t("inspecting") : t("inspect")}
+                                </Button>
+                            </div>
+
+                            <StatusStrip
+                                id={hintId}
+                                tone={status.tone}
+                                message={status.message}
+                                className="border-border/60 border-t px-3.5 py-2"
                             />
-                            <Button
-                                onClick={() => void handleInspect()}
-                                disabled={!canInspect}
-                                className="h-9 shrink-0 px-3.5"
-                            >
-                                {running ? (
-                                    <IconLoader2
-                                        className="size-4 animate-spin"
-                                        aria-hidden="true"
-                                    />
-                                ) : (
-                                    <IconRadar2
-                                        className="size-4"
-                                        stroke={1.9}
-                                        aria-hidden="true"
-                                    />
-                                )}
-                                {running ? t("inspecting") : t("inspect")}
-                            </Button>
                         </div>
-                        <StatusStrip id={hintId} tone={status.tone} message={status.message} />
                     </div>
 
+                    {/*
+                     * The select is wrapped so it carries the same card the
+                     * switch draws for itself. A bare control beside a boxed one
+                     * reads as one setting and one afterthought.
+                     */}
                     <div className="grid min-w-0 gap-3 sm:grid-cols-2">
-                        <OptionSelect
-                            label={t("resolverLabel")}
-                            hint={t("resolverHint")}
-                            value={options.resolver}
-                            values={DNS_RESOLVERS}
-                            items={Object.fromEntries(
-                                DNS_RESOLVERS.map((resolver) => [resolver, tResolvers(resolver)]),
-                            )}
-                            disabled={running}
-                            onChange={(resolver) => patch({ resolver })}
-                        />
+                        <div className="bg-card/60 ring-border/70 rounded-xl px-3 py-2.5 ring-1 ring-inset">
+                            <OptionSelect
+                                label={t("resolverLabel")}
+                                hint={t("resolverHint")}
+                                value={options.resolver}
+                                values={DNS_RESOLVERS}
+                                items={Object.fromEntries(
+                                    DNS_RESOLVERS.map((resolver) => [
+                                        resolver,
+                                        tResolvers(resolver),
+                                    ]),
+                                )}
+                                disabled={running}
+                                onChange={(resolver) => patch({ resolver })}
+                            />
+                        </div>
                         <OptionSwitch
                             label={t("probeLabel")}
                             hint={t("probeHint")}
@@ -338,22 +415,32 @@ export function DomainInspectorWorkbench({
                 </CardContent>
             </Card>
 
-            {report !== null && (
-                <div
-                    className={cn(
-                        "grid min-w-0 gap-4 transition-opacity duration-200 xl:grid-cols-2",
-                        running && "opacity-55",
-                    )}
-                >
-                    <OverviewPanel breakdown={report.breakdown} />
-                    <RegistrationPanel registration={report.registration} />
-                    <DnsPanel dns={report.dns} />
-                    <HostingPanel hosting={report.hosting} />
-                    <CertificatePanel certificate={report.certificate} />
-                    <HttpPanel http={report.http} />
-                    <TechnologiesPanel technologies={report.technologies} />
-                </div>
-            )}
+            <div ref={resultRef} className="min-w-0 scroll-mt-6">
+                {scanning && <ScanRadar hostname={host.trim()} />}
+
+                {!scanning && report !== null && <DomainReportView report={report} />}
+
+                {/*
+                 * A lookup that started and then failed has to say so *here*.
+                 * The page has already moved to this slot, and leaving the
+                 * reason behind at the input is what makes a scroll feel
+                 * broken — you arrive somewhere empty and have to go back to
+                 * find out why.
+                 */}
+                {!scanning && report === null && lookupFailure !== null && (
+                    <p
+                        role="status"
+                        className="bg-card ring-border/70 text-muted-foreground flex min-w-0 items-start gap-2.5 rounded-2xl px-5 py-4 text-[0.8125rem] leading-relaxed ring-1 ring-inset"
+                    >
+                        <IconAlertTriangle
+                            className="mt-0.5 size-4 shrink-0 text-[color-mix(in_oklch,var(--brand-amber)_75%,var(--muted-foreground))]"
+                            stroke={1.8}
+                            aria-hidden="true"
+                        />
+                        {tErrors(lookupFailure)}
+                    </p>
+                )}
+            </div>
         </div>
     );
 }

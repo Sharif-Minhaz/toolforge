@@ -76,6 +76,7 @@ export async function DomainInspectorArticle() {
                 <ArticleSection id="panels" title={t("panels.title")}>
                     <div className={PROSE}>
                         <p>{t("panels.intro")}</p>
+                        <p>{t("panels.strip")}</p>
                     </div>
 
                     <div className="ring-border/80 mt-5 overflow-x-auto rounded-xl ring-1 ring-inset">

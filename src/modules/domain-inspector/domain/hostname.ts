@@ -1,6 +1,6 @@
 import { parse } from "tldts";
 
-import { MAX_HOSTNAME_LENGTH, MAX_INPUT_LENGTH, MAX_LABEL_LENGTH } from "./constants";
+import { checkHostSyntax, extractHostname, type HostSyntaxFailure } from "./host-syntax";
 import { isIpAddress } from "./ip";
 import { toUnicodeHostname } from "./punycode";
 import type { DomainBreakdown } from "../types";
@@ -13,76 +13,26 @@ import type { DomainBreakdown } from "../types";
  * Pure, and the only place the input is interpreted. Every layer downstream
  * receives a hostname it may trust to be syntactically well formed; whether it
  * is safe to *connect* to is a separate question, answered by `ip.ts`.
+ *
+ * The syntax half lives in `host-syntax.ts` so the browser can run it without
+ * downloading the suffix list — see that file for why.
  */
 
-export type HostInputFailureReason =
-    "empty_input" | "too_long" | "invalid_hostname" | "unknown_suffix";
+export type HostInputFailureReason = HostSyntaxFailure | "unknown_suffix";
 
 export type HostInputResult =
     | { readonly ok: true; readonly breakdown: DomainBreakdown }
     | { readonly ok: false; readonly reason: HostInputFailureReason };
 
-const SCHEME_PATTERN = /^[a-z][a-z0-9+.-]*:\/\//i;
-
-/** LDH: letters, digits, hyphen — and never a hyphen at either end. */
-const LABEL_PATTERN = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
-
-/**
- * `new URL` is the IDNA implementation here: it is specified rather than
- * host-derived, so Bun, Node and every browser agree on what `münchen.de`
- * becomes. A bare IPv6 literal is handled before it, because the URL parser
- * requires the brackets that nobody types.
- */
-function extractHostname(input: string): string | null {
-    const trimmed = input.trim();
-
-    if (isIpAddress(trimmed)) {
-        return trimmed.toLowerCase();
-    }
-
-    try {
-        const url = new URL(SCHEME_PATTERN.test(trimmed) ? trimmed : `http://${trimmed}`);
-        const host = url.hostname.replace(/^\[/, "").replace(/\]$/, "");
-
-        // A root-relative trailing dot is valid DNS and meaningless to every
-        // registry below, so it goes here rather than in six later callers.
-        const withoutRootDot = host.replace(/\.+$/, "").toLowerCase();
-
-        return withoutRootDot.length > 0 ? withoutRootDot : null;
-    } catch {
-        return null;
-    }
-}
-
-/**
- * Syntax only. A single-label name passes here and is refused below for having
- * no public suffix, because "there is no registry for `localhost`" is a more
- * useful thing to be told than "that is not a hostname".
- */
-function isWellFormedHostname(hostname: string): boolean {
-    return hostname
-        .split(".")
-        .every((label) => label.length <= MAX_LABEL_LENGTH && LABEL_PATTERN.test(label));
-}
-
 export function readHostInput(input: string): HostInputResult {
-    if (input.trim().length === 0) {
-        return { ok: false, reason: "empty_input" };
+    const syntax = checkHostSyntax(input);
+
+    if (syntax !== null) {
+        return { ok: false, reason: syntax };
     }
 
-    if (input.length > MAX_INPUT_LENGTH) {
-        return { ok: false, reason: "too_long" };
-    }
-
-    const hostname = extractHostname(input);
-
-    if (hostname === null) {
-        return { ok: false, reason: "invalid_hostname" };
-    }
-
-    if (hostname.length > MAX_HOSTNAME_LENGTH) {
-        return { ok: false, reason: "too_long" };
-    }
+    // Non-null by construction: `checkHostSyntax` returned no complaint.
+    const hostname = extractHostname(input) ?? "";
 
     if (isIpAddress(hostname)) {
         return {
@@ -99,10 +49,6 @@ export function readHostInput(input: string): HostInputResult {
                 punycoded: false,
             },
         };
-    }
-
-    if (!isWellFormedHostname(hostname)) {
-        return { ok: false, reason: "invalid_hostname" };
     }
 
     const parsed = parse(hostname);

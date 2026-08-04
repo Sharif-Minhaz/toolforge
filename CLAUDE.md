@@ -1241,6 +1241,52 @@ import path. Neither wrapper style changes how much JS ships.
 
 Interaction:
 
+- **A result produced by a press has to be brought into view.** A workbench
+  card plus its options is most of a laptop viewport, so the answer to the
+  button you just pressed lands below the fold and the page looks as though
+  nothing happened. `useResultScroll` from
+  `tools/components/use-result-scroll.ts` is the one implementation: put its
+  `ref` on the result wrapper, call `scrollToResult()` from the handler, and add
+  `scroll-mt-6` so the target does not sit flush against the viewport edge.
+
+    Three rules it encodes, and none of them is optional if you hand-roll it
+    instead:
+
+    - **Wait a frame.** The element does not exist at the moment the handler sets
+      state; a `requestAnimationFrame` runs after React commits, so the target is
+      measurable by the time it is scrolled to.
+    - **Never scroll something already on screen.** Yanking the page when the
+      answer is already visible is worse than not scrolling. The hook skips when
+      the target is at least 40% in view.
+    - **Honour `prefers-reduced-motion`.** Smooth scrolling is vestibular motion.
+      The query is read at call time, not at render, so a reader who changes the
+      setting mid-session is respected without a re-render.
+
+    Call it where the result _appears_ — for most tools, inside the success
+    branch, after the early return that handles failure. **Only for discrete
+    actions**, never for a derived-during-render result, where it would drag the
+    page on every keystroke.
+
+    **Never scroll to a destination that can turn out empty.** The Domain
+    Inspector scrolls when the scan _starts_, because the radar mounts in that
+    same commit and watching the sweep beats watching a gap — and that bought a
+    bug: an unparseable hostname left the reader parked at a blank slot with the
+    reason sitting off-screen beside the input they had to fix. Scrolling early
+    is allowed, but only with both halves of the fix:
+
+    - **Reject what you can reject before moving the page.** `checkHostSyntax`
+      lives apart from `hostname.ts` precisely so the island can run it without
+      pulling `tldts` and its suffix list into the bundle. A typo then costs no
+      Turnstile token, no round trip, and no scroll.
+    - **Render the remaining failures at the destination.** A lookup that
+      started and then failed says so in the result slot, not only in the status
+      strip beside the field. Arriving somewhere empty and having to scroll back
+      to learn why is what makes the whole gesture feel broken.
+
+    The split is worth copying: a complaint about the _input_ belongs beside the
+    input and must not move the page; a complaint about the _lookup_ belongs
+    where the answer would have been.
+
 - Hover-only affordances must stay reachable without a pointer. Gate them on
   `[@media(hover:hover)]` and pair with `focus-visible:opacity-100`.
 - Never disable a rule to satisfy `react-hooks/set-state-in-effect`. Use a ref

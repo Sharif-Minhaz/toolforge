@@ -6185,17 +6185,15 @@
         },
         "dns": {
             "title": "DNS records",
-            "tableCaption": "DNS records by type, with their time to live",
-            "colType": "Type",
-            "colValue": "Value",
-            "colTtl": "TTL",
             "dnssecValidated": "DNSSEC validated",
             "dnssecUnsigned": "No DNSSEC",
             "spf": "SPF",
             "dmarc": "DMARC",
             "mtaSts": "MTA-STS",
             "spfRecord": "SPF policy",
-            "dmarcRecord": "DMARC policy"
+            "dmarcRecord": "DMARC policy",
+            "noRecords": "None published:",
+            "mailPolicies": "Mail policies"
         },
         "recordTypes": {
             "A": "The IPv4 address this name resolves to.",
@@ -6222,16 +6220,16 @@
             "expiresIn": "{days, plural, =0 {Expires today} one {# day left} other {# days left}}",
             "lapsed": "{days, plural, one {Expired # day ago} other {Expired # days ago}}",
             "dnssecSigned": "DNSSEC delegated",
-            "dnssecUnsigned": "DNSSEC not delegated"
+            "dnssecUnsigned": "DNSSEC not delegated",
+            "ianaId": "IANA id",
+            "dates": "Dates"
         },
         "hosting": {
             "title": "Hosting",
             "asn": "AS",
             "prefix": "Prefix",
             "reverse": "Reverse name",
-            "network": "Network",
-            "org": "Organisation",
-            "registry": "Registry"
+            "org": "Organisation"
         },
         "certificate": {
             "title": "TLS certificate",
@@ -6257,16 +6255,18 @@
             "poweredBy": "Powered by",
             "pageTitle": "Page title",
             "declaredLicense": "Declared licence",
-            "redirects": "{count, plural, one {# redirect} other {# redirects}}"
+            "redirects": "{count, plural, one {# redirect} other {# redirects}}",
+            "securityHeaders": "Security headers"
         },
         "grades": {
-            "strong": "Headers: strong",
-            "partial": "Headers: partial",
-            "weak": "Headers: weak"
+            "strong": "Strong",
+            "partial": "Partial",
+            "weak": "Weak"
         },
         "securityHeaders": {
             "present": "sent",
-            "missing": "not sent"
+            "missing": "not sent",
+            "chip": "{grade} headers"
         },
         "technologies": {
             "title": "Technologies",
@@ -6340,6 +6340,7 @@
             "panels": {
                 "title": "The seven panels",
                 "intro": "Each panel answers one question, from one source.",
+                "strip": "Above them sits a strip of six readings — addresses, network, registrar, domain expiry, certificate expiry and header grade — each tinted by whether it needs attention. It is there so the question \"is anything wrong with this domain\" can be answered without opening a single panel, and so the panel that does need reading is the one with a coloured rail down its edge.",
                 "tableCaption": "What each panel shows and where it comes from",
                 "colPanel": "Panel",
                 "colShows": "Shows",
@@ -6437,6 +6438,25 @@
                 "q7": "Why is there a challenge on a read-only lookup?",
                 "a7": "Because the alternative is a public endpoint that fetches whatever host anyone names, from our address. Without the challenge it would be somebody's free scanner within a day, and the complaints would arrive here."
             }
+        },
+        "scan": {
+            "dns": "Resolving records",
+            "registry": "Asking the registry",
+            "network": "Tracing the network",
+            "tls": "Reading the certificate",
+            "page": "Fetching the page",
+            "working": "Scanning"
+        },
+        "readings": {
+            "label": "At a glance",
+            "addresses": "Addresses",
+            "network": "Network",
+            "registrar": "Registrar",
+            "expiry": "Domain",
+            "certificate": "Certificate",
+            "headers": "Headers",
+            "daysLeft": "{days, plural, =0 {today} one {# day} other {# days}}",
+            "daysAgo": "{days, plural, one {# day ago} other {# days ago}}"
         }
     }
 }

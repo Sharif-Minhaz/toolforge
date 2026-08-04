@@ -10,75 +10,137 @@ import {
     IconWorldSearch,
 } from "@tabler/icons-react";
 import { useFormatter, useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 
+import { staggerDelay } from "@/components/motion/motion-tokens";
+import { Reveal } from "@/components/motion/reveal";
 import { cn } from "@/lib/utils";
-import { Fact, FactGrid, PanelBody, PanelCard, ScrollRow } from "./panel-card";
-import type {
-    CertificateReport,
-    DnsReport,
-    DomainBreakdown,
-    DomainRegistration,
-    DomainReport,
-    HostAddress,
-    HttpReport,
-    SecurityGrade,
-    TechnologyMatch,
+import { Chip, GroupLabel, PanelBody, PanelCard, Row, Rows, type ChipTone } from "./panel-card";
+import { SignalStrip } from "./signal-strip";
+import { summarizeReadings, type ReadingId, type ReadingTone } from "../domain/summary";
+import {
+    TECHNOLOGY_CATEGORIES,
+    type CertificateReport,
+    type DnsRecord,
+    type DnsReport,
+    type DomainBreakdown,
+    type DomainRegistration,
+    type DomainReport,
+    type HostAddress,
+    type HttpReport,
+    type SecurityGrade,
+    type TechnologyMatch,
 } from "../types";
 
 /**
- * The six result panels.
+ * The seven result panels, and the layout that holds them.
  *
- * Presentational and client-side, but they hold no state: everything they draw
- * arrived from the server action in one object. Values that came off the wire —
- * hostnames, EPP codes, cipher suites, SPDX identifiers — are rendered in the
- * mono face and are never translated, because they are data. Only the words
- * around them come from the catalogue.
+ * Presentational and stateless: everything arrives from the server action in
+ * one object. Values that came off the wire — hostnames, EPP codes, cipher
+ * suites, SPDX identifiers — are set in the mono face and never translated,
+ * because they are data. Only the words around them come from the catalogue.
  */
 
 const ICON = "size-4";
 
-function useAbsent() {
-    const t = useTranslations("domainInspector.common");
+/**
+ * Past this a value wraps onto a second line, and two wrapped values sitting
+ * flush against each other stop reading as two values. Those get a tinted
+ * block so each stays one object.
+ */
+const LONG_VALUE = 44;
 
-    return t("absent");
+const VALUE = "font-mono text-[0.8125rem] leading-relaxed wrap-anywhere";
+
+function useAbsent() {
+    return useTranslations("domainInspector.common")("absent");
 }
 
-export function OverviewPanel({ breakdown }: { breakdown: DomainBreakdown }) {
+export function DomainReportView({ report }: { report: DomainReport }) {
+    const readings = summarizeReadings(report);
+    const toneOf = (id: ReadingId): ReadingTone =>
+        readings.find((reading) => reading.id === id)?.tone ?? "idle";
+
+    const panels: readonly { readonly id: string; readonly node: ReactNode }[] = [
+        { id: "dns", node: <DnsPanel dns={report.dns} /> },
+        {
+            id: "registration",
+            node: <RegistrationPanel registration={report.registration} tone={toneOf("expiry")} />,
+        },
+        {
+            id: "certificate",
+            node: (
+                <CertificatePanel certificate={report.certificate} tone={toneOf("certificate")} />
+            ),
+        },
+        { id: "hosting", node: <HostingPanel hosting={report.hosting} /> },
+        { id: "http", node: <HttpPanel http={report.http} /> },
+        { id: "technologies", node: <TechnologiesPanel technologies={report.technologies} /> },
+        { id: "overview", node: <OverviewPanel breakdown={report.breakdown} /> },
+    ];
+
+    return (
+        <div className="flex min-w-0 flex-col gap-4">
+            <SignalStrip report={report} />
+
+            {/*
+             * Columns rather than a grid. Seven panels of very different
+             * heights in a two-column grid leaves ragged holes under the short
+             * ones; multicol packs them, and each panel is independent so
+             * reading down a column loses nothing.
+             */}
+            <div className="min-w-0 xl:columns-2 xl:gap-4">
+                {panels.map((panel, index) => (
+                    <Reveal
+                        key={panel.id}
+                        delay={staggerDelay(index)}
+                        className="mb-4 block break-inside-avoid last:mb-0 xl:last:mb-4"
+                    >
+                        {panel.node}
+                    </Reveal>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function OverviewPanel({ breakdown }: { breakdown: DomainBreakdown }) {
     const t = useTranslations("domainInspector.overview");
+    const format = useFormatter();
     const absent = useAbsent();
 
     return (
         <PanelCard title={t("title")} icon={<IconListTree className={ICON} stroke={1.8} />}>
-            <FactGrid label={t("title")}>
-                <Fact label={t("hostname")} wide>
-                    {breakdown.hostname}
-                </Fact>
-                {breakdown.punycoded && <Fact label={t("unicode")}>{breakdown.unicode}</Fact>}
-                {!breakdown.isIp && (
+            <Rows label={t("title")}>
+                <Row label={t("hostname")}>{breakdown.hostname}</Row>
+                {breakdown.punycoded && <Row label={t("unicode")}>{breakdown.unicode}</Row>}
+                {breakdown.isIp ? (
+                    <Row label={t("kind")}>{t("kindIp")}</Row>
+                ) : (
                     <>
-                        <Fact label={t("subdomain")}>{breakdown.subdomain ?? absent}</Fact>
-                        <Fact label={t("registrable")}>
-                            {breakdown.registrableDomain ?? absent}
-                        </Fact>
-                        <Fact label={t("suffix")}>{breakdown.publicSuffix ?? absent}</Fact>
-                        <Fact label={t("labels")}>{breakdown.labels.length}</Fact>
+                        <Row label={t("subdomain")}>{breakdown.subdomain ?? absent}</Row>
+                        <Row label={t("registrable")}>{breakdown.registrableDomain ?? absent}</Row>
+                        <Row label={t("suffix")}>{breakdown.publicSuffix ?? absent}</Row>
+                        <Row label={t("labels")}>{format.number(breakdown.labels.length)}</Row>
                     </>
                 )}
-                {breakdown.isIp && (
-                    <Fact label={t("kind")} wide>
-                        {t("kindIp")}
-                    </Fact>
-                )}
-            </FactGrid>
+            </Rows>
         </PanelCard>
     );
 }
 
-export function DnsPanel({ dns }: { dns: DomainReport["dns"] }) {
+/** One TTL for the whole set when they agree, which they nearly always do. */
+function sharedTtl(records: readonly DnsRecord[]): number | null {
+    const [first] = records;
+
+    return first !== undefined && records.every((record) => record.ttl === first.ttl)
+        ? first.ttl
+        : null;
+}
+
+function DnsPanel({ dns }: { dns: DomainReport["dns"] }) {
     const t = useTranslations("domainInspector.dns");
-    const tTypes = useTranslations("domainInspector.recordTypes");
     const tResolvers = useTranslations("domainInspector.resolvers");
-    const absent = useAbsent();
 
     return (
         <PanelCard
@@ -87,104 +149,136 @@ export function DnsPanel({ dns }: { dns: DomainReport["dns"] }) {
             meta={dns.ok ? tResolvers(dns.data.resolver) : undefined}
         >
             <PanelBody result={dns}>
-                {(data: DnsReport) => (
-                    <div className="flex min-w-0 flex-col gap-3">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                            <Chip tone={data.authenticated ? "good" : "neutral"}>
-                                {data.authenticated ? t("dnssecValidated") : t("dnssecUnsigned")}
-                            </Chip>
-                            <Chip tone={data.mail.spf === null ? "warn" : "good"}>{t("spf")}</Chip>
-                            <Chip tone={data.mail.dmarc === null ? "warn" : "good"}>
-                                {t("dmarc")}
-                            </Chip>
-                            {data.mail.mtaSts && <Chip tone="good">{t("mtaSts")}</Chip>}
-                        </div>
+                {(data: DnsReport) => {
+                    const answered = data.sets.filter((set) => set.records.length > 0);
+                    const silent = data.sets.filter((set) => set.records.length === 0);
 
-                        <ScrollRow>
-                            <table className="w-full min-w-140 border-collapse text-left text-[0.8125rem]">
-                                <caption className="sr-only">{t("tableCaption")}</caption>
-                                <thead>
-                                    <tr className="text-muted-foreground">
-                                        <th scope="col" className="py-1.5 pr-3 font-medium">
-                                            {t("colType")}
-                                        </th>
-                                        <th scope="col" className="py-1.5 pr-3 font-medium">
-                                            {t("colValue")}
-                                        </th>
-                                        <th scope="col" className="py-1.5 pr-3 font-medium">
-                                            {t("colTtl")}
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-border/60 divide-y">
-                                    {data.sets.map((set) =>
-                                        set.records.length === 0 ? (
-                                            <tr key={set.type}>
-                                                <th
-                                                    scope="row"
-                                                    className="text-primary py-1.5 pr-3 font-mono text-xs font-medium"
-                                                >
+                    return (
+                        <div className="flex min-w-0 flex-col py-2">
+                            <div className="flex flex-wrap items-center gap-1.5 pb-3">
+                                <Chip tone={data.authenticated ? "good" : "neutral"}>
+                                    {data.authenticated
+                                        ? t("dnssecValidated")
+                                        : t("dnssecUnsigned")}
+                                </Chip>
+                                <Chip tone={data.mail.spf === null ? "warn" : "good"}>
+                                    {t("spf")}
+                                </Chip>
+                                <Chip tone={data.mail.dmarc === null ? "warn" : "good"}>
+                                    {t("dmarc")}
+                                </Chip>
+                                {data.mail.mtaSts && <Chip tone="good">{t("mtaSts")}</Chip>}
+                            </div>
+
+                            {/*
+                             * One hairline-separated block per record type. The
+                             * previous version ran every record of every type
+                             * into a single column, so a three-line TXT record
+                             * and the SOA under it read as one paragraph.
+                             */}
+                            <ul className="divide-border/50 min-w-0 divide-y border-t">
+                                {answered.map((set) => {
+                                    const ttl = sharedTtl(set.records);
+
+                                    return (
+                                        <li
+                                            key={set.type}
+                                            className="flex min-w-0 flex-col gap-1.5 py-2.5"
+                                        >
+                                            <div className="flex items-baseline justify-between gap-3">
+                                                <span className="text-muted-foreground font-mono text-[0.6875rem] leading-normal font-medium tracking-widest">
                                                     {set.type}
-                                                </th>
-                                                <td
-                                                    colSpan={2}
-                                                    className="text-muted-foreground py-1.5 pr-3"
-                                                >
-                                                    {absent}
-                                                </td>
-                                            </tr>
-                                        ) : (
-                                            set.records.map((record, index) => (
-                                                <tr key={`${set.type}-${index}`}>
-                                                    <th
-                                                        scope="row"
-                                                        className="text-primary py-1.5 pr-3 font-mono text-xs font-medium whitespace-nowrap"
+                                                </span>
+                                                {/*
+                                                 * A TTL per row repeated one
+                                                 * number down a whole column. It
+                                                 * earns a place only where the
+                                                 * records actually disagree.
+                                                 */}
+                                                {ttl !== null && (
+                                                    <span className="text-muted-foreground/60 shrink-0 font-mono text-[0.625rem] tabular-nums">
+                                                        {ttl}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <ul className="flex min-w-0 flex-col gap-1">
+                                                {set.records.map((record, index) => (
+                                                    <li
+                                                        key={`${record.value}-${index}`}
+                                                        className="flex min-w-0 items-baseline gap-2"
                                                     >
-                                                        {index === 0 ? set.type : ""}
-                                                        <span className="sr-only">
-                                                            {tTypes(set.type)}
-                                                        </span>
-                                                    </th>
-                                                    <td className="py-1.5 pr-3 font-mono break-all">
                                                         {record.priority !== undefined && (
-                                                            <span className="text-muted-foreground mr-1.5 tabular-nums">
+                                                            <span className="text-muted-foreground w-5 shrink-0 text-right font-mono text-[0.75rem] tabular-nums">
                                                                 {record.priority}
                                                             </span>
                                                         )}
-                                                        {record.value}
-                                                    </td>
-                                                    <td className="text-muted-foreground py-1.5 pr-3 font-mono tabular-nums">
-                                                        {record.ttl}
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        ),
-                                    )}
-                                </tbody>
-                            </table>
-                        </ScrollRow>
+                                                        <span
+                                                            className={cn(
+                                                                "min-w-0 flex-1",
+                                                                VALUE,
+                                                                record.value.length > LONG_VALUE &&
+                                                                    "bg-muted/45 rounded-md px-2 py-1",
+                                                            )}
+                                                        >
+                                                            {record.value}
+                                                        </span>
+                                                        {ttl === null && (
+                                                            <span className="text-muted-foreground/60 shrink-0 font-mono text-[0.625rem] tabular-nums">
+                                                                {record.ttl}
+                                                            </span>
+                                                        )}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
 
-                        {data.mail.spf !== null && (
-                            <Fact label={t("spfRecord")} wide>
-                                {data.mail.spf}
-                            </Fact>
-                        )}
-                        {data.mail.dmarc !== null && (
-                            <Fact label={t("dmarcRecord")} wide>
-                                {data.mail.dmarc}
-                            </Fact>
-                        )}
-                    </div>
-                )}
+                            {silent.length > 0 && (
+                                // One line rather than nine empty blocks: "no
+                                // CAA" is worth knowing and not worth a block.
+                                <p className="border-border/50 text-muted-foreground border-t py-2.5 text-[0.6875rem] leading-relaxed">
+                                    {t("noRecords")}{" "}
+                                    <span className="font-mono">
+                                        {silent.map((set) => set.type).join(" · ")}
+                                    </span>
+                                </p>
+                            )}
+
+                            {(data.mail.spf !== null || data.mail.dmarc !== null) && (
+                                <Rows label={t("mailPolicies")}>
+                                    {data.mail.spf !== null && (
+                                        <Row label={t("spfRecord")} stacked>
+                                            <span className="bg-muted/45 block rounded-md px-2 py-1">
+                                                {data.mail.spf}
+                                            </span>
+                                        </Row>
+                                    )}
+                                    {data.mail.dmarc !== null && (
+                                        <Row label={t("dmarcRecord")} stacked>
+                                            <span className="bg-muted/45 block rounded-md px-2 py-1">
+                                                {data.mail.dmarc}
+                                            </span>
+                                        </Row>
+                                    )}
+                                </Rows>
+                            )}
+                        </div>
+                    );
+                }}
             </PanelBody>
         </PanelCard>
     );
 }
 
-export function RegistrationPanel({
+function RegistrationPanel({
     registration,
+    tone,
 }: {
     registration: DomainReport["registration"];
+    tone: ReadingTone;
 }) {
     const t = useTranslations("domainInspector.registration");
     const format = useFormatter();
@@ -197,71 +291,71 @@ export function RegistrationPanel({
         <PanelCard title={t("title")} icon={<IconFileCertificate className={ICON} stroke={1.8} />}>
             <PanelBody result={registration}>
                 {(data: DomainRegistration) => (
-                    <div className="flex min-w-0 flex-col gap-3">
-                        {data.daysUntilExpiry !== null && (
-                            <div className="flex flex-wrap items-center gap-1.5">
-                                <Chip
-                                    tone={
-                                        data.daysUntilExpiry < 0
-                                            ? "bad"
-                                            : data.daysUntilExpiry < 30
-                                              ? "warn"
-                                              : "good"
-                                    }
-                                >
+                    <div className="flex min-w-0 flex-col py-2">
+                        <div className="flex flex-wrap items-center gap-1.5 pb-3">
+                            {data.daysUntilExpiry !== null && (
+                                <Chip tone={tone}>
                                     {data.daysUntilExpiry < 0
-                                        ? t("lapsed", {
-                                              days: Math.abs(data.daysUntilExpiry),
-                                          })
+                                        ? t("lapsed", { days: Math.abs(data.daysUntilExpiry) })
                                         : t("expiresIn", { days: data.daysUntilExpiry })}
                                 </Chip>
-                                <Chip tone={data.dnssec ? "good" : "neutral"}>
-                                    {data.dnssec ? t("dnssecSigned") : t("dnssecUnsigned")}
-                                </Chip>
-                            </div>
-                        )}
-
-                        <FactGrid label={t("title")}>
-                            <Fact label={t("registrar")} wide>
-                                {data.registrar ?? absent}
-                                {data.registrarIanaId !== null && (
-                                    <span className="text-muted-foreground ml-2">
-                                        IANA {data.registrarIanaId}
-                                    </span>
-                                )}
-                            </Fact>
-                            <Fact label={t("created")}>{date(data.registeredAt)}</Fact>
-                            <Fact label={t("expires")}>{date(data.expiresAt)}</Fact>
-                            <Fact label={t("updated")}>{date(data.updatedAt)}</Fact>
-                            <Fact label={t("country")}>{data.registrantCountry ?? absent}</Fact>
-                            <Fact label={t("abuse")} wide>
-                                {data.abuseEmail ?? absent}
-                            </Fact>
-                            {data.nameservers.length > 0 && (
-                                <Fact label={t("nameservers")} wide>
-                                    {data.nameservers.join(", ")}
-                                </Fact>
                             )}
-                            {data.source !== null && (
-                                <Fact label={t("source")} wide>
-                                    {data.source}
-                                </Fact>
-                            )}
-                        </FactGrid>
+                            <Chip tone={data.dnssec ? "good" : "neutral"}>
+                                {data.dnssec ? t("dnssecSigned") : t("dnssecUnsigned")}
+                            </Chip>
+                        </div>
 
-                        {data.statuses.length > 0 && (
-                            <div className="flex min-w-0 flex-col gap-1.5">
-                                <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                                    {t("statuses")}
-                                </p>
-                                <ul className="flex flex-wrap gap-1.5">
-                                    {data.statuses.map((status) => (
-                                        <li key={status}>
-                                            <Chip tone="neutral">{status}</Chip>
+                        {/*
+                         * Broken into named runs. Fourteen rows under one
+                         * heading is a list nobody finishes; who / when / where
+                         * is three short lists somebody scans.
+                         */}
+                        <Rows label={t("title")}>
+                            <Row label={t("registrar")}>{data.registrar ?? absent}</Row>
+                            {data.registrarIanaId !== null && (
+                                <Row label={t("ianaId")}>{data.registrarIanaId}</Row>
+                            )}
+                            <Row label={t("abuse")}>{data.abuseEmail ?? absent}</Row>
+                            <Row label={t("country")}>{data.registrantCountry ?? absent}</Row>
+                        </Rows>
+
+                        <GroupLabel>{t("dates")}</GroupLabel>
+                        <Rows label={t("dates")}>
+                            <Row label={t("created")}>{date(data.registeredAt)}</Row>
+                            <Row label={t("expires")}>{date(data.expiresAt)}</Row>
+                            <Row label={t("updated")}>{date(data.updatedAt)}</Row>
+                        </Rows>
+
+                        {data.nameservers.length > 0 && (
+                            <>
+                                <GroupLabel>{t("nameservers")}</GroupLabel>
+                                <ul className="flex min-w-0 flex-col gap-0.5 pb-2">
+                                    {data.nameservers.map((nameserver) => (
+                                        <li key={nameserver} className={cn("min-w-0", VALUE)}>
+                                            {nameserver}
                                         </li>
                                     ))}
                                 </ul>
-                            </div>
+                            </>
+                        )}
+
+                        {data.statuses.length > 0 && (
+                            <>
+                                <GroupLabel>{t("statuses")}</GroupLabel>
+                                <ul className="flex flex-wrap gap-1.5 pb-2">
+                                    {data.statuses.map((status) => (
+                                        <li key={status}>
+                                            <Chip>{status}</Chip>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </>
+                        )}
+
+                        {data.source !== null && (
+                            <Rows label={t("source")}>
+                                <Row label={t("source")}>{data.source}</Row>
+                            </Rows>
                         )}
                     </div>
                 )}
@@ -270,7 +364,7 @@ export function RegistrationPanel({
     );
 }
 
-export function HostingPanel({ hosting }: { hosting: DomainReport["hosting"] }) {
+function HostingPanel({ hosting }: { hosting: DomainReport["hosting"] }) {
     const t = useTranslations("domainInspector.hosting");
     const absent = useAbsent();
 
@@ -278,44 +372,30 @@ export function HostingPanel({ hosting }: { hosting: DomainReport["hosting"] }) 
         <PanelCard title={t("title")} icon={<IconServer2 className={ICON} stroke={1.8} />}>
             <PanelBody result={hosting}>
                 {(data: readonly HostAddress[]) => (
-                    <ul className="flex min-w-0 flex-col gap-2">
+                    <ul className="divide-border/50 min-w-0 divide-y">
                         {data.map((address) => (
-                            <li
-                                key={address.ip}
-                                className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-2 rounded-xl px-3 py-2.5 ring-1 ring-inset"
-                            >
+                            <li key={address.ip} className="flex min-w-0 flex-col gap-1.5 py-3">
                                 <div className="flex min-w-0 flex-wrap items-center gap-2">
-                                    <span className="min-w-0 font-mono text-[0.8125rem] break-all">
-                                        {address.ip}
-                                    </span>
-                                    <Chip tone="neutral">IPv{address.version}</Chip>
-                                    {address.country !== null && (
-                                        <Chip tone="neutral">{address.country}</Chip>
-                                    )}
+                                    <span className={cn("min-w-0", VALUE)}>{address.ip}</span>
+                                    <Chip>IPv{address.version}</Chip>
+                                    {address.country !== null && <Chip>{address.country}</Chip>}
                                 </div>
-                                <dl
-                                    aria-label={address.ip}
-                                    className="grid min-w-0 gap-x-4 gap-y-1 text-[0.75rem] sm:grid-cols-2"
-                                >
-                                    <HostFact label={t("asn")}>
+
+                                {/*
+                                 * One column, not two. A reverse name is forty
+                                 * characters and the two-column grid broke it
+                                 * across three lines, mid-word.
+                                 */}
+                                <Rows label={address.ip}>
+                                    <Row label={t("asn")}>
                                         {address.asn === null
                                             ? absent
                                             : `AS${address.asn}${address.asName === null ? "" : ` · ${address.asName}`}`}
-                                    </HostFact>
-                                    <HostFact label={t("prefix")}>
-                                        {address.prefix ?? absent}
-                                    </HostFact>
-                                    <HostFact label={t("reverse")}>
-                                        {address.reverse ?? absent}
-                                    </HostFact>
-                                    <HostFact label={t("network")}>
-                                        {address.network ?? absent}
-                                    </HostFact>
-                                    <HostFact label={t("org")}>{address.org ?? absent}</HostFact>
-                                    <HostFact label={t("registry")}>
-                                        {address.registry ?? absent}
-                                    </HostFact>
-                                </dl>
+                                    </Row>
+                                    <Row label={t("prefix")}>{address.prefix ?? absent}</Row>
+                                    <Row label={t("reverse")}>{address.reverse ?? absent}</Row>
+                                    <Row label={t("org")}>{address.org ?? absent}</Row>
+                                </Rows>
                             </li>
                         ))}
                     </ul>
@@ -325,16 +405,13 @@ export function HostingPanel({ hosting }: { hosting: DomainReport["hosting"] }) 
     );
 }
 
-function HostFact({ label, children }: { label: string; children: React.ReactNode }) {
-    return (
-        <div className="flex min-w-0 gap-2">
-            <dt className="text-muted-foreground shrink-0">{label}</dt>
-            <dd className="min-w-0 font-mono break-all">{children}</dd>
-        </div>
-    );
-}
-
-export function CertificatePanel({ certificate }: { certificate: DomainReport["certificate"] }) {
+function CertificatePanel({
+    certificate,
+    tone,
+}: {
+    certificate: DomainReport["certificate"];
+    tone: ReadingTone;
+}) {
     const t = useTranslations("domainInspector.certificate");
     const format = useFormatter();
     const absent = useAbsent();
@@ -343,17 +420,9 @@ export function CertificatePanel({ certificate }: { certificate: DomainReport["c
         <PanelCard title={t("title")} icon={<IconCertificate className={ICON} stroke={1.8} />}>
             <PanelBody result={certificate}>
                 {(data: CertificateReport) => (
-                    <div className="flex min-w-0 flex-col gap-3">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                            <Chip
-                                tone={
-                                    data.expired
-                                        ? "bad"
-                                        : (data.daysRemaining ?? 0) < 15
-                                          ? "warn"
-                                          : "good"
-                                }
-                            >
+                    <div className="flex min-w-0 flex-col py-2">
+                        <div className="flex flex-wrap items-center gap-1.5 pb-3">
+                            <Chip tone={tone}>
                                 {data.expired
                                     ? t("expired")
                                     : data.daysRemaining === null
@@ -363,47 +432,83 @@ export function CertificatePanel({ certificate }: { certificate: DomainReport["c
                             <Chip tone={data.matchesHost ? "good" : "bad"}>
                                 {data.matchesHost ? t("nameMatches") : t("nameMismatch")}
                             </Chip>
-                            {data.protocol !== null && <Chip tone="neutral">{data.protocol}</Chip>}
+                            {data.protocol !== null && <Chip>{data.protocol}</Chip>}
                         </div>
 
-                        <FactGrid label={t("title")}>
-                            <Fact label={t("subject")}>{data.subject ?? absent}</Fact>
-                            <Fact label={t("issuer")}>
-                                {data.issuerOrg ?? data.issuer ?? absent}
-                            </Fact>
-                            <Fact label={t("validFrom")}>
+                        <Rows label={t("title")}>
+                            <Row label={t("subject")}>{data.subject ?? absent}</Row>
+                            <Row label={t("issuer")}>{data.issuerOrg ?? data.issuer ?? absent}</Row>
+                            <Row label={t("validFrom")}>
                                 {data.validFrom === null
                                     ? absent
                                     : format.dateTime(new Date(data.validFrom), {
                                           dateStyle: "medium",
                                       })}
-                            </Fact>
-                            <Fact label={t("validTo")}>
+                            </Row>
+                            <Row label={t("validTo")}>
                                 {data.validTo === null
                                     ? absent
                                     : format.dateTime(new Date(data.validTo), {
                                           dateStyle: "medium",
                                       })}
-                            </Fact>
-                            <Fact label={t("key")}>{data.keyType ?? absent}</Fact>
-                            <Fact label={t("cipher")}>{data.cipher ?? absent}</Fact>
-                            <Fact label={t("serial")} wide>
+                            </Row>
+                            <Row label={t("key")}>{data.keyType ?? absent}</Row>
+                            <Row label={t("cipher")}>{data.cipher ?? absent}</Row>
+                        </Rows>
+
+                        {data.chain.length > 0 && (
+                            <>
+                                <GroupLabel>{t("chain")}</GroupLabel>
+                                {/*
+                                 * Drawn as a ladder, because that is what a
+                                 * chain is: each rung signed by the one below.
+                                 */}
+                                <ol className="flex min-w-0 flex-col pb-2">
+                                    {data.chain.map((link, index) => (
+                                        <li
+                                            key={`${link}-${index}`}
+                                            className="flex min-w-0 items-start gap-2.5"
+                                        >
+                                            <span
+                                                aria-hidden="true"
+                                                className="relative flex w-2 shrink-0 justify-center self-stretch"
+                                            >
+                                                <span
+                                                    className={cn(
+                                                        "bg-border/70 absolute w-px",
+                                                        index === 0 && "top-2.5 bottom-0",
+                                                        index > 0 &&
+                                                            index < data.chain.length - 1 &&
+                                                            "inset-y-0",
+                                                        index === data.chain.length - 1 &&
+                                                            index > 0 &&
+                                                            "top-0 h-2.5",
+                                                    )}
+                                                />
+                                                <span className="bg-muted-foreground/50 relative mt-2 size-1.5 rounded-full" />
+                                            </span>
+                                            <span className="min-w-0 py-1 font-mono text-[0.75rem] leading-relaxed wrap-anywhere">
+                                                {link}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ol>
+                            </>
+                        )}
+
+                        <Rows label={t("fingerprint")}>
+                            <Row label={t("serial")} stacked>
                                 {data.serialNumber ?? absent}
-                            </Fact>
-                            <Fact label={t("fingerprint")} wide>
+                            </Row>
+                            <Row label={t("fingerprint")} stacked>
                                 {data.fingerprint ?? absent}
-                            </Fact>
-                            {data.chain.length > 0 && (
-                                <Fact label={t("chain")} wide>
-                                    {data.chain.join(" → ")}
-                                </Fact>
-                            )}
+                            </Row>
                             {data.altNames.length > 0 && (
-                                <Fact label={t("altNames")} wide>
+                                <Row label={t("altNames")} stacked>
                                     {data.altNames.join(", ")}
-                                </Fact>
+                                </Row>
                             )}
-                        </FactGrid>
+                        </Rows>
                     </div>
                 )}
             </PanelBody>
@@ -417,7 +522,7 @@ const GRADE_TONE: Record<SecurityGrade, ChipTone> = {
     weak: "bad",
 };
 
-export function HttpPanel({ http }: { http: DomainReport["http"] }) {
+function HttpPanel({ http }: { http: DomainReport["http"] }) {
     const t = useTranslations("domainInspector.http");
     const tGrades = useTranslations("domainInspector.grades");
     const tHeaders = useTranslations("domainInspector.securityHeaders");
@@ -427,59 +532,70 @@ export function HttpPanel({ http }: { http: DomainReport["http"] }) {
         <PanelCard title={t("title")} icon={<IconCloudNetwork className={ICON} stroke={1.8} />}>
             <PanelBody result={http}>
                 {(data: HttpReport) => (
-                    <div className="flex min-w-0 flex-col gap-3">
-                        <div className="flex flex-wrap items-center gap-1.5">
+                    <div className="flex min-w-0 flex-col py-2">
+                        <div className="flex flex-wrap items-center gap-1.5 pb-3">
                             <Chip tone={data.status < 400 ? "good" : "bad"}>
                                 HTTP {data.status}
                             </Chip>
-                            <Chip tone={GRADE_TONE[data.grade]}>{tGrades(data.grade)}</Chip>
+                            <Chip tone={GRADE_TONE[data.grade]}>
+                                {tHeaders("chip", { grade: tGrades(data.grade) })}
+                            </Chip>
                             {data.hops.length > 1 && (
-                                <Chip tone="neutral">
-                                    {t("redirects", { count: data.hops.length - 1 })}
-                                </Chip>
+                                <Chip>{t("redirects", { count: data.hops.length - 1 })}</Chip>
                             )}
                         </div>
 
-                        <FactGrid label={t("title")}>
-                            <Fact label={t("finalUrl")} wide>
+                        <Rows label={t("title")}>
+                            <Row label={t("finalUrl")} stacked>
                                 {data.finalUrl}
-                            </Fact>
-                            <Fact label={t("server")}>{data.server ?? absent}</Fact>
-                            <Fact label={t("poweredBy")}>{data.poweredBy ?? absent}</Fact>
-                            <Fact label={t("pageTitle")} wide>
+                            </Row>
+                            <Row label={t("server")}>{data.server ?? absent}</Row>
+                            <Row label={t("poweredBy")}>{data.poweredBy ?? absent}</Row>
+                            <Row label={t("pageTitle")} stacked>
                                 {data.title ?? absent}
-                            </Fact>
+                            </Row>
                             {data.declaredLicense !== null && (
-                                <Fact label={t("declaredLicense")} wide>
+                                <Row label={t("declaredLicense")} stacked>
                                     {data.declaredLicense.name ??
                                         data.declaredLicense.url ??
                                         absent}
-                                </Fact>
+                                </Row>
                             )}
-                        </FactGrid>
+                        </Rows>
 
-                        <ul className="grid min-w-0 gap-1.5 sm:grid-cols-2">
+                        <GroupLabel>{t("securityHeaders")}</GroupLabel>
+                        {/*
+                         * One column. Two columns of twenty-four-character
+                         * header names inside a half-width panel truncated
+                         * every one of them.
+                         */}
+                        <ul className="divide-border/40 min-w-0 divide-y pb-2">
                             {data.securityHeaders.map((header) => (
                                 <li
                                     key={header.name}
-                                    className="flex min-w-0 items-start gap-2 text-[0.75rem]"
+                                    className="flex min-w-0 items-baseline gap-2 py-1.5 text-[0.75rem] leading-relaxed"
                                 >
                                     <span
                                         aria-hidden="true"
                                         className={cn(
-                                            "mt-1.5 size-1.5 shrink-0 rounded-full",
+                                            "size-1.5 shrink-0 rounded-full",
                                             header.value === null
-                                                ? "bg-muted-foreground/50"
-                                                : "bg-[var(--brand-emerald)]",
+                                                ? "bg-border"
+                                                : "bg-[color-mix(in_oklch,var(--brand-emerald)_65%,transparent)]",
                                         )}
                                     />
-                                    <span className="min-w-0">
-                                        <span className="font-mono">{header.name}</span>
-                                        <span className="text-muted-foreground ml-1.5">
-                                            {header.value === null
-                                                ? tHeaders("missing")
-                                                : tHeaders("present")}
-                                        </span>
+                                    <span
+                                        className={cn(
+                                            "min-w-0 flex-1 font-mono wrap-anywhere",
+                                            header.value === null && "text-muted-foreground",
+                                        )}
+                                    >
+                                        {header.name}
+                                    </span>
+                                    <span className="text-muted-foreground/70 shrink-0 text-[0.6875rem]">
+                                        {header.value === null
+                                            ? tHeaders("missing")
+                                            : tHeaders("present")}
                                     </span>
                                 </li>
                             ))}
@@ -491,100 +607,93 @@ export function HttpPanel({ http }: { http: DomainReport["http"] }) {
     );
 }
 
-export function TechnologiesPanel({
-    technologies,
-}: {
-    technologies: DomainReport["technologies"];
-}) {
+function TechnologiesPanel({ technologies }: { technologies: DomainReport["technologies"] }) {
     const t = useTranslations("domainInspector.technologies");
     const tCategories = useTranslations("domainInspector.techCategories");
     const tEvidence = useTranslations("domainInspector.evidence");
+    const format = useFormatter();
 
     return (
         <PanelCard
             title={t("title")}
             icon={<IconStack2 className={ICON} stroke={1.8} />}
-            meta={technologies.ok ? String(technologies.data.length) : undefined}
+            meta={technologies.ok ? format.number(technologies.data.length) : undefined}
         >
             <PanelBody result={technologies}>
-                {(data: readonly TechnologyMatch[]) =>
-                    data.length === 0 ? (
-                        <p className="text-muted-foreground bg-muted/40 rounded-xl px-3 py-2.5 text-[0.8125rem] leading-[1.5]">
-                            {t("none")}
-                        </p>
-                    ) : (
-                        <ul className="grid min-w-0 gap-2 sm:grid-cols-2">
-                            {data.map((match) => (
-                                <li
-                                    key={match.id}
-                                    className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-1 rounded-xl px-3 py-2.5 ring-1 ring-inset"
+                {(data: readonly TechnologyMatch[]) => {
+                    if (data.length === 0) {
+                        return (
+                            <p className="text-muted-foreground py-3 text-[0.8125rem] leading-normal">
+                                {t("none")}
+                            </p>
+                        );
+                    }
+
+                    // Grouped by category rather than listed flat: "what serves
+                    // it" and "what it is written in" are different questions,
+                    // and the answer to each is two or three entries long.
+                    const groups = TECHNOLOGY_CATEGORIES.map((category) => ({
+                        category,
+                        matches: data.filter((match) => match.category === category),
+                    })).filter((group) => group.matches.length > 0);
+
+                    return (
+                        <div className="divide-border/50 min-w-0 divide-y">
+                            {groups.map((group) => (
+                                <section
+                                    key={group.category}
+                                    className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] items-baseline gap-x-4 py-2.5"
                                 >
-                                    <div className="flex min-w-0 items-baseline gap-1.5">
-                                        <span className="min-w-0 truncate text-[0.8125rem] leading-[1.3] font-medium">
-                                            {match.name}
-                                        </span>
-                                        {match.version !== null && (
-                                            <span className="text-muted-foreground shrink-0 font-mono text-[0.6875rem]">
-                                                {match.version}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                                        {tCategories(match.category)}
-                                    </p>
-                                    <p className="flex min-w-0 flex-wrap items-center gap-1.5 text-[0.6875rem]">
-                                        <span className="text-muted-foreground">
-                                            {t("license")}
-                                        </span>
-                                        {match.licenseUrl === null ? (
-                                            <span className="font-mono">{match.license}</span>
-                                        ) : (
-                                            <a
-                                                href={match.licenseUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer nofollow"
-                                                className="text-primary focus-visible:ring-ring rounded font-mono underline underline-offset-2 focus-visible:ring-2 focus-visible:outline-none"
-                                            >
-                                                {match.license}
-                                            </a>
-                                        )}
-                                    </p>
-                                    <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                                        {tEvidence(match.evidence.source)}
-                                        {match.evidence.key !== null && (
-                                            <span className="ml-1 font-mono break-all">
-                                                {match.evidence.key}
-                                            </span>
-                                        )}
-                                    </p>
-                                </li>
+                                    <h4 className="text-muted-foreground pt-px text-[0.625rem] leading-normal tracking-[0.14em] uppercase">
+                                        {tCategories(group.category)}
+                                    </h4>
+                                    <ul className="flex min-w-0 flex-col gap-2">
+                                        {group.matches.map((match) => (
+                                            <li key={match.id} className="flex min-w-0 flex-col">
+                                                <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                                                    <span className="min-w-0 text-[0.8125rem] leading-relaxed font-medium">
+                                                        {match.name}
+                                                    </span>
+                                                    {match.version !== null && (
+                                                        <span className="text-muted-foreground shrink-0 font-mono text-[0.6875rem]">
+                                                            {match.version}
+                                                        </span>
+                                                    )}
+                                                    <span className="ml-auto shrink-0">
+                                                        {match.licenseUrl === null ? (
+                                                            <Chip>{match.license}</Chip>
+                                                        ) : (
+                                                            <a
+                                                                href={match.licenseUrl}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer nofollow"
+                                                                className="focus-visible:ring-ring rounded-md focus-visible:ring-2 focus-visible:outline-none"
+                                                                title={t("license")}
+                                                            >
+                                                                <Chip tone="good">
+                                                                    {match.license}
+                                                                </Chip>
+                                                            </a>
+                                                        )}
+                                                    </span>
+                                                </div>
+                                                <p className="text-muted-foreground/80 min-w-0 truncate text-[0.6875rem] leading-relaxed">
+                                                    {tEvidence(match.evidence.source)}
+                                                    {match.evidence.key !== null && (
+                                                        <span className="ml-1 font-mono">
+                                                            {match.evidence.key}
+                                                        </span>
+                                                    )}
+                                                </p>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </section>
                             ))}
-                        </ul>
-                    )
-                }
+                        </div>
+                    );
+                }}
             </PanelBody>
         </PanelCard>
-    );
-}
-
-type ChipTone = "good" | "warn" | "bad" | "neutral";
-
-const CHIP_TONES: Record<ChipTone, string> = {
-    good: "text-foreground ring-[color-mix(in_oklch,var(--brand-emerald)_45%,transparent)] bg-[color-mix(in_oklch,var(--brand-emerald)_10%,transparent)]",
-    warn: "text-foreground ring-[color-mix(in_oklch,var(--brand-amber)_45%,transparent)] bg-[color-mix(in_oklch,var(--brand-amber)_10%,transparent)]",
-    bad: "text-foreground ring-[color-mix(in_oklch,var(--brand-rose)_45%,transparent)] bg-[color-mix(in_oklch,var(--brand-rose)_10%,transparent)]",
-    neutral: "text-muted-foreground ring-border/70 bg-card/60",
-};
-
-function Chip({ tone, children }: { tone: ChipTone; children: React.ReactNode }) {
-    return (
-        <span
-            className={cn(
-                "inline-flex items-center rounded-lg px-2 py-0.5 font-mono text-[0.6875rem] leading-[1.4] ring-1 ring-inset",
-                CHIP_TONES[tone],
-            )}
-        >
-            {children}
-        </span>
     );
 }

@@ -302,6 +302,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         // largest here — everything under `article` still stays on the server.
         domainInspector: {
             workbench: messages.domainInspector.workbench,
+            scan: messages.domainInspector.scan,
+            readings: messages.domainInspector.readings,
             common: messages.domainInspector.common,
             resolvers: messages.domainInspector.resolvers,
             overview: messages.domainInspector.overview,

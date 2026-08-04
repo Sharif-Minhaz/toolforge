@@ -24,18 +24,16 @@ export default function DomainInspectorLoading() {
                     <Skeleton className="h-4 w-72" />
                 </div>
 
+                {/* The lookup console: one frame holding the field and its verdict. */}
                 <div className="flex flex-col gap-2">
-                    <Skeleton className="h-3.5 w-24" />
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                        <Skeleton className="h-9 flex-1 rounded-xl" />
-                        <Skeleton className="h-9 w-28 rounded-xl" />
-                    </div>
-                    <Skeleton className="h-3.5 w-72" />
+                    <Skeleton className="h-2.5 w-24" />
+                    <Skeleton className="h-19 w-full rounded-xl" />
                 </div>
 
+                {/* Two option cards of equal weight. */}
                 <div className="grid gap-3 sm:grid-cols-2">
-                    <Skeleton className="h-16 w-full rounded-xl" />
-                    <Skeleton className="h-16 w-full rounded-xl" />
+                    <Skeleton className="h-22 w-full rounded-xl" />
+                    <Skeleton className="h-22 w-full rounded-xl" />
                 </div>
 
                 <Skeleton className="h-16 w-full max-w-82 rounded-lg" />

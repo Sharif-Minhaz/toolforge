@@ -247,6 +247,11 @@ Reserve `throw` for programmer error.
 - One interactive component per tool holds the state. Everything static stays on the server.
 - **Generate per-request values on the server** and pass them down as props. Never in a `useState`
   initialiser — the server and the client produce different values and hydration breaks.
+- **Bring a pressed-for result into view** with `useResultScroll` from
+  `@/modules/tools/components/use-result-scroll`: its `ref` on the result wrapper, `scrollToResult()`
+  from the handler, `scroll-mt-6` on the target. It waits a frame for the commit, skips when the
+  result is already on screen, and honours `prefers-reduced-motion`. Discrete actions only — never a
+  result derived during render.
 - **Debounce typed input at 300 ms** using `@/hooks/use-debounced-value`. Discrete actions — presets,
   steppers, toggles, buttons — stay instant. Dim a stale result rather than blanking it.
 
@@ -400,32 +405,33 @@ Work in this order. Each step has a rule that is easy to skip.
 
 Reuse what exists rather than rebuilding it:
 
-| Need                          | Import                                       |
-| ----------------------------- | -------------------------------------------- |
-| Foot-of-page tool suggestions | `@/modules/tools/components/related-tools`   |
-| Tool card, accent and status  | `@/modules/tools/components/tool-card`      |
-| Article section, prose widths | `@/modules/tools/components/article-section` |
-| Sticky table of contents      | `@/modules/tools/components/article-toc`     |
-| FAQ                           | `@/modules/tools/components/faq-accordion`   |
-| Copy button                   | `@/modules/tools/components/copy-button`     |
-| Accent vars, icon tile        | `@/modules/tools/components/tool-accent`     |
-| Region + city zone picker     | `@/modules/tools/components/zone-picker`     |
-| Calendar + clock, one field   | `@/modules/tools/components/date-time-picker` |
-| Clipboard, typed result       | `@/modules/tools/domain/clipboard`           |
-| File download, text or blob   | `@/modules/tools/domain/file-saver`          |
-| Upload type and size gate     | `@/modules/tools/domain/image-file`          |
-| Decode an image, read its size| `@/modules/tools/domain/image-element`       |
-| Worker URL from a variable    | `@/modules/tools/domain/endpoint`            |
-| Turnstile widget, verification | `@/modules/tools/components/turnstile-widget` |
-| Wall clock ↔ instant, offsets | `@/modules/tools/domain/zone`                |
-| Frozen IANA zone list         | `@/modules/tools/domain/time-zones`          |
-| Gregorian calendar arithmetic | `@/modules/tools/domain/calendar`            |
-| Uniform random draws, injectable | `@/modules/tools/domain/random`           |
-| 300 ms debounce               | `@/hooks/use-debounced-value`                |
-| Structured data               | `@/modules/seo/components/json-ld`           |
-| Structured logging            | `@/modules/observability/domain/logger`      |
-| Re-pointable short links      | `@/modules/short-links/`                     |
-| Browser-remembered link list  | `@/modules/short-links/components/use-link-history` |
+| Need                                  | Import                                              |
+| ------------------------------------- | --------------------------------------------------- |
+| Foot-of-page tool suggestions         | `@/modules/tools/components/related-tools`          |
+| Tool card, accent and status          | `@/modules/tools/components/tool-card`              |
+| Article section, prose widths         | `@/modules/tools/components/article-section`        |
+| Sticky table of contents              | `@/modules/tools/components/article-toc`            |
+| FAQ                                   | `@/modules/tools/components/faq-accordion`          |
+| Copy button                           | `@/modules/tools/components/copy-button`            |
+| Accent vars, icon tile                | `@/modules/tools/components/tool-accent`            |
+| Region + city zone picker             | `@/modules/tools/components/zone-picker`            |
+| Calendar + clock, one field           | `@/modules/tools/components/date-time-picker`       |
+| Clipboard, typed result               | `@/modules/tools/domain/clipboard`                  |
+| File download, text or blob           | `@/modules/tools/domain/file-saver`                 |
+| Upload type and size gate             | `@/modules/tools/domain/image-file`                 |
+| Decode an image, read its size        | `@/modules/tools/domain/image-element`              |
+| Worker URL from a variable            | `@/modules/tools/domain/endpoint`                   |
+| Turnstile widget, verification        | `@/modules/tools/components/turnstile-widget`       |
+| Wall clock ↔ instant, offsets         | `@/modules/tools/domain/zone`                       |
+| Frozen IANA zone list                 | `@/modules/tools/domain/time-zones`                 |
+| Gregorian calendar arithmetic         | `@/modules/tools/domain/calendar`                   |
+| Uniform random draws, injectable      | `@/modules/tools/domain/random`                     |
+| 300 ms debounce                       | `@/hooks/use-debounced-value`                       |
+| Scroll a pressed-for result into view | `@/modules/tools/components/use-result-scroll`      |
+| Structured data                       | `@/modules/seo/components/json-ld`                  |
+| Structured logging                    | `@/modules/observability/domain/logger`             |
+| Re-pointable short links              | `@/modules/short-links/`                            |
+| Browser-remembered link list          | `@/modules/short-links/components/use-link-history` |
 
 Shared UI belongs in `src/modules/tools/`, never inside another tool's module. If a second tool
 needs something the first one owns, lift it with `git mv` and update the first tool's imports in the

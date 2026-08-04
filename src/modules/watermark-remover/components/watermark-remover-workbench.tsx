@@ -19,6 +19,7 @@ import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
+import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
 import { loadImageElement } from "@/modules/tools/domain/image-element";
 import { checkImageFile, normalizeImageType } from "@/modules/tools/domain/image-file";
@@ -90,6 +91,7 @@ export function WatermarkRemoverWorkbench({ siteKey }: WatermarkRemoverWorkbench
     const [resetSignal, setResetSignal] = useState(0);
     const [working, setWorking] = useState(false);
     const [result, setResult] = useState<Cleaned | null>(null);
+    const { ref: resultRef, scrollToResult } = useResultScroll();
     const [failure, setFailure] = useState<WatermarkFailureReason | null>(null);
 
     // Revoking on the way out rather than in the picker: the cleanup fires both
@@ -327,6 +329,7 @@ export function WatermarkRemoverWorkbench({ siteKey }: WatermarkRemoverWorkbench
                 facts: picked.facts,
                 strokes,
             });
+            scrollToResult();
             toast.success(tToast("removed"));
         } catch (caught) {
             logEvent("error", "watermark_remover.action_threw", { error: describeError(caught) });
@@ -553,6 +556,7 @@ export function WatermarkRemoverWorkbench({ siteKey }: WatermarkRemoverWorkbench
 
                 {result !== null && (
                     <div
+                        ref={resultRef}
                         className={cn(
                             "min-w-0 transition-opacity duration-200",
                             stale && "opacity-55",

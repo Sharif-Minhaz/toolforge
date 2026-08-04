@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { MAX_INPUT_LENGTH } from "@/modules/domain-inspector/domain/constants";
+import { checkHostSyntax } from "@/modules/domain-inspector/domain/host-syntax";
 import {
     readHostInput,
     type HostInputFailureReason,
@@ -113,5 +114,36 @@ describe("readHostInput", () => {
             ok: false,
             reason: "too_long",
         });
+    });
+});
+
+describe("checkHostSyntax", () => {
+    test("passes anything worth sending to a resolver", () => {
+        for (const input of ["example.com", "https://example.com/x?y=1", "8.8.8.8", "münchen.de"]) {
+            expect(checkHostSyntax(input)).toBeNull();
+        }
+    });
+
+    test("catches the typos the island must reject before spending a challenge", () => {
+        expect(checkHostSyntax("324jksh f3wjs3.hell.net")).toBe("invalid_hostname");
+        expect(checkHostSyntax("")).toBe("empty_input");
+        expect(checkHostSyntax("   ")).toBe("empty_input");
+        expect(checkHostSyntax("a".repeat(MAX_INPUT_LENGTH + 1))).toBe("too_long");
+    });
+
+    test("leaves the suffix question to readHostInput", () => {
+        // `localhost` is well-formed; it simply has no registry. That verdict
+        // needs the Public Suffix List, which never reaches the browser.
+        expect(checkHostSyntax("localhost")).toBeNull();
+        expect(readHostInput("localhost")).toEqual({ ok: false, reason: "unknown_suffix" });
+    });
+
+    test("agrees with readHostInput on every syntax failure it reports", () => {
+        for (const input of ["exa mple.com", "ex_ample.com", "-example.com", "example..com"]) {
+            const syntax = checkHostSyntax(input);
+
+            expect(syntax).not.toBeNull();
+            expect(readHostInput(input)).toEqual({ ok: false, reason: syntax! });
+        }
     });
 });

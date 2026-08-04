@@ -293,6 +293,7 @@ they should not.
 | File download | `@/modules/tools/domain/file-saver` |
 | `DownloadFile` and catalog types | `@/modules/tools/types` |
 | 300 ms debounce | `@/hooks/use-debounced-value` |
+| Scroll a pressed-for result into view | `@/modules/tools/components/use-result-scroll` |
 | Hydration-gated UI | `@/hooks/use-is-hydrated` |
 | Entrance motion | `@/components/motion/reveal` |
 | Page metadata (canonical, OG, Twitter, keywords) | `@/modules/seo/domain/metadata` |
