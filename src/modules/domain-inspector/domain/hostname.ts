@@ -1,7 +1,12 @@
 import { parse } from "tldts";
 
-import { checkHostSyntax, extractHostname, type HostSyntaxFailure } from "./host-syntax";
-import { isIpAddress } from "./ip";
+import {
+    checkHostSyntax,
+    extractHostname,
+    type HostSyntaxFailure,
+} from "@/modules/tools/domain/host-syntax";
+import { isIpAddress } from "@/modules/tools/domain/ip";
+import { MAX_INPUT_LENGTH } from "./constants";
 import { toUnicodeHostname } from "./punycode";
 import type { DomainBreakdown } from "../types";
 
@@ -14,7 +19,7 @@ import type { DomainBreakdown } from "../types";
  * receives a hostname it may trust to be syntactically well formed; whether it
  * is safe to *connect* to is a separate question, answered by `ip.ts`.
  *
- * The syntax half lives in `host-syntax.ts` so the browser can run it without
+ * The syntax half lives in `tools/domain/host-syntax.ts` so the browser can run it without
  * downloading the suffix list — see that file for why.
  */
 
@@ -25,7 +30,7 @@ export type HostInputResult =
     | { readonly ok: false; readonly reason: HostInputFailureReason };
 
 export function readHostInput(input: string): HostInputResult {
-    const syntax = checkHostSyntax(input);
+    const syntax = checkHostSyntax(input, MAX_INPUT_LENGTH);
 
     if (syntax !== null) {
         return { ok: false, reason: syntax };

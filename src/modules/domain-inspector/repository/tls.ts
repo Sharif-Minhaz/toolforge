@@ -5,7 +5,7 @@ import { connect } from "node:tls";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { toCertificateReport, type PeerCertificateLike } from "../domain/certificate";
 import { TLS_TIMEOUT_MS } from "../domain/constants";
-import { isIpAddress } from "../domain/ip";
+import { isIpAddress } from "@/modules/tools/domain/ip";
 import type { CertificateReport, PanelResult } from "../types";
 
 /**

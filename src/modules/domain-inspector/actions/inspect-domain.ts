@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { logEvent } from "@/modules/observability/domain/logger";
 import { resolveRemoteIp, verifyTurnstileToken } from "@/modules/tools/repository/turnstile";
 import { readHostInput } from "../domain/hostname";
-import { classifyAddress } from "../domain/ip";
+import { classifyAddress } from "@/modules/tools/domain/ip";
 import { runInspection } from "../repository/inspect";
 import type { InspectionResult } from "../types";
 import { inspectionRequestSchema } from "../validation/inspection";

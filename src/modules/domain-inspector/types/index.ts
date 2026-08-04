@@ -6,6 +6,8 @@
  * holds a socket, a response, or a function.
  */
 
+import type { IpVersion } from "@/modules/tools/types";
+
 /** Public resolvers the reader can choose between, all of which speak DoH JSON. */
 export const DNS_RESOLVERS = ["cloudflare", "google", "dnssb"] as const;
 
@@ -99,8 +101,6 @@ export type DomainRegistration = {
     /** Host of the RDAP server that answered, so the reader can check it. */
     readonly source: string | null;
 };
-
-export type IpVersion = 4 | 6;
 
 export type HostAddress = {
     readonly ip: string;

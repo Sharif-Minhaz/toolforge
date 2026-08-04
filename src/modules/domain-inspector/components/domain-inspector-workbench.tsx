@@ -27,8 +27,8 @@ import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
 import { inspectDomain } from "../actions/inspect-domain";
-import { TURNSTILE_ACTION } from "../domain/constants";
-import { checkHostSyntax, type HostSyntaxFailure } from "../domain/host-syntax";
+import { MAX_INPUT_LENGTH, TURNSTILE_ACTION } from "../domain/constants";
+import { checkHostSyntax, type HostSyntaxFailure } from "@/modules/tools/domain/host-syntax";
 import { createDomainReportFile, summarizeReport } from "../domain/export";
 import {
     DNS_RESOLVERS,
@@ -145,7 +145,7 @@ export function DomainInspectorWorkbench({
         // below this line costs something the reader should not pay for a
         // typo: a Turnstile token, a round trip, and a scroll away from the
         // field they need to fix.
-        const syntax = checkHostSyntax(host);
+        const syntax = checkHostSyntax(host, MAX_INPUT_LENGTH);
 
         if (syntax !== null) {
             setReport(null);

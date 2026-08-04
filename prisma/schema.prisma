@@ -42,3 +42,30 @@ model ShortLink {
 
   @@map("short_links")
 }
+
+/// One row per visitor per rolling window, counting port scans.
+///
+/// A port scan runs from this server, so the host being scanned sees this
+/// site's address in its logs rather than the visitor's. Without a limit that
+/// survives a cold start, the tool is a free anonymous scanning service with
+/// this site's reputation attached — which is why the counter lives in Postgres
+/// rather than in a process that Vercel is free to recycle between requests.
+///
+/// The visitor is identified by a salted SHA-256 of their address, never the
+/// address itself. The whole point is to spend nothing on knowing who they are:
+/// a dump of this table says how often somebody scanned, and nothing about who.
+/// That also means the salt is a secret — rotate it and every window resets,
+/// which is the correct failure.
+model PortScanQuota {
+  /// SHA-256 of `PORT_SCAN_IP_SALT` + the caller's address.
+  visitorHash String   @id @map("visitor_hash")
+  count       Int      @default(0)
+  /// Start of the window this count belongs to; a request past the window
+  /// length resets both fields rather than adding a row.
+  windowStart DateTime @map("window_start")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  /// Sweeping expired rows is a scan over this, not over the table.
+  @@index([windowStart])
+  @@map("port_scan_quota")
+}

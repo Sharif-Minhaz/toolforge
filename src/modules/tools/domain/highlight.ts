@@ -46,14 +46,7 @@ export type Token = {
  * has no structure worth colouring — base64, a digest — passes a value instead
  * of branching around the component.
  */
-export const HIGHLIGHT_LANGUAGES = [
-    "shell",
-    "javascript",
-    "json",
-    "toon",
-    "hex",
-    "plain",
-] as const;
+export const HIGHLIGHT_LANGUAGES = ["shell", "javascript", "json", "toon", "hex", "plain"] as const;
 
 export type HighlightLanguage = (typeof HIGHLIGHT_LANGUAGES)[number];
 

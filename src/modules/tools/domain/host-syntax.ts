@@ -1,18 +1,23 @@
-import { MAX_HOSTNAME_LENGTH, MAX_INPUT_LENGTH, MAX_LABEL_LENGTH } from "./constants";
 import { isIpAddress } from "./ip";
 
 /**
  * The half of the input check that needs no Public Suffix List.
  *
- * It is its own module so the browser can run it. `hostname.ts` imports
- * `tldts`, which carries the whole suffix list, and pulling that into the
- * client bundle to tell somebody they typed a space would be a poor trade.
- * Everything here is string work.
+ * It is its own module so the browser can run it. The Domain Inspector's
+ * `hostname.ts` imports `tldts`, which carries the whole suffix list, and
+ * pulling that into the client bundle to tell somebody they typed a space
+ * would be a poor trade. Everything here is string work.
  *
- * The split is also what lets the island reject a typo *before* it spends a
+ * The split is also what lets an island reject a typo *before* it spends a
  * Turnstile token and a round trip — and before it moves the page to a result
- * area that is never going to fill.
+ * area that is never going to fill. That mattered enough for a second tool to
+ * need it, which is why it lives here rather than in either of them.
  */
+
+/** RFC 1035: a name is at most 253 octets, a label at most 63. */
+export const MAX_HOSTNAME_LENGTH = 253;
+
+export const MAX_LABEL_LENGTH = 63;
 
 export type HostSyntaxFailure = "empty_input" | "too_long" | "invalid_hostname";
 
@@ -49,10 +54,9 @@ export function extractHostname(input: string): string | null {
 }
 
 /**
- * Syntax only. A single-label name passes here and is refused by
- * `readHostInput` for having no public suffix, because "there is no registry
- * for `localhost`" is a more useful thing to be told than "that is not a
- * hostname".
+ * Syntax only. A single-label name passes here; a caller that needs a
+ * registrable name refuses it afterwards, because "there is no registry for
+ * `localhost`" is a more useful thing to be told than "that is not a hostname".
  */
 export function isWellFormedHostname(hostname: string): boolean {
     return hostname
@@ -60,13 +64,19 @@ export function isWellFormedHostname(hostname: string): boolean {
         .every((label) => label.length <= MAX_LABEL_LENGTH && LABEL_PATTERN.test(label));
 }
 
-/** `null` when the input is worth sending to a resolver. */
-export function checkHostSyntax(input: string): HostSyntaxFailure | null {
+/**
+ * `null` when the input is worth sending to a resolver.
+ *
+ * `maxInputLength` is a parameter because it is a policy each tool sets for
+ * itself — how much text its box accepts — while everything else here is RFC
+ * 1035 and the same everywhere.
+ */
+export function checkHostSyntax(input: string, maxInputLength: number): HostSyntaxFailure | null {
     if (input.trim().length === 0) {
         return "empty_input";
     }
 
-    if (input.length > MAX_INPUT_LENGTH) {
+    if (input.length > maxInputLength) {
         return "too_long";
     }
 

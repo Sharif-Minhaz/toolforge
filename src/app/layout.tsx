@@ -311,6 +311,14 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.aiTextDetector.errors,
             toast: messages.aiTextDetector.toast,
         },
+        portScanner: {
+            workbench: messages.portScanner.workbench,
+            presets: messages.portScanner.presets,
+            presetHints: messages.portScanner.presetHints,
+            states: messages.portScanner.states,
+            errors: messages.portScanner.errors,
+            toast: messages.portScanner.toast,
+        },
         // Seven panels' worth of labels, which is why this slice is the
         // largest here — everything under `article` still stays on the server.
         domainInspector: {

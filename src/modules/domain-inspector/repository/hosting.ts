@@ -2,7 +2,8 @@ import "server-only";
 
 import { CYMRU_AS_ZONE } from "../domain/constants";
 import { parseCymruAsName, parseCymruOrigin, stripRootDot } from "../domain/dns";
-import { cymruOriginName, detectIpVersion, reverseArpaName } from "../domain/ip";
+import { detectIpVersion } from "@/modules/tools/domain/ip";
+import { cymruOriginName, reverseArpaName } from "../domain/reverse-names";
 import { queryDns, queryTxtValue } from "./doh";
 import { fetchNetworkInfo } from "./rdap";
 import type { DnsResolver, HostAddress } from "../types";

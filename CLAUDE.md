@@ -416,15 +416,19 @@ plus the shared time-zone and calendar layer: `domain/zone.ts`,
 `domain/time-zones.ts`, `domain/calendar.ts`, `components/zone-picker.tsx`, the
 injectable random source `domain/random.ts`, and the shared image layer:
 `domain/image-codec.ts`, `domain/pixels.ts`, `domain/archive.ts`,
-`domain/base64.ts`, `domain/hex.ts`, `domain/filenames.ts`), `short-links` (every re-pointable
+`domain/base64.ts`, `domain/hex.ts`, `domain/filenames.ts`, and the shared code
+layer: `domain/highlight.ts` with `components/code-editor.tsx` and
+`components/code-block.tsx`, and the shared network layer: `domain/ip.ts`,
+`domain/host-syntax.ts`, `repository/address-guard.ts`), `short-links` (every re-pointable
 link on the site — see below), `image-compressor` (a batch queue and a
 smallest-of-four search), `image-converter` (a named target per batch, plus the
 ICO container and the favicon pack), `blur-placeholder` (the BlurHash codec and
 the `blurDataURL` it writes), `curl` (the shell tokenizer, the request model and
 the four writers around it), `domain-inspector` (the address guard, the DoH
 transport and the signature table — see below), `bson` (three readers and three
-writers over one plain value — see below), `uuid`, `overview`, `preferences`,
-`seo`, `observability`.
+writers over one plain value — see below), `port-scanner` (a TCP connect scan
+behind a quota that fails closed — see below), `uuid`, `overview`,
+`preferences`, `seo`, `observability`.
 
 The three image tools are the worked example of the "lift it the moment a second
 tool needs it" rule. Everything they share — decoding, the four tuned encoder
@@ -700,8 +704,10 @@ the worse answer. There it is left out and the difference becomes a note. Decide
 per runtime, and write down which way and why.
 
 **Highlighting a textarea means painting behind it, and the alignment is the
-whole job.** `curl/components/code-editor.tsx` is the pattern: a `<pre>` holding
-the coloured copy, `absolute inset-0`, with the textarea's own glyphs set to
+whole job.** `tools/components/code-editor.tsx` is the pattern — it started in
+this module and moved to `tools/` whole the moment the BSON converter needed one,
+along with `code-block.tsx` and `tools/domain/highlight.ts`. A `<pre>` holds the
+coloured copy, `absolute inset-0`, with the textarea's own glyphs set to
 `text-transparent` and only its caret and selection left visible. The textarea
 stays a real textarea, so undo, IME, autofill and screen readers are untouched.
 Four things hold the two in register, and each is a bug if it drifts:
@@ -724,7 +730,21 @@ return every character it was given, in order. That is the invariant to test:
 `tokens.map((t) => t.text).join("") === input`, over deliberately awkward input.
 And highlighting cannot be debounced when it sits behind a caret, so it needs a
 length ceiling instead — above `MAX_HIGHLIGHT_LENGTH` it returns one plain
-token, because losing the colour beats losing the typing.
+token, because losing the colour beats losing the typing. Nor can the *language*
+be debounced: it follows the live value, or a reader switching notation watches
+the backdrop stay a language behind the glyphs for 300 ms.
+
+Adding a language to that file is a scanner and nothing else, and the round-trip
+invariant is what makes it cheap — the shared test already loops over
+`HIGHLIGHT_LANGUAGES`, so a new member is covered by every awkward input in the
+list the moment it joins the union. That is what caught both defects in the TOON
+scanner: whitespace emitted twice, and a delimiter inside a quoted value
+splitting the string it was quoted to protect. Two rules fall out. **Never split
+on a separator before honouring quotes** — the quoting exists precisely because
+the separator appears inside values. And **`plain` is a language**, not the
+absence of one, so a notation with no structure worth colouring (base64, a
+digest) names a value instead of making every caller branch around the
+component.
 
 **A hand-rolled reader for a language degrades; it does not fail.** `js-value.ts`
 reads the slice of JavaScript a `fetch` init is written in and returns anything
@@ -1129,6 +1149,82 @@ rules keep it honest: **no `g` flag on any pattern**, because a `RegExp` with
 handles; and **every entry carries a licence**, SPDX or the literal
 `Proprietary`, because "what is this built on" and "may I build on it" are the
 same question asked twice.
+
+# Building the Thing the Guard Was Written Against
+
+`src/modules/port-scanner/` opens a TCP connection to a port on a host somebody
+typed. The address guard's own comment names that as the abuse it exists to
+prevent — "use this server as a port scanner with this site's reputation
+attached" — so this is the one module in the repository where the guard is
+load-bearing rather than precautionary. Everything below follows from taking
+that seriously rather than from the feature being hard.
+
+**Name the property you cannot keep, in the tool, above the controls.** This
+site's promise is that nothing is uploaded. A page cannot open a raw socket, so
+a port scan has to run on the server, and the host being scanned sees *our*
+address in its logs. That makes the tool an attribution-laundering service by
+default. The disclosure panel therefore sits above the form, not in the article
+underneath it — a reader deserves to know whose name lands in the target's log
+before they press anything, not after.
+
+**A limiter that can fail open is not a limiter.** Every other degradation on
+this site falls toward doing the work: no Turnstile key and a tool renders
+disabled, no database and the shortener says so. `spendQuota` inverts that. No
+`DATABASE_URL`, no `PORT_SCAN_IP_SALT`, an unreachable database, a thrown
+transaction — every one of them **refuses the scan**. Decide which way a gate
+fails by what happens when it is bypassed, and here that is an unmetered
+scanning service.
+
+- **In Postgres, not in memory.** On serverless a per-process counter resets on
+  every cold start and each instance counts separately. Shipping one under the
+  name "rate limit" is worse than shipping none, because it stops anyone
+  looking again.
+- **Read and write in one transaction.** Two visitors behind one address arrive
+  together; a read-then-write lets both see nine and both write ten.
+- **Spend the allowance even when the scan fails.** A refused scan that costs
+  nothing is a free retry loop, and retrying is what an abuser does.
+- **Store a salted hash of the address, never the address.** The row answers "is
+  this the same caller" and nothing else. Unsalted, a table of SHA-256 digests
+  of IPv4 addresses is reversible by brute force in seconds — there are only
+  four billion. The salt is a secret for that reason, and rotating it resetting
+  every window is the correct failure.
+- **A fixed window, not a sliding one.** Sliding needs every timestamp kept,
+  and a per-scan history of who scanned when is a log this site has no business
+  holding. The cost — a caller can spend the tail of one window and the head of
+  the next — is written down in `domain/quota.ts` rather than discovered.
+
+**Order the gates by what each one costs.** Shape, syntax and port parsing are
+free and local, so a typo costs no challenge, no database write and no packet.
+Turnstile comes before the quota, or a script burns a stranger's allowance by
+replaying their address without solving anything. The quota comes before the
+network, because it is the only gate that limits *volume* — everything above it
+refuses one bad request, and this is what refuses the thousandth good one.
+
+**Say what the tool refuses to do, and mean it.** No SYN scan, no banner read,
+no version probe: the socket is opened, the handshake observed, and it is
+destroyed without a byte crossing it. The service column is a static table of
+what each port is *registered* for, so a web server on 22 is labelled SSH and
+the label is wrong — which the copy says, because the alternative is
+fingerprinting. There is also deliberately no "known attack ports" preset:
+checking your own host for a backdoor port is legitimate and the custom field
+does it, but offering it as one click against any address somebody types is a
+tool for finding other people's compromised machines.
+
+**A third state is not a detail.** Open means the handshake completed; closed
+means a reset came back, which took a reachable machine to send; filtered means
+nothing came back at all. Most hosted checkers fold the last two together, and
+that is a false statement about the network — one of the tools this was
+specified against prints `CLOSED` with a `timeout` badge beside it. Where a
+measurement has three outcomes, three is what the UI shows, and a scan that
+comes back entirely filtered gets a sentence saying nothing answered rather
+than being read as a clean bill of health.
+
+**Concurrency is a politeness setting before it is a speed one.** Opening every
+socket at once looks exactly like a SYN flood from the far end, and that is how
+a server's address gets blocked by the networks it most needs to reach. Sixteen
+at a time, 128 ports at most, and an absolute deadline that reports whatever is
+unfinished as `filtered` — because a serverless function killed at its own limit
+returns nothing at all.
 
 # Putting Something on a Map
 

@@ -15,6 +15,7 @@ import {
     IconLink,
     IconLock,
     IconMarkdown,
+    IconNetwork,
     IconPalette,
     IconPhotoScan,
     IconQrcode,
@@ -60,6 +61,7 @@ const ICONS: Record<ToolIconName, ComponentType<IconProps>> = {
     terminal: IconTerminal2,
     radar: IconRadar2,
     database: IconDatabaseCog,
+    network: IconNetwork,
 };
 
 type ToolIconProps = {

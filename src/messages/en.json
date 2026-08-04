@@ -238,6 +238,10 @@
         "bson": {
             "name": "BSON / JSON / TOON Converter",
             "description": "Convert between BSON, JSON and TOON in any direction. Canonical Extended JSON returns the exact bytes MongoDB stored, and TOON's tabular form cuts a uniform array down for an LLM prompt."
+        },
+        "port-scanner": {
+            "name": "Port Scanner",
+            "description": "Check whether a TCP port is open on a public host or on your own address, with open, closed and filtered told apart. Nmap's most-scanned ports plus web, mail, database and remote-access presets."
         }
     },
     "overview": {
@@ -6706,6 +6710,192 @@
                 "a6": "TOON 4.1, through the format's own reference implementation rather than a re-reading of the specification — so what comes out of here is what every other TOON reader expects to see.",
                 "q7": "Why does the tool count characters instead of tokens?",
                 "a7": "Because a token count is a property of a model, not of a document. Two tokenizers disagree, and shipping one would mean shipping a megabyte of vocabulary to answer for a single model. Characters are exact, and the ratio between two formats holds directionally whichever tokenizer reads them."
+            }
+        }
+    },
+    "portScanner": {
+        "meta": {
+            "title": "Online Port Checker — Open, Closed or Filtered, Told Apart",
+            "description": "Check whether a TCP port is open on any public host or on your own address. A real connect scan reports three states, not two: open, closed, and filtered — a timeout is something dropping your packets, which is a different fact from a refusal. Nmap's most-scanned ports, plus web, mail, database and remote-access presets. Scans run from our servers, are rate limited, and never touch private or reserved ranges."
+        },
+        "hero": {
+            "eyebrow": "Network",
+            "title": "Port Scanner",
+            "subtitle": "Open a TCP connection to each port and report what happened. Your own address is filled in, because the first useful question is usually what the internet can already see of you.",
+            "badgeStates": "Open, closed, filtered",
+            "badgeGuarded": "Private ranges refused",
+            "badgeLimited": "Rate limited"
+        },
+        "workbench": {
+            "title": "Scan a host",
+            "description": "One TCP connection per port. Nothing is written to the socket and nothing is read back — a completed handshake is the whole finding.",
+            "hostLabel": "Host or IP address",
+            "hostPlaceholder": "example.com",
+            "yourIp": "Your address is {address}",
+            "useYourIp": "Scan my address",
+            "presetLabel": "Ports",
+            "portsLabel": "Port numbers",
+            "portsPlaceholder": "80, 443, 8000-8100",
+            "portsHint": "Commas, spaces or line breaks. Ranges with a hyphen. At most {max, number} ports per scan.",
+            "portsCount": "{count, plural, one {# port} other {# ports}} selected",
+            "scan": "Scan ports",
+            "scanning": "Scanning…",
+            "clear": "Clear",
+            "quotaRemaining": "{remaining, plural, =0 {No scans left} one {# scan left} other {# scans left}} this hour",
+            "quotaResets": "Resets {time}",
+            "quotaUnavailable": "Scanning is not configured on this deployment.",
+            "disclosureTitle": "This one is not private, and cannot be",
+            "disclosure": "A page in your browser cannot open a raw socket, so the scan runs on our servers. The host you name will see our address in its logs, not yours. Nothing about the scan is stored except a count against your address, hashed, so the hourly limit can be enforced.",
+            "authorization": "Scan hosts you own, or have written permission to test. Unauthorised port scanning is a criminal offence in many countries, and the log entry it leaves points at us.",
+            "resultsTitle": "Results",
+            "summaryOpen": "Open",
+            "summaryClosed": "Closed",
+            "summaryFiltered": "Filtered",
+            "summaryTotal": "Scanned",
+            "colPort": "Port",
+            "colService": "Service",
+            "colState": "State",
+            "colLatency": "Response",
+            "scannedHost": "Host",
+            "scannedAddress": "Address",
+            "startedAt": "Started",
+            "duration": "Took",
+            "latencyMs": "{value, number} ms",
+            "noLatency": "—",
+            "noService": "Unregistered",
+            "copy": "Copy",
+            "downloadCsv": "CSV",
+            "downloadJson": "JSON",
+            "allFiltered": "Every port timed out. That usually means the host is down, or a firewall is dropping packets rather than refusing them — it does not mean these ports are closed.",
+            "statusIdle": "Enter a host and choose which ports to check.",
+            "statusScanning": "Opening {count, plural, one {# connection} other {# connections}}…",
+            "statusDone": "{open, plural, =0 {No open ports} one {# open port} other {# open ports}} of {total, number} scanned.",
+            "serviceCaveat": "Service names are what the port is registered for, not what answered. Nothing here reads a banner."
+        },
+        "presets": {
+            "top": "Most scanned",
+            "web": "Web",
+            "mail": "Mail",
+            "database": "Databases",
+            "remote": "Remote access",
+            "custom": "Custom"
+        },
+        "presetHints": {
+            "top": "The ports Nmap reports as the most scanned on the internet.",
+            "web": "HTTP and HTTPS, including the alternates a dev server picks.",
+            "mail": "SMTP, POP3 and IMAP, plain and over TLS.",
+            "database": "The engines most often found facing the internet by accident.",
+            "remote": "SSH, Telnet, RDP, VNC and the Windows remoting pair.",
+            "custom": "Type your own list or ranges."
+        },
+        "states": {
+            "open": "Open",
+            "closed": "Closed",
+            "filtered": "Filtered"
+        },
+        "stateHints": {
+            "open": "The handshake completed. Something is listening.",
+            "closed": "The host sent a reset. It is reachable, and nothing is listening here.",
+            "filtered": "Nothing came back. Something dropped the packet silently, or the host is gone."
+        },
+        "errors": {
+            "empty_input": "Type a host or an IP address first.",
+            "too_long": "That is longer than a hostname is allowed to be.",
+            "invalid_hostname": "That is not a hostname or an IP address. Try example.com, or 93.184.216.34.",
+            "unresolved": "That name does not resolve to any address.",
+            "blocked_address": "That address is private, loopback, link-local or reserved. This tool only reaches the public internet — a scanner that could be pointed at an internal network would be a way through our firewall, not a feature.",
+            "no_address": "No address could be found for that host.",
+            "no_ports": "Choose a preset, or type at least one port number.",
+            "invalid_ports": "{token} is not a port or a range. Use numbers from 1 to 65535, and ranges like 8000-8100.",
+            "too_many_ports": "That asks for {count, number} ports. At most {max, number} can be scanned at once — a larger sweep is a lot of unsolicited traffic to send somebody.",
+            "quota_exceeded": "You have used every scan in this window. It resets shortly.",
+            "turnstile_failed": "The challenge could not be verified. Wait for it to reset and try again.",
+            "scan_failed": "The scan could not be completed. Try again in a moment."
+        },
+        "toast": {
+            "copied": "Results copied",
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The download could not be started",
+            "copyFailedEmpty": "There is nothing to copy yet",
+            "copyFailedUnsupported": "This browser will not let a page write to the clipboard",
+            "copyFailedDenied": "Clipboard permission was refused"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "What a connect scan actually tells you",
+                "p1": "A TCP port is not a door that is open or shut. It is a number a program may have asked the operating system to listen on, and the only way to find out from outside is to try to start a conversation and see what comes back. This tool opens a real TCP connection to each port, watches the three-way handshake, and closes it again without writing or reading a single byte.",
+                "p2": "Three things can happen, and the difference between the last two is the part most hosted port checkers throw away. The handshake completes, and something is listening — open. The host answers with a reset, meaning it is reachable and has nothing on that port — closed. Or nothing comes back at all before the deadline, which means a packet filter dropped it silently, or the host is not there — filtered.",
+                "p3": "Reporting a timeout as \"closed\" is the common shortcut and it is a false statement about the network. Closed proves a live host declined; filtered proves nothing about the port and quite a lot about the firewall in front of it. If every port on a scan comes back filtered, the useful conclusion is that nothing answered — not that the host is secure.",
+                "p4": "What this deliberately does not do is a SYN scan, which never completes the handshake and exists mainly to be harder to log; read the banner a service announces on connect; or guess a software version. The service column is a static table of what each port is registered for, so a web server running on port 22 will be labelled SSH and the label will be wrong. That is the honest cost of not fingerprinting."
+            },
+            "states": {
+                "title": "The three states",
+                "intro": "Each row is one TCP connection attempt and what came back from it. The response time is the round trip to the handshake or the reset — it is a rough distance measurement, not a health check.",
+                "tableCaption": "What each state means and what it proves",
+                "colState": "State",
+                "colMeans": "What happened",
+                "colProves": "What it proves",
+                "provesOpen": "A program is listening and accepted a connection from our address. It may still refuse yours.",
+                "provesClosed": "The host is up and reachable. Nothing is bound to that port, and no firewall is hiding it.",
+                "provesFiltered": "Nothing. A filter dropped the packet, the host is down, or the network in between lost it."
+            },
+            "presets": {
+                "title": "The port lists",
+                "intro": "The default is the set Nmap reports as the most scanned on the internet — the ports that carry the services almost every host runs, and therefore the ones worth checking first.",
+                "tableCaption": "What each preset covers",
+                "colPreset": "Preset",
+                "colCovers": "Covers",
+                "outro": "There is deliberately no \"known attack ports\" preset, although several hosted scanners ship one. Checking your own host for a backdoor port is a legitimate thing to want, and typing the numbers into the custom field does it. Offering it as a one-click preset against any address somebody types is a tool for finding other people's compromised machines, which is a different product."
+            },
+            "limits": {
+                "title": "The limits, and why each one exists",
+                "intro": "None of these are tuning knobs. A hosted port scanner is an abuse surface before it is a feature, and these are most of what keeps it from being one.",
+                "tableCaption": "Every limit and its reason",
+                "colLimit": "Limit",
+                "colValue": "Value",
+                "colWhy": "Why",
+                "portsLimit": "Ports per scan",
+                "portsWhy": "A few hundred half-open connections is rude; several thousand is a denial of service with a progress bar.",
+                "timeoutLimit": "Per-port timeout",
+                "timeoutWhy": "Comfortably past an intercontinental round trip, which tops out near 400 ms. Longer, and a fully-dropped scan just sits there.",
+                "concurrencyLimit": "Connections at once",
+                "concurrencyWhy": "All of them at once looks like a SYN flood from the far end, which is how a server's address gets blocked by the networks it most needs to reach.",
+                "quotaLimit": "Scans per hour",
+                "quotaWhy": "Counted per visitor in a database rather than in memory, because a counter that a cold start resets is not a limit.",
+                "rangesLimit": "Address ranges",
+                "rangesWhy": "Private, loopback, link-local, carrier-grade NAT, cloud metadata and reserved ranges are refused — including an IPv4 address hidden inside an IPv6 literal."
+            },
+            "legal": {
+                "title": "Before you scan somebody else's host",
+                "p1": "Port scanning a host you do not own is, in many jurisdictions, at best a grey area and at worst a criminal offence — the UK's Computer Misuse Act, the US Computer Fraud and Abuse Act and their equivalents elsewhere are written broadly enough to cover unauthorised probing. Whether a given scan is lawful depends on where you are, where the host is, and what you agreed to. This is not legal advice, and nothing here should be read as permission.",
+                "p2": "There is a practical point on top of the legal one. The scan runs on our servers, so the entry it leaves in the target's log carries our address, not yours. An operator who notices it blocks us, and every other visitor loses the tool. That is why there is an hourly limit, why the port count is capped, and why we would rather you pointed it at your own address.",
+                "p3": "Nothing about a scan is stored — not the host, not the ports, not the result. The one thing kept is a salted hash of your address with a count against it, so the hourly limit can be enforced without the table knowing who you are."
+            },
+            "useCases": {
+                "title": "What people use this for",
+                "p1": "Checking what your own connection exposes: whether the router is forwarding 3389 to a desktop, whether a home server's SSH is reachable from outside, whether a port you opened for one evening is still open.",
+                "p2": "Confirming a firewall rule did what you meant. A port that reads filtered from outside and works from inside is the rule behaving; one that reads closed is the rule missing.",
+                "p3": "Checking that a service you just deployed is actually reachable — the difference between \"the process is running\" and \"the internet can get to it\" is a security group nobody edited."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Does the host I scan see my IP address?",
+                "a1": "No, it sees ours. A page in a browser cannot open a raw TCP socket, so the scan has to run on a server, and the connection comes from this site's address. That is a property of every hosted port checker, not just this one — and it is why the tool is rate limited and why the copy asks you to scan hosts you are authorised to test.",
+                "q2": "Why is a port reported as filtered rather than closed?",
+                "a2": "Because nothing came back. Closed means the host actively refused — it sent a TCP reset, which took a reachable machine to send. Filtered means the probe vanished: a firewall dropped it without replying, or the host is not there at all. They are different facts, and folding them together is a lie a lot of port checkers tell.",
+                "q3": "Can I scan an internal address like 192.168.1.1?",
+                "a3": "No. Private, loopback, link-local, carrier-grade NAT, cloud metadata and reserved ranges are all refused, including an IPv4 address disguised inside an IPv6 literal. The scan would run from our network rather than yours, so it would tell you nothing about your LAN and would turn this tool into a way through our own firewall. For an internal scan, run nmap on a machine inside that network.",
+                "q4": "Why only a few scans an hour?",
+                "a4": "Because the scan carries our address, an unmetered scanner is an anonymous scanning service, and the first thing that happens to one of those is that the networks worth scanning stop accepting traffic from it. The count is kept against a salted hash of your address in a database rather than in memory, because a limit that resets when a serverless instance recycles is not a limit.",
+                "q5": "Why does the service column say SSH when I am running something else there?",
+                "a5": "Because it is a static table of what each port is registered for, not a reading of what answered. Nothing here reads the banner a service announces or probes for a version — that is fingerprinting, it doubles the time per open port, and it is a meaningful step from \"is this reachable\" toward reconnaissance. The column tells you what the port is conventionally for; the state tells you what is true.",
+                "q6": "Can it scan UDP?",
+                "a6": "No, TCP only. UDP has no handshake, so there is nothing to observe: an open UDP port and a filtered one both usually answer with silence, and telling them apart means sending protocol-specific payloads and waiting far longer per port. A UDP scan that reported anything useful here would be guessing.",
+                "q7": "Is it legal to scan a host I do not own?",
+                "a7": "It depends where you are, where the host is, and what you agreed to — and in several jurisdictions the answer is no. Unauthorised probing falls under computer misuse law in the UK, the US and elsewhere. Scan your own hosts, or ones you have written permission to test. This is not legal advice."
             }
         }
     }

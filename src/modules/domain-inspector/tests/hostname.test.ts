@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { MAX_INPUT_LENGTH } from "@/modules/domain-inspector/domain/constants";
-import { checkHostSyntax } from "@/modules/domain-inspector/domain/host-syntax";
+import { checkHostSyntax } from "@/modules/tools/domain/host-syntax";
 import {
     readHostInput,
     type HostInputFailureReason,
@@ -120,27 +120,31 @@ describe("readHostInput", () => {
 describe("checkHostSyntax", () => {
     test("passes anything worth sending to a resolver", () => {
         for (const input of ["example.com", "https://example.com/x?y=1", "8.8.8.8", "münchen.de"]) {
-            expect(checkHostSyntax(input)).toBeNull();
+            expect(checkHostSyntax(input, MAX_INPUT_LENGTH)).toBeNull();
         }
     });
 
     test("catches the typos the island must reject before spending a challenge", () => {
-        expect(checkHostSyntax("324jksh f3wjs3.hell.net")).toBe("invalid_hostname");
-        expect(checkHostSyntax("")).toBe("empty_input");
-        expect(checkHostSyntax("   ")).toBe("empty_input");
-        expect(checkHostSyntax("a".repeat(MAX_INPUT_LENGTH + 1))).toBe("too_long");
+        expect(checkHostSyntax("324jksh f3wjs3.hell.net", MAX_INPUT_LENGTH)).toBe(
+            "invalid_hostname",
+        );
+        expect(checkHostSyntax("", MAX_INPUT_LENGTH)).toBe("empty_input");
+        expect(checkHostSyntax("   ", MAX_INPUT_LENGTH)).toBe("empty_input");
+        expect(checkHostSyntax("a".repeat(MAX_INPUT_LENGTH + 1), MAX_INPUT_LENGTH)).toBe(
+            "too_long",
+        );
     });
 
     test("leaves the suffix question to readHostInput", () => {
         // `localhost` is well-formed; it simply has no registry. That verdict
         // needs the Public Suffix List, which never reaches the browser.
-        expect(checkHostSyntax("localhost")).toBeNull();
+        expect(checkHostSyntax("localhost", MAX_INPUT_LENGTH)).toBeNull();
         expect(readHostInput("localhost")).toEqual({ ok: false, reason: "unknown_suffix" });
     });
 
     test("agrees with readHostInput on every syntax failure it reports", () => {
         for (const input of ["exa mple.com", "ex_ample.com", "-example.com", "example..com"]) {
-            const syntax = checkHostSyntax(input);
+            const syntax = checkHostSyntax(input, MAX_INPUT_LENGTH);
 
             expect(syntax).not.toBeNull();
             expect(readHostInput(input)).toEqual({ ok: false, reason: syntax! });

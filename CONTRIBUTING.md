@@ -416,7 +416,13 @@ Reuse what exists rather than rebuilding it:
 | Accent vars, icon tile                | `@/modules/tools/components/tool-accent`            |
 | Region + city zone picker             | `@/modules/tools/components/zone-picker`            |
 | Calendar + clock, one field           | `@/modules/tools/components/date-time-picker`       |
+| Highlighted, editable code box        | `@/modules/tools/components/code-editor`            |
+| Highlighted, read-only code box       | `@/modules/tools/components/code-block`             |
+| Display tokenizer, six languages      | `@/modules/tools/domain/highlight`                  |
 | Bytes ↔ hex, strictly                 | `@/modules/tools/domain/hex`                        |
+| Address family and public/private     | `@/modules/tools/domain/ip`                         |
+| Hostname syntax, no suffix list       | `@/modules/tools/domain/host-syntax`                |
+| SSRF gate before an outbound socket   | `@/modules/tools/repository/address-guard`          |
 | Bytes ↔ base64, either alphabet       | `@/modules/tools/domain/base64`                     |
 | Clipboard, typed result               | `@/modules/tools/domain/clipboard`                  |
 | File download, text or blob           | `@/modules/tools/domain/file-saver`                 |

@@ -43,6 +43,7 @@ export const TOOL_IDS = [
     "watermark-remover",
     "domain-inspector",
     "bson",
+    "port-scanner",
 ] as const;
 
 export type ToolId = (typeof TOOL_IDS)[number];
@@ -83,7 +84,8 @@ export type ToolIconName =
     | "blur"
     | "terminal"
     | "radar"
-    | "database";
+    | "database"
+    | "network";
 
 export type Tool = {
     readonly id: ToolId;
@@ -127,6 +129,9 @@ export type ZonedFields = {
     readonly second: number;
     readonly millisecond: number;
 };
+
+/** Which family an address belongs to. Shared by every tool that reads one. */
+export type IpVersion = 4 | 6;
 
 export const NEWLINE_SEPARATORS = ["lf", "crlf", "cr"] as const;
 
