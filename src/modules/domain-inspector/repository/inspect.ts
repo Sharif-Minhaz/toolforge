@@ -8,6 +8,7 @@ import { guardAddresses } from "./address-guard";
 import { queryDns } from "./doh";
 import { probeSite, type SiteProbe } from "./http-probe";
 import { describeAddress } from "./hosting";
+import { checkPropagation } from "./propagation";
 import { fetchDomainRegistration } from "./rdap";
 import { fetchCertificate } from "./tls";
 import {
@@ -18,6 +19,7 @@ import {
     type HostAddress,
     type InspectionOptions,
     type PanelResult,
+    type PropagationReport,
     type TechnologyMatch,
 } from "../types";
 
@@ -132,6 +134,24 @@ async function collectHosting(
     return { ok: true, data: described };
 }
 
+/**
+ * Which record the nine resolvers are compared on.
+ *
+ * `A` unless the name publishes only `AAAA`, in which case comparing `A` would
+ * show nine resolvers agreeing on nothing — technically true and useless. This
+ * reads the answer already in hand rather than costing another query.
+ */
+function propagationType(dns: PanelResult<DnsReport>): PropagationReport["type"] {
+    if (!dns.ok) {
+        return "A";
+    }
+
+    const count = (type: "A" | "AAAA") =>
+        dns.data.sets.find((set) => set.type === type)?.records.length ?? 0;
+
+    return count("A") === 0 && count("AAAA") > 0 ? "AAAA" : "A";
+}
+
 function collectTechnologies(
     site: PanelResult<SiteProbe>,
     dns: PanelResult<DnsReport>,
@@ -173,11 +193,16 @@ export async function runInspection({
 
     const addresses = addressesOf(dns, breakdown);
 
-    const [registration, hosting, certificate, site] = await Promise.all([
+    const [registration, hosting, propagation, certificate, site] = await Promise.all([
         breakdown.registrableDomain === null
             ? Promise.resolve({ ok: false, reason: "unsupported_tld" } as const)
             : fetchDomainRegistration(breakdown.registrableDomain, now),
         collectHosting(addresses, options),
+        // An address has nothing to propagate: there is no name for the nine
+        // resolvers to disagree about, only the number the reader already typed.
+        breakdown.isIp
+            ? Promise.resolve({ ok: false, reason: "no_records" } as const)
+            : checkPropagation(breakdown.hostname, propagationType(dns)),
         // "Switched off" is its own reason. Reusing a lookup failure here would
         // tell the reader their certificate could not be reached, when in fact
         // nobody asked for it.
@@ -194,6 +219,7 @@ export async function runInspection({
         dns,
         registration,
         hosting,
+        propagation,
         certificate,
         http: site.ok ? { ok: true, data: site.data.report } : site,
         technologies: collectTechnologies(site, dns),

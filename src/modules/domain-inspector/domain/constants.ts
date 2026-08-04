@@ -19,6 +19,14 @@ export const TLS_TIMEOUT_MS = 8_000;
 export const HTTP_TIMEOUT_MS = 10_000;
 
 /**
+ * Shorter than a single DNS lookup on purpose. Nine resolvers run at once and
+ * the slowest sets the wall clock for the whole panel, so a node having a bad
+ * day costs five seconds and reports itself unreachable — which is a result —
+ * rather than holding the report open for six.
+ */
+export const PROPAGATION_TIMEOUT_MS = 5_000;
+
+/**
  * Addresses looked up in the hosting panel. A large site answers with a dozen
  * A records, and every one of them costs a reverse lookup plus two registry
  * queries; four is enough to name the host without turning one press into

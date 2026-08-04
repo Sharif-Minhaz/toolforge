@@ -311,6 +311,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             recordTypes: messages.domainInspector.recordTypes,
             registration: messages.domainInspector.registration,
             hosting: messages.domainInspector.hosting,
+            propagation: messages.domainInspector.propagation,
+            propagationStates: messages.domainInspector.propagationStates,
             certificate: messages.domainInspector.certificate,
             http: messages.domainInspector.http,
             grades: messages.domainInspector.grades,

@@ -47,6 +47,19 @@ export default function DomainInspectorLoading() {
                 <Skeleton className="h-3 w-full max-w-lg" />
             </div>
 
+            {/* The propagation card: verdict, then the node list beside the map. */}
+            <div className="bg-card ring-border/70 flex flex-col gap-4 rounded-2xl p-5 ring-1 ring-inset sm:p-6">
+                <Skeleton className="h-2.5 w-32" />
+                <div className="flex flex-col gap-2">
+                    <Skeleton className="h-6 w-44" />
+                    <Skeleton className="h-4 w-full max-w-sm" />
+                </div>
+                <div className="grid gap-4 xl:grid-cols-2">
+                    <Skeleton className="h-56 w-full rounded-xl sm:h-72" />
+                    <Skeleton className="order-first h-56 w-full rounded-xl sm:h-72 xl:order-0" />
+                </div>
+            </div>
+
             <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_14rem] xl:gap-12">
                 <div className="hidden xl:order-2 xl:block">
                     <Skeleton className="h-64 w-full rounded-xl" />

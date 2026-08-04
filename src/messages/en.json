@@ -6168,6 +6168,7 @@
             "dns": "DNS records",
             "registration": "Registration",
             "hosting": "Hosting",
+            "propagation": "DNS propagation",
             "certificate": "TLS certificate",
             "http": "HTTP response",
             "technologies": "Technologies"
@@ -6230,6 +6231,24 @@
             "prefix": "Prefix",
             "reverse": "Reverse name",
             "org": "Organisation"
+        },
+        "propagation": {
+            "title": "DNS propagation",
+            "verdict": "{agreed} of {total} resolvers agree",
+            "consensus": "Most resolvers return this {type} record: {values}",
+            "noConsensus": "No resolver returned an {type} record for this name.",
+            "mapLabel": "Where the resolvers that were asked are operated from",
+            "listLabel": "Resolvers and what each returned",
+            "anycast": "anycast",
+            "ttl": "TTL {seconds}s",
+            "vantageNote": "Every query is sent from this server, so this compares resolvers rather than locations — an anycast service answers from whichever of its nodes is nearest this server, not from the country on the map. What it does show is whether independent caches agree, which is what a DNS change still spreading looks like.",
+            "divergenceNote": "Resolvers returning different records does not always mean a change is still spreading. A name can answer differently by region on purpose — GeoDNS steering, which is how many large sites send visitors to a nearby server — and from one vantage point the two look identical."
+        },
+        "propagationStates": {
+            "agreed": "agrees",
+            "differs": "differs",
+            "empty": "no record",
+            "unreachable": "no reply"
         },
         "certificate": {
             "title": "TLS certificate",
@@ -6353,6 +6372,8 @@
                 "registrationSource": "RDAP, the protocol that replaced WHOIS.",
                 "hostingShows": "For each address: its reverse name, the autonomous system announcing it, the announced prefix, and the registry record for the block.",
                 "hostingSource": "Reverse DNS, Team Cymru's origin zones, and RDAP.",
+                "propagationShows": "The same record asked of nine public resolvers, whether they agree, and the answer each returned with its TTL.",
+                "propagationSource": "DNS over HTTPS against nine independent operators.",
                 "certificateShows": "Issuer, validity window, days remaining, whether it covers the name you asked for, key type, negotiated cipher, and the issuing chain.",
                 "certificateSource": "A TLS handshake on port 443.",
                 "httpShows": "The redirect chain, the final URL, the server headers, six security headers, the page title, and any licence the page declares for itself.",
@@ -6368,6 +6389,13 @@
                 "colType": "Type",
                 "colMeans": "What it says",
                 "srvNote": "SRV is deliberately absent. It is only ever published under a _service._proto prefix, so a query at the apex returns nothing — and an empty row would read as “this domain publishes no SRV records” rather than “that is the wrong name to ask”. DMARC and MTA-STS are the exception that proves it: both have fixed prefixes, so they are queried at _dmarc and _mta-sts and folded into the mail chips."
+            },
+            "propagation": {
+                "title": "Propagation, and what it can honestly tell you",
+                "p1": "After you change a record, the question is not whether the registry accepted it — it is whether the resolvers people actually use have caught up. Every recursive resolver keeps its own cache and does its own resolution, so for as long as the old record’s TTL has left to run, some will answer with the new value and some with the old. That divergence is what a change in flight looks like from outside, and the propagation card is nine independent operators asked the same question at the same moment.",
+                "p2": "Nine operators is not nine locations. Every query leaves this server, so an anycast service such as Cloudflare or Google answers from whichever of its nodes is nearest this server, not from the country its pin sits in. The map shows where each operator runs its service, which is a fact about the operator; it is not a claim that the query travelled there. A tool that drew nine flags and implied nine vantage points would be easier to build and would be lying to you.",
+                "p3": "Disagreement also has a second, entirely healthy cause. A name can be configured to answer differently depending on where the asker is — GeoDNS steering, which is how many large sites hand visitors a server near them. Ask nine resolvers about github.com on a perfectly ordinary day and you will get several different addresses back. From a single vantage point, that is indistinguishable from a change still spreading, so the card says so rather than colouring it as a fault.",
+                "p4": "Read it, then, as a comparison and not a verdict. Every resolver agreeing means the change has reached all nine caches. Some disagreeing means either the change is still spreading or the name steers by region — and the TTL beside each answer is the number that tells you how long the stale ones can still be stale."
             },
             "controls": {
                 "title": "Every control",
@@ -6436,7 +6464,9 @@
                 "q6": "Does the site I inspect know about it?",
                 "a6": "If the site fetch is on, yes: it receives one GET request for its home page from our server, identified as ToolForgeBot. Turn the switch off and only the resolver and the registry are contacted.",
                 "q7": "Why is there a challenge on a read-only lookup?",
-                "a7": "Because the alternative is a public endpoint that fetches whatever host anyone names, from our address. Without the challenge it would be somebody's free scanner within a day, and the complaints would arrive here."
+                "a7": "Because the alternative is a public endpoint that fetches whatever host anyone names, from our address. Without the challenge it would be somebody's free scanner within a day, and the complaints would arrive here.",
+                "q8": "The propagation card says resolvers disagree. Is my DNS broken?",
+                "a8": "Not necessarily. Two ordinary things produce that result. The first is a change still spreading: until the previous record’s TTL expires, resolvers that cached it keep serving it, and the TTL shown beside each answer is how long that can last. The second is GeoDNS steering, where the name is configured to return different addresses depending on where the question came from, which is how many large sites route visitors to a nearby server. If you have not changed anything recently, the second is the likely explanation."
             }
         },
         "scan": {

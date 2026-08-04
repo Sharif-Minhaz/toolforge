@@ -15,7 +15,9 @@ import type { ReactNode } from "react";
 import { staggerDelay } from "@/components/motion/motion-tokens";
 import { Reveal } from "@/components/motion/reveal";
 import { cn } from "@/lib/utils";
+import { CountryChip } from "./country-chip";
 import { Chip, GroupLabel, PanelBody, PanelCard, Row, Rows, type ChipTone } from "./panel-card";
+import { PropagationCard } from "./propagation-card";
 import { SignalStrip } from "./signal-strip";
 import { summarizeReadings, type ReadingId, type ReadingTone } from "../domain/summary";
 import {
@@ -82,6 +84,13 @@ export function DomainReportView({ report }: { report: DomainReport }) {
     return (
         <div className="flex min-w-0 flex-col gap-4">
             <SignalStrip report={report} />
+
+            {/*
+             * Full width, above the columns. It is the answer to the question
+             * most people arrive with — "is my change live yet" — and it holds
+             * a map, which a half-width multicol track would shrink to a stamp.
+             */}
+            <PropagationCard propagation={report.propagation} />
 
             {/*
              * Columns rather than a grid. Seven panels of very different
@@ -316,7 +325,13 @@ function RegistrationPanel({
                                 <Row label={t("ianaId")}>{data.registrarIanaId}</Row>
                             )}
                             <Row label={t("abuse")}>{data.abuseEmail ?? absent}</Row>
-                            <Row label={t("country")}>{data.registrantCountry ?? absent}</Row>
+                            <Row label={t("country")}>
+                                {data.registrantCountry === null ? (
+                                    absent
+                                ) : (
+                                    <CountryChip code={data.registrantCountry} />
+                                )}
+                            </Row>
                         </Rows>
 
                         <GroupLabel>{t("dates")}</GroupLabel>
@@ -378,7 +393,9 @@ function HostingPanel({ hosting }: { hosting: DomainReport["hosting"] }) {
                                 <div className="flex min-w-0 flex-wrap items-center gap-2">
                                     <span className={cn("min-w-0", VALUE)}>{address.ip}</span>
                                     <Chip>IPv{address.version}</Chip>
-                                    {address.country !== null && <Chip>{address.country}</Chip>}
+                                    {address.country !== null && (
+                                        <CountryChip code={address.country} />
+                                    )}
                                 </div>
 
                                 {/*

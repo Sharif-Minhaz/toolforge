@@ -116,6 +116,48 @@ export type HostAddress = {
     readonly org: string | null;
 };
 
+/**
+ * What one resolver said when asked the same question as all the others.
+ *
+ * `agreed` and `differs` are the two answers worth having; the other two are
+ * the ways a node can fail to give one, kept apart because "this resolver has
+ * not caught up" and "this resolver did not reply" are different findings.
+ */
+export const PROPAGATION_STATES = ["agreed", "differs", "empty", "unreachable"] as const;
+
+export type PropagationState = (typeof PROPAGATION_STATES)[number];
+
+/** A resolver in the propagation fan-out, and what it answered. */
+export type PropagationNodeResult = {
+    readonly id: string;
+    /** The operator's own name — a proper noun, never translated. */
+    readonly name: string;
+    /** ISO 3166-1 alpha-2 for where the operator runs the service. */
+    readonly country: string;
+    /**
+     * The service answers from whichever node is nearest the caller, so its
+     * reply describes this server's corner of the internet rather than the
+     * country on the map. Surfaced, not hidden — see the panel copy.
+     */
+    readonly anycast: boolean;
+    readonly state: PropagationState;
+    /** Addresses returned, sorted, so two nodes are compared by value not order. */
+    readonly values: readonly string[];
+    readonly ttl: number | null;
+    readonly elapsedMs: number;
+};
+
+export type PropagationReport = {
+    /** Which record type was compared — `AAAA` only when there is no `A` at all. */
+    readonly type: Extract<DnsRecordType, "A" | "AAAA">;
+    /** The answer the most resolvers gave; empty when none of them answered. */
+    readonly consensus: readonly string[];
+    readonly agreed: number;
+    readonly answered: number;
+    readonly total: number;
+    readonly nodes: readonly PropagationNodeResult[];
+};
+
 export type CertificateReport = {
     readonly subject: string | null;
     readonly issuer: string | null;
@@ -249,6 +291,7 @@ export type DomainReport = {
     readonly dns: PanelResult<DnsReport>;
     readonly registration: PanelResult<DomainRegistration>;
     readonly hosting: PanelResult<readonly HostAddress[]>;
+    readonly propagation: PanelResult<PropagationReport>;
     readonly certificate: PanelResult<CertificateReport>;
     readonly http: PanelResult<HttpReport>;
     readonly technologies: PanelResult<readonly TechnologyMatch[]>;

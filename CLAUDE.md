@@ -1075,6 +1075,83 @@ handles; and **every entry carries a licence**, SPDX or the literal
 `Proprietary`, because "what is this built on" and "may I build on it" are the
 same question asked twice.
 
+# Putting Something on a Map
+
+A pin is a claim, and it is a far stronger one than the data behind it usually
+supports. The Domain Inspector's propagation card
+(`domain-inspector/components/world-map.tsx` plus `domain/countries.ts`) is the
+shape to copy, and most of what it cost was deciding what *not* to draw.
+
+**Match the pin's precision to the data's.** Every country code in that tool
+comes from a registry — an RDAP allocation, an operator's published service
+location — and a registry knows which country a block was assigned to, never
+which building it is plugged into. So the coordinates are country centroids, the
+basemap is capped at `MAX_ZOOM` so it never promises street level, and the copy
+says which claim is being made. A city-level pin over country-level data is a
+lie that renders beautifully.
+
+**Reject a data source whose location you cannot defend.** Three resolvers were
+dropped from the propagation table for exactly this: Tiarap and RethinkDNS both
+sit behind Cloudflare, so their pins would land on Cloudflare's network and a
+duplicate would be dressed as an independent sample; NextDNS answers from an
+Austrian block while the company is American, so no single country is not
+misleading. Finding this out cost one `curl` per candidate through Team Cymru's
+origin zone. Do it before writing the table, not after.
+
+**A measurement with two causes has to name the second one.** The card was
+finished, tested and byte-correct when a live run against `github.com` returned
+five different addresses across nine resolvers. Nothing was wrong: that is
+GeoDNS steering, and from one vantage point it is indistinguishable from a
+change still spreading. Amber with no sentence beside it reads as "your change
+is broken". The fix is `divergenceNote`, rendered only when there *is*
+divergence — and the general rule is that a signal with an innocent explanation
+must carry it, or the tool trains people to ignore the signal.
+
+Leaflet itself has four traps, all in `world-map.tsx`:
+
+- **Import it inside the effect, never at the top.** It is ~150 KB that touches
+  `window` on evaluation, so a static import both breaks the server render and
+  lands in the island's first chunk for every reader — including the ones whose
+  report has no map in it.
+- **`circleMarker`, not `marker`.** Leaflet's default pin is a PNG resolved
+  against a CSS-relative path, which every bundler breaks and everybody patches
+  with `L.Icon.Default.mergeOptions`. A circle is an SVG `<path>` carrying a
+  `className`, and Leaflet writes `fill`/`stroke` as presentation attributes —
+  which any CSS rule outranks, so a pin takes design tokens directly.
+- **Build tooltips as DOM, not as an HTML string.** `bindTooltip` accepts both
+  and the string form is `innerHTML`. Pin text is derived from what a stranger's
+  DNS returned, so the only safe version is the one where escaping is not a step
+  somebody can forget.
+- **One effect that rebuilds everything, not three that create, retint and
+  repin.** Creation is async, so an effect ordered after it can run before the
+  map exists — a bug that only appears on a slow connection. Rebuilding on a
+  theme toggle costs a few tiles and nine circles, and the discarded pan
+  position is not state anyone relied on. The `cancelled` flag checked
+  immediately after the `await` is what stops React's double effect from meeting
+  "Map container is already initialized".
+
+Two more that are not Leaflet's fault:
+
+- **Tiles are a third-party request from the reader's browser**, and this site
+  claims to run in the browser and store nothing. CARTO is used because it is
+  the rare basemap with a matched light/dark pair — raw OpenStreetMap has no
+  dark twin and would leave one theme with a white rectangle in it — and the
+  fetch is disclosed in the README rather than left implied.
+- **A map is hover-only, so it can never be the only copy.** Every pin's
+  contents also appear as text in the list beside it. `country-chip.tsx` is the
+  same rule at chip scale: the two-letter code stays visible next to the flag,
+  because Windows renders a regional-indicator pair as plain letters, several
+  flags are unrecognisable to most readers, and a screen reader gets nothing
+  from the glyph. The flag is ornament, the code is the label, and the tooltip —
+  on a real focusable `<button>` — is the answer for whoever wants it.
+
+`Intl.DisplayNames` supplies ~250 translated country names, which is why they
+are not in both catalogues. Its output can differ between ICU builds, so the
+hydration rule in **Platform APIs That Read the Host** would normally bar it —
+it is allowed in `use-country-name.ts` only because every caller lives under the
+report view, which mounts after the server action returns and is therefore never
+server-rendered. Move a caller above that boundary and the rule applies again.
+
 # Calling a Metered Worker
 
 Every tool that fronts a Workers AI model reads its endpoint and bearer key in

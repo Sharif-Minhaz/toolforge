@@ -33,7 +33,28 @@ export async function queryDns(
     type: QueryableRecordType,
     resolver: DnsResolver,
 ): Promise<DohQueryResult> {
-    const url = new URL(RESOLVER_ENDPOINTS[resolver]);
+    return queryDnsAt(RESOLVER_ENDPOINTS[resolver], resolver, name, type, DNS_TIMEOUT_MS);
+}
+
+/**
+ * The same query against an endpoint chosen by the caller rather than by the
+ * reader, which is what the propagation fan-out needs: nine operators asked the
+ * one question. `label` is only ever a node id from our own table — it names
+ * the upstream in the log line and never reaches a URL.
+ *
+ * The timeout is a parameter because the two callers want different ones. A
+ * single lookup the whole report waits on can afford six seconds; one of nine
+ * running in parallel cannot, since the slowest sets the wall clock for all.
+ */
+export async function queryDnsAt(
+    endpoint: string,
+    label: string,
+    name: string,
+    type: QueryableRecordType,
+    timeoutMs: number,
+): Promise<DohQueryResult> {
+    const url = new URL(endpoint);
+    const resolver = label;
 
     url.searchParams.set("name", name);
     url.searchParams.set("type", type);
@@ -42,7 +63,7 @@ export async function queryDns(
         const response = await fetch(url, {
             headers: { accept: "application/dns-json" },
             cache: "no-store",
-            signal: AbortSignal.timeout(DNS_TIMEOUT_MS),
+            signal: AbortSignal.timeout(timeoutMs),
         });
 
         if (!response.ok) {

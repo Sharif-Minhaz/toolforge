@@ -39,6 +39,7 @@ export function createDomainReportFile(report: DomainReport): DownloadFile {
         dns: serializePanel(report.dns),
         registration: serializePanel(report.registration),
         hosting: serializePanel(report.hosting),
+        propagation: serializePanel(report.propagation),
         certificate: serializePanel(report.certificate),
         http: serializePanel(report.http),
         technologies: serializePanel(report.technologies),
@@ -89,6 +90,12 @@ export function summarizeReport(report: DomainReport): string {
         if (operators.length > 0) {
             lines.push(`Network: ${operators.join(", ")}`);
         }
+    }
+
+    if (report.propagation.ok) {
+        const { agreed, total, type } = report.propagation.data;
+
+        lines.push(`Propagation (${type}): ${agreed}/${total} resolvers agree`);
     }
 
     if (report.certificate.ok && report.certificate.data.validTo !== null) {

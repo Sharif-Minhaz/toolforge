@@ -9,6 +9,7 @@ export const DOMAIN_INSPECTOR_ARTICLE_SECTIONS = [
     { id: "what", titleKey: "what.title" },
     { id: "panels", titleKey: "panels.title" },
     { id: "records", titleKey: "records.title" },
+    { id: "propagation", titleKey: "propagation.title" },
     { id: "controls", titleKey: "controls.title" },
     { id: "licensing", titleKey: "licensing.title" },
     { id: "privacy", titleKey: "privacy.title" },
@@ -23,6 +24,7 @@ const PANEL_ROWS = [
     "dns",
     "registration",
     "hosting",
+    "propagation",
     "certificate",
     "http",
     "technologies",
@@ -41,6 +43,7 @@ export async function getDomainInspectorFaqEntries(): Promise<FaqEntry[]> {
         { question: t("faq.q5"), answer: t("faq.a5") },
         { question: t("faq.q6"), answer: t("faq.a6") },
         { question: t("faq.q7"), answer: t("faq.a7") },
+        { question: t("faq.q8"), answer: t("faq.a8") },
     ];
 }
 
@@ -156,6 +159,15 @@ export async function DomainInspectorArticle() {
                     </div>
 
                     <p className={`mt-5 ${PROSE_TEXT}`}>{t("records.srvNote")}</p>
+                </ArticleSection>
+
+                <ArticleSection id="propagation" title={t("propagation.title")}>
+                    <div className={PROSE}>
+                        <p>{t("propagation.p1")}</p>
+                        <p>{t("propagation.p2")}</p>
+                        <p>{t("propagation.p3")}</p>
+                        <p>{t("propagation.p4")}</p>
+                    </div>
                 </ArticleSection>
 
                 <ArticleSection id="controls" title={t("controls.title")}>

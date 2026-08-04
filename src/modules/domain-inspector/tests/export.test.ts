@@ -70,6 +70,28 @@ const REPORT: DomainReport = {
             },
         ],
     },
+    propagation: {
+        ok: true,
+        data: {
+            type: "A",
+            consensus: ["93.184.216.34"],
+            agreed: 8,
+            answered: 9,
+            total: 9,
+            nodes: [
+                {
+                    id: "cloudflare",
+                    name: "Cloudflare",
+                    country: "US",
+                    anycast: true,
+                    state: "agreed",
+                    values: ["93.184.216.34"],
+                    ttl: 300,
+                    elapsedMs: 41,
+                },
+            ],
+        },
+    },
     certificate: { ok: false, reason: "tls_failed" },
     http: { ok: false, reason: "http_failed" },
     technologies: {
@@ -162,12 +184,17 @@ describe("summarizeReport", () => {
         expect(summary).not.toContain("Certificate:");
     });
 
+    test("carries the propagation verdict, which is why most people ran this", () => {
+        expect(summary).toContain("Propagation (A): 8/9 resolvers agree");
+    });
+
     test("degrades to the hostname alone when nothing resolved", () => {
         const empty = summarizeReport({
             ...REPORT,
             dns: { ok: false, reason: "nxdomain" },
             registration: { ok: false, reason: "unsupported_tld" },
             hosting: { ok: false, reason: "no_address" },
+            propagation: { ok: false, reason: "nxdomain" },
             technologies: { ok: false, reason: "http_failed" },
         });
 

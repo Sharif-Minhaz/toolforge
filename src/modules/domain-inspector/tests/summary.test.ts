@@ -26,6 +26,7 @@ const EMPTY: DomainReport = {
     dns: { ok: false, reason: "nxdomain" },
     registration: { ok: false, reason: "unsupported_tld" },
     hosting: { ok: false, reason: "no_address" },
+    propagation: { ok: false, reason: "no_records" },
     certificate: { ok: false, reason: "skipped" },
     http: { ok: false, reason: "skipped" },
     technologies: { ok: false, reason: "skipped" },
