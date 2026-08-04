@@ -2,23 +2,13 @@ import { describe, expect, test } from "bun:test";
 
 import {
     bytesToBase64,
-    bytesToHex,
-    hexToBytes,
     isBase64,
-    isHex,
     timingSafeEqual,
     utf8ByteLength,
 } from "@/modules/hash/domain/encoding";
 
-describe("bytesToHex", () => {
-    test("pads every byte to two digits", () => {
-        expect(bytesToHex(new Uint8Array([0, 1, 15, 16, 255]))).toBe("00010f10ff");
-    });
-
-    test("renders an empty buffer as an empty string", () => {
-        expect(bytesToHex(new Uint8Array(0))).toBe("");
-    });
-});
+// Hex moved to `tools/domain/hex.ts` once the BSON converter needed it too;
+// its assertions travelled with it to `tools/tests/hex.test.ts`.
 
 describe("bytesToBase64", () => {
     for (const [bytes, expected] of [
@@ -34,40 +24,6 @@ describe("bytesToBase64", () => {
 
     test("survives bytes above 0x7f", () => {
         expect(bytesToBase64(new Uint8Array([0xff, 0xfe, 0xfd]))).toBe("//79");
-    });
-});
-
-describe("hexToBytes", () => {
-    test("round-trips through bytesToHex", () => {
-        const bytes = new Uint8Array([0, 127, 128, 255]);
-
-        expect(hexToBytes(bytesToHex(bytes))).toEqual(bytes);
-    });
-
-    test("accepts upper case", () => {
-        expect(hexToBytes("FF00")).toEqual(new Uint8Array([255, 0]));
-    });
-
-    test("rejects an odd number of digits", () => {
-        expect(hexToBytes("abc")).toBeNull();
-    });
-
-    test("rejects a non-hex character", () => {
-        expect(hexToBytes("zz")).toBeNull();
-    });
-});
-
-describe("isHex", () => {
-    test("accepts an even run of hex digits", () => {
-        expect(isHex("deadbeef")).toBe(true);
-        expect(isHex("DEADBEEF")).toBe(true);
-    });
-
-    test("rejects empty, odd-length, and non-hex values", () => {
-        expect(isHex("")).toBe(false);
-        expect(isHex("abc")).toBe(false);
-        expect(isHex("dead beef")).toBe(false);
-        expect(isHex("g0")).toBe(false);
     });
 });
 

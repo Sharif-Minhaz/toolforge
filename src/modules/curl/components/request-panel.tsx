@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { HTTP_VERSION_LABELS } from "../domain/constants";
 import type { HttpRequest, KeyValue, TransferOptions } from "../types";
-import { CodeBlock, CODE_TEXT } from "./code-block";
+import { CodeBlock, CODE_TEXT } from "@/modules/tools/components/code-block";
 
 /**
  * The model both directions are built from, shown as it is. Not a second parse

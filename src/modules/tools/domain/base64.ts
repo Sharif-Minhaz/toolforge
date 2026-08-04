@@ -19,6 +19,13 @@ export const URL_SAFE_BASE64_ALPHABET =
 
 const PAD = "=";
 
+/** Symbol → sextet for both alphabets at once; the 62nd and 63rd slots differ
+ *  between them and every other symbol is shared, so one map reads either. */
+const SEXTETS = new Map<string, number>([
+    ...[...STANDARD_BASE64_ALPHABET].map((symbol, value): [string, number] => [symbol, value]),
+    ...[...URL_SAFE_BASE64_ALPHABET].map((symbol, value): [string, number] => [symbol, value]),
+]);
+
 export function bytesToBase64(
     bytes: Uint8Array,
     alphabet: string = STANDARD_BASE64_ALPHABET,
@@ -60,6 +67,53 @@ export function bytesToBase64(
     }
 
     return parts.join("");
+}
+
+/**
+ * The inverse, for callers that need bytes back and nothing else.
+ *
+ * Deliberately thinner than the Base64 tool's own reader, which stays in that
+ * module: it names its alphabets, tolerates what a person pastes, and reports
+ * the position of the first character it could not use. Everything here is a
+ * plumbing step in some other conversion, so a wrong string is one `null` and
+ * the calling tool says what it means in its own vocabulary.
+ *
+ * Whitespace is stripped because a blob copied out of a log or a terminal
+ * arrives wrapped, and both alphabets are accepted because neither `-_` nor
+ * `+/` is ambiguous — no byte string can be read two ways.
+ */
+export function base64ToBytes(text: string): Uint8Array | null {
+    const compact = text.replace(/\s+/g, "").replace(/=+$/, "");
+
+    // Four symbols carry three bytes, so a remainder of one leaves six bits
+    // that belong to no byte. There is no string that legitimately ends there.
+    if (compact.length % 4 === 1) {
+        return null;
+    }
+
+    const bytes = new Uint8Array(Math.floor((compact.length * 3) / 4));
+    let accumulator = 0;
+    let bits = 0;
+    let written = 0;
+
+    for (const character of compact) {
+        const sextet = SEXTETS.get(character);
+
+        if (sextet === undefined) {
+            return null;
+        }
+
+        accumulator = (accumulator << 6) | sextet;
+        bits += 6;
+
+        if (bits >= 8) {
+            bits -= 8;
+            bytes[written] = (accumulator >>> bits) & 0xff;
+            written += 1;
+        }
+    }
+
+    return bytes;
 }
 
 /**

@@ -32,7 +32,7 @@ import {
     SAMPLE_FETCH,
 } from "../domain/constants";
 import { convert } from "../domain/convert";
-import type { HighlightLanguage } from "../domain/highlight";
+import type { HighlightLanguage } from "@/modules/tools/domain/highlight";
 import { buildRequestJson, createCurlExportFile } from "../domain/export";
 import type {
     CodeOptions,
@@ -45,8 +45,8 @@ import type {
     ShellDialect,
 } from "../types";
 import { CURL_DIRECTIONS } from "../types";
-import { CodeBlock } from "./code-block";
-import { CodeEditor } from "./code-editor";
+import { CodeBlock } from "@/modules/tools/components/code-block";
+import { CodeEditor } from "@/modules/tools/components/code-editor";
 import { ConversionOptions } from "./conversion-options";
 import { NotesList } from "./notes-list";
 import { RequestPanel } from "./request-panel";

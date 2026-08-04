@@ -42,6 +42,7 @@ export const TOOL_IDS = [
     "ai-text-detector",
     "watermark-remover",
     "domain-inspector",
+    "bson",
 ] as const;
 
 export type ToolId = (typeof TOOL_IDS)[number];
@@ -81,7 +82,8 @@ export type ToolIconName =
     | "transform"
     | "blur"
     | "terminal"
-    | "radar";
+    | "radar"
+    | "database";
 
 export type Tool = {
     readonly id: ToolId;

@@ -1,20 +1,22 @@
 /**
- * A tokenizer for *display*, not for meaning.
+ * Tokenizers for *display*, not for meaning.
  *
- * The module already has a shell tokenizer, and it is the wrong tool for this:
- * that one resolves escapes and throws quotes away, because it is working out
- * what curl receives. Highlighting has the opposite requirement — every
- * character of the input must come back out, quotes and backslashes included,
- * in the order it was written. The text is painted *behind* a transparent
- * textarea, so a single character lost or added shifts every glyph after it and
- * the caret stops landing where it points.
+ * A tool that reads a language usually already has a parser for it, and that
+ * parser is the wrong tool for this: it resolves escapes, discards quotes and
+ * normalises whitespace, because it is working out what the text *means*.
+ * Highlighting has the opposite requirement — every character of the input must
+ * come back out, quotes and backslashes included, in the order it was written.
+ * The text is painted *behind* a transparent textarea, so a single character
+ * lost or added shifts every glyph after it and the caret stops landing where
+ * it points.
  *
- * That requirement is the invariant the tests hold it to:
+ * That requirement is the invariant the tests hold every language to:
  * `tokens.map((token) => token.text).join("") === input`, for any input at all.
+ * It is why each of these is a hand-written scanner that always advances and
+ * never throws — an unterminated string or a stray brace has to colour badly
+ * rather than fail, because it is what somebody halfway through typing has.
  *
- * It lives here rather than in `tools/` because only this tool highlights
- * anything so far. The moment a second one does — the Markdown preview's code
- * blocks are the obvious candidate — this file moves to `tools/domain/` whole.
+ * Lifted out of the cURL module, whole, the moment a second tool needed it.
  */
 
 export const TOKEN_KINDS = [
@@ -39,7 +41,19 @@ export type Token = {
     readonly text: string;
 };
 
-export const HIGHLIGHT_LANGUAGES = ["shell", "javascript"] as const;
+/**
+ * `plain` is a real member rather than an absence, so a caller whose notation
+ * has no structure worth colouring — base64, a digest — passes a value instead
+ * of branching around the component.
+ */
+export const HIGHLIGHT_LANGUAGES = [
+    "shell",
+    "javascript",
+    "json",
+    "toon",
+    "hex",
+    "plain",
+] as const;
 
 export type HighlightLanguage = (typeof HIGHLIGHT_LANGUAGES)[number];
 
@@ -355,6 +369,258 @@ function highlightJavaScript(input: string): Token[] {
     return sink.drain();
 }
 
+/* ----------------------------------------------------------------- json --- */
+
+const JSON_NUMBER = /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/;
+const JSON_LITERAL = /^(?:true|false|null)/;
+const JSON_PUNCTUATION = new Set(["{", "}", "[", "]", ",", ":"]);
+
+/**
+ * A JSON string is a key or a value depending on what comes *after* it, so the
+ * colon has to be looked ahead to. Extended JSON leans on that hard: half the
+ * keys a reader of this site sees are `$oid` and `$numberLong`, and colouring
+ * them as values would make a BSON document unreadable at a glance.
+ */
+function highlightJson(input: string): Token[] {
+    const sink = new TokenSink();
+    let index = 0;
+
+    while (index < input.length) {
+        const character = input[index];
+
+        if (/\s/.test(character)) {
+            sink.push("plain", character);
+            index += 1;
+            continue;
+        }
+
+        if (character === '"') {
+            const end = readQuoted(input, index, '"', true);
+            const text = input.slice(index, end);
+
+            sink.push(peekNonSpace(input, end) === ":" ? "property" : "string", text);
+            index = end;
+            continue;
+        }
+
+        if (JSON_PUNCTUATION.has(character)) {
+            sink.push("punctuation", character);
+            index += 1;
+            continue;
+        }
+
+        const rest = input.slice(index);
+        const literal = JSON_LITERAL.exec(rest);
+
+        if (literal !== null) {
+            sink.push("keyword", literal[0]);
+            index += literal[0].length;
+            continue;
+        }
+
+        const number = JSON_NUMBER.exec(rest);
+
+        if (number !== null) {
+            sink.push("number", number[0]);
+            index += number[0].length;
+            continue;
+        }
+
+        // Anything else is somebody mid-keystroke, or JSON this is not. One
+        // character at a time keeps the scan advancing whatever it meets.
+        sink.push("plain", character);
+        index += 1;
+    }
+
+    return sink.drain();
+}
+
+/* ----------------------------------------------------------------- toon --- */
+
+const TOON_LITERAL = /^(?:true|false|null)$/;
+const TOON_NUMBER = /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$/;
+// `key:`, `key[3]:`, `key[3|]{a|b}:` — the header up to and including the
+// colon. TOON's structure lives entirely on the left of that colon, which is
+// what makes a line-oriented scanner enough here.
+const TOON_HEADER = /^(\s*)(-\s+)?("(?:[^"\\]|\\.)*"|[^\s:[{]+)(\[[^\]]*\])?(\{[^}]*\})?(:)/;
+
+/** Splits a `[3|]` or `{a|b}` group into its brackets, names and delimiters. */
+function pushToonGroup(sink: TokenSink, group: string, inner: TokenKind): void {
+    sink.push("punctuation", group[0]);
+
+    for (const part of group.slice(1, -1).split(/([,|\t:])/)) {
+        if (part.length === 0) {
+            continue;
+        }
+
+        if (/^[,|\t:]$/.test(part)) {
+            sink.push("punctuation", part);
+        } else {
+            sink.push(/^\d+$/.test(part) ? "number" : inner, part);
+        }
+    }
+
+    sink.push("punctuation", group[group.length - 1]);
+}
+
+const TOON_DELIMITER = /[,|\t]/;
+
+/**
+ * Colours the values after a header's colon, the way a JSON scalar is coloured.
+ *
+ * Scanned rather than split, because a quoted value may *contain* the
+ * delimiter — that is the entire reason TOON quotes anything. Splitting on the
+ * delimiter first cuts `"a, b"` into `"a` and ` b"` and loses the string.
+ */
+function pushToonValue(sink: TokenSink, text: string): void {
+    let index = 0;
+
+    while (index < text.length) {
+        const character = text[index];
+
+        if (character === '"') {
+            const end = readQuoted(text, index, '"', true);
+
+            sink.push("string", text.slice(index, end));
+            index = end;
+            continue;
+        }
+
+        if (TOON_DELIMITER.test(character) || character === " ") {
+            sink.push(TOON_DELIMITER.test(character) ? "punctuation" : "plain", character);
+            index += 1;
+            continue;
+        }
+
+        let end = index;
+
+        while (
+            end < text.length &&
+            text[end] !== '"' &&
+            text[end] !== " " &&
+            !TOON_DELIMITER.test(text[end])
+        ) {
+            end += 1;
+        }
+
+        const run = text.slice(index, end);
+
+        sink.push(
+            TOON_LITERAL.test(run) ? "keyword" : TOON_NUMBER.test(run) ? "number" : "plain",
+            run,
+        );
+        index = end;
+    }
+}
+
+/**
+ * TOON is line-oriented and indentation-structured, so this scans a line at a
+ * time rather than a character at a time. The header regex either matches the
+ * whole `key[3]{a,b}:` prefix or it does not; a line it cannot read is a row of
+ * values, which is exactly what an unmatched line is.
+ */
+function highlightToon(input: string): Token[] {
+    const sink = new TokenSink();
+
+    for (const [index, line] of input.split("\n").entries()) {
+        if (index > 0) {
+            sink.push("plain", "\n");
+        }
+
+        const indent = line.slice(0, line.length - line.trimStart().length);
+
+        // A full-line `#` comment is stripped on decode, so hand-annotated
+        // prompt data survives a round trip. Colour it like one.
+        if (line.trimStart().startsWith("#")) {
+            sink.push("plain", indent);
+            sink.push("comment", line.slice(indent.length));
+            continue;
+        }
+
+        const header = TOON_HEADER.exec(line);
+
+        if (header === null) {
+            const marker = /^(\s*)(-\s+)/.exec(line);
+
+            if (marker !== null) {
+                sink.push("plain", marker[1]);
+                sink.push("punctuation", marker[2]);
+                pushToonValue(sink, line.slice(marker[0].length));
+                continue;
+            }
+
+            pushToonValue(sink, line);
+            continue;
+        }
+
+        const [matched, lead, dash, key, length, fields, colon] = header;
+
+        sink.push("plain", lead);
+
+        if (dash !== undefined) {
+            sink.push("punctuation", dash);
+        }
+
+        sink.push("property", key);
+
+        if (length !== undefined) {
+            pushToonGroup(sink, length, "number");
+        }
+
+        if (fields !== undefined) {
+            pushToonGroup(sink, fields, "property");
+        }
+
+        sink.push("punctuation", colon);
+        pushToonValue(sink, line.slice(matched.length));
+    }
+
+    return sink.drain();
+}
+
+/* ------------------------------------------------------------------ hex --- */
+
+/** A BSON document opens with its own length as a little-endian int32. */
+const BSON_LENGTH_DIGITS = 8;
+const ALL_HEX = /^[0-9a-f]*$/i;
+
+/**
+ * Hex has no syntax, so there is nothing to colour — except the two parts of a
+ * BSON dump that a reader actually has to find. The first four bytes are the
+ * document's declared length, which is the number the "header declares N bytes"
+ * failure is about, and the last byte is the terminator. Marking those two
+ * turns an undifferentiated wall of digits into something with ends.
+ *
+ * Everything else, including any string that is not a plausible document, is
+ * one plain token: guessing structure out of hex that has none would colour
+ * noise.
+ */
+function highlightHex(input: string): Token[] {
+    const compact = input.replace(/\s+/g, "");
+
+    if (compact.length < BSON_LENGTH_DIGITS + 2 || !ALL_HEX.test(compact)) {
+        return input.length === 0 ? [] : [{ kind: "plain", text: input }];
+    }
+
+    const sink = new TokenSink();
+    let seen = 0;
+
+    for (const character of input) {
+        if (/\s/.test(character)) {
+            sink.push("plain", character);
+            continue;
+        }
+
+        const isLength = seen < BSON_LENGTH_DIGITS;
+        const isTerminator = seen >= compact.length - 2;
+
+        sink.push(isLength ? "number" : isTerminator ? "punctuation" : "plain", character);
+        seen += 1;
+    }
+
+    return sink.drain();
+}
+
 /* --------------------------------------------------------------- public --- */
 
 /**
@@ -370,9 +636,24 @@ function highlightJavaScript(input: string): Token[] {
 export const MAX_HIGHLIGHT_LENGTH = 20_000;
 
 export function highlight(input: string, language: HighlightLanguage): readonly Token[] {
-    if (input.length > MAX_HIGHLIGHT_LENGTH) {
+    if (input.length === 0) {
+        return [];
+    }
+
+    if (input.length > MAX_HIGHLIGHT_LENGTH || language === "plain") {
         return [{ kind: "plain", text: input }];
     }
 
-    return language === "shell" ? highlightShell(input) : highlightJavaScript(input);
+    switch (language) {
+        case "shell":
+            return highlightShell(input);
+        case "javascript":
+            return highlightJavaScript(input);
+        case "json":
+            return highlightJson(input);
+        case "toon":
+            return highlightToon(input);
+        case "hex":
+            return highlightHex(input);
+    }
 }

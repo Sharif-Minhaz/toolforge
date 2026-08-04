@@ -5,6 +5,7 @@ import {
     IconBraces,
     IconCalendarTime,
     IconClockHour4,
+    IconDatabaseCog,
     IconEraser,
     IconFingerprint,
     IconGitCompare,
@@ -58,6 +59,7 @@ const ICONS: Record<ToolIconName, ComponentType<IconProps>> = {
     blur: IconBlur,
     terminal: IconTerminal2,
     radar: IconRadar2,
+    database: IconDatabaseCog,
 };
 
 type ToolIconProps = {

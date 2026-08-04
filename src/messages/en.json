@@ -234,6 +234,10 @@
         "domain-inspector": {
             "name": "DNS & Domain Inspector",
             "description": "Look up DNS records, registration, hosting, TLS certificate, and the stack a site is built on."
+        },
+        "bson": {
+            "name": "BSON / JSON / TOON Converter",
+            "description": "Convert between BSON, JSON and TOON in any direction. Canonical Extended JSON returns the exact bytes MongoDB stored, and TOON's tabular form cuts a uniform array down for an LLM prompt."
         }
     },
     "overview": {
@@ -6487,6 +6491,222 @@
             "headers": "Headers",
             "daysLeft": "{days, plural, =0 {today} one {# day} other {# days}}",
             "daysAgo": "{days, plural, one {# day ago} other {# days ago}}"
+        }
+    },
+    "bson": {
+        "meta": {
+            "title": "BSON ↔ JSON ↔ TOON Converter — Every Type Survives the Trip",
+            "description": "Convert BSON to JSON, JSON to TOON, and every pairing between the three. Canonical Extended JSON returns the exact bytes MongoDB stored — ObjectId, Decimal128, int64 and dates included — while TOON's tabular form cuts a uniform array down for an LLM prompt. Reads hex, base64 and .bson files, and says on your own document what the conversion cost. Runs in your browser; nothing is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Encoding",
+            "title": "BSON / JSON / TOON Converter",
+            "subtitle": "Three notations for one data model. Paste a BSON dump, a JSON document or a TOON block, pick what to write it as, and read what the conversion cost — measured on your own document rather than warned about in general.",
+            "badgeLossless": "Byte-exact round trip",
+            "badgeOffline": "Works offline",
+            "badgeFormats": "hex, base64, .bson"
+        },
+        "workbench": {
+            "title": "One document, three notations",
+            "description": "Everything below updates as you type. Nothing is uploaded — reading, writing and export all happen in this tab.",
+            "fromLabel": "Read as",
+            "toLabel": "Write as",
+            "swap": "Send the output back as input",
+            "inputLabel": "Input",
+            "outputLabel": "Output",
+            "example": "Try an example",
+            "clear": "Clear input",
+            "openFile": "Open a .bson file",
+            "copy": "Copy",
+            "download": "Download",
+            "downloadBytes": "Download .bson",
+            "outputPlaceholder": "The converted document appears here.",
+            "optionsTitle": "Conversion options",
+            "statusEmpty": "Paste a document to convert it.",
+            "statusReady": "Converted. {notes, plural, =0 {Nothing changed on the way through} one {# thing worth knowing} other {# things worth knowing}}.",
+            "sizeSmaller": "{input, number} → {output, number} characters, {ratio, number, percent} smaller",
+            "sizeLarger": "{input, number} → {output, number} characters, {ratio, number, percent} larger",
+            "sizeSame": "{input, number} → {output, number} characters",
+            "sizeHint": "Characters, not tokens — a tokenizer answers differently for every model.",
+            "notesTitle": "What this conversion did",
+            "notesEmpty": "Nothing was changed or dropped on the way through.",
+            "encoding": "BSON notation",
+            "encodingHint": "Hex is what bsondump prints; base64 is what drivers and logs carry.",
+            "encodingUnavailable": "Neither side of this conversion is BSON.",
+            "ejson": "Extended JSON",
+            "ejsonHint": "Canonical keeps every BSON type and returns the same bytes. Relaxed reads better and loses what plain JSON cannot say.",
+            "ejsonUnavailable": "Only reading BSON needs this — writing it accepts both spellings.",
+            "jsonIndent": "JSON indent",
+            "jsonIndentHint": "Spaces per level, or one unbroken line.",
+            "jsonIndentUnavailable": "The output is not JSON.",
+            "delimiter": "TOON delimiter",
+            "delimiterHint": "A tab or a pipe saves a little where no value contains one.",
+            "delimiterUnavailable": "The output is not TOON.",
+            "toonIndent": "TOON indent",
+            "toonIndentHint": "TOON reads its structure from indentation, so this has to match the block you paste as well as the one you write.",
+            "toonIndentUnavailable": "Neither side of this conversion is TOON.",
+            "toonStrict": "Check declared lengths",
+            "toonStrictHint": "TOON declares how many items an array holds. Off, a hand-edited header may disagree with the rows under it.",
+            "toonStrictUnavailable": "The input is not TOON."
+        },
+        "formats": {
+            "bson": "BSON",
+            "json": "JSON",
+            "toon": "TOON"
+        },
+        "encodings": {
+            "hex": "Hex",
+            "base64": "Base64"
+        },
+        "ejsonModes": {
+            "canonical": "Canonical",
+            "relaxed": "Relaxed"
+        },
+        "jsonIndents": {
+            "minified": "Minified",
+            "two": "2 spaces",
+            "four": "4 spaces",
+            "tab": "Tab"
+        },
+        "delimiters": {
+            "comma": "Comma",
+            "tab": "Tab",
+            "pipe": "Pipe"
+        },
+        "toonIndents": {
+            "two": "2 spaces",
+            "four": "4 spaces"
+        },
+        "notes": {
+            "extendedJson": "BSON's types are written as Extended JSON — the same $oid and $date wrappers that mongosh prints and mongoimport reads.",
+            "relaxedLossy": "Relaxed mode did not survive this document: writing it back produces different bytes. Canonical returns the original exactly.",
+            "canonicalVerbose": "Canonical wrappers turn every typed value into a nested object, so TOON's tabular form rarely applies here. Relaxed mode produces much shorter TOON.",
+            "numbersRetyped": "JSON has one number type. Whole numbers were stored as int32 or int64 and fractional ones as double, so a value written 1.0 comes back as 1.",
+            "delimiterInValues": "Some values contain the delimiter you chose, so TOON quoted them. A comma may cost fewer characters here."
+        },
+        "noteKinds": {
+            "lossy": "Lossy",
+            "adapted": "Adapted",
+            "info": "Note"
+        },
+        "errors": {
+            "tooLarge": "That is longer than {max, number} characters — longer than any single document is meant to be.",
+            "invalidHex": "That is not hexadecimal. A BSON dump is an even run of the digits 0–9 and the letters a–f.",
+            "invalidBase64": "That is not base64.",
+            "invalidBson": "Those bytes are not a BSON document.",
+            "invalidBsonSized": "Those bytes are not a complete BSON document — the header declares {declared, number} bytes and {actual, number} arrived.",
+            "invalidJson": "That is not valid JSON. The JSON Formatter will name the line and the character.",
+            "invalidToon": "That is not valid TOON.",
+            "invalidToonLine": "Line {line, number} is not valid TOON.",
+            "rootNotObject": "BSON stores a document, so the top level has to be an object. An array or a bare value has no BSON encoding at the root — give it a name first."
+        },
+        "toast": {
+            "copied": "Copied",
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The download could not be started",
+            "opened": "Read {filename}",
+            "openFailed": "That file could not be read",
+            "fileTooLarge": "That file is larger than this tool will read",
+            "copyFailedEmpty": "There is nothing to copy yet",
+            "copyFailedUnsupported": "This browser will not let a page write to the clipboard",
+            "copyFailedDenied": "Clipboard permission was refused"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "Three notations, one data model",
+                "p1": "BSON, JSON and TOON all describe the same thing: objects, arrays, strings, numbers, booleans and null. They agree about almost nothing else. BSON is binary, length-prefixed and typed — MongoDB's storage and wire format. JSON is text with exactly six types. TOON is text too, and trades JSON's punctuation for indentation and a CSV-style table so that a document costs fewer tokens in an LLM prompt.",
+                "p2": "So this tool never rewrites one notation into another. It reads whichever you paste into one plain value, then writes that value out in whichever you asked for. Both halves meet at the same model, which is why BSON → TOON cannot develop its own opinion about what a date is, and why a fourth format would cost one reader and one writer rather than six new conversions.",
+                "p3": "Where the model runs out is BSON's type system. BSON knows an ObjectId from a string and an int32 from a double; JSON knows a number. The bridge is Extended JSON, MongoDB's own way of writing those types down as ordinary JSON objects — and because TOON encodes the JSON data model exactly, Extended JSON travels through TOON unchanged.",
+                "p4": "Nothing is uploaded. Reading, writing and export all happen in this tab; close it and nothing is left behind."
+            },
+            "extendedJson": {
+                "title": "Canonical and relaxed",
+                "intro": "Extended JSON has two spellings, and the difference is not cosmetic. Canonical writes every value in a $-prefixed wrapper naming its type, and a document read canonically and written back produces the same bytes it came from — every type, byte for byte. Relaxed writes what plain JSON can hold and wraps only what it cannot, which reads far better and quietly loses the distinctions plain JSON has no room for.",
+                "tableCaption": "What each mode preserves",
+                "colType": "BSON type",
+                "colCanonical": "Canonical",
+                "colRelaxed": "Relaxed",
+                "colCost": "What relaxed costs",
+                "costDouble": "A double holding a whole number returns as an int32.",
+                "costInt64": "Past ±2⁵³ the value itself changes — no JavaScript number holds it.",
+                "costDate": "Nothing. The ISO string round-trips exactly.",
+                "costObjectId": "Nothing. Relaxed wraps it too.",
+                "costDecimal": "Nothing. Decimal128 has no plain-JSON spelling.",
+                "costBinary": "Nothing. Binary is wrapped in both modes.",
+                "outro1": "Rather than warn about this in general, the tool checks it on your document: after a relaxed read it writes the result back to BSON and compares the bytes. If they differ you get a note saying so; if they do not, you get silence. Most documents survive relaxed intact, and a warning that is usually wrong is a warning people stop reading.",
+                "outro2": "Going the other way there is nothing to choose. Both spellings parse to the same bytes, so the mode control is switched off whenever BSON is the output rather than the input."
+            },
+            "toonForms": {
+                "title": "Why TOON is shorter",
+                "intro": "TOON picks a rendering from the shape of the value, and the one that pays is the table. A uniform array of objects declares its field list once in the header and then streams one row per element, which is the whole point of the format.",
+                "tableCaption": "TOON's four forms",
+                "colForm": "Form",
+                "colWhen": "Chosen when",
+                "colLooks": "Looks like",
+                "formInline": "Inline",
+                "formTabular": "Tabular",
+                "formKeyed": "Keyed tabular",
+                "formList": "List",
+                "whenInline": "An array of primitives, short enough to sit on its own header line.",
+                "whenTabular": "An array of objects that all carry the same fields, with primitive values.",
+                "whenKeyed": "An object whose values are uniform objects — config maps, feature flags, records by id.",
+                "whenList": "Anything else: mixed types, or objects that do not agree on their fields.",
+                "outro": "Which is why TOON is not always smaller. A deeply nested document with no uniform arrays encodes to roughly what minified JSON does, occasionally a little more. The counts under the output say which happened for the document in front of you — characters rather than tokens, because a tokenizer is a megabyte of vocabulary and gives a different answer for every model."
+            },
+            "options": {
+                "title": "The controls",
+                "tableCaption": "Every option, and when it earns its place",
+                "colOption": "Option",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "encodingDoes": "Whether BSON is read and written as hexadecimal or as base64.",
+                "encodingWhen": "Hex for anything copied out of bsondump or the MongoDB documentation; base64 for a blob from a driver log or an API response.",
+                "ejsonDoes": "Whether BSON's types are written as canonical wrappers or as the nearest plain JSON value.",
+                "ejsonWhen": "Canonical whenever the document has to survive the trip back. Relaxed when a person is going to read it.",
+                "jsonIndentDoes": "Spaces per level in the JSON output, or one unbroken line.",
+                "jsonIndentWhen": "Minified for anything a program will read; two or four spaces for anything a person will.",
+                "delimiterDoes": "Which character separates TOON's table columns.",
+                "delimiterWhen": "A tab or a pipe when no value contains one — the encoder quotes any value that does, which costs more than the comma saved.",
+                "toonIndentDoes": "Spaces per level in TOON, on the way in as well as out.",
+                "toonIndentWhen": "Leave it at two unless the block you are pasting was written with four.",
+                "strictDoes": "Whether a declared array length has to match the number of rows under it.",
+                "strictWhen": "Leave it on. Turn it off only to read a block edited by hand, or truncated by a model that stopped early.",
+                "outro": "Each control is switched off when the current pairing cannot read it, with a line saying why. Nudging the TOON delimiter while the output is BSON changes nothing, and a control that looks live but is not is worse than one that is greyed out."
+            },
+            "gotchas": {
+                "title": "Traps worth knowing",
+                "p1": "BSON's root is a document. An array or a bare value has no encoding at the top level, and the driver refuses rather than inventing one — so a JSON document or TOON block whose root is an array cannot be written as BSON. Give it a name first, and the wrapper object is what you convert.",
+                "p2": "A hex dump is not a .bson file. The text output downloads as .txt with the notation in its name; the raw bytes get their own button and the real extension. Naming a transcript .bson produces a file every reader of BSON rejects.",
+                "p3": "JSON has one number type. Going into BSON, a whole number becomes an int32 or an int64 and a fractional one becomes a double — which means 1.0 and 1 are the same input, and both come back as 1. Canonical Extended JSON is the only way to say “a double, holding one”.",
+                "p4": "Relaxed dates are still objects. A relaxed date is written as a string inside a $date wrapper, which anything that reads Extended JSON understands, but a program doing a plain JSON.parse sees an object with one string in it. That is a property of Extended JSON, not of this tool.",
+                "p5": "TOON's indentation is load-bearing. Unlike JSON, whitespace is structure: a block written at four spaces and read at two is a parse error rather than a shrug. That is what the indent control is for on the input side, and why it stays available when TOON is what you are pasting."
+            },
+            "useCases": {
+                "title": "What people use this for",
+                "p1": "Reading a BSON blob out of a log, an oplog entry or a driver trace and seeing what is actually in it, with the types intact rather than flattened into JSON's six.",
+                "p2": "Turning a JSON fixture into TOON to cut the token cost of a prompt. Most of the saving comes from uniform arrays of records, which is exactly the shape fixtures and API responses tend to have.",
+                "p3": "Building a BSON document by hand from Extended JSON to feed a test, and getting the exact bytes rather than whatever a driver decided the numbers ought to be."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Does this upload my document anywhere?",
+                "a1": "No. Every conversion runs in this tab and the page has no server behind it. That includes the file you open and the file you download.",
+                "q2": "What is the difference between canonical and relaxed Extended JSON?",
+                "a2": "Canonical writes every value in a wrapper naming its BSON type, so the document returns as the exact bytes it came from. Relaxed writes plain values wherever plain JSON can hold them, which reads better but loses the distinction between a double and an integer, and loses precision past ±2⁵³. After a relaxed read this tool checks your own document and tells you which of the two happened.",
+                "q3": "Is TOON always smaller than JSON?",
+                "a3": "No. It wins on uniform arrays of objects, where the field list is written once instead of on every row — often by half against indented JSON. On a deeply nested document with no repetition it lands near minified JSON and sometimes slightly above it. The counts under the output tell you which, for the document in front of you.",
+                "q4": "Can I convert a .bson file from mongodump?",
+                "a4": "One document at a time. mongodump writes a stream of documents back to back and this tool reads a single document, so opening such a file loads its bytes but the conversion stops at the length check once the first document ends.",
+                "q5": "Why does my ObjectId come out as a $oid object?",
+                "a5": "Because JSON has no ObjectId. That wrapper is Extended JSON, which is what mongosh prints, what mongoexport writes and what mongoimport reads — so it is not a lossy fallback, it is the interchange format. Feed it back in and the ObjectId returns.",
+                "q6": "Which version of TOON does this write?",
+                "a6": "TOON 4.1, through the format's own reference implementation rather than a re-reading of the specification — so what comes out of here is what every other TOON reader expects to see.",
+                "q7": "Why does the tool count characters instead of tokens?",
+                "a7": "Because a token count is a property of a model, not of a document. Two tokenizers disagree, and shipping one would mean shipping a megabyte of vocabulary to answer for a single model. Characters are exact, and the ratio between two formats holds directionally whichever tokenizer reads them."
+            }
         }
     }
 }

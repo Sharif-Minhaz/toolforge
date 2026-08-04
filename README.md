@@ -43,6 +43,7 @@ Everything else follows from that:
 | URL Encoder / Decoder            | `/tools/url`               | Encoding   | Percent-encoding across component, path and query profiles, with double-encoding detection                                                                                                                                                                                                                                                                 |
 | URL Parser                       | `/tools/url-parser`        | Encoding   | Splits a link into protocol, credentials, host, port, path, query, fragment and origin, and edits its query parameters in place                                                                                                                                                                                                                            |
 | cURL ↔ Fetch Converter           | `/tools/curl`              | Encoding   | Turns a cURL command into working `fetch`, axios or `node:https` and back again — headers, query, cookies, credentials, every body form, redirects, timeouts and TLS flags — reading bash, Windows cmd and PowerShell, and naming every flag that could not carry across                                                                                   |
+| BSON / JSON / TOON Converter     | `/tools/bson`              | Encoding   | Converts between BSON, JSON and TOON in any of the six directions, through one shared value rather than six translators. Canonical Extended JSON returns the exact bytes MongoDB stored — ObjectId, Decimal128, int64, dates and binary included — and the tool proves it per document rather than claiming it; TOON's tabular form collapses a uniform array for an LLM prompt. Reads BSON as hex, base64 or an opened `.bson` file                                                                                                                             |
 | JWT Encoder / Decoder            | `/tools/jwt`               | Security   | Inspect claims, verify a signature, or sign a fresh token (HMAC, RSA, ECDSA)                                                                                                                                                                                                                                                                               |
 | Hash Generator / Verifier        | `/tools/hash`              | Security   | SHA family, MD5, bcrypt and Argon2, plus constant-time comparison                                                                                                                                                                                                                                                                                          |
 | Password Generator               | `/tools/password`          | Security   | Random passwords, wordlist passphrases and PINs, with exact entropy and a crack-time estimate against an attacker you pick                                                                                                                                                                                                                                 |
@@ -108,6 +109,19 @@ is reachable only by hovering.
 > capped at 512 KB and never echoed back. `src/modules/domain-inspector/domain/ip.ts` holds the
 > classification and is unit-tested against both families;
 > `src/modules/domain-inspector/repository/address-guard.ts` is the only gate that opens.
+
+The **BSON / JSON / TOON Converter** is browser-only and is the one place this repository takes a
+format on trust rather than reimplementing it. Both codecs are the formats' own reference
+implementations — MongoDB's `bson` and `@toon-format/toon`, each zero-dependency — because a
+hand-rolled Decimal128 or a re-reading of the TOON specification would produce output that only this
+site can read, which is the opposite of what a converter is for. What the repository does own is the
+thing worth owning: the six conversions all pass through one plain value
+(`src/modules/bson/domain/convert.ts`), so BSON → TOON cannot develop its own opinion about what a
+date is, and the fidelity claim is tested rather than asserted — a document carrying every BSON type
+is read as canonical Extended JSON, written back, and compared byte for byte, once for the whole
+document and once per type so a failure names which one. Relaxed Extended JSON cannot make that
+promise, so instead of a standing warning the tool runs the same round trip on *your* document and
+says only when it actually cost something.
 
 The **Image Compressor** and the **Image Converter** are browser-only with no exception at all. They
 share one codec layer (`src/modules/tools/domain/image-codec.ts`) whose four encoders — MozJPEG,
@@ -183,7 +197,7 @@ empties it. Clear it on a shared machine.
 
 Next.js 16 (App Router) · React 19 · TypeScript (strict) · Tailwind CSS v4 · Base UI via
 shadcn/ui · next-intl · Zod · Prisma + PostgreSQL · Supabase (auth and storage only) · Bun ·
-jSquash (MozJPEG, libwebp, libaom and OxiPNG as WebAssembly) · fflate
+jSquash (MozJPEG, libwebp, libaom and OxiPNG as WebAssembly) · fflate · bson · @toon-format/toon
 
 ## Getting started
 

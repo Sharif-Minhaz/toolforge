@@ -8,7 +8,8 @@ import {
     type DigestAlgorithm,
 } from "../types";
 import { DIGEST_BASE64_LENGTHS, DIGEST_HEX_LENGTHS } from "./digest";
-import { isBase64, isHex } from "./encoding";
+import { isHex } from "@/modules/tools/domain/hex";
+import { isBase64 } from "./encoding";
 
 /** `$2b$12$` followed by 53 characters of bcrypt-base64 salt and hash. */
 const BCRYPT_PATTERN = /^\$2[abxy]\$(\d{2})\$[./A-Za-z0-9]{53}$/;

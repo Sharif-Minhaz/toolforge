@@ -1,6 +1,5 @@
+import { bytesToHex } from "@/modules/tools/domain/hex";
 import type { DigestEncoding } from "../types";
-
-const HEX_PATTERN = /^[0-9a-f]+$/i;
 
 /**
  * Standard base64 with optional padding. Digests are fixed-length, so a hash
@@ -17,16 +16,6 @@ export function utf8ByteLength(text: string): number {
     return utf8Bytes(text).length;
 }
 
-export function bytesToHex(bytes: Uint8Array): string {
-    let hex = "";
-
-    for (const byte of bytes) {
-        hex += byte.toString(16).padStart(2, "0");
-    }
-
-    return hex;
-}
-
 export function bytesToBase64(bytes: Uint8Array): string {
     let binary = "";
 
@@ -35,24 +24,6 @@ export function bytesToBase64(bytes: Uint8Array): string {
     }
 
     return btoa(binary);
-}
-
-export function hexToBytes(hex: string): Uint8Array | null {
-    if (hex.length % 2 !== 0 || !HEX_PATTERN.test(hex)) {
-        return null;
-    }
-
-    const bytes = new Uint8Array(hex.length / 2);
-
-    for (let index = 0; index < bytes.length; index += 1) {
-        bytes[index] = Number.parseInt(hex.slice(index * 2, index * 2 + 2), 16);
-    }
-
-    return bytes;
-}
-
-export function isHex(value: string): boolean {
-    return value.length > 0 && value.length % 2 === 0 && HEX_PATTERN.test(value);
 }
 
 export function isBase64(value: string): boolean {
