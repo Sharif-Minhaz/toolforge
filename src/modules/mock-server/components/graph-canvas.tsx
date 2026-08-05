@@ -13,7 +13,7 @@ import {
     type NodeProps,
 } from "@xyflow/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { cn } from "@/lib/utils";
 import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
@@ -106,6 +106,7 @@ export function GraphCanvas() {
     const graph = useStudioStore((state) => state.graph);
     const selection = useStudioStore((state) => state.selection);
     const select = useStudioStore((state) => state.select);
+    const setView = useStudioStore((state) => state.setView);
     const dragNode = useStudioStore((state) => state.dragNode);
     const connectNodes = useStudioStore((state) => state.connectNodes);
     const removeEdge = useStudioStore((state) => state.removeEdge);
@@ -204,33 +205,91 @@ export function GraphCanvas() {
         [dragNode],
     );
 
+    /**
+     * What the reader is looking at, pushed up to the store.
+     *
+     * The palette sits outside the `<ReactFlow>` tree, so it cannot ask
+     * `useReactFlow` where the viewport is — and without that a node added from
+     * it lands at a fixed point in graph space, which after `fitView` has panned
+     * is usually off-screen. The transform is kept in a ref rather than in state
+     * because `onMove` fires on every frame of a pan and none of those frames
+     * needs to re-render anything here.
+     */
+    const hostRef = useRef<HTMLDivElement>(null);
+    const transformRef = useRef({ x: 0, y: 0, zoom: 1 });
+
+    const report = useCallback(() => {
+        const host = hostRef.current;
+
+        if (host === null) {
+            return;
+        }
+
+        setView({
+            viewport: transformRef.current,
+            size: { width: host.clientWidth, height: host.clientHeight },
+        });
+    }, [setView]);
+
+    // A resize changes where the middle is just as much as a pan does, and the
+    // dialog this lives in is resizable.
+    useEffect(() => {
+        const host = hostRef.current;
+
+        if (host === null) {
+            return;
+        }
+
+        const observer = new ResizeObserver(report);
+        observer.observe(host);
+
+        return () => observer.disconnect();
+    }, [report]);
+
     return (
-        <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            nodeTypes={NODE_TYPES}
-            onNodesChange={onNodesChange}
-            onSelectionChange={({ nodes: selected }) => select(selected.map((node) => node.id))}
-            onConnect={(connection) => {
-                if (connection.source && connection.target) {
-                    connectNodes(
-                        connection.source,
-                        connection.sourceHandle ?? "next",
-                        connection.target,
-                    );
-                }
-            }}
-            onEdgeDoubleClick={(_event, edge) => removeEdge(edge.id)}
-            fitView
-            // Above this many nodes the cost of rendering off-screen ones stops
-            // being free; below it the extra bookkeeping is the larger cost.
-            onlyRenderVisibleElements={graph.nodes.length > 150}
-            proOptions={{ hideAttribution: false }}
-            className="[&_.react-flow\_\_attribution]:!bg-transparent"
-        >
-            <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
-            <MiniMap pannable zoomable className="!bg-card !border-border/70 !border" />
-            <Controls showInteractive={false} />
-        </ReactFlow>
+        <div ref={hostRef} className="mock-canvas size-full">
+            <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                nodeTypes={NODE_TYPES}
+                onNodesChange={onNodesChange}
+                onSelectionChange={({ nodes: selected }) => select(selected.map((node) => node.id))}
+                onConnect={(connection) => {
+                    if (connection.source && connection.target) {
+                        connectNodes(
+                            connection.source,
+                            connection.sourceHandle ?? "next",
+                            connection.target,
+                        );
+                    }
+                }}
+                onEdgeDoubleClick={(_event, edge) => removeEdge(edge.id)}
+                onInit={(instance) => {
+                    transformRef.current = instance.getViewport();
+                    report();
+                }}
+                onMove={(_event, viewport) => {
+                    transformRef.current = viewport;
+                    report();
+                }}
+                fitView
+                // Above this many nodes the cost of rendering off-screen ones stops
+                // being free; below it the extra bookkeeping is the larger cost.
+                onlyRenderVisibleElements={graph.nodes.length > 150}
+                proOptions={{ hideAttribution: false }}
+            >
+                <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
+                {/* Default is 200×150, which in a rail-flanked canvas eats a
+                    corner of the workspace. Small enough to orient by, not
+                    large enough to work in — which is what a minimap is for. */}
+                <MiniMap
+                    pannable
+                    zoomable
+                    style={{ width: 128, height: 84 }}
+                    className="!bg-card !border-border/70 !m-2 !rounded-lg !border"
+                />
+                <Controls showInteractive={false} className="!m-2" />
+            </ReactFlow>
+        </div>
     );
 }

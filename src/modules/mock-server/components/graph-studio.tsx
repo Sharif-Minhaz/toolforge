@@ -3,6 +3,7 @@
 import {
     IconArrowBackUp,
     IconArrowForwardUp,
+    IconEraser,
     IconLayoutGrid,
     IconLoader2,
     IconPlus,
@@ -10,6 +11,7 @@ import {
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import { useEffect } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -63,9 +65,10 @@ export function GraphStudio({ endpointId, graph, version, onDirty }: GraphStudio
     const load = useStudioStore((state) => state.load);
     const current = useStudioStore((state) => state.graph);
     const selection = useStudioStore((state) => state.selection);
-    const addNodeAt = useStudioStore((state) => state.addNodeAt);
+    const addNode = useStudioStore((state) => state.addNode);
     const setNodeData = useStudioStore((state) => state.setNodeData);
     const layout = useStudioStore((state) => state.layout);
+    const clear = useStudioStore((state) => state.clear);
     const saveState = useStudioStore((state) => state.saveState);
     const loadedKey = useStudioStore((state) => state.loadedKey);
 
@@ -130,6 +133,36 @@ export function GraphStudio({ endpointId, graph, version, onDirty }: GraphStudio
                     {t("autoLayout")}
                 </Button>
 
+                <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="text-muted-foreground hover:text-destructive gap-1.5"
+                    onClick={() =>
+                        // Confirmed in the toast rather than by arming the
+                        // button, so the destructive press is never the one
+                        // already under the pointer. Ten seconds, because a
+                        // confirmation that vanishes while it is being read is
+                        // worse than no confirmation at all.
+                        toast(t("clearConfirm"), {
+                            description: t("clearConfirmHint"),
+                            duration: 10_000,
+                            action: {
+                                label: t("clear"),
+                                onClick: () => {
+                                    clear();
+                                    toast.success(t("cleared"), {
+                                        description: t("clearedHint"),
+                                    });
+                                },
+                            },
+                        })
+                    }
+                >
+                    <IconEraser className="size-4" aria-hidden="true" />
+                    {t("clear")}
+                </Button>
+
                 <p className="text-muted-foreground ml-auto text-[0.6875rem] leading-[1.3]">
                     {t("flowSummary", { count: current.nodes.length })}
                 </p>
@@ -149,13 +182,12 @@ export function GraphStudio({ endpointId, graph, version, onDirty }: GraphStudio
                     </span>
 
                     <div className="flex flex-wrap gap-1.5 lg:flex-col lg:flex-nowrap">
-                        {placeableNodeKinds().map((kind, index) => (
+                        {placeableNodeKinds().map((kind) => (
                             <PaletteButton
                                 key={kind}
                                 kind={kind}
-                                index={index}
                                 label={tNodes(kind)}
-                                onAdd={addNodeAt}
+                                onAdd={addNode}
                             />
                         ))}
                     </div>
@@ -219,11 +251,10 @@ export function GraphStudio({ endpointId, graph, version, onDirty }: GraphStudio
 type PaletteButtonProps = {
     kind: NodeKind;
     label: string;
-    index: number;
-    onAdd: (kind: NodeKind, position: { x: number; y: number }) => void;
+    onAdd: (kind: NodeKind) => void;
 };
 
-function PaletteButton({ kind, label, index, onAdd }: PaletteButtonProps) {
+function PaletteButton({ kind, label, onAdd }: PaletteButtonProps) {
     const definition = nodeDefinition(kind);
 
     return (
@@ -234,11 +265,10 @@ function PaletteButton({ kind, label, index, onAdd }: PaletteButtonProps) {
             // it is the one that ships first — no affordance here is
             // pointer-only.
             //
-            // Staggered by the palette index rather than randomly: nothing on
-            // this site draws from `Math.random`, and a deterministic offset is
-            // also the one that does not occasionally drop two nodes on top of
-            // each other.
-            onClick={() => onAdd(kind, { x: 140 + (index % 4) * 30, y: 120 + (index % 5) * 40 })}
+            // Where it lands is the store's business, not the palette's: it goes
+            // to the middle of the current viewport, which is the only answer
+            // that keeps a new node in front of the reader after a pan.
+            onClick={() => onAdd(kind)}
             className={cn(
                 "border-border/70 bg-card focus-visible:ring-ring flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-[0.6875rem] transition-colors hover:border-[var(--tool-accent)]/50 hover:bg-[var(--tool-accent)]/8 focus-visible:ring-2 focus-visible:outline-none lg:w-full",
                 TOOL_ACCENT_VARS[definition.accent],

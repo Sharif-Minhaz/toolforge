@@ -42,6 +42,7 @@ import {
     createEndpointSchema,
     createServerSchema,
     endpointRefSchema,
+    pauseServerSchema,
     serverRefSchema,
     updateEndpointSchema,
     updateServerSchema,
@@ -197,6 +198,48 @@ export async function updateServer(input: unknown): Promise<ServerActionResult> 
     });
 
     return written ? { ok: true } : { ok: false, reason: "write_failed" };
+}
+
+/**
+ * Switches a server off, or back on.
+ *
+ * A paused server answers **503 `server_paused`** on every route rather than
+ * 404, and that distinction is the whole point: 404 says "this address is
+ * wrong", which sends whoever is calling to check their URL. 503 says "this
+ * exists and is not answering right now", which is true and is what a caller
+ * needs in order to stop debugging their own code. `serveMockRequest` has
+ * refused a paused server since M1; until now nothing could set the flag.
+ *
+ * The endpoints are untouched — pausing is not deleting, and coming back is one
+ * press. `revalidatePath` covers both the workspace list and the server page,
+ * because the state is shown on both and a stale "running" badge over a server
+ * that is off is worse than no badge at all.
+ */
+export async function pauseServer(input: unknown): Promise<ServerActionResult> {
+    const parsed = pauseServerSchema.safeParse(input);
+
+    if (!parsed.success) {
+        return { ok: false, reason: "not_found" };
+    }
+
+    const workspaceId = await findServerWorkspace(parsed.data.serverId);
+
+    if (!(await ownsWorkspace(workspaceId))) {
+        return { ok: false, reason: "not_owner" };
+    }
+
+    const written = await updateServerRow(parsed.data.serverId, {
+        isPaused: parsed.data.isPaused,
+    });
+
+    if (!written) {
+        return { ok: false, reason: "write_failed" };
+    }
+
+    revalidatePath(`/mock/${workspaceId}`);
+    revalidatePath(`/mock/${workspaceId}/servers/${parsed.data.serverId}`);
+
+    return { ok: true };
 }
 
 export async function deleteServer(input: unknown): Promise<ServerActionResult> {

@@ -9,10 +9,14 @@ import {
     connect,
     copyFragment,
     disconnect,
+    dropPosition,
+    freeNodeId,
     moveNode,
     pasteFragment,
     removeNodes,
+    resetGraph,
     updateNodeData,
+    type CanvasView,
     type GraphFragment,
 } from "../domain/graph-edit";
 import type { GraphDocument, GraphNode, NodeKind } from "../types/graph";
@@ -53,13 +57,24 @@ export type StudioState = {
     clipboard: GraphFragment | null;
     saveState: SaveState;
     version: number;
+    /**
+     * What the canvas is currently showing, reported by it on every pan, zoom
+     * and resize.
+     *
+     * Held here rather than read through `useReactFlow` because the palette
+     * lives outside the `<ReactFlow>` tree — and it is what lets a new node land
+     * in front of the reader instead of at a fixed point in graph space they may
+     * have panned a long way from.
+     */
+    view: CanvasView | null;
 
     load: (graph: GraphDocument, version: number, key: string) => void;
     setSaveState: (state: SaveState) => void;
     markSaved: (version: number) => void;
+    setView: (view: CanvasView) => void;
 
     select: (ids: readonly string[]) => void;
-    addNodeAt: (kind: NodeKind, position: { x: number; y: number }) => void;
+    addNode: (kind: NodeKind) => void;
     setNodeData: (nodeId: string, data: GraphNode["data"]) => void;
     dragNode: (nodeId: string, position: { x: number; y: number }) => void;
     connectNodes: (source: string, handle: string, target: string) => void;
@@ -69,6 +84,7 @@ export type StudioState = {
     paste: () => void;
     duplicateSelection: () => void;
     layout: () => void;
+    clear: () => void;
 };
 
 /**
@@ -92,11 +108,18 @@ export const useStudioStore = create<StudioState>()(
             clipboard: null,
             saveState: "idle",
             version: 1,
+            view: null,
 
             load: (graph, version, key) =>
                 set({ graph, version, loadedKey: key, saveState: "idle", selection: [] }),
             setSaveState: (saveState) => set({ saveState }),
             markSaved: (version) => set({ version, saveState: "saved" }),
+
+            /**
+             * Not part of the undo stack — `partialize` sees to that — and not a
+             * `dirty` edit either. Panning is not a change to the document.
+             */
+            setView: (view) => set((state) => ({ ...state, view })),
 
             /**
              * Ignores a selection that has not actually changed.
@@ -115,11 +138,27 @@ export const useStudioStore = create<StudioState>()(
                     sameIds(state.selection, selection) ? state : { ...state, selection },
                 ),
 
-            addNodeAt: (kind, position) =>
-                set((state) => ({
-                    graph: addNode(state.graph, kind, position),
-                    saveState: "dirty",
-                })),
+            /**
+             * Drops a node in the middle of what the reader is looking at, and
+             * selects it.
+             *
+             * Selecting is half the fix. A node that appears in view but with
+             * the inspector still showing whatever was selected before makes the
+             * reader hunt for the thing they just asked for — and the inspector
+             * is where the node is actually configured, so opening it is the
+             * next thing they were going to do anyway.
+             */
+            addNode: (kind) =>
+                set((state) => {
+                    const id = freeNodeId(state.graph, kind);
+
+                    return {
+                        ...state,
+                        graph: addNode(state.graph, kind, dropPosition(state.graph, state.view)),
+                        selection: [id],
+                        saveState: "dirty",
+                    };
+                }),
 
             setNodeData: (nodeId, data) =>
                 set((state) => ({
@@ -183,6 +222,16 @@ export const useStudioStore = create<StudioState>()(
             },
 
             layout: () => set((state) => ({ graph: autoLayout(state.graph), saveState: "dirty" })),
+
+            // Goes through the same store as every other edit, so ⌘Z brings it
+            // all back. That is what makes a confirmation enough rather than a
+            // second are-you-sure — the mistake is one keystroke from undone.
+            clear: () =>
+                set((state) => ({
+                    graph: resetGraph(state.graph),
+                    selection: [],
+                    saveState: "dirty",
+                })),
         }),
         {
             limit: 100,

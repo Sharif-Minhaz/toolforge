@@ -135,6 +135,18 @@ export const updateServerSchema = z.object({
 
 export const serverRefSchema = z.object({ serverId: serverIdSchema });
 
+/**
+ * Pausing on its own, rather than through `updateServerSchema`.
+ *
+ * That one requires a name, so a toggle would have to send the name back with
+ * it — and a switch that round-trips a field it is not editing is a switch that
+ * can overwrite a rename made in another tab.
+ */
+export const pauseServerSchema = z.object({
+    serverId: serverIdSchema,
+    isPaused: z.boolean(),
+});
+
 export const createCollectionSchema = z.object({
     serverId: serverIdSchema,
     parentId: collectionIdSchema.nullable(),

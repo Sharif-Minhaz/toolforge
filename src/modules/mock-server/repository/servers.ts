@@ -123,10 +123,17 @@ export async function insertServer(input: InsertServerRow): Promise<InsertServer
     }
 }
 
+/**
+ * Every field optional, so a caller writes only what it is editing.
+ *
+ * The pause toggle is the reason: sending a name back alongside a boolean it is
+ * not changing is how a switch in one tab silently reverts a rename made in
+ * another.
+ */
 export type UpdateServerRow = {
-    readonly name: string;
-    readonly description: string | null;
-    readonly isPaused: boolean;
+    readonly name?: string;
+    readonly description?: string | null;
+    readonly isPaused?: boolean;
 };
 
 export async function updateServer(serverId: string, input: UpdateServerRow): Promise<boolean> {

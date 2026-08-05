@@ -702,7 +702,68 @@ is now the endpoint id (`flowDirtyFor`), compared against the open route. Any
 flag that gates reading from a module-scoped store has to name _what_ it was
 set for, not merely that it was set.
 
-### 7.5 State management
+Five smaller rules the canvas settled once it had the room to be used properly:
+
+- **A palette drops into the viewport, not into graph space.** The fixed drop
+  point was correct until `fitView` panned — which it does on every open — after
+  which every new node appeared off-screen and had to be hunted for and dragged
+  back. `view` lives in the store because the palette sits outside the
+  `<ReactFlow>` tree, and `dropPosition` inverts the transform in `domain/`,
+  where it is tested. It also selects what it just added: the inspector is where
+  a node is configured, so opening it is the next thing the reader was going to
+  do anyway.
+- **Clear keeps both ends.** `resetGraph` strips the logic and preserves the
+  request and the response — including the response node's _data_, because that
+  node carries the body the route form edits through the same field. Removing it
+  would make a button labelled as clearing the _flow_ quietly clear the
+  _response_. Confirmation lives in the toast rather than in an armed button, so
+  the destructive press is never the one already under the pointer, and it goes
+  through the temporal store so ⌘Z brings it all back.
+- **A tree row in a rail is two lines, not one.** `ValueRow` laid identity, kind
+  and value on a single flex row with a fixed 10rem key box. Fine in a
+  full-width panel, unusable in a 22rem inspector: the row overflowed, the
+  container grew a horizontal scrollbar and every control became a sliver. Key
+  and row actions take the first line; the kind and its value get the whole of
+  the second and wrap among themselves.
+- **`type="number"` reserves the stepper's width inside the content box.** In
+  anything narrow the arrows land on top of the value — a three-digit weight
+  rendered as two digits and a spinner. The `no-spinner` utility exists for that
+  case only; where the field is wide the arrows are a real affordance.
+- **Vendor CSS with `__` in its selectors belongs in a stylesheet.** React Flow's
+  chrome is light-only and had to be repainted from tokens. An arbitrary variant
+  cannot express it safely: `_` means a space inside one, so the class needs
+  escaped underscores, which then behave differently in a JSX attribute
+  (backslashes stay literal) and in a `cn()` argument (a JS string collapses
+  `\_` to `_`) — one of the two silently generates a rule that matches nothing.
+  The `.mock-canvas` block in `globals.css` needs no `!important` either, because
+  two classes outrank one whatever order the sheets land in.
+
+### 7.5 Pausing a server
+
+`MockServer.isPaused` shipped in M1 and `serveMockRequest` has refused a paused
+server ever since. Nothing could set it until now, which made it a column rather
+than a feature.
+
+**503, never 404.** A 404 says "this address is wrong" and sends the caller off
+to check their URL; 503 says "this exists and is not answering", which is true
+and is what lets somebody stop debugging their own code. That distinction is the
+reason the state is worth having at all, and it is why the copy on both surfaces
+names the status code rather than only the state.
+
+**The off state repaints the frame, not a badge.** The workspace card and the
+server page both go amber and both say what the routes now answer with. Somebody
+who paused a server yesterday and meets failing calls today has to be able to
+learn why from the page rather than from a response body. The live state gets a
+dot rather than a play glyph — it is a condition, not a button to press.
+
+**Pausing is not deleting, and the copy says so.** Endpoints, logs and variables
+survive untouched; that is the whole difference from the button beside it.
+`pauseServerSchema` carries the id and the boolean and nothing else, because
+`updateServerSchema` requires a name — and a toggle that round-trips a field it
+is not editing is a toggle that reverts a rename made in another tab. Every field
+on `UpdateServerRow` became optional for the same reason.
+
+### 7.6 State management
 
 Zustand with selector subscriptions. **Not** React Context — the graph changes on
 every drag frame and context re-renders every consumer. `reactCompiler` is on and
@@ -722,7 +783,7 @@ useStudioStore = create(temporal(immer(…)), {
 `@dagrejs/dagre` — small, and sufficient for DAGs. `elkjs` is 1.5 MB and buys
 nothing here.
 
-### 7.6 Autosave and optimistic concurrency
+### 7.7 Autosave and optimistic concurrency
 
 Debounced 800 ms, whole document. Graphs are under 100 KB; diffing is not worth
 the complexity yet.
@@ -814,6 +875,55 @@ same ordering the Port Scanner uses.
 3. **Turnstile**: workspace and server creation.
 4. **Quota**: `MockQuota`, salted-hash keyed, in Postgres, **fails closed**. No
    `DATABASE_URL` or no salt means creation is refused rather than unmetered.
+
+### Throughput on the public path
+
+The three gates above all guard _the studio_. `/m/<key>/…` has none of them —
+there is no cookie, no challenge and no account, because the whole point is that
+somebody else's program can call it. It therefore carries its own limit, and it
+is a different shape from the other two.
+
+**What it defends against is a loop, not an attacker.** A `useEffect` with a
+dependency that changes every render calls its mock as fast as the network
+allows, from one tab, until the tab is closed. That is the single most likely
+way this deployment gets hurt, and it is an accident rather than an attack —
+which decides almost every parameter:
+
+| Choice                                                        | Why                                                                                                                                                                                                                         |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **One-minute window**, not the hourly one used elsewhere      | The author fixes the loop in seconds and expects their mock back. An hourly window outlives the mistake by an hour. It also bounds the hour anyway: 120/min is 7,200/hr                                                     |
+| **120 per calling address**                                   | Two a second sustained. A test suite, a hot-reloading front end and a Postman run all sit well under it; a render loop does not                                                                                             |
+| **1,200 per server key**                                      | Ten times the per-address bound, so a team or a CI fleet is never refused by the shared limit before the per-caller one bites — and a flood spread across many addresses still meets a ceiling                              |
+| **One `INSERT … ON CONFLICT … RETURNING`**, not a transaction | This is the hot path. A read-then-write transaction would double the database work of _every_ request including every request in a flood, and a limiter that gets more expensive the harder it is pushed is the wrong shape |
+| **Counted before serving, logged never**                      | A refused request reaches no server lookup, no route match, no graph and no log row. A loop that filled the 500-row request log with its own refusals would push out the calls its author needs to see                      |
+| **Both counters in one statement**                            | Two rows in one `VALUES`, which is safe here precisely because the two keys are digests of different namespaces and so can never collide — the one thing Postgres refuses to do with `ON CONFLICT`                          |
+| **Fails closed**                                              | Same reasoning as creation, and in practice the two failures coincide: the database this cannot reach is the one `serveMockRequest` needs to find an endpoint at all                                                        |
+
+Two smaller decisions worth having written down.
+
+**`HEAD` and `OPTIONS` are counted.** A browser sends a preflight before each
+cross-origin call, so counting them halves that caller's effective budget. Taken
+deliberately: the alternative is a verb that reaches the database unmetered.
+
+**`repository/rate-limit.ts` keeps an in-memory map, and it is not the limit.**
+`CLAUDE.md` is explicit that a per-process counter is a limit in name only, and
+that rule stands — the counters are rows. What the map holds is a _refusal
+already learned from Postgres_: "this key is over until T". Within one window a
+count only goes up, so no instance can be under before T, which makes the cache
+exact rather than merely conservative, and losing it on a cold start costs one
+round trip. It exists for the loop specifically: without it, each of a runaway's
+thousands of refusals still costs a database write. With it they cost a `Map`
+lookup. The distinction to hold on to is that a cached _refusal_ can only ever
+refuse more, never less — which is why this is safe where a cached _count_ would
+not be.
+
+The rows are keyed by digest and reset in place, so the table is bounded by
+distinct callers rather than by requests. `sweepQuotaRows` drops anything a day
+past its window, called from `after()` and only when a fresh window opened — at
+most once a minute per active server, off the response path. A sweep is not a
+limiter: running it too often is merely wasteful and missing one is caught by
+the next request, so unlike a counter it is safe to trigger from whichever
+process happens to notice.
 
 ### Origin isolation
 

@@ -7,6 +7,7 @@ import { FadeIn, Reveal } from "@/components/motion/reveal";
 import { getServerDetail } from "@/modules/mock-server/actions/servers";
 import { EndpointWorkbench } from "@/modules/mock-server/components/endpoint-workbench";
 import { MockUrl } from "@/modules/mock-server/components/mock-url";
+import { ServerPausePanel } from "@/modules/mock-server/components/server-pause-panel";
 import { SITE_URL } from "@/modules/seo/domain/site";
 
 /** Same reasoning as the workspace page: this is somebody's work, not content. */
@@ -67,6 +68,13 @@ export default async function ServerPage({ params }: ServerPageProps) {
                     </p>
                 </header>
             </FadeIn>
+
+            {/* Above the route list, not below it: somebody whose calls have
+                started failing needs to see that the server is off before they
+                start reading routes for the mistake. */}
+            <Reveal>
+                <ServerPausePanel serverId={server.id} isPaused={server.isPaused} />
+            </Reveal>
 
             <Reveal>
                 <EndpointWorkbench

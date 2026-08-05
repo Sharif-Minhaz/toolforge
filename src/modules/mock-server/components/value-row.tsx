@@ -73,295 +73,319 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
 
     return (
         <li className="min-w-0">
+            {/*
+             * Two lines, not one.
+             *
+             * Everything used to sit on a single flex row with a fixed 10rem key
+             * box, which is fine in a full-width panel and unusable in the
+             * inspector rail the studio actually puts it in: the row overflowed,
+             * the container grew a horizontal scrollbar, and every control ended
+             * up a sliver wide. Identity and row actions go on the first line;
+             * the kind and its value get the whole width of the second, and wrap
+             * among themselves when even that is not enough.
+             */}
             <div
                 className={cn(
-                    "group/row flex min-w-0 flex-wrap items-center gap-1.5 rounded-lg py-1",
+                    "group/row flex min-w-0 flex-col gap-1 rounded-lg py-1",
                     depth > 0 && "border-border/60 border-l pl-3",
                 )}
             >
-                {branching ? (
-                    <Button
-                        type="button"
-                        size="icon"
-                        variant="ghost"
-                        className="text-muted-foreground size-6 shrink-0"
-                        aria-expanded={!collapsed}
-                        aria-label={collapsed ? t("expand") : t("collapse")}
-                        onClick={() => actions.onToggleCollapse(path)}
-                    >
-                        {collapsed ? (
-                            <IconChevronRight className="size-3.5" aria-hidden="true" />
-                        ) : (
-                            <IconChevronDown className="size-3.5" aria-hidden="true" />
-                        )}
-                    </Button>
-                ) : (
-                    <span className="size-6 shrink-0" aria-hidden="true" />
-                )}
-
-                {field !== undefined ? (
-                    <Input
-                        value={field.key}
-                        onChange={(event) =>
-                            actions.onRenameField(field.parent, field.index, event.target.value)
-                        }
-                        placeholder={t("keyPlaceholder")}
-                        aria-label={t("keyLabel")}
-                        autoComplete="off"
-                        spellCheck={false}
-                        className="h-8 w-40 shrink-0 font-mono text-xs"
-                    />
-                ) : label !== undefined ? (
-                    <span className="text-muted-foreground w-40 shrink-0 font-mono text-xs">
-                        {label}
-                    </span>
-                ) : null}
-
-                {/*
-                 * A native select rather than the shadcn one: this renders once
-                 * per row and a tree of sixty fields is sixty popovers to mount
-                 * otherwise. It is also the control a keyboard user reaches
-                 * fastest, which matters most in the densest part of the UI.
-                 */}
-                <select
-                    value={expr.kind}
-                    onChange={(event) =>
-                        actions.onKindChange(path, event.target.value as ValueKind)
-                    }
-                    aria-label={t("kindLabel")}
-                    className="border-input bg-card focus-visible:ring-ring h-8 shrink-0 rounded-lg border px-2 text-xs focus-visible:ring-2 focus-visible:outline-none"
-                >
-                    {VALUE_KINDS.map((kind) => (
-                        <option key={kind} value={kind}>
-                            {tKinds(kind)}
-                        </option>
-                    ))}
-                </select>
-
-                <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                    {expr.kind === "static" ? (
-                        <Input
-                            value={expr.value === null ? "" : String(expr.value)}
-                            onChange={(event) =>
-                                actions.onValueChange(path, {
-                                    kind: "static",
-                                    value: coerceLiteral(event.target.value),
-                                })
-                            }
-                            placeholder={t("literalPlaceholder")}
-                            aria-label={t("literalLabel")}
-                            autoComplete="off"
-                            className="h-8 min-w-0 flex-1 text-xs"
-                        />
-                    ) : null}
-
-                    {expr.kind === "request" ? (
-                        <>
-                            <select
-                                value={expr.source}
-                                onChange={(event) =>
-                                    actions.onValueChange(path, {
-                                        ...expr,
-                                        source: event.target
-                                            .value as (typeof REQUEST_SOURCES)[number],
-                                    })
-                                }
-                                aria-label={t("sourceLabel")}
-                                className="border-input bg-card focus-visible:ring-ring h-8 shrink-0 rounded-lg border px-2 text-xs focus-visible:ring-2 focus-visible:outline-none"
-                            >
-                                {REQUEST_SOURCES.map((source) => (
-                                    <option key={source} value={source}>
-                                        {t(`sources.${source}`)}
-                                    </option>
-                                ))}
-                            </select>
-                            <Input
-                                value={expr.path}
-                                onChange={(event) =>
-                                    actions.onValueChange(path, {
-                                        ...expr,
-                                        path: event.target.value,
-                                    })
-                                }
-                                placeholder={t("pathPlaceholder")}
-                                aria-label={t("pathLabel")}
-                                autoComplete="off"
-                                spellCheck={false}
-                                className="h-8 min-w-0 flex-1 font-mono text-xs"
-                            />
-                        </>
-                    ) : null}
-
-                    {expr.kind === "env" ? (
-                        <Input
-                            value={expr.key}
-                            onChange={(event) =>
-                                actions.onValueChange(path, {
-                                    kind: "env",
-                                    key: event.target.value,
-                                })
-                            }
-                            placeholder="API_BASE"
-                            aria-label={t("envLabel")}
-                            autoComplete="off"
-                            spellCheck={false}
-                            className="h-8 min-w-0 flex-1 font-mono text-xs"
-                        />
-                    ) : null}
-
-                    {expr.kind === "var" ? (
-                        <Input
-                            value={expr.name}
-                            onChange={(event) =>
-                                actions.onValueChange(path, {
-                                    kind: "var",
-                                    name: event.target.value,
-                                })
-                            }
-                            placeholder="userId"
-                            aria-label={t("varLabel")}
-                            autoComplete="off"
-                            spellCheck={false}
-                            className="h-8 min-w-0 flex-1 font-mono text-xs"
-                        />
-                    ) : null}
-
-                    {expr.kind === "faker" ? (
-                        <select
-                            value={expr.fn}
-                            onChange={(event) =>
-                                actions.onValueChange(path, {
-                                    kind: "faker",
-                                    fn: event.target.value,
-                                })
-                            }
-                            aria-label={t("fakerLabel")}
-                            className="border-input bg-card focus-visible:ring-ring h-8 min-w-0 flex-1 rounded-lg border px-2 text-xs focus-visible:ring-2 focus-visible:outline-none"
-                        >
-                            {FAKER_CATEGORIES.map((category) => (
-                                <optgroup key={category} label={tCategories(category)}>
-                                    {fakerProvidersByCategory(category).map((provider) => (
-                                        <option key={provider.id} value={provider.id}>
-                                            {tFaker(provider.id)}
-                                        </option>
-                                    ))}
-                                </optgroup>
-                            ))}
-                        </select>
-                    ) : null}
-
-                    {expr.kind === "now" ? (
-                        <select
-                            value={expr.format}
-                            onChange={(event) =>
-                                actions.onValueChange(path, {
-                                    kind: "now",
-                                    format: event.target.value as (typeof NOW_FORMATS)[number],
-                                })
-                            }
-                            aria-label={t("formatLabel")}
-                            className="border-input bg-card focus-visible:ring-ring h-8 min-w-0 flex-1 rounded-lg border px-2 text-xs focus-visible:ring-2 focus-visible:outline-none"
-                        >
-                            {NOW_FORMATS.map((format) => (
-                                <option key={format} value={format}>
-                                    {tFormats(format)}
-                                </option>
-                            ))}
-                        </select>
-                    ) : null}
-
-                    {expr.kind === "array" ? (
-                        <ArrayCount expr={expr} path={path} actions={actions} />
-                    ) : null}
-
-                    {expr.kind === "uuid" ? (
-                        <span className="text-muted-foreground truncate text-[0.6875rem]">
-                            {t("uuidHint")}
-                        </span>
-                    ) : null}
-                </div>
-
-                <div className="flex shrink-0 items-center gap-0.5">
-                    {expr.kind === "object" ? (
+                <div className="flex min-w-0 items-center gap-1.5">
+                    {branching ? (
                         <Button
                             type="button"
                             size="icon"
                             variant="ghost"
-                            className="text-muted-foreground hover:text-foreground size-7"
-                            aria-label={t("addField")}
-                            onClick={() => actions.onAddField(path)}
+                            className="text-muted-foreground size-6 shrink-0"
+                            aria-expanded={!collapsed}
+                            aria-label={collapsed ? t("expand") : t("collapse")}
+                            onClick={() => actions.onToggleCollapse(path)}
                         >
-                            <IconPlus className="size-3.5" aria-hidden="true" />
+                            {collapsed ? (
+                                <IconChevronRight className="size-3.5" aria-hidden="true" />
+                            ) : (
+                                <IconChevronDown className="size-3.5" aria-hidden="true" />
+                            )}
                         </Button>
-                    ) : null}
-
-                    {expr.kind === "oneOf" ? (
-                        <Button
-                            type="button"
-                            size="icon"
-                            variant="ghost"
-                            className="text-muted-foreground hover:text-foreground size-7"
-                            aria-label={t("addOption")}
-                            onClick={() => actions.onAddOption(path)}
-                        >
-                            <IconPlus className="size-3.5" aria-hidden="true" />
-                        </Button>
-                    ) : null}
+                    ) : (
+                        <span className="size-6 shrink-0" aria-hidden="true" />
+                    )}
 
                     {field !== undefined ? (
-                        <>
-                            {/*
-                             * Reorder is buttons, not only dragging: no
-                             * affordance on this site is pointer-only, and a
-                             * tree row is exactly where that rule bites.
-                             */}
-                            <Button
-                                type="button"
-                                size="icon"
-                                variant="ghost"
-                                className="text-muted-foreground hover:text-foreground size-7 disabled:opacity-30"
-                                aria-label={t("moveUp")}
-                                disabled={field.index === 0}
-                                onClick={() => actions.onMoveField(field.parent, field.index, -1)}
-                            >
-                                <IconChevronDown
-                                    className="size-3.5 rotate-180"
-                                    aria-hidden="true"
-                                />
-                            </Button>
-                            <Button
-                                type="button"
-                                size="icon"
-                                variant="ghost"
-                                className="text-muted-foreground hover:text-foreground size-7 disabled:opacity-30"
-                                aria-label={t("moveDown")}
-                                disabled={field.index >= field.count - 1}
-                                onClick={() => actions.onMoveField(field.parent, field.index, 1)}
-                            >
-                                <IconChevronDown className="size-3.5" aria-hidden="true" />
-                            </Button>
+                        <Input
+                            value={field.key}
+                            onChange={(event) =>
+                                actions.onRenameField(field.parent, field.index, event.target.value)
+                            }
+                            placeholder={t("keyPlaceholder")}
+                            aria-label={t("keyLabel")}
+                            autoComplete="off"
+                            spellCheck={false}
+                            className="h-8 min-w-0 flex-1 font-mono text-xs"
+                        />
+                    ) : label !== undefined ? (
+                        <span className="text-muted-foreground min-w-0 flex-1 truncate font-mono text-xs">
+                            {label}
+                        </span>
+                    ) : (
+                        <span className="flex-1" aria-hidden="true" />
+                    )}
+
+                    <div className="flex shrink-0 items-center gap-0.5">
+                        {expr.kind === "object" ? (
                             <Button
                                 type="button"
                                 size="icon"
                                 variant="ghost"
                                 className="text-muted-foreground hover:text-foreground size-7"
-                                aria-label={t("duplicate")}
-                                onClick={() => actions.onDuplicateField(field.parent, field.index)}
+                                aria-label={t("addField")}
+                                onClick={() => actions.onAddField(path)}
                             >
-                                <IconCopy className="size-3.5" aria-hidden="true" />
+                                <IconPlus className="size-3.5" aria-hidden="true" />
                             </Button>
+                        ) : null}
+
+                        {expr.kind === "oneOf" ? (
                             <Button
                                 type="button"
                                 size="icon"
                                 variant="ghost"
-                                className="text-muted-foreground hover:text-destructive size-7"
-                                aria-label={t("removeField")}
-                                onClick={() => actions.onRemoveField(field.parent, field.index)}
+                                className="text-muted-foreground hover:text-foreground size-7"
+                                aria-label={t("addOption")}
+                                onClick={() => actions.onAddOption(path)}
                             >
-                                <IconTrash className="size-3.5" aria-hidden="true" />
+                                <IconPlus className="size-3.5" aria-hidden="true" />
                             </Button>
-                        </>
-                    ) : null}
+                        ) : null}
+
+                        {field !== undefined ? (
+                            <>
+                                {/*
+                                 * Reorder is buttons, not only dragging: no
+                                 * affordance on this site is pointer-only, and a
+                                 * tree row is exactly where that rule bites.
+                                 */}
+                                <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="ghost"
+                                    className="text-muted-foreground hover:text-foreground size-7 disabled:opacity-30"
+                                    aria-label={t("moveUp")}
+                                    disabled={field.index === 0}
+                                    onClick={() =>
+                                        actions.onMoveField(field.parent, field.index, -1)
+                                    }
+                                >
+                                    <IconChevronDown
+                                        className="size-3.5 rotate-180"
+                                        aria-hidden="true"
+                                    />
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="ghost"
+                                    className="text-muted-foreground hover:text-foreground size-7 disabled:opacity-30"
+                                    aria-label={t("moveDown")}
+                                    disabled={field.index >= field.count - 1}
+                                    onClick={() =>
+                                        actions.onMoveField(field.parent, field.index, 1)
+                                    }
+                                >
+                                    <IconChevronDown className="size-3.5" aria-hidden="true" />
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="ghost"
+                                    className="text-muted-foreground hover:text-foreground size-7"
+                                    aria-label={t("duplicate")}
+                                    onClick={() =>
+                                        actions.onDuplicateField(field.parent, field.index)
+                                    }
+                                >
+                                    <IconCopy className="size-3.5" aria-hidden="true" />
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="ghost"
+                                    className="text-muted-foreground hover:text-destructive size-7"
+                                    aria-label={t("removeField")}
+                                    onClick={() => actions.onRemoveField(field.parent, field.index)}
+                                >
+                                    <IconTrash className="size-3.5" aria-hidden="true" />
+                                </Button>
+                            </>
+                        ) : null}
+                    </div>
+                </div>
+
+                {/* Second line: what the value is, and where it comes from. */}
+                <div className="flex min-w-0 flex-wrap items-center gap-1.5 pl-7">
+                    {/*
+                     * A native select rather than the shadcn one: this renders once
+                     * per row and a tree of sixty fields is sixty popovers to mount
+                     * otherwise. It is also the control a keyboard user reaches
+                     * fastest, which matters most in the densest part of the UI.
+                     */}
+                    <select
+                        value={expr.kind}
+                        onChange={(event) =>
+                            actions.onKindChange(path, event.target.value as ValueKind)
+                        }
+                        aria-label={t("kindLabel")}
+                        className="border-input bg-card focus-visible:ring-ring h-8 min-w-0 flex-1 basis-32 rounded-lg border px-2 text-xs focus-visible:ring-2 focus-visible:outline-none"
+                    >
+                        {VALUE_KINDS.map((kind) => (
+                            <option key={kind} value={kind}>
+                                {tKinds(kind)}
+                            </option>
+                        ))}
+                    </select>
+
+                    <div className="flex min-w-0 flex-[2] basis-40 flex-wrap items-center gap-1.5 empty:hidden">
+                        {expr.kind === "static" ? (
+                            <Input
+                                value={expr.value === null ? "" : String(expr.value)}
+                                onChange={(event) =>
+                                    actions.onValueChange(path, {
+                                        kind: "static",
+                                        value: coerceLiteral(event.target.value),
+                                    })
+                                }
+                                placeholder={t("literalPlaceholder")}
+                                aria-label={t("literalLabel")}
+                                autoComplete="off"
+                                className="h-8 min-w-0 flex-1 text-xs"
+                            />
+                        ) : null}
+
+                        {expr.kind === "request" ? (
+                            <>
+                                <select
+                                    value={expr.source}
+                                    onChange={(event) =>
+                                        actions.onValueChange(path, {
+                                            ...expr,
+                                            source: event.target
+                                                .value as (typeof REQUEST_SOURCES)[number],
+                                        })
+                                    }
+                                    aria-label={t("sourceLabel")}
+                                    className="border-input bg-card focus-visible:ring-ring h-8 min-w-0 flex-1 basis-28 rounded-lg border px-2 text-xs focus-visible:ring-2 focus-visible:outline-none"
+                                >
+                                    {REQUEST_SOURCES.map((source) => (
+                                        <option key={source} value={source}>
+                                            {t(`sources.${source}`)}
+                                        </option>
+                                    ))}
+                                </select>
+                                <Input
+                                    value={expr.path}
+                                    onChange={(event) =>
+                                        actions.onValueChange(path, {
+                                            ...expr,
+                                            path: event.target.value,
+                                        })
+                                    }
+                                    placeholder={t("pathPlaceholder")}
+                                    aria-label={t("pathLabel")}
+                                    autoComplete="off"
+                                    spellCheck={false}
+                                    className="h-8 min-w-0 flex-1 font-mono text-xs"
+                                />
+                            </>
+                        ) : null}
+
+                        {expr.kind === "env" ? (
+                            <Input
+                                value={expr.key}
+                                onChange={(event) =>
+                                    actions.onValueChange(path, {
+                                        kind: "env",
+                                        key: event.target.value,
+                                    })
+                                }
+                                placeholder="API_BASE"
+                                aria-label={t("envLabel")}
+                                autoComplete="off"
+                                spellCheck={false}
+                                className="h-8 min-w-0 flex-1 font-mono text-xs"
+                            />
+                        ) : null}
+
+                        {expr.kind === "var" ? (
+                            <Input
+                                value={expr.name}
+                                onChange={(event) =>
+                                    actions.onValueChange(path, {
+                                        kind: "var",
+                                        name: event.target.value,
+                                    })
+                                }
+                                placeholder="userId"
+                                aria-label={t("varLabel")}
+                                autoComplete="off"
+                                spellCheck={false}
+                                className="h-8 min-w-0 flex-1 font-mono text-xs"
+                            />
+                        ) : null}
+
+                        {expr.kind === "faker" ? (
+                            <select
+                                value={expr.fn}
+                                onChange={(event) =>
+                                    actions.onValueChange(path, {
+                                        kind: "faker",
+                                        fn: event.target.value,
+                                    })
+                                }
+                                aria-label={t("fakerLabel")}
+                                className="border-input bg-card focus-visible:ring-ring h-8 min-w-0 flex-1 rounded-lg border px-2 text-xs focus-visible:ring-2 focus-visible:outline-none"
+                            >
+                                {FAKER_CATEGORIES.map((category) => (
+                                    <optgroup key={category} label={tCategories(category)}>
+                                        {fakerProvidersByCategory(category).map((provider) => (
+                                            <option key={provider.id} value={provider.id}>
+                                                {tFaker(provider.id)}
+                                            </option>
+                                        ))}
+                                    </optgroup>
+                                ))}
+                            </select>
+                        ) : null}
+
+                        {expr.kind === "now" ? (
+                            <select
+                                value={expr.format}
+                                onChange={(event) =>
+                                    actions.onValueChange(path, {
+                                        kind: "now",
+                                        format: event.target.value as (typeof NOW_FORMATS)[number],
+                                    })
+                                }
+                                aria-label={t("formatLabel")}
+                                className="border-input bg-card focus-visible:ring-ring h-8 min-w-0 flex-1 rounded-lg border px-2 text-xs focus-visible:ring-2 focus-visible:outline-none"
+                            >
+                                {NOW_FORMATS.map((format) => (
+                                    <option key={format} value={format}>
+                                        {tFormats(format)}
+                                    </option>
+                                ))}
+                            </select>
+                        ) : null}
+
+                        {expr.kind === "array" ? (
+                            <ArrayCount expr={expr} path={path} actions={actions} />
+                        ) : null}
+
+                        {expr.kind === "uuid" ? (
+                            <span className="text-muted-foreground truncate text-[0.6875rem]">
+                                {t("uuidHint")}
+                            </span>
+                        ) : null}
+                    </div>
                 </div>
             </div>
 
@@ -448,7 +472,9 @@ function ArrayCount({ expr, path, actions }: ArrayCountProps) {
     const ranged = expr.count.kind === "range";
 
     return (
-        <div className="flex min-w-0 flex-1 items-center gap-1.5">
+        // `contents`, so the count controls join the value row's own wrap rather
+        // than forming a second nested flex line that cannot break.
+        <div className="contents">
             <select
                 value={expr.count.kind}
                 onChange={(event) =>
@@ -461,7 +487,7 @@ function ArrayCount({ expr, path, actions }: ArrayCountProps) {
                     })
                 }
                 aria-label={t("countLabel")}
-                className="border-input bg-card focus-visible:ring-ring h-8 shrink-0 rounded-lg border px-2 text-xs focus-visible:ring-2 focus-visible:outline-none"
+                className="border-input bg-card focus-visible:ring-ring h-8 min-w-0 flex-1 basis-24 rounded-lg border px-2 text-xs focus-visible:ring-2 focus-visible:outline-none"
             >
                 <option value="fixed">{t("countFixed")}</option>
                 <option value="range">{t("countRange")}</option>
@@ -484,7 +510,10 @@ function ArrayCount({ expr, path, actions }: ArrayCountProps) {
                             })
                         }
                         aria-label={t("countMin")}
-                        className="h-8 w-20 text-xs"
+                        // `no-spinner`: Chrome reserves the stepper's width
+                        // inside the content box, so in a box this narrow the
+                        // arrows sit on top of a three-digit value.
+                        className="no-spinner h-8 min-w-0 flex-1 basis-16 text-xs"
                     />
                     <Input
                         type="number"
@@ -501,7 +530,7 @@ function ArrayCount({ expr, path, actions }: ArrayCountProps) {
                             })
                         }
                         aria-label={t("countMax")}
-                        className="h-8 w-20 text-xs"
+                        className="no-spinner h-8 min-w-0 flex-1 basis-16 text-xs"
                     />
                 </>
             ) : expr.count.kind === "fixed" ? (
@@ -516,7 +545,7 @@ function ArrayCount({ expr, path, actions }: ArrayCountProps) {
                         })
                     }
                     aria-label={t("countLabel")}
-                    className="h-8 w-24 text-xs"
+                    className="no-spinner h-8 min-w-0 flex-1 basis-20 text-xs"
                 />
             ) : null}
         </div>

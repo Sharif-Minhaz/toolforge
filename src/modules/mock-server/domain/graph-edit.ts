@@ -45,6 +45,115 @@ export function freeNodeId(graph: GraphDocument, kind: NodeKind): string {
     return `${kind}-${counter}`;
 }
 
+/**
+ * Back to a request wired straight to its response, and nothing else.
+ *
+ * What "clear the canvas" has to mean here, and the shape of it is the decision
+ * worth recording: it keeps the **response node's own data**. Removing every
+ * node including that one would throw away the body the reader built — which
+ * lives on that node, and which the route form edits through the same field —
+ * so a button labelled as clearing the *flow* would have quietly cleared the
+ * *response* as well. Logic goes; the two ends stay.
+ *
+ * A graph with no entry node is returned untouched: there is nothing to rebuild
+ * around, and refusing beats inventing.
+ */
+export function resetGraph(graph: GraphDocument): GraphDocument {
+    const entry = graph.nodes.find((node) => node.kind === "request");
+
+    if (entry === undefined) {
+        return graph;
+    }
+
+    const response = graph.nodes.find((node) => node.kind === "response");
+    const stripped: GraphDocument = {
+        ...graph,
+        nodes:
+            response === undefined
+                ? [{ ...entry, position: { x: 0, y: 0 } }]
+                : [
+                      { ...entry, position: { x: 0, y: 0 } },
+                      { ...response, position: { x: LAYOUT_COLUMN, y: 0 } },
+                  ],
+        edges: [],
+    };
+
+    return response === undefined ? stripped : connect(stripped, entry.id, "next", response.id);
+}
+
+export type CanvasPoint = { readonly x: number; readonly y: number };
+
+export type CanvasView = {
+    /** React Flow's pan/zoom transform, exactly as it reports it. */
+    readonly viewport: { readonly x: number; readonly y: number; readonly zoom: number };
+    readonly size: { readonly width: number; readonly height: number };
+};
+
+/** Roughly what `StudioNode` measures, used only to centre a drop. */
+const NODE_SIZE = { width: 180, height: 56 } as const;
+
+/** How far a colliding drop steps before trying again. */
+const DROP_STEP = 36;
+
+/**
+ * Where a node added from the palette should land.
+ *
+ * The middle of what the reader is currently looking at, which sounds obvious
+ * and was not what happened: the palette used to drop at a fixed point in *graph*
+ * coordinates, so once `fitView` had panned away — which it does on every open
+ * with more than a node or two — every new node appeared somewhere off-screen
+ * and had to be hunted for and dragged back. A canvas that puts new work outside
+ * the window is worse than one with no palette at all.
+ *
+ * Pure, and it takes the viewport rather than reading it, so the arithmetic that
+ * inverts React Flow's transform is unit-tested rather than trusted.
+ *
+ * A drop that would land on an existing node steps down and right until it is
+ * clear. Deterministic, because nothing on this site draws from `Math.random` —
+ * and a fixed step is also the version that never drops two nodes on the same
+ * pixel.
+ */
+export function dropPosition(graph: GraphDocument, view: CanvasView | null): CanvasPoint {
+    if (view === null || view.size.width === 0 || view.size.height === 0) {
+        // Nothing has reported a viewport yet, which happens only before the
+        // canvas has mounted. The origin is as good an answer as any and is
+        // where `fitView` will be looking.
+        return avoidCollisions(graph, { x: 0, y: 0 });
+    }
+
+    const { viewport, size } = view;
+
+    // The inverse of React Flow's transform: screen = flow * zoom + offset.
+    const centre = {
+        x: (size.width / 2 - viewport.x) / viewport.zoom - NODE_SIZE.width / 2,
+        y: (size.height / 2 - viewport.y) / viewport.zoom - NODE_SIZE.height / 2,
+    };
+
+    return avoidCollisions(graph, centre);
+}
+
+function avoidCollisions(graph: GraphDocument, start: CanvasPoint): CanvasPoint {
+    let point = start;
+
+    // Bounded rather than `while (true)`: a graph is capped well below this, and
+    // an unbounded search in a renderer is a hang waiting for the wrong input.
+    for (let attempt = 0; attempt < 64; attempt += 1) {
+        const taken = graph.nodes.some(
+            (node) =>
+                Math.abs(node.position.x - point.x) < NODE_SIZE.width / 2 &&
+                Math.abs(node.position.y - point.y) < NODE_SIZE.height / 2,
+        );
+
+        if (!taken) {
+            return point;
+        }
+
+        point = { x: point.x + DROP_STEP, y: point.y + DROP_STEP };
+    }
+
+    return point;
+}
+
 export function addNode(
     graph: GraphDocument,
     kind: NodeKind,

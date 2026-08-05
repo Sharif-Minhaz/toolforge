@@ -36,6 +36,16 @@ import { CODE_PADDING, CODE_TEXT, HighlightedCode } from "./code-block";
  * boxes identical whether or not a scrollbar is showing. Browsers that ignore
  * the property are the ones with overlay scrollbars, which never took the width
  * in the first place.
+ *
+ * **The wrapper is a grid**, and that is the fourth alignment rule rather than a
+ * style choice. The backdrop is out of flow, so the wrapper's height came from
+ * the textarea alone — which meant a caller passing `min-h-56` stretched the
+ * wrapper and the backdrop to 14rem while the textarea stayed at its own 8rem.
+ * The resize grip, which the browser draws at the *textarea's* bottom-right,
+ * then floated in the middle of the box with six rems of empty highlighted panel
+ * below it. One grid item stretches to the wrapper's content box, so the
+ * textarea is exactly as tall as the frame around it whatever floor a caller
+ * sets, and dragging the grip grows the row and the backdrop with it.
  */
 
 type CodeEditorProps = {
@@ -73,7 +83,8 @@ export function CodeEditor({
     return (
         <div
             className={cn(
-                "bg-card/70 ring-border/70 focus-within:ring-ring/60 relative min-w-0 rounded-xl ring-1 transition-shadow duration-200 ring-inset focus-within:ring-2",
+                // `grid` rather than the default block: see the note above.
+                "bg-card/70 ring-border/70 focus-within:ring-ring/60 relative grid min-h-32 min-w-0 rounded-xl ring-1 transition-shadow duration-200 ring-inset focus-within:ring-2",
                 className,
             )}
         >
@@ -110,7 +121,12 @@ export function CodeEditor({
                 className={cn(
                     CODE_TEXT,
                     CODE_PADDING,
-                    "relative block max-h-72 min-h-32 w-full resize-y overflow-auto rounded-xl border-0 bg-transparent",
+                    // The wrapper's only grid item, so it stretches to the frame
+                    // and the grip lands on the frame's own bottom edge. No
+                    // `max-h`: the cap belonged to the old block layout, and a
+                    // resize affordance that stops a few rems down reads as
+                    // broken rather than as deliberate.
+                    "relative block min-h-32 w-full resize-y overflow-auto rounded-xl border-0 bg-transparent",
                     "scrollbar-gutter-stable",
                     // The glyphs are transparent so the backdrop shows through;
                     // the caret and the selection are not, or there would be no

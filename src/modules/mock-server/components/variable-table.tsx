@@ -156,45 +156,6 @@ export function VariableTable({ workspaceId, servers, initial, environments }: V
                 </p>
             </div>
 
-            {shown.length === 0 ? (
-                <p className="border-border/70 text-muted-foreground rounded-2xl border border-dashed p-6 text-center text-xs leading-relaxed">
-                    {t("empty")}
-                </p>
-            ) : (
-                <ul className="flex flex-col gap-1.5">
-                    {shown.map((row) => (
-                        <li
-                            key={`${row.scopeType}:${row.scopeId}:${row.key}`}
-                            className="border-border/70 bg-card flex min-w-0 items-center gap-2 rounded-xl border px-2.5 py-2"
-                        >
-                            <span className="text-muted-foreground w-28 shrink-0 truncate text-[0.6875rem]">
-                                {scopeLabel(row)}
-                            </span>
-                            <span className="text-foreground w-44 shrink-0 truncate font-mono text-xs">
-                                {row.key}
-                            </span>
-                            <span className="text-muted-foreground flex min-w-0 flex-1 items-center gap-1 truncate font-mono text-xs">
-                                {row.masked ? (
-                                    <IconLock className="size-3 shrink-0" aria-hidden="true" />
-                                ) : null}
-                                {row.value}
-                            </span>
-                            <Button
-                                type="button"
-                                size="icon"
-                                variant="ghost"
-                                className="text-muted-foreground hover:text-destructive size-7 shrink-0"
-                                aria-label={t("remove")}
-                                disabled={pending}
-                                onClick={() => remove(row)}
-                            >
-                                <IconTrash className="size-3.5" aria-hidden="true" />
-                            </Button>
-                        </li>
-                    ))}
-                </ul>
-            )}
-
             <section
                 aria-labelledby="add-variable"
                 className="border-border/70 bg-card rounded-2xl border p-5 shadow-xs"
@@ -284,6 +245,45 @@ export function VariableTable({ workspaceId, servers, initial, environments }: V
                     ) : null}
                 </div>
             </section>
+
+            {shown.length === 0 ? (
+                <p className="border-border/70 text-muted-foreground rounded-2xl border border-dashed p-6 text-center text-xs leading-relaxed">
+                    {t("empty")}
+                </p>
+            ) : (
+                <ul className="flex flex-col gap-1.5">
+                    {shown.map((row) => (
+                        <li
+                            key={`${row.scopeType}:${row.scopeId}:${row.key}`}
+                            className="border-border/70 bg-card flex min-w-0 items-center gap-2 rounded-xl border px-2.5 py-2"
+                        >
+                            <span className="text-muted-foreground w-28 shrink-0 truncate text-[0.6875rem]">
+                                {scopeLabel(row)}
+                            </span>
+                            <span className="text-foreground w-44 shrink-0 truncate font-mono text-xs">
+                                {row.key}
+                            </span>
+                            <span className="text-muted-foreground flex min-w-0 flex-1 items-center gap-1 truncate font-mono text-xs">
+                                {row.masked ? (
+                                    <IconLock className="size-3 shrink-0" aria-hidden="true" />
+                                ) : null}
+                                {row.value}
+                            </span>
+                            <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                className="text-muted-foreground hover:text-destructive size-7 shrink-0"
+                                aria-label={t("remove")}
+                                disabled={pending}
+                                onClick={() => remove(row)}
+                            >
+                                <IconTrash className="size-3.5" aria-hidden="true" />
+                            </Button>
+                        </li>
+                    ))}
+                </ul>
+            )}
         </div>
     );
 }

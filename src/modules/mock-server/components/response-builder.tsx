@@ -180,7 +180,7 @@ export function ResponseBuilder({ value, onChange }: ResponseBuilderProps) {
             </div>
 
             {tab === "tree" ? (
-                <div className="border-border/70 bg-card/60 min-w-0 overflow-x-auto rounded-xl border p-2">
+                <div className="border-border/70 bg-card/60 min-w-0 rounded-xl border p-2">
                     <ul className="min-w-0">
                         <ValueRow
                             expr={value}

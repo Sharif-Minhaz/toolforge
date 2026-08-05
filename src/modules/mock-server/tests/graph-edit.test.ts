@@ -6,6 +6,7 @@ import {
     connect,
     copyFragment,
     disconnect,
+    dropPosition,
     emptyGraph,
     freeNodeId,
     LAYOUT_COLUMN,
@@ -13,6 +14,8 @@ import {
     pasteFragment,
     reaches,
     removeNodes,
+    resetGraph,
+    updateNodeData,
 } from "@/modules/mock-server/domain/graph-edit";
 import { createDefaultGraph, validateGraph } from "@/modules/mock-server/domain/graph";
 import {
@@ -412,5 +415,184 @@ describe("handlesFor", () => {
         const node = withResponse().nodes.find((candidate) => candidate.kind === "response");
 
         expect(node && handlesFor(node)).toEqual([]);
+    });
+});
+
+describe("dropPosition", () => {
+    const SIZE = { width: 800, height: 400 };
+
+    /**
+     * The bug this exists to prevent: the palette used to drop at a fixed point
+     * in *graph* coordinates, so once `fitView` had panned — which it does on
+     * every open — a new node appeared off-screen and had to be hunted for.
+     */
+    test("centres the node in an unpanned, unzoomed viewport", () => {
+        const point = dropPosition(emptyGraph(), {
+            viewport: { x: 0, y: 0, zoom: 1 },
+            size: SIZE,
+        });
+
+        // Half the node's own width and height back from the middle, so the
+        // node is centred rather than its corner.
+        expect(point).toEqual({ x: 400 - 90, y: 200 - 28 });
+    });
+
+    test("follows a pan, so the drop lands where the reader is looking", () => {
+        const point = dropPosition(emptyGraph(), {
+            viewport: { x: -1_000, y: -600, zoom: 1 },
+            size: SIZE,
+        });
+
+        expect(point).toEqual({ x: 1_400 - 90, y: 800 - 28 });
+    });
+
+    /** Screen distance and graph distance are not the same once zoom is not 1. */
+    test("divides by the zoom rather than ignoring it", () => {
+        const point = dropPosition(emptyGraph(), {
+            viewport: { x: 0, y: 0, zoom: 2 },
+            size: SIZE,
+        });
+
+        expect(point).toEqual({ x: 200 - 90, y: 100 - 28 });
+    });
+
+    test("a half-zoom pushes the centre further out, not closer in", () => {
+        const point = dropPosition(emptyGraph(), {
+            viewport: { x: 0, y: 0, zoom: 0.5 },
+            size: SIZE,
+        });
+
+        expect(point).toEqual({ x: 800 - 90, y: 400 - 28 });
+    });
+
+    describe("collisions", () => {
+        function occupied(at: { x: number; y: number }): GraphDocument {
+            return {
+                schemaVersion: 1,
+                nodes: [{ id: "response-1", kind: "response", position: at, data: { body: null } }],
+                edges: [],
+            } as unknown as GraphDocument;
+        }
+
+        test("steps clear of a node already at the centre", () => {
+            const view = { viewport: { x: 0, y: 0, zoom: 1 }, size: SIZE };
+            const centre = dropPosition(emptyGraph(), view);
+            const nudged = dropPosition(occupied(centre), view);
+
+            expect(nudged).not.toEqual(centre);
+            expect(nudged.x).toBeGreaterThan(centre.x);
+            expect(nudged.y).toBeGreaterThan(centre.y);
+        });
+
+        /** Deterministic, because nothing on this site draws from `Math.random`. */
+        test("gives the same answer twice for the same graph", () => {
+            const view = { viewport: { x: 0, y: 0, zoom: 1 }, size: SIZE };
+            const graph = occupied(dropPosition(emptyGraph(), view));
+
+            expect(dropPosition(graph, view)).toEqual(dropPosition(graph, view));
+        });
+
+        test("leaves a node that is well clear alone", () => {
+            const view = { viewport: { x: 0, y: 0, zoom: 1 }, size: SIZE };
+            const centre = dropPosition(emptyGraph(), view);
+
+            expect(dropPosition(occupied({ x: 5_000, y: 5_000 }), view)).toEqual(centre);
+        });
+    });
+
+    /**
+     * Before the canvas has mounted there is no viewport to centre on, so the
+     * drop falls back to the origin — where `fitView` will be looking. It still
+     * steps clear of the entry node, which an empty graph already has sitting
+     * there, so even the fallback never buries a new node under an old one.
+     */
+    test("falls back to near the origin when nothing has reported a viewport", () => {
+        const point = dropPosition(emptyGraph(), null);
+
+        expect(point.x).toBeGreaterThanOrEqual(0);
+        expect(point.x).toBeLessThan(200);
+        expect(point).not.toEqual(emptyGraph().nodes[0].position);
+    });
+
+    test("treats a zero-sized canvas as no viewport at all", () => {
+        expect(
+            dropPosition(emptyGraph(), {
+                viewport: { x: 0, y: 0, zoom: 1 },
+                size: { width: 0, height: 0 },
+            }),
+        ).toEqual(dropPosition(emptyGraph(), null));
+    });
+});
+
+describe("resetGraph", () => {
+    /**
+     * The rule the Clear button rests on: logic goes, the two ends stay. The
+     * response node carries the body — the same body the route form edits — so
+     * removing it would make a button labelled as clearing the *flow* quietly
+     * clear the *response* too.
+     */
+    test("keeps the request and the response, drops everything between", () => {
+        let graph = withResponse();
+        graph = addNode(graph, "delay", ORIGIN);
+        graph = addNode(graph, "log", ORIGIN);
+
+        const cleared = resetGraph(graph);
+
+        expect(cleared.nodes.map((node) => node.kind).sort()).toEqual(["request", "response"]);
+    });
+
+    test("keeps the response node's own data", () => {
+        const graph = updateNodeData(withResponse(), "response", {
+            body: { kind: "static", value: "kept" },
+        } as never);
+        const cleared = resetGraph(graph);
+
+        expect(cleared.nodes.find((node) => node.kind === "response")?.data).toEqual({
+            body: { kind: "static", value: "kept" },
+        } as never);
+    });
+
+    test("rewires the request straight to the response", () => {
+        let graph = withResponse();
+        graph = addNode(graph, "delay", ORIGIN);
+
+        const cleared = resetGraph(graph);
+
+        expect(cleared.edges).toHaveLength(1);
+        expect(cleared.edges[0]).toMatchObject({ source: "request", target: "response" });
+    });
+
+    /** A cleared graph still has to be one the executor accepts. */
+    test("produces a graph that validates", () => {
+        expect(validateGraph(resetGraph(addNode(withResponse(), "delay", ORIGIN))).ok).toBe(true);
+    });
+
+    test("lays the two survivors out rather than leaving them where they were", () => {
+        const graph = moveNode(withResponse(), "response", { x: 4_000, y: 4_000 });
+        const cleared = resetGraph(graph);
+
+        expect(cleared.nodes.find((node) => node.kind === "request")?.position).toEqual({
+            x: 0,
+            y: 0,
+        });
+        expect(cleared.nodes.find((node) => node.kind === "response")?.position).toEqual({
+            x: LAYOUT_COLUMN,
+            y: 0,
+        });
+    });
+
+    test("survives a graph that has no response node", () => {
+        const graph = removeNodes(withResponse(), ["response"]);
+        const cleared = resetGraph(graph);
+
+        expect(cleared.nodes.map((node) => node.kind)).toEqual(["request"]);
+        expect(cleared.edges).toEqual([]);
+    });
+
+    /** Nothing sensible to rebuild around, so refusing beats inventing. */
+    test("returns a graph with no entry node untouched", () => {
+        const orphan: GraphDocument = { schemaVersion: 1, nodes: [], edges: [] };
+
+        expect(resetGraph(orphan)).toBe(orphan);
     });
 });

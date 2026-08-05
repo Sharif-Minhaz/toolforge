@@ -4,6 +4,7 @@ import {
     IconArrowRight,
     IconLoader2,
     IconPlayerPause,
+    IconPlayerPlay,
     IconPlus,
     IconTrash,
 } from "@tabler/icons-react";
@@ -19,7 +20,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 
-import { createServer, deleteServer } from "../actions/servers";
+import { createServer, deleteServer, pauseServer } from "../actions/servers";
 import { MAX_SERVERS_PER_WORKSPACE } from "../domain/constants";
 import { suggestServerKey } from "../domain/server-key";
 import type { ServerFailureReason, ServerSummary } from "../types";
@@ -81,6 +82,26 @@ export function ServerGrid({ workspaceId, servers, origin }: ServerGridProps) {
             setName("");
             setKey("");
             toast.success(tToast("serverCreated"));
+            router.refresh();
+        });
+    }
+
+    function togglePause(serverId: string, isPaused: boolean) {
+        setFailure(null);
+
+        startTransition(async () => {
+            const result = await pauseServer({ serverId, isPaused });
+
+            if (!result.ok) {
+                setFailure(result.reason);
+
+                return;
+            }
+
+            setRows((held) =>
+                held.map((row) => (row.id === serverId ? { ...row, isPaused } : row)),
+            );
+            toast.success(isPaused ? t("pausedToast") : t("resumedToast"));
             router.refresh();
         });
     }
@@ -208,7 +229,19 @@ export function ServerGrid({ workspaceId, servers, origin }: ServerGridProps) {
                         {rows.map((server) => (
                             <li
                                 key={server.id}
-                                className="border-border/70 bg-card flex flex-col gap-3 rounded-2xl border p-4 shadow-xs"
+                                className={cn(
+                                    "flex flex-col gap-3 rounded-2xl border p-4 shadow-xs transition-colors",
+                                    // A paused server is not a styling variant,
+                                    // it is a different state of the thing the
+                                    // card describes — so it changes the frame
+                                    // and not just a badge. The address below is
+                                    // deliberately left legible: it is still the
+                                    // address, and it is what somebody checks
+                                    // when their calls start failing.
+                                    server.isPaused
+                                        ? "border-brand-amber/45 bg-brand-amber/6"
+                                        : "border-border/70 bg-card",
+                                )}
                             >
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0">
@@ -219,19 +252,37 @@ export function ServerGrid({ workspaceId, servers, origin }: ServerGridProps) {
                                             {t("endpointCount", { count: server.endpointCount })}
                                         </p>
                                     </div>
-                                    {server.isPaused ? (
-                                        <span className="bg-brand-amber/12 text-brand-amber flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-[0.625rem] leading-[1.3] font-medium">
+                                    <span
+                                        className={cn(
+                                            "flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-[0.625rem] leading-[1.3] font-medium",
+                                            server.isPaused
+                                                ? "bg-brand-amber/12 text-brand-amber"
+                                                : "bg-brand-emerald/12 text-brand-emerald",
+                                        )}
+                                    >
+                                        {server.isPaused ? (
                                             <IconPlayerPause
                                                 className="size-3"
                                                 stroke={2}
                                                 aria-hidden="true"
                                             />
-                                            {t("paused")}
-                                        </span>
-                                    ) : null}
+                                        ) : (
+                                            <span
+                                                className="bg-brand-emerald size-1.5 rounded-full"
+                                                aria-hidden="true"
+                                            />
+                                        )}
+                                        {server.isPaused ? t("paused") : t("live")}
+                                    </span>
                                 </div>
 
                                 <MockUrl origin={origin} serverKey={server.key} />
+
+                                {server.isPaused ? (
+                                    <p className="text-brand-amber text-[0.6875rem] leading-normal">
+                                        {t("pausedShort")}
+                                    </p>
+                                ) : null}
 
                                 {armed === server.id ? (
                                     <div className="flex flex-wrap items-center gap-2">
@@ -275,6 +326,27 @@ export function ServerGrid({ workspaceId, servers, origin }: ServerGridProps) {
                                             {t("open")}
                                             <IconArrowRight className="size-4" aria-hidden="true" />
                                         </Link>
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            className="gap-1.5"
+                                            disabled={pending}
+                                            onClick={() => togglePause(server.id, !server.isPaused)}
+                                        >
+                                            {server.isPaused ? (
+                                                <IconPlayerPlay
+                                                    className="size-3.5"
+                                                    aria-hidden="true"
+                                                />
+                                            ) : (
+                                                <IconPlayerPause
+                                                    className="size-3.5"
+                                                    aria-hidden="true"
+                                                />
+                                            )}
+                                            {server.isPaused ? t("resume") : t("pause")}
+                                        </Button>
                                         <Button
                                             type="button"
                                             size="sm"

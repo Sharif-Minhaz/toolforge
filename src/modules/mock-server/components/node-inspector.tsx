@@ -198,7 +198,7 @@ export function NodeInspector({ node, onChange }: NodeInspectorProps) {
                                         })
                                     }
                                     aria-label={t("switchCaseLabel")}
-                                    className="h-8 text-xs"
+                                    className="h-8 min-w-0 flex-1 text-xs"
                                 />
                                 <Button
                                     type="button"
@@ -250,7 +250,7 @@ export function NodeInspector({ node, onChange }: NodeInspectorProps) {
                             max={MAX_DELAY_MS}
                             value={readNumber(data, "ms", 0)}
                             onChange={(event) => patch({ ms: Number(event.target.value) })}
-                            className="h-9 text-xs"
+                            className="no-spinner h-9 text-xs"
                         />
                     </Field>
 
@@ -292,7 +292,7 @@ export function NodeInspector({ node, onChange }: NodeInspectorProps) {
                                     })
                                 }
                                 aria-label={t("branchLabel")}
-                                className="h-8 text-xs"
+                                className="h-8 min-w-0 flex-1 text-xs"
                             />
                             <Input
                                 type="number"
@@ -308,7 +308,10 @@ export function NodeInspector({ node, onChange }: NodeInspectorProps) {
                                     })
                                 }
                                 aria-label={t("branchWeight")}
-                                className="h-8 w-20 text-xs"
+                                // `no-spinner` and wider: Chrome takes the
+                                // stepper's width out of the content box, so a
+                                // three-digit weight rendered under the arrows.
+                                className="no-spinner h-8 w-14 shrink-0 text-xs"
                             />
                             {/* Weights are relative, so the share is shown rather
                                 than made the reader's arithmetic problem. */}
