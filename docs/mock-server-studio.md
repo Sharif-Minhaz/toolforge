@@ -1,6 +1,6 @@
 # Visual Mock Server Studio — System Design
 
-Status: **M0 and M1 shipped.** See §14 for the ladder.
+Status: **M0–M8 shipped.** Every milestone on the ladder is done. See §14 for the ladder.
 Decisions locked in Phase 1 are marked **[locked]**; everything else is open.
 
 > The Prisma block in §2.1 is the design as first written. Where the shipped
@@ -18,12 +18,12 @@ public request loads the graph, executes it, and returns the response.
 
 Four decisions from the Phase 1 review frame everything below.
 
-| Decision | Choice |
-| --- | --- |
-| Node model **[locked]** | Two tiers — 11 control-flow node kinds on canvas, values as an inline `ValueExpr` union |
-| Public origin **[locked]** | Path form `/m/<key>/…` for now — the deployment is on a `*.vercel.app` domain with no wildcard DNS. Designed so the origin is one config value to change. See §4.1 |
-| Outbound nodes **[locked]** | `httpRequest` / `webhook` ship last, behind the address guard and a fail-closed quota |
-| Placement **[locked]** | Top-level `/mock` section, one catalog entry so search and sitemap find it |
+| Decision                    | Choice                                                                                                                                                             |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Node model **[locked]**     | Two tiers — 11 control-flow node kinds on canvas, values as an inline `ValueExpr` union                                                                            |
+| Public origin **[locked]**  | Path form `/m/<key>/…` for now — the deployment is on a `*.vercel.app` domain with no wildcard DNS. Designed so the origin is one config value to change. See §4.1 |
+| Outbound nodes **[locked]** | `httpRequest` / `webhook` ship last, behind the address guard and a fail-closed quota                                                                              |
+| Placement **[locked]**      | Top-level `/mock` section, one catalog entry so search and sitemap find it                                                                                         |
 
 ### Why two tiers
 
@@ -33,8 +33,8 @@ is the reason people call it spaghetti. Splitting control flow from data flow
 means the canvas holds eleven node kinds and the object above is six rows in a
 tree. Arbitrary nesting comes free because `ValueExpr` is recursive.
 
-The original brief listed the same items twice — once under *Available Nodes*,
-once under *Dynamic Data → value providers*. That duplication is what the split
+The original brief listed the same items twice — once under _Available Nodes_,
+once under _Dynamic Data → value providers_. That duplication is what the split
 resolves.
 
 ---
@@ -270,17 +270,17 @@ The one thing that genuinely could not be retrofitted cheaply is
 
 No accounts. Two credentials, different jobs.
 
-| Credential | Lives in | Purpose |
-| --- | --- | --- |
+| Credential       | Lives in                                       | Purpose                                                                |
+| ---------------- | ---------------------------------------------- | ---------------------------------------------------------------------- |
 | Workspace secret | HttpOnly, SameSite=Lax cookie `toolforge.mock` | Session — proves ownership on every studio action. **One per browser** |
-| Recovery key | Shown once, saved by the human | Bearer — adds a browser to a workspace that already exists |
+| Recovery key     | Shown once, saved by the human                 | Bearer — adds a browser to a workspace that already exists             |
 
 The cookie holds secrets joined by `.`, capped at **3**. The server hashes each
 and looks up a row in `workspace_secrets`.
 
 **A row per device, not a column on `workspaces`.** This changed during M0 and
 the reason is worth keeping: with a single `secretHash` column, importing a
-recovery key into a second browser would have to *overwrite* it, silently
+recovery key into a second browser would have to _overwrite_ it, silently
 logging the first browser out. A recovery key whose use evicts you elsewhere is
 not a recovery key. The row-per-claim version also makes "forget on this device"
 a real, per-device revocation rather than a cookie edit.
@@ -435,19 +435,19 @@ is written back on the next save.
 
 ### 5.2 The eleven node kinds
 
-| Kind | Outputs | Data |
-| --- | --- | --- |
-| `request` | `next` | none — the entry anchor, exactly one per graph |
-| `auth` | `pass`, `fail` | `{ mode: "none"\|"apiKey"\|"bearer"\|"basic"\|"jwt", config }` |
-| `condition` | `true`, `false` | `{ left: ValueExpr, op: CompareOp, right: ValueExpr }` |
-| `switch` | `case:<id>…`, `default` | `{ operand: ValueExpr, cases: SwitchCase[] }` |
-| `delay` | `next` | `{ ms: number } \| { min: number, max: number }` |
-| `randomBranch` | `branch:<id>…` | `{ branches: { id, label, weight }[] }` |
-| `setVariable` | `next` | `{ name: string, value: ValueExpr }` |
-| `transform` | `next` | `{ source, target, ops: TransformOp[] }` |
-| `log` | `next` | `{ level, message: ValueExpr }` |
-| `httpRequest` | `ok`, `error` | milestone 8 — see §11 |
-| `response` | terminal | `{ status, headers: HeaderRow[], contentType, body: ValueExpr }` |
+| Kind           | Outputs                 | Data                                                             |
+| -------------- | ----------------------- | ---------------------------------------------------------------- |
+| `request`      | `next`                  | none — the entry anchor, exactly one per graph                   |
+| `auth`         | `pass`, `fail`          | `{ mode: "none"\|"apiKey"\|"bearer"\|"basic"\|"jwt", config }`   |
+| `condition`    | `true`, `false`         | `{ left: ValueExpr, op: CompareOp, right: ValueExpr }`           |
+| `switch`       | `case:<id>…`, `default` | `{ operand: ValueExpr, cases: SwitchCase[] }`                    |
+| `delay`        | `next`                  | `{ ms: number } \| { min: number, max: number }`                 |
+| `randomBranch` | `branch:<id>…`          | `{ branches: { id, label, weight }[] }`                          |
+| `setVariable`  | `next`                  | `{ name: string, value: ValueExpr }`                             |
+| `transform`    | `next`                  | `{ source, target, ops: TransformOp[] }`                         |
+| `log`          | `next`                  | `{ level, message: ValueExpr }`                                  |
+| `httpRequest`  | `ok`, `error`           | milestone 8 — see §11                                            |
+| `response`     | terminal                | `{ status, headers: HeaderRow[], contentType, body: ValueExpr }` |
 
 `Build Response` and `Return Response` are **one node**. Two nodes admit a graph
 that builds without returning, which is a state with no meaning.
@@ -562,14 +562,14 @@ Invariant, and the single most valuable test in the suite:
 
 ### 6.3 Budgets
 
-| Constant | Value | Why |
-| --- | --- | --- |
-| `MAX_STEPS` | 200 | Backstop behind save-time cycle detection |
-| `MAX_DELAY_MS` | 5 000 | An uncapped delay is a cheap way to exhaust function concurrency |
-| `MAX_TOTAL_MS` | 10 000 | Absolute deadline; whatever is unfinished reports as an error, not a hang |
-| `MAX_RESPONSE_BYTES` | 1 MiB | |
-| `MAX_ARRAY_ITEMS` | 1 000 | Per `array` expression |
-| `MAX_VALUE_DEPTH` | 12 | Recursion guard on `ValueExpr` |
+| Constant             | Value  | Why                                                                       |
+| -------------------- | ------ | ------------------------------------------------------------------------- |
+| `MAX_STEPS`          | 200    | Backstop behind save-time cycle detection                                 |
+| `MAX_DELAY_MS`       | 5 000  | An uncapped delay is a cheap way to exhaust function concurrency          |
+| `MAX_TOTAL_MS`       | 10 000 | Absolute deadline; whatever is unfinished reports as an error, not a hang |
+| `MAX_RESPONSE_BYTES` | 1 MiB  |                                                                           |
+| `MAX_ARRAY_ITEMS`    | 1 000  | Per `array` expression                                                    |
+| `MAX_VALUE_DEPTH`    | 12     | Recursion guard on `ValueExpr`                                            |
 
 ### 6.4 One executor, two callers
 
@@ -610,16 +610,16 @@ src/app/m/[serverKey]/[[...path]]/       public execution
 
 ### 7.2 Routes
 
-| Route | What |
-| --- | --- |
-| `/mock` | Landing: workspace list, create, import by recovery key |
-| `/mock/[workspaceId]` | Overview, servers grid |
-| `/mock/[workspaceId]/servers/[serverId]` | Endpoint tree, server settings |
-| `/mock/[workspaceId]/servers/[serverId]/e/[endpointId]` | **The studio** |
-| `/mock/[workspaceId]/logs` | Searchable log table |
-| `/mock/[workspaceId]/environments` | Variables, per scope, per environment |
-| `/mock/[workspaceId]/import` | OpenAPI upload and mapping preview |
-| `/mock/[workspaceId]/settings` | Rename, recovery key, delete, forget-on-this-device |
+| Route                                                   | What                                                    |
+| ------------------------------------------------------- | ------------------------------------------------------- |
+| `/mock`                                                 | Landing: workspace list, create, import by recovery key |
+| `/mock/[workspaceId]`                                   | Overview, servers grid                                  |
+| `/mock/[workspaceId]/servers/[serverId]`                | Endpoint tree, server settings                          |
+| `/mock/[workspaceId]/servers/[serverId]/e/[endpointId]` | **The studio**                                          |
+| `/mock/[workspaceId]/logs`                              | Searchable log table                                    |
+| `/mock/[workspaceId]/environments`                      | Variables, per scope, per environment                   |
+| `/mock/[workspaceId]/import`                            | OpenAPI upload and mapping preview                      |
+| `/mock/[workspaceId]/settings`                          | Rename, recovery key, delete, forget-on-this-device     |
 
 Every one gets a `loading.tsx` with skeletons matching the real layout.
 
@@ -641,9 +641,9 @@ clearLogs
 
 Route Handlers are used **only** where the client is not this UI:
 
-| Handler | Why it must be HTTP |
-| --- | --- |
-| `/m/[serverKey]/[[...path]]` | The client is somebody else's program |
+| Handler                       | Why it must be HTTP                                          |
+| ----------------------------- | ------------------------------------------------------------ |
+| `/m/[serverKey]/[[...path]]`  | The client is somebody else's program                        |
 | `/api/v1/*` (later milestone) | Seeding mocks from CI; authenticated by `X-Workspace-Secret` |
 
 The v1 REST layer stays a thin shell over the same `repository/` + `domain/`
@@ -676,7 +676,31 @@ StudioPage (server)
 
 The JSON escape hatch lives in `ResponseBuilder` as a second tab, two-way, built
 on the existing `code-editor.tsx` and `highlight.ts`. Refusing one loses every
-power user; *"almost never write JSON"* is the goal, not *"never"*.
+power user; _"almost never write JSON"_ is the goal, not _"never"_.
+
+**What shipped, and one correction to the shape above.** The canvas is not a
+panel inside the route form. It first shipped as one — a 26rem box under the
+response editor, reached by a Response/Flow tab — and that was the wrong shape
+for all three of its parts at once: the canvas had no room to lay a graph out,
+the palette wrapped into three rows of chips, and the inspector, which for a
+response node _is_ the whole tree editor, sat below the fold of a panel that was
+itself below the fold of the page.
+
+`GraphStudio` is now a full-screen dialog opened from the route form, three
+panes filling the viewport — palette rail, canvas, inspector — stacking to one
+scrolling column below `lg`. The rule it stands for: **a canvas editor takes the
+viewport or it takes a door, never a slot in a form.** The dialog's own
+`Save route` runs the same `save()` the form does and closes on success;
+closing without saving keeps the edits in the store and the form shows an
+_Unsaved changes_ chip, because the store outlives the dialog.
+
+That last point cost a latent bug worth recording. The flag saying "the canvas
+has been touched, read the graph from the store on save" was a boolean, and the
+store is module-level — so dirtying one route's flow and then saving a
+_different_ route would have written the first route's graph onto the second. It
+is now the endpoint id (`flowDirtyFor`), compared against the open route. Any
+flag that gates reading from a module-scoped store has to name _what_ it was
+set for, not merely that it was set.
 
 ### 7.5 State management
 
@@ -712,7 +736,7 @@ if (updated.count === 0) return { ok: false, reason: "version_conflict" };
 ```
 
 Zero rows updated means another tab saved first. The UI shows a conflict banner
-offering *reload theirs* or *overwrite with mine*. **Never last-write-wins** — two
+offering _reload theirs_ or _overwrite with mine_. **Never last-write-wins** — two
 studio tabs is the normal case, not the edge case.
 
 Optimistic UI: the store applies every edit immediately and tracks
@@ -742,8 +766,8 @@ response. Confirmed available in Route Handlers in the bundled Next 16 docs.
 - Candidate query excludes `graph`; the winner's graph is a second `findUnique`.
 - No execution cache in v1 — two indexed queries is roughly 2 ms and correctness
   beats it. A later milestone can add `unstable_cache` keyed on `serverId` with
-  `revalidateTag(\`mock:server:${id}\`)` on every save. The trap is stale graphs
-  after a save, which is why the route carries `force-dynamic` until then.
+  `revalidateTag(\`mock:server:${id}\`)`on every save. The trap is stale graphs
+after a save, which is why the route carries`force-dynamic` until then.
 - React Flow: `onlyRenderVisibleElements` above ~150 nodes.
 - Canvas is `next/dynamic` with `ssr: false` and a skeleton matching its layout.
   React Flow is client-only and must never enter the shared bundle the other 28
@@ -826,21 +850,21 @@ and traces. The copy says plainly that a mock server is not a secret store.
 
 Everything below runs in `bun test` against `domain/`.
 
-| Area | What is asserted |
-| --- | --- |
-| `match.ts` | Specificity ordering, `/users/me` beating `/users/:id`, wildcards, 404 vs 405, trailing slash, percent-decoding |
-| `resolve.ts` | Every `ValueExpr` kind, depth cap, array cap, missing paths degrading rather than throwing |
-| `executor.ts` | Every node kind with fake clock, fake random, refusing fetch; every budget; every error reason |
-| Seed invariant | Same graph + request + seed → identical bytes, across every node kind |
-| `validate.ts` | Each rule in §5.5, including the unreachable-variable check |
-| `migrate.ts` | Every schema version migrates forward and still executes |
-| `quota.ts` | Window arithmetic, mirroring the port-scanner tests |
-| `openapi.ts` | Spec → graph, `$ref`, `allOf`, circular refs hitting the depth cap |
+| Area           | What is asserted                                                                                                |
+| -------------- | --------------------------------------------------------------------------------------------------------------- |
+| `match.ts`     | Specificity ordering, `/users/me` beating `/users/:id`, wildcards, 404 vs 405, trailing slash, percent-decoding |
+| `resolve.ts`   | Every `ValueExpr` kind, depth cap, array cap, missing paths degrading rather than throwing                      |
+| `executor.ts`  | Every node kind with fake clock, fake random, refusing fetch; every budget; every error reason                  |
+| Seed invariant | Same graph + request + seed → identical bytes, across every node kind                                           |
+| `validate.ts`  | Each rule in §5.5, including the unreachable-variable check                                                     |
+| `migrate.ts`   | Every schema version migrates forward and still executes                                                        |
+| `quota.ts`     | Window arithmetic, mirroring the port-scanner tests                                                             |
+| `openapi.ts`   | Spec → graph, `$ref`, `allOf`, circular refs hitting the depth cap                                              |
 
 ### The independent check
 
-Following the rule already in `CLAUDE.md` — *verify against something that is not
-you*:
+Following the rule already in `CLAUDE.md` — _verify against something that is not
+you_:
 
 **OpenAPI spec → import → execute → validate the produced response against that
 same spec's response schema, using `ajv`.** A wrong value provider, a wrong array
@@ -872,17 +896,18 @@ machine input.
 
 Each is independently shippable and leaves the product working.
 
-| # | Milestone | Ships |
-| --- | --- | --- |
-| **M0** ✅ | Foundation | Schema, migration, workspace identity, cookie, recovery key, quota, `/mock` landing, nav entry |
-| **M1** ✅ | Servers and routes | Servers, endpoints, static JSON responses, **public execution live at `/m/<key>/…`**, specificity-ranked route matching, 404/405/OPTIONS, HEAD-via-GET |
-| **M2** | Response Builder + collections | The tree editor, `ValueExpr`, value pickers, Faker registry, JSON escape-hatch tab |
-| **M3** | The Studio | React Flow canvas, node registry, executor, autosave, optimistic concurrency, undo/redo, copy/paste, auto-layout, preview |
-| **M4** | Logic nodes | `auth`, `condition`, `switch`, `delay`, `randomBranch`, `setVariable`, `transform`, `log` |
-| **M5** | Logs and trace | Searchable table, redaction, retention, per-node timing |
-| **M6** | Environments | Scoped variables, multiple environments, secret masking |
-| **M7** | OpenAPI | Import with mapping preview, chunked creation, export |
-| **M8** | Outbound | `httpRequest` and `webhook` behind the full guard stack |
+| #            | Milestone          | Ships                                                                                                                                                                                                        |
+| ------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **M0** ✅    | Foundation         | Schema, migration, workspace identity, cookie, recovery key, quota, `/mock` landing, nav entry                                                                                                               |
+| **M1** ✅    | Servers and routes | Servers, endpoints, static JSON responses, **public execution live at `/m/<key>/…`**, specificity-ranked route matching, 404/405/OPTIONS, HEAD-via-GET                                                       |
+| **M2** ✅    | Response Builder   | The tree editor, all 11 `ValueExpr` kinds, 51 curated Faker providers, seeded PRNG, honest JSON escape-hatch tab                                                                                             |
+| **M3** ✅    | The Studio         | React Flow canvas, two-part node registry, undo/redo, copy/paste, duplicate, auto-layout, keyboard shortcuts, one save path shared with the response form                                                    |
+| **Deferred** | Collections        | The `collections` table, its self-referencing tree and the variable scope all exist; the folder UI does not. Endpoints currently sit at a server's root                                                      |
+| **M4** ✅    | Logic nodes        | `auth`, `condition`, `switch`, `delay`, `randomBranch`, `setVariable`, `log`, plus an inspector for each. `transform` is declared and deliberately unimplemented — the Response Builder already expresses it |
+| **M5** ✅    | Logs and trace     | Searchable table, write-path redaction, 500-row and 7-day retention, per-node trace, `after()` so logging never delays a response                                                                            |
+| **M6** ✅    | Environments       | Workspace/server/collection scopes with narrowest-wins, named environments, secrets masked before they cross the action boundary                                                                             |
+| **M7** ✅    | OpenAPI            | JSON and YAML import, internal `$ref` resolution, schema-to-example mapping, a skipped-operations report, and export back to OpenAPI 3.1                                                                     |
+| **M8** ✅    | Outbound           | `httpRequest` behind `guardAddresses`, resolve-then-connect, per-hop redirect guarding, streaming size cap, and a fail-closed per-workspace quota                                                            |
 
 **M1 is the one that matters most.** It ships a working, publicly-callable mock
 server before a single canvas node exists. Everything after it is an upgrade to
@@ -892,15 +917,15 @@ how the response is built, not a prerequisite for the product being useful.
 
 ## 15. Dependencies to add
 
-| Package | Where | Licence |
-| --- | --- | --- |
-| `@xyflow/react` | Client, dynamic import | MIT |
-| `zustand`, `zundo` | Client | MIT |
-| `@dagrejs/dagre` | Client | MIT |
-| `@faker-js/faker` | Server only, lazy | MIT |
-| `@apidevtools/swagger-parser` | Server only, M7 | MIT |
-| `yaml` | Server, M7 | ISC |
-| `ajv` | devDependency, tests | MIT |
+| Package                       | Where                  | Licence |
+| ----------------------------- | ---------------------- | ------- |
+| `@xyflow/react`               | Client, dynamic import | MIT     |
+| `zustand`, `zundo`            | Client                 | MIT     |
+| `@dagrejs/dagre`              | Client                 | MIT     |
+| `@faker-js/faker`             | Server only, lazy      | MIT     |
+| `@apidevtools/swagger-parser` | Server only, M7        | MIT     |
+| `yaml`                        | Server, M7             | ISC     |
+| `ajv`                         | devDependency, tests   | MIT     |
 
 Reused, nothing added: `zod`, `prisma`, `pg`, Turnstile, `address-guard`,
 `logEvent`, `code-editor`, `highlight`, `scan-radar`, `use-result-scroll`.
@@ -913,7 +938,7 @@ real-time collaboration is on the table.
 
 ## 16. Documentation owed
 
-Per the *Documentation Is Part of the Change* rule, landing this touches:
+Per the _Documentation Is Part of the Change_ rule, landing this touches:
 
 - `README.md` — Tools table row, environment table, project-structure block,
   and the "everything runs in the browser" promise line, which must name its

@@ -1,7 +1,19 @@
 import { MAX_EXECUTION_STEPS, MAX_RESPONSE_BYTES } from "./constants";
 import { isJsonType, resolveContentType } from "./content-type";
 import { readGraph, migrateGraph } from "./graph";
+import {
+    planDelay,
+    readLogLine,
+    runAuth,
+    runCondition,
+    runHttpRequest,
+    runRandomBranch,
+    runSetVariable,
+    runSwitch,
+    runTransform,
+} from "./nodes";
 import { resolveValue } from "./values";
+import type { LogLine } from "./nodes";
 import type {
     ExecutionContext,
     ExecutionResult,
@@ -35,11 +47,49 @@ import type {
  *   ones.
  */
 
-function runNode(node: GraphNode, context: ExecutionContext): NodeResult {
+/**
+ * One node's turn.
+ *
+ * Synchronous by design. The only node that waits is `delay`, and it returns a
+ * *plan* rather than sleeping — the executor owns the single `await`, so a test
+ * never has to wait for real time and the deadline stays checked in one place.
+ */
+function runNode(node: GraphNode, context: ExecutionContext, log: LogLine[]): NodeResult {
     switch (node.kind) {
         case "request":
             // The entry anchor does nothing but name where execution begins.
             return { kind: "continue", handle: "next" };
+
+        case "auth":
+            return runAuth(node, context);
+
+        case "condition":
+            return runCondition(node, context);
+
+        case "switch":
+            return runSwitch(node, context);
+
+        case "randomBranch":
+            return runRandomBranch(node, context);
+
+        case "setVariable":
+            return runSetVariable(node, context);
+
+        case "log": {
+            const line = readLogLine(node, context);
+
+            if (line !== null) {
+                // Collected into the trace, never written to this deployment's
+                // stdout. A visitor's mock must not be able to put arbitrary
+                // text into our logs.
+                log.push(line);
+            }
+
+            return { kind: "continue", handle: "next" };
+        }
+
+        case "transform":
+            return runTransform();
 
         case "response": {
             const resolved = resolveValue(node.data.body, context);
@@ -87,12 +137,16 @@ function byteLength(body: string): number {
     return new TextEncoder().encode(body).length;
 }
 
-export function executeGraph(raw: unknown, context: ExecutionContext): ExecutionResult {
+export async function executeGraph(
+    raw: unknown,
+    context: ExecutionContext,
+): Promise<ExecutionResult> {
     const trace: TraceEntry[] = [];
+    const log: LogLine[] = [];
     const read = readGraph(migrateGraph(raw));
 
     if (!read.ok) {
-        return { ok: false, reason: "graph_invalid", trace };
+        return { ok: false, reason: "graph_invalid", trace, log };
     }
 
     const graph: GraphDocument = read.graph;
@@ -100,7 +154,7 @@ export function executeGraph(raw: unknown, context: ExecutionContext): Execution
     const entry = graph.nodes.find((node) => node.kind === "request");
 
     if (entry === undefined) {
-        return { ok: false, reason: "no_entry_node", trace };
+        return { ok: false, reason: "no_entry_node", trace, log };
     }
 
     let current: GraphNode | undefined = entry;
@@ -108,29 +162,49 @@ export function executeGraph(raw: unknown, context: ExecutionContext): Execution
 
     while (current !== undefined) {
         if (steps >= MAX_EXECUTION_STEPS) {
-            return { ok: false, reason: "step_budget_exceeded", nodeId: current.id, trace };
+            return { ok: false, reason: "step_budget_exceeded", nodeId: current.id, trace, log };
         }
 
         if (context.clock() >= context.deadlineAt) {
-            return { ok: false, reason: "deadline_exceeded", nodeId: current.id, trace };
+            return { ok: false, reason: "deadline_exceeded", nodeId: current.id, trace, log };
         }
 
         steps += 1;
 
         const startedAt = context.clock();
-        const result = runNode(current, context);
+
+        // The single `await` in the executor. A delay computes its duration
+        // purely and waits here, so the deadline is checked around it in one
+        // place rather than inside every node that might sleep.
+        if (current.kind === "delay") {
+            const plan = planDelay(current, context);
+
+            if (plan.ms > 0) {
+                await context.sleep(
+                    Math.min(plan.ms, Math.max(0, context.deadlineAt - context.clock())),
+                );
+            }
+        }
+
+        const result =
+            current.kind === "delay"
+                ? ({ kind: "continue", handle: "next" } as const)
+                : current.kind === "httpRequest"
+                  ? await runHttpRequest(current, context)
+                  : runNode(current, context, log);
+
         trace.push({ nodeId: current.id, kind: current.kind, ms: context.clock() - startedAt });
 
         if (result.kind === "error") {
-            return { ok: false, reason: result.reason, nodeId: current.id, trace };
+            return { ok: false, reason: result.reason, nodeId: current.id, trace, log };
         }
 
         if (result.kind === "respond") {
             if (byteLength(result.response.body) > MAX_RESPONSE_BYTES) {
-                return { ok: false, reason: "response_too_large", nodeId: current.id, trace };
+                return { ok: false, reason: "response_too_large", nodeId: current.id, trace, log };
             }
 
-            return { ok: true, response: result.response, trace };
+            return { ok: true, response: result.response, trace, log };
         }
 
         const edge = graph.edges.find(
@@ -139,13 +213,13 @@ export function executeGraph(raw: unknown, context: ExecutionContext): Execution
         );
 
         if (edge === undefined) {
-            return { ok: false, reason: "no_response_on_path", nodeId: current.id, trace };
+            return { ok: false, reason: "no_response_on_path", nodeId: current.id, trace, log };
         }
 
         current = byId.get(edge.target);
     }
 
-    return { ok: false, reason: "no_response_on_path", trace };
+    return { ok: false, reason: "no_response_on_path", trace, log };
 }
 
 /** A HEAD answer: every header the GET would carry, and no bytes. */

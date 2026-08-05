@@ -6,7 +6,6 @@ import {
     COLLECTION_NAME_LENGTH,
     ENDPOINT_NAME_LENGTH,
     MAX_PATH_LENGTH,
-    MAX_RESPONSE_BYTES,
     MAX_STATUS_CODE,
     MIN_STATUS_CODE,
     RECOVERY_KEY_LENGTH,
@@ -111,12 +110,15 @@ export const headerRowsSchema = z
     .max(30);
 
 /**
- * The response body arrives as text and is parsed here rather than as a nested
- * Zod shape, because until M2's tree editor exists the reader is typing JSON by
- * hand and the useful failure is "line 3 is not valid JSON", not a schema
- * mismatch six levels down. `parseBodyText` in `domain/` owns that message.
+ * The response body arrives as a `ValueExpr` tree, and is deliberately *not*
+ * described here.
+ *
+ * A recursive Zod schema over eleven variants would be a second, drifting copy
+ * of a shape `validateGraph` already checks — including the depth cap, which is
+ * the part that actually matters. So the payload is bounded and passed through,
+ * and the domain validator is the single authority on whether it is a value.
  */
-export const bodyTextSchema = z.string().max(MAX_RESPONSE_BYTES);
+export const bodyTreeSchema = z.unknown();
 
 export const createServerSchema = z.object({
     workspaceId: workspaceIdSchema,
@@ -175,7 +177,13 @@ export const updateEndpointSchema = z.object({
     status: statusCodeSchema,
     contentType: contentTypeSchema,
     headers: headerRowsSchema,
-    bodyText: bodyTextSchema,
+    body: bodyTreeSchema,
+    /**
+     * The canvas's document. Bounded and passed through for the same reason the
+     * body is: `validateGraph` is the single authority on graph shape, and a
+     * parallel Zod description of eleven node kinds would drift from it.
+     */
+    graph: z.unknown(),
     /** Optimistic-concurrency token; the save asserts the version it read. */
     version: z.number().int().min(1),
 });

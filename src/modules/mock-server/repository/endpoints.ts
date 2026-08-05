@@ -4,10 +4,11 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 
-import { formatBodyText } from "../domain/body-text";
 import { MAX_ENDPOINTS_PER_SERVER } from "../domain/constants";
 import { DEFAULT_CONTENT_TYPE } from "../domain/content-type";
 import { createDefaultGraph, readGraph } from "../domain/graph";
+import { emptyGraph } from "../domain/graph-edit";
+import { DEFAULT_RESPONSE_BODY } from "../domain/value-edit";
 import type { GraphDocument, HttpMethod } from "../types/graph";
 import type { EndpointDetail } from "../types";
 import type { ParsedPathPattern } from "../types/routing";
@@ -75,7 +76,8 @@ function toDetail(row: DetailRow): EndpointDetail {
             status: 200,
             contentType: DEFAULT_CONTENT_TYPE,
             headers: [],
-            bodyText: "",
+            body: DEFAULT_RESPONSE_BODY,
+            graph: emptyGraph(),
             graphProblem: read.reason,
         };
     }
@@ -88,23 +90,9 @@ function toDetail(row: DetailRow): EndpointDetail {
             status: 200,
             contentType: DEFAULT_CONTENT_TYPE,
             headers: [],
-            bodyText: "",
+            body: DEFAULT_RESPONSE_BODY,
+            graph: read.graph,
             graphProblem: "no_response_node",
-        };
-    }
-
-    const { body } = response.data;
-
-    // M1 stores every body as a `static` expression. Anything else is a graph
-    // built by a later milestone, and this editor is not the one to open it.
-    if (body.kind !== "static") {
-        return {
-            ...base,
-            status: response.data.status,
-            contentType: response.data.contentType,
-            headers: response.data.headers,
-            bodyText: "",
-            graphProblem: "unsupported_value",
         };
     }
 
@@ -113,7 +101,10 @@ function toDetail(row: DetailRow): EndpointDetail {
         status: response.data.status,
         contentType: response.data.contentType,
         headers: response.data.headers,
-        bodyText: formatBodyText(body.value, response.data.contentType),
+        // Handed over whole. The tree editor understands every value kind, so
+        // there is no longer a shape it has to refuse to open.
+        body: response.data.body,
+        graph: read.graph,
         graphProblem: null,
     };
 }

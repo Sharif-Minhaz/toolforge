@@ -1,4 +1,4 @@
-import { IconKey, IconServer2, IconShieldLock } from "@tabler/icons-react";
+import { IconCloudUpload, IconKey, IconServer2, IconShieldLock } from "@tabler/icons-react";
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 
@@ -24,13 +24,13 @@ export async function generateMetadata(): Promise<Metadata> {
 /**
  * The way in to the studio.
  *
- * Everything interactive is one island; the disclosure panel above it is a
- * server component, because the one thing a reader has to see before they press
- * anything must not depend on JavaScript arriving.
- *
- * No `JsonLd` and no catalog entry yet — a section that cannot mock anything is
- * not a tool to be found in search. Both land with M1, when the public
- * execution path does.
+ * Everything interactive is one island. The disclosure — this is the one part
+ * of the site that does not run in your browser — is a server component, so it
+ * never depends on JavaScript arriving. It sits *below* the launcher rather
+ * than above it: the three badges in the header already carry the short form of
+ * the same claim, and a full panel between the reader and the create form was
+ * costing more space than the warning was buying. What it must not become is
+ * optional, which is why it is plain page copy rather than a collapsed panel.
  */
 export default async function MockStudioPage() {
     const [t, overview] = await Promise.all([
@@ -77,42 +77,30 @@ export default async function MockStudioPage() {
                     </ul>
                 </header>
             </FadeIn>
-
-            {/*
-             * Above the controls, not in an article underneath them. This site
-             * promises that everything runs in your browser, and this section
-             * is one of the places that is not true — a reader deserves to know
-             * whose servers their mock APIs answer from before they build one,
-             * not after.
-             */}
             <Reveal>
-                <section
-                    aria-labelledby="disclosure-heading"
-                    className="border-brand-cyan/40 bg-brand-cyan/5 rounded-2xl border p-5"
-                >
-                    <div className="flex items-start gap-3">
-                        <IconShieldLock
-                            className="text-brand-cyan mt-0.5 size-5 shrink-0"
-                            stroke={1.75}
-                            aria-hidden="true"
-                        />
-                        <div className="min-w-0">
-                            <h2
-                                id="disclosure-heading"
-                                className="text-foreground text-sm leading-[1.3] font-semibold"
-                            >
-                                {t("disclosureTitle")}
-                            </h2>
-                            <p className="text-muted-foreground mt-1 max-w-[68ch] text-xs leading-relaxed">
-                                {t("disclosureBody")}
-                            </p>
-                        </div>
-                    </div>
-                </section>
+                <WorkspaceLauncher overview={overview} turnstileSiteKey={turnstileSiteKey} />
             </Reveal>
 
             <Reveal>
-                <WorkspaceLauncher overview={overview} turnstileSiteKey={turnstileSiteKey} />
+                <section
+                    aria-labelledby="disclosure-heading"
+                    className="border-border/70 bg-muted/30 rounded-2xl border p-4"
+                >
+                    <h2
+                        id="disclosure-heading"
+                        className="text-foreground flex items-center gap-2 text-xs leading-[1.3] font-semibold"
+                    >
+                        <IconCloudUpload
+                            className="text-muted-foreground size-4 shrink-0"
+                            stroke={1.75}
+                            aria-hidden="true"
+                        />
+                        {t("disclosureTitle")}
+                    </h2>
+                    <p className="text-muted-foreground mt-1.5 max-w-[68ch] text-xs leading-relaxed">
+                        {t("disclosureBody")}
+                    </p>
+                </section>
             </Reveal>
         </div>
     );

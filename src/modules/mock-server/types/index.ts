@@ -1,3 +1,6 @@
+import type { LoggedRequest, LoggedResponse, LoggedTrace } from "../domain/log-record";
+import type { GraphDocument, ValueExpr } from "./graph";
+
 /**
  * Shared shapes for the Visual Mock Server Studio.
  *
@@ -123,8 +126,13 @@ export type EndpointDetail = EndpointSummary & {
     readonly status: number;
     readonly contentType: string;
     readonly headers: readonly { readonly name: string; readonly value: string }[];
-    /** The response body as text, for the editor. M2 replaces this with a tree. */
-    readonly bodyText: string;
+    /** The response body as the tree editor holds it. */
+    readonly body: ValueExpr;
+    /**
+     * The whole document, so the canvas and the response form edit one thing.
+     * Two save paths over one row is how a graph and its response drift apart.
+     */
+    readonly graph: GraphDocument;
     /** Set when the stored graph could not be read as a response this build knows. */
     readonly graphProblem: string | null;
 };
@@ -143,6 +151,7 @@ export const SERVER_FAILURE_REASONS = [
     "route_taken",
     "invalid_status",
     "invalid_body",
+    "invalid_content_type",
     "version_conflict",
     "write_failed",
 ] as const;
@@ -161,6 +170,21 @@ export type CreateServerResult =
 
 export type EndpointResult =
     { readonly ok: true; readonly endpoint: EndpointDetail } | ServerFailure;
+
+/** One row of the log table. */
+export type RequestLogRow = {
+    readonly id: string;
+    readonly serverId: string;
+    readonly endpointId: string | null;
+    readonly method: string;
+    readonly path: string;
+    readonly status: number;
+    readonly durationMs: number;
+    readonly request: LoggedRequest;
+    readonly response: LoggedResponse;
+    readonly trace: LoggedTrace | null;
+    readonly createdAt: string;
+};
 
 /** What the landing page renders before the visitor does anything. */
 export type WorkspaceOverview = {

@@ -68,7 +68,12 @@ export function WorkspaceLauncher({ overview, turnstileSiteKey }: WorkspaceLaunc
 
     // Shown once and never again. Held here rather than routed to, because a
     // key that survives a refresh is a key written somewhere it should not be.
-    const [issuedKey, setIssuedKey] = useState<string | null>(null);
+    //
+    // The workspace's name travels with it: a reader who creates two in a row
+    // otherwise gets a second key with nothing on screen saying which of the
+    // two it opens, and a key filed against the wrong workspace is a key that
+    // does not work when it is finally needed.
+    const [issued, setIssued] = useState<{ key: string; name: string } | null>(null);
     const [keyCopied, setKeyCopied] = useState(false);
     const [keyAcknowledged, setKeyAcknowledged] = useState(false);
 
@@ -109,7 +114,7 @@ export function WorkspaceLauncher({ overview, turnstileSiteKey }: WorkspaceLaunc
                 }
 
                 setWorkspaces((held) => [result.workspace, ...held]);
-                setIssuedKey(result.recoveryKey);
+                setIssued({ key: result.recoveryKey, name: result.workspace.name });
                 setKeyCopied(false);
                 setKeyAcknowledged(false);
                 setName("");
@@ -187,11 +192,11 @@ export function WorkspaceLauncher({ overview, turnstileSiteKey }: WorkspaceLaunc
     }
 
     async function copyRecoveryKey() {
-        if (issuedKey === null) {
+        if (issued === null) {
             return;
         }
 
-        const result = await copyText(issuedKey);
+        const result = await copyText(issued.key);
 
         if (result.ok) {
             setKeyCopied(true);
@@ -217,7 +222,139 @@ export function WorkspaceLauncher({ overview, turnstileSiteKey }: WorkspaceLaunc
 
     return (
         <div className="flex flex-col gap-6">
-            {issuedKey !== null && !keyAcknowledged ? (
+            <section
+                aria-labelledby="gain-heading"
+                className="border-border/70 bg-card rounded-2xl border p-5 shadow-xs"
+            >
+                <h2 id="gain-heading" className="sr-only">
+                    {panel === "create" ? t("createTitle") : t("importTitle")}
+                </h2>
+
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div
+                        role="tablist"
+                        aria-label={t("panelLabel")}
+                        className="bg-muted/60 inline-flex rounded-xl p-1"
+                    >
+                        {(["create", "import"] as const).map((option) => (
+                            <button
+                                key={option}
+                                type="button"
+                                role="tab"
+                                aria-selected={panel === option}
+                                onClick={() => {
+                                    setPanel(option);
+                                    setFailure(null);
+                                }}
+                                className={cn(
+                                    "focus-visible:ring-ring rounded-lg px-3 py-1.5 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
+                                    panel === option
+                                        ? "bg-card text-foreground shadow-xs"
+                                        : "text-muted-foreground hover:text-foreground",
+                                )}
+                            >
+                                {option === "create" ? t("createTab") : t("importTab")}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Both numbers go through ICU rather than into JSX, so Bangla
+                        gets Bengali digits. */}
+                    <p
+                        className={cn(
+                            "text-[0.6875rem] leading-[1.3]",
+                            hasRoom ? "text-muted-foreground" : "text-brand-amber",
+                        )}
+                    >
+                        {hasRoom
+                            ? t("slotsLeft", {
+                                  remaining: overview.maxWorkspaces - workspaces.length,
+                                  max: overview.maxWorkspaces,
+                              })
+                            : t("slotsFull")}
+                    </p>
+                </div>
+
+                <p className="text-muted-foreground mt-3 max-w-[60ch] text-xs leading-relaxed">
+                    {panel === "create" ? t("createDescription") : t("importDescription")}
+                </p>
+
+                <div className="mt-4 flex flex-col gap-3">
+                    {panel === "create" ? (
+                        <div className="flex flex-col gap-1.5">
+                            <Label htmlFor={nameId} className="text-xs">
+                                {t("nameLabel")}
+                            </Label>
+                            <Input
+                                id={nameId}
+                                value={name}
+                                onChange={(event) => setName(event.target.value)}
+                                placeholder={t("namePlaceholder")}
+                                disabled={!storageReady || !hasRoom}
+                                autoComplete="off"
+                                className="max-w-md"
+                            />
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-1.5">
+                            <Label htmlFor={keyId} className="text-xs">
+                                {t("keyLabel")}
+                            </Label>
+                            <Input
+                                id={keyId}
+                                value={recoveryInput}
+                                onChange={(event) => setRecoveryInput(event.target.value)}
+                                placeholder="XXXX-XXXX-XXXX-XXXX"
+                                disabled={!storageReady || !hasRoom}
+                                autoComplete="off"
+                                spellCheck={false}
+                                className="max-w-md font-mono tracking-[0.12em] uppercase"
+                            />
+                        </div>
+                    )}
+
+                    {challengeReady && storageReady && hasRoom ? (
+                        // Turnstile's `flexible` size fills whatever it is given,
+                        // so the constraint belongs on the container. 20rem is
+                        // just above the widget's own 300px floor, which keeps it
+                        // the width of a control rather than the width of a card.
+                        <div className="w-full max-w-xs">
+                            <TurnstileWidget
+                                siteKey={turnstileSiteKey}
+                                action={TURNSTILE_ACTION}
+                                resetSignal={resetSignal}
+                                onVerify={setToken}
+                                onExpire={() => setToken(null)}
+                                onError={() => setToken(null)}
+                            />
+                        </div>
+                    ) : null}
+
+                    <div className="flex flex-wrap items-center gap-3">
+                        <Button
+                            type="button"
+                            disabled={!canSubmit}
+                            onClick={submit}
+                            className="gap-1.5"
+                        >
+                            {pending ? (
+                                <IconLoader2 className="size-4 animate-spin" aria-hidden="true" />
+                            ) : panel === "create" ? (
+                                <IconPlus className="size-4" aria-hidden="true" />
+                            ) : (
+                                <IconDownload className="size-4" aria-hidden="true" />
+                            )}
+                            {panel === "create" ? t("createAction") : t("importAction")}
+                        </Button>
+
+                        {status !== null ? (
+                            <StatusStrip tone={status.tone} message={status.message} />
+                        ) : null}
+                    </div>
+                </div>
+            </section>
+
+            {issued !== null && !keyAcknowledged ? (
                 <section
                     aria-labelledby="recovery-heading"
                     className="border-brand-amber/45 bg-brand-amber/6 rounded-2xl border p-5"
@@ -233,7 +370,10 @@ export function WorkspaceLauncher({ overview, turnstileSiteKey }: WorkspaceLaunc
                                 id="recovery-heading"
                                 className="text-foreground text-sm leading-[1.3] font-semibold"
                             >
-                                {tRecovery("title")}
+                                {tRecovery("title")}{" "}
+                                <span className="text-muted-foreground font-normal">
+                                    {tRecovery("forWorkspace", { name: issued.name })}
+                                </span>
                             </h2>
                             <p className="text-muted-foreground mt-1 max-w-[60ch] text-xs leading-relaxed">
                                 {tRecovery("description")}
@@ -241,7 +381,7 @@ export function WorkspaceLauncher({ overview, turnstileSiteKey }: WorkspaceLaunc
 
                             <div className="mt-3 flex flex-wrap items-center gap-2">
                                 <code className="border-border/70 bg-card text-foreground rounded-xl border px-3 py-2 font-mono text-sm tracking-[0.14em] tabular-nums select-all">
-                                    {issuedKey}
+                                    {issued.key}
                                 </code>
                                 <Button
                                     type="button"
@@ -306,114 +446,6 @@ export function WorkspaceLauncher({ overview, turnstileSiteKey }: WorkspaceLaunc
                         ))}
                     </ul>
                 )}
-            </section>
-
-            <section
-                aria-labelledby="gain-heading"
-                className="border-border/70 bg-card rounded-2xl border p-5 shadow-xs"
-            >
-                <h2 id="gain-heading" className="sr-only">
-                    {panel === "create" ? t("createTitle") : t("importTitle")}
-                </h2>
-
-                <div
-                    role="tablist"
-                    aria-label={t("panelLabel")}
-                    className="bg-muted/60 inline-flex rounded-xl p-1"
-                >
-                    {(["create", "import"] as const).map((option) => (
-                        <button
-                            key={option}
-                            type="button"
-                            role="tab"
-                            aria-selected={panel === option}
-                            onClick={() => {
-                                setPanel(option);
-                                setFailure(null);
-                            }}
-                            className={cn(
-                                "focus-visible:ring-ring rounded-lg px-3 py-1.5 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
-                                panel === option
-                                    ? "bg-card text-foreground shadow-xs"
-                                    : "text-muted-foreground hover:text-foreground",
-                            )}
-                        >
-                            {option === "create" ? t("createTab") : t("importTab")}
-                        </button>
-                    ))}
-                </div>
-
-                <p className="text-muted-foreground mt-3 max-w-[60ch] text-xs leading-relaxed">
-                    {panel === "create" ? t("createDescription") : t("importDescription")}
-                </p>
-
-                <div className="mt-4 flex flex-col gap-3">
-                    {panel === "create" ? (
-                        <div className="flex flex-col gap-1.5">
-                            <Label htmlFor={nameId} className="text-xs">
-                                {t("nameLabel")}
-                            </Label>
-                            <Input
-                                id={nameId}
-                                value={name}
-                                onChange={(event) => setName(event.target.value)}
-                                placeholder={t("namePlaceholder")}
-                                disabled={!storageReady || !hasRoom}
-                                autoComplete="off"
-                                className="max-w-md"
-                            />
-                        </div>
-                    ) : (
-                        <div className="flex flex-col gap-1.5">
-                            <Label htmlFor={keyId} className="text-xs">
-                                {t("keyLabel")}
-                            </Label>
-                            <Input
-                                id={keyId}
-                                value={recoveryInput}
-                                onChange={(event) => setRecoveryInput(event.target.value)}
-                                placeholder="XXXX-XXXX-XXXX-XXXX"
-                                disabled={!storageReady || !hasRoom}
-                                autoComplete="off"
-                                spellCheck={false}
-                                className="max-w-md font-mono tracking-[0.12em] uppercase"
-                            />
-                        </div>
-                    )}
-
-                    {challengeReady && storageReady && hasRoom ? (
-                        <TurnstileWidget
-                            siteKey={turnstileSiteKey}
-                            action={TURNSTILE_ACTION}
-                            resetSignal={resetSignal}
-                            onVerify={setToken}
-                            onExpire={() => setToken(null)}
-                            onError={() => setToken(null)}
-                        />
-                    ) : null}
-
-                    <div className="flex flex-wrap items-center gap-3">
-                        <Button
-                            type="button"
-                            disabled={!canSubmit}
-                            onClick={submit}
-                            className="gap-1.5"
-                        >
-                            {pending ? (
-                                <IconLoader2 className="size-4 animate-spin" aria-hidden="true" />
-                            ) : panel === "create" ? (
-                                <IconPlus className="size-4" aria-hidden="true" />
-                            ) : (
-                                <IconDownload className="size-4" aria-hidden="true" />
-                            )}
-                            {panel === "create" ? t("createAction") : t("importAction")}
-                        </Button>
-
-                        {status !== null ? (
-                            <StatusStrip tone={status.tone} message={status.message} />
-                        ) : null}
-                    </div>
-                </div>
             </section>
         </div>
     );

@@ -1,17 +1,23 @@
 "use client";
 
-import { IconLoader2, IconPlus, IconTrash } from "@tabler/icons-react";
+import { IconLoader2, IconPlus, IconSitemap, IconTrash, IconX } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useId, useState, useTransition } from "react";
+import { useCallback, useId, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { CodeEditor } from "@/modules/tools/components/code-editor";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 
@@ -19,7 +25,10 @@ import { createEndpoint, deleteEndpoint, getEndpoint, updateEndpoint } from "../
 import { ALLOWED_CONTENT_TYPES, type AllowedContentType } from "../domain/content-type";
 import { HTTP_METHODS, type HttpMethod } from "../types/graph";
 import type { EndpointDetail, EndpointSummary, ServerFailureReason } from "../types";
+import { GraphStudio } from "./graph-studio";
+import { useStudioStore } from "./studio-store";
 import { MockUrl } from "./mock-url";
+import { ResponseBuilder } from "./response-builder";
 
 type EndpointWorkbenchProps = {
     serverId: string;
@@ -71,6 +80,7 @@ export function EndpointWorkbench({
     const t = useTranslations("mockServer.endpoints");
     const tErrors = useTranslations("mockServer.serverErrors");
     const tToast = useTranslations("mockServer.toast");
+    const tStudio = useTranslations("mockServer.studio");
     const router = useRouter();
 
     const nameId = useId();
@@ -86,6 +96,17 @@ export function EndpointWorkbench({
 
     const [draftMethod, setDraftMethod] = useState<HttpMethod>("GET");
     const [draftPath, setDraftPath] = useState("/");
+    const [flowOpen, setFlowOpen] = useState(false);
+    // The canvas keeps the live document in its own store; this only records
+    // *which route's* flow has been touched, so the save below knows both to
+    // read from there and that it is reading the right document. A plain
+    // boolean was a latent bug: the store is module-level and outlives a route
+    // switch, so dirtying one flow and then saving a different route would have
+    // written the first route's graph onto the second.
+    const [flowDirtyFor, setFlowDirtyFor] = useState<string | null>(null);
+    // Stable, because `GraphStudio` lists it in an effect's dependencies — a
+    // fresh arrow each render would re-run that effect on every commit.
+    const markFlowDirty = useCallback((endpointId: string) => setFlowDirtyFor(endpointId), []);
 
     function patch(next: Partial<EndpointDetail>) {
         setOpen((held) => (held === null ? held : { ...held, ...next }));
@@ -93,6 +114,9 @@ export function EndpointWorkbench({
 
     function load(endpointId: string) {
         setFailure(null);
+        // The dialog is bound to whichever route is open, so switching route
+        // with it up would swap the graph under the reader's cursor.
+        setFlowOpen(false);
 
         startTransition(async () => {
             const result = await getEndpoint(endpointId);
@@ -137,7 +161,8 @@ export function EndpointWorkbench({
         });
     }
 
-    function save() {
+    /** `onDone` is what lets the flow dialog close itself only on a real save. */
+    function save(onDone?: () => void) {
         if (open === null || pending) {
             return;
         }
@@ -154,7 +179,11 @@ export function EndpointWorkbench({
                 status: open.status,
                 contentType: open.contentType,
                 headers: open.headers,
-                bodyText: open.bodyText,
+                body: open.body,
+                // Read from the canvas store when *this* route's canvas has
+                // been used, so one save covers both editors and neither can
+                // overwrite the other's work.
+                graph: flowDirtyFor === open.id ? useStudioStore.getState().graph : open.graph,
                 version: open.version,
             });
 
@@ -170,8 +199,10 @@ export function EndpointWorkbench({
                     row.id === result.endpoint.id ? toSummary(result.endpoint) : row,
                 ),
             );
+            setFlowDirtyFor(null);
             toast.success(tToast("endpointSaved"));
             router.refresh();
+            onDone?.();
         });
     }
 
@@ -188,6 +219,7 @@ export function EndpointWorkbench({
 
             setRows((held) => held.filter((row) => row.id !== endpointId));
             setOpen((held) => (held?.id === endpointId ? null : held));
+            setFlowOpen(false);
             setArmed(null);
             toast.success(tToast("endpointDeleted"));
             router.refresh();
@@ -410,24 +442,55 @@ export function EndpointWorkbench({
                         </div>
 
                         <div className="flex min-w-0 flex-col gap-1.5">
-                            <Label className="text-xs">{t("bodyLabel")}</Label>
+                            <Label className="text-xs" id={bodyId}>
+                                {t("bodyLabel")}
+                            </Label>
                             <p className="text-muted-foreground text-[0.6875rem] leading-normal">
                                 {t("bodyHint")}
                             </p>
-                            <CodeEditor
-                                id={bodyId}
-                                value={open.bodyText}
-                                onChange={(bodyText) => patch({ bodyText })}
-                                language="json"
-                                className="min-h-56"
+                            <ResponseBuilder
+                                value={open.body}
+                                onChange={(body) => patch({ body })}
                             />
+                        </div>
+
+                        {/* The graph is not a second tab beside the body — it is
+                            the layer around it, and it needs the viewport rather
+                            than a slot in a form. So it gets a door instead of a
+                            panel. */}
+                        <div className="border-border/70 bg-muted/30 flex flex-wrap items-center gap-3 rounded-xl border p-3">
+                            <div className="min-w-0 flex-1">
+                                <p className="text-foreground text-xs leading-[1.3] font-medium">
+                                    {t("flowLabel")}
+                                </p>
+                                <p className="text-muted-foreground mt-0.5 max-w-[60ch] text-[0.6875rem] leading-normal">
+                                    {t("flowHint")}
+                                </p>
+                            </div>
+
+                            {flowDirtyFor === open.id ? (
+                                <span className="text-brand-amber bg-brand-amber/12 rounded-lg px-2 py-1 text-[0.625rem] leading-[1.3] font-medium">
+                                    {tStudio("unsaved")}
+                                </span>
+                            ) : null}
+
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="gap-1.5"
+                                onClick={() => setFlowOpen(true)}
+                            >
+                                <IconSitemap className="size-4" aria-hidden="true" />
+                                {tStudio("openFlow")}
+                            </Button>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-3">
                             <Button
                                 type="button"
                                 disabled={pending}
-                                onClick={save}
+                                onClick={() => save()}
                                 className="gap-1.5"
                             >
                                 {pending ? (
@@ -446,6 +509,74 @@ export function EndpointWorkbench({
                     </div>
                 )}
             </section>
+
+            {open === null ? null : (
+                <Dialog open={flowOpen} onOpenChange={setFlowOpen}>
+                    <DialogContent
+                        // Full-bleed rather than the default centred card: the
+                        // canvas is the content, and `grid`/`p-4`/`max-w-sm`
+                        // would letterbox it exactly the way the inline version
+                        // did. `100dvh` rather than `100vh` so a phone's
+                        // collapsing address bar does not push the footer off,
+                        // and the width stays a percentage of the containing
+                        // block rather than `100vw`, which counts the scrollbar
+                        // and would overflow by its width on a desktop.
+                        className="flex h-[calc(100dvh-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[calc(100%-1.5rem)]"
+                        showCloseButton={false}
+                    >
+                        <div className="border-border/70 flex flex-wrap items-center gap-3 border-b px-4 py-3">
+                            <div className="min-w-0 flex-1">
+                                <DialogTitle className="text-foreground truncate text-sm leading-[1.3] font-semibold">
+                                    {tStudio("flowTitle")}
+                                    <span className="text-muted-foreground ml-2 font-mono text-xs font-normal">
+                                        {open.method} {open.path}
+                                    </span>
+                                </DialogTitle>
+                                <DialogDescription className="text-muted-foreground mt-0.5 max-w-[70ch] text-[0.6875rem] leading-normal">
+                                    {tStudio("flowDescription")}
+                                </DialogDescription>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    disabled={pending}
+                                    onClick={() => save(() => setFlowOpen(false))}
+                                    className="gap-1.5"
+                                >
+                                    {pending ? (
+                                        <IconLoader2
+                                            className="size-4 animate-spin"
+                                            aria-hidden="true"
+                                        />
+                                    ) : null}
+                                    {t("saveAction")}
+                                </Button>
+                                <DialogClose
+                                    render={<Button variant="ghost" size="icon" />}
+                                    aria-label={tStudio("close")}
+                                >
+                                    <IconX className="size-4" aria-hidden="true" />
+                                </DialogClose>
+                            </div>
+                        </div>
+
+                        {status !== null ? (
+                            <div className="border-border/70 border-b px-4 py-2">
+                                <StatusStrip tone={status.tone} message={status.message} />
+                            </div>
+                        ) : null}
+
+                        <GraphStudio
+                            endpointId={open.id}
+                            graph={open.graph}
+                            version={open.version}
+                            onDirty={markFlowDirty}
+                        />
+                    </DialogContent>
+                </Dialog>
+            )}
         </div>
     );
 }

@@ -85,12 +85,14 @@ export const VALUE_KINDS = [
 
 export type ValueKind = (typeof VALUE_KINDS)[number];
 
-/** The kinds `resolveValue` can produce a result for right now. */
-export const IMPLEMENTED_VALUE_KINDS = [
-    "static",
-    "object",
-    "array",
-] as const satisfies readonly ValueKind[];
+/**
+ * The kinds `resolveValue` can produce a result for.
+ *
+ * All of them, as of M2. `faker` is listed because the expression is
+ * resolvable — whether a given *context* can resolve it depends on the injected
+ * provider, which is a runtime question and not a shape one.
+ */
+export const IMPLEMENTED_VALUE_KINDS = VALUE_KINDS;
 
 export type RequestSource = "body" | "header" | "cookie" | "query" | "param";
 
@@ -180,6 +182,7 @@ export const GRAPH_PROBLEM_REASONS = [
     "unknown_handle",
     "unsupported_node",
     "unsupported_value",
+    "unsupported_content_type",
     "invalid_status",
     "value_too_deep",
 ] as const;
@@ -238,13 +241,25 @@ export type TraceEntry = {
     readonly ms: number;
 };
 
+/** What a `log` node produced, collected rather than written to stdout. */
+export type ExecutionLogLine = {
+    readonly level: "debug" | "info" | "warn";
+    readonly message: string;
+};
+
 export type ExecutionResult =
-    | { readonly ok: true; readonly response: MockResponse; readonly trace: readonly TraceEntry[] }
+    | {
+          readonly ok: true;
+          readonly response: MockResponse;
+          readonly trace: readonly TraceEntry[];
+          readonly log: readonly ExecutionLogLine[];
+      }
     | {
           readonly ok: false;
           readonly reason: ExecutionErrorReason;
           readonly nodeId?: string;
           readonly trace: readonly TraceEntry[];
+          readonly log: readonly ExecutionLogLine[];
       };
 
 /**
@@ -258,8 +273,46 @@ export type ExecutionResult =
 export type ExecutionContext = {
     readonly request: NormalizedRequest;
     readonly env: Readonly<Record<string, string>>;
+    /**
+     * Monotonic, for the deadline. Not a wall clock: `performance.now()` on the
+     * server, a counter in a test, and neither is a date anybody can render.
+     */
     readonly clock: () => number;
+    /** Epoch milliseconds — what a `now` value expression renders. */
+    readonly now: () => number;
+    /** Seeded. See `domain/seeded-random.ts` for why it is never `Math.random`. */
     readonly random: () => number;
+    /**
+     * Fake data, injected rather than imported.
+     *
+     * `@faker-js/faker` is roughly three megabytes and `domain/` is reachable
+     * from the client bundle, so a static import here would ship it to every
+     * visitor of every tool on the site. The provider is wired in by a
+     * server-only module, and a context without one simply cannot resolve
+     * `faker` values — which is exactly what a preview running somewhere
+     * without it should do.
+     */
+    readonly faker?: (id: string, random: () => number) => JsonValue;
+    /**
+     * How a `delay` node waits. Injected so a test resolves instantly and the
+     * executor never reaches for a global timer.
+     */
+    readonly sleep: (ms: number) => Promise<void>;
+    /**
+     * How an `httpRequest` node reaches the network — absent unless the caller
+     * wired one in, which is what keeps the whole SSRF surface unreachable by
+     * default. The guard stack lives behind it in
+     * `repository/outbound.ts`; `domain/` never opens a socket.
+     */
+    readonly outbound?: (input: {
+        url: string;
+        method: string;
+        headers: Record<string, string>;
+        body: string | null;
+    }) => Promise<
+        | { ok: true; status: number; headers: Record<string, string>; body: JsonValue }
+        | { ok: false; reason: string }
+    >;
     readonly deadlineAt: number;
     vars: Record<string, JsonValue>;
 };

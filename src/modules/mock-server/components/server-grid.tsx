@@ -112,6 +112,82 @@ export function ServerGrid({ workspaceId, servers, origin }: ServerGridProps) {
 
     return (
         <div className="flex flex-col gap-6">
+            <section
+                aria-labelledby="create-server-heading"
+                className="border-border/70 bg-card rounded-2xl border p-5 shadow-xs"
+            >
+                <h2
+                    id="create-server-heading"
+                    className="text-foreground text-sm leading-[1.3] font-semibold"
+                >
+                    {t("createTitle")}
+                </h2>
+                <p className="text-muted-foreground mt-1 max-w-[60ch] text-xs leading-relaxed">
+                    {t("createDescription")}
+                </p>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="flex flex-col gap-1.5">
+                        <Label htmlFor={nameId} className="text-xs">
+                            {t("nameLabel")}
+                        </Label>
+                        <Input
+                            id={nameId}
+                            value={name}
+                            onChange={(event) => setName(event.target.value)}
+                            placeholder={t("namePlaceholder")}
+                            disabled={!hasRoom}
+                            autoComplete="off"
+                        />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                        <Label htmlFor={keyId} className="text-xs">
+                            {t("keyLabel")}
+                        </Label>
+                        <Input
+                            id={keyId}
+                            value={key}
+                            onChange={(event) => setKey(event.target.value)}
+                            placeholder={t("keyPlaceholder")}
+                            disabled={!hasRoom}
+                            autoComplete="off"
+                            spellCheck={false}
+                            className="font-mono"
+                        />
+                    </div>
+                </div>
+
+                {previewKey !== "" ? (
+                    <p className="text-muted-foreground mt-3 text-xs">
+                        {t("addressPreview")}{" "}
+                        <code className="text-foreground font-mono">
+                            {origin}/m/{previewKey}/…
+                        </code>
+                    </p>
+                ) : null}
+
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <Button
+                        type="button"
+                        disabled={!hasRoom || pending || name.trim() === ""}
+                        onClick={submit}
+                        className="gap-1.5"
+                    >
+                        {pending ? (
+                            <IconLoader2 className="size-4 animate-spin" aria-hidden="true" />
+                        ) : (
+                            <IconPlus className="size-4" aria-hidden="true" />
+                        )}
+                        {t("createAction")}
+                    </Button>
+
+                    {status !== null ? (
+                        <StatusStrip tone={status.tone} message={status.message} />
+                    ) : null}
+                </div>
+            </section>
+
             <section aria-labelledby="servers-heading">
                 <h2
                     id="servers-heading"
@@ -216,82 +292,6 @@ export function ServerGrid({ workspaceId, servers, origin }: ServerGridProps) {
                         ))}
                     </ul>
                 )}
-            </section>
-
-            <section
-                aria-labelledby="create-server-heading"
-                className="border-border/70 bg-card rounded-2xl border p-5 shadow-xs"
-            >
-                <h2
-                    id="create-server-heading"
-                    className="text-foreground text-sm leading-[1.3] font-semibold"
-                >
-                    {t("createTitle")}
-                </h2>
-                <p className="text-muted-foreground mt-1 max-w-[60ch] text-xs leading-relaxed">
-                    {t("createDescription")}
-                </p>
-
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <div className="flex flex-col gap-1.5">
-                        <Label htmlFor={nameId} className="text-xs">
-                            {t("nameLabel")}
-                        </Label>
-                        <Input
-                            id={nameId}
-                            value={name}
-                            onChange={(event) => setName(event.target.value)}
-                            placeholder={t("namePlaceholder")}
-                            disabled={!hasRoom}
-                            autoComplete="off"
-                        />
-                    </div>
-
-                    <div className="flex flex-col gap-1.5">
-                        <Label htmlFor={keyId} className="text-xs">
-                            {t("keyLabel")}
-                        </Label>
-                        <Input
-                            id={keyId}
-                            value={key}
-                            onChange={(event) => setKey(event.target.value)}
-                            placeholder={t("keyPlaceholder")}
-                            disabled={!hasRoom}
-                            autoComplete="off"
-                            spellCheck={false}
-                            className="font-mono"
-                        />
-                    </div>
-                </div>
-
-                {previewKey !== "" ? (
-                    <p className="text-muted-foreground mt-3 text-xs">
-                        {t("addressPreview")}{" "}
-                        <code className="text-foreground font-mono">
-                            {origin}/m/{previewKey}/…
-                        </code>
-                    </p>
-                ) : null}
-
-                <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <Button
-                        type="button"
-                        disabled={!hasRoom || pending || name.trim() === ""}
-                        onClick={submit}
-                        className="gap-1.5"
-                    >
-                        {pending ? (
-                            <IconLoader2 className="size-4 animate-spin" aria-hidden="true" />
-                        ) : (
-                            <IconPlus className="size-4" aria-hidden="true" />
-                        )}
-                        {t("createAction")}
-                    </Button>
-
-                    {status !== null ? (
-                        <StatusStrip tone={status.tone} message={status.message} />
-                    ) : null}
-                </div>
             </section>
         </div>
     );

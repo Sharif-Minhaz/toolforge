@@ -5,9 +5,8 @@ import { revalidatePath } from "next/cache";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { cryptoRandomBytes } from "@/modules/tools/domain/random";
 
-import { parseBodyText } from "../domain/body-text";
 import { GRAPH_SCHEMA_VERSION } from "../types/graph";
-import { createDefaultGraph, validateGraph } from "../domain/graph";
+import { createDefaultGraph, readGraph, validateGraph } from "../domain/graph";
 import { parsePathPattern } from "../domain/path-pattern";
 import { checkServerKey, createServerKey, suggestServerKey } from "../domain/server-key";
 import { checkWorkspaceName } from "../domain/workspace-name";
@@ -38,7 +37,7 @@ import type {
     ServerDetail,
     ServerSummary,
 } from "../types";
-import type { GraphDocument, GraphNode, HttpMethod } from "../types/graph";
+import type { GraphDocument, GraphNode, HttpMethod, ValueExpr } from "../types/graph";
 import {
     createEndpointSchema,
     createServerSchema,
@@ -273,12 +272,6 @@ export async function updateEndpoint(input: unknown): Promise<EndpointResult> {
         return { ok: false, reason: "invalid_path" };
     }
 
-    const body = parseBodyText(parsed.data.bodyText, parsed.data.contentType);
-
-    if (!body.ok) {
-        return { ok: false, reason: "invalid_body" };
-    }
-
     if (!(await requireEndpoint(parsed.data.endpointId))) {
         return { ok: false, reason: "not_owner" };
     }
@@ -289,17 +282,33 @@ export async function updateEndpoint(input: unknown): Promise<EndpointResult> {
         return { ok: false, reason: "not_found" };
     }
 
-    const graph = withResponse({
+    const graph = withResponse(parsed.data.graph, {
         status: parsed.data.status,
         contentType: parsed.data.contentType,
         headers: parsed.data.headers,
-        body: { kind: "static", value: body.value },
+        // Passed through as-is; `validateGraph` below is the only authority on
+        // whether it is a value tree this build can resolve.
+        body: parsed.data.body as ValueExpr,
     });
 
     const checked = validateGraph(graph);
 
     if (!checked.ok) {
-        return { ok: false, reason: "invalid_status" };
+        // The reason is narrowed so the reader is told which of the two things
+        // is wrong — a bad status code and an unresolvable value read nothing
+        // alike, and one generic "invalid" for both is what makes a form
+        // frustrating.
+        const problem = checked.problems[0]?.reason;
+
+        return {
+            ok: false,
+            reason:
+                problem === "invalid_status"
+                    ? "invalid_status"
+                    : problem === "unsupported_content_type"
+                      ? "invalid_content_type"
+                      : "invalid_body",
+        };
     }
 
     const result = await updateEndpointRow({
@@ -334,20 +343,37 @@ export async function deleteEndpoint(input: unknown): Promise<ServerActionResult
 }
 
 /**
- * The two-node graph with its response node replaced.
+ * The submitted graph with the response form's fields merged into it.
  *
- * M1's editor owns the whole document, because M1's endpoints have exactly two
- * nodes and the editor edits both of the things that vary. When the canvas
- * lands in M3 this becomes a merge over the *stored* document instead — the
- * shape is already a real `GraphDocument`, so no row has to change, only this
- * function.
+ * Two editors, one document. The canvas owns the nodes and edges; the form
+ * above it owns status, content type, headers and the body tree. Merging here
+ * rather than having each save separately is what stops a graph and its
+ * response drifting apart — the failure the M1 note predicted and this is the
+ * milestone that had to answer.
+ *
+ * Only the *first* response node takes the form's settings. A graph with
+ * several is legitimate — one per branch — and the form edits the one the
+ * inspector is showing, which is the first until the canvas passes an id.
  */
-function withResponse(data: Extract<GraphNode, { kind: "response" }>["data"]): GraphDocument {
-    const base = createDefaultGraph();
+function withResponse(
+    submitted: unknown,
+    data: Extract<GraphNode, { kind: "response" }>["data"],
+): GraphDocument {
+    const read = readGraph(submitted);
+    const base = read.ok && read.graph.nodes.length > 0 ? read.graph : createDefaultGraph();
+    let merged = false;
 
     return {
         schemaVersion: GRAPH_SCHEMA_VERSION,
-        nodes: base.nodes.map((node) => (node.kind === "response" ? { ...node, data } : node)),
+        nodes: base.nodes.map((node) => {
+            if (node.kind !== "response" || merged) {
+                return node;
+            }
+
+            merged = true;
+
+            return { ...node, data };
+        }),
         edges: base.edges,
     };
 }

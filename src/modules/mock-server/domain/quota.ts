@@ -6,6 +6,7 @@ import {
 import type { QuotaRow, QuotaState } from "@/modules/tools/types";
 
 import { CREATE_QUOTA_LIMIT, CREATE_QUOTA_WINDOW_MS } from "./constants";
+import { OUTBOUND_QUOTA_LIMIT, OUTBOUND_QUOTA_WINDOW_MS } from "./outbound";
 
 /**
  * The studio's creation allowance, bound to the studio's window.
@@ -41,4 +42,31 @@ export function describeCreateQuota(
     limit = CREATE_QUOTA_LIMIT,
 ): QuotaState {
     return describeWindow(row, now, limit, CREATE_QUOTA_WINDOW_MS);
+}
+
+/**
+ * The outbound allowance, bound to its own window.
+ *
+ * Separate from creation because they meter different things and fail the same
+ * way: an unmetered outbound path turns this deployment into an amplifier
+ * pointed at whoever a stranger names, which is worse than an unmetered signup.
+ */
+export function hasOutboundWindowExpired(row: QuotaRow, now: Date): boolean {
+    return windowExpired(row, now, OUTBOUND_QUOTA_WINDOW_MS);
+}
+
+export function isOutboundQuotaExhausted(
+    row: QuotaRow | null,
+    now: Date,
+    limit = OUTBOUND_QUOTA_LIMIT,
+): boolean {
+    return windowExhausted(row, now, limit, OUTBOUND_QUOTA_WINDOW_MS);
+}
+
+export function describeOutboundQuota(
+    row: QuotaRow | null,
+    now: Date,
+    limit = OUTBOUND_QUOTA_LIMIT,
+): QuotaState {
+    return describeWindow(row, now, limit, OUTBOUND_QUOTA_WINDOW_MS);
 }

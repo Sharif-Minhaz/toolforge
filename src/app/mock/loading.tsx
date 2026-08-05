@@ -1,9 +1,13 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
- * Matches `page.tsx` block for block: header, badge row, disclosure panel,
- * workspace grid, then the create/import card. A skeleton that does not agree
- * with what replaces it reads as a layout shift rather than as loading.
+ * Matches `page.tsx` block for block: header, badge row, the create/import card,
+ * the workspace grid, then the disclosure panel at the foot. A skeleton that
+ * does not agree with what replaces it reads as a layout shift rather than as
+ * loading — which is why this file changes whenever that page reorders.
+ *
+ * The recovery-key panel has no skeleton: it only ever appears in response to a
+ * press, never on first paint.
  */
 export default function MockStudioLoading() {
     return (
@@ -20,9 +24,9 @@ export default function MockStudioLoading() {
                 </div>
             </div>
 
-            <Skeleton className="h-24 w-full rounded-2xl" />
-
             <div className="flex flex-col gap-6">
+                <Skeleton className="h-64 w-full rounded-2xl" />
+
                 <div>
                     <Skeleton className="h-3 w-32" />
                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -30,9 +34,9 @@ export default function MockStudioLoading() {
                         <Skeleton className="h-36 rounded-2xl" />
                     </div>
                 </div>
-
-                <Skeleton className="h-64 w-full rounded-2xl" />
             </div>
+
+            <Skeleton className="h-24 w-full rounded-2xl" />
         </div>
     );
 }

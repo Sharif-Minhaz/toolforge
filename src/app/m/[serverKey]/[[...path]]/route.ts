@@ -1,5 +1,9 @@
-import { HTTP_METHODS, type HttpMethod } from "@/modules/mock-server/types/graph";
+import { after } from "next/server";
+
+import { buildLoggedRequest, buildLoggedResponse } from "@/modules/mock-server/domain/log-record";
+import { writeRequestLog } from "@/modules/mock-server/repository/logs";
 import { serveMockRequest, type ServeOutcome } from "@/modules/mock-server/repository/serve";
+import { HTTP_METHODS, type HttpMethod } from "@/modules/mock-server/types/graph";
 
 /**
  * Where a mock endpoint actually answers.
@@ -84,6 +88,9 @@ function toResponse(outcome: ServeOutcome, method: HttpMethod): Response {
             }
 
             headers.set("x-mock-endpoint", outcome.endpointId);
+            // Echoed so a caller who liked what they got can pin it: send the
+            // same value back as `X-Mock-Seed` and the response repeats exactly.
+            headers.set("x-mock-seed", outcome.seed);
 
             return new Response(method === "HEAD" ? null : outcome.response.body, {
                 status: outcome.response.status,
@@ -133,17 +140,52 @@ async function handle(request: Request, context: RouteContext): Promise<Response
 
     const url = new URL(request.url);
 
+    const query = Object.fromEntries(url.searchParams);
+    const headers = Object.fromEntries(request.headers);
+    const rawBody = method === "GET" || method === "HEAD" ? "" : await request.text();
+    const requestPath = `/${(path ?? []).join("/")}`;
+
     const outcome = await serveMockRequest({
         serverKey,
         method: method as HttpMethod,
-        path: `/${(path ?? []).join("/")}`,
-        query: Object.fromEntries(url.searchParams),
-        headers: Object.fromEntries(request.headers),
+        path: requestPath,
+        query,
+        headers,
         cookies: readCookies(request.headers.get("cookie")),
-        rawBody: method === "GET" || method === "HEAD" ? "" : await request.text(),
+        rawBody,
     });
 
-    return toResponse(outcome, method as HttpMethod);
+    const response = toResponse(outcome, method as HttpMethod);
+
+    // Written after the response is finished, so a mock answers at the same
+    // speed whether logging is on or not — and a briefly slow database costs
+    // the caller nothing.
+    if (outcome.kind === "response" || outcome.kind === "failed") {
+        const status = outcome.kind === "response" ? outcome.response.status : 500;
+        const { workspaceId, serverId, endpointId, trace, durationMs } = outcome;
+        const responseHeaders = outcome.kind === "response" ? outcome.response.headers : [];
+        const responseBody = outcome.kind === "response" ? outcome.response.body : "";
+
+        after(async () => {
+            await writeRequestLog({
+                workspaceId,
+                serverId,
+                endpointId,
+                method,
+                path: requestPath,
+                status,
+                durationMs,
+                // Redacted here, on the way in — never filtered on the way out.
+                // A read-path filter is one forgotten query from leaking, and it
+                // does nothing about the copy already on disk.
+                request: buildLoggedRequest(headers, query, rawBody, false),
+                response: buildLoggedResponse(responseHeaders, responseBody, false),
+                trace,
+            });
+        });
+    }
+
+    return response;
 }
 
 function readCookies(header: string | null): Readonly<Record<string, string>> {

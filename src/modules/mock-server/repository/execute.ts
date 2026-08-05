@@ -82,12 +82,24 @@ export async function findCandidateRoutes(
     }));
 }
 
-/** The winner's graph, and only the winner's. */
-export async function findEndpointGraph(endpointId: string): Promise<unknown | null> {
+export type EndpointExecution = {
+    readonly graph: unknown;
+    /** Needed to scope variables; null when the endpoint sits at the root. */
+    readonly collectionId: string | null;
+};
+
+/**
+ * The winner's graph and the one other column execution needs.
+ *
+ * Fetched together rather than in two queries: `collectionId` is four bytes
+ * beside a document that may be a hundred kilobytes, and a second round trip
+ * to read it would double the query count on the hot path for nothing.
+ */
+export async function findEndpointExecution(endpointId: string): Promise<EndpointExecution | null> {
     const row = await prisma.endpoint.findUnique({
         where: { id: endpointId },
-        select: { graph: true },
+        select: { graph: true, collectionId: true },
     });
 
-    return row?.graph ?? null;
+    return row === null ? null : { graph: row.graph, collectionId: row.collectionId };
 }

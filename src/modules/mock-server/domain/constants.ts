@@ -182,6 +182,13 @@ export const MAX_VALUE_DEPTH = 12;
 /** Per `array` expression. One number must not become unbounded work. */
 export const MAX_ARRAY_ITEMS = 1_000;
 
+/**
+ * A template is the one value shape that can grow without the array ceiling
+ * catching it — a template over an array expression concatenates rather than
+ * counting — so it carries its own.
+ */
+export const MAX_TEMPLATE_LENGTH = 64 * 1_024;
+
 export const MIN_STATUS_CODE = 100;
 
 export const MAX_STATUS_CODE = 599;

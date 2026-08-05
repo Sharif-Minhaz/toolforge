@@ -10,7 +10,9 @@ import { CREATE_QUOTA_LIMIT } from "../domain/constants";
 import {
     describeCreateQuota,
     hasCreateWindowExpired,
+    hasOutboundWindowExpired,
     isCreateQuotaExhausted,
+    isOutboundQuotaExhausted,
 } from "../domain/quota";
 import { isMockQuotaConfigured } from "./config";
 
@@ -128,5 +130,61 @@ export async function spendCreateQuota(
         logEvent("error", "mock_server.quota_write_failed", { error: describeError(caught) });
 
         return { ok: false, quota: describeCreateQuota(null, now) };
+    }
+}
+
+/**
+ * Spends one outbound call, or refuses.
+ *
+ * Keyed on the **workspace** rather than on the caller's address, and that is
+ * deliberate: an outbound request is made on behalf of whoever built the graph,
+ * not whoever happened to call the mock. Metering the caller would let one
+ * abusive workspace spread its budget across every visitor who touched it.
+ *
+ * Fails closed for the same reason `spendCreateQuota` does, only more so. An
+ * unmetered outbound path is an amplifier aimed at whatever address a stranger
+ * types, carrying this deployment's reputation.
+ */
+export async function spendOutboundQuota(workspaceId: string, now = new Date()): Promise<boolean> {
+    if (!isMockQuotaConfigured()) {
+        logEvent("error", "mock_server.outbound_quota_not_configured");
+
+        return false;
+    }
+
+    // Namespaced so an outbound count and a creation count cannot collide on
+    // one key — the table is shared and the two limits are not.
+    const key = createHash("sha256")
+        .update(`${process.env.MOCK_IP_SALT ?? ""}:outbound:${workspaceId}`)
+        .digest("hex");
+
+    try {
+        return await prisma.$transaction(async (tx) => {
+            const row = await tx.mockQuota.findUnique({
+                where: { visitorHash: key },
+                select: { count: true, windowStart: true },
+            });
+
+            if (isOutboundQuotaExhausted(row, now)) {
+                return false;
+            }
+
+            const reset = row === null || hasOutboundWindowExpired(row, now);
+            const next = reset
+                ? { count: 1, windowStart: now }
+                : { count: row.count + 1, windowStart: row.windowStart };
+
+            await tx.mockQuota.upsert({
+                where: { visitorHash: key },
+                create: { visitorHash: key, ...next },
+                update: next,
+            });
+
+            return true;
+        });
+    } catch (caught) {
+        logEvent("error", "mock_server.outbound_quota_failed", { error: describeError(caught) });
+
+        return false;
     }
 }

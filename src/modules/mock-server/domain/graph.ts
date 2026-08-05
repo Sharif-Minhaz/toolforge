@@ -1,4 +1,5 @@
 import { MAX_STATUS_CODE, MAX_VALUE_DEPTH, MIN_STATUS_CODE } from "./constants";
+import { isFakerFnId } from "./faker-registry";
 import { DEFAULT_CONTENT_TYPE, isAllowedContentType } from "./content-type";
 import {
     GRAPH_SCHEMA_VERSION,
@@ -203,21 +204,35 @@ function isValueExpr(value: unknown, depth: number): value is ValueExpr {
     }
 }
 
-/** Which value kinds `resolveValue` can actually produce a result for today. */
+/**
+ * Whether every value in a tree is one this build can resolve.
+ *
+ * Every declared kind is resolvable as of M2, so what this actually catches is
+ * a `faker` naming a provider the registry does not carry — an id from a newer
+ * build, or one removed since. The recursion still has to walk the whole tree,
+ * because a single bad leaf ten levels down is what would otherwise surface as
+ * a 500 rather than as a save-time message.
+ */
 function usesOnlySupportedValues(value: ValueExpr, depth = 0): boolean {
     if (depth > MAX_VALUE_DEPTH) {
         return false;
     }
 
     switch (value.kind) {
-        case "static":
-            return true;
+        case "faker":
+            return isFakerFnId(value.fn);
         case "object":
             return value.fields.every((field) => usesOnlySupportedValues(field.value, depth + 1));
         case "array":
             return usesOnlySupportedValues(value.of, depth + 1);
+        case "oneOf":
+            return value.options.every((option) => usesOnlySupportedValues(option, depth + 1));
+        case "template":
+            return value.parts.every(
+                (part) => typeof part === "string" || usesOnlySupportedValues(part, depth + 1),
+            );
         default:
-            return false;
+            return true;
     }
 }
 
@@ -290,7 +305,7 @@ export function validateGraph(raw: unknown): GraphValidation {
         if (!isAllowedContentType(response.contentType)) {
             // Not fatal — `resolveContentType` collapses it to text/plain — but
             // the author should be told rather than discovering it from curl.
-            problems.push({ reason: "unsupported_value", nodeId: node.id });
+            problems.push({ reason: "unsupported_content_type", nodeId: node.id });
         }
     }
 

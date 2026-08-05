@@ -1227,6 +1227,93 @@ at a time, 128 ports at most, and an absolute deadline that reports whatever is
 unfinished as `filtered` — because a serverless function killed at its own limit
 returns nothing at all.
 
+# A Tree Editor Over a Recursive Union
+
+`src/modules/mock-server/domain/value-edit.ts` and its `ValueRow` component are
+the shape to copy whenever a reader has to build a nested structure without
+typing its syntax.
+
+**Every operation is a pure function on a path, and the component is a
+renderer.** Add, remove, rename, duplicate, reorder, change kind — each is a
+function taking `(root, path, …)` and returning a new root, so the whole
+interaction surface is unit-tested with no DOM. A path is a list of *steps*
+rather than a dotted string, because a tree over a union descends in several
+different ways — into an object field, into an array's item template, into one
+branch of a choice — and a string would have to encode which, badly.
+
+**A write to a path that no longer fits returns the tree unchanged.** A render
+and a click are separated by time, so a row can be removed by one action while
+another is mid-flight. Losing that edit is a far better outcome than throwing
+away the document.
+
+**Say when the escape hatch is lossy, and refuse rather than guess.** A "code
+view" beside a visual editor is right — the rule that a builder must not trap a
+power user has not changed — but a tree containing generated values has no
+literal spelling, because there is no JSON that means "a different name on every
+call". So `isAllStatic` decides whether the JSON tab is an editor or a viewer,
+`toJson` returns `null` rather than inventing something for the dynamic case,
+and the UI says which one it is. Most tools in this shape are quietly lossy
+exactly here.
+
+**`fromJson` has to produce real nodes, not one opaque blob.** Pasting JSON that
+comes back as a single unopenable value is what makes most code views one-way.
+
+**Injected, not imported, when a dependency is large and server-only.**
+`@faker-js/faker` is ~3 MB and `domain/` is reachable from the client bundle, so
+the registry holds ids and metadata while the call itself arrives on
+`ExecutionContext` from a `server-only` module — the same seam `clock` and
+`random` already use. Ids are a literal union and carry no dots, because each
+becomes a `next-intl` message key and a dot is that library's namespace
+separator.
+
+**Verify a registry against the library it names.** Fifty-one hand-written
+`"person.fullName"` strings are fifty-one chances to be wrong, and a typo
+degrades to `null` at runtime rather than failing a build. A throwaway script
+that imports the real package and calls every entry is a minute's work and is
+the same "check against something that is not you" rule the QR encoder and the
+ICO writer follow.
+
+**Seed the generator; never reach for `Math.random`.** It is unseedable in every
+engine, which makes reproducibility impossible — and reproducibility is what
+turns a mock into a test fixture. `sfc32` behind an avalanche hash of a string
+seed is fifteen lines. Keep it away from anything that must be unguessable:
+credentials still come from `crypto.getRandomValues`.
+
+# Letting a Stranger's Configuration Reach the Network
+
+`src/modules/mock-server/` ends with a node that opens a connection to an
+address whoever built the graph typed. It was built **last on purpose**, and the
+ordering is the transferable part: when a feature turns user configuration into
+an outbound request, ship everything else first and let the guard stack be the
+gate on the feature rather than a follow-up ticket.
+
+**Close the surface by construction, not by a flag.** `ExecutionContext.outbound`
+is optional, and a context built without it *cannot* make a request — the node
+returns `unsupported_node`. The serve path wires it in only when the stored graph
+actually mentions the node. There is no boolean anybody can forget to check,
+because the capability is absent rather than disabled.
+
+**Order the gates by cost.** URL shape is a regular expression, so it runs first
+and a typo costs nothing. The per-execution counter is a local integer. The
+quota is a database write and runs last, because it is the only one that bounds
+*volume* — everything above it refuses one bad call and this refuses the
+thousandth good one. It fails closed, exactly like the Port Scanner's.
+
+**Every redirect hop is a fresh decision.** `guardedFetch` follows them by hand
+because a public URL that 302s to `169.254.169.254` defeats a check done once.
+And only the first hop carries the body: a 301 on a POST is followed as a GET by
+every real client, and re-sending a body to a host the author did not name is
+precisely what should not happen.
+
+**Cap a response while it streams.** Reading it all and measuring afterwards is
+how a four-gigabyte reply kills the process.
+
+**Decide what comes back, not just what goes out.** Forwarding an upstream's
+`set-cookie` into a mock's own response would launder somebody else's session
+through this origin. Four headers are carried; everything else is dropped. The
+outbound direction drops `authorization`, `cookie` and `host` for the mirror
+reason, and any header value containing a newline, which is request splitting.
+
 # Answering on a Route Somebody Typed
 
 `src/modules/mock-server/` serves HTTP responses whose shape a stranger
