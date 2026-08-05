@@ -1,4 +1,4 @@
-import type { IpVersion } from "@/modules/tools/types";
+import type { IpVersion, QuotaState } from "@/modules/tools/types";
 
 /**
  * The three answers a TCP connect scan can actually give, and the distinction
@@ -53,18 +53,11 @@ export type PortSpecResult =
       };
 
 /**
- * How many scans this visitor has left, and when the window turns over.
- *
- * Carried back with every result — including the refusals — because a reader
+ * How many scans this visitor has left rides on `QuotaState` from
+ * `@/modules/tools/types`, which the Mock Server Studio meters with too. It is
+ * carried back with every result — including the refusals — because a reader
  * who has run out needs to know that before they retype the host.
  */
-export type QuotaState = {
-    readonly limit: number;
-    readonly used: number;
-    readonly remaining: number;
-    /** ISO-8601. The whole report crosses a Server Action boundary. */
-    readonly resetsAt: string;
-};
 
 export type ScanFailureReason =
     | "empty_input"

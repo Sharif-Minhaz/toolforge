@@ -66,11 +66,13 @@ Everything else follows from that:
 | Watermark Remover                | `/tools/watermark-remover` | AI         | Brush over a watermark, logo or unwanted object and have that square repainted by an inpainting model, composited back at the original size                                                                                                                                                                                                                |
 | Port Scanner                     | `/tools/port-scanner`      | Network    | A TCP connect scan of a public host or of your own address, reporting open, closed and **filtered** as three separate answers rather than folding a timeout into "closed". Nmap's most-scanned ports plus web, mail, database and remote-access presets, or your own list and ranges. Rate limited per visitor, capped at 128 ports a scan, and refuses every private, loopback, link-local, CGNAT, metadata and reserved range |
 | DNS & Domain Inspector           | `/tools/domain-inspector`  | Network    | One lookup returns a propagation check across nine public resolvers on a world map, plus seven panels: the name split against the Public Suffix List, DNS records with TTLs plus SPF, DMARC and MTA-STS, RDAP registration and expiry, the ASN and registry record behind every address, the TLS certificate, the redirect chain and security headers, and the technologies the site runs — each with the licence it ships under |
+| Mock Server Studio               | `/mock`                    | Network    | Build mock REST APIs and call them from a real URL. Workspaces need no account — a secret in an HttpOnly cookie proves ownership and a printable recovery key moves one to another browser. Routes support `:name` parameters and a trailing `*`, are ranked by specificity so `/users/me` beats `/users/:id`, and answer **405 with an `Allow` header** where the path exists under another method. Endpoints answer at `/m/<key>/…` and keep working after you close the tab |
 
 Every tool in the catalogue has shipped. Adding another is the easiest way to
 contribute — see [Adding a tool](CONTRIBUTING.md#adding-a-tool).
 
-Every tool except the three AI tools, the Domain Inspector and the Port Scanner runs entirely in the browser. The AI
+Every tool except the three AI tools, the Domain Inspector, the Port Scanner and the Mock Server
+Studio runs entirely in the browser. The AI
 tools call a Cloudflare
 Workers AI endpoint behind a Turnstile challenge, which is why they have environment variables of
 their own. The Watermark Remover splits the work: cropping the marked square, building the mask, and
@@ -262,7 +264,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | `NEXT_PUBLIC_SUPABASE_URL`             | **Yes**                                 | Read by the proxy on every navigation                                                                                                                                                  |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | **Yes**                                 | Same                                                                                                                                                                                   |
 | `NEXT_PUBLIC_SITE_URL`                 | No                                      | Canonical URLs, Open Graph, JSON-LD. Defaults to localhost.                                                                                                                            |
-| `DATABASE_URL`                         | Short links, Port Scanner               | Pooled connection for app runtime. Blank, and the URL Shortener says it has nowhere to store a link and the QR tool's dynamic option renders disabled; every other tool is unaffected. |
+| `DATABASE_URL`                         | Short links, Port Scanner, Mock Servers | Pooled connection for app runtime. Blank, and the URL Shortener says it has nowhere to store a link, the QR tool's dynamic option renders disabled, and the Mock Server Studio says it has nowhere to keep a workspace; every other tool is unaffected. |
 | `DIRECT_URL`                           | Migrations only                         | Non-pooled connection for `db:migrate`, `db:push`, Studio                                                                                                                              |
 | `NEXT_PUBLIC_MEASUREMENT_ID`           | No                                      | GA4 measurement id. Blank means gtag.js is never loaded.                                                                                                                               |
 | `NEXT_PUBLIC_TEXT_DETECTOR_API`        | AI Text Detector                        | Cloudflare Workers AI endpoint. `TEXT_DETECTOR_API` overrides it server-side.                                                                                                          |
@@ -272,8 +274,9 @@ Open [http://localhost:3000](http://localhost:3000).
 | `NEXT_PUBLIC_WATERMARK_REMOVER_API`    | Watermark Remover                       | Full URL of the worker fronting the inpainting model. No path is appended — the worker answers `POST` wherever it is mounted. `WATERMARK_REMOVER_API` overrides it server-side.        |
 | `WATERMARK_REMOVER_API_KEY`            | Watermark Remover                       | Bearer token for that endpoint. Server-only — never exposed to the client.                                                                                                             |
 | `PORT_SCAN_IP_SALT`                    | Port Scanner                            | Salt mixed into a visitor's address before it is hashed into `port_scan_quota`, so the row records how often somebody scanned and never who. Any long random string. Blank — or `DATABASE_URL` blank — and the scanner refuses every scan rather than running unmetered. Rotating it resets every open window                                    |
-| `NEXT_PUBLIC_TURNSTILE_KEY`            | AI tools, short links, network tools    | Turnstile site key. Absent, and those features render disabled rather than unprotected.                                                                                                |
-| `TURNSTILE_SECRET`                     | AI tools, short links, network tools    | Turnstile secret, read only by `src/modules/tools/repository/turnstile.ts`.                                                                                                            |
+| `MOCK_IP_SALT`                         | Mock Server Studio                      | Salt mixed into a caller's address before it is hashed into `mock_quota`, which meters workspace creation per network per hour. Any long random string. Blank — or `DATABASE_URL` blank — and the studio refuses to create or import a workspace rather than running unmetered. Rotating it resets every open window |
+| `NEXT_PUBLIC_TURNSTILE_KEY`            | AI tools, short links, network tools, Mock Servers | Turnstile site key. Absent, and those features render disabled rather than unprotected.                                                                                     |
+| `TURNSTILE_SECRET`                     | AI tools, short links, network tools, Mock Servers | Turnstile secret, read only by `src/modules/tools/repository/turnstile.ts`.                                                                                                 |
 
 > **Analytics is gated three ways.** `gtag.js` only enters the document when a well-formed `G-…` id
 > is configured, the visitor has clicked **Allow** on the consent banner, and the build is
@@ -323,7 +326,8 @@ Open [http://localhost:3000](http://localhost:3000).
 | `next.config.ts`       | The `next-intl` plugin pointed at `src/i18n/request.ts`, the React Compiler (`reactCompiler: true`), and a `serverActions.bodySizeLimit` of `11mb` so the AI Image Detector can forward a 10 MB upload |
 | `prisma.config.ts`     | Prisma 7 config. It loads `.env.local` then `.env` itself, and supplies `DIRECT_URL` to CLI commands only                                                                                              |
 | `prisma/schema.prisma` | Schema only — connection URLs moved to `prisma.config.ts` in Prisma 7. Holds one model, `QrLink`                                                                                                       |
-| `prisma/migrations/`   | SQL migrations, applied with `bun run db:deploy`. `20260801000000_add_qr_links` creates `qr_links`                                                                                                     |
+| `prisma/migrations/`   | SQL migrations, applied with `bun run db:deploy`. `20260801000000_add_qr_links` creates `qr_links`; `20260805000000_mock_server_studio` creates the eight Mock Server Studio tables                     |
+| `docs/`                | Design documents kept next to the code they describe. `mock-server-studio.md` is the specification the studio is built against                                                                         |
 | `components.json`      | shadcn settings: `base-nova` style, Tabler icons, `src/app/globals.css` as the token source                                                                                                            |
 | `example.env`          | The template to copy to `.env.local`. Every variable in the table above appears there with a comment                                                                                                   |
 
@@ -353,6 +357,7 @@ Feature-first. Each tool is a self-contained module.
 src/
   app/                    routes only: page, layout, loading, not-found
     tools/<tool>/         page.tsx, loading.tsx
+    mock/                 the Mock Server Studio — a route tree, not a single-page tool
     q/[slug]/             route handler — the redirect a printed dynamic QR code follows
     s/[slug]/             route handler — the redirect a shortened link follows
     unlock/[slug]/        the gate in front of a password-protected short link

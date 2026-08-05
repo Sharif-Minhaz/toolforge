@@ -21,6 +21,17 @@ export default function robots(): MetadataRoute.Robots {
                 "/q/",
                 "/s/",
                 "/unlock/",
+                // Mock endpoints answer with data somebody is developing
+                // against, not with content this site publishes. Every response
+                // already carries `X-Robots-Tag: noindex`; this stops the
+                // request being made at all, which matters more here than
+                // elsewhere because a crawl of a mock server is a crawl of
+                // somebody's whole API surface.
+                "/m/",
+                // A workspace id is a handle to somebody's work. Owning it
+                // still needs the cookie, but an indexed URL is an invitation
+                // to try the door.
+                "/mock/",
             ],
         },
         sitemap: absoluteUrl("/sitemap.xml"),

@@ -44,6 +44,7 @@ export const TOOL_IDS = [
     "domain-inspector",
     "bson",
     "port-scanner",
+    "mock-server",
 ] as const;
 
 export type ToolId = (typeof TOOL_IDS)[number];
@@ -85,11 +86,21 @@ export type ToolIconName =
     | "terminal"
     | "radar"
     | "database"
-    | "network";
+    | "network"
+    | "server";
 
 export type Tool = {
     readonly id: ToolId;
     readonly href: string;
+    /**
+     * True for a whole section — a route tree with its own navigation rather
+     * than a single page. A section is findable in search and appears in the
+     * sitemap, but is left out of the category rail, the featured and popular
+     * grids and the related-tools strip, where a multi-page app sitting between
+     * two single-page utilities reads as a mistake. It also opts out of the
+     * `/tools/<id>` route rule, which a section cannot satisfy.
+     */
+    readonly isSection?: boolean;
     readonly category: ToolCategory;
     readonly status: ToolStatus;
     readonly accent: ToolAccent;
@@ -252,3 +263,21 @@ export type LocalizedCategoryGroup = {
  * `crypto.getRandomValues`; nothing here ever falls back to `Math.random`.
  */
 export type RandomBytes = (length: number) => Uint8Array;
+
+/**
+ * One visitor's spend inside one fixed window, as stored. Shared by every tool
+ * that meters a public action — see `tools/domain/quota-window.ts`.
+ */
+export type QuotaRow = {
+    readonly count: number;
+    readonly windowStart: Date;
+};
+
+/** The same allowance, described for the UI. */
+export type QuotaState = {
+    readonly limit: number;
+    readonly used: number;
+    readonly remaining: number;
+    /** ISO-8601. The whole report crosses a Server Action boundary. */
+    readonly resetsAt: string;
+};

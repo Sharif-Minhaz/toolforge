@@ -319,6 +319,17 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.portScanner.errors,
             toast: messages.portScanner.toast,
         },
+        // The studio's own hero and disclosure copy stays on the server; only
+        // the launcher island's strings cross.
+        mockServer: {
+            launcher: messages.mockServer.launcher,
+            recovery: messages.mockServer.recovery,
+            servers: messages.mockServer.servers,
+            endpoints: messages.mockServer.endpoints,
+            errors: messages.mockServer.errors,
+            serverErrors: messages.mockServer.serverErrors,
+            toast: messages.mockServer.toast,
+        },
         // Seven panels' worth of labels, which is why this slice is the
         // largest here — everything under `article` still stays on the server.
         domainInspector: {

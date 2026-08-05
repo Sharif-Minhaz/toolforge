@@ -59,7 +59,9 @@
         "toolsLabel": "Tools",
         "soonTooltip": "{name} · Soon",
         "breadcrumb": "Breadcrumb",
-        "repository": "ToolForge on GitHub"
+        "repository": "ToolForge on GitHub",
+        "mockServers": "Mock Servers",
+        "sectionStudio": "Studio"
     },
     "theme": {
         "label": "Theme",
@@ -242,6 +244,10 @@
         "port-scanner": {
             "name": "Port Scanner",
             "description": "Check whether a TCP port is open on a public host or on your own address, with open, closed and filtered told apart. Nmap's most-scanned ports plus web, mail, database and remote-access presets."
+        },
+        "mock-server": {
+            "name": "Mock Server Studio",
+            "description": "Build mock REST APIs visually and call them from a real URL. No account — a recovery key moves a workspace between browsers."
         }
     },
     "overview": {
@@ -6898,6 +6904,159 @@
                 "q7": "Is it legal to scan a host I do not own?",
                 "a7": "It depends where you are, where the host is, and what you agreed to — and in several jurisdictions the answer is no. Unauthorised probing falls under computer misuse law in the UK, the US and elsewhere. Scan your own hosts, or ones you have written permission to test. This is not legal advice."
             }
+        }
+    },
+    "mockServer": {
+        "meta": {
+            "title": "Visual Mock Server Studio — Build Mock APIs Without Writing JSON",
+            "description": "Build mock REST APIs by dragging nodes onto a canvas instead of hand-writing JSON. Workspaces need no account: a secret in your browser proves ownership and a recovery key moves it to another machine. Mock endpoints answer from our servers, so they keep working after you close the tab."
+        },
+        "hero": {
+            "eyebrow": "Mock servers",
+            "title": "Mock Server Studio",
+            "subtitle": "Design an API before it exists. Build each endpoint as a graph, give it the shape of the response you want back, and point your app at a real URL that answers exactly that.",
+            "badgeNoAccount": "No account, no sign-up",
+            "badgeRecovery": "One recovery key per workspace",
+            "badgeThree": "Three workspaces per browser",
+            "disclosureTitle": "This part does not run in your browser",
+            "disclosureBody": "Every other tool on ToolForge works entirely on your machine. This one cannot: a mock endpoint has to answer requests from your app, so your workspaces, endpoints and their responses are stored on our servers and served from them. Anyone who has the address of a mock endpoint can call it — treat what you put in a response as public, and never put a real credential in one."
+        },
+        "launcher": {
+            "yourWorkspaces": "Your workspaces",
+            "empty": "No workspaces on this browser yet.",
+            "emptyHint": "Create one below, or bring an existing one across with its recovery key.",
+            "panelLabel": "How to get a workspace",
+            "createTab": "Create",
+            "importTab": "Import",
+            "createTitle": "Create a workspace",
+            "createDescription": "A workspace holds your mock servers, their endpoints and their logs. You will get a recovery key once, and it is the only way back in from a different browser.",
+            "importTitle": "Import a workspace",
+            "importDescription": "Paste the recovery key you saved when the workspace was created. Case, spaces and hyphens do not matter. Importing adds this browser alongside the ones that already have access — nothing is signed out.",
+            "nameLabel": "Workspace name",
+            "namePlaceholder": "Payments API",
+            "keyLabel": "Recovery key",
+            "createAction": "Create workspace",
+            "importAction": "Import workspace",
+            "open": "Open",
+            "rename": "Rename",
+            "renameSave": "Save name",
+            "cancel": "Cancel",
+            "forget": "Forget here",
+            "forgetAction": "Forget it",
+            "forgetConfirm": "Forget “{name}” on this browser?",
+            "forgetConfirmHint": "The workspace keeps running and its endpoints keep answering. Other browsers keep their access. You will need the recovery key to get back in here.",
+            "delete": "Delete",
+            "deleteAction": "Delete permanently",
+            "deleteConfirm": "Delete “{name}” for good?",
+            "deleteConfirmHint": "Every server, endpoint, variable and log under it goes with it, for everyone, and no recovery key brings it back.",
+            "serverCount": "{count, plural, =0 {No servers} one {# server} other {# servers}}",
+            "createdOn": "created {date}",
+            "fullHint": "This browser is already holding {max, number} workspaces. Forget one to make room, or open another browser.",
+            "challengeMissing": "The challenge is not configured on this deployment, so workspaces cannot be created here."
+        },
+        "recovery": {
+            "title": "Save your recovery key",
+            "description": "This is the only way to reach this workspace from another browser, and the only way back if you clear this one's cookies. It is stored as a one-way digest, so nobody — including us — can show it to you again.",
+            "copy": "Copy key",
+            "copied": "Copied",
+            "saved": "I have saved it",
+            "warning": "Once you dismiss this, the key cannot be shown again."
+        },
+        "errors": {
+            "storage_unavailable": "This deployment has no database configured, so the studio has nowhere to keep a workspace.",
+            "quota_not_configured": "The creation limit cannot run on this deployment, so new workspaces are refused rather than left unmetered.",
+            "quota_exhausted": "Too many workspaces created from this network recently. Try again in a little while.",
+            "challenge_failed": "The challenge did not verify. Wait for it to reset and try again.",
+            "cookie_full": "This browser is already holding the maximum number of workspaces.",
+            "invalid_name": "Give the workspace a name of 60 characters or fewer.",
+            "invalid_recovery_key": "That is not a recovery key. They are 16 characters, usually written as four groups of four.",
+            "unknown_recovery_key": "No workspace answers to that key. Check it and try again.",
+            "already_imported": "This browser already has access to that workspace.",
+            "not_owner": "This browser does not have access to that workspace.",
+            "not_found": "That workspace no longer exists.",
+            "write_failed": "The change could not be saved. Try again."
+        },
+        "toast": {
+            "created": "Workspace created",
+            "imported": "Workspace imported",
+            "renamed": "Workspace renamed",
+            "deleted": "Workspace deleted",
+            "forgotten": "Forgotten on this browser",
+            "copyFailed": "Could not copy the key — select it and copy manually",
+            "serverCreated": "Server created",
+            "serverDeleted": "Server deleted",
+            "endpointCreated": "Route added",
+            "endpointSaved": "Route saved",
+            "endpointDeleted": "Route deleted"
+        },
+        "workspace": {
+            "eyebrow": "Workspace",
+            "subtitle": "Each server owns a set of endpoints and answers on its own address. Nothing here is private — anyone holding the address can call it.",
+            "back": "All workspaces",
+            "notFound": "That workspace is not on this browser.",
+            "notFoundHint": "Import it with its recovery key, or pick another one."
+        },
+        "servers": {
+            "heading": "Mock servers",
+            "empty": "No servers in this workspace yet.",
+            "emptyHint": "Create one below. Its address starts answering the moment it has an endpoint.",
+            "createTitle": "Create a server",
+            "createDescription": "The key is the part of the address people will call. Leave it blank and one is drawn from the name.",
+            "nameLabel": "Server name",
+            "namePlaceholder": "Payments API",
+            "keyLabel": "Key (optional)",
+            "keyPlaceholder": "payments-api",
+            "addressPreview": "Endpoints will answer at",
+            "createAction": "Create server",
+            "open": "Open",
+            "delete": "Delete",
+            "deleteAction": "Delete permanently",
+            "deleteConfirm": "Delete “{name}” and every endpoint under it?",
+            "cancel": "Cancel",
+            "endpointCount": "{count, plural, =0 {No endpoints} one {# endpoint} other {# endpoints}}",
+            "paused": "Paused",
+            "limitHint": "This workspace is holding {max, number} servers. Delete one to make room.",
+            "copyUrl": "Copy address",
+            "copyFailed": "Could not copy — select the address and copy manually"
+        },
+        "endpoints": {
+            "heading": "Routes",
+            "editorHeading": "Response",
+            "empty": "No routes yet. Add one above.",
+            "noSelection": "Pick a route to edit its response.",
+            "methodLabel": "Method",
+            "pathLabel": "Path",
+            "addAction": "Add route",
+            "nameLabel": "Name",
+            "statusLabel": "Status code",
+            "contentTypeLabel": "Content type",
+            "enabledLabel": "Enabled",
+            "enabledHint": "A disabled route answers 404 without being deleted.",
+            "bodyLabel": "Response body",
+            "bodyHint": "JSON for now. The visual tree editor replaces this field and reads the same stored value.",
+            "saveAction": "Save route",
+            "delete": "Delete route",
+            "deleteAction": "Delete",
+            "cancel": "Cancel",
+            "graphProblem": "This route was built by a newer version of the studio than this editor understands. Saving here would replace its response.",
+            "pathHelp": "Use :name for a parameter and a trailing * for everything below a prefix — /users/:id, /files/*."
+        },
+        "serverErrors": {
+            "storage_unavailable": "This deployment has no database configured.",
+            "not_owner": "This browser does not have access to that workspace.",
+            "not_found": "That no longer exists.",
+            "invalid_name": "Give it a name of 60 characters or fewer.",
+            "invalid_key": "A key is 3 to 32 characters of lowercase letters, digits and single hyphens, not starting or ending with one.",
+            "key_taken": "That key is already in use. Try another.",
+            "key_reserved": "That key is reserved. Try another.",
+            "server_limit_reached": "This workspace is holding the maximum number of servers.",
+            "endpoint_limit_reached": "This server is holding the maximum number of routes.",
+            "invalid_path": "That is not a usable path. Use :name for a parameter, and a * only as the last segment.",
+            "route_taken": "This server already has that method on that path.",
+            "invalid_status": "A status code is a whole number between 100 and 599.",
+            "invalid_body": "The response body is not valid JSON.",
+            "version_conflict": "Someone saved this route in another tab. Reload to see their version before saving yours.",
+            "write_failed": "The change could not be saved. Try again."
         }
     }
 }

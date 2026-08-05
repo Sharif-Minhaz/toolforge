@@ -69,3 +69,302 @@ model PortScanQuota {
   @@index([windowStart])
   @@map("port_scan_quota")
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Visual Mock Server Studio
+//
+// See docs/mock-server-studio.md for the design these models implement. The
+// whole data model lands in one migration because the relations only make sense
+// together; the milestones after M0 fill the tables rather than add them.
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum HttpMethod {
+  GET
+  POST
+  PUT
+  PATCH
+  DELETE
+  HEAD
+  OPTIONS
+
+  @@map("http_method")
+}
+
+/// Which level of the tree an environment variable is attached to.
+enum VariableScope {
+  WORKSPACE
+  SERVER
+  COLLECTION
+
+  @@map("variable_scope")
+}
+
+/// A visitor's whole world: their servers, endpoints, variables and logs.
+///
+/// There is no account. Ownership is proved by one of two credentials, and
+/// **both are stored only as SHA-256 digests** — a database dump must not hand
+/// over the ability to edit somebody's mock APIs.
+///
+/// - A row in `workspace_secrets` matches a secret held in an HttpOnly cookie.
+///   That is the session credential, one per browser, and it proves ownership
+///   on every studio action.
+/// - `recoveryHash` matches the printable key shown once at creation. That is
+///   the bearer credential, and the only way to reach a workspace from a
+///   browser that does not already hold a secret.
+///
+/// Neither is salted or stretched, and deliberately so: both are uniform random
+/// values of 80 bits or more, which is not something a dictionary reaches. The
+/// stretching in `short_links` exists because a link password is human-chosen.
+model Workspace {
+  id           String @id @default(uuid(7)) @db.Uuid
+  name         String
+  recoveryHash String @unique @map("recovery_hash")
+
+  /// Bumped whenever the recovery key is rotated, so a key someone wrote down
+  /// two rotations ago cannot be replayed even if its digest were recovered.
+  recoveryEpoch Int @default(1) @map("recovery_epoch")
+
+  /// Studio preferences that no query ever filters on.
+  settings Json @default("{}")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  /// Touched when the studio loads. The only thing a dormancy sweep needs, and
+  /// far cheaper than deriving it from the newest row in `request_logs`.
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+
+  secrets   WorkspaceSecret[]
+  servers   MockServer[]
+  variables EnvironmentVariable[]
+  logs      RequestLog[]
+
+  @@index([lastSeenAt])
+  @@map("workspaces")
+}
+
+/// One browser's claim on one workspace.
+///
+/// A row per device rather than a column on `workspaces`, because importing a
+/// recovery key into a second browser has to *add* a claim. With a single
+/// column the import would have to overwrite it, silently evicting the browser
+/// that created the workspace — and a recovery key whose use logs you out
+/// elsewhere is not a recovery key.
+///
+/// The digest is the primary key: it is the only thing a request carries, and a
+/// surrogate id would be a second identity nothing ever looks up by.
+model WorkspaceSecret {
+  /// SHA-256 of the secret in that browser's cookie. Never the secret.
+  secretHash  String @id @map("secret_hash")
+  workspaceId String @map("workspace_id") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+  /// Lets the settings page list "this device and two others", and lets a
+  /// future sweep drop claims nobody has used in a year.
+  lastUsedAt DateTime @default(now()) @map("last_used_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@map("workspace_secrets")
+}
+
+/// One deployable mock API.
+///
+/// `key` is what appears in the public address, so it is globally unique rather
+/// than unique per workspace — two workspaces cannot both own `payments`.
+model MockServer {
+  id          String  @id @default(uuid(7)) @db.Uuid
+  workspaceId String  @map("workspace_id") @db.Uuid
+  key         String  @unique
+  name        String
+  description String?
+
+  /// CORS rules, default response headers, the content-type policy and base
+  /// latency. JSONB because nothing queries inside it.
+  config Json @default("{}")
+
+  /// A paused server answers 503 rather than 404, so a caller can tell the
+  /// difference between "switched off" and "never existed".
+  isPaused Boolean @default(false) @map("is_paused")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  collections Collection[]
+  endpoints   Endpoint[]
+
+  @@index([workspaceId])
+  @@map("mock_servers")
+}
+
+/// A folder inside a server.
+///
+/// Self-referencing rather than a fixed three-level hierarchy, because an
+/// OpenAPI import arrives with whatever tag depth its author chose — and this
+/// is the one thing here that could not be retrofitted without a data
+/// migration.
+model Collection {
+  id       String  @id @default(uuid(7)) @db.Uuid
+  serverId String  @map("server_id") @db.Uuid
+  parentId String? @map("parent_id") @db.Uuid
+  name     String
+
+  /// Materialised ancestor path (`/auth/admin`), so breadcrumbs and ordering
+  /// cost one indexed read rather than a recursive query.
+  path String
+
+  sortOrder Int @default(0) @map("sort_order")
+
+  /// Collection-level defaults — auth, headers, base path — inherited by every
+  /// endpoint underneath unless that endpoint overrides them.
+  config Json @default("{}")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  server    MockServer   @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  parent    Collection?  @relation("CollectionTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children  Collection[] @relation("CollectionTree")
+  endpoints Endpoint[]
+
+  @@index([serverId, path])
+  @@index([parentId])
+  @@map("collections")
+}
+
+/// One route, and the graph that answers it.
+///
+/// The graph lives on this row rather than in a joined table because this is
+/// the hot path: a public request reads one row and nothing else. Version
+/// history, when it arrives, is an append-only sibling table — additive,
+/// because `graph` is already a self-contained document carrying its own
+/// `schemaVersion`.
+model Endpoint {
+  id           String  @id @default(uuid(7)) @db.Uuid
+  serverId     String  @map("server_id") @db.Uuid
+  collectionId String? @map("collection_id") @db.Uuid
+
+  method HttpMethod
+
+  /// Normalised at write time: leading slash, no trailing slash, `:name` for a
+  /// parameter, a single trailing `*` for a wildcard tail.
+  pathPattern String @map("path_pattern")
+
+  /// Both precomputed at write time so a public request selects candidates with
+  /// one indexed query and ranks them with arithmetic rather than parsing.
+  /// `specificity` is a base-3 number read left to right, one digit per
+  /// segment: 2 static, 1 parameter, 0 wildcard. Higher wins.
+  segmentCount Int     @map("segment_count")
+  specificity  Int
+  hasWildcard  Boolean @default(false) @map("has_wildcard")
+
+  name        String
+  description String?
+  isEnabled   Boolean @default(true) @map("is_enabled")
+
+  /// A `GraphDocument`. Carries its own `schemaVersion` so an endpoint saved
+  /// against an older node set keeps executing after the format moves on.
+  graph Json
+
+  /// Optimistic-concurrency token. Every save asserts the version it read, so
+  /// two studio tabs cannot silently overwrite each other.
+  version Int @default(1)
+
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  server     MockServer  @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  collection Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+
+  @@unique([serverId, method, pathPattern])
+  /// Candidate selection for a public request: one server, enabled rows, and
+  /// the segment count the incoming path has.
+  @@index([serverId, isEnabled, segmentCount])
+  @@index([collectionId])
+  @@map("endpoints")
+}
+
+/// A value a graph can read, at one of three levels of the tree.
+///
+/// Scope is one `(type, id)` pair rather than three nullable foreign keys,
+/// because Postgres treats NULLs as distinct: a unique constraint spanning
+/// nullable scope columns would silently permit the duplicates it looks like it
+/// prevents.
+model EnvironmentVariable {
+  id          String        @id @default(uuid(7)) @db.Uuid
+  workspaceId String        @map("workspace_id") @db.Uuid
+  scopeType   VariableScope @map("scope_type")
+  scopeId     String        @map("scope_id") @db.Uuid
+
+  /// "default", "staging", … — one row per environment per key.
+  environment String @default("default")
+
+  key   String
+  value String
+
+  /// Masked in the UI, and never written into a log line or a trace entry.
+  isSecret Boolean @default(false) @map("is_secret")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([scopeType, scopeId, environment, key])
+  @@index([workspaceId])
+  @@map("environment_variables")
+}
+
+/// One row per public request.
+///
+/// Capped per workspace and truncated per field. People post real bearer tokens
+/// at their mock servers, so `authorization`, `cookie` and friends are redacted
+/// before the row is written rather than filtered when it is read.
+model RequestLog {
+  id          String  @id @default(uuid(7)) @db.Uuid
+  workspaceId String  @map("workspace_id") @db.Uuid
+  serverId    String  @map("server_id") @db.Uuid
+  /// Null when nothing matched — which is exactly the row worth reading.
+  endpointId  String? @map("endpoint_id") @db.Uuid
+
+  method     String
+  path       String
+  status     Int
+  durationMs Int    @map("duration_ms")
+
+  /// `{ headers, query, bodyPreview, bodyTruncated }`, already redacted.
+  request Json
+  /// `{ headers, bodyPreview, bodyTruncated }`.
+  response Json
+  /// Which nodes ran, in order, with per-node milliseconds. Powers the trace
+  /// panel; null for a request that matched nothing.
+  trace Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt(sort: Desc)])
+  @@index([serverId, createdAt(sort: Desc)])
+  @@map("request_logs")
+}
+
+/// Workspace and server creation, metered per caller address.
+///
+/// The same shape and the same reasoning as `port_scan_quota`. The cookie's
+/// "three workspaces" is a UI affordance — a visitor who clears it can create
+/// three more — so the limit that actually holds lives here, keyed on a salted
+/// digest of the address and never on the address itself.
+model MockQuota {
+  /// SHA-256 of `MOCK_IP_SALT` + the caller's address.
+  visitorHash String   @id @map("visitor_hash")
+  count       Int      @default(0)
+  windowStart DateTime @map("window_start")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([windowStart])
+  @@map("mock_quota")
+}

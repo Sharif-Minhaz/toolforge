@@ -1,4 +1,5 @@
 import {
+    IconServer2,
     IconArrowsMinimize,
     IconBinary,
     IconBlur,
@@ -62,6 +63,7 @@ const ICONS: Record<ToolIconName, ComponentType<IconProps>> = {
     radar: IconRadar2,
     database: IconDatabaseCog,
     network: IconNetwork,
+    server: IconServer2,
 };
 
 type ToolIconProps = {

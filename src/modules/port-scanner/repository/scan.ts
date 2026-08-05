@@ -4,7 +4,8 @@ import { PORT_TIMEOUT_MS, SCAN_DEADLINE_MS } from "../domain/constants";
 import { summarise } from "../domain/summary";
 import { probePorts } from "./probe";
 import { resolveScanTarget } from "./resolve";
-import type { QuotaState, ScanResult } from "../types";
+import type { QuotaState } from "@/modules/tools/types";
+import type { ScanResult } from "../types";
 
 /**
  * Resolve, guard, scan — in that order, and the order is the security property.

@@ -1,6 +1,6 @@
 "use client";
 
-import { IconLayoutDashboard, IconSearch, IconX } from "@tabler/icons-react";
+import { IconLayoutDashboard, IconSearch, IconServer2, IconX } from "@tabler/icons-react";
 import { motion } from "motion/react";
 import { useFormatter, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -196,6 +196,9 @@ export function SidebarNav({
     );
 
     const overviewActive = pathname === "/";
+    // A section rather than a catalog entry: the studio is a route tree, not a
+    // page, so it is not one of `tools` and does not appear under a category.
+    const studioActive = pathname === "/mock" || pathname.startsWith("/mock/");
 
     function renderRow(tool: LocalizedTool) {
         const available = tool.status === "available";
@@ -293,6 +296,26 @@ export function SidebarNav({
                                 accentClass={TOOL_ACCENT_VARS.violet}
                                 icon={
                                     <IconLayoutDashboard
+                                        className="size-4"
+                                        stroke={1.75}
+                                        aria-hidden="true"
+                                    />
+                                }
+                            />
+                        </ul>
+
+                        <SectionLabel ruleWhenCollapsed>{t("sectionStudio")}</SectionLabel>
+                        <ul className="flex flex-col gap-0.5">
+                            <NavRow
+                                label={t("mockServers")}
+                                href="/mock"
+                                active={studioActive}
+                                collapsed={collapsed}
+                                layoutIdPrefix={layoutIdPrefix}
+                                onNavigate={onNavigate}
+                                accentClass={TOOL_ACCENT_VARS.cyan}
+                                icon={
+                                    <IconServer2
                                         className="size-4"
                                         stroke={1.75}
                                         aria-hidden="true"

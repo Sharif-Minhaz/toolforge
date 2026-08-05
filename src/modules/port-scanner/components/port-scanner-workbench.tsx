@@ -33,13 +33,8 @@ import { MAX_INPUT_LENGTH, MAX_PORTS_PER_SCAN, TURNSTILE_ACTION } from "../domai
 import { buildScanCsv, createScanCsvFile, createScanJsonFile } from "../domain/export";
 import { resolveRequestedPorts } from "../domain/port-spec";
 import { isFullyFiltered } from "../domain/summary";
-import {
-    PORT_PRESETS,
-    type PortPreset,
-    type QuotaState,
-    type ScanFailure,
-    type ScanReport,
-} from "../types";
+import type { QuotaState } from "@/modules/tools/types";
+import { PORT_PRESETS, type PortPreset, type ScanFailure, type ScanReport } from "../types";
 import { ResultsTable } from "./results-table";
 
 /** Small-caps label, matching the result panels the form sits above. */

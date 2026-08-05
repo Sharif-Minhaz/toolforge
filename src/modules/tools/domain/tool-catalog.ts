@@ -804,6 +804,33 @@ const TOOLS: readonly Tool[] = [
             "filtered port",
         ],
     },
+    {
+        id: "mock-server",
+        // A section, not a page: the studio is a route tree under /mock with
+        // its own navigation, so it opts out of the /tools/<id> rule and out of
+        // every grid where a multi-page app between two single-page utilities
+        // would read as a mistake.
+        href: "/mock",
+        isSection: true,
+        category: "network",
+        status: "available",
+        accent: "cyan",
+        icon: "server",
+        addedOn: "2026-08-05",
+        featured: false,
+        popularity: 60,
+        keywords: [
+            "mock api",
+            "mock server",
+            "api mocking",
+            "fake api",
+            "stub api",
+            "rest mock",
+            "json server",
+            "http mock",
+            "prototype api",
+        ],
+    },
 ];
 
 export function getTools(): readonly Tool[] {
@@ -819,6 +846,15 @@ export function getAvailableTools(): readonly Tool[] {
 }
 
 /**
+ * Everything that is a single page, which is what every ranked grid means by
+ * "tool". A section has its own navigation and belongs in the rail above them,
+ * not between two utilities in a popularity list.
+ */
+function getPageTools(): readonly Tool[] {
+    return TOOLS.filter((tool) => tool.isSection !== true);
+}
+
+/**
  * Search terms for the site-wide `keywords` meta tag. Planned tools are left
  * out: promising a QR generator that does not exist yet earns a bounce, not a
  * visitor.
@@ -829,13 +865,16 @@ export function getToolKeywords(): readonly string[] {
 
 /** Hand-picked tools for the overview grid, most popular first. */
 export function getFeaturedTools(limit = 6): readonly Tool[] {
-    return TOOLS.filter((tool) => tool.featured)
+    return getPageTools()
+        .filter((tool) => tool.featured)
         .toSorted((a, b) => b.popularity - a.popularity)
         .slice(0, limit);
 }
 
 export function getPopularTools(limit = 4): readonly Tool[] {
-    return TOOLS.toSorted((a, b) => b.popularity - a.popularity).slice(0, limit);
+    return getPageTools()
+        .toSorted((a, b) => b.popularity - a.popularity)
+        .slice(0, limit);
 }
 
 /**
@@ -850,7 +889,7 @@ export function getRelatedTools(id: ToolId, limit = 3): readonly Tool[] {
     const category = getToolById(id)?.category;
 
     return getAvailableTools()
-        .filter((tool) => tool.id !== id)
+        .filter((tool) => tool.id !== id && tool.isSection !== true)
         .toSorted((a, b) => {
             const byCategory = Number(b.category === category) - Number(a.category === category);
 
@@ -861,12 +900,14 @@ export function getRelatedTools(id: ToolId, limit = 3): readonly Tool[] {
 
 /** Newest first, so the overview can surface what just landed. */
 export function getRecentTools(limit = 4): readonly Tool[] {
-    return TOOLS.toSorted((a, b) => b.addedOn.localeCompare(a.addedOn)).slice(0, limit);
+    return getPageTools()
+        .toSorted((a, b) => b.addedOn.localeCompare(a.addedOn))
+        .slice(0, limit);
 }
 
 export function getToolsByCategory(): readonly ToolCategoryGroup[] {
     return TOOL_CATEGORIES.map((category) => {
-        const tools = TOOLS.filter((tool) => tool.category === category);
+        const tools = getPageTools().filter((tool) => tool.category === category);
 
         return {
             category,
@@ -877,7 +918,7 @@ export function getToolsByCategory(): readonly ToolCategoryGroup[] {
 }
 
 export function getToolsInCategory(category: ToolCategory): readonly Tool[] {
-    return TOOLS.filter((tool) => tool.category === category);
+    return getPageTools().filter((tool) => tool.category === category);
 }
 
 export function getToolCatalogStats(): ToolCatalogStats {

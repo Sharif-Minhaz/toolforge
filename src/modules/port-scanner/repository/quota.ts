@@ -4,9 +4,9 @@ import { createHash } from "node:crypto";
 
 import { prisma } from "@/lib/prisma";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
+import type { QuotaRow, QuotaState } from "@/modules/tools/types";
 import { QUOTA_LIMIT } from "../domain/constants";
-import { describeQuota, hasWindowExpired, isQuotaExhausted, type QuotaRow } from "../domain/quota";
-import type { QuotaState } from "../types";
+import { describeQuota, hasWindowExpired, isQuotaExhausted } from "../domain/quota";
 
 /**
  * The counter that keeps this tool from being a free anonymous scanning

@@ -38,10 +38,51 @@ describe("tool catalog", () => {
         expect(new Set(ids).size).toBe(ids.length);
     });
 
-    test("routes every tool under /tools", () => {
-        for (const tool of getTools()) {
+    test("routes every single-page tool under /tools", () => {
+        for (const tool of getTools().filter((tool) => tool.isSection !== true)) {
             expect(tool.href).toBe(`/tools/${tool.id}`);
         }
+    });
+
+    /**
+     * A section is a route tree with its own navigation, so it cannot satisfy
+     * the rule above. What it must still do is own a root nobody else can
+     * claim — otherwise the exception becomes a way to smuggle a tool onto any
+     * path at all.
+     */
+    test("gives every section its own top-level root", () => {
+        const sections = getTools().filter((tool) => tool.isSection === true);
+        const roots = sections.map((tool) => tool.href);
+
+        for (const href of roots) {
+            expect(href).toMatch(/^\/[a-z0-9-]+$/);
+            expect(href.startsWith("/tools/")).toBe(false);
+        }
+
+        expect(new Set(roots).size).toBe(roots.length);
+    });
+
+    /**
+     * Sections are findable in search and in the sitemap, and absent from every
+     * grid that ranks single-page utilities — a multi-page app between two of
+     * them reads as a mistake rather than as a suggestion.
+     */
+    test("keeps sections out of the ranked grids", () => {
+        const isSection = (tool: { isSection?: boolean }) => tool.isSection === true;
+
+        expect(getFeaturedTools(50).some(isSection)).toBe(false);
+        expect(getPopularTools(50).some(isSection)).toBe(false);
+        expect(getRecentTools(50).some(isSection)).toBe(false);
+        expect(getRelatedTools("uuid", 50).some(isSection)).toBe(false);
+        expect(
+            getToolsByCategory()
+                .flatMap((group) => group.tools)
+                .some(isSection),
+        ).toBe(false);
+    });
+
+    test("still lists sections among the available tools, so search finds them", () => {
+        expect(getAvailableTools().some((tool) => tool.isSection === true)).toBe(true);
     });
 
     test("ships the UUID generator", () => {
@@ -95,11 +136,15 @@ describe("tool catalog", () => {
         expect(stats.categories).toBe(TOOL_CATEGORIES.length);
     });
 
-    test("groups every tool into exactly one category", () => {
+    test("groups every single-page tool into exactly one category", () => {
         const groups = getToolsByCategory();
         const grouped = groups.flatMap((group) => group.tools);
+        const pages = getTools().filter((tool) => tool.isSection !== true);
 
-        expect(grouped).toHaveLength(getTools().length);
+        // Sections are deliberately absent — they have their own rail above the
+        // category headings — so the count is of pages, not of every entry.
+        expect(grouped).toHaveLength(pages.length);
+        expect(new Set(grouped.map((tool) => tool.id)).size).toBe(pages.length);
         expect(groups.map((group) => group.category)).toEqual([...TOOL_CATEGORIES]);
     });
 

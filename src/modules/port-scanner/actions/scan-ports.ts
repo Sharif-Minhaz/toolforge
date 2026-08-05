@@ -11,7 +11,8 @@ import { resolveRequestedPorts } from "../domain/port-spec";
 import { peekQuota, spendQuota } from "../repository/quota";
 import { runScan } from "../repository/scan";
 import { scanRequestSchema } from "../validation/scan-request";
-import type { QuotaState, ScanResult } from "../types";
+import type { QuotaState } from "@/modules/tools/types";
+import type { ScanResult } from "../types";
 
 /**
  * One scan, and every gate it has to pass first.
