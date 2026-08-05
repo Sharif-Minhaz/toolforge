@@ -22,6 +22,21 @@ const REQUEST_SOURCES = ["body", "header", "cookie", "query", "param"] as const;
 
 const NOW_FORMATS = ["iso", "epochMs", "epochSeconds"] as const;
 
+/**
+ * One control on the value line, and the width that decides how the line breaks.
+ *
+ * `basis-40` is 10rem, so two of them plus a gap do not fit the ~19rem of usable
+ * width in the studio's inspector rail and each takes a line of its own — which
+ * is the shape a three-control row like *From the request → Body → path* needs
+ * to be readable at all. The route form is twice as wide and fits two or three
+ * across, which is why this is a basis rather than a breakpoint: the same class
+ * gives the right answer in both places without either knowing about the other.
+ */
+const VALUE_CONTROL = "h-8 min-w-0 flex-1 basis-40 text-xs";
+
+/** The same, plus the chrome a bare `<select>` needs to match `Input`. */
+const VALUE_SELECT = `border-input bg-card focus-visible:ring-ring rounded-lg border px-2 focus-visible:ring-2 focus-visible:outline-none ${VALUE_CONTROL}`;
+
 export type RowActions = {
     readonly onKindChange: (path: ValuePath, kind: ValueKind) => void;
     readonly onValueChange: (path: ValuePath, next: ValueExpr) => void;
@@ -103,6 +118,17 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
                 )}
             >
                 <div className="flex min-w-0 items-center gap-1.5">
+                    {/*
+                     * No spacer where there is no chevron.
+                     *
+                     * It was reserving the toggle's width on every row, so a
+                     * leaf's key box started 1.9rem in while the kind select
+                     * directly beneath it started at the card's own padding —
+                     * two controls in one box, neither aligned to the other or
+                     * to anything else. Only a row that actually has a chevron
+                     * is indented by it now, which is what a tree should look
+                     * like anyway: the disclosure is the indent.
+                     */}
                     {branching ? (
                         <Button
                             type="button"
@@ -119,9 +145,7 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
                                 <IconChevronDown className="size-3.5" aria-hidden="true" />
                             )}
                         </Button>
-                    ) : (
-                        <span className="size-6 shrink-0" aria-hidden="true" />
-                    )}
+                    ) : null}
 
                     {field !== undefined ? (
                         <Input
@@ -133,6 +157,9 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
                             aria-label={t("keyLabel")}
                             autoComplete="off"
                             spellCheck={false}
+                            // Not `VALUE_CONTROL`: the key shares its line with
+                            // the row's buttons and must shrink to fit them
+                            // rather than claim a basis and push them off.
                             className="h-8 min-w-0 flex-1 font-mono text-xs"
                         />
                     ) : label !== undefined ? (
@@ -234,15 +261,11 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
                 </div>
 
                 {/* Second line: what the value is, and where it comes from.
-                    Indented under the key on the root row only — inside a
-                    bordered field the card's own padding is the alignment, and
-                    a second indent inside it just wastes the width. */}
-                <div
-                    className={cn(
-                        "flex min-w-0 flex-wrap items-center gap-1.5",
-                        depth === 0 && "pl-5",
-                    )}
-                >
+                    Flush with the first, at the card's own padding. The two
+                    lines describe one field, and a stray indent on either of
+                    them reads as a nesting level that is not there — which is
+                    what the leading gap under every key box was doing. */}
+                <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                     {/*
                      * A native select rather than the shadcn one: this renders once
                      * per row and a tree of sixty fields is sixty popovers to mount
@@ -255,7 +278,7 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
                             actions.onKindChange(path, event.target.value as ValueKind)
                         }
                         aria-label={t("kindLabel")}
-                        className="border-input bg-card focus-visible:ring-ring h-8 min-w-0 flex-1 basis-32 rounded-lg border px-2 text-xs focus-visible:ring-2 focus-visible:outline-none"
+                        className={VALUE_SELECT}
                     >
                         {VALUE_KINDS.map((kind) => (
                             <option key={kind} value={kind}>
@@ -264,7 +287,19 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
                         ))}
                     </select>
 
-                    <div className="flex min-w-0 flex-[2] basis-40 flex-wrap items-center gap-1.5 empty:hidden">
+                    {/*
+                     * `contents`, not a nested flex box.
+                     *
+                     * A box of its own gave the controls inside it their own
+                     * wrap context, so in the inspector rail they fought each
+                     * other over one line's width instead of wrapping with the
+                     * kind select — a request row came out as three slivers with
+                     * a path field reading `pr`. With `contents` they are all
+                     * siblings in one wrapping row, and `VALUE_CONTROL`'s basis
+                     * decides where it breaks: side by side in the wide route
+                     * form, one per line in the rail.
+                     */}
+                    <div className="contents">
                         {expr.kind === "static" ? (
                             <Input
                                 value={expr.value === null ? "" : String(expr.value)}
@@ -277,7 +312,7 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
                                 placeholder={t("literalPlaceholder")}
                                 aria-label={t("literalLabel")}
                                 autoComplete="off"
-                                className="h-8 min-w-0 flex-1 text-xs"
+                                className={VALUE_CONTROL}
                             />
                         ) : null}
 
@@ -293,7 +328,7 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
                                         })
                                     }
                                     aria-label={t("sourceLabel")}
-                                    className="border-input bg-card focus-visible:ring-ring h-8 min-w-0 flex-1 basis-28 rounded-lg border px-2 text-xs focus-visible:ring-2 focus-visible:outline-none"
+                                    className={VALUE_SELECT}
                                 >
                                     {REQUEST_SOURCES.map((source) => (
                                         <option key={source} value={source}>
@@ -313,7 +348,7 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
                                     aria-label={t("pathLabel")}
                                     autoComplete="off"
                                     spellCheck={false}
-                                    className="h-8 min-w-0 flex-1 font-mono text-xs"
+                                    className={cn(VALUE_CONTROL, "font-mono")}
                                 />
                             </>
                         ) : null}
@@ -331,7 +366,7 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
                                 aria-label={t("envLabel")}
                                 autoComplete="off"
                                 spellCheck={false}
-                                className="h-8 min-w-0 flex-1 font-mono text-xs"
+                                className={cn(VALUE_CONTROL, "font-mono")}
                             />
                         ) : null}
 
@@ -348,7 +383,7 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
                                 aria-label={t("varLabel")}
                                 autoComplete="off"
                                 spellCheck={false}
-                                className="h-8 min-w-0 flex-1 font-mono text-xs"
+                                className={cn(VALUE_CONTROL, "font-mono")}
                             />
                         ) : null}
 
@@ -362,7 +397,7 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
                                     })
                                 }
                                 aria-label={t("fakerLabel")}
-                                className="border-input bg-card focus-visible:ring-ring h-8 min-w-0 flex-1 rounded-lg border px-2 text-xs focus-visible:ring-2 focus-visible:outline-none"
+                                className={VALUE_SELECT}
                             >
                                 {FAKER_CATEGORIES.map((category) => (
                                     <optgroup key={category} label={tCategories(category)}>
@@ -386,7 +421,7 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
                                     })
                                 }
                                 aria-label={t("formatLabel")}
-                                className="border-input bg-card focus-visible:ring-ring h-8 min-w-0 flex-1 rounded-lg border px-2 text-xs focus-visible:ring-2 focus-visible:outline-none"
+                                className={VALUE_SELECT}
                             >
                                 {NOW_FORMATS.map((format) => (
                                     <option key={format} value={format}>
@@ -515,7 +550,7 @@ function ArrayCount({ expr, path, actions }: ArrayCountProps) {
                     })
                 }
                 aria-label={t("countLabel")}
-                className="border-input bg-card focus-visible:ring-ring h-8 min-w-0 flex-1 basis-24 rounded-lg border px-2 text-xs focus-visible:ring-2 focus-visible:outline-none"
+                className={VALUE_SELECT}
             >
                 <option value="fixed">{t("countFixed")}</option>
                 <option value="range">{t("countRange")}</option>

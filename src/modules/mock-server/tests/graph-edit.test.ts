@@ -13,9 +13,11 @@ import {
     moveNode,
     pasteFragment,
     reaches,
+    readResponseBody,
     removeNodes,
     resetGraph,
     updateNodeData,
+    writeResponseBody,
 } from "@/modules/mock-server/domain/graph-edit";
 import { createDefaultGraph, validateGraph } from "@/modules/mock-server/domain/graph";
 import {
@@ -594,5 +596,66 @@ describe("resetGraph", () => {
         const orphan: GraphDocument = { schemaVersion: 1, nodes: [], edges: [] };
 
         expect(resetGraph(orphan)).toBe(orphan);
+    });
+});
+
+describe("the response body on a graph", () => {
+    test("reads the body off the response node", () => {
+        expect(readResponseBody(withResponse())).toEqual({
+            kind: "object",
+            fields: [{ key: "message", value: { kind: "static", value: "Hello from ToolForge" } }],
+        });
+    });
+
+    test("reads null from a graph with no response node", () => {
+        expect(readResponseBody(removeNodes(withResponse(), ["response"]))).toBeNull();
+    });
+
+    /**
+     * The bug this pair replaced: the route form and the canvas each kept a
+     * copy of the body, the save sent both, and the form's won unconditionally
+     * — so a response built in the flow editor came back as whatever the form
+     * happened to be holding. One reader and one writer over the node itself is
+     * what makes the two editors edit the same thing.
+     */
+    test("writes a new body onto the response node", () => {
+        const next = writeResponseBody(withResponse(), { kind: "static", value: "replaced" });
+
+        expect(readResponseBody(next)).toEqual({ kind: "static", value: "replaced" });
+    });
+
+    test("leaves the rest of the node's data alone", () => {
+        const next = writeResponseBody(withResponse(), { kind: "static", value: "x" });
+        const response = next.nodes.find((node) => node.kind === "response");
+
+        expect(response?.kind === "response" && response.data.status).toBe(200);
+    });
+
+    test("leaves every other node alone", () => {
+        const before = addNode(withResponse(), "delay", ORIGIN);
+        const after = writeResponseBody(before, { kind: "static", value: "x" });
+
+        expect(after.nodes.find((node) => node.kind === "delay")).toEqual(
+            before.nodes.find((node) => node.kind === "delay") as never,
+        );
+        expect(after.edges).toEqual(before.edges);
+    });
+
+    /** Same rule the save path follows: the form edits the first one. */
+    test("writes only the first response node", () => {
+        const two = addNode(withResponse(), "response", ORIGIN);
+        const after = writeResponseBody(two, { kind: "static", value: "first" });
+        const bodies = after.nodes
+            .filter((node) => node.kind === "response")
+            .map((node) => (node.kind === "response" ? node.data.body : null));
+
+        expect(bodies[0]).toEqual({ kind: "static", value: "first" });
+        expect(bodies[1]).not.toEqual({ kind: "static", value: "first" });
+    });
+
+    test("a graph with no response node comes back unchanged in content", () => {
+        const none = removeNodes(withResponse(), ["response"]);
+
+        expect(writeResponseBody(none, { kind: "static", value: "x" }).nodes).toEqual(none.nodes);
     });
 });

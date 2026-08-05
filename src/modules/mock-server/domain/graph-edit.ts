@@ -5,6 +5,7 @@ import {
     type GraphEdge,
     type GraphNode,
     type NodeKind,
+    type ValueExpr,
 } from "../types/graph";
 
 /**
@@ -79,6 +80,61 @@ export function resetGraph(graph: GraphDocument): GraphDocument {
     };
 
     return response === undefined ? stripped : connect(stripped, entry.id, "next", response.id);
+}
+
+/**
+ * The body of the first response node, and the graph with a new one in it.
+ *
+ * "First" matches the rule the save path already follows: a graph may hold
+ * several response nodes — one per branch — and the form outside the canvas
+ * edits the one the inspector shows, which is the first until something passes
+ * an id.
+ *
+ * These exist so the route form and the canvas can stop keeping two copies of
+ * the body. They kept one each, the save sent both, and the form's copy won
+ * unconditionally — so everything built in the flow editor was overwritten by
+ * whatever the form happened to be holding, which for a fresh route was the
+ * default `{ "message": … }` and after a clear was `{}`.
+ */
+export function readResponseBody(graph: GraphDocument): ValueExpr | null {
+    const response = graph.nodes.find((node) => node.kind === "response");
+
+    return response?.kind === "response" ? response.data.body : null;
+}
+
+/**
+ * Whether the route form's body editor can honestly speak for this graph.
+ *
+ * True only for the shape a route starts in: one request wired straight to one
+ * response, nothing between them. That is the common case and the form is the
+ * fast way to edit it.
+ *
+ * The moment a graph branches, it stops being true. `readResponseBody` and
+ * `writeResponseBody` both act on the *first* response node, so a form over a
+ * condition with a response on each side shows one of them and silently edits
+ * that one — which reads as the editor ignoring half the work. There is no
+ * honest single-body view of a branching flow, so the form stops offering one
+ * and points at the canvas, where each response is edited on its own node.
+ */
+export function hasSingleResponse(graph: GraphDocument): boolean {
+    return graph.nodes.filter((node) => node.kind === "response").length === 1;
+}
+
+export function writeResponseBody(graph: GraphDocument, body: ValueExpr): GraphDocument {
+    let written = false;
+
+    return {
+        ...graph,
+        nodes: graph.nodes.map((node) => {
+            if (node.kind !== "response" || written) {
+                return node;
+            }
+
+            written = true;
+
+            return { ...node, data: { ...node.data, body } };
+        }),
+    };
 }
 
 export type CanvasPoint = { readonly x: number; readonly y: number };

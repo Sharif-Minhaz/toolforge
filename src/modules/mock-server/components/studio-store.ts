@@ -16,10 +16,11 @@ import {
     removeNodes,
     resetGraph,
     updateNodeData,
+    writeResponseBody,
     type CanvasView,
     type GraphFragment,
 } from "../domain/graph-edit";
-import type { GraphDocument, GraphNode, NodeKind } from "../types/graph";
+import type { GraphDocument, GraphNode, NodeKind, ValueExpr } from "../types/graph";
 
 /**
  * The canvas's state, and nothing else.
@@ -88,6 +89,8 @@ export type StudioState = {
     select: (ids: readonly string[]) => void;
     addNode: (kind: NodeKind) => void;
     setNodeData: (nodeId: string, data: GraphNode["data"]) => void;
+    /** The route form's body editor, writing into the same document the canvas holds. */
+    setResponseBody: (body: ValueExpr) => void;
     dragNode: (nodeId: string, position: { x: number; y: number }) => void;
     connectNodes: (source: string, handle: string, target: string) => void;
     removeEdge: (edgeId: string) => void;
@@ -207,6 +210,21 @@ export const useStudioStore = create<StudioState>()(
             setNodeData: (nodeId, data) =>
                 set((state) => ({
                     graph: updateNodeData(state.graph, nodeId, data),
+                    saveState: "dirty",
+                })),
+
+            /**
+             * There is one body, and it lives on the response node.
+             *
+             * The route form used to hold a second copy in its own state and the
+             * save sent both, with the form's winning unconditionally — so a
+             * response built in the flow editor was overwritten the moment it
+             * was saved. Routing the form's edits through here is what makes
+             * the two editors edit the same thing rather than race for it.
+             */
+            setResponseBody: (body) =>
+                set((state) => ({
+                    graph: writeResponseBody(state.graph, body),
                     saveState: "dirty",
                 })),
 

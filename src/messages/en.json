@@ -6995,6 +6995,15 @@
             "loadFailed": "Could not open the route",
             "deleteFailed": "Could not delete the route"
         },
+        "export": {
+            "title": "Export this server",
+            "subtitle": "Take the whole server away as a file — every route, its response and the flow behind it.",
+            "bundleAction": "Download JSON",
+            "openApiAction": "Download OpenAPI",
+            "formatsHint": "The JSON file holds everything, so it is the one to commit or keep as a backup. OpenAPI describes the API to other tools and cannot carry generated data — a field that returns a different name every call is exported as one example of it.",
+            "downloaded": "Export downloaded",
+            "failed": "The export could not be built. Try again."
+        },
         "workspace": {
             "eyebrow": "Workspace",
             "subtitle": "Each server owns a set of endpoints and answers on its own address. Nothing here is private — anyone holding the address can call it.",
@@ -7049,6 +7058,8 @@
             "enabledHint": "A disabled route answers 404 without being deleted.",
             "bodyLabel": "Response body",
             "bodyHint": "Build the shape you want back. Every field picks where its value comes from — a fixed value, something out of the request, or generated data.",
+            "bodyBranchedHint": "This route answers differently depending on the request, so it has more than one response.",
+            "bodyBranched": "This flow branches into {count, plural, one {# response} other {# responses}}. Each one is edited on its own node in the flow editor — a single box here could only ever show you one of them.",
             "saveAction": "Save route",
             "delete": "Delete route",
             "deleteAction": "Delete",
@@ -7074,6 +7085,13 @@
             "route_taken": "This server already has that method on that path.",
             "invalid_status": "A status code is a whole number between 100 and 599.",
             "invalid_body": "The response body is not valid JSON.",
+            "graph_entry": "A flow needs exactly one Request node — the point every call starts from.",
+            "graph_no_response": "This flow has no Response node, so there is nothing for it to send back.",
+            "graph_dead_end": "One branch of this flow ends without a Response node. Every path has to finish at one, including the ones a condition or a switch rarely takes.",
+            "graph_unreachable": "A node in this flow is not connected to anything the Request can reach. Wire it up or delete it.",
+            "graph_cycle": "This flow loops back on itself, so a request could run forever. Remove the connection that closes the loop.",
+            "graph_unsupported_node": "This flow uses a node this version cannot run yet.",
+            "graph_unreadable": "This flow could not be read. Reload the route and try again.",
             "version_conflict": "Someone saved this route in another tab. Reload to see their version before saving yours.",
             "write_failed": "The change could not be saved. Try again.",
             "invalid_content_type": "That content type cannot be served from this address."

@@ -23,6 +23,7 @@ import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-
 
 import { createEndpoint, deleteEndpoint, getEndpoint, updateEndpoint } from "../actions/servers";
 import { ALLOWED_CONTENT_TYPES, type AllowedContentType } from "../domain/content-type";
+import { hasSingleResponse, readResponseBody } from "../domain/graph-edit";
 import { HTTP_METHODS, type HttpMethod } from "../types/graph";
 import type { EndpointDetail, EndpointSummary, ServerFailureReason } from "../types";
 import { GraphStudio } from "./graph-studio";
@@ -97,16 +98,42 @@ export function EndpointWorkbench({
     const [draftMethod, setDraftMethod] = useState<HttpMethod>("GET");
     const [draftPath, setDraftPath] = useState("/");
     const [flowOpen, setFlowOpen] = useState(false);
-    // The canvas keeps the live document in its own store; this only records
-    // *which route's* flow has been touched, so the save below knows both to
-    // read from there and that it is reading the right document. A plain
-    // boolean was a latent bug: the store is module-level and outlives a route
-    // switch, so dirtying one flow and then saving a different route would have
-    // written the first route's graph onto the second.
-    const [flowDirtyFor, setFlowDirtyFor] = useState<string | null>(null);
-    // Stable, because `GraphStudio` lists it in an effect's dependencies — a
-    // fresh arrow each render would re-run that effect on every commit.
-    const markFlowDirty = useCallback((endpointId: string) => setFlowDirtyFor(endpointId), []);
+
+    /**
+     * The graph lives in the studio store, and nowhere else, for as long as a
+     * route is open.
+     *
+     * It used to live in two places — `open.graph` plus whatever the canvas had
+     * — with a flag deciding which one a save should believe, and a *third*
+     * copy of the body in `open.body` on top of that. Every save sent the graph
+     * and the body separately and the body won, so anything built in the flow
+     * editor was overwritten by whatever the form was holding.
+     *
+     * Loading here rather than inside `GraphStudio` is what makes one document
+     * possible: the store is filled the instant a route opens, not the first
+     * time somebody opens the canvas, so the body editor below can write
+     * through it too. `saveState` then answers "are there unsaved changes" for
+     * both editors at once, and there is no flag to keep in step.
+     */
+    const graph = useStudioStore((state) => state.graph);
+    const graphReady = useStudioStore((state) => state.loadedKey) === (open && studioKey(open));
+    const setResponseBody = useStudioStore((state) => state.setResponseBody);
+    const dirty = useStudioStore((state) => state.saveState) === "dirty";
+
+    /** Fills the store from a freshly loaded route and resets its history. */
+    const adopt = useCallback((endpoint: EndpointDetail) => {
+        useStudioStore.getState().load(endpoint.graph, endpoint.version, studioKey(endpoint));
+        useStudioStore.temporal.getState().clear();
+    }, []);
+
+    // Derived, never stored. The body the form shows is the one on the graph's
+    // response node — the same node the canvas inspector edits.
+    const body = (graphReady ? readResponseBody(graph) : null) ?? open?.body ?? null;
+
+    // A branching flow has more than one response and the form can only reach
+    // the first, so it stops pretending to be the editor for them. See
+    // `hasSingleResponse`.
+    const bodyEditable = !graphReady || hasSingleResponse(graph);
 
     function patch(next: Partial<EndpointDetail>) {
         setOpen((held) => (held === null ? held : { ...held, ...next }));
@@ -145,6 +172,7 @@ export function EndpointWorkbench({
             }
 
             setOpen(result.endpoint);
+            adopt(result.endpoint);
         });
     }
 
@@ -172,6 +200,7 @@ export function EndpointWorkbench({
 
             setRows((held) => [...held, toSummary(result.endpoint)]);
             setOpen(result.endpoint);
+            adopt(result.endpoint);
             setDraftPath("/");
             toast.success(tToast("endpointCreated"));
             router.refresh();
@@ -186,6 +215,12 @@ export function EndpointWorkbench({
 
         setFailure(null);
 
+        // One document. The body sent is read back off the very graph being
+        // sent, so the two cannot disagree — which is the whole bug this
+        // replaced: they were separate, and the body silently won.
+        const current = graphReady ? useStudioStore.getState().graph : open.graph;
+        const currentBody = readResponseBody(current) ?? open.body;
+
         startTransition(async () => {
             const result = await updateEndpoint({
                 endpointId: open.id,
@@ -196,11 +231,8 @@ export function EndpointWorkbench({
                 status: open.status,
                 contentType: open.contentType,
                 headers: open.headers,
-                body: open.body,
-                // Read from the canvas store when *this* route's canvas has
-                // been used, so one save covers both editors and neither can
-                // overwrite the other's work.
-                graph: flowDirtyFor === open.id ? useStudioStore.getState().graph : open.graph,
+                body: currentBody,
+                graph: current,
                 version: open.version,
             });
 
@@ -211,12 +243,12 @@ export function EndpointWorkbench({
             }
 
             setOpen(result.endpoint);
+            adopt(result.endpoint);
             setRows((held) =>
                 held.map((row) =>
                     row.id === result.endpoint.id ? toSummary(result.endpoint) : row,
                 ),
             );
-            setFlowDirtyFor(null);
             toast.success(tToast("endpointSaved"));
             router.refresh();
             onDone?.();
@@ -465,12 +497,25 @@ export function EndpointWorkbench({
                                 {t("bodyLabel")}
                             </Label>
                             <p className="text-muted-foreground text-[0.6875rem] leading-normal">
-                                {t("bodyHint")}
+                                {bodyEditable ? t("bodyHint") : t("bodyBranchedHint")}
                             </p>
-                            <ResponseBuilder
-                                value={open.body}
-                                onChange={(body) => patch({ body })}
-                            />
+                            {!bodyEditable ? (
+                                <div className="border-border/70 bg-muted/30 flex items-start gap-2 rounded-xl border p-3">
+                                    <IconSitemap
+                                        className="text-muted-foreground mt-0.5 size-4 shrink-0"
+                                        aria-hidden="true"
+                                    />
+                                    <p className="text-muted-foreground max-w-[60ch] text-xs leading-relaxed">
+                                        {t("bodyBranched", {
+                                            count: graph.nodes.filter(
+                                                (node) => node.kind === "response",
+                                            ).length,
+                                        })}
+                                    </p>
+                                </div>
+                            ) : body === null ? null : (
+                                <ResponseBuilder value={body} onChange={setResponseBody} />
+                            )}
                         </div>
 
                         {/* The graph is not a second tab beside the body — it is
@@ -487,7 +532,7 @@ export function EndpointWorkbench({
                                 </p>
                             </div>
 
-                            {flowDirtyFor === open.id ? (
+                            {dirty ? (
                                 <span className="text-brand-amber bg-brand-amber/12 rounded-lg px-2 py-1 text-[0.625rem] leading-[1.3] font-medium">
                                     {tStudio("unsaved")}
                                 </span>
@@ -587,17 +632,23 @@ export function EndpointWorkbench({
                             </div>
                         ) : null}
 
-                        <GraphStudio
-                            endpointId={open.id}
-                            graph={open.graph}
-                            version={open.version}
-                            onDirty={markFlowDirty}
-                        />
+                        <GraphStudio ready={graphReady} />
                     </DialogContent>
                 </Dialog>
             )}
         </div>
     );
+}
+
+/**
+ * What the studio store calls this route.
+ *
+ * The version is in the key so a save — which bumps it — reloads the store from
+ * what the server returned, rather than leaving the canvas showing a document
+ * the database no longer agrees with.
+ */
+function studioKey(endpoint: Pick<EndpointDetail, "id" | "version">): string {
+    return `${endpoint.id}:${endpoint.version}`;
 }
 
 function toSummary(detail: EndpointDetail): EndpointSummary {

@@ -38,6 +38,7 @@ import type {
     ServerFailureReason,
     ServerSummary,
 } from "../types";
+import type { GraphProblemReason } from "../types/graph";
 import type { PathPatternProblem } from "../types/routing";
 import type { GraphDocument, GraphNode, HttpMethod, ValueExpr } from "../types/graph";
 import {
@@ -71,6 +72,49 @@ async function ownsWorkspace(workspaceId: string | null): Promise<boolean> {
         logEvent("error", "mock_server.ownership_check_failed", { error: describeError(caught) });
 
         return false;
+    }
+}
+
+/**
+ * What a rejected graph is told to the author.
+ *
+ * Every reason had to be listed rather than defaulted, and the default is the
+ * reason why: this used to be three branches with `invalid_body` catching
+ * everything else, so eleven of the fourteen problems — a cycle, an unreachable
+ * node, a branch that ends nowhere, a node kind this build cannot run — all came
+ * back as **"The response body is not valid JSON."** Somebody with a perfectly
+ * good response and a mis-wired condition was sent to stare at their JSON.
+ *
+ * A `switch` here rather than a map with a fallback, so adding a fourteenth
+ * problem is a type error rather than a silently mislabelled one.
+ */
+function describeGraphProblem(reason: GraphProblemReason | undefined): ServerFailureReason {
+    switch (reason) {
+        case "invalid_status":
+            return "invalid_status";
+        case "unsupported_content_type":
+            return "invalid_content_type";
+        case "unsupported_value":
+        case "value_too_deep":
+            return "invalid_body";
+        case "no_request_node":
+        case "many_request_nodes":
+            return "graph_entry";
+        case "no_response_node":
+            return "graph_no_response";
+        case "path_without_response":
+            return "graph_dead_end";
+        case "unreachable_node":
+            return "graph_unreachable";
+        case "cycle":
+            return "graph_cycle";
+        case "unsupported_node":
+            return "graph_unsupported_node";
+        case "unknown_handle":
+        case "not_a_document":
+        case "unknown_schema_version":
+        case undefined:
+            return "graph_unreadable";
     }
 }
 
@@ -355,21 +399,7 @@ export async function updateEndpoint(input: unknown): Promise<EndpointResult> {
     const checked = validateGraph(graph);
 
     if (!checked.ok) {
-        // The reason is narrowed so the reader is told which of the two things
-        // is wrong — a bad status code and an unresolvable value read nothing
-        // alike, and one generic "invalid" for both is what makes a form
-        // frustrating.
-        const problem = checked.problems[0]?.reason;
-
-        return {
-            ok: false,
-            reason:
-                problem === "invalid_status"
-                    ? "invalid_status"
-                    : problem === "unsupported_content_type"
-                      ? "invalid_content_type"
-                      : "invalid_body",
-        };
+        return { ok: false, reason: describeGraphProblem(checked.problems[0]?.reason) };
     }
 
     const result = await updateEndpointRow({
@@ -406,11 +436,20 @@ export async function deleteEndpoint(input: unknown): Promise<ServerActionResult
 /**
  * The submitted graph with the response form's fields merged into it.
  *
- * Two editors, one document. The canvas owns the nodes and edges; the form
- * above it owns status, content type, headers and the body tree. Merging here
- * rather than having each save separately is what stops a graph and its
- * response drifting apart — the failure the M1 note predicted and this is the
- * milestone that had to answer.
+ * The canvas owns the nodes and edges; the form above it owns status, content
+ * type and headers. Merging here rather than having each save separately is
+ * what stops a graph and its response settings drifting apart.
+ *
+ * **The body is the exception, and it used to be a bug.** It is edited in two
+ * places — the form's Response Builder and the canvas inspector's, which are
+ * the same component over the same node — so taking it from the payload
+ * unconditionally meant the form's copy overwrote the canvas's on every save.
+ * Anything built in the flow editor came back as whatever the form had been
+ * holding: the default `{ "message": … }` on a fresh route, `{}` after a clear.
+ * The client now derives the body from the very graph it is sending, so the two
+ * cannot disagree; keeping the submitted body only when the graph carries none
+ * is the belt to that braces, and covers an older client posting a graph whose
+ * response node predates this.
  *
  * Only the *first* response node takes the form's settings. A graph with
  * several is legitimate — one per branch — and the form edits the one the
@@ -433,7 +472,9 @@ function withResponse(
 
             merged = true;
 
-            return { ...node, data };
+            // The node's own body wins. See the note above: the submitted one
+            // is a second copy, and it is the copy that used to destroy work.
+            return { ...node, data: { ...data, body: node.data.body ?? data.body } };
         }),
         edges: base.edges,
     };

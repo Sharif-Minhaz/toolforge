@@ -34,7 +34,7 @@ import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
 
 import { INSPECTOR_SHORTCUT, isTypingTarget, PALETTE_SHORTCUT } from "../domain/keyboard";
 import { nodeDefinition, placeableNodeKinds } from "../domain/node-registry";
-import type { GraphDocument, NodeKind } from "../types/graph";
+import type { NodeKind } from "../types/graph";
 import { NodeInspector } from "./node-inspector";
 import { ResponseBuilder } from "./response-builder";
 import { useStudioStore } from "./studio-store";
@@ -50,11 +50,15 @@ const GraphCanvas = dynamic(async () => (await import("./graph-canvas")).GraphCa
 });
 
 type GraphStudioProps = {
-    endpointId: string;
-    graph: GraphDocument;
-    version: number;
-    /** Called on every edit so the parent can mark the endpoint unsaved. */
-    onDirty: (endpointId: string) => void;
+    /**
+     * Whether the store is holding the route this was opened for.
+     *
+     * The workbench fills the store the moment a route opens, so by the time
+     * this mounts it is nearly always true — the flag exists for the frame it
+     * is not. This component no longer loads anything: it used to, and that is
+     * precisely what let a second copy of the document exist.
+     */
+    ready: boolean;
 };
 
 /**
@@ -73,50 +77,22 @@ type GraphStudioProps = {
  * is the point of having built it against `ValueExpr` rather than against a
  * form. The canvas gained a way to *reach* it; it did not replace it.
  */
-export function GraphStudio({ endpointId, graph, version, onDirty }: GraphStudioProps) {
+export function GraphStudio({ ready }: GraphStudioProps) {
     const t = useTranslations("mockServer.studio");
     const tNodes = useTranslations("mockServer.nodes");
 
-    const load = useStudioStore((state) => state.load);
     const current = useStudioStore((state) => state.graph);
     const selection = useStudioStore((state) => state.selection);
     const addNode = useStudioStore((state) => state.addNode);
     const setNodeData = useStudioStore((state) => state.setNodeData);
     const layout = useStudioStore((state) => state.layout);
     const clear = useStudioStore((state) => state.clear);
-    const saveState = useStudioStore((state) => state.saveState);
-    const loadedKey = useStudioStore((state) => state.loadedKey);
     const paletteOpen = useStudioStore((state) => state.paletteOpen);
     const inspectorOpen = useStudioStore((state) => state.inspectorOpen);
     const togglePalette = useStudioStore((state) => state.togglePalette);
     const toggleInspector = useStudioStore((state) => state.toggleInspector);
 
     const [confirmingClear, setConfirmingClear] = useState(false);
-
-    const key = `${endpointId}:${version}`;
-    const ready = loadedKey === key;
-
-    // Seeded in an effect rather than during render: the store is module-level,
-    // so writing to it while rendering would be a write to shared state during
-    // React's render phase. Readiness is read back off the store, so nothing
-    // here sets local state from an effect.
-    useEffect(() => {
-        if (loadedKey !== key) {
-            load(graph, version, key);
-            useStudioStore.temporal.getState().clear();
-        }
-    }, [graph, version, key, loadedKey, load]);
-
-    // The parent owns persistence and reads the graph off the store when it
-    // saves, so this only has to say *that* something changed — no second copy
-    // of the document is pushed upward on every keystroke. The endpoint id
-    // travels with it because the store outlives this component: without it, a
-    // flow dirtied on one route would be saved onto the next one opened.
-    useEffect(() => {
-        if (ready && saveState === "dirty") {
-            onDirty(endpointId);
-        }
-    }, [ready, saveState, onDirty, endpointId]);
 
     /**
      * `[` and `]` fold the two rails.

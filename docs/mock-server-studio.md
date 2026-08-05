@@ -694,13 +694,35 @@ viewport or it takes a door, never a slot in a form.** The dialog's own
 closing without saving keeps the edits in the store and the form shows an
 _Unsaved changes_ chip, because the store outlives the dialog.
 
-That last point cost a latent bug worth recording. The flag saying "the canvas
-has been touched, read the graph from the store on save" was a boolean, and the
-store is module-level — so dirtying one route's flow and then saving a
-_different_ route would have written the first route's graph onto the second. It
-is now the endpoint id (`flowDirtyFor`), compared against the open route. Any
-flag that gates reading from a module-scoped store has to name _what_ it was
-set for, not merely that it was set.
+**One document, and it lives in the store.** This took two goes to get right and
+the wrong version destroyed work, so it is worth the space.
+
+The route form and the canvas both edit the response body — the same
+`ResponseBuilder` over the same node — and each kept its own copy: `open.body`
+in the form, the graph in the studio store, with `open.graph` as a third. The
+save sent the graph and the body as separate fields and `withResponse` merged
+the body in last, so **the form's copy overwrote the canvas's every time**.
+Anything built in the flow editor came back as whatever the form happened to be
+holding: the default `{ "message": … }` on a fresh route, `{}` after a clear. A
+flag named `flowDirtyFor` tried to arbitrate and could not, because the question
+it answered — "which copy is newer" — is the wrong question.
+
+The fix removes state rather than adding it. `EndpointWorkbench` fills the store
+the moment a route opens rather than leaving it to `GraphStudio`'s first mount,
+so there is one graph for as long as a route is open. The form's body editor
+writes through `setResponseBody`, which is `writeResponseBody` on the response
+node; the body it displays is `readResponseBody` of that same graph, derived
+during render and never stored. `GraphStudio` loads nothing and takes one prop.
+The save reads the body back off the very graph it is about to send, so the two
+fields cannot disagree, and `saveState` answers "unsaved changes" for both
+editors at once. `flowDirtyFor` is gone.
+
+`withResponse` on the server now prefers the node's own body over the submitted
+one — belt to that braces, and it covers an older client posting a graph whose
+response node predates the change.
+
+The general rule, which the URL Parser section states and this ignored: **two
+editors over one value need one owner, not a flag saying whose turn it is.**
 
 Seven smaller rules the canvas settled once it had the room to be used properly:
 
@@ -968,6 +990,142 @@ most once a minute per active server, off the response path. A sweep is not a
 limiter: running it too often is merely wasteful and missing one is caught by
 the next request, so unlike a counter it is safe to trigger from whichever
 process happens to notice.
+
+### The body a browser actually sends
+
+`From the request → Body → email` worked for JSON and nothing else. A form post
+— what a browser sends when somebody presses a button, and among the most common
+things there is to mock — arrived as the raw string
+`email=a%40b.com&remember=on`. Reading `email` off a string is `undefined`, so
+the condition did not fail; it quietly matched nothing, which is worse than
+failing.
+
+`domain/request-body.ts` now parses three shapes and keeps everything else as
+text: JSON including `+json` suffixes, `application/x-www-form-urlencoded`, and
+`multipart/form-data`. Four decisions in it:
+
+- **A repeated field is an array, in order.** `tag=a&tag=b` is two tags, and a
+  parser that answers `"b"` has thrown away half the request — precisely the
+  thing somebody is using a mock to look at.
+- **A file part is described, never carried.** `{ filename, contentType, size }`.
+  A five-megabyte upload has no business inside a condition, and by the time the
+  body reaches here it has been through `text()`, so its bytes are UTF-8-mangled
+  and mean nothing. Size is counted in **bytes**, because "was the upload over
+  2 MB" is a question about bytes and a multi-byte character would answer it
+  short.
+- **The multipart reader is hand-written.** Every parser on npm expects a Node
+  stream and brings a file-writing layer, none of which applies to a string that
+  has already been read. What is here is the slice of RFC 7578 a form uses.
+- **`URLSearchParams`, not a hand-rolled split**, because `+` is a space and
+  `%2B` is a plus, and that is the pair everybody gets wrong.
+
+One limitation is pinned by a test rather than hidden: splitting on the boundary
+cuts a value that contains it. Real clients pick a boundary they have checked
+does not occur in the content, so it is reachable only by hand-writing a body
+that breaks its own framing.
+
+**Still outstanding**: `query` is built with `Object.fromEntries(searchParams)`,
+which keeps only the last value, so `?tag=a&tag=b` silently loses `a` — the same
+class of loss the form parser now avoids. Fixing it widens
+`NormalizedRequest["query"]` to `string | string[]` and ripples through the
+executor, the log record and their tests, so it is written down here rather than
+folded into an unrelated change.
+
+### A rule neither side could satisfy
+
+`compareValues` was loose on numeric strings — `"42"` equals `42`, because a path
+parameter is always a string — and strict on booleans, on the argument that a
+body holding the string `"true"` is a different fact from one holding the
+boolean. That argument is correct and it was the wrong rule to draw from it.
+
+A query string has no booleans in it. `?is_stock=true` arrives as four
+characters, while the operand box beside the condition coerces a typed `true` to
+the boolean — because a _response body_ is JSON, where the two genuinely differ.
+So the two halves of one condition disagreed by construction: `is_stock equals
+true` could never hold, and nothing in the UI could express what the reader
+wanted, because there was no way to type a string `"true"` either.
+
+**A rule that cannot be satisfied from either side is not strictness, it is a
+dead control.** Booleans now bridge exactly as numbers do. What that gives up —
+telling a body's `"true"` from its `true` — is real, and far rarer than comparing
+a query parameter to a boolean, which is most of what conditions are for.
+
+`asBoolean` reads only the literal words, so `1 equals true` stays false. That is
+JavaScript's mistake and it would quietly make a count of one mean yes.
+
+The same shape of thing sits next to it: the route form's body editor reads and
+writes the _first_ response node, so on a branching flow it showed one response
+and silently edited that one. `hasSingleResponse` now decides whether the form
+may speak for the graph at all; past one response it says so and points at the
+canvas, where each response is edited on its own node. There is no honest
+single-body view of a branching flow, and offering one that edits an arbitrary
+branch is worse than offering none.
+
+### One question, one answer
+
+`validateGraph` asked a constant in `types/` whether a node kind could run.
+`IMPLEMENTED_NODE_KINDS` had said `["request", "response"]` since M1, and was
+true then. M4 through M8 added eight running kinds and updated the _registry's_
+`implemented` flag — the other answer to the same question — without touching
+it. From M4 on, **every graph containing a condition, a switch, a delay, a
+branch, a variable, a log or an outbound node was refused on save.**
+
+Three things let it live that long, and each is the lesson:
+
+- **Two constants answered one question.** The registry is where the palette
+  dims a node and where the executor refuses one, so it is the only place that
+  may say what runs. `validateGraph` now asks `nodeDefinition(kind).implemented`
+  and the constant is renamed `TYPED_NODE_KINDS` — what it was always really
+  about, which is whose `data` has a declared shape rather than a bag of JSON.
+  A test asserts the validator's answer matches the registry's for every kind.
+- **Every failure said the same wrong thing.** The action mapped two problems by
+  name and defaulted the other eleven — a cycle, an unreachable node, a dead-end
+  branch, an unrunnable kind — to `invalid_body`, whose copy is _"The response
+  body is not valid JSON."_ Somebody with a perfectly good response and a
+  mis-wired condition was sent to stare at their JSON. It is a `switch` over
+  every reason now, so a fourteenth problem is a type error rather than a
+  silently mislabelled one.
+- **The tests exercised the wrong door.** `executeGraph` was tested directly
+  with every logic node and passed; nothing built a graph the _palette_ can
+  build and put it through the _save_ path. The regression test loops over
+  `placeableNodeKinds()` and does exactly that.
+
+One gap is now pinned rather than closed: a condition with only one branch wired
+still validates, because `path_without_response` looks at nodes with no outgoing
+edges and a half-wired condition has one. At runtime that branch answers 500.
+Closing it means checking every _handle_, which would also refuse a flow
+somebody is midway through building — a product decision, so the test records
+today's behaviour instead of quietly changing it.
+
+### Taking a server away
+
+Two exports, answering different questions, and the split is the point.
+
+**OpenAPI** describes the API _to other tools_ and is lossy by design: a value
+tree that generates a different name on every call has no OpenAPI spelling, so
+`toJson` returns null and the operation carries one example. That is the right
+answer for a schema and the wrong one for a backup.
+
+**The bundle** (`domain/bundle.ts`) is everything the studio knows, in the shape
+it knows it — each route and its _whole graph_, so what is restored answers the
+way the original did. Three decisions worth keeping:
+
+- **No timestamp in the file.** The obvious `exportedAt` makes two exports of an
+  unchanged server differ, which ruins the main reason to have one: committing it
+  and seeing what actually changed. The date goes in the filename, where it costs
+  a diff nothing, and the action supplies it because `domain/` owns no clock.
+- **No ids.** A workspace id or an endpoint id describes _this_ installation's
+  row, not the mock, and a file naming them would collide or renumber on the way
+  back in.
+- **The reader ships with the writer, before anything reads.** `readBundle` has
+  no caller yet — importing is not built — and exists so the export is a contract
+  rather than a dump. The round-trip test is the only thing that proves the file
+  holds enough to rebuild a server from, and it is what would catch a field
+  quietly dropped from the writer.
+
+`readBundle` degrades the way the OpenAPI import does: one unusable route is
+skipped _by name_ and the rest load, because a file meant to be committed is a
+file somebody will hand-edit.
 
 ### Origin isolation
 

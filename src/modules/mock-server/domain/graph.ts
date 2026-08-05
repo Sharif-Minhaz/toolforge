@@ -1,9 +1,10 @@
 import { MAX_STATUS_CODE, MAX_VALUE_DEPTH, MIN_STATUS_CODE } from "./constants";
 import { isFakerFnId } from "./faker-registry";
 import { DEFAULT_CONTENT_TYPE, isAllowedContentType } from "./content-type";
+import { nodeDefinition } from "./node-registry";
+import { fromJson } from "./value-edit";
 import {
     GRAPH_SCHEMA_VERSION,
-    IMPLEMENTED_NODE_KINDS,
     NODE_KINDS,
     VALUE_KINDS,
     type GraphDocument,
@@ -46,6 +47,17 @@ const REQUEST_NODE_ID = "request";
  * as a placeholder shape, so the canvas that arrives in M3 edits exactly this
  * and no migration is needed in between.
  */
+/**
+ * `fromJson`, not `{ kind: "static", value: body }`.
+ *
+ * The wrapped form stores a single literal whose value happens to be an object,
+ * and the Response Builder renders exactly that: kind *Fixed value*, and the
+ * object stringified into a one-line text box as `[object Object]`. Typing one
+ * character in it replaced the whole response with the string `[object Objec`.
+ * `fromJson` is the function that turns a `JsonValue` into real nodes, which is
+ * what makes the root arrive as **Object** with an editable `message` field —
+ * the state every new route should open in.
+ */
 export function createDefaultGraph(
     body: JsonValue = { message: "Hello from ToolForge" },
 ): GraphDocument {
@@ -61,7 +73,7 @@ export function createDefaultGraph(
                     status: 200,
                     contentType: DEFAULT_CONTENT_TYPE,
                     headers: [],
-                    body: { kind: "static", value: body },
+                    body: fromJson(body),
                 },
             },
         ],
@@ -277,7 +289,11 @@ export function validateGraph(raw: unknown): GraphValidation {
     }
 
     for (const node of graph.nodes) {
-        if (!(IMPLEMENTED_NODE_KINDS as readonly string[]).includes(node.kind)) {
+        // Asked of the registry, which is the one place that knows — the same
+        // flag the palette dims a node with and the executor refuses on. It used
+        // to read a constant in `types/` that had said "request and response"
+        // since M1, so every logic node added after that was refused on save.
+        if (!nodeDefinition(node.kind).implemented) {
             problems.push({ reason: "unsupported_node", nodeId: node.id });
             continue;
         }

@@ -44,15 +44,33 @@ describe("compareValues", () => {
         ["a", "equals", "a", true],
         ["a", "equals", "b", false],
         ["a", "notEquals", "b", true],
-        // The one coercion, and it exists because a path parameter is always a
-        // string: refusing this would make `/users/:id` unusable in a condition.
+        // Coerced because a path parameter is always a string: refusing this
+        // would make `/users/:id` unusable in a condition.
         ["42", "equals", 42, true],
         [42, "equals", "42", true],
         ["42.0", "equals", 42, true],
-        // Deliberately *not* coerced: a body carrying the string "true" is a
-        // different fact from one carrying the boolean, and a mock exists to
-        // model such differences.
-        ["true", "equals", true, false],
+        /*
+         * A reversal, not a fix. This asserted `false` on the argument that a
+         * body's string "true" is a different fact from its boolean — which is
+         * true, and was the wrong rule to draw from it. A query string has no
+         * booleans in it: `?is_stock=true` arrives as text while the operand box
+         * coerces a typed `true` to the boolean, so `is_stock equals true` could
+         * never hold and no typing on either side could make it. What is given
+         * up is telling a body's "true" from its `true`, which is far rarer than
+         * comparing a query parameter to a boolean.
+         */
+        ["true", "equals", true, true],
+        ["TRUE", "equals", true, true],
+        [" false ", "equals", false, true],
+        ["true", "equals", false, false],
+        ["false", "notEquals", true, true],
+        // Only the literal words. `1 equals true` staying false is the whole
+        // reason `asBoolean` does not read numbers — that is JavaScript's
+        // mistake and it would make a count of one mean yes.
+        [1, "equals", true, false],
+        ["1", "equals", true, false],
+        [0, "equals", false, false],
+        ["yes", "equals", true, false],
         [null, "equals", "", false],
         ["abcdef", "contains", "cde", true],
         ["abcdef", "notContains", "xyz", true],
@@ -552,5 +570,85 @@ describe("executing a branching graph", () => {
         const result = await executeGraph(emptyGraph(), context());
 
         expect(result).toMatchObject({ ok: false, reason: "no_response_on_path" });
+    });
+});
+
+describe("a query parameter tested against a boolean", () => {
+    /**
+     * The reported bug, end to end: `?is_stock=true` against a condition
+     * reading *From the request → Query → is_stock* equals a typed `true`, with
+     * a response on each branch. It took the false branch every time, because
+     * the query gave the string `"true"` and the operand box gave the boolean.
+     */
+    function stockGraph(): GraphDocument {
+        let graph = removeNodes(createDefaultGraph(), ["response"]);
+        graph = addNode(graph, "condition", { x: 0, y: 0 });
+        graph = addNode(graph, "response", { x: 0, y: 0 });
+        graph = addNode(graph, "response", { x: 0, y: 0 });
+
+        graph = {
+            ...graph,
+            nodes: graph.nodes.map((node) => {
+                if (node.id === "condition-1") {
+                    return {
+                        ...node,
+                        data: {
+                            left: { kind: "request", source: "query", path: "is_stock" },
+                            op: "equals",
+                            // Exactly what `coerceLiteral` stores when somebody
+                            // types `true` into the operand box.
+                            right: { kind: "static", value: true },
+                        },
+                    } as GraphNode;
+                }
+
+                if (node.kind === "response") {
+                    return {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            body: {
+                                kind: "static",
+                                value: node.id === "response-1" ? "yes available" : "Not available",
+                            },
+                        },
+                    } as GraphNode;
+                }
+
+                return node;
+            }),
+        };
+
+        graph = connect(graph, "request", "next", "condition-1");
+        graph = connect(graph, "condition-1", "true", "response-1");
+        graph = connect(graph, "condition-1", "false", "response-2");
+
+        return graph;
+    }
+
+    async function answerFor(query: Readonly<Record<string, string>>) {
+        const result = await executeGraph(stockGraph(), {
+            ...context(),
+            request: { ...REQUEST, query },
+        });
+
+        return result.ok ? JSON.parse(result.response.body) : null;
+    }
+
+    test("?is_stock=true takes the true branch", async () => {
+        expect(await answerFor({ is_stock: "true" })).toBe("yes available");
+    });
+
+    test("?is_stock=false takes the false branch", async () => {
+        expect(await answerFor({ is_stock: "false" })).toBe("Not available");
+    });
+
+    test("a missing parameter takes the false branch", async () => {
+        expect(await answerFor({})).toBe("Not available");
+    });
+
+    /** Only the literal word, so a count of one is not a yes. */
+    test("?is_stock=1 does not count as true", async () => {
+        expect(await answerFor({ is_stock: "1" })).toBe("Not available");
     });
 });

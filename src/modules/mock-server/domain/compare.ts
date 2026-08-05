@@ -9,11 +9,24 @@ import type { JsonValue } from "../types/graph";
  * where the form holds `"42"`. Deciding what those mean is the whole job here,
  * and the answer has to be written down rather than discovered.
  *
- * **Loose on numeric strings, strict on everything else.** `"42"` equals `42`,
- * because a path parameter is always a string and refusing that comparison
- * would make `/users/:id` unusable in a condition. `"true"` does **not** equal
- * `true`, because a body carrying the string `"true"` is a different fact from
- * one carrying the boolean, and a mock exists to model such differences.
+ * **Loose on the two texts a request can only ever carry as text.** `"42"`
+ * equals `42` because a path parameter is always a string, and refusing that
+ * would make `/users/:id` unusable in a condition. `"true"` equals `true` for
+ * exactly the same reason, and that one had to be corrected: this file used to
+ * argue that a body holding the string `"true"` is a different fact from one
+ * holding the boolean, which is true and was the wrong rule to draw from it.
+ *
+ * A query string has no booleans in it. `?is_stock=true` arrives as the four
+ * characters `true`, and the operand box beside it coerces a typed `true` to the
+ * boolean — because a *response body* is JSON, where the two differ. So the two
+ * halves of the same condition disagreed by construction, `is_stock equals true`
+ * could never match, and nothing in the UI could express what the reader wanted:
+ * there was no way to type a string `"true"` either. A rule that cannot be
+ * satisfied from either side is not strictness, it is a dead control.
+ *
+ * What that gives up is telling a body's `"true"` from its `true`. That is a
+ * real distinction and a far rarer one than comparing a query parameter to a
+ * boolean, which is most of what conditions are for.
  */
 
 export const COMPARE_OPS = [
@@ -52,6 +65,27 @@ function asNumber(value: JsonValue): number | null {
     return null;
 }
 
+/**
+ * The boolean reading of a value, or null when there is not one.
+ *
+ * Only the literal words. `"1"` and `1` are deliberately *not* booleans here —
+ * that is JavaScript's mistake, and it would make `1 equals true` quietly hold
+ * for a count of one.
+ */
+function asBoolean(value: JsonValue): boolean | null {
+    if (typeof value === "boolean") {
+        return value;
+    }
+
+    if (typeof value === "string") {
+        const text = value.trim().toLowerCase();
+
+        return text === "true" ? true : text === "false" ? false : null;
+    }
+
+    return null;
+}
+
 function asText(value: JsonValue): string {
     if (value === null) {
         return "";
@@ -70,13 +104,22 @@ function looseEquals(left: JsonValue, right: JsonValue): boolean {
         return true;
     }
 
-    // Both numeric: compare as numbers, so `"42"` matches `42`. This is the one
-    // coercion, and it is here because a path parameter is always a string.
+    // Both numeric: compare as numbers, so `"42"` matches `42`.
     const leftNumber = asNumber(left);
     const rightNumber = asNumber(right);
 
     if (leftNumber !== null && rightNumber !== null) {
         return leftNumber === rightNumber;
+    }
+
+    // Both boolean-ish: compare as booleans, so `?flag=true` matches `true`.
+    // Checked after numbers so nothing here can see `"1"` — `asBoolean` reads
+    // only the literal words, and the number branch has already claimed digits.
+    const leftBoolean = asBoolean(left);
+    const rightBoolean = asBoolean(right);
+
+    if (leftBoolean !== null && rightBoolean !== null) {
+        return leftBoolean === rightBoolean;
     }
 
     // Structural values compare by their JSON, which is the only equality that

@@ -3,7 +3,7 @@ import "server-only";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 
 import { MAX_EXECUTION_MS, MAX_PATH_LENGTH } from "../domain/constants";
-import { isJsonType } from "../domain/content-type";
+import { parseRequestBody } from "../domain/request-body";
 import { executeGraph, withoutBody } from "../domain/execute";
 import { matchEndpoint } from "../domain/match";
 import { createSeededRandom, resolveSeed } from "../domain/seeded-random";
@@ -17,13 +17,7 @@ import { findCandidateRoutes, findEndpointExecution, findServerByKey } from "./e
 import { listVariables } from "./variables";
 import { isMockStorageConfigured } from "./config";
 import type { LoggedTrace } from "../domain/log-record";
-import type {
-    ExecutionContext,
-    HttpMethod,
-    JsonValue,
-    MockResponse,
-    NormalizedRequest,
-} from "../types/graph";
+import type { ExecutionContext, HttpMethod, MockResponse, NormalizedRequest } from "../types/graph";
 
 /**
  * One public request, from bytes to bytes.
@@ -72,24 +66,9 @@ export type IncomingRequest = {
     readonly rawBody: string;
 };
 
-/**
- * Parsed when the request says JSON, kept as text otherwise.
- *
- * A body that claims to be JSON and is not degrades to the raw text rather than
- * failing the request: the mock's own graph decides what it cares about, and
- * refusing here would answer a question nobody asked.
- */
-function readBody(rawBody: string, contentType: string): JsonValue {
-    if (rawBody === "" || !isJsonType(contentType)) {
-        return rawBody === "" ? null : rawBody;
-    }
-
-    try {
-        return JSON.parse(rawBody) as JsonValue;
-    } catch {
-        return rawBody;
-    }
-}
+// Body parsing moved wholesale to `domain/request-body.ts` when form posts
+// turned out to be unreadable — see the note there. It stays out of this file
+// because it is pure and the interesting cases are all edge cases.
 
 export async function serveMockRequest(incoming: IncomingRequest): Promise<ServeOutcome> {
     if (!isMockStorageConfigured()) {
@@ -165,7 +144,7 @@ export async function serveMockRequest(incoming: IncomingRequest): Promise<Serve
             query: incoming.query,
             headers: incoming.headers,
             cookies: incoming.cookies,
-            body: readBody(incoming.rawBody, incoming.headers["content-type"] ?? ""),
+            body: parseRequestBody(incoming.rawBody, incoming.headers["content-type"] ?? ""),
         };
 
         // A caller may pin the seed, which is what makes a mock usable as a

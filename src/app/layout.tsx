@@ -340,6 +340,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             logs: messages.mockServer.logs,
             variables: messages.mockServer.variables,
             import: messages.mockServer.import,
+            export: messages.mockServer.export,
             errors: messages.mockServer.errors,
             serverErrors: messages.mockServer.serverErrors,
             toast: messages.mockServer.toast,

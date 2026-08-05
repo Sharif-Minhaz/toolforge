@@ -7,6 +7,7 @@ import { FadeIn, Reveal } from "@/components/motion/reveal";
 import { getServerDetail } from "@/modules/mock-server/actions/servers";
 import { EndpointWorkbench } from "@/modules/mock-server/components/endpoint-workbench";
 import { MockUrl } from "@/modules/mock-server/components/mock-url";
+import { ServerExport } from "@/modules/mock-server/components/server-export";
 import { ServerPausePanel } from "@/modules/mock-server/components/server-pause-panel";
 import { SITE_URL } from "@/modules/seo/domain/site";
 
@@ -83,6 +84,12 @@ export default async function ServerPage({ params }: ServerPageProps) {
                     origin={SITE_URL}
                     endpoints={server.endpoints}
                 />
+            </Reveal>
+
+            {/* Below the routes: exporting is what you do once the work is
+                done, and it should not sit between the reader and the work. */}
+            <Reveal>
+                <ServerExport workspaceId={workspaceId} serverId={server.id} origin={SITE_URL} />
             </Reveal>
         </div>
     );

@@ -35,13 +35,25 @@ export const NODE_KINDS = [
 
 export type NodeKind = (typeof NODE_KINDS)[number];
 
-/** The kinds `executeGraph` can actually run right now. */
-export const IMPLEMENTED_NODE_KINDS = [
-    "request",
-    "response",
-] as const satisfies readonly NodeKind[];
+/**
+ * The kinds whose `data` has a declared shape rather than a bag of JSON.
+ *
+ * **This is about the type, not about execution**, and the distinction cost a
+ * real bug. It used to be called `IMPLEMENTED_NODE_KINDS` and described as "the
+ * kinds `executeGraph` can actually run", which was true in M1 when those were
+ * the same two. M4 through M8 then added eight running node kinds and updated
+ * the registry's `implemented` flag — the *other* answer to the same question —
+ * without touching this. `validateGraph` was reading this one, so from M4 on
+ * every graph containing a condition, a delay, a branch or an auth node was
+ * refused on save as `unsupported_node`.
+ *
+ * Whether a kind *runs* is `nodeDefinition(kind).implemented`, in the registry,
+ * which is where the executor and the palette both read it. There is one answer
+ * to that question and this is not it.
+ */
+export const TYPED_NODE_KINDS = ["request", "response"] as const satisfies readonly NodeKind[];
 
-export type ImplementedNodeKind = (typeof IMPLEMENTED_NODE_KINDS)[number];
+export type TypedNodeKind = (typeof TYPED_NODE_KINDS)[number];
 
 /** Anything JSON can hold. The hub value every codec and node passes around. */
 export type JsonValue =
@@ -135,7 +147,7 @@ export type GraphNode =
       }
     | {
           readonly id: string;
-          readonly kind: Exclude<NodeKind, ImplementedNodeKind>;
+          readonly kind: Exclude<NodeKind, TypedNodeKind>;
           readonly position: NodePosition;
           readonly data: Record<string, JsonValue>;
       };
