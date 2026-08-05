@@ -112,6 +112,23 @@ export function EndpointWorkbench({
         setOpen((held) => (held === null ? held : { ...held, ...next }));
     }
 
+    /**
+     * Reports a failure that has nowhere on the page to appear.
+     *
+     * The status strip lives beside the Save button, in the *editor* column —
+     * which is the right home for a save that was refused and the wrong one for
+     * everything else here. Adding a route is a press in the left column, and
+     * when no route is open that column is the only thing rendered, so a refused
+     * creation had no way to say so at all: the button simply did nothing.
+     *
+     * Title plus description rather than one line, because the reasons are
+     * sentences. `path_has_query` is two of them, and a toast whose title is a
+     * paragraph reads as a wall.
+     */
+    function reportFailure(kind: "create" | "load" | "delete", reason: ServerFailureReason) {
+        toast.error(tToast(`${kind}Failed`), { description: tErrors(reason) });
+    }
+
     function load(endpointId: string) {
         setFailure(null);
         // The dialog is bound to whichever route is open, so switching route
@@ -122,7 +139,7 @@ export function EndpointWorkbench({
             const result = await getEndpoint(endpointId);
 
             if (!result.ok) {
-                setFailure(result.reason);
+                reportFailure("load", result.reason);
 
                 return;
             }
@@ -148,7 +165,7 @@ export function EndpointWorkbench({
             });
 
             if (!result.ok) {
-                setFailure(result.reason);
+                reportFailure("create", result.reason);
 
                 return;
             }
@@ -211,7 +228,7 @@ export function EndpointWorkbench({
             const result = await deleteEndpoint({ endpointId });
 
             if (!result.ok) {
-                setFailure(result.reason);
+                reportFailure("delete", result.reason);
                 setArmed(null);
 
                 return;
@@ -226,6 +243,8 @@ export function EndpointWorkbench({
         });
     }
 
+    // Only ever a refused save. Everything else on this page reports through a
+    // toast, because everything else is pressed somewhere this strip is not.
     const status: { tone: StatusTone; message: string } | null =
         failure !== null ? { tone: "error", message: tErrors(failure) } : null;
 

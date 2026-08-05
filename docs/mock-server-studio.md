@@ -702,7 +702,7 @@ is now the endpoint id (`flowDirtyFor`), compared against the open route. Any
 flag that gates reading from a module-scoped store has to name _what_ it was
 set for, not merely that it was set.
 
-Five smaller rules the canvas settled once it had the room to be used properly:
+Seven smaller rules the canvas settled once it had the room to be used properly:
 
 - **A palette drops into the viewport, not into graph space.** The fixed drop
   point was correct until `fitView` panned — which it does on every open — after
@@ -712,19 +712,63 @@ Five smaller rules the canvas settled once it had the room to be used properly:
   where it is tested. It also selects what it just added: the inspector is where
   a node is configured, so opening it is the next thing the reader was going to
   do anyway.
+- **Both rails collapse, and the choice outlives the dialog.** The palette and
+  the inspector are together 35rem of a laptop's width, which on a canvas is most
+  of the workspace. Each folds to a 2.75rem strip carrying only its own toggle.
+  The two booleans live in the store rather than in `GraphStudio`, because
+  somebody who hid the palette to get room did not mean "until I next open this
+  route" — and `partialize` already keeps chrome out of the undo stack. The four
+  grid templates are written out in full, because Tailwind generates from what it
+  can _see_ — an interpolated `lg:grid-cols-[${width}]` produces no CSS at all.
+
+    One gesture overrides the reader's choice, and only one: **selecting a node
+    opens the inspector**, because clicking a node is a request to see the thing
+    that rail holds. Deselecting is not the reverse — a rail that shut itself
+    because you clicked the background would be infuriating — so an empty
+    selection leaves it exactly as it was, and a rail closed by hand over a live
+    selection shows a dot instead. Doing this inside `select` is safe only
+    because of the ordering there: the identity return that broke the
+    `StoreUpdater` loop still happens whenever the ids match and the rail is
+    already open, the open-once case cannot repeat, and `selection` is spread
+    through by reference in every branch, so `nodes` never rebuilds.
+
+    `[` and `]` toggle them, and the bare key is the decision. Every obvious
+    modifier chord is already taken by a browser: `Ctrl+B` opens Firefox's
+    bookmarks sidebar, `Ctrl+Shift+I` opens devtools and **cannot** be prevented,
+    and `⌘[` is Back on macOS. Brackets have no default anywhere and point at the
+    rail each one opens. A bare key is only safe because of `isTypingTarget`, which
+    moved to `domain/keyboard.ts` when the studio needed the same guard the canvas
+    already had — a pure predicate over a tag name, so the rule that keeps `Delete`
+    from eating a node while somebody renames it is unit-tested rather than
+    duplicated. A `<select>` counts as typing: it takes no text, but letter keys
+    jump to an option and the faker picker has fifty-one.
+
 - **Clear keeps both ends.** `resetGraph` strips the logic and preserves the
   request and the response — including the response node's _data_, because that
   node carries the body the route form edits through the same field. Removing it
   would make a button labelled as clearing the _flow_ quietly clear the
-  _response_. Confirmation lives in the toast rather than in an armed button, so
-  the destructive press is never the one already under the pointer, and it goes
-  through the temporal store so ⌘Z brings it all back.
+  _response_. It goes through the temporal store, so ⌘Z brings it all back.
+  Confirmation is a **dialog, not a toast with an action in it**: a toast is an
+  announcement, and it can be missed, covered by the next one, or dismissed by
+  waiting — none of which a destructive confirmation may do. The dialog takes
+  focus, names what goes and what survives, and has no timeout.
 - **A tree row in a rail is two lines, not one.** `ValueRow` laid identity, kind
   and value on a single flex row with a fixed 10rem key box. Fine in a
   full-width panel, unusable in a 22rem inspector: the row overflowed, the
   container grew a horizontal scrollbar and every control became a sliver. Key
   and row actions take the first line; the kind and its value get the whole of
   the second and wrap among themselves.
+- **The zoom controls are hand-built, and the lock is view state.** React Flow's
+  default `<Controls>` labels its buttons `"zoom in"`, `"fit view"` and
+  `"toggle interactivity"` in English with no prop to change them, which on a
+  bilingual site means four `ControlButton` children instead. The lock stops
+  nodes being dragged, connected or selected — worth having the moment a graph is
+  finished and being read rather than built, since on a trackpad the difference
+  between a pan and a three-pixel node drag is nothing at all. It stays in React
+  Flow's own store rather than the studio's: it is a property of the view, not of
+  the document, so it never enters the undo stack and a locked canvas saves
+  exactly the graph an unlocked one would. It also announces itself in a panel,
+  because a canvas that has quietly stopped responding to drags reads as broken.
 - **`type="number"` reserves the stepper's width inside the content box.** In
   anything narrow the arrows land on top of the value — a three-digit weight
   rendered as two digits and a spinner. The `no-spinner` utility exists for that

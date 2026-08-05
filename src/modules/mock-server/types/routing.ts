@@ -43,6 +43,18 @@ export const PATH_PATTERN_PROBLEMS = [
     "invalid_param_name",
     "duplicate_param",
     "wildcard_not_last",
+    /**
+     * `/game?id=:game_id` — the commonest thing to get wrong here, and the one
+     * a generic "not a usable path" leaves somebody stuck on. It is named
+     * separately so the copy can say the useful thing: a route matches the path
+     * alone, the query is read inside the response.
+     */
+    "query_in_path",
+    /**
+     * A fragment is stripped by the browser and never sent, so a route
+     * containing one could not match even if this accepted it.
+     */
+    "fragment_in_path",
 ] as const;
 
 export type PathPatternProblem = (typeof PATH_PATTERN_PROBLEMS)[number];

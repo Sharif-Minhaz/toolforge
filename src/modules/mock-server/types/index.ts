@@ -148,6 +148,8 @@ export const SERVER_FAILURE_REASONS = [
     "server_limit_reached",
     "endpoint_limit_reached",
     "invalid_path",
+    "path_has_query",
+    "path_has_fragment",
     "route_taken",
     "invalid_status",
     "invalid_body",

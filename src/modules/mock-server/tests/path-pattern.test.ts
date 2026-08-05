@@ -111,8 +111,14 @@ describe("parsePathPattern — refusals", () => {
         expect(parsePathPattern("/a b")).toEqual({ ok: false, reason: "invalid_segment" });
     });
 
+    /**
+     * Still refused — but by its own name rather than as a bad segment. The
+     * reason changed deliberately: `invalid_segment` is accurate and useless,
+     * and this is the mistake people actually make. See the query-string block
+     * at the foot of this file.
+     */
     test("refuses a segment carrying a query separator", () => {
-        expect(parsePathPattern("/a?b")).toEqual({ ok: false, reason: "invalid_segment" });
+        expect(parsePathPattern("/a?b")).toEqual({ ok: false, reason: "query_in_path" });
     });
 });
 
@@ -224,5 +230,53 @@ describe("extractParams", () => {
             id: "7",
             "*": "x/y",
         });
+    });
+});
+
+describe("a query string in a route pattern", () => {
+    /**
+     * The commonest thing to type, because in a browser's URL bar the query
+     * *is* part of the address. It used to come back as `invalid_segment`,
+     * which is true and tells nobody what to do instead.
+     */
+    test("is named, not folded into invalid_segment", () => {
+        const result = parsePathPattern("/game?id=:game_id");
+
+        expect(result.ok).toBe(false);
+        expect(!result.ok && result.reason).toBe("query_in_path");
+    });
+
+    test("is caught wherever the ? appears", () => {
+        for (const input of ["/?a=1", "/a/b?c", "?x=1", "/search?"]) {
+            const result = parsePathPattern(input);
+
+            expect(!result.ok && result.reason).toBe("query_in_path");
+        }
+    });
+
+    /** A fragment never leaves the browser, so it is a separate mistake. */
+    test("a fragment is its own reason", () => {
+        const result = parsePathPattern("/game#top");
+
+        expect(!result.ok && result.reason).toBe("fragment_in_path");
+    });
+
+    /** The query is reported first: it is the half that could have been sent. */
+    test("a path with both reports the query", () => {
+        const result = parsePathPattern("/game?id=1#top");
+
+        expect(!result.ok && result.reason).toBe("query_in_path");
+    });
+
+    /**
+     * And the route the reader is pointed at really does answer the call they
+     * were trying to describe — matching strips the query before it looks, so
+     * one route covers every value of `id`.
+     */
+    test("the route they wanted matches the request they meant", () => {
+        expect(parsePathPattern("/game").ok).toBe(true);
+        expect(splitRequestPath("/game?id=7")).toEqual(["game"]);
+        expect(splitRequestPath("/game?id=8&sort=name")).toEqual(["game"]);
+        expect(splitRequestPath("/game")).toEqual(["game"]);
     });
 });

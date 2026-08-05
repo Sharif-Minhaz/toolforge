@@ -72,7 +72,10 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
     const collapsed = branching && actions.isCollapsed(path);
 
     return (
-        <li className="min-w-0">
+        // A little less than the `gap-2` between siblings: a parent sitting
+        // closer to its own children than to the field after it is what makes
+        // the nesting readable without another border.
+        <li className="flex min-w-0 flex-col gap-1.5">
             {/*
              * Two lines, not one.
              *
@@ -86,8 +89,17 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
              */}
             <div
                 className={cn(
-                    "group/row flex min-w-0 flex-col gap-1 rounded-lg py-1",
-                    depth > 0 && "border-border/60 border-l pl-3",
+                    "group/row flex min-w-0 flex-col gap-1.5 rounded-lg",
+                    // A field is a card, not a line with a rule down one side.
+                    // The single left border was carrying two jobs at once —
+                    // marking the indent *and* separating one field from the
+                    // next — and did the second badly, because a row is two
+                    // lines tall and a rule cannot say where one ends. A closed
+                    // border says it in one stroke; the indent is then the
+                    // margin on the list, which is all it ever needed to be.
+                    depth > 0
+                        ? "border-border/60 bg-card/40 hover:border-border border p-2 transition-colors"
+                        : "py-1",
                 )}
             >
                 <div className="flex min-w-0 items-center gap-1.5">
@@ -221,8 +233,16 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
                     </div>
                 </div>
 
-                {/* Second line: what the value is, and where it comes from. */}
-                <div className="flex min-w-0 flex-wrap items-center gap-1.5 pl-7">
+                {/* Second line: what the value is, and where it comes from.
+                    Indented under the key on the root row only — inside a
+                    bordered field the card's own padding is the alignment, and
+                    a second indent inside it just wastes the width. */}
+                <div
+                    className={cn(
+                        "flex min-w-0 flex-wrap items-center gap-1.5",
+                        depth === 0 && "pl-5",
+                    )}
+                >
                     {/*
                      * A native select rather than the shadcn one: this renders once
                      * per row and a tree of sixty fields is sixty popovers to mount
@@ -391,8 +411,16 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
 
             {collapsed ? null : (
                 <>
+                    {/*
+                     * `gap-2` between siblings, and it is doing real work now
+                     * that a row is two lines: without it the second line of one
+                     * field and the first of the next sit a single pixel apart,
+                     * and the eye groups them as one row rather than two fields.
+                     * The gap is what makes the left rule read as an indent
+                     * instead of as a solid block.
+                     */}
                     {expr.kind === "object" && expr.fields.length > 0 ? (
-                        <ul className={cn("min-w-0", depth >= 0 && "ml-3")}>
+                        <ul className={cn("flex min-w-0 flex-col gap-2", depth >= 0 && "ml-3")}>
                             {expr.fields.map((child, index) => (
                                 <ValueRow
                                     key={`${pathKey(path)}:f${index}`}
@@ -412,7 +440,7 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
                     ) : null}
 
                     {expr.kind === "array" ? (
-                        <ul className="ml-3 min-w-0">
+                        <ul className="ml-3 flex min-w-0 flex-col gap-2">
                             <ValueRow
                                 key={`${pathKey(path)}:of`}
                                 expr={expr.of}
@@ -425,7 +453,7 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
                     ) : null}
 
                     {expr.kind === "oneOf" ? (
-                        <ul className="ml-3 min-w-0">
+                        <ul className="ml-3 flex min-w-0 flex-col gap-2">
                             {expr.options.map((option, index) => (
                                 <li
                                     key={`${pathKey(path)}:o${index}`}

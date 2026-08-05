@@ -5,19 +5,34 @@ import {
     IconArrowForwardUp,
     IconEraser,
     IconLayoutGrid,
+    IconLayoutSidebarLeftCollapse,
+    IconLayoutSidebarLeftExpand,
+    IconLayoutSidebarRightCollapse,
+    IconLayoutSidebarRightExpand,
     IconLoader2,
     IconPlus,
 } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
-import { useEffect } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
 
+import { INSPECTOR_SHORTCUT, isTypingTarget, PALETTE_SHORTCUT } from "../domain/keyboard";
 import { nodeDefinition, placeableNodeKinds } from "../domain/node-registry";
 import type { GraphDocument, NodeKind } from "../types/graph";
 import { NodeInspector } from "./node-inspector";
@@ -71,6 +86,12 @@ export function GraphStudio({ endpointId, graph, version, onDirty }: GraphStudio
     const clear = useStudioStore((state) => state.clear);
     const saveState = useStudioStore((state) => state.saveState);
     const loadedKey = useStudioStore((state) => state.loadedKey);
+    const paletteOpen = useStudioStore((state) => state.paletteOpen);
+    const inspectorOpen = useStudioStore((state) => state.inspectorOpen);
+    const togglePalette = useStudioStore((state) => state.togglePalette);
+    const toggleInspector = useStudioStore((state) => state.toggleInspector);
+
+    const [confirmingClear, setConfirmingClear] = useState(false);
 
     const key = `${endpointId}:${version}`;
     const ready = loadedKey === key;
@@ -97,31 +118,67 @@ export function GraphStudio({ endpointId, graph, version, onDirty }: GraphStudio
         }
     }, [ready, saveState, onDirty, endpointId]);
 
+    /**
+     * `[` and `]` fold the two rails.
+     *
+     * Bound here rather than in `GraphCanvas` because the panels belong to this
+     * component and the canvas is only mounted once the store is ready — a
+     * shortcut that does not work for the first second is a shortcut people stop
+     * reaching for. Two window listeners is the right cost for that.
+     *
+     * Guarded three ways: not while typing, not while a modifier is held (so
+     * `⌘[` stays the browser's Back), and not while the clear dialog is up,
+     * where a rail folding behind the confirmation would be noise.
+     */
+    useEffect(() => {
+        function onKeyDown(event: KeyboardEvent) {
+            const target = event.target as HTMLElement | null;
+
+            if (
+                confirmingClear ||
+                event.metaKey ||
+                event.ctrlKey ||
+                event.altKey ||
+                isTypingTarget(target?.tagName ?? null, target?.isContentEditable)
+            ) {
+                return;
+            }
+
+            if (event.key === PALETTE_SHORTCUT) {
+                event.preventDefault();
+                togglePalette();
+            } else if (event.key === INSPECTOR_SHORTCUT) {
+                event.preventDefault();
+                toggleInspector();
+            }
+        }
+
+        window.addEventListener("keydown", onKeyDown);
+
+        return () => window.removeEventListener("keydown", onKeyDown);
+    }, [confirmingClear, togglePalette, toggleInspector]);
+
     const selected = current.nodes.find((node) => node.id === selection[0]);
 
     return (
         <div className="flex min-h-0 flex-1 flex-col">
             <div className="border-border/70 flex flex-wrap items-center gap-1 border-b px-3 py-2">
-                <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
+                <IconAction
+                    label={t("undo")}
+                    shortcut="⌘Z"
                     className="size-8"
-                    aria-label={t("undo")}
                     onClick={() => useStudioStore.temporal.getState().undo()}
                 >
                     <IconArrowBackUp className="size-4" aria-hidden="true" />
-                </Button>
-                <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
+                </IconAction>
+                <IconAction
+                    label={t("redo")}
+                    shortcut="⇧⌘Z"
                     className="size-8"
-                    aria-label={t("redo")}
                     onClick={() => useStudioStore.temporal.getState().redo()}
                 >
                     <IconArrowForwardUp className="size-4" aria-hidden="true" />
-                </Button>
+                </IconAction>
                 <Button
                     type="button"
                     size="sm"
@@ -138,26 +195,7 @@ export function GraphStudio({ endpointId, graph, version, onDirty }: GraphStudio
                     size="sm"
                     variant="ghost"
                     className="text-muted-foreground hover:text-destructive gap-1.5"
-                    onClick={() =>
-                        // Confirmed in the toast rather than by arming the
-                        // button, so the destructive press is never the one
-                        // already under the pointer. Ten seconds, because a
-                        // confirmation that vanishes while it is being read is
-                        // worse than no confirmation at all.
-                        toast(t("clearConfirm"), {
-                            description: t("clearConfirmHint"),
-                            duration: 10_000,
-                            action: {
-                                label: t("clear"),
-                                onClick: () => {
-                                    clear();
-                                    toast.success(t("cleared"), {
-                                        description: t("clearedHint"),
-                                    });
-                                },
-                            },
-                        })
-                    }
+                    onClick={() => setConfirmingClear(true)}
                 >
                     <IconEraser className="size-4" aria-hidden="true" />
                     {t("clear")}
@@ -171,30 +209,81 @@ export function GraphStudio({ endpointId, graph, version, onDirty }: GraphStudio
             {/* One scrolling column on a phone, three panes on a laptop. The
                 canvas keeps a fixed height in the stacked form, because a flex
                 child with no height inside a scroll container collapses to
-                nothing. */}
-            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:grid lg:grid-cols-[13rem_minmax(0,1fr)_22rem] lg:overflow-hidden">
+                nothing.
+
+                Four explicit column templates rather than one built from a
+                variable: Tailwind generates from what it can *see* in the
+                source, so an interpolated `lg:grid-cols-[${w}]` produces no CSS
+                at all. */}
+            <div
+                className={cn(
+                    "flex min-h-0 flex-1 flex-col overflow-y-auto lg:grid lg:overflow-hidden",
+                    paletteOpen && inspectorOpen && "lg:grid-cols-[13rem_minmax(0,1fr)_22rem]",
+                    paletteOpen && !inspectorOpen && "lg:grid-cols-[13rem_minmax(0,1fr)_2.75rem]",
+                    !paletteOpen && inspectorOpen && "lg:grid-cols-[2.75rem_minmax(0,1fr)_22rem]",
+                    !paletteOpen &&
+                        !inspectorOpen &&
+                        "lg:grid-cols-[2.75rem_minmax(0,1fr)_2.75rem]",
+                )}
+            >
                 <aside
                     aria-label={t("palette")}
-                    className="border-border/70 flex shrink-0 flex-col gap-2 border-b p-3 lg:min-h-0 lg:overflow-y-auto lg:border-r lg:border-b-0"
+                    className={cn(
+                        "border-border/70 flex shrink-0 flex-col border-b lg:min-h-0 lg:overflow-y-auto lg:border-r lg:border-b-0",
+                        paletteOpen ? "gap-2 p-3" : "gap-2 p-2",
+                    )}
                 >
-                    <span className="text-muted-foreground text-[0.6875rem] font-semibold tracking-[0.09em] uppercase">
-                        {t("palette")}
-                    </span>
-
-                    <div className="flex flex-wrap gap-1.5 lg:flex-col lg:flex-nowrap">
-                        {placeableNodeKinds().map((kind) => (
-                            <PaletteButton
-                                key={kind}
-                                kind={kind}
-                                label={tNodes(kind)}
-                                onAdd={addNode}
-                            />
-                        ))}
+                    <div className="flex items-center gap-1">
+                        <span
+                            className={cn(
+                                "text-muted-foreground min-w-0 truncate text-[0.6875rem] font-semibold tracking-[0.09em] uppercase",
+                                // Hidden only where the rail is actually narrow.
+                                // Stacked on a phone it is a full-width bar and
+                                // an unlabelled chevron there says nothing.
+                                !paletteOpen && "lg:hidden",
+                            )}
+                        >
+                            {t("palette")}
+                        </span>
+                        <IconAction
+                            label={paletteOpen ? t("hidePalette") : t("showPalette")}
+                            shortcut={PALETTE_SHORTCUT}
+                            expanded={paletteOpen}
+                            className="text-muted-foreground ml-auto size-7 shrink-0"
+                            onClick={togglePalette}
+                        >
+                            {paletteOpen ? (
+                                <IconLayoutSidebarLeftCollapse
+                                    className="size-4"
+                                    aria-hidden="true"
+                                />
+                            ) : (
+                                <IconLayoutSidebarLeftExpand
+                                    className="size-4"
+                                    aria-hidden="true"
+                                />
+                            )}
+                        </IconAction>
                     </div>
 
-                    <p className="text-muted-foreground mt-auto hidden pt-3 text-[0.625rem] leading-normal lg:block">
-                        {t("canvasHint")}
-                    </p>
+                    {paletteOpen ? (
+                        <>
+                            <div className="flex flex-wrap gap-1.5 lg:flex-col lg:flex-nowrap">
+                                {placeableNodeKinds().map((kind) => (
+                                    <PaletteButton
+                                        key={kind}
+                                        kind={kind}
+                                        label={tNodes(kind)}
+                                        onAdd={addNode}
+                                    />
+                                ))}
+                            </div>
+
+                            <p className="text-muted-foreground mt-auto hidden pt-3 text-[0.625rem] leading-normal lg:block">
+                                {t("canvasHint")} {t("panelShortcuts")}
+                            </p>
+                        </>
+                    ) : null}
                 </aside>
 
                 <div className="h-[22rem] min-w-0 shrink-0 lg:h-auto lg:min-h-0">
@@ -212,16 +301,54 @@ export function GraphStudio({ endpointId, graph, version, onDirty }: GraphStudio
 
                 <aside
                     aria-labelledby="inspector-heading"
-                    className="border-border/70 min-w-0 border-t p-3 lg:min-h-0 lg:overflow-y-auto lg:border-t-0 lg:border-l"
+                    className={cn(
+                        "border-border/70 min-w-0 border-t lg:min-h-0 lg:overflow-y-auto lg:border-t-0 lg:border-l",
+                        inspectorOpen ? "p-3" : "p-2",
+                    )}
                 >
-                    <h3
-                        id="inspector-heading"
-                        className="text-muted-foreground text-[0.6875rem] font-semibold tracking-[0.09em] uppercase"
-                    >
-                        {t("inspector")}
-                    </h3>
+                    <div className="flex items-center gap-1">
+                        <IconAction
+                            label={inspectorOpen ? t("hideInspector") : t("showInspector")}
+                            shortcut={INSPECTOR_SHORTCUT}
+                            expanded={inspectorOpen}
+                            className="text-muted-foreground relative order-2 ml-auto size-7 shrink-0 lg:order-none lg:ml-0"
+                            onClick={toggleInspector}
+                        >
+                            {inspectorOpen ? (
+                                <IconLayoutSidebarRightCollapse
+                                    className="size-4"
+                                    aria-hidden="true"
+                                />
+                            ) : (
+                                <IconLayoutSidebarRightExpand
+                                    className="size-4"
+                                    aria-hidden="true"
+                                />
+                            )}
+                            {/* Selecting a node opens this rail, so the only way
+                                to be here is to have shut it by hand afterwards.
+                                That choice stands — but a selection behind a
+                                closed rail would otherwise be invisible. */}
+                            {!inspectorOpen && selected !== undefined ? (
+                                <span
+                                    className="bg-brand-violet absolute top-1 right-1 size-1.5 rounded-full"
+                                    aria-hidden="true"
+                                />
+                            ) : null}
+                        </IconAction>
 
-                    {selected === undefined ? (
+                        <h3
+                            id="inspector-heading"
+                            className={cn(
+                                "text-muted-foreground order-1 min-w-0 flex-1 truncate text-[0.6875rem] font-semibold tracking-[0.09em] uppercase lg:order-none",
+                                !inspectorOpen && "lg:hidden",
+                            )}
+                        >
+                            {t("inspector")}
+                        </h3>
+                    </div>
+
+                    {!inspectorOpen ? null : selected === undefined ? (
                         <p className="border-border/70 text-muted-foreground mt-2 rounded-xl border border-dashed p-5 text-center text-xs">
                             {t("nothingSelected")}
                         </p>
@@ -244,7 +371,94 @@ export function GraphStudio({ endpointId, graph, version, onDirty }: GraphStudio
                     )}
                 </aside>
             </div>
+
+            {/*
+             * A real dialog rather than a toast with an action in it.
+             *
+             * A toast is an announcement: it can be missed, it can be covered by
+             * the next one, and it times out — none of which a destructive
+             * confirmation may do. This one takes focus, says exactly what goes
+             * and what survives, and cannot be dismissed by waiting.
+             */}
+            <Dialog open={confirmingClear} onOpenChange={setConfirmingClear}>
+                <DialogContent showCloseButton={false} className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>{t("clearConfirm")}</DialogTitle>
+                        <DialogDescription>{t("clearConfirmHint")}</DialogDescription>
+                    </DialogHeader>
+
+                    <DialogFooter>
+                        <DialogClose render={<Button variant="outline" />}>
+                            {t("clearCancel")}
+                        </DialogClose>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            className="gap-1.5"
+                            onClick={() => {
+                                clear();
+                                setConfirmingClear(false);
+                                toast.success(t("cleared"), { description: t("clearedHint") });
+                            }}
+                        >
+                            <IconEraser className="size-4" aria-hidden="true" />
+                            {t("clear")}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
+    );
+}
+
+type IconActionProps = {
+    label: string;
+    /** The key that does the same thing, shown as a chip beside the label. */
+    shortcut?: string;
+    className?: string;
+    expanded?: boolean;
+    onClick: () => void;
+    children: ReactNode;
+};
+
+/**
+ * An icon button whose name and shortcut are both discoverable on hover.
+ *
+ * `aria-label` alone is invisible to a pointer — it names the control for a
+ * screen reader and produces no tooltip at all, which is how a rail of unlabelled
+ * glyphs ends up being guessed at. The label goes in both places; the key goes
+ * only in the tooltip, because "Hide the inspector (])" read aloud is noise.
+ */
+function IconAction({ label, shortcut, className, expanded, onClick, children }: IconActionProps) {
+    return (
+        <Tooltip>
+            <TooltipTrigger
+                render={
+                    <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className={className}
+                        aria-label={label}
+                        aria-expanded={expanded}
+                        onClick={onClick}
+                    />
+                }
+            >
+                {children}
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+                {label}
+                {shortcut === undefined ? null : (
+                    <kbd
+                        data-slot="kbd"
+                        className="bg-background/20 text-background px-1.5 py-0.5 font-mono text-[0.6875rem] leading-[1.3]"
+                    >
+                        {shortcut}
+                    </kbd>
+                )}
+            </TooltipContent>
+        </Tooltip>
     );
 }
 

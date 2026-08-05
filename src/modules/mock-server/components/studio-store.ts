@@ -67,11 +67,23 @@ export type StudioState = {
      * have panned a long way from.
      */
     view: CanvasView | null;
+    /**
+     * Whether each side rail is showing.
+     *
+     * In the store rather than in `GraphStudio` so the choice survives closing
+     * and reopening the dialog — a reader who hid the palette to get room did
+     * not mean "until I next look at this route". It is chrome, not document,
+     * so `partialize` keeps it out of the undo stack.
+     */
+    paletteOpen: boolean;
+    inspectorOpen: boolean;
 
     load: (graph: GraphDocument, version: number, key: string) => void;
     setSaveState: (state: SaveState) => void;
     markSaved: (version: number) => void;
     setView: (view: CanvasView) => void;
+    togglePalette: () => void;
+    toggleInspector: () => void;
 
     select: (ids: readonly string[]) => void;
     addNode: (kind: NodeKind) => void;
@@ -109,6 +121,8 @@ export const useStudioStore = create<StudioState>()(
             saveState: "idle",
             version: 1,
             view: null,
+            paletteOpen: true,
+            inspectorOpen: true,
 
             load: (graph, version, key) =>
                 set({ graph, version, loadedKey: key, saveState: "idle", selection: [] }),
@@ -121,10 +135,14 @@ export const useStudioStore = create<StudioState>()(
              */
             setView: (view) => set((state) => ({ ...state, view })),
 
+            togglePalette: () => set((state) => ({ paletteOpen: !state.paletteOpen })),
+            toggleInspector: () => set((state) => ({ inspectorOpen: !state.inspectorOpen })),
+
             /**
-             * Ignores a selection that has not actually changed.
+             * Ignores a selection that has not actually changed, and opens the
+             * inspector for one that has.
              *
-             * This guard is load-bearing, not an optimisation. React Flow is
+             * The comparison is load-bearing, not an optimisation. React Flow is
              * driven by controlled `nodes`, and its `StoreUpdater` re-syncs
              * whenever that array's *reference* changes. The canvas derives that
              * array from `selection`, and React Flow fires `onSelectionChange`
@@ -132,11 +150,34 @@ export const useStudioStore = create<StudioState>()(
              * the loop: new array → new nodes → setNodes → onSelectionChange →
              * new array. Comparing contents breaks it, and there is no other
              * place it can be broken without giving up controlled nodes.
+             *
+             * Opening the rail is safe alongside that, and the ordering below is
+             * why: when the ids match *and* the rail is already open this still
+             * returns `state` itself, so the identity the loop was broken with
+             * survives. When the ids match and the rail is shut it opens once,
+             * and the next call is the identity case again — and `selection` is
+             * spread through by reference either way, so `nodes` never rebuilds.
+             *
+             * **Clicking a node is a request to inspect it**, which is worth
+             * saying because it overrides the rule next to it: a collapsed rail
+             * is otherwise the reader's choice and is not undone for them.
+             * Selecting is the one gesture that asks for the thing the rail
+             * holds. Deselecting is not the reverse — a rail that shut itself
+             * because you clicked the background would be infuriating — so an
+             * empty selection leaves it exactly as it was.
              */
             select: (selection) =>
-                set((state) =>
-                    sameIds(state.selection, selection) ? state : { ...state, selection },
-                ),
+                set((state) => {
+                    const inspectorOpen = selection.length > 0 || state.inspectorOpen;
+
+                    if (sameIds(state.selection, selection)) {
+                        return inspectorOpen === state.inspectorOpen
+                            ? state
+                            : { ...state, inspectorOpen };
+                    }
+
+                    return { ...state, selection, inspectorOpen };
+                }),
 
             /**
              * Drops a node in the middle of what the reader is looking at, and
@@ -146,7 +187,9 @@ export const useStudioStore = create<StudioState>()(
              * the inspector still showing whatever was selected before makes the
              * reader hunt for the thing they just asked for — and the inspector
              * is where the node is actually configured, so opening it is the
-             * next thing they were going to do anyway.
+             * next thing they were going to do anyway. That is also why the rail
+             * itself opens: the same reasoning as `select`, applied to the one
+             * gesture that produces a selection without a click.
              */
             addNode: (kind) =>
                 set((state) => {
@@ -156,6 +199,7 @@ export const useStudioStore = create<StudioState>()(
                         ...state,
                         graph: addNode(state.graph, kind, dropPosition(state.graph, state.view)),
                         selection: [id],
+                        inspectorOpen: true,
                         saveState: "dirty",
                     };
                 }),

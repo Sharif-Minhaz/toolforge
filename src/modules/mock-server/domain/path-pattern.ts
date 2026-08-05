@@ -81,6 +81,30 @@ export function parsePathPattern(input: string): PathPatternResult {
         return { ok: false, reason: "too_long" };
     }
 
+    /**
+     * Named before the segment scan, because both would otherwise fall out of
+     * it as `invalid_segment` — technically true and useless to read.
+     *
+     * A route pattern is the **path** and nothing else. Matching already
+     * ignores the query (`splitRequestPath` cuts it off), so `/game` answers
+     * `/game?id=7` and `/game?id=8` and `/game` alike, and `id` is read inside
+     * the response as a request value. Accepting `/game?id=:game_id` would
+     * therefore be worse than refusing it: the route would match every call to
+     * `/game` regardless of the query, `:game_id` would never bind to anything,
+     * and nothing would ever say why.
+     *
+     * A fragment is stronger still — the browser strips it before the request
+     * leaves, so a pattern containing one describes something no server can
+     * ever see.
+     */
+    if (trimmed.includes("?")) {
+        return { ok: false, reason: "query_in_path" };
+    }
+
+    if (trimmed.includes("#")) {
+        return { ok: false, reason: "fragment_in_path" };
+    }
+
     if (trimmed === "" || trimmed === "/") {
         // The server root is a legitimate endpoint: `GET /` is what a health
         // check hits. It has no segments, so it matches only the empty path.

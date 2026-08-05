@@ -3,21 +3,28 @@
 import {
     Background,
     BackgroundVariant,
+    ControlButton,
     Controls,
     Handle,
     MiniMap,
+    Panel,
     Position,
     ReactFlow,
+    useReactFlow,
+    useStore,
+    useStoreApi,
     type Edge,
     type Node,
     type NodeProps,
 } from "@xyflow/react";
+import { IconLock, IconLockOpen, IconMaximize, IconMinus, IconPlus } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { cn } from "@/lib/utils";
 import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
 
+import { isTypingTarget } from "../domain/keyboard";
 import { handlesFor, nodeDefinition } from "../domain/node-registry";
 import type { GraphNode, NodeKind } from "../types/graph";
 import { useStudioStore } from "./studio-store";
@@ -102,6 +109,103 @@ function StudioNode({ data, selected }: NodeProps) {
 
 const NODE_TYPES = { studio: StudioNode };
 
+/**
+ * Zoom, fit and the interactivity lock.
+ *
+ * Hand-built out of React Flow's own `ControlButton` rather than left to the
+ * default `<Controls>`, for one reason: the built-in buttons label themselves
+ * `"zoom in"`, `"fit view"` and `"toggle interactivity"` in English, with no
+ * prop to change them. Everything else on this site is bilingual, so four
+ * children and a `showZoom={false}` is the price of not shipping a control
+ * nobody reading Bangla can identify.
+ *
+ * The lock is the one worth explaining. It stops nodes being dragged,
+ * connected or selected — which is what you want the moment a graph is finished
+ * and you are reading it rather than building it, since on a trackpad the
+ * difference between panning and dragging a node by three pixels is nothing at
+ * all. Locking is a *view* state, not a document one: it is React Flow's own to
+ * hold, so it stays out of the studio store and out of the undo stack, and a
+ * locked canvas saves exactly the same graph as an unlocked one.
+ *
+ * It has to be a child component. Hooks reading React Flow's store must run
+ * inside `<ReactFlow>`, and `GraphCanvas` is the thing that renders it.
+ */
+function CanvasControls() {
+    const t = useTranslations("mockServer.studio");
+    const { zoomIn, zoomOut, fitView } = useReactFlow();
+    const store = useStoreApi();
+
+    // The three flags the built-in toggle sets together. Read as one so a
+    // canvas left half-locked by anything else still reports honestly.
+    const interactive = useStore(
+        (state) => state.nodesDraggable || state.nodesConnectable || state.elementsSelectable,
+    );
+
+    return (
+        <>
+            {/* A locked canvas that does not say so is a broken canvas. The
+                notice lives inside the flow rather than in the toolbar above it
+                because the flag is React Flow's, readable only in here. */}
+            {interactive ? null : (
+                <Panel position="top-center">
+                    <p className="border-brand-amber/45 bg-brand-amber/12 text-brand-amber flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[0.6875rem] leading-[1.3]">
+                        <IconLock className="size-3.5 shrink-0" aria-hidden="true" />
+                        {t("lockedHint")}
+                    </p>
+                </Panel>
+            )}
+
+            <Controls
+                showZoom={false}
+                showFitView={false}
+                showInteractive={false}
+                aria-label={t("controls")}
+                className="!m-2"
+            >
+                <ControlButton
+                    onClick={() => zoomIn()}
+                    title={t("zoomIn")}
+                    aria-label={t("zoomIn")}
+                >
+                    <IconPlus className="size-4" aria-hidden="true" />
+                </ControlButton>
+                <ControlButton
+                    onClick={() => zoomOut()}
+                    title={t("zoomOut")}
+                    aria-label={t("zoomOut")}
+                >
+                    <IconMinus className="size-4" aria-hidden="true" />
+                </ControlButton>
+                <ControlButton
+                    onClick={() => fitView()}
+                    title={t("fitView")}
+                    aria-label={t("fitView")}
+                >
+                    <IconMaximize className="size-4" aria-hidden="true" />
+                </ControlButton>
+                <ControlButton
+                    onClick={() =>
+                        store.setState({
+                            nodesDraggable: !interactive,
+                            nodesConnectable: !interactive,
+                            elementsSelectable: !interactive,
+                        })
+                    }
+                    title={interactive ? t("lock") : t("unlock")}
+                    aria-label={interactive ? t("lock") : t("unlock")}
+                    aria-pressed={!interactive}
+                >
+                    {interactive ? (
+                        <IconLockOpen className="size-4" aria-hidden="true" />
+                    ) : (
+                        <IconLock className="size-4" aria-hidden="true" />
+                    )}
+                </ControlButton>
+            </Controls>
+        </>
+    );
+}
+
 export function GraphCanvas() {
     const graph = useStudioStore((state) => state.graph);
     const selection = useStudioStore((state) => state.selection);
@@ -150,13 +254,7 @@ export function GraphCanvas() {
         function onKeyDown(event: KeyboardEvent) {
             const target = event.target as HTMLElement | null;
 
-            if (
-                target !== null &&
-                (target.tagName === "INPUT" ||
-                    target.tagName === "TEXTAREA" ||
-                    target.tagName === "SELECT" ||
-                    target.isContentEditable)
-            ) {
+            if (isTypingTarget(target?.tagName ?? null, target?.isContentEditable)) {
                 return;
             }
 
@@ -288,7 +386,7 @@ export function GraphCanvas() {
                     style={{ width: 128, height: 84 }}
                     className="!bg-card !border-border/70 !m-2 !rounded-lg !border"
                 />
-                <Controls showInteractive={false} className="!m-2" />
+                <CanvasControls />
             </ReactFlow>
         </div>
     );

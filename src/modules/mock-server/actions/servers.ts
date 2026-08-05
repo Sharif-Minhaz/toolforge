@@ -35,8 +35,10 @@ import type {
     EndpointResult,
     ServerActionResult,
     ServerDetail,
+    ServerFailureReason,
     ServerSummary,
 } from "../types";
+import type { PathPatternProblem } from "../types/routing";
 import type { GraphDocument, GraphNode, HttpMethod, ValueExpr } from "../types/graph";
 import {
     createEndpointSchema,
@@ -70,6 +72,22 @@ async function ownsWorkspace(workspaceId: string | null): Promise<boolean> {
 
         return false;
     }
+}
+
+/**
+ * Two path problems get their own message; everything else shares one.
+ *
+ * The split is not tidiness. "That is not a usable path" tells somebody who
+ * typed `/game?id=:game_id` nothing they can act on, and it is the single most
+ * likely thing to type — a query string looks like part of an address because
+ * in a browser's URL bar it is one.
+ */
+function pathFailure(reason: PathPatternProblem): ServerFailureReason {
+    if (reason === "query_in_path") {
+        return "path_has_query";
+    }
+
+    return reason === "fragment_in_path" ? "path_has_fragment" : "invalid_path";
 }
 
 async function requireServer(serverId: string): Promise<boolean> {
@@ -270,7 +288,7 @@ export async function createEndpoint(input: unknown): Promise<EndpointResult> {
     const path = parsePathPattern(parsed.data.path);
 
     if (!path.ok) {
-        return { ok: false, reason: "invalid_path" };
+        return { ok: false, reason: pathFailure(path.reason) };
     }
 
     if (!(await requireServer(parsed.data.serverId))) {
@@ -312,7 +330,7 @@ export async function updateEndpoint(input: unknown): Promise<EndpointResult> {
     const path = parsePathPattern(parsed.data.path);
 
     if (!path.ok) {
-        return { ok: false, reason: "invalid_path" };
+        return { ok: false, reason: pathFailure(path.reason) };
     }
 
     if (!(await requireEndpoint(parsed.data.endpointId))) {
