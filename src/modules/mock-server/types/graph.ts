@@ -10,9 +10,43 @@
  */
 
 /** Methods a mock endpoint can answer. Mirrors the Prisma `HttpMethod` enum. */
-export const HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"] as const;
+/**
+ * `QUERY` is the newest of these and the odd one out in every layer below.
+ *
+ * RFC 10008 (Proposed Standard, 2026) defines it as a **safe, idempotent,
+ * cacheable** method that *requires* a request body — a GET that can carry a
+ * query too large or too structured for a URL. It is exactly the method a mock
+ * server should know about early, because the people adopting it first are the
+ * ones with nothing to test against.
+ *
+ * It is also the one method Next.js route handlers cannot export: they support
+ * `GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS` and answer 405 to anything
+ * else, before any code here runs. See `src/proxy.ts`, which is where a QUERY
+ * request is actually served from and why.
+ */
+export const HTTP_METHODS = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "HEAD",
+    "OPTIONS",
+    "QUERY",
+] as const;
 
 export type HttpMethod = (typeof HTTP_METHODS)[number];
+
+/** The seven a Next.js `route.ts` may export. `QUERY` is served by the proxy. */
+export const ROUTE_HANDLER_METHODS: readonly HttpMethod[] = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "HEAD",
+    "OPTIONS",
+];
 
 /**
  * Every node the canvas will ever place. Only `request` and `response` execute

@@ -81,6 +81,7 @@ export default async function ServerPage({ params }: ServerPageProps) {
                 <EndpointWorkbench
                     serverId={server.id}
                     serverKey={server.key}
+                    workspaceId={workspaceId}
                     origin={SITE_URL}
                     endpoints={server.endpoints}
                 />

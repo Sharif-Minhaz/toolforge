@@ -86,6 +86,10 @@ enum HttpMethod {
   DELETE
   HEAD
   OPTIONS
+  /// RFC 10008. Safe, idempotent, cacheable, and carries a request body.
+  /// Served from `src/proxy.ts` rather than the route handler, because Next.js
+  /// route files can only export the seven above.
+  QUERY
 
   @@map("http_method")
 }

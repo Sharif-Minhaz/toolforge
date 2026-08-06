@@ -9,9 +9,22 @@ import {
 const FORM = "application/x-www-form-urlencoded";
 const MULTIPART = 'multipart/form-data; boundary="X"';
 
+/**
+ * A multipart body as the route handler hands it over: one character per byte.
+ *
+ * That is the contract `parseRequestBody` is written against, and building the
+ * fixture any other way would test something the parser never receives. `€` is
+ * one JavaScript character and three bytes on the wire, so it has to be three
+ * characters here — which is exactly the difference that made the old size
+ * wrong.
+ */
+function latin1(utf8Text: string): string {
+    return String.fromCharCode(...new TextEncoder().encode(utf8Text));
+}
+
 /** A multipart body, written the way a browser writes one. */
 function multipart(...parts: readonly string[]): string {
-    return `${parts.map((part) => `--X\r\n${part}\r\n`).join("")}--X--\r\n`;
+    return latin1(`${parts.map((part) => `--X\r\n${part}\r\n`).join("")}--X--\r\n`);
 }
 
 describe("recognising the types", () => {
@@ -125,16 +138,50 @@ describe("parseRequestBody", () => {
             });
         });
 
-        /** Bytes, because "was the upload over 2 MB" is a question about bytes. */
+        /** Bytes, because "was the upload over a megabyte" is a byte question. */
         test("counts a file's size in bytes, not characters", () => {
             const body = multipart(
                 'Content-Disposition: form-data; name="f"; filename="a.txt"\r\n\r\n€',
             );
-            const parsed = parseRequestBody(body, MULTIPART) as {
-                f: { size: number };
-            };
+            const parsed = parseRequestBody(body, MULTIPART) as { f: { size: number } };
 
             expect(parsed.f.size).toBe(3);
+        });
+
+        /**
+         * The bug the latin1 contract exists for. Read with `text()`, a byte
+         * sequence that is not valid UTF-8 — which is most of any real image —
+         * collapses to U+FFFD, and a size counted afterwards has no relation to
+         * the file. These are the first bytes of a PNG, three of which are
+         * invalid UTF-8 on their own.
+         */
+        test("reports the true size of bytes that are not valid UTF-8", () => {
+            const png = "\x89PNG\r\n\x1a\n\xff\xd8\xfe";
+            const body =
+                latin1('--X\r\nContent-Disposition: form-data; name="f"; filename="a.png"\r\n') +
+                latin1("Content-Type: image/png\r\n\r\n") +
+                png +
+                latin1("\r\n--X--\r\n");
+            const parsed = parseRequestBody(body, MULTIPART) as { f: { size: number } };
+
+            expect(parsed.f.size).toBe(png.length);
+            expect(parsed.f.size).toBe(11);
+        });
+
+        test("a text field keeps its accents", () => {
+            const body = multipart('Content-Disposition: form-data; name="who"\r\n\r\nnaïve café');
+
+            expect(parseRequestBody(body, MULTIPART)).toEqual({ who: "naïve café" });
+        });
+
+        test("a filename keeps its accents", () => {
+            const body = multipart(
+                'Content-Disposition: form-data; name="f"; filename="résumé.pdf"\r\n\r\nx',
+            );
+
+            expect(parseRequestBody(body, MULTIPART)).toEqual({
+                f: { filename: "résumé.pdf", contentType: "application/octet-stream", size: 1 },
+            });
         });
 
         test("mixes fields and files in one body", () => {

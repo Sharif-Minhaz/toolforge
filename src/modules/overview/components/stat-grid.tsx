@@ -12,7 +12,13 @@ export async function StatGrid() {
     const tiles = [
         {
             key: "clientSide",
-            value: t("clientSide.value"),
+            // Counted from the catalog rather than written down: the moment a
+            // server-backed tool ships, a hand-typed "100%" becomes a false
+            // claim nobody is reminded to correct.
+            value: t("clientSide.value", {
+                browserOnly: stats.browserOnly,
+                available: stats.available,
+            }),
             label: t("clientSide.label"),
             hint: t("clientSide.hint"),
             Icon: IconShieldLock,

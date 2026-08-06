@@ -1,12 +1,15 @@
+import "server-only";
+
 import { after } from "next/server";
 
-import { buildLoggedRequest, buildLoggedResponse } from "@/modules/mock-server/domain/log-record";
-import type { RateVerdict } from "@/modules/mock-server/domain/rate-limit";
-import { checkServerKey } from "@/modules/mock-server/domain/server-key";
-import { writeRequestLog } from "@/modules/mock-server/repository/logs";
-import { spendServeQuota, sweepQuotaRows } from "@/modules/mock-server/repository/rate-limit";
-import { serveMockRequest, type ServeOutcome } from "@/modules/mock-server/repository/serve";
-import { HTTP_METHODS, type HttpMethod } from "@/modules/mock-server/types/graph";
+import { buildLoggedRequest, buildLoggedResponse } from "../domain/log-record";
+import type { RateVerdict } from "../domain/rate-limit";
+import { isMultipartType, parseRequestBody } from "../domain/request-body";
+import { checkServerKey } from "../domain/server-key";
+import { writeRequestLog } from "./logs";
+import { spendServeQuota, sweepQuotaRows } from "./rate-limit";
+import { serveMockRequest, type ServeOutcome } from "./serve";
+import { HTTP_METHODS, type HttpMethod } from "../types/graph";
 import { resolveRemoteIp } from "@/modules/tools/repository/turnstile";
 
 /**
@@ -58,9 +61,6 @@ import { resolveRemoteIp } from "@/modules/tools/repository/turnstile";
  * caller — accepted deliberately, because the alternative is a verb that reaches
  * the database unmetered.
  */
-
-/** Every request must reach the database, or a just-saved endpoint serves stale. */
-export const dynamic = "force-dynamic";
 
 const SECURITY_HEADERS: ReadonlyArray<readonly [string, string]> = [
     ["x-robots-tag", "noindex, nofollow"],
@@ -177,8 +177,11 @@ function toResponse(outcome: ServeOutcome, method: HttpMethod, rate: RateVerdict
     }
 }
 
-async function handle(request: Request, context: RouteContext): Promise<Response> {
-    const { serverKey, path } = await context.params;
+export async function handleMockRequest(
+    request: Request,
+    target: { readonly serverKey: string; readonly path: string },
+): Promise<Response> {
+    const { serverKey, path } = target;
     const method = request.method.toUpperCase();
 
     if (!(HTTP_METHODS as readonly string[]).includes(method)) {
@@ -223,8 +226,11 @@ async function handle(request: Request, context: RouteContext): Promise<Response
 
     const query = Object.fromEntries(url.searchParams);
     const headers = Object.fromEntries(request.headers);
-    const rawBody = method === "GET" || method === "HEAD" ? "" : await request.text();
-    const requestPath = `/${(path ?? []).join("/")}`;
+    const rawBody =
+        method === "GET" || method === "HEAD"
+            ? ""
+            : await readBody(request, headers["content-type"]);
+    const requestPath = path;
 
     const outcome = await serveMockRequest({
         serverKey,
@@ -265,7 +271,14 @@ async function handle(request: Request, context: RouteContext): Promise<Response
                 // Redacted here, on the way in — never filtered on the way out.
                 // A read-path filter is one forgotten query from leaking, and it
                 // does nothing about the copy already on disk.
-                request: buildLoggedRequest(headers, query, rawBody, false),
+                // The *parsed* body, never the wire bytes. For an upload those
+                // bytes are the start of somebody's file, and the log keeps
+                // 8 KB of whatever it is handed — so logging them would mean
+                // this service stores a slice of every file posted to it, which
+                // is precisely what it promises not to do. What goes in instead
+                // is what the graph saw: field names, field values, and each
+                // file's name, type and size.
+                request: buildLoggedRequest(headers, query, loggableBody(rawBody, headers), false),
                 response: buildLoggedResponse(responseHeaders, responseBody, false),
                 trace,
             });
@@ -273,6 +286,34 @@ async function handle(request: Request, context: RouteContext): Promise<Response
     }
 
     return response;
+}
+
+/**
+ * The body, as text for everything except an upload.
+ *
+ * `request.text()` decodes UTF-8, and a PNG is not UTF-8 — every invalid
+ * sequence in it becomes U+FFFD, so the bytes that reach the parser bear no
+ * relation to the bytes that arrived and neither does any size counted from
+ * them. A multipart body is therefore read as bytes and mapped one-to-one onto
+ * characters, which keeps `size` exact and leaves the boundary and part headers
+ * legible because both are ASCII. `parseRequestBody` decodes the text fields
+ * back. See `domain/request-body.ts`.
+ */
+/** An upload is logged as what it parsed to; everything else as it arrived. */
+function loggableBody(rawBody: string, headers: Readonly<Record<string, string>>): string {
+    const contentType = headers["content-type"] ?? "";
+
+    return isMultipartType(contentType)
+        ? JSON.stringify(parseRequestBody(rawBody, contentType))
+        : rawBody;
+}
+
+async function readBody(request: Request, contentType: string | undefined): Promise<string> {
+    if (!isMultipartType(contentType ?? "")) {
+        return request.text();
+    }
+
+    return Buffer.from(await request.arrayBuffer()).toString("latin1");
 }
 
 function readCookies(header: string | null): Readonly<Record<string, string>> {
@@ -291,36 +332,4 @@ function readCookies(header: string | null): Readonly<Record<string, string>> {
     }
 
     return jar;
-}
-
-type RouteContext = {
-    params: Promise<{ serverKey: string; path?: string[] }>;
-};
-
-export async function GET(request: Request, context: RouteContext): Promise<Response> {
-    return handle(request, context);
-}
-
-export async function POST(request: Request, context: RouteContext): Promise<Response> {
-    return handle(request, context);
-}
-
-export async function PUT(request: Request, context: RouteContext): Promise<Response> {
-    return handle(request, context);
-}
-
-export async function PATCH(request: Request, context: RouteContext): Promise<Response> {
-    return handle(request, context);
-}
-
-export async function DELETE(request: Request, context: RouteContext): Promise<Response> {
-    return handle(request, context);
-}
-
-export async function HEAD(request: Request, context: RouteContext): Promise<Response> {
-    return handle(request, context);
-}
-
-export async function OPTIONS(request: Request, context: RouteContext): Promise<Response> {
-    return handle(request, context);
 }

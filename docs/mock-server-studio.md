@@ -4,9 +4,10 @@ Status: **M0–M8 shipped.** Every milestone on the ladder is done. See §14 for
 Decisions locked in Phase 1 are marked **[locked]**; everything else is open.
 
 > The Prisma block in §2.1 is the design as first written. Where the shipped
-> schema differs — `workspace_secrets` replacing `Workspace.secretHash`, and
-> `uuid(7)` keys — `prisma/schema.prisma` is authoritative and carries the
-> reasoning at each model. §3 records why the secret moved to its own table.
+> schema differs — `workspace_secrets` replacing `Workspace.secretHash`,
+> `uuid(7)` keys, and `QUERY` on the `HttpMethod` enum — `prisma/schema.prisma`
+> is authoritative and carries the reasoning at each model. §3 records why the
+> secret moved to its own table; §7 records why `QUERY` is served from the proxy.
 
 ---
 
@@ -636,7 +637,7 @@ createEndpoint · updateEndpointRoute · saveEndpointGraph · duplicateEndpoint 
 setVariable · deleteVariable
 previewEndpoint
 importOpenApi · exportServer
-clearLogs
+clearLogs · getRequestShape
 ```
 
 Route Handlers are used **only** where the client is not this UI:
@@ -870,6 +871,48 @@ Optimistic UI: the store applies every edit immediately and tracks
 `saveState: "idle" | "dirty" | "saving" | "saved" | "conflict"`. Nothing in the
 canvas ever waits on a round trip.
 
+### 7.8 Saying what a request carries
+
+Every path in the value editor — `avatar.contentType`, `game_id`, `x-api-key` —
+had to be typed from memory against a request nothing on screen described. The
+picker (`domain/suggest-path.ts`, `components/path-picker.tsx`) is the list that
+describes it, and its design is one distinction carried all the way through.
+
+**Some suggestions are facts about the route and some are facts about traffic.**
+They cannot be presented identically, so every entry carries an `origin` and the
+UI labels it:
+
+| Origin     | Where it comes from                                    | How sure           |
+| ---------- | ------------------------------------------------------ | ------------------ |
+| `route`    | `parsePathPattern(path).paramNames` plus `*`           | Exact and complete |
+| `graph`    | `declaredVariables(graph)` — this flow's own writes    | Exact              |
+| `upload`   | `UPLOAD_FILE_KEYS`, this server's own multipart parser | Exact              |
+| `observed` | Keys in the last 25 logged requests to this route      | True of those      |
+| `common`   | `COMMON_REQUEST_HEADERS`                               | A guess, labelled  |
+
+**Keys travel; values never do.** `actions/request-shape.ts` reduces log rows to
+paths on the server. Shipping two hundred bodies to the browser to walk them
+there would be megabytes instead of a few hundred bytes, and would put a body
+this feature has no use for on the wire. It sits behind the same ownership gate
+as the logs themselves.
+
+Three consequences worth keeping:
+
+- **Multipart is already parsed in the log.** `loggableBody` stores an upload as
+  the object it parsed to rather than its bytes, so `avatar.contentType` is
+  reachable from a log row without ever having stored the file.
+- **Cookies are never suggested.** The `cookie` header is redacted before a row
+  is written, so nothing recorded holds a cookie name. The picker says that in
+  words rather than showing an empty list that reads as broken.
+- **An empty list is answered per source.** "Nothing matches", "this route has
+  never been called" and "this route has no parameters" lead somewhere
+  different, and one shared "no suggestions" would be the dead end the plain
+  text box already was.
+
+The list is laid out **in flow**, not floated: the inspector rail is
+`overflow-y-auto`, so an absolute dropdown is clipped near the bottom of it and
+a portal would need position tracking against a pane that pans and zooms.
+
 ---
 
 ## 8. Logs
@@ -991,6 +1034,48 @@ limiter: running it too often is merely wasteful and missing one is caught by
 the next request, so unlike a counter it is safe to trigger from whichever
 process happens to notice.
 
+### Serving a method the framework cannot route
+
+`QUERY` — RFC 10008, Proposed Standard, 2026 — is a **safe, idempotent,
+cacheable** method that _requires_ a request body: a GET for a query too large
+or too structured to put in a URL. It is exactly the method a mock server should
+know about early, because the people adopting it first are the ones with nothing
+to test against.
+
+It is also the one method a Next.js `route.ts` cannot serve. Route files may
+export `GET, POST, PUT, PATCH, DELETE, HEAD` and `OPTIONS`, and **the framework
+answers 405 to anything else before the file is consulted** — so no amount of
+code in the route handler could have made it work.
+
+`src/proxy.ts` can, and that is where it is served from. The proxy runs before
+route resolution, defaults to the Node runtime, can read a request body and can
+return a response. Three things keep that from costing everybody:
+
+- **The whole handler was extracted first.** `repository/handle.ts` holds the
+  pipeline — gate ordering, rate limit, security headers, log write — and both
+  the route file and the proxy call it. The alternative was two copies of a
+  pipeline that ends in somebody else's public API, which is the drift this
+  document has already recorded twice.
+- **The import is dynamic and inside the branch.** `handleMockRequest` pulls in
+  Prisma, the executor and the log writer; a static import in the proxy would put
+  all of it in the bundle that runs on every navigation. Same rule as the image
+  codecs.
+- **Only `QUERY` takes the branch.** Every other method still falls through to
+  the route handler untouched.
+
+Two smaller consequences. `parseMockPath` exists because the proxy sees a
+pathname where the route handler gets Next's dynamic segments for free, and it
+leaves the path **encoded** so `splitRequestPath` can keep decoding once, after
+splitting. And the OpenAPI export declares **3.2.0 only when a QUERY operation
+is present** — `query` became a path-item field in 3.2, so writing it into a
+document that calls itself 3.1 produces something validators reject, while
+declaring 3.2 for everyone pushes a newer version on readers who gain nothing.
+
+The RFC's `Content-Type` rule is deliberately **not** enforced. It says a server
+MUST fail a QUERY request whose media type is missing or inconsistent, and a
+real server should — but this is a mock, and what it answers is the author's to
+decide. Nothing stops a graph checking the header itself with a condition.
+
 ### The body a browser actually sends
 
 `From the request → Body → email` worked for JSON and nothing else. A form post
@@ -1023,6 +1108,25 @@ One limitation is pinned by a test rather than hidden: splitting on the boundary
 cuts a value that contains it. Real clients pick a boundary they have checked
 does not occur in the content, so it is reachable only by hand-writing a body
 that breaks its own framing.
+
+**A multipart body is read as bytes, and that is the whole reason the size is
+usable.** `request.text()` is the obvious call and is wrong here: it decodes
+UTF-8, a PNG is not UTF-8, and every invalid sequence in one collapses to
+U+FFFD — so a size counted afterwards bears no relation to the file, which is
+exactly the number somebody branches on. The route handler reads
+`arrayBuffer()` and decodes latin1, where one byte is one character both ways;
+`content.length` is then the byte count exactly, the boundary and part headers
+stay legible because both are ASCII, and the parser decodes text fields and
+filenames back to UTF-8 one part at a time. The contract is stated at the top of
+`request-body.ts` and the fixtures in its tests are built to match it, because a
+fixture written as a plain string would be testing something the parser never
+receives.
+
+**The log gets the parsed body, never the wire bytes.** `buildLoggedRequest`
+keeps 8 KB of whatever it is handed, so logging a multipart body raw would mean
+this service stores the first 8 KB of every file posted to it — a promise broken
+by omission. What goes in instead is what the graph saw: field names, field
+values, and each file's name, type and size.
 
 **Still outstanding**: `query` is built with `Object.fromEntries(searchParams)`,
 which keeps only the last value, so `?tag=a&tag=b` silently loses `a` — the same

@@ -1,0 +1,11 @@
+-- The HTTP QUERY method, RFC 10008 (Proposed Standard, 2026): a safe,
+-- idempotent, cacheable method that carries a request body.
+--
+-- Adding a value to an enum is not transactional in PostgreSQL before 12 and
+-- cannot be undone in any version, which is the usual reason to hesitate. Here
+-- it is additive only: no existing row changes, no column is rewritten, and
+-- nothing reads the enum by ordinal.
+--
+-- Route handlers in Next.js cannot export a `QUERY` function, so a request with
+-- this method is served from `src/proxy.ts`. See `repository/handle.ts`.
+ALTER TYPE "http_method" ADD VALUE 'QUERY';

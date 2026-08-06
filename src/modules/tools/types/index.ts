@@ -51,6 +51,22 @@ export type ToolId = (typeof TOOL_IDS)[number];
 
 export type ToolStatus = "available" | "planned";
 
+/**
+ * Where a tool's work actually happens, and therefore whether anything a
+ * visitor types can leave their machine.
+ *
+ * `"browser"` is the promise the front page makes: no request carries the
+ * input anywhere. `"server"` is a tool that cannot keep it — a raw socket, a
+ * DNS lookup, a model, a stored row — and every one of those says so in its own
+ * copy. `"hybrid"` is local by default with one opt-in feature that is not: a
+ * static QR code is drawn in the tab, a dynamic one has to store its
+ * destination.
+ *
+ * Counted rather than asserted, because "100% client-side" stopped being true
+ * the moment the first server-backed tool shipped.
+ */
+export type ToolRuntime = "browser" | "hybrid" | "server";
+
 /** Decorative hue, mapped to a `--brand-*` token by the UI layer. */
 export type ToolAccent = "violet" | "cyan" | "amber" | "rose" | "emerald";
 
@@ -103,6 +119,7 @@ export type Tool = {
     readonly isSection?: boolean;
     readonly category: ToolCategory;
     readonly status: ToolStatus;
+    readonly runsOn: ToolRuntime;
     readonly accent: ToolAccent;
     readonly icon: ToolIconName;
     /** ISO-8601 date the tool shipped, or is expected to. */
@@ -241,6 +258,8 @@ export type ToolCatalogStats = {
     readonly planned: number;
     readonly total: number;
     readonly categories: number;
+    /** Shipped tools that send nothing anywhere — `runsOn: "browser"` only. */
+    readonly browserOnly: number;
 };
 
 export type ToolCategoryGroup = {

@@ -4,6 +4,7 @@ import { MAX_PATH_SEGMENTS } from "@/modules/mock-server/domain/constants";
 import {
     computeSpecificity,
     extractParams,
+    parseMockPath,
     parsePathPattern,
     splitRequestPath,
 } from "@/modules/mock-server/domain/path-pattern";
@@ -278,5 +279,62 @@ describe("a query string in a route pattern", () => {
         expect(splitRequestPath("/game?id=7")).toEqual(["game"]);
         expect(splitRequestPath("/game?id=8&sort=name")).toEqual(["game"]);
         expect(splitRequestPath("/game")).toEqual(["game"]);
+    });
+});
+
+describe("parseMockPath", () => {
+    /**
+     * The route handler gets this split from Next's dynamic segments. The proxy
+     * does not — and the proxy is the only place a `QUERY` request can be
+     * served, because a `route.ts` cannot export one.
+     */
+    test("splits the server key from the path", () => {
+        expect(parseMockPath("/m/payments-api/users/7", "/m")).toEqual({
+            serverKey: "payments-api",
+            path: "/users/7",
+        });
+    });
+
+    test("a bare server address is the root path", () => {
+        expect(parseMockPath("/m/payments-api", "/m")).toEqual({
+            serverKey: "payments-api",
+            path: "/",
+        });
+    });
+
+    test("a trailing slash is the root path too", () => {
+        expect(parseMockPath("/m/payments-api/", "/m")).toEqual({
+            serverKey: "payments-api",
+            path: "/",
+        });
+    });
+
+    /**
+     * Left encoded on purpose: `splitRequestPath` decodes each segment *after*
+     * splitting, and decoding earlier turns a `%2F` into a separator — which is
+     * how a traversal walks through a router that reads as correct.
+     */
+    test("leaves the path encoded for the splitter to decode", () => {
+        expect(parseMockPath("/m/api/a%2Fb/c", "/m")?.path).toBe("/a%2Fb/c");
+    });
+
+    test("keeps a query-looking path intact, since the caller strips it", () => {
+        expect(parseMockPath("/m/api/search", "/m")?.serverKey).toBe("api");
+    });
+
+    describe("refusals", () => {
+        test("refuses a path outside the prefix", () => {
+            expect(parseMockPath("/tools/uuid", "/m")).toBeNull();
+        });
+
+        /** `/mock` must not be read as the `/m` prefix plus `ock`. */
+        test("refuses a path that merely starts with the prefix's letters", () => {
+            expect(parseMockPath("/mock/whatever", "/m")).toBeNull();
+        });
+
+        test("refuses the bare prefix, which names no server", () => {
+            expect(parseMockPath("/m", "/m")).toBeNull();
+            expect(parseMockPath("/m/", "/m")).toBeNull();
+        });
     });
 });

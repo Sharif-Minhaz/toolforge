@@ -372,3 +372,68 @@ describe("writeOpenApi", () => {
         expect(reimported.endpoints[0].path).toBe("/pets/:petId");
     });
 });
+
+describe("the QUERY method in an exported document", () => {
+    /**
+     * `query` became a path-item field in OpenAPI 3.2, alongside the IETF
+     * standardising the method as RFC 10008. Writing `query:` into a document
+     * that calls itself 3.1 produces something validators reject.
+     */
+    test("declares 3.2 when a QUERY operation is in it", () => {
+        const document = writeOpenApi("Search", "https://example.com/m/k", [
+            {
+                method: "QUERY",
+                path: "/search",
+                name: "search",
+                status: 200,
+                contentType: "application/json",
+                example: { hits: [] },
+            },
+        ]) as Record<string, JsonValue>;
+
+        expect(document.openapi).toBe("3.2.0");
+    });
+
+    test("writes it as the path item's query field", () => {
+        const document = writeOpenApi("Search", "https://example.com/m/k", [
+            {
+                method: "QUERY",
+                path: "/search",
+                name: "search",
+                status: 200,
+                contentType: "application/json",
+                example: null,
+            },
+        ]) as Record<string, JsonValue>;
+        const paths = document.paths as Record<string, Record<string, JsonValue>>;
+
+        expect(Object.keys(paths["/search"])).toEqual(["query"]);
+    });
+
+    /** A server with no QUERY route gains nothing from a newer version. */
+    test("stays on 3.1 when there is no QUERY operation", () => {
+        const document = writeOpenApi("Pets", "https://example.com/m/k", [
+            {
+                method: "GET",
+                path: "/pets",
+                name: "listPets",
+                status: 200,
+                contentType: "application/json",
+                example: [],
+            },
+        ]) as Record<string, JsonValue>;
+
+        expect(document.openapi).toBe("3.1.0");
+    });
+
+    test("reads a QUERY operation back out of a document", () => {
+        const parsed = readOpenApi({
+            openapi: "3.2.0",
+            paths: { "/search": { query: { operationId: "search", responses: {} } } },
+        });
+
+        expect(parsed.endpoints.map((endpoint) => `${endpoint.method} ${endpoint.path}`)).toEqual([
+            "QUERY /search",
+        ]);
+    });
+});

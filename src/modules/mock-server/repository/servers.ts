@@ -186,7 +186,14 @@ export async function findServerDetail(
                     version: true,
                     updatedAt: true,
                 },
-                orderBy: [{ pathPattern: "asc" }, { method: "asc" }],
+                // Newest first. Alphabetical by path reads well on a finished
+                // server and badly on one being built: the route you just added
+                // lands wherever the alphabet puts it, which on a list of
+                // twenty is somewhere you have to go looking. `id` breaks a tie
+                // because `createdAt` has millisecond resolution and these are
+                // UUIDv7 — monotonic, so it is the same ordering, not a
+                // tiebreak invented to be deterministic.
+                orderBy: [{ createdAt: "desc" }, { id: "desc" }],
             },
         },
     });

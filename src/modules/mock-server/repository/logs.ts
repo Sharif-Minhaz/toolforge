@@ -100,6 +100,9 @@ export async function trimWorkspaceLogs(workspaceId: string): Promise<void> {
 export type ListLogsInput = {
     readonly workspaceId: string;
     readonly serverId?: string;
+    /** Narrows to one route, for the path picker. Filtering after the query
+     *  instead would let a busy neighbouring route push every row off the end. */
+    readonly endpointId?: string;
     /** Matched against the path, case-insensitively. */
     readonly search?: string;
     readonly status?: number;
@@ -111,6 +114,7 @@ export async function listRequestLogs(input: ListLogsInput): Promise<readonly Re
         where: {
             workspaceId: input.workspaceId,
             ...(input.serverId === undefined ? {} : { serverId: input.serverId }),
+            ...(input.endpointId === undefined ? {} : { endpointId: input.endpointId }),
             ...(input.status === undefined ? {} : { status: input.status }),
             ...(input.search === undefined || input.search === ""
                 ? {}

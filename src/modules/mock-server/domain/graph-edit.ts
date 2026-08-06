@@ -120,6 +120,38 @@ export function hasSingleResponse(graph: GraphDocument): boolean {
     return graph.nodes.filter((node) => node.kind === "response").length === 1;
 }
 
+/**
+ * Every variable name this graph sets, in canvas order.
+ *
+ * What the name picker on a `var` value offers. Reading the graph rather than
+ * keeping a list is the same rule the rest of this module follows: a second copy
+ * of a fact is a copy that can disagree with the first, and here the disagreement
+ * would be a suggestion for a variable nothing writes — which resolves to `null`
+ * at run time and looks like a request that arrived empty.
+ *
+ * Reachability is deliberately not considered. `validateGraph` is what catches a
+ * write nothing runs, and a picker that hid a name because the node setting it is
+ * not wired up yet would go empty in the middle of building the very flow that
+ * is about to wire it.
+ */
+export function declaredVariables(graph: GraphDocument): readonly string[] {
+    const names: string[] = [];
+
+    for (const node of graph.nodes) {
+        if (node.kind !== "setVariable") {
+            continue;
+        }
+
+        const name = (node.data as { name?: unknown }).name;
+
+        if (typeof name === "string" && name.trim() !== "" && !names.includes(name)) {
+            names.push(name);
+        }
+    }
+
+    return names;
+}
+
 export function writeResponseBody(graph: GraphDocument, body: ValueExpr): GraphDocument {
     let written = false;
 

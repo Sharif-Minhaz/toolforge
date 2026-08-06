@@ -15,8 +15,11 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 import { FAKER_CATEGORIES, fakerProvidersByCategory } from "../domain/faker-registry";
+import { suggestNames, suggestRequestPaths } from "../domain/suggest-path";
 import { pathKey, type ValuePath } from "../domain/value-edit";
-import { VALUE_KINDS, type ValueExpr, type ValueKind } from "../types/graph";
+import { VALUE_KINDS, type RequestSource, type ValueExpr, type ValueKind } from "../types/graph";
+import { PathPicker } from "./path-picker";
+import { useEditorSuggestions } from "./suggestion-context";
 
 const REQUEST_SOURCES = ["body", "header", "cookie", "query", "param"] as const;
 
@@ -82,6 +85,8 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
     // of it, so they need their own scopes rather than a dotted key.
     const tCategories = useTranslations("mockServer.fakerCategories");
     const tFormats = useTranslations("mockServer.nowFormats");
+    const tSuggest = useTranslations("mockServer.suggest");
+    const suggestions = useEditorSuggestions();
 
     const branching = expr.kind === "object" || expr.kind === "array" || expr.kind === "oneOf";
     const collapsed = branching && actions.isCollapsed(path);
@@ -336,54 +341,45 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
                                         </option>
                                     ))}
                                 </select>
-                                <Input
+                                <RequestPathPicker
+                                    source={expr.source}
                                     value={expr.path}
-                                    onChange={(event) =>
-                                        actions.onValueChange(path, {
-                                            ...expr,
-                                            path: event.target.value,
-                                        })
+                                    onChange={(next) =>
+                                        actions.onValueChange(path, { ...expr, path: next })
                                     }
-                                    placeholder={t("pathPlaceholder")}
-                                    aria-label={t("pathLabel")}
-                                    autoComplete="off"
-                                    spellCheck={false}
-                                    className={cn(VALUE_CONTROL, "font-mono")}
                                 />
                             </>
                         ) : null}
 
                         {expr.kind === "env" ? (
-                            <Input
+                            <NamePicker
+                                names={suggestions.envKeys}
+                                origin="observed"
                                 value={expr.key}
-                                onChange={(event) =>
-                                    actions.onValueChange(path, {
-                                        kind: "env",
-                                        key: event.target.value,
-                                    })
+                                onChange={(key) =>
+                                    actions.onValueChange(path, { kind: "env", key })
                                 }
+                                label={t("envLabel")}
                                 placeholder="API_BASE"
-                                aria-label={t("envLabel")}
-                                autoComplete="off"
-                                spellCheck={false}
-                                className={cn(VALUE_CONTROL, "font-mono")}
+                                emptyHint={tSuggest(
+                                    suggestions.envKeys.length === 0 ? "emptyEnv" : "emptyMatch",
+                                )}
                             />
                         ) : null}
 
                         {expr.kind === "var" ? (
-                            <Input
+                            <NamePicker
+                                names={suggestions.vars}
+                                origin="graph"
                                 value={expr.name}
-                                onChange={(event) =>
-                                    actions.onValueChange(path, {
-                                        kind: "var",
-                                        name: event.target.value,
-                                    })
+                                onChange={(name) =>
+                                    actions.onValueChange(path, { kind: "var", name })
                                 }
+                                label={t("varLabel")}
                                 placeholder="userId"
-                                aria-label={t("varLabel")}
-                                autoComplete="off"
-                                spellCheck={false}
-                                className={cn(VALUE_CONTROL, "font-mono")}
+                                emptyHint={tSuggest(
+                                    suggestions.vars.length === 0 ? "emptyVars" : "emptyMatch",
+                                )}
                             />
                         ) : null}
 
@@ -521,6 +517,94 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
                 </>
             )}
         </li>
+    );
+}
+
+/**
+ * The path box for a `request` value, and the words around an empty list.
+ *
+ * The empty case carries most of the teaching here, so it is answered per
+ * source rather than with one line. "Nothing matches" and "this route has never
+ * been called" are different facts and lead somewhere different: the first means
+ * keep typing, the second means go and send a request. A picker that said
+ * "no suggestions" to both would be the same dead end the plain text box was.
+ */
+function RequestPathPicker({
+    source,
+    value,
+    onChange,
+}: {
+    source: RequestSource;
+    value: string;
+    onChange: (next: string) => void;
+}) {
+    const t = useTranslations("mockServer.builder");
+    const tSuggest = useTranslations("mockServer.suggest");
+    const { request, loading } = useEditorSuggestions();
+
+    const found = suggestRequestPaths(source, value, request);
+    const { samples } = request.observed;
+    // `param` is read off the route pattern, so it is complete the moment the
+    // route exists and traffic tells it nothing.
+    const fromTraffic = source === "body" || source === "query" || source === "header";
+
+    function emptyHint(): string {
+        if (source === "cookie") {
+            return tSuggest("emptyCookie");
+        }
+
+        if (source === "param") {
+            return tSuggest(request.params.length === 0 ? "emptyParams" : "emptyMatch");
+        }
+
+        return tSuggest(fromTraffic && samples === 0 ? "emptyTraffic" : "emptyMatch");
+    }
+
+    return (
+        <PathPicker
+            value={value}
+            onChange={onChange}
+            suggestions={found}
+            loading={loading && fromTraffic}
+            emptyHint={emptyHint()}
+            sourceHint={
+                fromTraffic && samples > 0 ? tSuggest("fromSamples", { count: samples }) : undefined
+            }
+            label={t("pathLabel")}
+            placeholder={t("pathPlaceholder")}
+            className={VALUE_CONTROL}
+        />
+    );
+}
+
+/** The same control over a flat list of names — environment keys, variables. */
+function NamePicker({
+    names,
+    origin,
+    value,
+    onChange,
+    label,
+    placeholder,
+    emptyHint,
+}: {
+    names: readonly string[];
+    origin: "observed" | "graph";
+    value: string;
+    onChange: (next: string) => void;
+    label: string;
+    placeholder: string;
+    emptyHint: string;
+}) {
+    return (
+        <PathPicker
+            value={value}
+            onChange={onChange}
+            suggestions={suggestNames(names, value, origin)}
+            emptyHint={emptyHint}
+            label={label}
+            placeholder={placeholder}
+            className={VALUE_CONTROL}
+        />
     );
 }
 

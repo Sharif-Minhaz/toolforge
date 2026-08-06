@@ -269,14 +269,14 @@
         "stats": {
             "title": "Built on four promises",
             "clientSide": {
-                "value": "100%",
-                "label": "Client-side",
-                "hint": "Nothing is ever uploaded"
+                "value": "{browserOnly, number}/{available, number}",
+                "label": "Run in your browser",
+                "hint": "Nothing uploaded. The few that need a server say so on the page."
             },
             "tracking": {
-                "value": "0",
-                "label": "Trackers",
-                "hint": "No analytics, no cookies to accept"
+                "value": "Opt-in",
+                "label": "Analytics",
+                "hint": "Page views only, and only if you allow it"
             },
             "tools": {
                 "value": "{count, number}",
@@ -6998,9 +6998,12 @@
         "export": {
             "title": "Export this server",
             "subtitle": "Take the whole server away as a file — every route, its response and the flow behind it.",
+            "bundleTitle": "JSON bundle",
+            "bundleHint": "Everything this studio knows: every route, its response and the flow behind it. This is the one to commit or keep as a backup.",
             "bundleAction": "Download JSON",
+            "openApiTitle": "OpenAPI",
+            "openApiHint": "Describes the API to other tools. It cannot carry generated data — a field that returns a different name every call goes out as one example of it.",
             "openApiAction": "Download OpenAPI",
-            "formatsHint": "The JSON file holds everything, so it is the one to commit or keep as a backup. OpenAPI describes the API to other tools and cannot carry generated data — a field that returns a different name every call is exported as one example of it.",
             "downloaded": "Export downloaded",
             "failed": "The export could not be built. Try again."
         },
@@ -7058,6 +7061,7 @@
             "enabledHint": "A disabled route answers 404 without being deleted.",
             "bodyLabel": "Response body",
             "bodyHint": "Build the shape you want back. Every field picks where its value comes from — a fixed value, something out of the request, or generated data.",
+            "uploadsHint": "Form posts are read too. JSON, form-encoded and multipart bodies all become fields you can address by name — and an uploaded file becomes a value carrying filename, contentType and size, so a condition can branch on its type or its size in bytes. The file itself is never stored.",
             "bodyBranchedHint": "This route answers differently depending on the request, so it has more than one response.",
             "bodyBranched": "This flow branches into {count, plural, one {# response} other {# responses}}. Each one is edited on its own node in the flow editor — a single box here could only ever show you one of them.",
             "saveAction": "Save route",
@@ -7172,6 +7176,31 @@
                 "query": "Query",
                 "param": "Path parameter"
             }
+        },
+        "suggest": {
+            "listLabel": "Suggestions",
+            "fromSamples": "Read from the last {count, plural, one {request} other {# requests}} to this route.",
+            "emptyMatch": "Nothing matches what you have typed. Any path still works — the list only shows what this route is known to carry.",
+            "emptyTraffic": "This route has not been called yet, so nothing is known about what it carries. Send it a request and its fields appear here. You can type a path now regardless.",
+            "emptyParams": "This route has no parameters. Add one to its path — /orders/:id — and it shows up here.",
+            "emptyCookie": "Cookie names are not recorded: the cookie header is redacted before a request is logged. Type the name you set.",
+            "emptyEnv": "This workspace has no environment variables yet. Add them under Environments.",
+            "emptyVars": "Nothing in this flow sets a variable yet. Add a Set variable node and its name appears here."
+        },
+        "suggestOrigins": {
+            "route": "route",
+            "graph": "this flow",
+            "observed": "seen",
+            "upload": "upload",
+            "common": "common"
+        },
+        "suggestTypes": {
+            "string": "text",
+            "number": "number",
+            "boolean": "true/false",
+            "null": "null",
+            "object": "object",
+            "array": "list"
         },
         "faker": {
             "personFullName": "Full name",

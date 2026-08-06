@@ -379,7 +379,13 @@ export function writeOpenApi(
     }
 
     return {
-        openapi: "3.1.0",
+        // 3.1 unless the document needs 3.2, and it needs 3.2 for exactly one
+        // reason: `query` became a path-item field there, alongside the IETF
+        // standardising the method itself. Writing `query:` into a document that
+        // calls itself 3.1 produces something validators reject, and declaring
+        // 3.2 for every export would push a newer version on readers whose
+        // servers have no QUERY route and gain nothing from it.
+        openapi: endpoints.some((endpoint) => endpoint.method === "QUERY") ? "3.2.0" : "3.1.0",
         info: { title, version: "1.0.0" },
         servers: [{ url: baseUrl }],
         paths: paths as unknown as JsonValue,

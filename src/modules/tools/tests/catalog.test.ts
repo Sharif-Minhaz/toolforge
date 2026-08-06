@@ -136,6 +136,38 @@ describe("tool catalog", () => {
         expect(stats.categories).toBe(TOOL_CATEGORIES.length);
     });
 
+    test("counts only shipped, fully local tools as browser-only", () => {
+        const stats = getToolCatalogStats();
+        const local = getAvailableTools().filter((tool) => tool.runsOn === "browser");
+
+        expect(stats.browserOnly).toBe(local.length);
+        expect(stats.browserOnly).toBeLessThanOrEqual(stats.available);
+    });
+
+    test("marks every tool that leaves the browser as such", () => {
+        // The front page counts this rather than asserting a percentage, so a
+        // tool that reaches the network and forgets to say so would silently
+        // widen a privacy claim. Named one by one for that reason.
+        const networked = [
+            "qr",
+            "shortener",
+            "ai-image-detector",
+            "ai-text-detector",
+            "watermark-remover",
+            "domain-inspector",
+            "port-scanner",
+            "mock-server",
+        ] as const;
+
+        for (const id of networked) {
+            expect(getToolById(id)?.runsOn).not.toBe("browser");
+        }
+
+        expect(getTools().filter((tool) => tool.runsOn !== "browser")).toHaveLength(
+            networked.length,
+        );
+    });
+
     test("groups every single-page tool into exactly one category", () => {
         const groups = getToolsByCategory();
         const grouped = groups.flatMap((group) => group.tools);

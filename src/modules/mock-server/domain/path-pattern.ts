@@ -185,6 +185,40 @@ export function parsePathPattern(input: string): PathPatternResult {
 }
 
 /**
+ * `/m/payments-api/users/7` → `{ serverKey: "payments-api", path: "/users/7" }`.
+ *
+ * The route handler gets this split for free from Next's `[serverKey]` and
+ * `[[...path]]` segments. The proxy does not — it sees a pathname and nothing
+ * else — and the proxy is where a `QUERY` request has to be served, because a
+ * `route.ts` cannot export one. Doing the split here rather than inline there
+ * keeps the one piece of URL reasoning the two share in a place that is tested.
+ *
+ * The segments are left encoded. `splitRequestPath` decodes each one *after*
+ * splitting, and decoding earlier is how a `%2F` becomes a separator and a
+ * traversal walks through a router that reads as correct.
+ */
+export function parseMockPath(
+    pathname: string,
+    prefix: string,
+): { readonly serverKey: string; readonly path: string } | null {
+    if (pathname !== prefix && !pathname.startsWith(`${prefix}/`)) {
+        return null;
+    }
+
+    const rest = pathname.slice(prefix.length).replace(/^\//u, "");
+
+    if (rest === "") {
+        return null;
+    }
+
+    const cut = rest.indexOf("/");
+
+    return cut === -1
+        ? { serverKey: rest, path: "/" }
+        : { serverKey: rest.slice(0, cut), path: rest.slice(cut) };
+}
+
+/**
  * The incoming path, reduced to the segments matching compares.
  *
  * Each segment is percent-decoded exactly once, so `%2F` stays a literal slash
