@@ -17,6 +17,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { TOOL_ACCENT_VARS, TOOL_ICON_TILE } from "@/modules/tools/components/tool-accent";
+import { WORKSPACE_NAME_LENGTH } from "../domain/constants";
 
 import type { WorkspaceSummary } from "../types";
 
@@ -148,6 +149,11 @@ export function WorkspaceCard({
                         <div className="flex items-center gap-1.5">
                             <Input
                                 autoFocus
+                                // No meter: this is a one-line rename inside a
+                                // card with nowhere to put a countdown, and
+                                // `checkWorkspaceName` names the real rule under
+                                // the field on submit.
+                                maxLength={WORKSPACE_NAME_LENGTH.max}
                                 value={draftName}
                                 onChange={(event) => setDraftName(event.target.value)}
                                 onKeyDown={(event) => {

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useIsHydrated } from "@/hooks/use-is-hydrated";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import { MAX_COLOR_INPUT_LENGTH } from "../domain/constants";
 import { CHECKERBOARD } from "./channel-slider";
 
 /**
@@ -94,6 +95,11 @@ export function ColorInput({
 
                 <Input
                     id={inputId}
+                    // Capped. The longest notation this parses — an `oklch()`
+                    // with four spelled-out components — is under forty
+                    // characters, so no meter: there is no "nearly full" state
+                    // worth reporting on a field nothing legitimate fills.
+                    maxLength={MAX_COLOR_INPUT_LENGTH}
                     value={value}
                     onChange={(event) => onChange(event.target.value)}
                     placeholder={t("inputPlaceholder")}

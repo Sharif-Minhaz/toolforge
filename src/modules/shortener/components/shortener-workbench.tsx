@@ -14,8 +14,14 @@ import { createLink } from "@/modules/short-links/actions/create-link";
 import { CreatedLinkCard } from "@/modules/short-links/components/created-link-card";
 import { RecentLinksPanel } from "@/modules/short-links/components/recent-links-panel";
 import { useLinkHistory } from "@/modules/short-links/components/use-link-history";
+import {
+    ALIAS_LENGTH,
+    MAX_TARGET_URL_LENGTH,
+    PASSWORD_LENGTH,
+} from "@/modules/short-links/domain/constants";
 import type { ShortLinkCreatedView, ShortLinkFailureReason } from "@/modules/short-links/types";
 import { DateTimePicker } from "@/modules/tools/components/date-time-picker";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { OptionSwitch } from "@/modules/tools/components/option-controls";
 import { StatusStrip } from "@/modules/tools/components/status-strip";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
@@ -85,6 +91,14 @@ export function ShortenerWorkbench({
     const [creating, setCreating] = useState(false);
     const [created, setCreated] = useState<ShortLinkCreatedView | null>(null);
     const [failure, setFailure] = useState<ShortLinkFailureReason | null>(null);
+
+    // Every one of these caps at `maxLength`, so none can ever read "over" —
+    // the meters only ever count the last stretch down. A destination, an alias
+    // and a password are all values somebody types or pastes whole, and one
+    // over the ceiling is a mistake rather than lost work.
+    const targetLimit = useInputLimit(draft.target.length, MAX_TARGET_URL_LENGTH);
+    const aliasLimit = useInputLimit(draft.alias.length, ALIAS_LENGTH.max);
+    const passwordLimit = useInputLimit(draft.password.length, PASSWORD_LENGTH.max);
 
     function patchDraft(patch: Partial<ShortenerDraft>) {
         setDraft((current) => ({ ...current, ...patch }));
@@ -202,15 +216,22 @@ export function ShortenerWorkbench({
                     ) : (
                         <>
                             <div className="flex flex-col gap-1.5">
-                                <Label htmlFor={targetId} className="text-muted-foreground text-xs">
-                                    <span className="leading-[1.3]">{t("targetLabel")}</span>
-                                </Label>
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <Label
+                                        htmlFor={targetId}
+                                        className="text-muted-foreground text-xs"
+                                    >
+                                        <span className="leading-[1.3]">{t("targetLabel")}</span>
+                                    </Label>
+                                    <InputLimitMeter reading={targetLimit} />
+                                </div>
                                 <div className="flex flex-col gap-2 sm:flex-row">
                                     <Input
                                         id={targetId}
                                         type="url"
                                         inputMode="url"
                                         autoComplete="url"
+                                        maxLength={MAX_TARGET_URL_LENGTH}
                                         value={draft.target}
                                         placeholder={t("targetPlaceholder")}
                                         aria-describedby={failure === null ? undefined : errorId}
@@ -279,18 +300,22 @@ export function ShortenerWorkbench({
 
                             {toggles.alias && (
                                 <div className="flex flex-col gap-1.5">
-                                    <Label
-                                        htmlFor={aliasId}
-                                        className="text-muted-foreground text-xs"
-                                    >
-                                        <span className="leading-[1.3]">{t("aliasLabel")}</span>
-                                    </Label>
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <Label
+                                            htmlFor={aliasId}
+                                            className="text-muted-foreground text-xs"
+                                        >
+                                            <span className="leading-[1.3]">{t("aliasLabel")}</span>
+                                        </Label>
+                                        <InputLimitMeter reading={aliasLimit} />
+                                    </div>
                                     <div className="ring-border/70 focus-within:ring-ring bg-background flex min-w-0 items-center gap-0 overflow-hidden rounded-xl ring-1 ring-inset focus-within:ring-2">
                                         <span className="text-muted-foreground shrink-0 pl-3 font-mono text-[0.75rem] select-none">
                                             {aliasPrefix}
                                         </span>
                                         <Input
                                             id={aliasId}
+                                            maxLength={ALIAS_LENGTH.max}
                                             value={draft.alias}
                                             placeholder={t("aliasPlaceholder")}
                                             autoComplete="off"
@@ -309,16 +334,22 @@ export function ShortenerWorkbench({
 
                             {toggles.password && (
                                 <div className="flex flex-col gap-1.5">
-                                    <Label
-                                        htmlFor={passwordId}
-                                        className="text-muted-foreground text-xs"
-                                    >
-                                        <span className="leading-[1.3]">{t("passwordLabel")}</span>
-                                    </Label>
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <Label
+                                            htmlFor={passwordId}
+                                            className="text-muted-foreground text-xs"
+                                        >
+                                            <span className="leading-[1.3]">
+                                                {t("passwordLabel")}
+                                            </span>
+                                        </Label>
+                                        <InputLimitMeter reading={passwordLimit} />
+                                    </div>
                                     <Input
                                         id={passwordId}
                                         type="password"
                                         autoComplete="new-password"
+                                        maxLength={PASSWORD_LENGTH.max}
                                         value={draft.password}
                                         placeholder={t("passwordPlaceholder")}
                                         onChange={(event) =>

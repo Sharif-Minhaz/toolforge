@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
+import { MAX_NODE_FIELD_LENGTH, MAX_NODE_VALUE_LENGTH } from "../domain/constants";
 import { FAKER_CATEGORIES, fakerProvidersByCategory } from "../domain/faker-registry";
 import { suggestNames, suggestRequestPaths } from "../domain/suggest-path";
 import { pathKey, type ValuePath } from "../domain/value-edit";
@@ -154,6 +155,7 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
 
                     {field !== undefined ? (
                         <Input
+                            maxLength={MAX_NODE_FIELD_LENGTH}
                             value={field.key}
                             onChange={(event) =>
                                 actions.onRenameField(field.parent, field.index, event.target.value)
@@ -307,6 +309,7 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
                     <div className="contents">
                         {expr.kind === "static" ? (
                             <Input
+                                maxLength={MAX_NODE_VALUE_LENGTH}
                                 value={expr.value === null ? "" : String(expr.value)}
                                 onChange={(event) =>
                                     actions.onValueChange(path, {
@@ -565,6 +568,7 @@ function RequestPathPicker({
             value={value}
             onChange={onChange}
             suggestions={found}
+            maxLength={MAX_NODE_FIELD_LENGTH}
             loading={loading && fromTraffic}
             emptyHint={emptyHint()}
             sourceHint={
@@ -600,6 +604,7 @@ function NamePicker({
             value={value}
             onChange={onChange}
             suggestions={suggestNames(names, value, origin)}
+            maxLength={MAX_NODE_FIELD_LENGTH}
             emptyHint={emptyHint}
             label={label}
             placeholder={placeholder}

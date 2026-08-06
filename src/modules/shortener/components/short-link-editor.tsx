@@ -12,9 +12,11 @@ import { Label } from "@/components/ui/label";
 import { useIsHydrated } from "@/hooks/use-is-hydrated";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { updateLink } from "@/modules/short-links/actions/update-link";
+import { MAX_TARGET_URL_LENGTH, PASSWORD_LENGTH } from "@/modules/short-links/domain/constants";
 import type { ShortLinkFailureReason, ShortLinkView } from "@/modules/short-links/types";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
 import { DateTimePicker } from "@/modules/tools/components/date-time-picker";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { OptionSwitch } from "@/modules/tools/components/option-controls";
 import { StatusStrip } from "@/modules/tools/components/status-strip";
 import { copyText } from "@/modules/tools/domain/clipboard";
@@ -68,6 +70,11 @@ export function ShortLinkEditor({ editToken, editUrl, link }: ShortLinkEditorPro
     const [saving, setSaving] = useState(false);
     const [failure, setFailure] = useState<ShortLinkFailureReason | null>(null);
     const [copied, setCopied] = useState(false);
+
+    // Both cap at `maxLength`, so neither can read "over" — the meters count
+    // the last stretch down and go quiet again once the value is trimmed.
+    const targetLimit = useInputLimit(target.length, MAX_TARGET_URL_LENGTH);
+    const passwordLimit = useInputLimit(password.length, PASSWORD_LENGTH.max);
 
     const startsAt = window_?.startsAt ?? instantToLocalDateTime(current.startsAt, timeZone);
     const expiresAt = window_?.expiresAt ?? instantToLocalDateTime(current.expiresAt, timeZone);
@@ -174,13 +181,17 @@ export function ShortLinkEditor({ editToken, editUrl, link }: ShortLinkEditorPro
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                    <Label htmlFor={targetId} className="text-muted-foreground text-xs">
-                        <span className="leading-[1.3]">{t("target")}</span>
-                    </Label>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <Label htmlFor={targetId} className="text-muted-foreground text-xs">
+                            <span className="leading-[1.3]">{t("target")}</span>
+                        </Label>
+                        <InputLimitMeter reading={targetLimit} />
+                    </div>
                     <Input
                         id={targetId}
                         type="url"
                         inputMode="url"
+                        maxLength={MAX_TARGET_URL_LENGTH}
                         value={target}
                         onChange={(event) => {
                             setTarget(event.target.value);
@@ -206,13 +217,20 @@ export function ShortLinkEditor({ editToken, editUrl, link }: ShortLinkEditorPro
                     />
                     {passwordEnabled && (
                         <div className="flex flex-col gap-1.5">
-                            <Label htmlFor={passwordId} className="text-muted-foreground text-xs">
-                                <span className="leading-[1.3]">{t("password")}</span>
-                            </Label>
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <Label
+                                    htmlFor={passwordId}
+                                    className="text-muted-foreground text-xs"
+                                >
+                                    <span className="leading-[1.3]">{t("password")}</span>
+                                </Label>
+                                <InputLimitMeter reading={passwordLimit} />
+                            </div>
                             <Input
                                 id={passwordId}
                                 type="password"
                                 autoComplete="new-password"
+                                maxLength={PASSWORD_LENGTH.max}
                                 value={password}
                                 placeholder={
                                     current.hasPassword

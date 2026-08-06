@@ -82,6 +82,9 @@ export function NumberField({
                         type="text"
                         inputMode="numeric"
                         pattern="[0-9]*"
+                        // The widest value this accepts, plus two digits of
+                        // overshoot so `clamp` has something to report.
+                        maxLength={String(max).length + 2}
                         value={value}
                         onChange={(event) => handleTyped(event.target.value)}
                         aria-describedby={hintId}

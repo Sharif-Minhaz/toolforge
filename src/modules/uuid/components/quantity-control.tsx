@@ -6,6 +6,9 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { MAX_UUID_QUANTITY, MIN_UUID_QUANTITY, UUID_QUANTITY_PRESETS } from "../domain/constants";
 
+/** The widest quantity, plus two digits of overshoot so the field can go invalid. */
+const MAX_QUANTITY_DIGITS = String(MAX_UUID_QUANTITY).length + 2;
+
 type QuantityControlProps = {
     value: string;
     quantity: number;
@@ -57,6 +60,9 @@ export function QuantityControl({
                         type="text"
                         inputMode="numeric"
                         pattern="[0-9]*"
+                        // The widest quantity this accepts, plus two digits of
+                        // overshoot so the field can go invalid and say why.
+                        maxLength={MAX_QUANTITY_DIGITS}
                         value={value}
                         onChange={(event) => onChange(event.target.value)}
                         aria-invalid={invalid}

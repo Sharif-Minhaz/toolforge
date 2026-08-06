@@ -41,6 +41,9 @@ export const DEFAULT_PIXEL_SIZE = 1_024;
 
 export const PIXEL_SIZE_PRESETS = [256, 512, 1_024, 2_048] as const;
 
+/** `#rrggbb`. What the hex field caps at — `hexColorSchema` accepts no other spelling. */
+export const HEX_COLOR_LENGTH = 7;
+
 export const DEFAULT_FOREGROUND = "#000000";
 
 export const DEFAULT_BACKGROUND = "#ffffff";

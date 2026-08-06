@@ -18,11 +18,12 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 
 import { createServer, deleteServer, pauseServer } from "../actions/servers";
-import { MAX_SERVERS_PER_WORKSPACE } from "../domain/constants";
-import { suggestServerKey } from "@/modules/tools/domain/server-key";
+import { MAX_SERVERS_PER_WORKSPACE, SERVER_NAME_LENGTH } from "../domain/constants";
+import { SERVER_KEY_LENGTH, suggestServerKey } from "@/modules/tools/domain/server-key";
 import type { ServerFailureReason, ServerSummary } from "../types";
 import { MockUrl } from "./mock-url";
 
@@ -54,6 +55,11 @@ export function ServerGrid({ workspaceId, servers, origin }: ServerGridProps) {
     const [rows, setRows] = useState<readonly ServerSummary[]>(servers);
     const [name, setName] = useState("");
     const [key, setKey] = useState("");
+
+    // Both cap at `maxLength`; `checkServerName` and `checkServerKey` still
+    // own what a usable name and key are.
+    const nameLimit = useInputLimit(name.length, SERVER_NAME_LENGTH.max);
+    const keyLimit = useInputLimit(key.length, SERVER_KEY_LENGTH.max);
     const [failure, setFailure] = useState<ServerFailureReason | null>(null);
     const [armed, setArmed] = useState<string | null>(null);
     const [pending, startTransition] = useTransition();
@@ -149,11 +155,15 @@ export function ServerGrid({ workspaceId, servers, origin }: ServerGridProps) {
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     <div className="flex flex-col gap-1.5">
-                        <Label htmlFor={nameId} className="text-xs">
-                            {t("nameLabel")}
-                        </Label>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <Label htmlFor={nameId} className="text-xs">
+                                {t("nameLabel")}
+                            </Label>
+                            <InputLimitMeter reading={nameLimit} />
+                        </div>
                         <Input
                             id={nameId}
+                            maxLength={SERVER_NAME_LENGTH.max}
                             value={name}
                             onChange={(event) => setName(event.target.value)}
                             placeholder={t("namePlaceholder")}
@@ -163,11 +173,15 @@ export function ServerGrid({ workspaceId, servers, origin }: ServerGridProps) {
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                        <Label htmlFor={keyId} className="text-xs">
-                            {t("keyLabel")}
-                        </Label>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <Label htmlFor={keyId} className="text-xs">
+                                {t("keyLabel")}
+                            </Label>
+                            <InputLimitMeter reading={keyLimit} />
+                        </div>
                         <Input
                             id={keyId}
+                            maxLength={SERVER_KEY_LENGTH.max}
                             value={key}
                             onChange={(event) => setKey(event.target.value)}
                             placeholder={t("keyPlaceholder")}

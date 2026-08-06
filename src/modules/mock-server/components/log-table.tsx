@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 import { clearLogs, getRequestLogs } from "../actions/logs";
+import { MAX_LOG_SEARCH_LENGTH } from "../domain/constants";
 import { LOG_RETENTION_DAYS, MAX_LOGS_PER_WORKSPACE, statusTone } from "../domain/log-record";
 import type { RequestLogRow } from "../types";
 
@@ -76,6 +77,9 @@ export function LogTable({ workspaceId, initialRows }: LogTableProps) {
                     <Input
                         id={searchId}
                         type="search"
+                        // The same 200 the list action bounds it at, so a long
+                        // paste is refused by the box rather than by the server.
+                        maxLength={MAX_LOG_SEARCH_LENGTH}
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
                         onKeyDown={(event) => {

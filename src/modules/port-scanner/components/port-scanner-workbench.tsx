@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { ScanRadar } from "@/modules/tools/components/scan-radar";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
@@ -29,7 +30,12 @@ import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { checkHostSyntax, type HostSyntaxFailure } from "@/modules/tools/domain/host-syntax";
 import { saveFile } from "@/modules/tools/domain/file-saver";
 import { scanPorts } from "../actions/scan-ports";
-import { MAX_INPUT_LENGTH, MAX_PORTS_PER_SCAN, TURNSTILE_ACTION } from "../domain/constants";
+import {
+    MAX_INPUT_LENGTH,
+    MAX_PORT_SPEC_LENGTH,
+    MAX_PORTS_PER_SCAN,
+    TURNSTILE_ACTION,
+} from "../domain/constants";
 import { buildScanCsv, createScanCsvFile, createScanJsonFile } from "../domain/export";
 import { resolveRequestedPorts } from "../domain/port-spec";
 import { isFullyFiltered } from "../domain/summary";
@@ -86,6 +92,11 @@ export function PortScannerWorkbench({
     const [host, setHost] = useState(initialHost);
     const [preset, setPreset] = useState<PortPreset>(initialPreset);
     const [spec, setSpec] = useState("");
+
+    // Both cap at `maxLength`, so neither can read "over". The port meter is
+    // hidden while a preset owns the field, or a disabled box would count
+    // down a value the reader cannot change.
+    const specLimit = useInputLimit(spec.length, MAX_PORT_SPEC_LENGTH);
     const [running, setRunning] = useState(false);
     const [report, setReport] = useState<ScanReport | null>(null);
     const [failure, setFailure] = useState<ScanFailure | null>(null);
@@ -326,6 +337,10 @@ export function PortScannerWorkbench({
 
                         <Input
                             id={hostId}
+                            // Capped: 2,048 characters is already eight times
+                            // the longest legal hostname, so the cut can only
+                            // ever land in a paste that was never a host.
+                            maxLength={MAX_INPUT_LENGTH}
                             value={host}
                             spellCheck={false}
                             autoCapitalize="off"
@@ -373,11 +388,15 @@ export function PortScannerWorkbench({
                         />
 
                         <div className="flex min-w-0 flex-col gap-1.5">
-                            <Label htmlFor={portsId} className="text-muted-foreground text-xs">
-                                <span className="leading-[1.3]">{t("portsLabel")}</span>
-                            </Label>
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <Label htmlFor={portsId} className="text-muted-foreground text-xs">
+                                    <span className="leading-[1.3]">{t("portsLabel")}</span>
+                                </Label>
+                                {preset === "custom" && <InputLimitMeter reading={specLimit} />}
+                            </div>
                             <Textarea
                                 id={portsId}
+                                maxLength={MAX_PORT_SPEC_LENGTH}
                                 value={spec}
                                 disabled={preset !== "custom"}
                                 spellCheck={false}

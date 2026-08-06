@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MAX_PARAM_FIELD_LENGTH } from "../domain/constants";
 import { editParam, removeParam } from "../domain/params";
 import type { UrlQueryParam } from "../types";
 
@@ -57,6 +58,7 @@ export function QueryParamsPanel({ params, onChange }: QueryParamsPanelProps) {
                 return (
                     <div key={index} className={ROW_GRID}>
                         <Input
+                            maxLength={MAX_PARAM_FIELD_LENGTH}
                             value={param.key}
                             onChange={(event) =>
                                 onChange(editParam(params, index, { key: event.target.value }))
@@ -71,6 +73,7 @@ export function QueryParamsPanel({ params, onChange }: QueryParamsPanelProps) {
                             =
                         </span>
                         <Input
+                            maxLength={MAX_PARAM_FIELD_LENGTH}
                             value={param.value}
                             onChange={(event) =>
                                 onChange(editParam(params, index, { value: event.target.value }))

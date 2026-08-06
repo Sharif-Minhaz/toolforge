@@ -87,6 +87,10 @@ export function NumberStepper({
                         type="text"
                         inputMode="numeric"
                         pattern="[0-9]*"
+                        // The widest number this accepts, plus room to overshoot
+                        // by two digits — enough for the field to go invalid and
+                        // say so, and far short of a paste worth parsing.
+                        maxLength={digits + 2}
                         value={value}
                         disabled={disabled}
                         onChange={(event) => onChange(event.target.value)}

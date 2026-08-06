@@ -21,6 +21,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
@@ -104,6 +105,12 @@ export function CurlWorkbench({
 
     // The two boxes always hold opposite languages, so one flag decides both.
     const inputLanguage: HighlightLanguage = direction === "curlToCode" ? "shell" : "javascript";
+
+    // Not capped with `maxLength`: a command is pasted whole and a trimmed
+    // one parses into a request nobody made, which is worse than a refusal.
+    // `parseCurl` already refuses past the ceiling; this is what says so
+    // before the reader wonders why nothing converted.
+    const inputLimit = useInputLimit(input.length, MAX_CURL_INPUT_LENGTH);
     const outputLanguage: HighlightLanguage = direction === "curlToCode" ? "javascript" : "shell";
 
     function describeFailure(failure: Extract<ConversionResult, { ok: false }>): string | null {
@@ -245,6 +252,8 @@ export function CurlWorkbench({
                             </span>
                         </Label>
                         <div className="flex items-center gap-1.5">
+                            <InputLimitMeter reading={inputLimit} className="mr-1" />
+
                             <Button variant="ghost" size="sm" onClick={handleExample}>
                                 <IconWand className="size-3.5" stroke={1.8} aria-hidden="true" />
                                 {t("example")}

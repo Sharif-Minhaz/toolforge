@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { OptionSelect, OptionSwitch } from "@/modules/tools/components/option-controls";
 import {
     DEFAULT_BACKGROUND,
+    HEX_COLOR_LENGTH,
     LOGO_ACCEPT_ATTRIBUTE,
     LOGO_SCALE_RANGE,
     MARGIN_RANGE,
@@ -70,6 +71,11 @@ function ColorField({ label, value, disabled, onChange }: ColorFieldProps) {
                 />
                 <Input
                     id={id}
+                    // `#rrggbb` and nothing else — `hexColorSchema` refuses
+                    // shorthand and names, so there is no longer spelling to
+                    // leave room for. No meter: a seven-character ceiling has no
+                    // "nearly full" worth reporting.
+                    maxLength={HEX_COLOR_LENGTH}
                     value={value}
                     disabled={disabled}
                     spellCheck={false}

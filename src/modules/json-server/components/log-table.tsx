@@ -2,11 +2,14 @@
 
 import { IconRefresh, IconTrash } from "@tabler/icons-react";
 import { useFormatter, useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 import type { RequestLogRow } from "../types";
+
+const CLOCK_TICK_MS = 15_000;
 
 type LogTableProps = {
     rows: readonly RequestLogRow[];
@@ -31,6 +34,21 @@ type LogTableProps = {
 export function LogTable({ rows, busy, onRefresh, onClear }: LogTableProps) {
     const t = useTranslations("jsonServer.logs");
     const format = useFormatter();
+
+    // `relativeTime` needs an explicit reference instant, or next-intl reads the
+    // host clock and warns — and a reference read per render would also mean the
+    // server and the browser disagreed about "2 minutes ago". Reading it here is
+    // safe because this table is only mounted once the logs tab is opened and the
+    // rows have come back from a server action, so it never server-renders a row.
+    const [now, setNow] = useState(() => new Date());
+
+    // A log left open goes stale otherwise: "just now" stays "just now" for as
+    // long as the tab is up.
+    useEffect(() => {
+        const timer = window.setInterval(() => setNow(new Date()), CLOCK_TICK_MS);
+
+        return () => window.clearInterval(timer);
+    }, []);
 
     return (
         <div className="flex flex-col gap-3">
@@ -117,7 +135,7 @@ export function LogTable({ rows, busy, onRefresh, onClear }: LogTableProps) {
                                             these read as prose, not as machine
                                             input.
                                         */}
-                                        {format.relativeTime(new Date(row.createdAt))}
+                                        {format.relativeTime(new Date(row.createdAt), now)}
                                         <span className="text-muted-foreground/70 ml-1.5">
                                             {t("duration", { ms: row.durationMs })}
                                         </span>

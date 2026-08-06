@@ -9,6 +9,7 @@ import { clearWorkspaceLogs, listRequestLogs } from "../repository/logs";
 import { readWorkspaceSecrets } from "../repository/session";
 import { findOwningSecret } from "../repository/workspaces";
 import type { RequestLogRow, ServerActionResult } from "../types";
+import { MAX_LOG_SEARCH_LENGTH } from "../domain/constants";
 import { workspaceIdSchema } from "../validation";
 
 /**
@@ -25,7 +26,7 @@ const MAX_ROWS = 200;
 const listSchema = z.object({
     workspaceId: workspaceIdSchema,
     serverId: z.uuid().optional(),
-    search: z.string().max(200).optional(),
+    search: z.string().max(MAX_LOG_SEARCH_LENGTH).optional(),
     status: z.number().int().min(100).max(599).optional(),
 });
 

@@ -18,6 +18,8 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { CopyIconSwap } from "@/modules/tools/components/copy-button";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
+import { MAX_TYPED_RECOVERY_KEY_LENGTH } from "@/modules/tools/domain/recovery-key";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
 import { copyText } from "@/modules/tools/domain/clipboard";
@@ -29,7 +31,7 @@ import {
     importWorkspace,
     renameWorkspace,
 } from "../actions/workspaces";
-import { TURNSTILE_ACTION } from "../domain/constants";
+import { TURNSTILE_ACTION, WORKSPACE_NAME_LENGTH } from "../domain/constants";
 import type { WorkspaceFailureReason, WorkspaceOverview, WorkspaceSummary } from "../types";
 import { WorkspaceCard } from "./workspace-card";
 
@@ -64,6 +66,9 @@ export function WorkspaceLauncher({ overview, turnstileSiteKey }: WorkspaceLaunc
     const [panel, setPanel] = useState<Panel>("create");
     const [name, setName] = useState("");
     const [recoveryInput, setRecoveryInput] = useState("");
+
+    // Caps at `maxLength`; `checkWorkspaceName` owns what a usable name is.
+    const nameLimit = useInputLimit(name.length, WORKSPACE_NAME_LENGTH.max);
     const [failure, setFailure] = useState<WorkspaceFailureReason | null>(null);
 
     // Shown once and never again. Held here rather than routed to, because a
@@ -282,11 +287,15 @@ export function WorkspaceLauncher({ overview, turnstileSiteKey }: WorkspaceLaunc
                 <div className="mt-4 flex flex-col gap-3">
                     {panel === "create" ? (
                         <div className="flex flex-col gap-1.5">
-                            <Label htmlFor={nameId} className="text-xs">
-                                {t("nameLabel")}
-                            </Label>
+                            <div className="flex max-w-md flex-wrap items-center justify-between gap-2">
+                                <Label htmlFor={nameId} className="text-xs">
+                                    {t("nameLabel")}
+                                </Label>
+                                <InputLimitMeter reading={nameLimit} />
+                            </div>
                             <Input
                                 id={nameId}
+                                maxLength={WORKSPACE_NAME_LENGTH.max}
                                 value={name}
                                 onChange={(event) => setName(event.target.value)}
                                 placeholder={t("namePlaceholder")}
@@ -302,6 +311,12 @@ export function WorkspaceLauncher({ overview, turnstileSiteKey }: WorkspaceLaunc
                             </Label>
                             <Input
                                 id={keyId}
+                                // The printed spelling, not the canonical
+                                // sixteen — `normalizeRecoveryKey` is what folds
+                                // separators away, and cutting at nineteen would
+                                // eat the last group of a key pasted with
+                                // surrounding whitespace.
+                                maxLength={MAX_TYPED_RECOVERY_KEY_LENGTH}
                                 value={recoveryInput}
                                 onChange={(event) => setRecoveryInput(event.target.value)}
                                 placeholder="XXXX-XXXX-XXXX-XXXX"

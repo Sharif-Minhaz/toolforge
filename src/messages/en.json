@@ -37,6 +37,15 @@
             "nonillion": "{value} nonillion",
             "decillion": "{value} decillion",
             "power": "{value} × 10{exponent}"
+        },
+        "inputLimit": {
+            "count": "{length} / {limit}",
+            "remaining": "{count, plural, =1 {# character left} other {# characters left}}",
+            "over": "{count, plural, =1 {# character over} other {# characters over}}",
+            "sizeRemaining": "{value} left",
+            "sizeOver": "{value} over",
+            "reached": "Limit reached",
+            "overHint": "{amount} the {limit} limit — shorten it to continue."
         }
     },
     "nav": {

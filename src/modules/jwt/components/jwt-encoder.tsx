@@ -21,6 +21,7 @@ import {
     DEFAULT_JWT_ALGORITHM,
     DEFAULT_PAYLOAD_JSON,
     DEFAULT_SECRET,
+    MAX_JWT_JSON_LENGTH,
 } from "../domain/constants";
 import { decodeJwt } from "../domain/decode";
 import { createJwtExportFile } from "../domain/export";
@@ -220,6 +221,7 @@ export function JwtEncoder({ example }: JwtEncoderProps) {
                         label={tEncoder("headerLabel")}
                         part="header"
                         value={headerJson}
+                        limit={MAX_JWT_JSON_LENGTH}
                         onChange={setHeaderJson}
                         copyLabel={tEncoder("copyHeader")}
                         copied={copied === "header"}
@@ -240,6 +242,7 @@ export function JwtEncoder({ example }: JwtEncoderProps) {
                         label={tEncoder("payloadLabel")}
                         part="payload"
                         value={payloadJson}
+                        limit={MAX_JWT_JSON_LENGTH}
                         onChange={setPayloadJson}
                         copyLabel={tEncoder("copyPayload")}
                         copied={copied === "payload"}

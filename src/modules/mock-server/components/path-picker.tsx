@@ -56,6 +56,12 @@ type PathPickerProps = {
     label: string;
     placeholder?: string;
     loading?: boolean;
+    /**
+     * The box's hard ceiling. From the caller rather than a constant here,
+     * because this picker serves a route path, a header name and a JSON path,
+     * and those three are bounded by three different numbers.
+     */
+    maxLength: number;
     className?: string;
 };
 
@@ -65,6 +71,7 @@ export function PathPicker({
     suggestions,
     emptyHint,
     sourceHint,
+    maxLength,
     label,
     placeholder,
     loading = false,
@@ -148,6 +155,7 @@ export function PathPicker({
                     aria-autocomplete="list"
                     aria-activedescendant={open && index >= 0 ? `${listId}-${index}` : undefined}
                     aria-label={label}
+                    maxLength={maxLength}
                     value={value}
                     onChange={(event) => {
                         onChange(event.target.value);

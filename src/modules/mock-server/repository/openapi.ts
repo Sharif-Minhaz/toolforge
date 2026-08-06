@@ -2,6 +2,8 @@ import "server-only";
 
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 
+import { MAX_OPENAPI_DOCUMENT_BYTES } from "../domain/constants";
+
 /**
  * Getting an OpenAPI document into a plain value.
  *
@@ -27,7 +29,8 @@ export type ParseResult =
     | { readonly ok: true; readonly document: unknown }
     | { readonly ok: false; readonly reason: "invalid_syntax" | "too_large" };
 
-export const MAX_DOCUMENT_BYTES = 4 * 1_024 * 1_024;
+/** Re-exported so existing callers keep their name for it. */
+export const MAX_DOCUMENT_BYTES = MAX_OPENAPI_DOCUMENT_BYTES;
 
 export async function parseOpenApiText(text: string): Promise<ParseResult> {
     if (new TextEncoder().encode(text).length > MAX_DOCUMENT_BYTES) {

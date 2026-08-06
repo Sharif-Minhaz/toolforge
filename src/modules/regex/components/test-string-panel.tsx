@@ -7,6 +7,8 @@ import { useRef, type UIEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
+import { MAX_TEST_STRING_LENGTH } from "../domain/constants";
 import { toMatchSegments } from "../domain/segments";
 import type { RegexMatch } from "../types";
 import { FIELD_INPUT, FIELD_OVERLAY, FIELD_PADDING, FIELD_TEXT } from "./field-styles";
@@ -39,6 +41,9 @@ export function TestStringPanel({
     const t = useTranslations("regex.workbench");
     const overlayRef = useRef<HTMLDivElement | null>(null);
     const segments = toMatchSegments(value.length, matches);
+    // Not capped: a sample is pasted whole and a trimmed one matches
+    // differently, which is a wrong answer rather than a refused one.
+    const reading = useInputLimit(value.length, MAX_TEST_STRING_LENGTH);
 
     function handleScroll(event: UIEvent<HTMLTextAreaElement>) {
         const overlay = overlayRef.current;
@@ -56,6 +61,8 @@ export function TestStringPanel({
                     {t("testStringLabel")}
                 </Label>
                 <div className="flex items-center gap-1.5">
+                    <InputLimitMeter reading={reading} className="mr-1" />
+
                     <Button
                         variant="ghost"
                         size="sm"

@@ -17,6 +17,18 @@ export const RECOVERY_GROUP_SIZE = 4;
 export const RECOVERY_GROUP_SEPARATOR = "-";
 
 /**
+ * What a recovery-key field caps its box at.
+ *
+ * Twice the canonical length rather than the printed nineteen, because
+ * `normalizeRecoveryKey` folds away whatever separators a reader typed and a
+ * pasted key routinely arrives wrapped in whitespace or spaced into groups.
+ * Cutting one of those at exactly nineteen would silently eat its last group.
+ * Still far inside the `RECOVERY_KEY_LENGTH * 4` the Server Actions accept, so
+ * a value that fits the box always fits the wire.
+ */
+export const MAX_TYPED_RECOVERY_KEY_LENGTH = RECOVERY_KEY_LENGTH * 2;
+
+/**
  * The printable credential that moves something owned without an account to
  * another browser.
  *

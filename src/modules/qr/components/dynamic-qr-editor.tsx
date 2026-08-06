@@ -11,9 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { StatusStrip } from "@/modules/tools/components/status-strip";
 import { copyText } from "@/modules/tools/domain/clipboard";
 import { updateLink } from "@/modules/short-links/actions/update-link";
+import { MAX_TARGET_URL_LENGTH } from "@/modules/short-links/domain/constants";
 import { useLinkHistory } from "@/modules/short-links/components/use-link-history";
 import type { ShortLinkFailureReason, ShortLinkView } from "@/modules/short-links/types";
 
@@ -37,6 +39,10 @@ export function DynamicQrEditor({ editToken, link }: DynamicQrEditorProps) {
 
     const [current, setCurrent] = useState(link);
     const [target, setTarget] = useState(link.target);
+
+    // Caps at `maxLength`, so this can never read "over" — the meter only
+    // counts the last stretch of a destination down.
+    const targetLimit = useInputLimit(target.length, MAX_TARGET_URL_LENGTH);
     const [saving, setSaving] = useState(false);
     const [failure, setFailure] = useState<ShortLinkFailureReason | null>(null);
     const [copied, setCopied] = useState(false);
@@ -124,13 +130,17 @@ export function DynamicQrEditor({ editToken, link }: DynamicQrEditorProps) {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                    <Label htmlFor={targetId} className="text-muted-foreground text-xs">
-                        <span className="leading-[1.3]">{t("target")}</span>
-                    </Label>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <Label htmlFor={targetId} className="text-muted-foreground text-xs">
+                            <span className="leading-[1.3]">{t("target")}</span>
+                        </Label>
+                        <InputLimitMeter reading={targetLimit} />
+                    </div>
                     <Input
                         id={targetId}
                         type="url"
                         inputMode="url"
+                        maxLength={MAX_TARGET_URL_LENGTH}
                         value={target}
                         onChange={(event) => setTarget(event.target.value)}
                     />

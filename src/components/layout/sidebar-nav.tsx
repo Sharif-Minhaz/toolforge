@@ -18,7 +18,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils";
 import { TOOL_ACCENT_VARS, TOOL_ICON_TILE } from "@/modules/tools/components/tool-accent";
 import { ToolIcon } from "@/modules/tools/components/tool-icon";
-import { filterTools } from "@/modules/tools/domain/search";
+import { MAX_TOOL_SEARCH_LENGTH, filterTools } from "@/modules/tools/domain/search";
 import { TOOL_CATEGORIES, type LocalizedTool } from "@/modules/tools/types";
 
 const INDICATOR_SPRING = { type: "spring", stiffness: 460, damping: 38, mass: 0.7 } as const;
@@ -258,6 +258,10 @@ export function SidebarNav({
                             id={searchId}
                             ref={searchRef}
                             type="search"
+                            // A filter over a few dozen tool names. Nothing past
+                            // this can match anything, and a pasted novel would
+                            // run the matcher over every entry on each keystroke.
+                            maxLength={MAX_TOOL_SEARCH_LENGTH}
                             value={query}
                             onChange={(event) => setQuery(event.target.value)}
                             placeholder={t("searchPlaceholder")}

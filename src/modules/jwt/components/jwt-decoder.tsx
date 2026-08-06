@@ -13,13 +13,14 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
 import { getKeyFormat, isUnsecuredAlgorithm, resolveExpectedAlgorithm } from "../domain/algorithms";
 import { buildHeaderRows, buildPayloadRows } from "../domain/claims";
-import { DEFAULT_JWT_ALGORITHM } from "../domain/constants";
+import { DEFAULT_JWT_ALGORITHM, MAX_JWT_INPUT_LENGTH } from "../domain/constants";
 import { decodeJwt } from "../domain/decode";
 import { buildDecodedDocument, createJwtExportFile } from "../domain/export";
 import type { JwtExample } from "../domain/examples";
@@ -69,6 +70,12 @@ export function JwtDecoder({ initialNow, example }: JwtDecoderProps) {
     const algorithmLabelId = useId();
 
     const [token, setToken] = useState(example?.token ?? "");
+
+    // Not capped: a token is pasted whole, and a trimmed one is a different
+    // token rather than a shorter one — its signature would simply fail to
+    // verify with nothing on screen explaining why. `decodeToken` refuses
+    // past the ceiling and this is what says so first.
+    const tokenLimit = useInputLimit(token.length, MAX_JWT_INPUT_LENGTH);
     const [view, setView] = useState<DecodedView>("json");
     const [algorithmOverride, setAlgorithmOverride] = useState<JwtAlgorithm | null>(null);
     const [keyInput, setKeyInput] = useState<JwtKeyInput>(
@@ -258,6 +265,8 @@ export function JwtDecoder({ initialNow, example }: JwtDecoderProps) {
                                 <span className="leading-[1.3]">{tDecoder("tokenLabel")}</span>
                             </Label>
                             <div className="flex items-center gap-1">
+                                <InputLimitMeter reading={tokenLimit} className="mr-1" />
+
                                 <IconCopyButton
                                     copied={copied === "token"}
                                     onClick={() => void handleCopy("token", token)}
@@ -349,6 +358,7 @@ export function JwtDecoder({ initialNow, example }: JwtDecoderProps) {
                                 part="header"
                                 value={headerJson}
                                 readOnly
+                                limit={null}
                                 placeholder={tDecoder("decodedPlaceholder")}
                                 copyLabel={tDecoder("copyHeader")}
                                 copied={copied === "header"}
@@ -360,6 +370,7 @@ export function JwtDecoder({ initialNow, example }: JwtDecoderProps) {
                                 part="payload"
                                 value={payloadJson}
                                 readOnly
+                                limit={null}
                                 placeholder={tDecoder("decodedPlaceholder")}
                                 copyLabel={tDecoder("copyPayload")}
                                 copied={copied === "payload"}

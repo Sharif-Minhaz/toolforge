@@ -8,7 +8,9 @@ import { buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { ByteSize } from "@/modules/tools/components/byte-size";
+import { ByteSize, useByteLabel } from "@/modules/tools/components/byte-size";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
+import { MAX_BASE64_INPUT_BYTES } from "../domain/constants";
 import { TOOL_ICON_TILE } from "@/modules/tools/components/tool-accent";
 import type { Base64Mode } from "../types";
 
@@ -40,6 +42,9 @@ export function InputPanel({
     onClear,
 }: InputPanelProps) {
     const t = useTranslations("base64.workbench");
+
+    const byteLabel = useByteLabel();
+    const sizeReading = useInputLimit(inputBytes, MAX_BASE64_INPUT_BYTES);
     const empty = file === null && text.length === 0;
 
     function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
@@ -61,9 +66,15 @@ export function InputPanel({
                 </Label>
 
                 <div className="flex items-center gap-1.5">
-                    <ByteSize
-                        bytes={inputBytes}
-                        className="text-muted-foreground mr-1 font-mono text-[0.6875rem] tabular-nums"
+                    {/* Against the ceiling rather than a bare size, so the
+                        number goes amber before the tool refuses rather than
+                        only after. Bytes, because that is what the limit is
+                        measured in. */}
+                    <InputLimitMeter
+                        reading={sizeReading}
+                        format={byteLabel}
+                        className="mr-1"
+                        always
                     />
 
                     {/* A styled label keeps the file picker a real <input>, so it

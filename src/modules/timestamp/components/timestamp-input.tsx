@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { ZonePicker } from "@/modules/tools/components/zone-picker";
-import { EXAMPLE_INPUTS } from "../domain/constants";
+import { EXAMPLE_INPUTS, MAX_INPUT_LENGTH } from "../domain/constants";
 import { EPOCH_UNITS, type EpochUnit } from "../types";
 
 type TimestampInputProps = {
@@ -66,6 +66,10 @@ export function TimestampInput({
                 <input
                     id={inputId}
                     type="text"
+                    // Capped, and `parseTimestamp` says the same thing about a
+                    // value arriving from a shared link. No meter: nothing this
+                    // reads is anywhere near 200 characters.
+                    maxLength={MAX_INPUT_LENGTH}
                     value={value}
                     spellCheck={false}
                     autoComplete="off"

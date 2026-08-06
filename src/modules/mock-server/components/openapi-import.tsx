@@ -8,10 +8,18 @@ import { useId, useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { CodeEditor } from "@/modules/tools/components/code-editor";
+import {
+    InputLimitMeter,
+    useInputLimit,
+    useInputLimitStatus,
+} from "@/modules/tools/components/input-limit-meter";
+
 import { StatusStrip } from "@/modules/tools/components/status-strip";
 
 import { importOpenApi, type ImportReport } from "../actions/openapi";
+import { MAX_OPENAPI_DOCUMENT_BYTES, WORKSPACE_NAME_LENGTH } from "../domain/constants";
 
 type OpenApiImportProps = {
     workspaceId: string;
@@ -39,6 +47,17 @@ export function OpenApiImport({ workspaceId }: OpenApiImportProps) {
 
     const [name, setName] = useState("");
     const [text, setText] = useState("");
+
+    const byteLabel = useByteLabel();
+    const nameLimit = useInputLimit(name.length, WORKSPACE_NAME_LENGTH.max);
+    // Measured in UTF-16 units against a byte ceiling, which under-counts
+    // non-ASCII — deliberately, because it is the same comparison the action
+    // makes with `z.string().max()`. The parser applies the exact byte
+    // measure afterwards; this is the half that has to agree with the box.
+    const textLimit = useInputLimit(text.length, MAX_OPENAPI_DOCUMENT_BYTES);
+    // The sentence under the box. Null while the document fits, so the
+    // import's own failure keeps the strip to itself.
+    const textStatus = useInputLimitStatus(textLimit, byteLabel);
     const [report, setReport] = useState<ImportReport | null>(null);
     const [failure, setFailure] = useState<string | null>(null);
     const [pending, startTransition] = useTransition();
@@ -82,11 +101,17 @@ export function OpenApiImport({ workspaceId }: OpenApiImportProps) {
         <div className="flex min-w-0 flex-col gap-4">
             <div className="grid gap-3 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
-                    <Label htmlFor={nameId} className="text-xs">
-                        {t("nameLabel")}
-                    </Label>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <Label htmlFor={nameId} className="text-xs">
+                            {t("nameLabel")}
+                        </Label>
+                        <InputLimitMeter reading={nameLimit} />
+                    </div>
                     <Input
                         id={nameId}
+                        // `checkWorkspaceName` owns the real rule and falls back
+                        // to the document's own title when this is blank.
+                        maxLength={WORKSPACE_NAME_LENGTH.max}
                         value={name}
                         onChange={(event) => setName(event.target.value)}
                         placeholder={t("namePlaceholder")}
@@ -130,12 +155,25 @@ export function OpenApiImport({ workspaceId }: OpenApiImportProps) {
                     placeholder='{ "openapi": "3.1.0", ... }'
                     className="min-h-64"
                 />
+
+                {/* Not capped with `maxLength`: a specification is pasted whole,
+                    and silently trimming one at four megabytes would produce a
+                    document that fails to parse for a reason nothing explains.
+                    The meter says how far over it is and Import stays
+                    unavailable until it fits. */}
+                <div className="flex justify-end">
+                    <InputLimitMeter reading={textLimit} format={byteLabel} always />
+                </div>
+
+                {textStatus !== null ? (
+                    <StatusStrip tone={textStatus.tone} message={textStatus.message} />
+                ) : null}
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
                 <Button
                     type="button"
-                    disabled={pending || text.trim() === ""}
+                    disabled={pending || text.trim() === "" || textLimit.state === "over"}
                     onClick={submit}
                     className="gap-1.5"
                 >

@@ -6,6 +6,8 @@ import type { ReactNode } from "react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
+
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
 import type { JwtSegmentName } from "../types";
 
@@ -27,6 +29,12 @@ type JsonBoxProps = {
     copied: boolean;
     onCopy: () => void;
     onChange?: (value: string) => void;
+    /**
+     * The box's ceiling, and `null` for a read-only one — a decoded claim set is
+     * output, and counting output down against a limit nobody can act on is
+     * noise.
+     */
+    limit: number | null;
     /** The `StatusStrip` that reports whether the contents parse. */
     status?: ReactNode;
     className?: string;
@@ -49,10 +57,15 @@ export function JsonBox({
     copied,
     onCopy,
     onChange,
+    limit,
     status,
     className,
     textareaClassName,
 }: JsonBoxProps) {
+    // Zero when read-only, which `readInputLimit` reports as "over" — the
+    // meter is not rendered in that case, so the reading is never read.
+    const reading = useInputLimit(value.length, limit ?? 0);
+
     return (
         <div
             className={cn(
@@ -69,7 +82,10 @@ export function JsonBox({
                     />
                     <span className="truncate leading-[1.3]">{label}</span>
                 </Label>
-                <IconCopyButton copied={copied} onClick={onCopy} aria-label={copyLabel} />
+                <div className="flex items-center gap-1.5">
+                    {limit === null ? null : <InputLimitMeter reading={reading} />}
+                    <IconCopyButton copied={copied} onClick={onCopy} aria-label={copyLabel} />
+                </div>
             </div>
 
             <Textarea

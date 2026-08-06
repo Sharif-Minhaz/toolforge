@@ -10,10 +10,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { StatusStrip } from "@/modules/tools/components/status-strip";
 
 import { removeVariable, saveVariable } from "../actions/variables";
-import { DEFAULT_ENVIRONMENT, type DisplayVariable } from "../domain/environment";
+import {
+    DEFAULT_ENVIRONMENT,
+    VARIABLE_KEY_LENGTH,
+    VARIABLE_VALUE_LENGTH,
+    type DisplayVariable,
+} from "../domain/environment";
 import type { ServerFailureReason, ServerSummary } from "../types";
 
 type VariableTableProps = {
@@ -47,6 +53,11 @@ export function VariableTable({ workspaceId, servers, initial, environments }: V
     const [scopeId, setScopeId] = useState<string>(workspaceId);
     const [key, setKey] = useState("");
     const [value, setValue] = useState("");
+
+    // Both cap at `maxLength`; `checkVariableKey` still owns what a usable
+    // key is, so a name that is short enough but shaped wrong still says so.
+    const keyLimit = useInputLimit(key.length, VARIABLE_KEY_LENGTH.max);
+    const valueLimit = useInputLimit(value.length, VARIABLE_VALUE_LENGTH.max);
     const [isSecret, setIsSecret] = useState(false);
     const [failure, setFailure] = useState<ServerFailureReason | null>(null);
     const [pending, startTransition] = useTransition();
@@ -185,11 +196,15 @@ export function VariableTable({ workspaceId, servers, initial, environments }: V
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                        <Label htmlFor={keyId} className="text-xs">
-                            {t("key")}
-                        </Label>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <Label htmlFor={keyId} className="text-xs">
+                                {t("key")}
+                            </Label>
+                            <InputLimitMeter reading={keyLimit} />
+                        </div>
                         <Input
                             id={keyId}
+                            maxLength={VARIABLE_KEY_LENGTH.max}
                             value={key}
                             onChange={(event) => setKey(event.target.value)}
                             placeholder="API_BASE"
@@ -200,11 +215,15 @@ export function VariableTable({ workspaceId, servers, initial, environments }: V
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                        <Label htmlFor={valueId} className="text-xs">
-                            {t("value")}
-                        </Label>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <Label htmlFor={valueId} className="text-xs">
+                                {t("value")}
+                            </Label>
+                            <InputLimitMeter reading={valueLimit} />
+                        </div>
                         <Input
                             id={valueId}
+                            maxLength={VARIABLE_VALUE_LENGTH.max}
                             value={value}
                             onChange={(event) => setValue(event.target.value)}
                             autoComplete="off"

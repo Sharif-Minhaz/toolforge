@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { REPLACEMENT_TOKENS } from "../domain/constants";
+import { MAX_REPLACEMENT_LENGTH, REPLACEMENT_TOKENS } from "../domain/constants";
 import type { RegexMode } from "../types";
 import { FIELD_PADDING, FIELD_TEXT } from "./field-styles";
 
@@ -44,6 +44,7 @@ export function ReplacementPanel({
 
             <Input
                 id={replacementId}
+                maxLength={MAX_REPLACEMENT_LENGTH}
                 value={replacement}
                 placeholder={t(`${mode}Placeholder`)}
                 spellCheck={false}

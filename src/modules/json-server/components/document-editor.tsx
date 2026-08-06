@@ -7,11 +7,13 @@ import { useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { CodeEditor } from "@/modules/tools/components/code-editor";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { getByteLength } from "@/modules/tools/domain/byte-size";
 
 import { MAX_UPLOAD_BYTES } from "../domain/constants";
+import { exceedsUploadLimit } from "../domain/document";
 import { formatDocumentText } from "../domain/format";
 import { SAMPLE_DOCUMENT } from "../domain/samples";
 import type { DocumentFailure } from "../types";
@@ -62,9 +64,14 @@ export function DocumentEditor({
 
     const byteLabel = useByteLabel();
     const bytes = getByteLength(value);
-    const overSize = bytes > MAX_UPLOAD_BYTES;
-    const sizeLabel = byteLabel(bytes);
+    const overSize = exceedsUploadLimit(value);
     const limitLabel = byteLabel(MAX_UPLOAD_BYTES);
+    // Measured in bytes, not characters — the ceiling this box is checked
+    // against is a byte count, so counting glyphs would report a number the
+    // server never applies. `always` because a `db.json` is grown rather than
+    // typed, and a size that only appears near the end is a size nobody planned
+    // around.
+    const sizeReading = useInputLimit(bytes, MAX_UPLOAD_BYTES);
 
     function format() {
         const formatted = formatDocumentText(value);
@@ -171,14 +178,7 @@ export function DocumentEditor({
                     />
                 </div>
 
-                <p
-                    className={cn(
-                        "text-[0.6875rem] leading-[1.3] tabular-nums",
-                        overSize ? "text-destructive" : "text-muted-foreground",
-                    )}
-                >
-                    {t("size", { size: sizeLabel, limit: limitLabel })}
-                </p>
+                <InputLimitMeter reading={sizeReading} format={byteLabel} always />
             </div>
 
             <CodeEditor

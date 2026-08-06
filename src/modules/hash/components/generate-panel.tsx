@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
+
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import {
     ALGORITHM_LABELS,
@@ -49,6 +51,9 @@ export function GeneratePanel({
     describeFailure,
 }: GeneratePanelProps) {
     const t = useTranslations("hash.workbench.generate");
+
+    // The box caps at `maxLength`, so this can only ever count down.
+    const inputLimit = useInputLimit(text.length, MAX_HASH_INPUT_LENGTH);
     const tAdvice = useTranslations("hash.workbench.advice");
     const format = useFormatter();
 
@@ -97,6 +102,8 @@ export function GeneratePanel({
                             <span className="text-muted-foreground font-mono text-[0.6875rem] tabular-nums">
                                 {format.number(text.length)}
                             </span>
+                            <InputLimitMeter reading={inputLimit} className="mr-1" />
+
                             <button
                                 type="button"
                                 onClick={onClear}

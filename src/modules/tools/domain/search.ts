@@ -1,3 +1,6 @@
+/** What the sidebar's filter box accepts; nothing longer can match a tool name. */
+export const MAX_TOOL_SEARCH_LENGTH = 64;
+
 /** The fields the catalog search reads. Keeps the filter usable from any layer. */
 export type SearchableTool = {
     readonly id: string;

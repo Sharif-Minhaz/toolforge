@@ -11,6 +11,17 @@
 export const MAX_INPUT_LENGTH = 2_048;
 
 /**
+ * Characters the custom port box accepts.
+ *
+ * Bounded independently of the port ceiling, because the two limit different
+ * things: `MAX_PORTS_PER_SCAN` bounds the packets, this bounds the string that
+ * has to be parsed to count them. 1,024 characters holds well over a hundred
+ * comma-separated ports and ranges — far more than the ceiling allows — so it
+ * can only ever cut a paste that was never a port list.
+ */
+export const MAX_PORT_SPEC_LENGTH = 1_024;
+
+/**
  * Ports per scan.
  *
  * The ceiling is a bandwidth decision as much as a time one: 128 half-open

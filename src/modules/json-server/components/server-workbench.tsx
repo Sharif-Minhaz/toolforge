@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { CopyIconSwap } from "@/modules/tools/components/copy-button";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { copyText } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
@@ -37,6 +38,8 @@ import {
     rotateRecoveryKey,
     setServerPaused,
 } from "../actions/servers";
+import { SERVER_NAME_LENGTH } from "../domain/constants";
+import { exceedsUploadLimit } from "../domain/document";
 import {
     DOCUMENT_PROBLEMS,
     type ActionProblem,
@@ -98,6 +101,11 @@ export function ServerWorkbench({ detail: initial }: ServerWorkbenchProps) {
 
     const serverId = detail.id;
     const documentDirty = document !== detail.document;
+    // The editor already refuses this under the box; the button must agree,
+    // or a reader is told it is too large and offered Save in the same breath.
+    const documentTooLarge = exceedsUploadLimit(document);
+    // Caps at `maxLength`; `checkServerName` still owns what a usable name is.
+    const nameLimit = useInputLimit(name.length, SERVER_NAME_LENGTH.max);
 
     function run(action: () => Promise<void>) {
         setFailure(null);
@@ -369,7 +377,7 @@ export function ServerWorkbench({ detail: initial }: ServerWorkbenchProps) {
                             type="button"
                             size="sm"
                             className="gap-1.5"
-                            disabled={pending || !documentDirty}
+                            disabled={pending || !documentDirty || documentTooLarge}
                             onClick={save}
                         >
                             {pending ? (
@@ -431,12 +439,16 @@ export function ServerWorkbench({ detail: initial }: ServerWorkbenchProps) {
             {tab === "settings" ? (
                 <section className="flex flex-col gap-5">
                     <div className="flex max-w-md flex-col gap-1.5">
-                        <Label htmlFor={nameId} className="text-xs">
-                            {t("nameLabel")}
-                        </Label>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <Label htmlFor={nameId} className="text-xs">
+                                {t("nameLabel")}
+                            </Label>
+                            <InputLimitMeter reading={nameLimit} />
+                        </div>
                         <div className="flex gap-2">
                             <Input
                                 id={nameId}
+                                maxLength={SERVER_NAME_LENGTH.max}
                                 value={name}
                                 onChange={(event) => setName(event.target.value)}
                                 disabled={pending}

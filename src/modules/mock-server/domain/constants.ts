@@ -69,6 +69,28 @@ export const MAX_PATH_SEGMENTS = 12;
 
 export const MAX_PARAM_NAME_LENGTH = 40;
 
+/**
+ * The two ceilings every inline field on the canvas caps at.
+ *
+ * The rail's fields — a header name, a switch case's label, a variable name, an
+ * object key — sit in rows a few inches wide with nowhere to put a countdown,
+ * so they cap and show nothing. That is the right trade here and only here:
+ * these are names, and a name somebody pastes a novel into was never going to
+ * survive `validateGraph` anyway.
+ *
+ * They are not the real defence — `MAX_GRAPH_PAYLOAD_UNITS` is, and it bounds
+ * the whole document however many fields it has. These stop one field from
+ * eating the entire budget on its own, which is what makes the graph limit
+ * something a person meets by building a lot rather than by pasting once.
+ */
+export const MAX_NODE_FIELD_LENGTH = 200;
+
+/** A literal or a credential, which have more to say than a name does. */
+export const MAX_NODE_VALUE_LENGTH = 4_096;
+
+/** What the log search box accepts; `listRequestLogs` bounds it at the same number. */
+export const MAX_LOG_SEARCH_LENGTH = 200;
+
 // ─── Execution budgets ──────────────────────────────────────────────────────
 
 /** Backstop behind save-time cycle detection, not a substitute for it. */
@@ -93,6 +115,36 @@ export const MAX_ARRAY_ITEMS = 1_000;
  * counting — so it carries its own.
  */
 export const MAX_TEMPLATE_LENGTH = 64 * 1_024;
+
+/**
+ * The largest OpenAPI document the importer will read.
+ *
+ * In `domain/` rather than beside the parser that applies it, because the
+ * import panel has to render the same number — and `repository/openapi.ts` is
+ * `server-only`, so a client island importing it from there is a build failure
+ * rather than a slightly awkward import.
+ */
+export const MAX_OPENAPI_DOCUMENT_BYTES = 4 * 1_024 * 1_024;
+
+/**
+ * How large the canvas document and a response body may be, as a payload.
+ *
+ * These are the two values a Server Action accepts as `z.unknown()` — see
+ * `validation/index.ts` for why their *shape* is checked by `validateGraph`
+ * rather than by Zod. That leaves their *size* to be bounded here, and it has
+ * to be bounded somewhere: `serverActions.bodySizeLimit` is 11 MB for the whole
+ * app because the AI Image Detector forwards photographs, so without these two
+ * numbers a graph save inherits a ceiling eleven times what any real canvas
+ * needs.
+ *
+ * Measured with `exceedsPayloadBudget` in UTF-16 units, not bytes. Both are
+ * generous against anything a person builds — a 200-endpoint server's largest
+ * single graph is a few thousand units — and both refuse in bounded time
+ * whatever arrives.
+ */
+export const MAX_GRAPH_PAYLOAD_UNITS = 512 * 1_024;
+
+export const MAX_BODY_PAYLOAD_UNITS = 256 * 1_024;
 
 export const MIN_STATUS_CODE = 100;
 

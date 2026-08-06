@@ -7,6 +7,16 @@ import type { UrlParserView } from "../types";
  */
 export const MAX_URL_INPUT_LENGTH = 8192;
 
+/**
+ * What one row of the query table accepts.
+ *
+ * A parameter is a piece of the address, so no single one may be longer than
+ * the whole. Capped at the same number rather than at some fraction of it: a
+ * URL that is one enormous parameter is a real thing to paste, and the address
+ * box's own ceiling is what refuses the assembled result.
+ */
+export const MAX_PARAM_FIELD_LENGTH = MAX_URL_INPUT_LENGTH;
+
 /** The breakdown is what "parse" means, so it is what the page opens on. */
 export const DEFAULT_URL_PARSER_VIEW: UrlParserView = "params";
 

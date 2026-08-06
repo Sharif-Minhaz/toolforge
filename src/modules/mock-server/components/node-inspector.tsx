@@ -10,7 +10,7 @@ import { StatusStrip } from "@/modules/tools/components/status-strip";
 
 import { AUTH_MODES } from "../domain/auth-check";
 import { COMPARE_OPS } from "../domain/compare";
-import { MAX_DELAY_MS } from "../domain/constants";
+import { MAX_DELAY_MS, MAX_NODE_FIELD_LENGTH, MAX_NODE_VALUE_LENGTH } from "../domain/constants";
 import { nodeDefinition, randomBranches, switchCases } from "../domain/node-registry";
 import type { GraphNode, JsonValue, ValueExpr } from "../types/graph";
 import { ValueEditor } from "./value-editor";
@@ -114,6 +114,7 @@ export function NodeInspector({ node, onChange }: NodeInspectorProps) {
                     {readString(data, "mode", "none") === "apiKey" ? (
                         <Field label={t("authHeader")}>
                             <Input
+                                maxLength={MAX_NODE_FIELD_LENGTH}
                                 value={readString(data, "header", "x-api-key")}
                                 onChange={(event) => patch({ header: event.target.value })}
                                 className="h-9 font-mono text-xs"
@@ -124,6 +125,7 @@ export function NodeInspector({ node, onChange }: NodeInspectorProps) {
                     {readString(data, "mode", "none") !== "none" ? (
                         <Field label={t("authValue")} hint={t("authValueHint")}>
                             <Input
+                                maxLength={MAX_NODE_VALUE_LENGTH}
                                 value={readString(data, "value")}
                                 onChange={(event) => patch({ value: event.target.value })}
                                 className="h-9 font-mono text-xs"
@@ -187,6 +189,7 @@ export function NodeInspector({ node, onChange }: NodeInspectorProps) {
                         {cases.map((entry, index) => (
                             <div key={entry.id} className="flex items-center gap-1.5">
                                 <Input
+                                    maxLength={MAX_NODE_FIELD_LENGTH}
                                     value={entry.label}
                                     onChange={(event) =>
                                         patch({
@@ -281,6 +284,7 @@ export function NodeInspector({ node, onChange }: NodeInspectorProps) {
                     {branches.map((branch, index) => (
                         <div key={branch.id} className="flex items-center gap-1.5">
                             <Input
+                                maxLength={MAX_NODE_FIELD_LENGTH}
                                 value={branch.label}
                                 onChange={(event) =>
                                     patch({
@@ -362,6 +366,7 @@ export function NodeInspector({ node, onChange }: NodeInspectorProps) {
                 <div className="flex flex-col gap-3">
                     <Field label={t("variableName")}>
                         <Input
+                            maxLength={MAX_NODE_FIELD_LENGTH}
                             value={readString(data, "name")}
                             onChange={(event) => patch({ name: event.target.value })}
                             placeholder="userId"

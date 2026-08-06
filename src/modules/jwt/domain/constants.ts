@@ -14,6 +14,18 @@ export const MAX_JWT_INPUT_LENGTH = 32_768;
 /** Ceiling on either JSON box in the encoder, applied before signing. */
 export const MAX_JWT_JSON_LENGTH = 16_384;
 
+/**
+ * What the two key boxes accept.
+ *
+ * An HMAC secret is a passphrase and 4 KB is thousands of times any real one. A
+ * PEM is a document: a 4096-bit RSA private key is about 3.2 KB and a chain of
+ * them more, so 32 KB leaves room for every real key while refusing a paste
+ * that was never one.
+ */
+export const MAX_JWT_SECRET_LENGTH = 4_096;
+
+export const MAX_JWT_KEY_LENGTH = 32_768;
+
 /** RFC 7519 §4.1.4 leaves leeway to the verifier; 60s is the common choice. */
 export const CLOCK_SKEW_SECONDS = 60;
 

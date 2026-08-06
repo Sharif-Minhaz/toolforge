@@ -7,6 +7,11 @@ import { useCallback, useId, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { CodeEditor } from "@/modules/tools/components/code-editor";
+import {
+    InputLimitMeter,
+    useInputLimit,
+    useInputLimitStatus,
+} from "@/modules/tools/components/input-limit-meter";
 import { StatusStrip } from "@/modules/tools/components/status-strip";
 
 import {
@@ -26,6 +31,7 @@ import {
     writeAt,
     type ValuePath,
 } from "../domain/value-edit";
+import { MAX_BODY_PAYLOAD_UNITS } from "../domain/constants";
 import type { JsonValue, ValueExpr, ValueKind } from "../types/graph";
 import { ValueRow, type RowActions } from "./value-row";
 
@@ -72,6 +78,13 @@ export function ResponseBuilder({ value, onChange }: ResponseBuilderProps) {
 
         return json === null ? "" : JSON.stringify(json, null, 4);
     }, [value]);
+
+    // The text measured against the *tree's* budget rather than a separate
+    // number. JSON text is always at least as long as the payload it parses
+    // into, so a document that fits the box always fits the save.
+    const jsonLimit = useInputLimit((draft ?? rendered).length, MAX_BODY_PAYLOAD_UNITS);
+    // Null while it fits, so `invalidJson` keeps the strip to itself.
+    const jsonStatus = useInputLimitStatus(jsonLimit);
 
     const actions: RowActions = {
         onKindChange: useCallback(
@@ -135,6 +148,10 @@ export function ResponseBuilder({ value, onChange }: ResponseBuilderProps) {
     };
 
     function applyJson() {
+        if (jsonLimit.state === "over") {
+            return;
+        }
+
         try {
             const parsed = JSON.parse(draft ?? rendered) as JsonValue;
             setJsonError(false);
@@ -218,8 +235,26 @@ export function ResponseBuilder({ value, onChange }: ResponseBuilderProps) {
                         className="min-h-56"
                     />
 
+                    {/* Not capped with `maxLength`: a body is pasted whole, and
+                        a document trimmed mid-string would fail to parse for a
+                        reason nothing on screen explains. It says how far over
+                        instead, and Apply stays unavailable — which is better
+                        than building the tree and having the save refuse it. */}
+                    <div className="flex justify-end">
+                        <InputLimitMeter reading={jsonLimit} />
+                    </div>
+
+                    {jsonStatus !== null ? (
+                        <StatusStrip tone={jsonStatus.tone} message={jsonStatus.message} />
+                    ) : null}
+
                     <div className="flex flex-wrap items-center gap-3">
-                        <Button type="button" size="sm" onClick={applyJson}>
+                        <Button
+                            type="button"
+                            size="sm"
+                            disabled={jsonLimit.state === "over"}
+                            onClick={applyJson}
+                        >
                             {staticOnly ? t("applyJson") : t("replaceWithJson")}
                         </Button>
                         {draft !== null ? (

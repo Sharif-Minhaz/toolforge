@@ -401,6 +401,14 @@ Two boundaries hold the whole thing together:
 - **Only `repository/` may touch Prisma or Supabase.** Components call `getThing()`, never
   `prisma.thing.findMany()`.
 
+Every free-text field on the site carries a ceiling and shows it. The reading is
+`src/modules/tools/domain/input-limit.ts` and the countdown beside each label is
+`components/input-limit-meter.tsx`; short identity fields cap with `maxLength`, content boxes
+never do — a paste trimmed mid-string is invalid rather than shorter — and instead disable
+whatever submits them. `domain/payload-size.ts` bounds the two structured payloads a Zod schema
+passes through as `z.unknown()`, since `serverActions.bodySizeLimit` is 11 MB app-wide for the AI
+Image Detector's sake.
+
 The locale comes from the `toolforge.locale` cookie rather than a URL segment, so tool routes stay
 canonical (`/tools/uuid`, never `/en/tools/uuid`).
 

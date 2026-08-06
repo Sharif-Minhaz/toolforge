@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 
@@ -25,6 +26,7 @@ import { getRequestShape, type RequestShapeResult } from "../actions/request-sha
 import { createEndpoint, deleteEndpoint, getEndpoint, updateEndpoint } from "../actions/servers";
 import { ALLOWED_CONTENT_TYPES, type AllowedContentType } from "../domain/content-type";
 import { declaredVariables, hasSingleResponse, readResponseBody } from "../domain/graph-edit";
+import { ENDPOINT_NAME_LENGTH, MAX_PATH_LENGTH } from "../domain/constants";
 import { parsePathPattern } from "../domain/path-pattern";
 import { EMPTY_OBSERVED_SHAPE } from "../domain/suggest-path";
 import { HTTP_METHODS, type HttpMethod } from "../types/graph";
@@ -166,6 +168,12 @@ export function EndpointWorkbench({
 
     const [draftMethod, setDraftMethod] = useState<HttpMethod>("GET");
     const [draftPath, setDraftPath] = useState("/");
+
+    // Both cap at `maxLength`, so neither can read "over". `open` is null
+    // whenever no route is showing, and a hook cannot be conditional — the
+    // meter it feeds is inside the dialog and unmounted along with it.
+    const draftPathLimit = useInputLimit(draftPath.length, MAX_PATH_LENGTH);
+    const openNameLimit = useInputLimit(open?.name.length ?? 0, ENDPOINT_NAME_LENGTH.max);
     const [flowOpen, setFlowOpen] = useState(false);
 
     /**
@@ -444,11 +452,15 @@ export function EndpointWorkbench({
                                 />
                             </div>
                             <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                                <Label htmlFor={pathId} className="text-xs">
-                                    {t("pathLabel")}
-                                </Label>
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <Label htmlFor={pathId} className="text-xs">
+                                        {t("pathLabel")}
+                                    </Label>
+                                    <InputLimitMeter reading={draftPathLimit} />
+                                </div>
                                 <Input
                                     id={pathId}
+                                    maxLength={MAX_PATH_LENGTH}
                                     value={draftPath}
                                     onChange={(event) => setDraftPath(event.target.value)}
                                     placeholder="/users/:id"
@@ -599,11 +611,15 @@ export function EndpointWorkbench({
 
                             <div className="grid gap-3 sm:grid-cols-2">
                                 <div className="flex flex-col gap-1.5">
-                                    <Label htmlFor={nameId} className="text-xs">
-                                        {t("nameLabel")}
-                                    </Label>
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <Label htmlFor={nameId} className="text-xs">
+                                            {t("nameLabel")}
+                                        </Label>
+                                        <InputLimitMeter reading={openNameLimit} />
+                                    </div>
                                     <Input
                                         id={nameId}
+                                        maxLength={ENDPOINT_NAME_LENGTH.max}
                                         value={open.name}
                                         onChange={(event) => patch({ name: event.target.value })}
                                         autoComplete="off"

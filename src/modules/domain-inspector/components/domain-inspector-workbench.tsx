@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { CopyIconSwap } from "@/modules/tools/components/copy-button";
 import { OptionSelect, OptionSwitch } from "@/modules/tools/components/option-controls";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
@@ -83,6 +84,10 @@ export function DomainInspectorWorkbench({
     // debounce: no keystroke costs a request, and the 300 ms rule for typed
     // input does not apply to a field whose value is only read on submit.
     const [host, setHost] = useState(initialHost);
+
+    // Caps at `maxLength`, so this never reads "over" — it only counts the
+    // last stretch down, which is the half `checkHostSyntax` cannot show.
+    const hostLimit = useInputLimit(host.length, MAX_INPUT_LENGTH);
     const [options, setOptions] = useState<InspectionOptions>(initialOptions);
     const [token, setToken] = useState<string | null>(null);
     const [challengeFailed, setChallengeFailed] = useState(false);
@@ -264,9 +269,12 @@ export function DomainInspectorWorkbench({
 
                 <CardContent className="flex min-w-0 flex-col gap-5">
                     <div className="flex min-w-0 flex-col gap-2">
-                        <label htmlFor={inputId} className={FIELD_LABEL}>
-                            {t("hostLabel")}
-                        </label>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <label htmlFor={inputId} className={FIELD_LABEL}>
+                                {t("hostLabel")}
+                            </label>
+                            <InputLimitMeter reading={hostLimit} />
+                        </div>
                         {/*
                          * Field, action and verdict share one frame. Three
                          * loose elements stacked with gaps read as a generic
@@ -283,6 +291,12 @@ export function DomainInspectorWorkbench({
                                 />
                                 <Input
                                     id={inputId}
+                                    // Capped rather than merely checked: a
+                                    // hostname is typed or pasted whole, and
+                                    // 2,048 characters is already far past the
+                                    // 253 a name can legally be. Nothing worth
+                                    // keeping is lost at the cut.
+                                    maxLength={MAX_INPUT_LENGTH}
                                     value={host}
                                     onChange={(event) => setHost(event.target.value)}
                                     onKeyDown={(event) => {

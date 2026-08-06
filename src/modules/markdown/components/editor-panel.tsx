@@ -6,6 +6,8 @@ import type { KeyboardEvent, RefObject, UIEvent } from "react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
+import { MAX_MARKDOWN_LENGTH } from "../domain/constants";
 import type { MarkdownEditAction } from "../types";
 import { EditorToolbar } from "./editor-toolbar";
 
@@ -40,6 +42,11 @@ export function EditorPanel({
 }: EditorPanelProps) {
     const t = useTranslations("markdown.workbench");
 
+    // Not capped: a draft is pasted whole, and trimming one mid-sentence is
+    // worse than refusing to render it. `parseMarkdown` refuses past the
+    // ceiling; this is what makes that something the writer saw coming.
+    const reading = useInputLimit(text.length, MAX_MARKDOWN_LENGTH);
+
     function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
         // `metaKey` on macOS, `ctrlKey` everywhere else. `altKey` is excluded so
         // AltGr layouts — where AltGr reports as Ctrl+Alt — can still type.
@@ -65,9 +72,12 @@ export function EditorPanel({
         <section
             className={cn("flex min-w-0 flex-col gap-2", fill ? "h-full min-h-0" : "lg:h-full")}
         >
-            <Label id={labelId} htmlFor={inputId} className="text-muted-foreground text-xs">
-                {t("editorLabel")}
-            </Label>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label id={labelId} htmlFor={inputId} className="text-muted-foreground text-xs">
+                    {t("editorLabel")}
+                </Label>
+                <InputLimitMeter reading={reading} />
+            </div>
 
             <EditorToolbar onAction={onAction} labelId={labelId} />
 

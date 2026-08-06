@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { MAX_INPUT_LENGTH } from "../domain/constants";
+import { MAX_INPUT_LENGTH, MAX_PORT_SPEC_LENGTH } from "../domain/constants";
 import { PORT_PRESETS } from "../types";
 
 /**
@@ -14,7 +14,7 @@ export const scanRequestSchema = z.object({
     preset: z.enum(PORT_PRESETS),
     // Bounded independently of the port ceiling: a megabyte of digits should be
     // refused before it is parsed, not after.
-    ports: z.string().max(1_024),
+    ports: z.string().max(MAX_PORT_SPEC_LENGTH),
     turnstileToken: z.string().min(1).max(4_096),
 });
 

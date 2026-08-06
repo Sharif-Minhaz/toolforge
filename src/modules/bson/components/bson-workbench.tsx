@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { CodeBlock } from "@/modules/tools/components/code-block";
 import { CodeEditor } from "@/modules/tools/components/code-editor";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveBlob, saveFile } from "@/modules/tools/domain/file-saver";
@@ -86,6 +87,10 @@ export function BsonWorkbench({
     // *behind* the textarea, so a debounced language would leave the backdrop a
     // notation behind the glyphs for 300 ms.
     const inputLanguage: HighlightLanguage = highlightLanguageFor(source, options.bsonEncoding);
+
+    // Not capped: a document is pasted whole, and one trimmed mid-value is
+    // invalid rather than truncated. `convert` refuses past the ceiling.
+    const inputLimit = useInputLimit(input.length, MAX_INPUT_LENGTH);
     const outputLanguage: HighlightLanguage = highlightLanguageFor(target, options.bsonEncoding);
 
     function describeFailure(failure: ConversionFailure): string | null {
@@ -284,6 +289,8 @@ export function BsonWorkbench({
                             <span className="leading-[1.3]">{t("inputLabel")}</span>
                         </Label>
                         <div className="flex items-center gap-1.5">
+                            <InputLimitMeter reading={inputLimit} className="mr-1" />
+
                             <Button
                                 variant="ghost"
                                 size="sm"

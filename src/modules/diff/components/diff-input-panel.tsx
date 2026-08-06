@@ -8,6 +8,8 @@ import { buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
+import { MAX_DIFF_INPUT_LENGTH } from "../domain/constants";
 import type { DiffSide } from "../types";
 
 type DiffInputPanelProps = {
@@ -33,6 +35,12 @@ export function DiffInputPanel({
     const t = useTranslations("diff.workbench");
     const label = t(`${side}Label`);
 
+    // Not capped with `maxLength`: these boxes take whole files, and a paste
+    // silently trimmed at 200,000 characters would produce a diff that is
+    // wrong rather than refused. `compare` already refuses past the ceiling;
+    // this is what says so before the button is pressed.
+    const reading = useInputLimit(value.length, MAX_DIFF_INPUT_LENGTH);
+
     function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
         const selected = event.target.files?.[0];
 
@@ -52,6 +60,8 @@ export function DiffInputPanel({
                 </Label>
 
                 <div className="flex items-center gap-1">
+                    <InputLimitMeter reading={reading} className="mr-1" />
+
                     {/* A styled label keeps the file picker a real <input>, so it
                         stays keyboard reachable without any imperative click. */}
                     <label

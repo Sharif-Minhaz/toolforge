@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
@@ -56,6 +57,10 @@ export function SlugWorkbench({
         customSeparator: initialCustomSeparator,
     });
     const [lengthField, setLengthField] = useState(String(DEFAULT_SLUG_OPTIONS.maxLength));
+
+    // Not capped: a list of titles is pasted whole, and a trimmed one
+    // silently drops the last row. `slugify` refuses past the ceiling.
+    const inputLimit = useInputLimit(text.length, MAX_SLUG_INPUT_LENGTH);
 
     // The two typed inputs settle before the slug is rebuilt; every discrete
     // control — a preset, a switch, a stepper — applies straight away.
@@ -187,18 +192,21 @@ export function SlugWorkbench({
                         <Label htmlFor={inputId} className="text-muted-foreground text-xs">
                             {t("inputLabel")}
                         </Label>
-                        <button
-                            type="button"
-                            onClick={() => setText("")}
-                            disabled={text.length === 0}
-                            aria-label={t("clear")}
-                            className={cn(
-                                buttonVariants({ variant: "ghost", size: "icon-sm" }),
-                                "text-muted-foreground hover:text-foreground",
-                            )}
-                        >
-                            <IconX className="size-4" stroke={1.9} aria-hidden="true" />
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                            <InputLimitMeter reading={inputLimit} />
+                            <button
+                                type="button"
+                                onClick={() => setText("")}
+                                disabled={text.length === 0}
+                                aria-label={t("clear")}
+                                className={cn(
+                                    buttonVariants({ variant: "ghost", size: "icon-sm" }),
+                                    "text-muted-foreground hover:text-foreground",
+                                )}
+                            >
+                                <IconX className="size-4" stroke={1.9} aria-hidden="true" />
+                            </button>
+                        </div>
                     </div>
                     <Textarea
                         id={inputId}

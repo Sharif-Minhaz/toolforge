@@ -6,8 +6,9 @@ import { useId, type ReactNode } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { OptionSelect, OptionSwitch } from "@/modules/tools/components/option-controls";
-import { MAX_PAYLOAD_LENGTH } from "../domain/constants";
+import { MAX_FIELD_LENGTH, MAX_PAYLOAD_LENGTH, MAX_WIFI_FIELD_LENGTH } from "../domain/constants";
 import { WIFI_ENCRYPTIONS, type QrDraft, type QrPayloadKind, type WifiEncryption } from "../types";
 
 /**
@@ -18,19 +19,36 @@ import { WIFI_ENCRYPTIONS, type QrDraft, type QrPayloadKind, type WifiEncryption
 type FieldProps = {
     label: string;
     hint?: string;
-    children: (props: { id: string; describedBy: string | undefined }) => ReactNode;
+    /** The field's own value and ceiling. The wrapper owns both the countdown
+     *  and the `maxLength` it hands down, so a field cannot cap at one number
+     *  while its meter counts against another. */
+    value: string;
+    limit: number;
+    children: (props: {
+        id: string;
+        describedBy: string | undefined;
+        maxLength: number;
+    }) => ReactNode;
 };
 
-function Field({ label, hint, children }: FieldProps) {
+function Field({ label, hint, value, limit, children }: FieldProps) {
     const id = useId();
     const hintId = useId();
+    const reading = useInputLimit(value.length, limit);
 
     return (
         <div className="flex min-w-0 flex-col gap-1.5">
-            <Label htmlFor={id} className="text-muted-foreground text-xs">
-                <span className="leading-[1.3]">{label}</span>
-            </Label>
-            {children({ id, describedBy: hint === undefined ? undefined : hintId })}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label htmlFor={id} className="text-muted-foreground text-xs">
+                    <span className="leading-[1.3]">{label}</span>
+                </Label>
+                <InputLimitMeter reading={reading} />
+            </div>
+            {children({
+                id,
+                describedBy: hint === undefined ? undefined : hintId,
+                maxLength: limit,
+            })}
             {hint !== undefined && (
                 <p id={hintId} className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
                     {hint}
@@ -55,10 +73,16 @@ export function QrPayloadFields({ kind, draft, disabled, onChange }: QrPayloadFi
     switch (kind) {
         case "url":
             return (
-                <Field label={t("url.label")} hint={t("url.hint")}>
-                    {({ id, describedBy }) => (
+                <Field
+                    label={t("url.label")}
+                    hint={t("url.hint")}
+                    value={draft.url}
+                    limit={MAX_FIELD_LENGTH}
+                >
+                    {({ id, describedBy, maxLength }) => (
                         <Input
                             id={id}
+                            maxLength={maxLength}
                             type="url"
                             inputMode="url"
                             autoComplete="url"
@@ -74,14 +98,19 @@ export function QrPayloadFields({ kind, draft, disabled, onChange }: QrPayloadFi
 
         case "text":
             return (
-                <Field label={t("text.label")} hint={t("text.hint")}>
-                    {({ id, describedBy }) => (
+                <Field
+                    label={t("text.label")}
+                    hint={t("text.hint")}
+                    value={draft.text}
+                    limit={MAX_PAYLOAD_LENGTH}
+                >
+                    {({ id, describedBy, maxLength }) => (
                         <Textarea
                             id={id}
+                            maxLength={maxLength}
                             rows={4}
                             aria-describedby={describedBy}
                             placeholder={t("text.placeholder")}
-                            maxLength={MAX_PAYLOAD_LENGTH}
                             value={draft.text}
                             onChange={(event) => onChange({ text: event.target.value })}
                         />
@@ -92,10 +121,16 @@ export function QrPayloadFields({ kind, draft, disabled, onChange }: QrPayloadFi
         case "wifi":
             return (
                 <div className="flex flex-col gap-3">
-                    <Field label={t("wifi.ssid")} hint={t("wifi.ssidHint")}>
-                        {({ id, describedBy }) => (
+                    <Field
+                        label={t("wifi.ssid")}
+                        hint={t("wifi.ssidHint")}
+                        value={draft.wifi.ssid}
+                        limit={MAX_WIFI_FIELD_LENGTH}
+                    >
+                        {({ id, describedBy, maxLength }) => (
                             <Input
                                 id={id}
+                                maxLength={maxLength}
                                 aria-describedby={describedBy}
                                 placeholder={t("wifi.ssidPlaceholder")}
                                 value={draft.wifi.ssid}
@@ -107,10 +142,15 @@ export function QrPayloadFields({ kind, draft, disabled, onChange }: QrPayloadFi
                     </Field>
 
                     <div className="grid gap-3 sm:grid-cols-2">
-                        <Field label={t("wifi.password")}>
-                            {({ id }) => (
+                        <Field
+                            label={t("wifi.password")}
+                            value={draft.wifi.password}
+                            limit={MAX_WIFI_FIELD_LENGTH}
+                        >
+                            {({ id, maxLength }) => (
                                 <Input
                                     id={id}
+                                    maxLength={maxLength}
                                     // Not `type="password"`: the value ends up in
                                     // a code anyone can scan, so hiding it on
                                     // screen protects nothing and only makes it
@@ -154,10 +194,15 @@ export function QrPayloadFields({ kind, draft, disabled, onChange }: QrPayloadFi
         case "contact":
             return (
                 <div className="grid gap-3 sm:grid-cols-2">
-                    <Field label={t("contact.fullName")}>
-                        {({ id }) => (
+                    <Field
+                        label={t("contact.fullName")}
+                        value={draft.contact.fullName}
+                        limit={MAX_FIELD_LENGTH}
+                    >
+                        {({ id, maxLength }) => (
                             <Input
                                 id={id}
+                                maxLength={maxLength}
                                 autoComplete="name"
                                 placeholder={t("contact.fullNamePlaceholder")}
                                 value={draft.contact.fullName}
@@ -173,10 +218,15 @@ export function QrPayloadFields({ kind, draft, disabled, onChange }: QrPayloadFi
                         )}
                     </Field>
 
-                    <Field label={t("contact.organization")}>
-                        {({ id }) => (
+                    <Field
+                        label={t("contact.organization")}
+                        value={draft.contact.organization}
+                        limit={MAX_FIELD_LENGTH}
+                    >
+                        {({ id, maxLength }) => (
                             <Input
                                 id={id}
+                                maxLength={maxLength}
                                 autoComplete="organization"
                                 placeholder={t("contact.organizationPlaceholder")}
                                 value={draft.contact.organization}
@@ -192,10 +242,15 @@ export function QrPayloadFields({ kind, draft, disabled, onChange }: QrPayloadFi
                         )}
                     </Field>
 
-                    <Field label={t("contact.phone")}>
-                        {({ id }) => (
+                    <Field
+                        label={t("contact.phone")}
+                        value={draft.contact.phone}
+                        limit={MAX_FIELD_LENGTH}
+                    >
+                        {({ id, maxLength }) => (
                             <Input
                                 id={id}
+                                maxLength={maxLength}
                                 type="tel"
                                 inputMode="tel"
                                 autoComplete="tel"
@@ -210,10 +265,15 @@ export function QrPayloadFields({ kind, draft, disabled, onChange }: QrPayloadFi
                         )}
                     </Field>
 
-                    <Field label={t("contact.email")}>
-                        {({ id }) => (
+                    <Field
+                        label={t("contact.email")}
+                        value={draft.contact.email}
+                        limit={MAX_FIELD_LENGTH}
+                    >
+                        {({ id, maxLength }) => (
                             <Input
                                 id={id}
+                                maxLength={maxLength}
                                 type="email"
                                 inputMode="email"
                                 autoComplete="email"
@@ -228,10 +288,15 @@ export function QrPayloadFields({ kind, draft, disabled, onChange }: QrPayloadFi
                         )}
                     </Field>
 
-                    <Field label={t("contact.url")}>
-                        {({ id }) => (
+                    <Field
+                        label={t("contact.url")}
+                        value={draft.contact.url}
+                        limit={MAX_FIELD_LENGTH}
+                    >
+                        {({ id, maxLength }) => (
                             <Input
                                 id={id}
+                                maxLength={maxLength}
                                 type="url"
                                 inputMode="url"
                                 placeholder={t("contact.urlPlaceholder")}
@@ -245,10 +310,15 @@ export function QrPayloadFields({ kind, draft, disabled, onChange }: QrPayloadFi
                         )}
                     </Field>
 
-                    <Field label={t("contact.address")}>
-                        {({ id }) => (
+                    <Field
+                        label={t("contact.address")}
+                        value={draft.contact.address}
+                        limit={MAX_FIELD_LENGTH}
+                    >
+                        {({ id, maxLength }) => (
                             <Input
                                 id={id}
+                                maxLength={maxLength}
                                 autoComplete="street-address"
                                 placeholder={t("contact.addressPlaceholder")}
                                 value={draft.contact.address}
@@ -266,10 +336,11 @@ export function QrPayloadFields({ kind, draft, disabled, onChange }: QrPayloadFi
         case "sms":
             return (
                 <div className="flex flex-col gap-3">
-                    <Field label={t("sms.phone")}>
-                        {({ id }) => (
+                    <Field label={t("sms.phone")} value={draft.sms.phone} limit={MAX_FIELD_LENGTH}>
+                        {({ id, maxLength }) => (
                             <Input
                                 id={id}
+                                maxLength={maxLength}
                                 type="tel"
                                 inputMode="tel"
                                 placeholder={t("sms.phonePlaceholder")}
@@ -281,13 +352,17 @@ export function QrPayloadFields({ kind, draft, disabled, onChange }: QrPayloadFi
                         )}
                     </Field>
 
-                    <Field label={t("sms.message")}>
-                        {({ id }) => (
+                    <Field
+                        label={t("sms.message")}
+                        value={draft.sms.message}
+                        limit={MAX_PAYLOAD_LENGTH}
+                    >
+                        {({ id, maxLength }) => (
                             <Textarea
                                 id={id}
+                                maxLength={maxLength}
                                 rows={3}
                                 placeholder={t("sms.messagePlaceholder")}
-                                maxLength={MAX_PAYLOAD_LENGTH}
                                 value={draft.sms.message}
                                 onChange={(event) =>
                                     onChange({ sms: { ...draft.sms, message: event.target.value } })
@@ -302,10 +377,15 @@ export function QrPayloadFields({ kind, draft, disabled, onChange }: QrPayloadFi
             return (
                 <div className="flex flex-col gap-3">
                     <div className="grid gap-3 sm:grid-cols-2">
-                        <Field label={t("email.address")}>
-                            {({ id }) => (
+                        <Field
+                            label={t("email.address")}
+                            value={draft.email.address}
+                            limit={MAX_FIELD_LENGTH}
+                        >
+                            {({ id, maxLength }) => (
                                 <Input
                                     id={id}
+                                    maxLength={maxLength}
                                     type="email"
                                     inputMode="email"
                                     placeholder={t("email.addressPlaceholder")}
@@ -322,10 +402,15 @@ export function QrPayloadFields({ kind, draft, disabled, onChange }: QrPayloadFi
                             )}
                         </Field>
 
-                        <Field label={t("email.subject")}>
-                            {({ id }) => (
+                        <Field
+                            label={t("email.subject")}
+                            value={draft.email.subject}
+                            limit={MAX_FIELD_LENGTH}
+                        >
+                            {({ id, maxLength }) => (
                                 <Input
                                     id={id}
+                                    maxLength={maxLength}
                                     placeholder={t("email.subjectPlaceholder")}
                                     value={draft.email.subject}
                                     onChange={(event) =>
@@ -341,13 +426,17 @@ export function QrPayloadFields({ kind, draft, disabled, onChange }: QrPayloadFi
                         </Field>
                     </div>
 
-                    <Field label={t("email.body")}>
-                        {({ id }) => (
+                    <Field
+                        label={t("email.body")}
+                        value={draft.email.body}
+                        limit={MAX_PAYLOAD_LENGTH}
+                    >
+                        {({ id, maxLength }) => (
                             <Textarea
                                 id={id}
+                                maxLength={maxLength}
                                 rows={3}
                                 placeholder={t("email.bodyPlaceholder")}
-                                maxLength={MAX_PAYLOAD_LENGTH}
                                 value={draft.email.body}
                                 onChange={(event) =>
                                     onChange({
@@ -362,10 +451,16 @@ export function QrPayloadFields({ kind, draft, disabled, onChange }: QrPayloadFi
 
         case "phone":
             return (
-                <Field label={t("phone.number")} hint={t("phone.hint")}>
-                    {({ id, describedBy }) => (
+                <Field
+                    label={t("phone.number")}
+                    hint={t("phone.hint")}
+                    value={draft.phone.number}
+                    limit={MAX_FIELD_LENGTH}
+                >
+                    {({ id, describedBy, maxLength }) => (
                         <Input
                             id={id}
+                            maxLength={maxLength}
                             type="tel"
                             inputMode="tel"
                             autoComplete="tel"

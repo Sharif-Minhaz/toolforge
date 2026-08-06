@@ -16,6 +16,7 @@ import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { MAX_URL_INPUT_LENGTH, SAMPLE_URL } from "../domain/constants";
 import { buildUrlParserJson, createUrlParserExportFile } from "../domain/export";
 import { applyParams } from "../domain/params";
@@ -42,6 +43,12 @@ export function UrlParserWorkbench({ initialUrl, initialView }: UrlParserWorkben
     const statusId = useId();
 
     const [url, setUrl] = useState(initialUrl);
+
+    // Not capped: this box and the parameter table below it edit one value
+    // in both directions, and a `maxLength` that trimmed a paste would make
+    // the rows disagree with the address they came from. `parseUrl` refuses
+    // past the ceiling; the meter is what makes that visible first.
+    const urlLimit = useInputLimit(url.length, MAX_URL_INPUT_LENGTH);
     const [copied, markCopied] = useCopyFeedback<CopyPanel>();
 
     // Derived during render rather than behind a debounce, and deliberately so:
@@ -175,10 +182,13 @@ export function UrlParserWorkbench({ initialUrl, initialView }: UrlParserWorkben
                         <Label htmlFor={inputId} className="text-muted-foreground text-xs">
                             <span className="leading-[1.3]">{t("inputLabel")}</span>
                         </Label>
-                        <Button variant="ghost" size="sm" onClick={() => setUrl(SAMPLE_URL)}>
-                            <IconWand className="size-3.5" stroke={1.8} aria-hidden="true" />
-                            {t("example")}
-                        </Button>
+                        <div className="flex items-center gap-1.5">
+                            <InputLimitMeter reading={urlLimit} />
+                            <Button variant="ghost" size="sm" onClick={() => setUrl(SAMPLE_URL)}>
+                                <IconWand className="size-3.5" stroke={1.8} aria-hidden="true" />
+                                {t("example")}
+                            </Button>
+                        </div>
                     </div>
 
                     <div className="relative">

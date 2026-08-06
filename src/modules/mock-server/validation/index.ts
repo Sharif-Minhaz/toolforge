@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { exceedsPayloadBudget } from "@/modules/tools/domain/payload-size";
 import { RECOVERY_KEY_LENGTH } from "@/modules/tools/domain/recovery-key";
 import { SERVER_KEY_LENGTH } from "@/modules/tools/domain/server-key";
 import { MAX_TURNSTILE_TOKEN_LENGTH } from "@/modules/tools/domain/turnstile";
@@ -7,6 +8,8 @@ import { MAX_TURNSTILE_TOKEN_LENGTH } from "@/modules/tools/domain/turnstile";
 import {
     COLLECTION_NAME_LENGTH,
     ENDPOINT_NAME_LENGTH,
+    MAX_BODY_PAYLOAD_UNITS,
+    MAX_GRAPH_PAYLOAD_UNITS,
     MAX_PATH_LENGTH,
     MAX_STATUS_CODE,
     MIN_STATUS_CODE,
@@ -110,15 +113,29 @@ export const headerRowsSchema = z
     .max(30);
 
 /**
- * The response body arrives as a `ValueExpr` tree, and is deliberately *not*
- * described here.
+ * The response body arrives as a `ValueExpr` tree, and its *shape* is
+ * deliberately not described here.
  *
  * A recursive Zod schema over eleven variants would be a second, drifting copy
  * of a shape `validateGraph` already checks — including the depth cap, which is
- * the part that actually matters. So the payload is bounded and passed through,
- * and the domain validator is the single authority on whether it is a value.
+ * the part that actually matters. So the domain validator stays the single
+ * authority on whether this is a value.
+ *
+ * Its *size* is another matter, and used to be unbounded. "Bounded and passed
+ * through" was what the comment said and only the second half was true: the
+ * body-size limit for Server Actions is 11 MB app-wide because one tool
+ * forwards photographs, so a `z.unknown()` here accepted eleven megabytes of
+ * anything on its way to Postgres. `exceedsPayloadBudget` costs the budget
+ * rather than the payload, so refusing a hostile tree is bounded work.
  */
-export const bodyTreeSchema = z.unknown();
+export const bodyTreeSchema = z
+    .unknown()
+    .refine((value) => !exceedsPayloadBudget(value, MAX_BODY_PAYLOAD_UNITS));
+
+/** The canvas document. Bounded for exactly the reason the body above is. */
+export const graphPayloadSchema = z
+    .unknown()
+    .refine((value) => !exceedsPayloadBudget(value, MAX_GRAPH_PAYLOAD_UNITS));
 
 export const createServerSchema = z.object({
     workspaceId: workspaceIdSchema,
@@ -191,11 +208,10 @@ export const updateEndpointSchema = z.object({
     headers: headerRowsSchema,
     body: bodyTreeSchema,
     /**
-     * The canvas's document. Bounded and passed through for the same reason the
-     * body is: `validateGraph` is the single authority on graph shape, and a
-     * parallel Zod description of eleven node kinds would drift from it.
+     * The canvas's document. Shape belongs to `validateGraph`, which is the
+     * single authority on it; only the size is asserted here.
      */
-    graph: z.unknown(),
+    graph: graphPayloadSchema,
     /** Optimistic-concurrency token; the save asserts the version it read. */
     version: z.number().int().min(1),
 });

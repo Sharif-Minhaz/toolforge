@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
 import { getKeyFormat, isSecretTooShort } from "../domain/algorithms";
+import { MAX_JWT_KEY_LENGTH, MAX_JWT_SECRET_LENGTH } from "../domain/constants";
 import { measureSecretBytes } from "../domain/keys";
 import type { JwtAlgorithm, JwtKeyInput } from "../types";
 
@@ -63,6 +64,10 @@ export function KeyField({ algorithm, value, onChange, purpose, copied, onCopy }
             {usesSecret ? (
                 <Textarea
                     id={fieldId}
+                    // Capped: an HMAC secret is a passphrase, and 4 KB is
+                    // thousands of times any real one. No meter — a countdown
+                    // beside a credential field is noise.
+                    maxLength={MAX_JWT_SECRET_LENGTH}
                     value={secret?.secret ?? ""}
                     placeholder={placeholder}
                     spellCheck={false}
@@ -81,6 +86,10 @@ export function KeyField({ algorithm, value, onChange, purpose, copied, onCopy }
             ) : (
                 <Textarea
                     id={fieldId}
+                    // A 4096-bit RSA private key in PEM is about 3.2 KB, and a
+                    // chain of them more; 32 KB leaves room for every real key
+                    // and refuses a paste that was never one.
+                    maxLength={MAX_JWT_KEY_LENGTH}
                     value={pem}
                     placeholder={placeholder}
                     spellCheck={false}

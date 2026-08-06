@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { StatusStrip } from "@/modules/tools/components/status-strip";
 import { unlockLink } from "../actions/unlock-link";
+import { PASSWORD_LENGTH } from "../domain/constants";
 import type { UnlockFailureReason } from "../types";
 
 /**
@@ -27,6 +29,10 @@ export function UnlockForm({ slug }: { slug: string }) {
     const errorId = useId();
 
     const [password, setPassword] = useState("");
+
+    // Caps at `maxLength`: a gate password is typed, never composed, so the
+    // meter only ever counts the last stretch down.
+    const passwordLimit = useInputLimit(password.length, PASSWORD_LENGTH.max);
     const [pending, setPending] = useState(false);
     const [failure, setFailure] = useState<UnlockFailureReason | null>(null);
 
@@ -59,15 +65,19 @@ export function UnlockForm({ slug }: { slug: string }) {
     return (
         <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-                <Label htmlFor={passwordId} className="text-muted-foreground text-xs">
-                    <span className="leading-[1.3]">{t("passwordLabel")}</span>
-                </Label>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <Label htmlFor={passwordId} className="text-muted-foreground text-xs">
+                        <span className="leading-[1.3]">{t("passwordLabel")}</span>
+                    </Label>
+                    <InputLimitMeter reading={passwordLimit} />
+                </div>
                 <Input
                     id={passwordId}
                     type="password"
                     autoComplete="off"
                     autoFocus
                     required
+                    maxLength={PASSWORD_LENGTH.max}
                     value={password}
                     placeholder={t("passwordPlaceholder")}
                     aria-describedby={failure === null ? undefined : errorId}

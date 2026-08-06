@@ -422,10 +422,14 @@ layer: `domain/highlight.ts` with `components/code-editor.tsx` and
 `domain/json-parser.ts` and `domain/json-serialize.ts` over
 `types/json-tree.ts`, the shared network layer: `domain/ip.ts`,
 `domain/host-syntax.ts`, `repository/address-guard.ts`,
-`components/scan-radar.tsx`, and the shared account-free identity and metering
+`components/scan-radar.tsx`, the shared account-free identity and metering
 layer both studios run on: `domain/browser-secret.ts`, `domain/recovery-key.ts`,
 `domain/secret-cookie.ts`, `domain/server-key.ts`, `domain/rate-window.ts` and
-`repository/rate-counter.ts`), `short-links` (every re-pointable
+`repository/rate-counter.ts`, and the shared input-ceiling layer every box on
+the site reads: `domain/input-limit.ts` with
+`components/input-limit-meter.tsx`, plus `domain/payload-size.ts` for the two
+payloads Zod passes through — see **Telling Somebody How Full the Box Is**),
+`short-links` (every re-pointable
 link on the site — see below), `image-compressor` (a batch queue and a
 smallest-of-four search), `image-converter` (a named target per batch, plus the
 ICO container and the favicon pack), `blur-placeholder` (the BlurHash codec and
@@ -476,6 +480,9 @@ Rules that keep this honest:
 - No `console.*` in feature code. Use `logEvent` from
   `src/modules/observability/domain/logger.ts`.
 - Do not add to `lib/`. It holds `cn` and the Prisma/Supabase clients only.
+- Every free-text field carries a ceiling and shows it. Pick `cap` or `warn`
+  by what a silent cut would destroy — see **Telling Somebody How Full the
+  Box Is**.
 
 ---
 
@@ -593,6 +600,63 @@ own "today" — lives inside the popover, so it never mounts during SSR and
 hydration never sees it.
 
 ---
+
+# Telling Somebody How Full the Box Is
+
+Every tool on this site already refused oversized input — a ceiling in `domain/`
+and a `z.string().max()` on every Server Action. What none of them did was say
+so _before_ the refusal, and a box that accepts a paste and then reports a
+failure is indistinguishable from a broken tool. `tools/domain/input-limit.ts`
+and `tools/components/input-limit-meter.tsx` are the one implementation.
+
+**Three states, not two.** A field that only speaks when it is full teaches
+nobody anything, and one that shows `0 / 60` from the first keystroke is noise
+on fifty-nine of them. `readInputLimit` returns `ok`, `near` or `over`, and the
+meter renders nothing in the first unless the caller asks for a running count.
+The window is a ratio clamped at both ends — 10% of a 20-character alias is two
+characters, which is too late, and 10% of a 250,000-character document is
+25,000, which is not "nearly" anything.
+
+**It takes a length, not a string.** Some ceilings are UTF-16 units and some are
+UTF-8 bytes, and one function over a number serves both. Byte-measured fields
+pass `useByteLabel()` as `format`, which also switches the copy off its plural
+forms — "1 character left" has no byte equivalent.
+
+**Cap or warn, and the choice is about what a cut destroys.** Both are correct
+and using the wrong one is the bug:
+
+- **Cap with `maxLength`** on a short identity field — a name, an alias, a
+  hostname, a key, a colour, a header. These are typed or pasted whole and one
+  over the ceiling is a mistake, so the browser refusing the keystroke costs
+  nothing. Such a field can never read `over`; the meter only counts down.
+- **Never cap a content box.** A `db.json`, a curl command, a JWT, a Markdown
+  draft, an OpenAPI document: `maxLength` truncates a paste _silently_, and a
+  document cut mid-string is not a shorter document — it is an invalid one, or
+  worse a valid one that means something else. Show the meter, render the
+  failure under the box, and **disable whatever submits it**. A box that says
+  "too large" above a button that will happily post it is the same defect in a
+  new place.
+
+**The counter goes beside the label, the failure goes under the box.** "How much
+is left" is a property of the field; "this cannot be submitted" is a verdict,
+and every verdict on this site appears in a `StatusStrip` under its control.
+`useInputLimitStatus` shapes one for that strip.
+
+**A live region that speaks on every keystroke is unusable.** The meter carries
+`role="status"` only once the state stops being `ok`.
+
+**Where Zod passes a value through, bound its size explicitly.**
+`serverActions.bodySizeLimit` is 11 MB app-wide because one tool forwards
+photographs, so every action inherits that ceiling — and the mock studio's
+`graph` and `body` were `z.unknown()`, which is the right call about _shape_ and
+was silently also a decision about _size_. `tools/domain/payload-size.ts` is the
+guard, and its two properties are the design: it walks iteratively, because a
+ten-thousand-deep array is a payload somebody can post and a recursive walk over
+one is a stack overflow rather than a refusal; and it **costs the budget, not
+the payload** — an array is charged for its `length` before a single item is
+pushed, so refusing a half-million-element paste is bounded work.
+`JSON.stringify(value).length > limit` is the obvious version and it serialises
+the whole thing first, which is the cost being defended against.
 
 # Remembering Something in the Reader's Browser
 
@@ -2088,5 +2152,10 @@ Checked by the maintainer, not by an automated browser run (see
 18. Ship documentation with the code. A new tool updates the README's tool
     table; a new variable updates `example.env` and the environment table
     together. Stale docs are a defect in the change that caused them.
-19. Keep implementations simple.
-20. Leave the codebase cleaner than you found it.
+19. Give every free-text field a ceiling and a visible countdown. Cap a short
+    identity field with `maxLength`; never cap a content box — show the meter,
+    render the failure under it, and disable what submits it.
+20. Bound the size of anything a Zod schema passes through as `z.unknown()`.
+    `serverActions.bodySizeLimit` is 11 MB for the whole app.
+21. Keep implementations simple.
+22. Leave the codebase cleaner than you found it.

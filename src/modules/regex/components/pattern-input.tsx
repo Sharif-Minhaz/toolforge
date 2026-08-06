@@ -3,6 +3,7 @@
 import { useRef, type ClipboardEvent, type KeyboardEvent, type UIEvent } from "react";
 
 import { cn } from "@/lib/utils";
+import { MAX_PATTERN_LENGTH } from "../domain/constants";
 import { parseLiteral, type RegexLiteral } from "../domain/literal";
 import type { HighlightKind, HighlightSpan } from "../types";
 import {
@@ -107,6 +108,11 @@ export function PatternInput({
                 id={id}
                 rows={1}
                 wrap="off"
+                // Capped rather than merely checked: a pattern is one line, and
+                // 1,000 characters is already far past any expression somebody
+                // hand-writes. `analyze` still refuses one that arrives from a
+                // shared link over the ceiling.
+                maxLength={MAX_PATTERN_LENGTH}
                 value={value}
                 aria-label={label}
                 aria-invalid={invalid}

@@ -54,6 +54,19 @@ export function isRoutableName(name: string): boolean {
 }
 
 /**
+ * Whether a document is already too big to send, without parsing it.
+ *
+ * The editor's own verdict and every submit button's disabled state read this
+ * one function, so a box that says "too large" can never sit above a button
+ * that will happily post it. `readDocument` applies the same ceiling on the way
+ * in — this is only the cheap half, pulled out so the UI can ask on every
+ * keystroke.
+ */
+export function exceedsUploadLimit(input: string, maxBytes = MAX_UPLOAD_BYTES): boolean {
+    return getByteLength(input) > maxBytes;
+}
+
+/**
  * Reads text into a document, or says where it went wrong.
  *
  * Ordered cheapest-first for the usual reason: an empty box and a document over

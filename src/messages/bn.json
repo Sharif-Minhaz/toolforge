@@ -37,6 +37,15 @@
             "nonillion": "{value} নোনিলিয়ন",
             "decillion": "{value} ডেসিলিয়ন",
             "power": "{value} × 10{exponent}"
+        },
+        "inputLimit": {
+            "count": "{length} / {limit}",
+            "remaining": "{count, plural, other {আর # অক্ষর লেখা যাবে}}",
+            "over": "{count, plural, other {# অক্ষর বেশি}}",
+            "sizeRemaining": "{value} বাকি",
+            "sizeOver": "{value} বেশি",
+            "reached": "সীমা শেষ",
+            "overHint": "{limit} সীমার চেয়ে {amount} — লেখা ছোট করে নিন।"
         }
     },
     "nav": {

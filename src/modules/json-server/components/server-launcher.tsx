@@ -18,12 +18,16 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { CopyIconSwap } from "@/modules/tools/components/copy-button";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
 import { copyText } from "@/modules/tools/domain/clipboard";
+import { MAX_TYPED_RECOVERY_KEY_LENGTH } from "@/modules/tools/domain/recovery-key";
+import { SERVER_KEY_LENGTH } from "@/modules/tools/domain/server-key";
 
 import { createServer, importServer } from "../actions/servers";
-import { TURNSTILE_ACTION } from "../domain/constants";
+import { SERVER_NAME_LENGTH, TURNSTILE_ACTION } from "../domain/constants";
+import { exceedsUploadLimit } from "../domain/document";
 import { SAMPLE_DOCUMENT } from "../domain/samples";
 import {
     DOCUMENT_PROBLEMS,
@@ -75,6 +79,12 @@ export function ServerLauncher({ overview, turnstileSiteKey }: ServerLauncherPro
     const [key, setKey] = useState("");
     const [document, setDocument] = useState(SAMPLE_DOCUMENT);
     const [recoveryInput, setRecoveryInput] = useState("");
+
+    // Both cap at `maxLength`. `checkServerName` and `checkServerKey` still
+    // own what a *usable* name and key are — this only stops the box from
+    // growing past what the action accepts, and counts the last stretch down.
+    const nameLimit = useInputLimit(name.length, SERVER_NAME_LENGTH.max);
+    const keyLimit = useInputLimit(key.length, SERVER_KEY_LENGTH.max);
     const [failure, setFailure] = useState<ActionProblem | null>(null);
     const [documentFailure, setDocumentFailure] = useState<DocumentFailure | null>(null);
 
@@ -96,7 +106,12 @@ export function ServerLauncher({ overview, turnstileSiteKey }: ServerLauncherPro
     const hasRoom = servers.length < overview.maxServers;
     const storageReady = overview.isStorageConfigured;
     const challengeReady = turnstileSiteKey !== null;
-    const canSubmit = storageReady && challengeReady && hasRoom && token !== null && !pending;
+    // A document already over the upload ceiling never leaves the browser.
+    // The editor says so under the box; this is what stops the button from
+    // contradicting it. Import has no document, so it is unaffected.
+    const documentFits = panel !== "create" || !exceedsUploadLimit(document);
+    const canSubmit =
+        storageReady && challengeReady && hasRoom && token !== null && !pending && documentFits;
 
     /** A token is single-use, so every attempt — win or lose — draws a fresh one. */
     function consumeToken() {
@@ -253,11 +268,15 @@ export function ServerLauncher({ overview, turnstileSiteKey }: ServerLauncherPro
                         <>
                             <div className="grid gap-3 sm:grid-cols-2">
                                 <div className="flex min-w-0 flex-col gap-1.5">
-                                    <Label htmlFor={nameId} className="text-xs">
-                                        {t("nameLabel")}
-                                    </Label>
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <Label htmlFor={nameId} className="text-xs">
+                                            {t("nameLabel")}
+                                        </Label>
+                                        <InputLimitMeter reading={nameLimit} />
+                                    </div>
                                     <Input
                                         id={nameId}
+                                        maxLength={SERVER_NAME_LENGTH.max}
                                         value={name}
                                         onChange={(event) => setName(event.target.value)}
                                         placeholder={t("namePlaceholder")}
@@ -267,11 +286,15 @@ export function ServerLauncher({ overview, turnstileSiteKey }: ServerLauncherPro
                                 </div>
 
                                 <div className="flex min-w-0 flex-col gap-1.5">
-                                    <Label htmlFor={keyId} className="text-xs">
-                                        {t("keyLabel")}
-                                    </Label>
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <Label htmlFor={keyId} className="text-xs">
+                                            {t("keyLabel")}
+                                        </Label>
+                                        <InputLimitMeter reading={keyLimit} />
+                                    </div>
                                     <Input
                                         id={keyId}
+                                        maxLength={SERVER_KEY_LENGTH.max}
                                         value={key}
                                         onChange={(event) => setKey(event.target.value)}
                                         placeholder={t("keyPlaceholder")}
@@ -304,6 +327,11 @@ export function ServerLauncher({ overview, turnstileSiteKey }: ServerLauncherPro
                             </Label>
                             <Input
                                 id={recoveryId}
+                                // Formatted keys carry separators, so the cap is
+                                // the printed spelling's length rather than the
+                                // canonical sixteen. `normalizeRecoveryKey`
+                                // still owns what counts as one.
+                                maxLength={MAX_TYPED_RECOVERY_KEY_LENGTH}
                                 value={recoveryInput}
                                 onChange={(event) => setRecoveryInput(event.target.value)}
                                 placeholder="XXXX-XXXX-XXXX-XXXX"

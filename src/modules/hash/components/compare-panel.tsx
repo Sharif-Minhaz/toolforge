@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
+
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { ALGORITHM_LABELS, ENCODING_LABELS } from "../domain/algorithms";
 import { MAX_HASH_INPUT_LENGTH } from "../domain/constants";
@@ -46,6 +48,10 @@ export function ComparePanel({
     describeFailure,
 }: ComparePanelProps) {
     const t = useTranslations("hash.workbench.compare");
+
+    // Both boxes cap at `maxLength`, so neither can read "over".
+    const leftLimit = useInputLimit(left.length, MAX_HASH_INPUT_LENGTH);
+    const rightLimit = useInputLimit(right.length, MAX_HASH_INPUT_LENGTH);
 
     const leftId = useId();
     const rightId = useId();
@@ -124,12 +130,15 @@ export function ComparePanel({
                         <Label htmlFor={leftId} className="text-muted-foreground text-xs">
                             <span className="leading-[1.3]">{t("leftLabel")}</span>
                         </Label>
-                        <IconCopyButton
-                            copied={copied === "left"}
-                            onClick={() => onCopy("left", left)}
-                            disabled={left.length === 0}
-                            aria-label={t("copyLeft")}
-                        />
+                        <div className="flex items-center gap-1.5">
+                            <InputLimitMeter reading={leftLimit} />
+                            <IconCopyButton
+                                copied={copied === "left"}
+                                onClick={() => onCopy("left", left)}
+                                disabled={left.length === 0}
+                                aria-label={t("copyLeft")}
+                            />
+                        </div>
                     </div>
                     <Textarea
                         id={leftId}
@@ -150,12 +159,15 @@ export function ComparePanel({
                         <Label htmlFor={rightId} className="text-muted-foreground text-xs">
                             <span className="leading-[1.3]">{t("rightLabel")}</span>
                         </Label>
-                        <IconCopyButton
-                            copied={copied === "right"}
-                            onClick={() => onCopy("right", right)}
-                            disabled={right.length === 0}
-                            aria-label={t("copyRight")}
-                        />
+                        <div className="flex items-center gap-1.5">
+                            <InputLimitMeter reading={rightLimit} />
+                            <IconCopyButton
+                                copied={copied === "right"}
+                                onClick={() => onCopy("right", right)}
+                                disabled={right.length === 0}
+                                aria-label={t("copyRight")}
+                            />
+                        </div>
                     </div>
                     <Textarea
                         id={rightId}

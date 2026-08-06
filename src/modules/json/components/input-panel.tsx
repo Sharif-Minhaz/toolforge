@@ -8,7 +8,9 @@ import { buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { ByteSize } from "@/modules/tools/components/byte-size";
+import { useByteLabel } from "@/modules/tools/components/byte-size";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
+import { MAX_JSON_INPUT_BYTES } from "../domain/constants";
 import type { JsonMode } from "../types";
 
 type InputPanelProps = {
@@ -34,6 +36,9 @@ export function InputPanel({
 }: InputPanelProps) {
     const t = useTranslations("json.workbench");
 
+    const byteLabel = useByteLabel();
+    const sizeReading = useInputLimit(inputBytes, MAX_JSON_INPUT_BYTES);
+
     function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
         const selected = event.target.files?.[0];
 
@@ -53,9 +58,15 @@ export function InputPanel({
                 </Label>
 
                 <div className="flex flex-wrap items-center gap-1.5">
-                    <ByteSize
-                        bytes={inputBytes}
-                        className="text-muted-foreground mr-1 font-mono text-[0.6875rem] tabular-nums"
+                    {/* Against the ceiling rather than a bare size, so the
+                        number goes amber before the tool refuses rather than
+                        only after. Bytes, because that is what the limit is
+                        measured in. */}
+                    <InputLimitMeter
+                        reading={sizeReading}
+                        format={byteLabel}
+                        className="mr-1"
+                        always
                     />
 
                     <button
