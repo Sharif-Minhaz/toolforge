@@ -1,6 +1,12 @@
 "use client";
 
-import { IconLayoutDashboard, IconSearch, IconServer2, IconX } from "@tabler/icons-react";
+import {
+    IconDatabase,
+    IconLayoutDashboard,
+    IconSearch,
+    IconServer2,
+    IconX,
+} from "@tabler/icons-react";
 import { motion } from "motion/react";
 import { useFormatter, useTranslations } from "next-intl";
 import Link from "next/link";
@@ -196,9 +202,10 @@ export function SidebarNav({
     );
 
     const overviewActive = pathname === "/";
-    // A section rather than a catalog entry: the studio is a route tree, not a
-    // page, so it is not one of `tools` and does not appear under a category.
-    const studioActive = pathname === "/mock" || pathname.startsWith("/mock/");
+    // Sections rather than catalog entries: each studio is a route tree, not a
+    // page, so neither is one of `tools` and neither appears under a category.
+    const mockActive = pathname === "/mock" || pathname.startsWith("/mock/");
+    const jsonActive = pathname === "/json" || pathname.startsWith("/json/");
 
     function renderRow(tool: LocalizedTool) {
         const available = tool.status === "available";
@@ -309,13 +316,29 @@ export function SidebarNav({
                             <NavRow
                                 label={t("mockServers")}
                                 href="/mock"
-                                active={studioActive}
+                                active={mockActive}
                                 collapsed={collapsed}
                                 layoutIdPrefix={layoutIdPrefix}
                                 onNavigate={onNavigate}
                                 accentClass={TOOL_ACCENT_VARS.cyan}
                                 icon={
                                     <IconServer2
+                                        className="size-4"
+                                        stroke={1.75}
+                                        aria-hidden="true"
+                                    />
+                                }
+                            />
+                            <NavRow
+                                label={t("jsonServers")}
+                                href="/json"
+                                active={jsonActive}
+                                collapsed={collapsed}
+                                layoutIdPrefix={layoutIdPrefix}
+                                onNavigate={onNavigate}
+                                accentClass={TOOL_ACCENT_VARS.amber}
+                                icon={
+                                    <IconDatabase
                                         className="size-4"
                                         stroke={1.75}
                                         aria-hidden="true"

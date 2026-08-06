@@ -1,18 +1,91 @@
-import { pickCharacter } from "@/modules/tools/domain/random";
-import type { RandomBytes } from "@/modules/tools/types";
-
-import { RESERVED_SERVER_KEYS, SERVER_KEY_LENGTH, SERVER_KEY_PATTERN } from "./constants";
-import type { ServerKeyResult } from "../types/routing";
+import { pickCharacter } from "./random";
+import type { RandomBytes, ServerKeyResult } from "../types";
 
 /**
- * The public name of a mock server — the `<key>` in `/m/<key>/…`.
+ * The public name of a hosted server — the `<key>` in `/m/<key>/…` for a mock
+ * server, and in `/j/<key>/…` for a JSON server.
  *
  * A DNS label's rules rather than a path segment's, deliberately: lower case,
  * digits and hyphens, no hyphen at either end, no doubled hyphen. Execution is
  * path-hosted today and will move to `<key>.mock.<site>` when a real domain
  * exists, and a key that is legal now and illegal then would strand every
  * server anybody had already made.
+ *
+ * One alphabet and one reserved list for both studios, not because their
+ * keyspaces are shared — they are not, each has its own unique index under its
+ * own path prefix — but because the phishing set below has to be the same
+ * everywhere or it is only enforced in the place somebody remembered.
  */
+
+/**
+ * The public path segment naming a server. A DNS label's rules, so the same key
+ * still works unchanged when execution moves to a subdomain.
+ */
+export const SERVER_KEY_LENGTH = { min: 3, max: 32 } as const;
+
+export const SERVER_KEY_PATTERN = /^[a-z0-9-]+$/;
+
+/**
+ * Keys this service will not hand out.
+ *
+ * Two groups, and the second is the one that matters. The first is
+ * infrastructure — anything that already names a path here, so a hosted server
+ * can never shadow a real route if execution ever moves back onto this origin's
+ * root. The second is the phishing set: a link reading `/m/secure-login/...`
+ * borrows this site's name to look like somebody's sign-in page, which is the
+ * same reservation list the URL Shortener keeps and for the same reason.
+ *
+ * Every entry has to be something `checkServerKey` would otherwise have
+ * accepted — at least `SERVER_KEY_LENGTH.min` characters, inside
+ * `SERVER_KEY_PATTERN`. A shorter one is protection nobody could have reached,
+ * which reads as safety while providing none, and a test enforces exactly that.
+ * `m` was here until it did: the prefix is a literal path segment in front of
+ * the key, so nothing could ever have collided with it anyway — and `j` is
+ * absent for the same reason.
+ */
+export const RESERVED_SERVER_KEYS: ReadonlySet<string> = new Set([
+    "api",
+    "app",
+    "assets",
+    "cdn",
+    "docs",
+    "help",
+    "json",
+    "mock",
+    "mocks",
+    "next",
+    "public",
+    "static",
+    "status",
+    "support",
+    "tools",
+    "unlock",
+    "www",
+    // Anything that reads as a lure.
+    "account",
+    "admin",
+    "auth",
+    "bank",
+    "billing",
+    "checkout",
+    "confirm",
+    "identity",
+    "invoice",
+    "login",
+    "logon",
+    "pay",
+    "payment",
+    "recover",
+    "reset",
+    "secure",
+    "security",
+    "signin",
+    "signup",
+    "update",
+    "validate",
+    "verify",
+    "wallet",
+]);
 
 /** Never `l`, `1`, `0` or `o` — a key gets read aloud and typed back in. */
 const DRAW_ALPHABET = "abcdefghijkmnpqrstuvwxyz23456789";

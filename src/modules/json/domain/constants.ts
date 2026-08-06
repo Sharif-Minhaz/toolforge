@@ -1,12 +1,9 @@
 import {
     REPAIRABLE_ERROR_CODES,
     type JsonErrorCode,
-    type JsonFormatOptions,
-    type JsonIndent,
-    type JsonMode,
     type JsonRepairCode,
-    type JsonSpec,
-} from "../types";
+} from "../../tools/types/json-tree";
+import type { JsonFormatOptions, JsonIndent, JsonMode, JsonSpec } from "../types";
 
 /** One indent level per template. Minifying is a mode, not an indent. */
 export const INDENT_UNITS: Record<JsonIndent, string> = {

@@ -7,7 +7,7 @@ import { parseRequestBody } from "../domain/request-body";
 import { executeGraph, withoutBody } from "../domain/execute";
 import { matchEndpoint } from "../domain/match";
 import { createSeededRandom, resolveSeed } from "../domain/seeded-random";
-import { checkServerKey } from "../domain/server-key";
+import { checkServerKey } from "@/modules/tools/domain/server-key";
 import { createFakerProvider, loadFaker } from "./faker";
 import { MAX_OUTBOUND_CALLS } from "../domain/outbound";
 import { guardedFetch } from "./outbound";

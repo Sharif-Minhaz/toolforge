@@ -4,7 +4,9 @@ import { IconAlertTriangle, IconCircleCheck, IconPointFilled } from "@tabler/ico
 import { useFormatter, useTranslations } from "next-intl";
 
 import { cn } from "@/lib/utils";
-import type { JsonAdvisory, JsonRepair, JsonStats } from "../types";
+import type { JsonAdvisory, JsonRepair } from "@/modules/tools/types/json-tree";
+
+import type { JsonStats } from "../types";
 import { JsonNotices } from "./notices";
 
 const STAT_KEYS = [

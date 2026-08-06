@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { parseJson } from "@/modules/json/domain/parser";
-import { encodeJsonString, serializeJson } from "@/modules/json/domain/serialize";
-import type { JsonNode, JsonSerializeOptions } from "@/modules/json/types";
+import { parseJson } from "@/modules/tools/domain/json-parser";
+import { encodeJsonString, serializeJson } from "@/modules/tools/domain/json-serialize";
+import type { JsonNode, JsonSerializeOptions } from "@/modules/tools/types/json-tree";
 
 const PLAIN: JsonSerializeOptions = { indent: "", sortKeys: false, escapeUnicode: false };
 

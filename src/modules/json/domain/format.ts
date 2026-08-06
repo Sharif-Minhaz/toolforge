@@ -2,16 +2,15 @@ import { getByteLength } from "@/modules/tools/domain/byte-size";
 import type {
     JsonAdvisory,
     JsonError,
-    JsonFormatOptions,
-    JsonMode,
     JsonPosition,
     JsonRepair,
-    JsonStats,
-} from "../types";
+} from "@/modules/tools/types/json-tree";
+
+import type { JsonFormatOptions, JsonMode, JsonStats } from "../types";
 import { analyzeJson } from "./analyze";
 import { INDENT_UNITS, MAX_JSON_INPUT_BYTES } from "./constants";
-import { parseJson } from "./parser";
-import { serializeJson } from "./serialize";
+import { parseJson } from "@/modules/tools/domain/json-parser";
+import { serializeJson } from "@/modules/tools/domain/json-serialize";
 import { rejectsUnpairedSurrogates, requiresContainerRoot } from "./spec";
 
 export type JsonFormatRequest = {

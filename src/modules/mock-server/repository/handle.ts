@@ -3,13 +3,14 @@ import "server-only";
 import { after } from "next/server";
 
 import { buildLoggedRequest, buildLoggedResponse } from "../domain/log-record";
-import type { RateVerdict } from "../domain/rate-limit";
+import type { RateBucket } from "../domain/rate-limit";
 import { isMultipartType, parseRequestBody } from "../domain/request-body";
-import { checkServerKey } from "../domain/server-key";
 import { writeRequestLog } from "./logs";
 import { spendServeQuota, sweepQuotaRows } from "./rate-limit";
 import { serveMockRequest, type ServeOutcome } from "./serve";
 import { HTTP_METHODS, type HttpMethod } from "../types/graph";
+import { checkServerKey } from "@/modules/tools/domain/server-key";
+import type { RateVerdict } from "@/modules/tools/domain/rate-window";
 import { resolveRemoteIp } from "@/modules/tools/repository/turnstile";
 
 /**
@@ -73,7 +74,7 @@ const SECURITY_HEADERS: ReadonlyArray<readonly [string, string]> = [
     ["vary", "origin"],
 ];
 
-function baseHeaders(rate?: RateVerdict): Headers {
+function baseHeaders(rate?: RateVerdict<RateBucket>): Headers {
     const headers = new Headers();
 
     for (const [name, value] of SECURITY_HEADERS) {
@@ -108,13 +109,17 @@ function problem(status: number, code: string, extra?: Headers): Response {
  * and "my component is calling it in a loop". The numbers describe the caller to
  * themselves and nobody else, so there is nothing here to withhold.
  */
-function applyRateHeaders(headers: Headers, rate: RateVerdict): void {
+function applyRateHeaders(headers: Headers, rate: RateVerdict<RateBucket>): void {
     headers.set("x-ratelimit-limit", String(rate.limit));
     headers.set("x-ratelimit-remaining", String(rate.remaining));
     headers.set("x-ratelimit-reset", String(rate.resetsAt));
 }
 
-function toResponse(outcome: ServeOutcome, method: HttpMethod, rate: RateVerdict): Response {
+function toResponse(
+    outcome: ServeOutcome,
+    method: HttpMethod,
+    rate: RateVerdict<RateBucket>,
+): Response {
     switch (outcome.kind) {
         case "response": {
             const headers = baseHeaders(rate);

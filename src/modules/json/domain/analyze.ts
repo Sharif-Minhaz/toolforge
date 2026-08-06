@@ -1,4 +1,5 @@
-import type { JsonNode, JsonStats } from "../types";
+import type { JsonNode } from "../../tools/types/json-tree";
+import type { JsonStats } from "../types";
 
 type Tally = {
     objects: number;

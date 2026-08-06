@@ -61,6 +61,7 @@
         "breadcrumb": "Breadcrumb",
         "repository": "ToolForge on GitHub",
         "mockServers": "Mock Servers",
+        "jsonServers": "JSON Servers",
         "sectionStudio": "Studio"
     },
     "theme": {
@@ -248,6 +249,10 @@
         "mock-server": {
             "name": "Mock Server Studio",
             "description": "Build mock REST APIs visually and call them from a real URL. No account — a recovery key moves a workspace between browsers."
+        },
+        "json-server": {
+            "name": "JSON Server",
+            "description": "Turn a db.json into a hosted REST API with full CRUD, filtering, sorting and relations. No account — a recovery key brings a server back in any browser."
         }
     },
     "overview": {
@@ -7419,6 +7424,185 @@
             "reportCreated": "{count, plural, =0 {No endpoints created} one {# endpoint created} other {# endpoints created}}.",
             "reportSkipped": "{count, plural, one {# operation could not be taken} other {# operations could not be taken}}:",
             "openServer": "Open the server"
+        }
+    },
+    "jsonServer": {
+        "meta": {
+            "title": "Hosted JSON Server — A Real REST API From One db.json",
+            "description": "Paste a db.json and get a public REST API with full CRUD, filtering, sorting, pagination and relations — the json-server you know, without leaving a laptop running. No account: a secret in your browser proves ownership and a recovery key brings the server back anywhere.",
+            "detailTitle": "JSON server"
+        },
+        "hero": {
+            "eyebrow": "Studio",
+            "title": "JSON Server, hosted",
+            "subtitle": "Write or upload a db.json and every route is built for you — list, read, create, replace, update and delete, with the same filtering, sorting, pagination and relations json-server has. The difference is that this one keeps answering after you close the laptop, so a front end you deploy somewhere can actually reach it.",
+            "badgeNoAccount": "No account needed",
+            "badgeRecovery": "Recovery key brings it back",
+            "badgeFive": "Five servers per browser",
+            "disclosureTitle": "This one does not run in your browser",
+            "disclosureBody": "Almost everything on ToolForge works entirely in your tab. This cannot: a page has no way to answer somebody else's HTTP request, so your document is stored on our servers and served from there. That means we hold your data, anyone who has the address can read and change it, and there is no password on it — treat a JSON server as a public fixture for prototyping, never as somewhere to put anything real."
+        },
+        "launcher": {
+            "panelLabel": "Create or restore",
+            "createTab": "New server",
+            "importTab": "Restore",
+            "createTitle": "Create a JSON server",
+            "importTitle": "Restore a JSON server",
+            "createDescription": "The box below already holds json-server's own example document. Press Create to try it as it is, or replace it with your own — every top-level key becomes a resource.",
+            "importDescription": "Enter the recovery key you saved when the server was created. It works in any browser and adds this one to the server without signing the other out.",
+            "nameLabel": "Name",
+            "namePlaceholder": "Storefront fixtures",
+            "keyLabel": "Address",
+            "keyPlaceholder": "leave blank to generate",
+            "keyHint": "Appears in the URL as /j/your-address. Lower case, digits and hyphens.",
+            "keyRecoveryLabel": "Recovery key",
+            "createAction": "Create server",
+            "importAction": "Restore",
+            "yourServers": "Your servers",
+            "empty": "No servers yet.",
+            "emptyHint": "Create one above, or restore one with its recovery key.",
+            "slotsLeft": "{remaining, number} of {max, number} slots left",
+            "slotsFull": "All slots used",
+            "fullHint": "This browser is holding {max, number} servers. Forget one first, or restore it elsewhere.",
+            "challengeMissing": "This deployment has no Turnstile key, so creating and restoring are switched off."
+        },
+        "editor": {
+            "format": "Format",
+            "upload": "Upload file",
+            "sample": "Use the example",
+            "placeholder": "'{' \"posts\": [ … ] '}'",
+            "size": "{size} of {limit}",
+            "tooLarge": "This document is over the {limit} upload limit. Trim it, or upload less and add the rest through the API.",
+            "atLine": "{problem} (line {line, number}, column {column, number})",
+            "formatFailed": "Nothing was reformatted — the document has to be valid JSON first."
+        },
+        "documentProblems": {
+            "empty": "Write or paste a db.json first.",
+            "invalid_json": "This is not valid JSON.",
+            "not_an_object": "A db.json has to be an object at the top level, with one key per resource.",
+            "too_large": "This document is over the upload limit.",
+            "too_deep": "This document nests too deeply to store.",
+            "too_many_collections": "That is more top-level resources than one server can hold.",
+            "too_many_items": "One of the collections holds more records than a server can take.",
+            "item_not_an_object": "Every record in a collection has to be an object.",
+            "duplicate_id": "Two records in one collection share an id, so one of them could never be reached."
+        },
+        "usage": {
+            "label": "Storage used",
+            "used": "{used} of {limit}",
+            "percent": "{percent, number}%",
+            "near": "{remaining} left before writes stop.",
+            "full": "Full — writes are refused.",
+            "fullVerbose": "This server is full. GET and DELETE still work, so the way back is to delete records you no longer need; POST, PUT and PATCH answer 507 until there is room."
+        },
+        "baseUrl": {
+            "copy": "Copy",
+            "copied": "Copied",
+            "copyFailed": "Could not copy the address."
+        },
+        "card": {
+            "open": "Open",
+            "paused": "Paused",
+            "counts": "{resources} resources · {records} records"
+        },
+        "tabs": {
+            "routes": "Routes",
+            "data": "Data",
+            "logs": "Requests",
+            "settings": "Settings"
+        },
+        "routes": {
+            "method": "Method",
+            "path": "Path",
+            "does": "What it does",
+            "empty": "This document publishes no routes yet. Add a top-level key holding an array or an object.",
+            "lockedRow": "Refused while the server is full.",
+            "unroutable": "{count, plural, one {One resource cannot appear in a URL and publishes no routes} other {# resources cannot appear in a URL and publish no routes}}: {names}. They are still stored and still returned at the root.",
+            "verb": {
+                "list": "List every record in {resource}",
+                "create": "Add a record to {resource}",
+                "read": "Read one record from {resource}",
+                "readOne": "Read {resource}",
+                "replace": "Replace a record in {resource}",
+                "replaceOne": "Replace {resource}",
+                "merge": "Update some fields of a record in {resource}",
+                "mergeOne": "Update some fields of {resource}",
+                "remove": "Delete a record from {resource}"
+            }
+        },
+        "logs": {
+            "description": "The last fifty calls this server answered. Methods, paths, statuses and timings only — never headers and never bodies, because the bodies are your data and one copy of it is enough.",
+            "refresh": "Refresh",
+            "clear": "Clear",
+            "empty": "Nothing has called this server yet.",
+            "method": "Method",
+            "path": "Path",
+            "status": "Status",
+            "when": "When",
+            "duration": "· {ms, number} ms"
+        },
+        "workbench": {
+            "back": "All servers",
+            "subtitle": "Point a client at this address. It answers whether or not this page is open.",
+            "tabsLabel": "Server sections",
+            "pause": "Pause",
+            "resume": "Resume",
+            "pausedNote": "Paused: every route answers 503 until you resume. Nothing has been deleted.",
+            "dataDescription": "The live document. Editing it here replaces everything at once — the same thing a client does one record at a time.",
+            "save": "Save document",
+            "download": "Download db.json",
+            "reset": "Reset to the original",
+            "unsaved": "Unsaved changes.",
+            "nameLabel": "Name",
+            "rename": "Rename",
+            "dangerTitle": "Leaving",
+            "forget": "Forget here",
+            "forgetDescription": "Removes this server from this browser only. It keeps answering, and your recovery key still brings it back.",
+            "forgetConfirm": "Forget it here?",
+            "delete": "Delete",
+            "deleteDescription": "Deletes the server, its document and its request log, everywhere. This cannot be undone.",
+            "deleteConfirm": "Delete permanently?"
+        },
+        "recovery": {
+            "title": "Save this recovery key",
+            "forServer": "for {name}",
+            "description": "It is the only way back to this server from a browser that does not already own it — including this one after you clear cookies. We store only a hash of it, so it cannot be shown again or looked up.",
+            "copy": "Copy key",
+            "copied": "Copied",
+            "warning": "Shown once. You can't recover it later.",
+            "saved": "I have saved it",
+            "rotateTitle": "Recovery key",
+            "rotateDescription": "Draw a new one if the old key may have been seen by somebody else. The previous key stops working immediately, and anyone using it loses access.",
+            "rotateAction": "Draw a new key",
+            "rotateConfirm": "Replace the old key?"
+        },
+        "errors": {
+            "invalid_name": "Give the server a name — anything up to sixty characters.",
+            "invalid_key": "An address is 3–32 characters of lower-case letters, digits and single hyphens, and cannot start or end with one.",
+            "key_taken": "That address is already in use. Try another.",
+            "storage_unavailable": "This deployment has no database configured, so the studio has nowhere to keep a server.",
+            "cookie_full": "This browser is already holding the maximum number of servers.",
+            "challenge_failed": "The challenge did not verify. Try again.",
+            "quota_exhausted": "This network has created enough servers for now. Try again in an hour.",
+            "write_failed": "That did not save. Try again.",
+            "not_owner": "This browser does not own that server.",
+            "not_found": "That server no longer exists.",
+            "invalid_recovery_key": "A recovery key is sixteen characters, usually written as four groups of four.",
+            "unknown_recovery_key": "No server answers to that key."
+        },
+        "toast": {
+            "created": "Server created.",
+            "imported": "Server restored.",
+            "saved": "Document saved.",
+            "reset": "Document reset.",
+            "renamed": "Renamed.",
+            "paused": "Paused.",
+            "resumed": "Resumed.",
+            "rotated": "New recovery key drawn.",
+            "deleted": "Server deleted.",
+            "forgotten": "Forgotten on this browser.",
+            "copyFailed": "Could not copy.",
+            "downloadFailed": "Could not download the file."
         }
     }
 }

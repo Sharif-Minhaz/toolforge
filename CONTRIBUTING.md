@@ -434,6 +434,14 @@ Reuse what exists rather than rebuilding it:
 | Frozen IANA zone list                 | `@/modules/tools/domain/time-zones`                 |
 | Gregorian calendar arithmetic         | `@/modules/tools/domain/calendar`                   |
 | Uniform random draws, injectable      | `@/modules/tools/domain/random`                     |
+| JSON reader with line and column      | `@/modules/tools/domain/json-parser`                |
+| JSON writer, literals preserved       | `@/modules/tools/domain/json-serialize`             |
+| Session secret for a browser          | `@/modules/tools/domain/browser-secret`             |
+| Printable recovery key, Crockford     | `@/modules/tools/domain/recovery-key`               |
+| Capped secret list in a cookie        | `@/modules/tools/domain/secret-cookie`              |
+| Public server key, reserved names     | `@/modules/tools/domain/server-key`                 |
+| Fixed-window throughput arithmetic    | `@/modules/tools/domain/rate-window`                |
+| The counter behind it, fails closed   | `@/modules/tools/repository/rate-counter`           |
 | 300 ms debounce                       | `@/hooks/use-debounced-value`                       |
 | Scroll a pressed-for result into view | `@/modules/tools/components/use-result-scroll`      |
 | Sweep shown while a scan runs         | `@/modules/tools/components/scan-radar`             |

@@ -1,15 +1,24 @@
-import { pickCharacter } from "@/modules/tools/domain/random";
-import type { RandomBytes } from "@/modules/tools/types";
-
-import {
-    RECOVERY_ALPHABET,
-    RECOVERY_GROUP_SEPARATOR,
-    RECOVERY_GROUP_SIZE,
-    RECOVERY_KEY_LENGTH,
-} from "./constants";
+import { pickCharacter } from "./random";
+import type { RandomBytes } from "../types";
 
 /**
- * The printable credential that moves a workspace to another browser.
+ * Crockford's base32. `I`, `L`, `O` and `U` are absent — the first three
+ * because they are read back as `1`, `1` and `0`, and `U` so that no draw can
+ * spell an unfortunate word.
+ */
+export const RECOVERY_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+
+/** 16 characters of a 32-symbol alphabet: exactly 80 bits. */
+export const RECOVERY_KEY_LENGTH = 16;
+
+/** Printed as four groups of four — `8QXK-H72D-9FLC-4M2P`. */
+export const RECOVERY_GROUP_SIZE = 4;
+
+export const RECOVERY_GROUP_SEPARATOR = "-";
+
+/**
+ * The printable credential that moves something owned without an account to
+ * another browser.
  *
  * Crockford's base32 rather than hex or the full alphabet, for one reason: this
  * value gets written on paper and typed back in somewhere else. Crockford drops
@@ -21,7 +30,7 @@ import {
  *
  * Two spellings exist and only one of them is ever hashed. The **canonical**
  * form is sixteen upper-case alphabet characters with no separators; that is
- * what `hashRecoveryKey` sees, so `8qxk h72d…` and `8QXK-H72D-…` are one key.
+ * what `hashCredential` sees, so `8qxk h72d…` and `8QXK-H72D-…` are one key.
  * The **display** form carries the hyphens and is what a human is shown.
  */
 

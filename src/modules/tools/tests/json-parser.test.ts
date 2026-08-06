@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { MAX_JSON_DEPTH } from "@/modules/json/domain/constants";
-import { losesPrecision, parseJson } from "@/modules/json/domain/parser";
-import type { JsonErrorCode, JsonNode } from "@/modules/json/types";
+import { MAX_JSON_DEPTH } from "@/modules/tools/types/json-tree";
+import { losesPrecision, parseJson } from "@/modules/tools/domain/json-parser";
+import type { JsonErrorCode, JsonNode } from "@/modules/tools/types/json-tree";
 
 function parseStrict(input: string) {
     return parseJson(input, false);

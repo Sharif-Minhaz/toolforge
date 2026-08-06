@@ -348,6 +348,24 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             serverErrors: messages.mockServer.serverErrors,
             toast: messages.mockServer.toast,
         },
+        // The JSON Server Studio. Everything here is a control label or a
+        // failure reason the islands render; `meta` and `hero` stay on the
+        // server, where the pages that use them are rendered.
+        jsonServer: {
+            launcher: messages.jsonServer.launcher,
+            editor: messages.jsonServer.editor,
+            documentProblems: messages.jsonServer.documentProblems,
+            usage: messages.jsonServer.usage,
+            baseUrl: messages.jsonServer.baseUrl,
+            card: messages.jsonServer.card,
+            tabs: messages.jsonServer.tabs,
+            routes: messages.jsonServer.routes,
+            logs: messages.jsonServer.logs,
+            workbench: messages.jsonServer.workbench,
+            recovery: messages.jsonServer.recovery,
+            errors: messages.jsonServer.errors,
+            toast: messages.jsonServer.toast,
+        },
         // Seven panels' worth of labels, which is why this slice is the
         // largest here — everything under `article` still stays on the server.
         domainInspector: {

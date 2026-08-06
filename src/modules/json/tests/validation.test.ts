@@ -6,12 +6,8 @@ import {
     jsonFormatOptionsSchema,
     jsonSearchParamsSchema,
 } from "@/modules/json/validation/format-options";
-import {
-    JSON_ERROR_CODES,
-    JSON_SPECS,
-    type JsonErrorCode,
-    type JsonFormatOptions,
-} from "@/modules/json/types";
+import { JSON_SPECS, type JsonFormatOptions } from "@/modules/json/types";
+import { JSON_ERROR_CODES, type JsonErrorCode } from "@/modules/tools/types/json-tree";
 
 describe("jsonSearchParamsSchema", () => {
     test("reads a fully specified link", () => {

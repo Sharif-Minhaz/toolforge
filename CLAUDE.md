@@ -418,9 +418,14 @@ injectable random source `domain/random.ts`, and the shared image layer:
 `domain/image-codec.ts`, `domain/pixels.ts`, `domain/archive.ts`,
 `domain/base64.ts`, `domain/hex.ts`, `domain/filenames.ts`, and the shared code
 layer: `domain/highlight.ts` with `components/code-editor.tsx` and
-`components/code-block.tsx`, and the shared network layer: `domain/ip.ts`,
+`components/code-block.tsx`, the shared JSON reader and writer
+`domain/json-parser.ts` and `domain/json-serialize.ts` over
+`types/json-tree.ts`, the shared network layer: `domain/ip.ts`,
 `domain/host-syntax.ts`, `repository/address-guard.ts`,
-`components/scan-radar.tsx`), `short-links` (every re-pointable
+`components/scan-radar.tsx`, and the shared account-free identity and metering
+layer both studios run on: `domain/browser-secret.ts`, `domain/recovery-key.ts`,
+`domain/secret-cookie.ts`, `domain/server-key.ts`, `domain/rate-window.ts` and
+`repository/rate-counter.ts`), `short-links` (every re-pointable
 link on the site — see below), `image-compressor` (a batch queue and a
 smallest-of-four search), `image-converter` (a named target per batch, plus the
 ICO container and the favicon pack), `blur-placeholder` (the BlurHash codec and
@@ -428,8 +433,23 @@ the `blurDataURL` it writes), `curl` (the shell tokenizer, the request model and
 the four writers around it), `domain-inspector` (the address guard, the DoH
 transport and the signature table — see below), `bson` (three readers and three
 writers over one plain value — see below), `port-scanner` (a TCP connect scan
-behind a quota that fails closed — see below), `uuid`, `overview`,
-`preferences`, `seo`, `observability`.
+behind a quota that fails closed — see below), `mock-server` (a node canvas over
+a stored graph — see below), `json-server` (a hosted `json-server`: one pure
+engine cross-checked against the real package, behind a two-tier size ceiling —
+see below), `uuid`, `overview`, `preferences`, `seo`, `observability`.
+
+The two studios are the second worked example of the "lift it the moment a
+second tool needs it" rule, and the seam is instructive because almost none of
+it was obvious in advance. What moved to `tools/` when the JSON Server Studio
+arrived is everything about _owning something without an account_ — the browser
+secret, the printable recovery key, the cookie that holds a capped list of
+them, the public server key with its reserved-name list, and the fixed-window
+throughput counter both public paths meter on. What stayed in each module is
+the part that differs: the mock studio's graph, and this one's engine. The JSON
+Formatter's reader and writer moved on the same principle a release earlier
+than they were needed here, and for the same reason the Base64 encoder did —
+the _reading_ of what a person pasted is shared, the tool's own options are
+not.
 
 The three image tools are the worked example of the "lift it the moment a second
 tool needs it" rule. Everything they share — decoding, the four tuned encoder
@@ -731,7 +751,7 @@ return every character it was given, in order. That is the invariant to test:
 `tokens.map((t) => t.text).join("") === input`, over deliberately awkward input.
 And highlighting cannot be debounced when it sits behind a caret, so it needs a
 length ceiling instead — above `MAX_HIGHLIGHT_LENGTH` it returns one plain
-token, because losing the colour beats losing the typing. Nor can the *language*
+token, because losing the colour beats losing the typing. Nor can the _language_
 be debounced: it follows the live value, or a reader switching notation watches
 the backdrop stay a language behind the glyphs for 300 ms.
 
@@ -777,7 +797,7 @@ What is still ours is the part worth owning.
   scaled up. Six conversions, four codecs, and BSON → TOON cannot develop its own
   opinion about what a date is because no code path connects the two directly.
 - **Where the model runs out, name the bridge.** BSON has twenty types and JSON
-  has six, so the hub value is *Extended JSON* — MongoDB's own spelling of those
+  has six, so the hub value is _Extended JSON_ — MongoDB's own spelling of those
   types as ordinary JSON objects. That is what makes TOON carry an ObjectId for
   free: TOON encodes the JSON data model, and Extended JSON is inside it.
 - **A library's defaults are not your guarantee.** `deserialize` promotes a
@@ -929,6 +949,54 @@ down which way and why:
 The comment at each of those three lines says which rule it is following. A
 constant that looks wrong and is deliberate needs that, or the next reader
 "fixes" it and the cross-check goes red with no explanation of what it was for.
+
+The JSON Server engine is the fifth instance, and it moves the rule from
+_formats_ to _behaviour_. Nothing here is byte-exact; what has to match is what
+a request returns. `src/modules/json-server/` reimplements `json-server` v1, and
+160 hand-written tests passed while **seven** behaviours were wrong — every one
+of them a case where a fixture would work locally and behave differently once
+hosted, which is the single defect a compatibility layer cannot have:
+
+- `sort-on` compares strings with **`localeCompare`**, so `"a title"` precedes
+  `"Tenth"`; a code-unit comparison puts every capital first.
+- and it sorts **falsy values last ascending, except `0`** — so `?_sort=draft`
+  leads with the drafts.
+- `_per_page=0` clamps to **one**, not to the default of ten.
+- `_per_page` **alone is not pagination**; the envelope needs `_page`.
+- `_embed` runs **before** filtering and sorting, which is the only order that
+  lets `?_embed=post&_sort=post.title` reach the embedded field.
+- `_embed=post` **pluralises** to find `posts`. Reading `document["post"]` finds
+  nothing on every real fixture.
+- `DELETE` **nulls the foreign keys** pointing at the deleted row, whether or not
+  `_dependent` was passed.
+
+Three rules generalise from it.
+
+**The independent implementation can be the library you are cloning, driven
+without its server.** `npm i json-server` in a scratch directory, import its
+`Service` class and the query-string mapping out of its own `lib/app.js`, and
+run both engines over one document. No port, no dependency added to this
+project, and 74 request/response pairs compared in a file that is deleted
+afterwards. What stays in the repository is `tests/reference-parity.test.ts` —
+the _results_, pinned, with each one saying which behaviour it caught.
+
+**Diverge only on malformed input, and say so.** The line this module draws is
+worth copying: a well-formed query behaves exactly as the reference does, and
+the three deliberate differences are all about input no working client sends — a
+`_where` that is not JSON and an unknown `:operator` are **400s** here where the
+reference silently drops the filter and returns the whole collection, and a bare
+`{"views": 100}` clause is honoured here where the reference matches nothing.
+The first two are refusals, the third is strictly additive. None of them can
+change what a correct client sees.
+
+**Matching a defect is sometimes right.** A nested `_where` clause against a
+field that is not an object _passes_ in the reference — a filter matching rows it
+was asked to exclude. That is matched anyway, and the comment says why: this is a
+clone, and imposing a judgement about which behaviour is nicer is exactly what
+makes a hosted fixture disagree with a local one. Compare the BlurHash punch
+above, where the defect was in a control the reader turns and matching it would
+have been wrong. The question is not "is this a bug" but "would diverging make
+the two disagree on something somebody actually does".
 
 # A Byte-Exact Codec Can Still Be a Bad Tool
 
@@ -1162,7 +1230,7 @@ that seriously rather than from the feature being hard.
 
 **Name the property you cannot keep, in the tool, above the controls.** This
 site's promise is that nothing is uploaded. A page cannot open a raw socket, so
-a port scan has to run on the server, and the host being scanned sees *our*
+a port scan has to run on the server, and the host being scanned sees _our_
 address in its logs. That makes the tool an attribution-laundering service by
 default. The disclosure panel therefore sits above the form, not in the article
 underneath it — a reader deserves to know whose name lands in the target's log
@@ -1198,13 +1266,13 @@ scanning service.
 free and local, so a typo costs no challenge, no database write and no packet.
 Turnstile comes before the quota, or a script burns a stranger's allowance by
 replaying their address without solving anything. The quota comes before the
-network, because it is the only gate that limits *volume* — everything above it
+network, because it is the only gate that limits _volume_ — everything above it
 refuses one bad request, and this is what refuses the thousandth good one.
 
 **Say what the tool refuses to do, and mean it.** No SYN scan, no banner read,
 no version probe: the socket is opened, the handshake observed, and it is
 destroyed without a byte crossing it. The service column is a static table of
-what each port is *registered* for, so a web server on 22 is labelled SSH and
+what each port is _registered_ for, so a web server on 22 is labelled SSH and
 the label is wrong — which the copy says, because the alternative is
 fingerprinting. There is also deliberately no "known attack ports" preset:
 checking your own host for a backdoor port is legitimate and the custom field
@@ -1236,7 +1304,7 @@ typing its syntax.
 **Every operation is a pure function on a path, and the component is a
 renderer.** Add, remove, rename, duplicate, reorder, change kind — each is a
 function taking `(root, path, …)` and returning a new root, so the whole
-interaction surface is unit-tested with no DOM. A path is a list of *steps*
+interaction surface is unit-tested with no DOM. A path is a list of _steps_
 rather than a dotted string, because a tree over a union descends in several
 different ways — into an object field, into an array's item template, into one
 branch of a choice — and a string would have to encode which, badly.
@@ -1308,7 +1376,7 @@ use for crossing the wire. Whatever gate guards the source guards this too.
 **Answer the empty case per reason.** "Nothing matches what you typed", "this
 route has never been called" and "cookie names are not recorded" lead somewhere
 completely different. One shared "no suggestions" is the same dead end the plain
-text box was. Where a fact is *structurally* unavailable — the cookie header is
+text box was. Where a fact is _structurally_ unavailable — the cookie header is
 redacted before a log row is written — say so, rather than implying it will fill
 in later.
 
@@ -1345,7 +1413,7 @@ an outbound request, ship everything else first and let the guard stack be the
 gate on the feature rather than a follow-up ticket.
 
 **Close the surface by construction, not by a flag.** `ExecutionContext.outbound`
-is optional, and a context built without it *cannot* make a request — the node
+is optional, and a context built without it _cannot_ make a request — the node
 returns `unsupported_node`. The serve path wires it in only when the stored graph
 actually mentions the node. There is no boolean anybody can forget to check,
 because the capability is absent rather than disabled.
@@ -1353,7 +1421,7 @@ because the capability is absent rather than disabled.
 **Order the gates by cost.** URL shape is a regular expression, so it runs first
 and a typo costs nothing. The per-execution counter is a local integer. The
 quota is a database write and runs last, because it is the only one that bounds
-*volume* — everything above it refuses one bad call and this refuses the
+_volume_ — everything above it refuses one bad call and this refuses the
 thousandth good one. It fails closed, exactly like the Port Scanner's.
 
 **Every redirect hop is a fresh decision.** `guardedFetch` follows them by hand
@@ -1370,6 +1438,38 @@ how a four-gigabyte reply kills the process.
 through this origin. Four headers are carried; everything else is dropped. The
 outbound direction drops `authorization`, `cookie` and `host` for the mirror
 reason, and any header value containing a newline, which is request splitting.
+
+# A Ceiling Somebody Can Come Back From
+
+`json-server/domain/constants.ts` holds **two** size limits, and the gap between
+them is the design rather than an accident: `MAX_UPLOAD_BYTES` (900 KB) bounds
+what may be pasted in, `MAX_DOCUMENT_BYTES` (1 MB) is where writes stop. Three
+rules fall out, and they apply to any tool that stores something a stranger can
+grow.
+
+**A resource created at its own ceiling is full before its first use.** Were the
+two numbers equal, the first thing a visitor met after creating a server would be
+a refusal. The gap is the room to actually use the thing.
+
+**Leave a way out, and make sure it is a way out of the thing that is stuck.**
+`isGrowingMethod` refuses `POST`, `PUT` and `PATCH` at the ceiling and
+deliberately lets `DELETE` through, so a full server can always be emptied by the
+person who filled it. A limit that refused every write would be a trap whose only
+escape is discarding the whole document — and the difference is one line in a
+set of methods, which is precisely why it is easy to get wrong.
+
+**Warn before you lock.** A limit somebody meets with no notice reads as a fault
+in the tool. `DOCUMENT_WARN_RATIO` turns the usage bar amber at 80% and the copy
+names the remaining bytes, so the lock is something they saw coming. And when it
+does lock, the copy says _which_ methods stopped and _what to do_ — "full" alone
+leaves somebody with a service they believe is broken.
+
+Two mechanics worth copying. The gate reads a **stored** `sizeBytes` column
+rather than measuring the document, so guarding a write costs a column and not a
+serialisation of the megabyte being guarded. And the gate lives in the **pure
+engine**, not in the repository, so "what happens at the ceiling" is one branch
+covered by the same unit tests as every other route rather than something only
+reachable with a database.
 
 # Answering on a Route Somebody Typed
 
@@ -1411,13 +1511,13 @@ value outside it collapses to `text/plain` rather than being refused, because
 the response is still worth serving, just not under a type that makes it
 executable. Pair it with `nosniff` and `Content-Security-Policy: sandbox` on
 every response, and note in the route handler that author-supplied headers are
-applied *before* the security set is re-applied, or one `set` overwrites the
+applied _before_ the security set is re-applied, or one `set` overwrites the
 protection.
 
 **`proxy.ts` runs on everything, including routes that must not pay for it.**
 The matcher catches every non-static path, so a public API route would get a
 Supabase session refresh and a `Set-Cookie` for this site's auth written onto
-its response. The prefix check has to live *inside* the proxy function, because
+its response. The prefix check has to live _inside_ the proxy function, because
 `config.matcher` values must be build-time constants.
 
 # Putting Something on a Map
@@ -1425,7 +1525,7 @@ its response. The prefix check has to live *inside* the proxy function, because
 A pin is a claim, and it is a far stronger one than the data behind it usually
 supports. The Domain Inspector's propagation card
 (`domain-inspector/components/world-map.tsx` plus `domain/countries.ts`) is the
-shape to copy, and most of what it cost was deciding what *not* to draw.
+shape to copy, and most of what it cost was deciding what _not_ to draw.
 
 **Match the pin's precision to the data's.** Every country code in that tool
 comes from a registry — an RDAP allocation, an operator's published service
@@ -1448,7 +1548,7 @@ finished, tested and byte-correct when a live run against `github.com` returned
 five different addresses across nine resolvers. Nothing was wrong: that is
 GeoDNS steering, and from one vantage point it is indistinguishable from a
 change still spreading. Amber with no sentence beside it reads as "your change
-is broken". The fix is `divergenceNote`, rendered only when there *is*
+is broken". The fix is `divergenceNote`, rendered only when there _is_
 divergence — and the general rule is that a signal with an innocent explanation
 must carry it, or the tool trains people to ignore the signal.
 
@@ -1475,34 +1575,35 @@ Leaflet itself has seven traps, all in `world-map.tsx`:
   immediately after the `await` is what stops React's double effect from meeting
   "Map container is already initialized".
 - **A basemap built as a backdrop has to be brought onto the palette, and that
-  is a solve rather than a taste.** Dark Matter and Positron both sit *under*
+  is a solve rather than a taste.** Dark Matter and Positron both sit _under_
   bright data overlays by design, and their tiles are pure neutral grey — dark
   is water `#262626` over land `#090909`, light is water `#d4dadc` under land
-  `#fafaf8`. The dark card is `oklch(0.187)`, which falls *between* those two,
+  `#fafaf8`. The dark card is `oklch(0.187)`, which falls _between_ those two,
   so land and water are each within a few values of their own frame and the
   whole thing mushes. Turning the brightness up until it separates is the wrong
   fix and looks it: it lands the ocean at `oklch(0.471)`, a lit grey slab on a
   dark card, which reads as a screenshot pasted into the page. The right fix
-  moves land *below* `--background` and water *above* `--muted`, so the map
+  moves land _below_ `--background` and water _above_ `--muted`, so the map
   reads against the card from both sides at the card's own lightness.
 
     That is tractable because the source is neutral: a colour matrix on a grey
-  collapses to three constant per-channel gains, so `sepia → hue-rotate →
-  saturate` is exactly a tint and `brightness → contrast` in front of it is
-  exactly a levels remap. Solve them numerically against the tokens — port the
-  Filter Effects matrices, grid-search the tint for the target's channel
-  ratios, then search brightness/contrast on the *composed* chain. Solving the
-  levels algebraically against a scalar gain is wrong; the tint's gain is
-  per-channel, and treating it as scalar clipped the light theme to flat white.
-  Then **render it and look at it** — raw, previous and solved side by side on
-  the card colour, per the rule in **A Byte-Exact Codec Can Still Be a Bad
-  Tool**. That is what showed the light theme's low `saturate` doing a second
-  job nobody asked for: Positron draws administrative borders in a salmon pink
-  that belongs to nothing else on this site.
+    collapses to three constant per-channel gains, so `sepia → hue-rotate →
+saturate` is exactly a tint and `brightness → contrast` in front of it is
+    exactly a levels remap. Solve them numerically against the tokens — port the
+    Filter Effects matrices, grid-search the tint for the target's channel
+    ratios, then search brightness/contrast on the _composed_ chain. Solving the
+    levels algebraically against a scalar gain is wrong; the tint's gain is
+    per-channel, and treating it as scalar clipped the light theme to flat white.
+    Then **render it and look at it** — raw, previous and solved side by side on
+    the card colour, per the rule in **A Byte-Exact Codec Can Still Be a Bad
+    Tool**. That is what showed the light theme's low `saturate` doing a second
+    job nobody asked for: Positron draws administrative borders in a salmon pink
+    that belongs to nothing else on this site.
 
     Reach for the `_nolabels` tiles at the same time. CARTO labels each region
-  in its local script, so a single card ends up carrying `AFRIKA`, `亚洲` and
-  `AMÉRICA DO SUL` at once, in none of which is the reader's chosen locale.
+    in its local script, so a single card ends up carrying `AFRIKA`, `亚洲` and
+    `AMÉRICA DO SUL` at once, in none of which is the reader's chosen locale.
+
 - **Animating a `circleMarker` needs `transform-box: fill-box`.** An SVG path
   scales about the viewport origin by default, so a ring that should expand out
   of its pin instead flies off the map. Pair it with
@@ -1512,12 +1613,12 @@ Leaflet itself has seven traps, all in `world-map.tsx`:
   target is not one — and keep the inner circles `interactive: false` so the
   pointer falls through to it.
 - **A pale border around the map is two bugs, not a style choice.** Leaflet puts
-  `.leaflet-container` on the element it is *handed*, so `[&_.leaflet-container]`
+  `.leaflet-container` on the element it is _handed_, so `[&_.leaflet-container]`
   — the descendant form — silently matches nothing and leaves Leaflet's own
   `#ddd` as the backdrop. `[&.leaflet-container]` is the fix, and it is worth
   checking any vendor override that targets a class the library adds to a node
   you already own. That backdrop is only visible because of the second bug:
-  `zoomSnap` defaults to whole numbers and `fitBounds` snaps *down*, so a frame
+  `zoomSnap` defaults to whole numbers and `fitBounds` snaps _down_, so a frame
   the world nearly fills gets the next size smaller with a band of backdrop
   above and below it. Set `zoomSnap: 0` for an exact fit, and floor `minZoom` at
   the zoom where the world covers the frame — `log2(max(width, height) / 256)`,

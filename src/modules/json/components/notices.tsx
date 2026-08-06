@@ -4,8 +4,9 @@ import { IconInfoCircle, IconTool } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
+import type { JsonAdvisory, JsonRepair, JsonRepairCode } from "@/modules/tools/types/json-tree";
+
 import { MAX_LISTED_ADVISORIES } from "../domain/constants";
-import type { JsonAdvisory, JsonRepair, JsonRepairCode } from "../types";
 
 /** First appearance wins, so the list reads in document order. */
 function distinctRepairCodes(repairs: readonly JsonRepair[]): readonly JsonRepairCode[] {

@@ -47,7 +47,7 @@ export type CreateQuotaCheck = {
 };
 
 async function readRow(hash: string): Promise<QuotaRow | null> {
-    return prisma.mockQuota.findUnique({
+    return prisma.serviceQuota.findUnique({
         where: { visitorHash: hash },
         select: { count: true, windowStart: true },
     });
@@ -101,7 +101,7 @@ export async function spendCreateQuota(
 
     try {
         return await prisma.$transaction(async (tx) => {
-            const row = await tx.mockQuota.findUnique({
+            const row = await tx.serviceQuota.findUnique({
                 where: { visitorHash: hash },
                 select: { count: true, windowStart: true },
             });
@@ -118,7 +118,7 @@ export async function spendCreateQuota(
                 ? { count: 1, windowStart: now }
                 : { count: row.count + 1, windowStart: row.windowStart };
 
-            await tx.mockQuota.upsert({
+            await tx.serviceQuota.upsert({
                 where: { visitorHash: hash },
                 create: { visitorHash: hash, ...next },
                 update: next,
@@ -160,7 +160,7 @@ export async function spendOutboundQuota(workspaceId: string, now = new Date()):
 
     try {
         return await prisma.$transaction(async (tx) => {
-            const row = await tx.mockQuota.findUnique({
+            const row = await tx.serviceQuota.findUnique({
                 where: { visitorHash: key },
                 select: { count: true, windowStart: true },
             });
@@ -174,7 +174,7 @@ export async function spendOutboundQuota(workspaceId: string, now = new Date()):
                 ? { count: 1, windowStart: now }
                 : { count: row.count + 1, windowStart: row.windowStart };
 
-            await tx.mockQuota.upsert({
+            await tx.serviceQuota.upsert({
                 where: { visitorHash: key },
                 create: { visitorHash: key, ...next },
                 update: next,

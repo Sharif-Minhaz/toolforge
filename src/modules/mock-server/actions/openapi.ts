@@ -8,7 +8,7 @@ import { cryptoRandomBytes } from "@/modules/tools/domain/random";
 import { MAX_ENDPOINTS_PER_SERVER } from "../domain/constants";
 import { readOpenApi, writeOpenApi, type ExportEndpoint } from "../domain/openapi";
 import { parsePathPattern } from "../domain/path-pattern";
-import { createServerKey, suggestServerKey } from "../domain/server-key";
+import { createServerKey, suggestServerKey } from "@/modules/tools/domain/server-key";
 import { toJson } from "../domain/value-edit";
 import { checkWorkspaceName } from "../domain/workspace-name";
 import { isMockStorageConfigured } from "../repository/config";

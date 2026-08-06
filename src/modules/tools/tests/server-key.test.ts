@@ -1,11 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
-import { RESERVED_SERVER_KEYS, SERVER_KEY_LENGTH } from "@/modules/mock-server/domain/constants";
 import {
     checkServerKey,
     createServerKey,
+    RESERVED_SERVER_KEYS,
+    SERVER_KEY_LENGTH,
     suggestServerKey,
-} from "@/modules/mock-server/domain/server-key";
+} from "@/modules/tools/domain/server-key";
 import type { RandomBytes } from "@/modules/tools/types";
 
 const zeroBytes: RandomBytes = (length) => new Uint8Array(length);

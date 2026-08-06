@@ -3,13 +3,17 @@
 import { headers } from "next/headers";
 
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
+import { createBrowserSecret, hashCredential } from "@/modules/tools/domain/browser-secret";
 import { cryptoRandomBytes } from "@/modules/tools/domain/random";
+import {
+    createRecoveryKey,
+    formatRecoveryKey,
+    normalizeRecoveryKey,
+} from "@/modules/tools/domain/recovery-key";
+import { addSecret, hasCapacity, removeSecret } from "@/modules/tools/domain/secret-cookie";
 import { resolveRemoteIp, verifyTurnstileToken } from "@/modules/tools/repository/turnstile";
 
 import { MAX_WORKSPACES_PER_BROWSER } from "../domain/constants";
-import { createWorkspaceSecret, hashCredential } from "../domain/credentials";
-import { createRecoveryKey, formatRecoveryKey, normalizeRecoveryKey } from "../domain/recovery-key";
-import { addSecret, hasCapacity, removeSecret } from "../domain/session";
 import { checkWorkspaceName } from "../domain/workspace-name";
 import { isMockStorageConfigured } from "../repository/config";
 import { spendCreateQuota } from "../repository/quota";
@@ -87,7 +91,7 @@ export async function getWorkspaceOverview(): Promise<WorkspaceOverview> {
             // was deleted elsewhere still occupies a slot until it is forgotten,
             // and telling the visitor they have room when they do not would put
             // the refusal after the challenge instead of before it.
-            canCreate: hasCapacity(secrets),
+            canCreate: hasCapacity(secrets, MAX_WORKSPACES_PER_BROWSER),
             maxWorkspaces: MAX_WORKSPACES_PER_BROWSER,
             isStorageConfigured: true,
         };
@@ -122,7 +126,7 @@ export async function createWorkspace(input: unknown): Promise<WorkspaceCreateRe
 
     const secrets = await readWorkspaceSecrets();
 
-    if (!hasCapacity(secrets)) {
+    if (!hasCapacity(secrets, MAX_WORKSPACES_PER_BROWSER)) {
         return { ok: false, reason: "cookie_full" };
     }
 
@@ -139,7 +143,7 @@ export async function createWorkspace(input: unknown): Promise<WorkspaceCreateRe
         return { ok: false, reason: "quota_exhausted" };
     }
 
-    const secret = createWorkspaceSecret(cryptoRandomBytes);
+    const secret = createBrowserSecret(cryptoRandomBytes);
     const recoveryKey = createRecoveryKey(cryptoRandomBytes);
     const workspace = await insertWorkspace({ name: name.name, secret, recoveryKey });
 
@@ -147,7 +151,7 @@ export async function createWorkspace(input: unknown): Promise<WorkspaceCreateRe
         return { ok: false, reason: "write_failed" };
     }
 
-    const next = addSecret(secrets, secret);
+    const next = addSecret(secrets, secret, MAX_WORKSPACES_PER_BROWSER);
 
     if (!next.ok) {
         return { ok: false, reason: next.reason };
@@ -185,7 +189,7 @@ export async function importWorkspace(input: unknown): Promise<WorkspaceImportRe
 
     const secrets = await readWorkspaceSecrets();
 
-    if (!hasCapacity(secrets)) {
+    if (!hasCapacity(secrets, MAX_WORKSPACES_PER_BROWSER)) {
         return { ok: false, reason: "cookie_full" };
     }
 
@@ -205,14 +209,14 @@ export async function importWorkspace(input: unknown): Promise<WorkspaceImportRe
         return { ok: false, reason: "quota_exhausted" };
     }
 
-    const secret = createWorkspaceSecret(cryptoRandomBytes);
+    const secret = createBrowserSecret(cryptoRandomBytes);
     const workspace = await attachSecretByRecoveryHash(await hashCredential(canonical), secret);
 
     if (workspace === null) {
         return { ok: false, reason: "unknown_recovery_key" };
     }
 
-    const next = addSecret(secrets, secret);
+    const next = addSecret(secrets, secret, MAX_WORKSPACES_PER_BROWSER);
 
     if (!next.ok) {
         return { ok: false, reason: next.reason };

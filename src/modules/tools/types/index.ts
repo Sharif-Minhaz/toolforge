@@ -45,6 +45,7 @@ export const TOOL_IDS = [
     "bson",
     "port-scanner",
     "mock-server",
+    "json-server",
 ] as const;
 
 export type ToolId = (typeof TOOL_IDS)[number];
@@ -282,6 +283,30 @@ export type LocalizedCategoryGroup = {
  * `crypto.getRandomValues`; nothing here ever falls back to `Math.random`.
  */
 export type RandomBytes = (length: number) => Uint8Array;
+
+/**
+ * How the public name of a hosted server can fail to be one. Shared by every
+ * studio that hands out a `/<prefix>/<key>/…` address — see
+ * `tools/domain/server-key.ts`.
+ *
+ * The members are message keys as well as reasons, so renaming one means
+ * renaming it in both locale catalogues too.
+ */
+export const SERVER_KEY_PROBLEMS = [
+    "empty_key",
+    "too_short",
+    "too_long",
+    "invalid_characters",
+    "edge_hyphen",
+    "double_hyphen",
+    "reserved",
+] as const;
+
+export type ServerKeyProblem = (typeof SERVER_KEY_PROBLEMS)[number];
+
+export type ServerKeyResult =
+    | { readonly ok: true; readonly key: string }
+    | { readonly ok: false; readonly reason: ServerKeyProblem };
 
 /**
  * One visitor's spend inside one fixed window, as stored. Shared by every tool

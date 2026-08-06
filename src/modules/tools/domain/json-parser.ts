@@ -1,14 +1,14 @@
-import type {
-    JsonAdvisory,
-    JsonError,
-    JsonErrorCode,
-    JsonMember,
-    JsonNode,
-    JsonPosition,
-    JsonRepair,
-    JsonRepairCode,
-} from "../types";
-import { MAX_JSON_DEPTH } from "./constants";
+import {
+    type JsonAdvisory,
+    type JsonError,
+    type JsonErrorCode,
+    type JsonMember,
+    type JsonNode,
+    type JsonPosition,
+    type JsonRepair,
+    type JsonRepairCode,
+    MAX_JSON_DEPTH,
+} from "../types/json-tree";
 
 /**
  * A JSON reader written by hand rather than layered over `JSON.parse`.

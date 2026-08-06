@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RECOVERY_KEY_LENGTH } from "@/modules/tools/domain/recovery-key";
+import { SERVER_KEY_LENGTH } from "@/modules/tools/domain/server-key";
 import { MAX_TURNSTILE_TOKEN_LENGTH } from "@/modules/tools/domain/turnstile";
 
 import {
@@ -8,8 +10,6 @@ import {
     MAX_PATH_LENGTH,
     MAX_STATUS_CODE,
     MIN_STATUS_CODE,
-    RECOVERY_KEY_LENGTH,
-    SERVER_KEY_LENGTH,
     SERVER_NAME_LENGTH,
     WORKSPACE_NAME_LENGTH,
 } from "../domain/constants";

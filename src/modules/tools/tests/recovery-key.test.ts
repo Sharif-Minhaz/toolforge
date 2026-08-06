@@ -1,15 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
 import {
-    RECOVERY_ALPHABET,
-    RECOVERY_GROUP_SIZE,
-    RECOVERY_KEY_LENGTH,
-} from "@/modules/mock-server/domain/constants";
-import {
     createRecoveryKey,
     formatRecoveryKey,
     normalizeRecoveryKey,
-} from "@/modules/mock-server/domain/recovery-key";
+    RECOVERY_ALPHABET,
+    RECOVERY_GROUP_SIZE,
+    RECOVERY_KEY_LENGTH,
+} from "@/modules/tools/domain/recovery-key";
 import type { RandomBytes } from "@/modules/tools/types";
 
 /**

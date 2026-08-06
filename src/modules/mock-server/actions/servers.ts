@@ -8,7 +8,11 @@ import { cryptoRandomBytes } from "@/modules/tools/domain/random";
 import { GRAPH_SCHEMA_VERSION } from "../types/graph";
 import { createDefaultGraph, readGraph, validateGraph } from "../domain/graph";
 import { parsePathPattern } from "../domain/path-pattern";
-import { checkServerKey, createServerKey, suggestServerKey } from "../domain/server-key";
+import {
+    checkServerKey,
+    createServerKey,
+    suggestServerKey,
+} from "@/modules/tools/domain/server-key";
 import { checkWorkspaceName } from "../domain/workspace-name";
 import { isMockStorageConfigured } from "../repository/config";
 import {

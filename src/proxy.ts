@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { updateSession } from "@/lib/supabase/middleware";
+import { JSON_EXECUTION_PREFIX } from "@/modules/json-server/domain/constants";
 import { MOCK_EXECUTION_PREFIX } from "@/modules/mock-server/domain/constants";
 import { parseMockPath } from "@/modules/mock-server/domain/path-pattern";
 
@@ -14,10 +15,17 @@ export async function proxy(request: NextRequest) {
     // catches every non-static path.
     //
     // Checked here rather than in `config.matcher` because matcher values have
-    // to be build-time constants, and this prefix is a shared constant that
-    // moves when execution eventually gets its own subdomain.
+    // to be build-time constants, and these prefixes are shared constants that
+    // move when execution eventually gets its own subdomain.
     if (isMockExecutionPath(request.nextUrl.pathname)) {
         return await serveMockHere(request);
+    }
+
+    // The JSON Server Studio's public path, for the same two reasons. It has no
+    // `QUERY` equivalent to route from here — `json-server` speaks the seven
+    // methods a route file can already export — so this is the bypass alone.
+    if (isUnder(request.nextUrl.pathname, JSON_EXECUTION_PREFIX)) {
+        return NextResponse.next();
     }
 
     return await updateSession(request);
@@ -63,7 +71,12 @@ async function serveMockHere(request: NextRequest): Promise<NextResponse | Respo
 }
 
 function isMockExecutionPath(pathname: string): boolean {
-    return pathname === MOCK_EXECUTION_PREFIX || pathname.startsWith(`${MOCK_EXECUTION_PREFIX}/`);
+    return isUnder(pathname, MOCK_EXECUTION_PREFIX);
+}
+
+/** The prefix itself, or anything below it — never a path that merely starts with it. */
+function isUnder(pathname: string, prefix: string): boolean {
+    return pathname === prefix || pathname.startsWith(`${prefix}/`);
 }
 
 export const config = {

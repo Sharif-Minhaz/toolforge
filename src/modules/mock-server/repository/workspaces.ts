@@ -3,7 +3,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 
-import { hashCredential } from "../domain/credentials";
+import { hashCredential } from "@/modules/tools/domain/browser-secret";
 import type { WorkspaceSummary } from "../types";
 
 /**

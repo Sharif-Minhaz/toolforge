@@ -157,6 +157,7 @@ describe("tool catalog", () => {
             "domain-inspector",
             "port-scanner",
             "mock-server",
+            "json-server",
         ] as const;
 
         for (const id of networked) {

@@ -22,7 +22,7 @@ import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-
 
 import { createServer, deleteServer, pauseServer } from "../actions/servers";
 import { MAX_SERVERS_PER_WORKSPACE } from "../domain/constants";
-import { suggestServerKey } from "../domain/server-key";
+import { suggestServerKey } from "@/modules/tools/domain/server-key";
 import type { ServerFailureReason, ServerSummary } from "../types";
 import { MockUrl } from "./mock-url";
 

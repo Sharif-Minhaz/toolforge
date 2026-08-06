@@ -2,12 +2,18 @@ import "server-only";
 
 import { cookies } from "next/headers";
 
-import { WORKSPACE_COOKIE_MAX_AGE_SECONDS, WORKSPACE_COOKIE_NAME } from "../domain/constants";
-import { parseSecretList, serializeSecretList } from "../domain/session";
+import {
+    parseSecretList,
+    SECRET_COOKIE_MAX_AGE_SECONDS,
+    serializeSecretList,
+} from "@/modules/tools/domain/secret-cookie";
+
+import { MAX_WORKSPACES_PER_BROWSER, WORKSPACE_COOKIE_NAME } from "../domain/constants";
 
 /**
  * The cookie itself. Everything about *what* it may contain is in
- * `domain/session.ts`; this file is only the reading and the writing.
+ * `tools/domain/secret-cookie.ts`; this file is only the reading and the
+ * writing.
  *
  * `httpOnly` is the whole design. The client cannot enumerate the secrets, so
  * the workspace switcher is fed by a Server Action rather than by anything the
@@ -18,7 +24,7 @@ import { parseSecretList, serializeSecretList } from "../domain/session";
 export async function readWorkspaceSecrets(): Promise<readonly string[]> {
     const store = await cookies();
 
-    return parseSecretList(store.get(WORKSPACE_COOKIE_NAME)?.value);
+    return parseSecretList(store.get(WORKSPACE_COOKIE_NAME)?.value, MAX_WORKSPACES_PER_BROWSER);
 }
 
 export async function writeWorkspaceSecrets(secrets: readonly string[]): Promise<void> {
@@ -40,6 +46,6 @@ export async function writeWorkspaceSecrets(secrets: readonly string[]): Promise
         // every deployment this ships to is HTTPS.
         secure: process.env.NODE_ENV === "production",
         path: "/",
-        maxAge: WORKSPACE_COOKIE_MAX_AGE_SECONDS,
+        maxAge: SECRET_COOKIE_MAX_AGE_SECONDS,
     });
 }

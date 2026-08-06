@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import { hashCredential } from "@/modules/mock-server/domain/credentials";
+import { hashCredential } from "@/modules/tools/domain/browser-secret";
 import {
     createRecoveryKey,
     formatRecoveryKey,
     normalizeRecoveryKey,
-} from "@/modules/mock-server/domain/recovery-key";
+} from "@/modules/tools/domain/recovery-key";
 import type { RandomBytes } from "@/modules/tools/types";
 
 const zeroBytes: RandomBytes = (length) => new Uint8Array(length);
@@ -13,7 +13,7 @@ const zeroBytes: RandomBytes = (length) => new Uint8Array(length);
 describe("hashCredential", () => {
     /**
      * Pinned against a value nothing in this repository produced. If the digest
-     * or its encoding ever changes, every stored workspace becomes unreachable,
+     * or its encoding ever changes, every stored server becomes unreachable,
      * so this is the one assertion here worth an external reference.
      */
     test("is SHA-256 in lower-case hex", async () => {

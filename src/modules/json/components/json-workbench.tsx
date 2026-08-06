@@ -24,7 +24,9 @@ import {
 } from "../domain/constants";
 import { createJsonExportFile } from "../domain/export";
 import { describeSizeDelta, type JsonFormatResult } from "../domain/format";
-import type { JsonError, JsonFormatOptions, JsonMode } from "../types";
+import type { JsonError } from "@/modules/tools/types/json-tree";
+
+import type { JsonFormatOptions, JsonMode } from "../types";
 import { FormatOptions } from "./format-options";
 import { InputPanel } from "./input-panel";
 import { ModeSelector } from "./mode-selector";

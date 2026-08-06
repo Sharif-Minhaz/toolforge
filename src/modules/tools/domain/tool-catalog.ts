@@ -860,6 +860,34 @@ const TOOLS: readonly Tool[] = [
             "prototype api",
         ],
     },
+    {
+        id: "json-server",
+        // A section, not a page: the studio is a route tree under /json with its
+        // own navigation, so it opts out of the /tools/<id> rule and out of
+        // every grid where a multi-page app between two single-page utilities
+        // would read as a mistake.
+        href: "/json",
+        isSection: true,
+        category: "network",
+        status: "available",
+        runsOn: "server",
+        accent: "amber",
+        icon: "database",
+        addedOn: "2026-08-06",
+        featured: false,
+        popularity: 58,
+        keywords: [
+            "json server",
+            "json-server",
+            "db.json",
+            "fake rest api",
+            "rest api mock",
+            "hosted json server",
+            "prototype api",
+            "crud api",
+            "typicode",
+        ],
+    },
 ];
 
 export function getTools(): readonly Tool[] {

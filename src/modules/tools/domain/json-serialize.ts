@@ -1,4 +1,4 @@
-import type { JsonMember, JsonNode, JsonSerializeOptions } from "../types";
+import type { JsonMember, JsonNode, JsonSerializeOptions } from "../types/json-tree";
 
 const ESCAPES: Record<string, string> = {
     '"': '\\"',

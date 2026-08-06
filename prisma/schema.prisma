@@ -356,19 +356,131 @@ model RequestLog {
   @@map("request_logs")
 }
 
-/// Workspace and server creation, metered per caller address.
+/// One hosted `json-server`: a whole `db.json` and the address it answers on.
 ///
-/// The same shape and the same reasoning as `port_scan_quota`. The cookie's
-/// "three workspaces" is a UI affordance — a visitor who clears it can create
-/// three more — so the limit that actually holds lives here, keyed on a salted
-/// digest of the address and never on the address itself.
-model MockQuota {
-  /// SHA-256 of `MOCK_IP_SALT` + the caller's address.
+/// Flat on purpose. The Mock Server Studio puts a `Workspace` above its servers
+/// because a workspace owns variables, logs and several servers that share them;
+/// a JSON server owns nothing but its own document, so a layer above it would be
+/// a folder containing one thing.
+///
+/// Ownership works exactly as it does there, and for the same reasons: a secret
+/// in an HttpOnly cookie is the session credential, a printable recovery key is
+/// the bearer credential that revives the server in another browser, and **both
+/// are stored only as SHA-256 digests** — a database dump must not hand over the
+/// ability to rewrite somebody's data.
+///
+/// `key` is what appears in the public address, so it is unique across this
+/// table rather than per owner. It is a separate namespace from `mock_servers`:
+/// the two answer under different path prefixes, so `/j/payments` and
+/// `/m/payments` are different servers and neither shadows the other.
+model JsonServer {
+  id            String @id @default(uuid(7)) @db.Uuid
+  key           String @unique
+  name          String
+  recoveryHash  String @unique @map("recovery_hash")
+  /// Bumped whenever the recovery key is rotated, so a key written down two
+  /// rotations ago cannot be replayed even if its digest were recovered.
+  recoveryEpoch Int    @default(1) @map("recovery_epoch")
+
+  /// The live document — every collection and singular resource. JSONB because
+  /// nothing queries inside it: `json-server` itself holds the whole database in
+  /// memory and rewrites the file, and reproducing that is the point. Every
+  /// write is a read-modify-write under a row lock, which is what makes two
+  /// concurrent POSTs impossible to interleave.
+  db     Json
+  /// What the document was created with, so "reset" is a real button rather
+  /// than an instruction to paste the file again.
+  seedDb Json @map("seed_db")
+
+  /// UTF-8 bytes of `db`, maintained on every write.
+  ///
+  /// Stored rather than derived because the write gate reads it on every
+  /// request: re-serialising a megabyte of JSONB to answer "is this server
+  /// full" would cost more than the write it is guarding.
+  sizeBytes Int @default(0) @map("size_bytes")
+
+  /// A paused server answers 503 rather than 404, so a caller can tell the
+  /// difference between "switched off" and "never existed".
+  isPaused Boolean @default(false) @map("is_paused")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  /// Touched when the studio loads it. The only thing a dormancy sweep needs.
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+
+  secrets JsonServerSecret[]
+  logs    JsonServerLog[]
+
+  @@index([lastSeenAt])
+  @@map("json_servers")
+}
+
+/// One browser's claim on one JSON server.
+///
+/// A row per device rather than a column, for the reason `workspace_secrets`
+/// gives: importing a recovery key into a second browser has to *add* a claim,
+/// and a recovery key whose use logs you out elsewhere is not a recovery key.
+model JsonServerSecret {
+  /// SHA-256 of the secret in that browser's cookie. Never the secret.
+  secretHash String @id @map("secret_hash")
+  serverId   String @map("server_id") @db.Uuid
+
+  createdAt  DateTime @default(now()) @map("created_at")
+  lastUsedAt DateTime @default(now()) @map("last_used_at")
+
+  server JsonServer @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  @@index([serverId])
+  @@map("json_server_secrets")
+}
+
+/// The last few calls a JSON server answered.
+///
+/// Deliberately narrower than `request_logs`: a method, a path, a status and a
+/// duration, and **no headers and no bodies at all**. The mock studio logs those
+/// because an author is debugging what a client sent; here the request bodies
+/// *are* the visitor's data, already stored once in `db`, and keeping a second
+/// redacted copy of them would be this service quietly retaining more than it
+/// says. What is left still answers the question people actually have, which is
+/// why a client got a 404.
+model JsonServerLog {
+  id       String @id @default(uuid(7)) @db.Uuid
+  serverId String @map("server_id") @db.Uuid
+
+  method     String
+  /// Path and query as received, so `?_page=2` is visible. Truncated on write.
+  path       String
+  status     Int
+  durationMs Int    @map("duration_ms")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  server JsonServer @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  @@index([serverId, createdAt(sort: Desc)])
+  @@map("json_server_logs")
+}
+
+/// Every fixed-window allowance on this site that counts a caller without
+/// naming one, in one table.
+///
+/// The same shape and the same reasoning as `port_scan_quota`. A cookie's
+/// "three workspaces" or "five JSON servers" is a UI affordance — a visitor who
+/// clears it gets more — so the limit that actually holds lives here, keyed on a
+/// salted digest and never on the address itself.
+///
+/// Shared between the Mock Server Studio and the JSON Server Studio, which is
+/// safe because every key is a digest of a **namespaced** string (`mock:serve:…`,
+/// `json:serve:…`, `mock:outbound:…`). Two limits therefore cannot land on one
+/// row, and adding a third costs a namespace rather than a table. Named
+/// `service_quota` rather than `mock_quota` since the second caller arrived.
+model ServiceQuota {
+  /// SHA-256 of a salt, a namespace and whatever the limit is keyed on.
   visitorHash String   @id @map("visitor_hash")
   count       Int      @default(0)
   windowStart DateTime @map("window_start")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@index([windowStart])
-  @@map("mock_quota")
+  @@map("service_quota")
 }

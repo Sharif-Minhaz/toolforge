@@ -93,19 +93,3 @@ export type RouteMiss =
     | { readonly kind: "options"; readonly allowed: readonly HttpMethod[] };
 
 export type RouteResult = RouteMatch | RouteMiss;
-
-export const SERVER_KEY_PROBLEMS = [
-    "empty_key",
-    "too_short",
-    "too_long",
-    "invalid_characters",
-    "edge_hyphen",
-    "double_hyphen",
-    "reserved",
-] as const;
-
-export type ServerKeyProblem = (typeof SERVER_KEY_PROBLEMS)[number];
-
-export type ServerKeyResult =
-    | { readonly ok: true; readonly key: string }
-    | { readonly ok: false; readonly reason: ServerKeyProblem };
