@@ -46,6 +46,7 @@ export const TOOL_IDS = [
     "port-scanner",
     "mock-server",
     "json-server",
+    "graphql-server",
 ] as const;
 
 export type ToolId = (typeof TOOL_IDS)[number];
@@ -104,7 +105,8 @@ export type ToolIconName =
     | "radar"
     | "database"
     | "network"
-    | "server";
+    | "server"
+    | "graph";
 
 export type Tool = {
     readonly id: ToolId;

@@ -1,8 +1,8 @@
-import { DOCUMENT_WARN_RATIO, MAX_DOCUMENT_BYTES } from "./constants";
-import type { ServerUsage } from "../types";
+import { DOCUMENT_WARN_RATIO, MAX_DOCUMENT_BYTES } from "./document-limits";
+import type { DocumentUsage } from "../types/json-document";
 
 /**
- * How full a server is, as the studio reports it.
+ * How full a stored document is, as a studio reports it.
  *
  * Pure, because the number decides what the UI *says* as well as what it draws,
  * and a bar that disagrees with its own caption is the kind of thing nobody
@@ -19,7 +19,7 @@ import type { ServerUsage } from "../types";
  * And `nearLimit` exists so the lock is something a visitor saw coming. A limit
  * somebody meets without warning reads as a fault in the tool.
  */
-export function describeUsage(bytes: number): ServerUsage {
+export function describeUsage(bytes: number): DocumentUsage {
     const clamped = Math.max(0, bytes);
 
     return {

@@ -1,19 +1,20 @@
 import { getByteLength } from "@/modules/tools/domain/byte-size";
+import {
+    MAX_DOCUMENT_BYTES,
+    MAX_ITEMS_PER_COLLECTION,
+} from "@/modules/tools/domain/document-limits";
+import {
+    isPlainObject,
+    resourceKind,
+    writeCompact,
+    writeDocument,
+} from "@/modules/tools/domain/json-document";
+import { findIndexById, idOf, idsOf, nextId } from "@/modules/tools/domain/record-id";
+import type { JsonDocument, JsonObject, JsonValue } from "@/modules/tools/types/json-document";
 
-import { MAX_DOCUMENT_BYTES, MAX_ITEMS_PER_COLLECTION } from "./constants";
-import { isPlainObject, resourceKind, writeCompact, writeDocument } from "./document";
-import { findIndexById, idOf, idsOf, nextId } from "./identity";
 import { embedInto, embedTargets, foreignKeyFor, readPath, runQuery } from "./query";
 import { allowedMethods, isGrowingMethod, parsePath, type PathTarget } from "./routes";
-import type {
-    HttpMethod,
-    JsonDocument,
-    JsonObject,
-    JsonValue,
-    ServeError,
-    ServeOutcome,
-    ServeRequest,
-} from "../types";
+import type { HttpMethod, ServeError, ServeOutcome, ServeRequest } from "../types";
 
 /**
  * The whole `json-server` engine, as one pure function.

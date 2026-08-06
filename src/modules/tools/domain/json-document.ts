@@ -1,7 +1,4 @@
-import { getByteLength } from "@/modules/tools/domain/byte-size";
-import { parseJson } from "@/modules/tools/domain/json-parser";
-import type { JsonNode } from "@/modules/tools/types/json-tree";
-
+import { getByteLength } from "./byte-size";
 import {
     MAX_COLLECTIONS,
     MAX_DOCUMENT_DEPTH,
@@ -9,8 +6,9 @@ import {
     MAX_RESOURCE_NAME_LENGTH,
     MAX_UPLOAD_BYTES,
     RESOURCE_NAME_PATTERN,
-} from "./constants";
-import { nextId } from "./identity";
+} from "./document-limits";
+import { parseJson } from "./json-parser";
+import { nextId } from "./record-id";
 import type {
     DocumentResult,
     JsonDocument,
@@ -18,10 +16,15 @@ import type {
     JsonValue,
     ResourceKind,
     ResourceSummary,
-} from "../types";
+} from "../types/json-document";
+import type { JsonNode } from "../types/json-tree";
 
 /**
  * Reading a `db.json` somebody supplied, and deciding what it publishes.
+ *
+ * Shared by both hosted-fixture studios: the REST one derives routes from what
+ * this returns, the GraphQL one derives a schema from it, and neither may
+ * disagree with the other about what a collection is.
  *
  * Two things make this more than a `JSON.parse`.
  *

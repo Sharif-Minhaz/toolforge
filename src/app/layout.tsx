@@ -348,15 +348,17 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             serverErrors: messages.mockServer.serverErrors,
             toast: messages.mockServer.toast,
         },
+        // The vocabulary both hosted-server studios share: the document editor,
+        // the usage bar, the base-URL row and the reasons reading a document can
+        // fail. One entry rather than one per studio, because the components
+        // that read it live in `tools/components` and are the same component.
+        hostedServer: messages.hostedServer,
         // The JSON Server Studio. Everything here is a control label or a
         // failure reason the islands render; `meta` and `hero` stay on the
         // server, where the pages that use them are rendered.
         jsonServer: {
             launcher: messages.jsonServer.launcher,
-            editor: messages.jsonServer.editor,
-            documentProblems: messages.jsonServer.documentProblems,
-            usage: messages.jsonServer.usage,
-            baseUrl: messages.jsonServer.baseUrl,
+            usageFull: messages.jsonServer.usageFull,
             card: messages.jsonServer.card,
             tabs: messages.jsonServer.tabs,
             routes: messages.jsonServer.routes,
@@ -365,6 +367,25 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             recovery: messages.jsonServer.recovery,
             errors: messages.jsonServer.errors,
             toast: messages.jsonServer.toast,
+        },
+        // The GraphQL Server Studio. Same split as its REST sibling: control
+        // labels and failure reasons cross to the island, `meta`, `hero` and the
+        // whole article stay on the server.
+        graphqlServer: {
+            launcher: messages.graphqlServer.launcher,
+            usageFull: messages.graphqlServer.usageFull,
+            card: messages.graphqlServer.card,
+            tabs: messages.graphqlServer.tabs,
+            schema: messages.graphqlServer.schema,
+            skipReasons: messages.graphqlServer.skipReasons,
+            renameReasons: messages.graphqlServer.renameReasons,
+            playground: messages.graphqlServer.playground,
+            snippets: messages.graphqlServer.snippets,
+            logs: messages.graphqlServer.logs,
+            workbench: messages.graphqlServer.workbench,
+            recovery: messages.graphqlServer.recovery,
+            errors: messages.graphqlServer.errors,
+            toast: messages.graphqlServer.toast,
         },
         // Seven panels' worth of labels, which is why this slice is the
         // largest here — everything under `article` still stays on the server.

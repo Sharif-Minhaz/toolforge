@@ -22,10 +22,16 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { CopyIconSwap } from "@/modules/tools/components/copy-button";
+import { DocumentUsageBar } from "@/modules/tools/components/document-usage-bar";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
+import { JsonDocumentEditor } from "@/modules/tools/components/json-document-editor";
+import { ServerBaseUrl } from "@/modules/tools/components/server-base-url";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { copyText } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
+import { exceedsUploadLimit } from "@/modules/tools/domain/json-document";
+import { SERVER_NAME_LENGTH } from "@/modules/tools/domain/server-name";
+import { DOCUMENT_PROBLEMS, type DocumentFailure } from "@/modules/tools/types/json-document";
 
 import {
     clearLogs,
@@ -38,20 +44,11 @@ import {
     rotateRecoveryKey,
     setServerPaused,
 } from "../actions/servers";
-import { SERVER_NAME_LENGTH } from "../domain/constants";
-import { exceedsUploadLimit } from "../domain/document";
-import {
-    DOCUMENT_PROBLEMS,
-    type ActionProblem,
-    type DocumentFailure,
-    type JsonServerDetail,
-    type RequestLogRow,
-} from "../types";
-import { ServerBaseUrl } from "./base-url";
-import { DocumentEditor } from "./document-editor";
+import { JSON_EXECUTION_PREFIX } from "../domain/constants";
+import { SAMPLE_DOCUMENT } from "../domain/samples";
+import type { ActionProblem, JsonServerDetail, RequestLogRow } from "../types";
 import { LogTable } from "./log-table";
 import { RouteTable } from "./route-table";
-import { UsageBar } from "./usage-bar";
 
 type ServerWorkbenchProps = {
     detail: JsonServerDetail;
@@ -83,6 +80,7 @@ export function ServerWorkbench({ detail: initial }: ServerWorkbenchProps) {
     const tRecovery = useTranslations("jsonServer.recovery");
     const tToast = useTranslations("jsonServer.toast");
     const tTabs = useTranslations("jsonServer.tabs");
+    const tUsage = useTranslations("jsonServer");
     const router = useRouter();
     const nameId = useId();
 
@@ -308,7 +306,7 @@ export function ServerWorkbench({ detail: initial }: ServerWorkbenchProps) {
                     </Button>
                 </div>
 
-                <ServerBaseUrl serverKey={detail.key} />
+                <ServerBaseUrl prefix={JSON_EXECUTION_PREFIX} serverKey={detail.key} />
 
                 {detail.isPaused ? (
                     <p className="text-brand-amber flex items-start gap-1.5 text-[0.6875rem] leading-normal">
@@ -321,7 +319,7 @@ export function ServerWorkbench({ detail: initial }: ServerWorkbenchProps) {
                     </p>
                 ) : null}
 
-                <UsageBar usage={detail.usage} verbose />
+                <DocumentUsageBar usage={detail.usage} fullMessage={tUsage("usageFull")} />
 
                 {status !== null ? (
                     <StatusStrip tone={status.tone} message={status.message} />
@@ -362,8 +360,9 @@ export function ServerWorkbench({ detail: initial }: ServerWorkbenchProps) {
                         {t("dataDescription")}
                     </p>
 
-                    <DocumentEditor
+                    <JsonDocumentEditor
                         value={document}
+                        sample={SAMPLE_DOCUMENT}
                         onChange={(next) => {
                             setDocument(next);
                             setDocumentFailure(null);

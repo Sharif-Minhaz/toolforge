@@ -6,10 +6,10 @@ import Link from "next/link";
 
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { DocumentUsageBar } from "@/modules/tools/components/document-usage-bar";
 import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
 
 import type { JsonServerSummary } from "../types";
-import { UsageBar } from "./usage-bar";
 
 type ServerCardProps = {
     server: JsonServerSummary;
@@ -64,7 +64,7 @@ export function ServerCard({ server }: ServerCardProps) {
                 })}
             </p>
 
-            <UsageBar usage={server.usage} />
+            <DocumentUsageBar usage={server.usage} />
 
             <Link
                 href={`/json/${server.id}`}

@@ -1,9 +1,9 @@
-import { parseJson } from "@/modules/tools/domain/json-parser";
-import { serializeJson } from "@/modules/tools/domain/json-serialize";
+import { parseJson } from "./json-parser";
+import { serializeJson } from "./json-serialize";
 
 /**
- * Beautifying the text in the editor, over the same reader and writer the JSON
- * Formatter uses.
+ * Beautifying the text in a document editor, over the same reader and writer the
+ * JSON Formatter uses.
  *
  * Five lines rather than a call into `modules/json`, because a tool may not
  * import another tool's module — and once `parser.ts` and `serialize.ts` moved

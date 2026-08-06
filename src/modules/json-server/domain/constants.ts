@@ -1,5 +1,12 @@
 /**
- * Every limit the JSON Server Studio runs on, named once.
+ * Every limit the JSON Server Studio runs on that is its own, named once.
+ *
+ * The document's ceilings — upload size, stored size, collection and depth
+ * bounds, what a resource name may be — live in
+ * `tools/domain/document-limits.ts`, shared with the GraphQL Server Studio so a
+ * `db.json` one accepts is never one the other refuses. What is here is the
+ * REST studio's own: its path prefix, its cookie, its query-language bounds and
+ * its log retention.
  */
 
 /**
@@ -13,8 +20,6 @@ export const MAX_SERVERS_PER_BROWSER = 5;
 
 /** The HttpOnly cookie carrying one secret per owned server. */
 export const SERVER_COOKIE_NAME = "toolforge.jsonserver";
-
-export const SERVER_NAME_LENGTH = { min: 1, max: 60 } as const;
 
 /**
  * Creations allowed per address per window.
@@ -32,70 +37,6 @@ export const TURNSTILE_ACTION = "json-server";
 
 /** The path prefix a JSON server answers on while the studio is path-hosted. */
 export const JSON_EXECUTION_PREFIX = "/j";
-
-// ─── Document size: two numbers, and the gap between them is the feature ────
-
-/**
- * The largest document that may be *uploaded* — pasted, imported, or written
- * back from the studio's own editor.
- *
- * Below `MAX_DOCUMENT_BYTES` on purpose. A server created at exactly its own
- * ceiling would be full before its first `POST`, so the first thing a new
- * visitor met would be a refusal. The gap is the room to actually use the thing.
- */
-export const MAX_UPLOAD_BYTES = 900 * 1_024;
-
-/**
- * The hard ceiling on the stored document.
- *
- * Reaching it locks `POST`, `PUT` and `PATCH` — and **only** those. `GET`,
- * `DELETE` and `OPTIONS` keep working, which is what makes the lock recoverable:
- * a full server can still be read, and deleting a record is the way out. A
- * ceiling that also blocked `DELETE` would be a trap rather than a limit, and
- * the only escape would be resetting the whole document.
- *
- * The gate reads `sizeBytes` from the row rather than measuring, so it costs a
- * column rather than a serialisation of everything it is guarding.
- */
-export const MAX_DOCUMENT_BYTES = 1_024 * 1_024;
-
-/**
- * The point at which the studio starts saying so, as a fraction of the ceiling.
- *
- * A limit somebody meets without warning reads as a fault. At 80% the usage bar
- * changes tone and the copy names the number, so the lock is something a visitor
- * saw coming rather than something that happened to them.
- */
-export const DOCUMENT_WARN_RATIO = 0.8;
-
-// ─── Document shape ─────────────────────────────────────────────────────────
-
-/** Top-level keys. Each is a collection or a singular resource. */
-export const MAX_COLLECTIONS = 50;
-
-/**
- * Records in one collection.
- *
- * The byte ceiling bounds this already for any realistic record, but a
- * collection of a hundred thousand `1`s would fit and would make every write a
- * hundred-thousand-element rewrite. This is the bound on *work*, not on size.
- */
-export const MAX_ITEMS_PER_COLLECTION = 10_000;
-
-/** Matches `MAX_JSON_DEPTH`'s job: a bound the reader can report rather than crash on. */
-export const MAX_DOCUMENT_DEPTH = 24;
-
-/**
- * A resource name has to survive being a path segment and being read aloud.
- *
- * Deliberately narrower than JSON allows a key to be: `posts` and `blog_posts`
- * are resources, `a/b` and `?x` are not, and a key that needed escaping to
- * appear in a URL would make its own routes unusable. Keys outside this are not
- * an error — they are simply not published as routes, and the studio says so.
- */
-export const RESOURCE_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
-
-export const MAX_RESOURCE_NAME_LENGTH = 64;
 
 // ─── Query semantics, matching json-server v1 ───────────────────────────────
 

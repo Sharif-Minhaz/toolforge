@@ -4,11 +4,17 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { hashCredential } from "@/modules/tools/domain/browser-secret";
+import { describeUsage } from "@/modules/tools/domain/document-usage";
+import {
+    checkDocument,
+    documentBytes,
+    summarize,
+    writeDocument,
+} from "@/modules/tools/domain/json-document";
+import type { JsonDocument, ResourceSummary } from "@/modules/tools/types/json-document";
 
-import { checkDocument, documentBytes, summarize, writeDocument } from "../domain/document";
 import { deriveRoutes } from "../domain/routes";
-import { describeUsage } from "../domain/usage";
-import type { JsonDocument, JsonServerDetail, JsonServerSummary, ResourceSummary } from "../types";
+import type { JsonServerDetail, JsonServerSummary } from "../types";
 
 /**
  * Every read and write the studio's identity layer makes. One of only two files

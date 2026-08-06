@@ -3,17 +3,12 @@ import { describe, expect, test } from "bun:test";
 import {
     MAX_DOCUMENT_BYTES,
     MAX_ITEMS_PER_COLLECTION,
-} from "@/modules/json-server/domain/constants";
-import { documentBytes } from "@/modules/json-server/domain/document";
+} from "@/modules/tools/domain/document-limits";
+import { documentBytes } from "@/modules/tools/domain/json-document";
 import { allowedMethods, deriveRoutes, parsePath } from "@/modules/json-server/domain/routes";
 import { serve } from "@/modules/json-server/domain/serve";
-import type {
-    HttpMethod,
-    JsonDocument,
-    JsonObject,
-    JsonValue,
-    ServeRequest,
-} from "@/modules/json-server/types";
+import type { JsonDocument, JsonObject, JsonValue } from "@/modules/tools/types/json-document";
+import type { HttpMethod, ServeRequest } from "@/modules/json-server/types";
 
 const DB: JsonDocument = {
     posts: [

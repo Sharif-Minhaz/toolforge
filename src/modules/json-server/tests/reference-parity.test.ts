@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import { documentBytes } from "@/modules/json-server/domain/document";
+import { documentBytes } from "@/modules/tools/domain/json-document";
 import { serve } from "@/modules/json-server/domain/serve";
-import type { HttpMethod, JsonDocument, JsonValue } from "@/modules/json-server/types";
+import type { JsonDocument, JsonValue } from "@/modules/tools/types/json-document";
+import type { HttpMethod } from "@/modules/json-server/types";
 
 /**
  * The behaviours that only came out of running this engine against the real

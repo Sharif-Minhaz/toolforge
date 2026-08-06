@@ -4,9 +4,10 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { checkServerKey } from "@/modules/tools/domain/server-key";
+import type { JsonDocument } from "@/modules/tools/types/json-document";
 
 import { serve } from "../domain/serve";
-import type { HttpMethod, JsonDocument, ServeRequest } from "../types";
+import type { HttpMethod, ServeRequest } from "../types";
 
 /**
  * Where a JSON server's data actually lives, and the one place a request is

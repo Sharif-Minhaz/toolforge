@@ -1,6 +1,7 @@
+import { isPlainObject } from "@/modules/tools/domain/json-document";
+import type { JsonObject, JsonValue } from "@/modules/tools/types/json-document";
+
 import { DEFAULT_PER_PAGE, MAX_PER_PAGE, MAX_WHERE_DEPTH, MAX_WHERE_LENGTH } from "./constants";
-import { isPlainObject } from "./document";
-import type { JsonObject, JsonValue } from "../types";
 
 /**
  * `json-server` v1's query language, as a pure function of a list and a query

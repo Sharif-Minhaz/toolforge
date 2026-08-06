@@ -15,7 +15,7 @@ import {
     singularize,
     sortRecords,
 } from "@/modules/json-server/domain/query";
-import type { JsonObject, JsonValue } from "@/modules/json-server/types";
+import type { JsonObject, JsonValue } from "@/modules/tools/types/json-document";
 
 const POSTS: readonly JsonObject[] = [
     { id: "1", title: "Hello world", views: 100, author: { name: "typicode" }, draft: false },

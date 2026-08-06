@@ -5,7 +5,9 @@ import { useTranslations } from "next-intl";
 
 import { cn } from "@/lib/utils";
 
-import type { DerivedRoute, HttpMethod, ResourceSummary } from "../types";
+import type { ResourceSummary } from "@/modules/tools/types/json-document";
+
+import type { DerivedRoute, HttpMethod } from "../types";
 
 type RouteTableProps = {
     routes: readonly DerivedRoute[];

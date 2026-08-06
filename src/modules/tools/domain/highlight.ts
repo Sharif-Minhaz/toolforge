@@ -46,7 +46,15 @@ export type Token = {
  * has no structure worth colouring — base64, a digest — passes a value instead
  * of branching around the component.
  */
-export const HIGHLIGHT_LANGUAGES = ["shell", "javascript", "json", "toon", "hex", "plain"] as const;
+export const HIGHLIGHT_LANGUAGES = [
+    "shell",
+    "javascript",
+    "json",
+    "graphql",
+    "toon",
+    "hex",
+    "plain",
+] as const;
 
 export type HighlightLanguage = (typeof HIGHLIGHT_LANGUAGES)[number];
 
@@ -362,6 +370,137 @@ function highlightJavaScript(input: string): Token[] {
     return sink.drain();
 }
 
+/* -------------------------------------------------------------- graphql --- */
+
+const GRAPHQL_KEYWORD =
+    /^(?:query|mutation|subscription|fragment|on|type|input|enum|interface|union|scalar|schema|extend|implements|directive|repeatable|true|false|null)\b/;
+
+const GRAPHQL_NUMBER = /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/;
+
+const GRAPHQL_NAME = /^[_A-Za-z][_0-9A-Za-z]*/;
+
+const GRAPHQL_PUNCTUATION = new Set(["{", "}", "(", ")", "[", "]", ":", ",", "=", "!", "|", "&"]);
+
+/**
+ * GraphQL, for the SDL panel and the query editor.
+ *
+ * Three things distinguish it from the JSON scanner it otherwise resembles, and
+ * each is a real feature of the grammar rather than decoration:
+ *
+ * - **Block strings.** `"""…"""` is how every description in a generated schema
+ *   is written, and reading one as three empty strings would mis-colour the
+ *   entire rest of the file. It is checked before the single-quote case, which
+ *   is the only order that works.
+ * - **A name before a colon is a field or an argument**, and one after it is a
+ *   type. Looking ahead for the colon is the same trick the JSON scanner uses
+ *   for keys, and it is what makes an SDL readable at a glance.
+ * - **`$` and `@` lead their own tokens.** A variable and a directive are the
+ *   two things in a query that are neither a field nor a literal, and both are
+ *   worth seeing.
+ *
+ * Like every scanner here it always advances and never throws: an unterminated
+ * block string or a stray brace colours badly rather than failing, because that
+ * is what somebody halfway through typing has.
+ */
+function highlightGraphql(input: string): Token[] {
+    const sink = new TokenSink();
+    let index = 0;
+
+    while (index < input.length) {
+        const character = input[index];
+
+        if (/\s/.test(character)) {
+            sink.push("plain", character);
+            index += 1;
+            continue;
+        }
+
+        if (character === "#") {
+            const end = input.indexOf("\n", index);
+            const stop = end < 0 ? input.length : end;
+
+            sink.push("comment", input.slice(index, stop));
+            index = stop;
+            continue;
+        }
+
+        // Before the single-quote case, or `"""` reads as an empty string
+        // followed by a quote that swallows the rest of the document.
+        if (input.startsWith('"""', index)) {
+            const end = input.indexOf('"""', index + 3);
+            const stop = end < 0 ? input.length : end + 3;
+
+            sink.push("string", input.slice(index, stop));
+            index = stop;
+            continue;
+        }
+
+        if (character === '"') {
+            const end = readQuoted(input, index, '"', true);
+
+            sink.push("string", input.slice(index, end));
+            index = end;
+            continue;
+        }
+
+        if (character === "$" || character === "@") {
+            const name = GRAPHQL_NAME.exec(input.slice(index + 1));
+            const text = name === null ? character : `${character}${name[0]}`;
+
+            sink.push(character === "$" ? "flag" : "function", text);
+            index += text.length;
+            continue;
+        }
+
+        if (input.startsWith("...", index)) {
+            sink.push("operator", "...");
+            index += 3;
+            continue;
+        }
+
+        if (GRAPHQL_PUNCTUATION.has(character)) {
+            sink.push("punctuation", character);
+            index += 1;
+            continue;
+        }
+
+        const rest = input.slice(index);
+        const keyword = GRAPHQL_KEYWORD.exec(rest);
+
+        if (keyword !== null) {
+            sink.push("keyword", keyword[0]);
+            index += keyword[0].length;
+            continue;
+        }
+
+        const number = GRAPHQL_NUMBER.exec(rest);
+
+        if (number !== null) {
+            sink.push("number", number[0]);
+            index += number[0].length;
+            continue;
+        }
+
+        const name = GRAPHQL_NAME.exec(rest);
+
+        if (name !== null) {
+            sink.push(
+                peekNonSpace(input, index + name[0].length) === ":" ? "property" : "plain",
+                name[0],
+            );
+            index += name[0].length;
+            continue;
+        }
+
+        // Anything else is somebody mid-keystroke. One character at a time keeps
+        // the scan advancing whatever it meets.
+        sink.push("plain", character);
+        index += 1;
+    }
+
+    return sink.drain();
+}
+
 /* ----------------------------------------------------------------- json --- */
 
 const JSON_NUMBER = /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/;
@@ -644,6 +783,8 @@ export function highlight(input: string, language: HighlightLanguage): readonly 
             return highlightJavaScript(input);
         case "json":
             return highlightJson(input);
+        case "graphql":
+            return highlightGraphql(input);
         case "toon":
             return highlightToon(input);
         case "hex":

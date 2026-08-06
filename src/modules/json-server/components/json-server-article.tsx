@@ -4,16 +4,19 @@ import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/ar
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 import {
-    DEFAULT_PER_PAGE,
     DOCUMENT_WARN_RATIO,
     MAX_COLLECTIONS,
     MAX_DOCUMENT_BYTES,
     MAX_DOCUMENT_DEPTH,
     MAX_ITEMS_PER_COLLECTION,
+    MAX_UPLOAD_BYTES,
+} from "@/modules/tools/domain/document-limits";
+
+import {
+    DEFAULT_PER_PAGE,
     MAX_LOG_ROWS,
     MAX_PER_PAGE,
     MAX_SERVERS_PER_BROWSER,
-    MAX_UPLOAD_BYTES,
 } from "../domain/constants";
 import type { ConditionOperator } from "../domain/query";
 

@@ -19,24 +19,20 @@ import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { CopyIconSwap } from "@/modules/tools/components/copy-button";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
+import { JsonDocumentEditor } from "@/modules/tools/components/json-document-editor";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
 import { copyText } from "@/modules/tools/domain/clipboard";
+import { exceedsUploadLimit } from "@/modules/tools/domain/json-document";
 import { MAX_TYPED_RECOVERY_KEY_LENGTH } from "@/modules/tools/domain/recovery-key";
 import { SERVER_KEY_LENGTH } from "@/modules/tools/domain/server-key";
+import { SERVER_NAME_LENGTH } from "@/modules/tools/domain/server-name";
+import { DOCUMENT_PROBLEMS, type DocumentFailure } from "@/modules/tools/types/json-document";
 
 import { createServer, importServer } from "../actions/servers";
-import { SERVER_NAME_LENGTH, TURNSTILE_ACTION } from "../domain/constants";
-import { exceedsUploadLimit } from "../domain/document";
+import { TURNSTILE_ACTION } from "../domain/constants";
 import { SAMPLE_DOCUMENT } from "../domain/samples";
-import {
-    DOCUMENT_PROBLEMS,
-    type ActionProblem,
-    type DocumentFailure,
-    type JsonServerSummary,
-    type ServerOverview,
-} from "../types";
-import { DocumentEditor } from "./document-editor";
+import type { ActionProblem, JsonServerSummary, ServerOverview } from "../types";
 import { ServerCard } from "./server-card";
 
 type ServerLauncherProps = {
@@ -309,8 +305,9 @@ export function ServerLauncher({ overview, turnstileSiteKey }: ServerLauncherPro
                                 </div>
                             </div>
 
-                            <DocumentEditor
+                            <JsonDocumentEditor
                                 value={document}
+                                sample={SAMPLE_DOCUMENT}
                                 onChange={(next) => {
                                     setDocument(next);
                                     setDocumentFailure(null);

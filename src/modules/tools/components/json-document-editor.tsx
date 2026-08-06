@@ -11,15 +11,15 @@ import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { getByteLength } from "@/modules/tools/domain/byte-size";
-
-import { MAX_UPLOAD_BYTES } from "../domain/constants";
-import { exceedsUploadLimit } from "../domain/document";
-import { formatDocumentText } from "../domain/format";
-import { SAMPLE_DOCUMENT } from "../domain/samples";
-import type { DocumentFailure } from "../types";
+import { formatDocumentText } from "@/modules/tools/domain/document-format";
+import { MAX_UPLOAD_BYTES } from "@/modules/tools/domain/document-limits";
+import { exceedsUploadLimit } from "@/modules/tools/domain/json-document";
+import type { DocumentFailure } from "@/modules/tools/types/json-document";
 
 type DocumentEditorProps = {
     value: string;
+    /** The document a fresh box is filled with when "use the example" is pressed. */
+    sample: string;
     onChange: (value: string) => void;
     /** Rendered under the box; carries a line and column when the parser found one. */
     failure: DocumentFailure | null;
@@ -32,31 +32,36 @@ type DocumentEditorProps = {
 /**
  * The box a `db.json` is written or pasted into, everywhere it appears.
  *
- * One component for the create form and the workbench's editor, because the
- * three affordances around it — **Format**, **Upload a file**, and the size
- * counter — are the same in both, and two copies would be two places for the
- * limit to be described differently.
+ * One component for four places — each studio's create form and each studio's
+ * workbench — because the three affordances around it (**Format**, **Upload a
+ * file**, and the size counter) are the same in all of them, and four copies
+ * would be four places for one limit to be described differently.
  *
  * **Format runs the JSON Formatter's own reader and writer** — the ones that
- * moved to `tools/domain/` when this tool needed them, so the output is the
- * same as pasting into that tool and pressing Beautify. See
- * `domain/format.ts` for why it is not `JSON.stringify(JSON.parse(…))`.
+ * moved to `tools/domain/` when the first studio needed them, so the output is
+ * the same as pasting into that tool and pressing Beautify. See
+ * `document-format.ts` for why it is not `JSON.stringify(JSON.parse(…))`.
  *
  * The counter is **live and against the upload ceiling**, not the storage one.
- * They are different numbers on purpose — see `domain/usage.ts` — and the one
+ * They are different numbers on purpose — see `document-usage.ts` — and the one
  * that applies while you are typing into a box is the one that decides whether
  * the box can be submitted.
+ *
+ * The sample is a prop rather than an import: both studios happen to start from
+ * `json-server`'s README fixture, but that is their decision to make and not
+ * this component's to assume.
  */
-export function DocumentEditor({
+export function JsonDocumentEditor({
     value,
+    sample,
     onChange,
     failure,
     disabled = false,
     showSample = false,
     className,
 }: DocumentEditorProps) {
-    const t = useTranslations("jsonServer.editor");
-    const tProblems = useTranslations("jsonServer.documentProblems");
+    const t = useTranslations("hostedServer.editor");
+    const tProblems = useTranslations("hostedServer.documentProblems");
     const editorId = useId();
     const statusId = useId();
     const fileRef = useRef<HTMLInputElement>(null);
@@ -158,7 +163,7 @@ export function DocumentEditor({
                             className="gap-1.5"
                             disabled={disabled}
                             onClick={() => {
-                                onChange(SAMPLE_DOCUMENT);
+                                onChange(sample);
                                 setFormatFailed(false);
                             }}
                         >

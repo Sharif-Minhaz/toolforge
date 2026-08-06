@@ -16,12 +16,12 @@ import {
     createServerKey,
     suggestServerKey,
 } from "@/modules/tools/domain/server-key";
+import { readDocument } from "@/modules/tools/domain/json-document";
+import { checkServerName } from "@/modules/tools/domain/server-name";
 import { resolveRemoteIp, verifyTurnstileToken } from "@/modules/tools/repository/turnstile";
 
 import { MAX_SERVERS_PER_BROWSER } from "../domain/constants";
-import { readDocument } from "../domain/document";
 import { SAMPLE_DOCUMENT } from "../domain/samples";
-import { checkServerName } from "../domain/server-name";
 import { isJsonStorageConfigured } from "../repository/config";
 import { clearRequestLogs, listRequestLogs } from "../repository/logs";
 import { spendCreateQuota } from "../repository/quota";

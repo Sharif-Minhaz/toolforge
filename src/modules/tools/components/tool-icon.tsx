@@ -26,6 +26,7 @@ import {
     IconTerminal2,
     IconTextScan2,
     IconTextSize,
+    IconTopologyStar3,
     IconTransform,
     IconWorldWww,
     type IconProps,
@@ -64,6 +65,7 @@ const ICONS: Record<ToolIconName, ComponentType<IconProps>> = {
     database: IconDatabaseCog,
     network: IconNetwork,
     server: IconServer2,
+    graph: IconTopologyStar3,
 };
 
 type ToolIconProps = {

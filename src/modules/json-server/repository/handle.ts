@@ -2,11 +2,11 @@ import "server-only";
 
 import { after } from "next/server";
 
+import { MAX_UPLOAD_BYTES } from "@/modules/tools/domain/document-limits";
 import type { RateVerdict } from "@/modules/tools/domain/rate-window";
 import { checkServerKey } from "@/modules/tools/domain/server-key";
 import { resolveRemoteIp } from "@/modules/tools/repository/turnstile";
 
-import { MAX_UPLOAD_BYTES } from "../domain/constants";
 import type { RateBucket } from "../domain/rate-limit";
 import { writeRequestLog } from "./logs";
 import { spendServeQuota, sweepQuotaRows } from "./rate-limit";

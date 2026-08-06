@@ -101,7 +101,7 @@ describe("tool catalog", () => {
             .map((tool) => tool.id)
             .toSorted();
 
-        expect(sections).toEqual(["json-server", "mock-server"]);
+        expect(sections).toEqual(["graphql-server", "json-server", "mock-server"]);
     });
 
     test("ships the UUID generator", () => {
@@ -177,6 +177,7 @@ describe("tool catalog", () => {
             "port-scanner",
             "mock-server",
             "json-server",
+            "graphql-server",
         ] as const;
 
         for (const id of networked) {

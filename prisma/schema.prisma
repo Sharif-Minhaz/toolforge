@@ -484,3 +484,113 @@ model ServiceQuota {
   @@index([windowStart])
   @@map("service_quota")
 }
+
+/// One hosted GraphQL server: a stored `db.json`, a public key, and a schema
+/// derived from the document on every request.
+///
+/// Shaped like `json_servers` on purpose — the same document, the same
+/// ownership model, the same size accounting — because the two studios serve
+/// one kind of thing two ways and a visitor should be able to point both at the
+/// same fixture. What differs is entirely in how a request is answered, which is
+/// code rather than columns.
+///
+/// A separate table rather than a `protocol` column on `json_servers`. Two
+/// reasons, and the second is the one that settles it: the log rows are
+/// genuinely different shapes — a method and a path there, an operation name and
+/// a node cost here — and a shared table would have to hold both and mean
+/// neither. And `key` is unique *within* a table, so separate tables are what
+/// let `/j/payments` and `/g/payments` be two different servers, exactly as
+/// `/m/payments` already is.
+model GraphqlServer {
+  id            String @id @default(uuid(7)) @db.Uuid
+  key           String @unique
+  name          String
+  recoveryHash  String @unique @map("recovery_hash")
+  /// Bumped whenever the recovery key is rotated, so a key written down two
+  /// rotations ago cannot be replayed even if its digest were recovered.
+  recoveryEpoch Int    @default(1) @map("recovery_epoch")
+
+  /// The live document. JSONB because nothing queries inside it: the schema is
+  /// derived in memory on every request and every mutation is a
+  /// read-modify-write under a row lock, which is what makes two concurrent
+  /// mutations impossible to interleave.
+  db     Json
+  /// What the document was created with, so "reset" is a real button rather
+  /// than an instruction to paste the file again.
+  seedDb Json @map("seed_db")
+
+  /// UTF-8 bytes of `db`, maintained on every write.
+  ///
+  /// Stored rather than derived because the write gate reads it on every
+  /// mutation: re-serialising a megabyte of JSONB to answer "is this server
+  /// full" would cost more than the write it is guarding.
+  sizeBytes Int @default(0) @map("size_bytes")
+
+  /// A paused server answers 503 rather than 404, so a caller can tell the
+  /// difference between "switched off" and "never existed".
+  isPaused Boolean @default(false) @map("is_paused")
+
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  /// Touched when the studio loads it. The only thing a dormancy sweep needs.
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+
+  secrets GraphqlServerSecret[]
+  logs    GraphqlServerLog[]
+
+  @@index([lastSeenAt])
+  @@map("graphql_servers")
+}
+
+/// One browser's claim on one GraphQL server.
+///
+/// A row per device rather than a column, for the reason `json_server_secrets`
+/// gives: importing a recovery key into a second browser has to *add* a claim,
+/// and a recovery key whose use logs you out elsewhere is not a recovery key.
+model GraphqlServerSecret {
+  /// SHA-256 of the secret in that browser's cookie. Never the secret.
+  secretHash String @id @map("secret_hash")
+  serverId   String @map("server_id") @db.Uuid
+
+  createdAt  DateTime @default(now()) @map("created_at")
+  lastUsedAt DateTime @default(now()) @map("last_used_at")
+
+  server GraphqlServer @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  @@index([serverId])
+  @@map("graphql_server_secrets")
+}
+
+/// The last few operations a GraphQL server answered.
+///
+/// **The operation name, never the query.** A GraphQL request body is the whole
+/// document, and a document is largely the visitor's own field names against
+/// their own data — logging it would mean this service keeps a second copy of
+/// what it already stores once in `db`, which is the same line
+/// `json_server_logs` draws and for the same reason. The name, the type, the
+/// status and the cost still answer the question people actually have, which is
+/// why a query was refused.
+///
+/// `cost` is here and has no equivalent in the REST log because it is the one
+/// number that explains a 400 nobody expected: a query rejected as too costly
+/// looks identical to one rejected as invalid unless the estimate is visible.
+model GraphqlServerLog {
+  id       String @id @default(uuid(7)) @db.Uuid
+  serverId String @map("server_id") @db.Uuid
+
+  /// Null for an anonymous operation, which is what most hand-written queries are.
+  operationName String? @map("operation_name")
+  /// `query` or `mutation`, or `unknown` when the document never parsed.
+  operationType String  @map("operation_type")
+  status        Int
+  durationMs    Int     @map("duration_ms")
+  /// The estimated node count the guard computed. Zero when it never ran.
+  cost          Int     @default(0)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  server GraphqlServer @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  @@index([serverId, createdAt(sort: Desc)])
+  @@map("graphql_server_logs")
+}

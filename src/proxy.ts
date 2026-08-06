@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { updateSession } from "@/lib/supabase/middleware";
+import { GRAPHQL_EXECUTION_PREFIX } from "@/modules/graphql-server/domain/constants";
 import { JSON_EXECUTION_PREFIX } from "@/modules/json-server/domain/constants";
 import { MOCK_EXECUTION_PREFIX } from "@/modules/mock-server/domain/constants";
 import { parseMockPath } from "@/modules/mock-server/domain/path-pattern";
@@ -25,6 +26,14 @@ export async function proxy(request: NextRequest) {
     // `QUERY` equivalent to route from here — `json-server` speaks the seven
     // methods a route file can already export — so this is the bypass alone.
     if (isUnder(request.nextUrl.pathname, JSON_EXECUTION_PREFIX)) {
+        return NextResponse.next();
+    }
+
+    // The GraphQL Server Studio's public path, for the same two reasons. Also
+    // the bypass alone: GraphQL over HTTP is `GET`, `POST` and `OPTIONS`, all
+    // three of which a route file can export, so nothing has to be served from
+    // here the way `QUERY` does for the mock studio.
+    if (isUnder(request.nextUrl.pathname, GRAPHQL_EXECUTION_PREFIX)) {
         return NextResponse.next();
     }
 

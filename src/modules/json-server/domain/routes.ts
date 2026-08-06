@@ -1,5 +1,7 @@
-import { isRoutableName, resourceKind } from "./document";
-import type { DerivedRoute, HttpMethod, JsonDocument } from "../types";
+import { isRoutableName, resourceKind } from "@/modules/tools/domain/json-document";
+import type { JsonDocument } from "@/modules/tools/types/json-document";
+
+import type { DerivedRoute, HttpMethod } from "../types";
 
 /**
  * The route table, derived from the document rather than authored.

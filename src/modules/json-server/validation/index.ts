@@ -1,10 +1,10 @@
 import { z } from "zod";
 
+import { MAX_UPLOAD_BYTES } from "@/modules/tools/domain/document-limits";
 import { RECOVERY_KEY_LENGTH } from "@/modules/tools/domain/recovery-key";
 import { SERVER_KEY_LENGTH } from "@/modules/tools/domain/server-key";
+import { SERVER_NAME_LENGTH } from "@/modules/tools/domain/server-name";
 import { MAX_TURNSTILE_TOKEN_LENGTH } from "@/modules/tools/domain/turnstile";
-
-import { MAX_UPLOAD_BYTES, SERVER_NAME_LENGTH } from "../domain/constants";
 
 /**
  * The shape of everything crossing a Server Action boundary into the studio.

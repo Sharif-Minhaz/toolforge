@@ -1,15 +1,15 @@
-import { SERVER_NAME_LENGTH } from "./constants";
-
 /**
- * What a JSON server may be called.
+ * What a hosted server may be called, in either fixture studio.
  *
  * The name is displayed back to the visitor who typed it and to nobody else, so
  * the rules are about legibility rather than safety — React escapes it on the
  * way out, and no query interpolates it. The *key* is the part that has to be
- * safe, and that lives in `tools/domain/server-key.ts`. What is enforced here is
+ * safe, and that lives in `server-key.ts` beside this. What is enforced here is
  * that a name has something in it, fits the list, and does not smuggle a line
  * break into a single-line control.
  */
+
+export const SERVER_NAME_LENGTH = { min: 1, max: 60 } as const;
 
 export type ServerNameResult =
     | { readonly ok: true; readonly name: string }

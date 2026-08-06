@@ -1,4 +1,4 @@
-import type { JsonObject, JsonValue } from "../types";
+import type { JsonObject, JsonValue } from "../types/json-document";
 
 /**
  * Record ids: how one is drawn, and how a record is found by one.

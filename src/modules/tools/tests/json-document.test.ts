@@ -5,7 +5,7 @@ import {
     MAX_DOCUMENT_DEPTH,
     MAX_ITEMS_PER_COLLECTION,
     MAX_UPLOAD_BYTES,
-} from "@/modules/json-server/domain/constants";
+} from "@/modules/tools/domain/document-limits";
 import {
     checkDocument,
     isRoutableName,
@@ -13,8 +13,8 @@ import {
     resourceKind,
     summarize,
     writeDocument,
-} from "@/modules/json-server/domain/document";
-import type { JsonObject } from "@/modules/json-server/types";
+} from "@/modules/tools/domain/json-document";
+import type { JsonObject } from "@/modules/tools/types/json-document";
 
 /** The document from `json-server`'s own README, which is the shape to get right. */
 const README_DB = `{

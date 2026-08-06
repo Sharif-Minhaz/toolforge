@@ -11,15 +11,19 @@ import { CopyIconSwap } from "@/modules/tools/components/copy-button";
 import { useIsHydrated } from "@/hooks/use-is-hydrated";
 import { copyText } from "@/modules/tools/domain/clipboard";
 
-import { JSON_EXECUTION_PREFIX } from "../domain/constants";
-
 type BaseUrlProps = {
+    /** The execution prefix — `/j` for REST, `/g` for GraphQL. */
+    prefix: string;
     serverKey: string;
     className?: string;
 };
 
 /**
  * The address somebody points a client at, and a button that copies it.
+ *
+ * Shared by both server studios; the prefix is a prop because that is the only
+ * thing that differs, and two copies of the hydration reasoning below would be
+ * one copy too many.
  *
  * The origin comes from `window.location` **behind `useIsHydrated`**, and that
  * is the rule from *Platform APIs That Read the Host* rather than a convenience.
@@ -32,12 +36,12 @@ type BaseUrlProps = {
  * is also the shorter, more readable thing. The absolute form appears a tick
  * later, because that is the form a `curl` needs.
  */
-export function ServerBaseUrl({ serverKey, className }: BaseUrlProps) {
-    const t = useTranslations("jsonServer.baseUrl");
+export function ServerBaseUrl({ prefix, serverKey, className }: BaseUrlProps) {
+    const t = useTranslations("hostedServer.baseUrl");
     const hydrated = useIsHydrated();
     const [copied, setCopied] = useState(false);
 
-    const path = `${JSON_EXECUTION_PREFIX}/${serverKey}`;
+    const path = `${prefix}/${serverKey}`;
     const shown = hydrated ? `${window.location.origin}${path}` : path;
 
     async function copy() {
@@ -50,7 +54,7 @@ export function ServerBaseUrl({ serverKey, className }: BaseUrlProps) {
             return;
         }
 
-        logEvent("error", "json_server.base_url_copy_failed", {
+        logEvent("error", "hosted_server.base_url_copy_failed", {
             error: describeError(result.reason),
         });
         toast.error(t("copyFailed"));

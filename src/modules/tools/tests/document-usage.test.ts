@@ -4,10 +4,10 @@ import {
     DOCUMENT_WARN_RATIO,
     MAX_DOCUMENT_BYTES,
     MAX_UPLOAD_BYTES,
-} from "@/modules/json-server/domain/constants";
-import { formatDocumentText } from "@/modules/json-server/domain/format";
-import { checkServerName } from "@/modules/json-server/domain/server-name";
-import { describeUsage } from "@/modules/json-server/domain/usage";
+} from "@/modules/tools/domain/document-limits";
+import { formatDocumentText } from "@/modules/tools/domain/document-format";
+import { checkServerName } from "@/modules/tools/domain/server-name";
+import { describeUsage } from "@/modules/tools/domain/document-usage";
 
 describe("describeUsage", () => {
     test("an empty server reports nothing used", () => {

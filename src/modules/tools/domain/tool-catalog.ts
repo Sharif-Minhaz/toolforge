@@ -888,6 +888,33 @@ const TOOLS: readonly Tool[] = [
             "typicode",
         ],
     },
+    {
+        id: "graphql-server",
+        // A section for the same reason the JSON Server Studio is one: a route
+        // tree with its own navigation, not a page.
+        href: "/graphql",
+        isSection: true,
+        category: "network",
+        status: "available",
+        runsOn: "server",
+        accent: "rose",
+        icon: "graph",
+        addedOn: "2026-08-06",
+        featured: false,
+        popularity: 56,
+        keywords: [
+            "graphql server",
+            "graphql api",
+            "fake graphql api",
+            "mock graphql",
+            "graphql from json",
+            "hosted graphql",
+            "graphql playground",
+            "schema from json",
+            "graphql sandbox",
+            "sdl",
+        ],
+    },
 ];
 
 export function getTools(): readonly Tool[] {

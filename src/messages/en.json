@@ -71,7 +71,8 @@
         "repository": "ToolForge on GitHub",
         "mockServers": "Mock Servers",
         "jsonServers": "JSON Servers",
-        "sectionStudio": "Studio"
+        "sectionStudio": "Studio",
+        "graphqlServers": "GraphQL Servers"
     },
     "theme": {
         "label": "Theme",
@@ -262,6 +263,10 @@
         "json-server": {
             "name": "JSON Server",
             "description": "Turn a db.json into a hosted REST API with full CRUD, filtering, sorting and relations. No account — a recovery key brings a server back in any browser."
+        },
+        "graphql-server": {
+            "name": "GraphQL Server",
+            "description": "Turn a db.json into a hosted GraphQL API with a derived schema, typed filters, relations and mutations. No account — a recovery key brings a server back in any browser."
         }
     },
     "overview": {
@@ -7583,6 +7588,41 @@
             "openServer": "Open the server"
         }
     },
+    "hostedServer": {
+        "usage": {
+            "label": "Storage used",
+            "used": "{used} of {limit}",
+            "percent": "{percent, number}%",
+            "near": "{remaining} left before writes stop.",
+            "full": "Full — writes are refused."
+        },
+        "baseUrl": {
+            "copy": "Copy",
+            "copied": "Copied",
+            "copyFailed": "Could not copy the address."
+        },
+        "editor": {
+            "format": "Format",
+            "upload": "Upload file",
+            "sample": "Use the example",
+            "placeholder": "'{' \"posts\": [ … ] '}'",
+            "size": "{size} of {limit}",
+            "tooLarge": "This document is over the {limit} upload limit. Trim it, or upload less and add the rest through the API.",
+            "atLine": "{problem} (line {line, number}, column {column, number})",
+            "formatFailed": "Nothing was reformatted — the document has to be valid JSON first."
+        },
+        "documentProblems": {
+            "empty": "Write or paste a db.json first.",
+            "invalid_json": "This is not valid JSON.",
+            "not_an_object": "A db.json has to be an object at the top level, with one key per resource.",
+            "too_large": "This document is over the upload limit.",
+            "too_deep": "This document nests too deeply to store.",
+            "too_many_collections": "That is more top-level resources than one server can hold.",
+            "too_many_items": "One of the collections holds more records than a server can take.",
+            "item_not_an_object": "Every record in a collection has to be an object.",
+            "duplicate_id": "Two records in one collection share an id, so one of them could never be reached."
+        }
+    },
     "jsonServer": {
         "meta": {
             "title": "Hosted JSON Server — A Real REST API From One db.json",
@@ -7773,40 +7813,6 @@
             "fullHint": "This browser is holding {max, number} servers. Forget one first, or restore it elsewhere.",
             "challengeMissing": "This deployment has no Turnstile key, so creating and restoring are switched off."
         },
-        "editor": {
-            "format": "Format",
-            "upload": "Upload file",
-            "sample": "Use the example",
-            "placeholder": "'{' \"posts\": [ … ] '}'",
-            "size": "{size} of {limit}",
-            "tooLarge": "This document is over the {limit} upload limit. Trim it, or upload less and add the rest through the API.",
-            "atLine": "{problem} (line {line, number}, column {column, number})",
-            "formatFailed": "Nothing was reformatted — the document has to be valid JSON first."
-        },
-        "documentProblems": {
-            "empty": "Write or paste a db.json first.",
-            "invalid_json": "This is not valid JSON.",
-            "not_an_object": "A db.json has to be an object at the top level, with one key per resource.",
-            "too_large": "This document is over the upload limit.",
-            "too_deep": "This document nests too deeply to store.",
-            "too_many_collections": "That is more top-level resources than one server can hold.",
-            "too_many_items": "One of the collections holds more records than a server can take.",
-            "item_not_an_object": "Every record in a collection has to be an object.",
-            "duplicate_id": "Two records in one collection share an id, so one of them could never be reached."
-        },
-        "usage": {
-            "label": "Storage used",
-            "used": "{used} of {limit}",
-            "percent": "{percent, number}%",
-            "near": "{remaining} left before writes stop.",
-            "full": "Full — writes are refused.",
-            "fullVerbose": "This server is full. GET and DELETE still work, so the way back is to delete records you no longer need; POST, PUT and PATCH answer 507 until there is room."
-        },
-        "baseUrl": {
-            "copy": "Copy",
-            "copied": "Copied",
-            "copyFailed": "Could not copy the address."
-        },
         "card": {
             "open": "Open",
             "paused": "Paused",
@@ -7910,6 +7916,260 @@
             "forgotten": "Forgotten on this browser.",
             "copyFailed": "Could not copy.",
             "downloadFailed": "Could not download the file."
+        },
+        "usageFull": "This server is full. GET and DELETE still work, so the way back is to delete records you no longer need; POST, PUT and PATCH answer 507 until there is room."
+    },
+    "graphqlServer": {
+        "meta": {
+            "title": "GraphQL Server — hosted GraphQL API from your JSON",
+            "description": "Paste a db.json and get a hosted GraphQL endpoint with a derived schema, typed filters, relations and mutations. No account; a recovery key brings a server back in any browser.",
+            "detailTitle": "GraphQL server"
+        },
+        "hero": {
+            "eyebrow": "GraphQL Server Studio",
+            "title": "Your JSON, as a GraphQL API",
+            "subtitle": "Paste a db.json and get an endpoint you can query straight away. Every collection becomes a type with typed filters, sorting and paging; every foreign key becomes a relation you can follow in both directions; every collection gets create, update, patch and delete.",
+            "badgeSchema": "Schema derived from your data",
+            "badgeRelations": "Relations both ways",
+            "badgeRecovery": "Recovery key, no account",
+            "disclosureTitle": "This one does not run in your browser",
+            "disclosureBody": "Almost everything on ToolForge runs on your machine and sends nothing anywhere. This tool cannot: a hosted API has to be hosted. Your document is stored on our server, the endpoint is public to anyone who has its address, and mutations change what is stored. Do not put anything private, personal or production in it. Every server can be deleted from its settings tab, and deleting removes the document and its logs."
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "launcher": {
+            "panelLabel": "Create or restore",
+            "createTab": "New server",
+            "importTab": "Restore",
+            "createTitle": "Create a GraphQL server",
+            "importTitle": "Restore a GraphQL server",
+            "createDescription": "The box below already holds json-server's own example document. Press Create to try it as it is, or replace it with your own — every top-level key becomes part of the schema.",
+            "importDescription": "Enter the recovery key you saved when the server was created. It works in any browser and adds this one to the server without signing the other out.",
+            "nameLabel": "Name",
+            "namePlaceholder": "Storefront fixtures",
+            "keyLabel": "Address",
+            "keyPlaceholder": "leave blank to generate",
+            "keyHint": "Appears in the URL as /g/your-address. Lower case, digits and hyphens.",
+            "keyRecoveryLabel": "Recovery key",
+            "createAction": "Create server",
+            "importAction": "Restore",
+            "yourServers": "Your servers",
+            "empty": "No servers yet.",
+            "emptyHint": "Create one above, or restore one with its recovery key.",
+            "slotsLeft": "{remaining, number} of {max, number} slots left",
+            "slotsFull": "All slots used",
+            "fullHint": "This browser is holding {max, number} servers. Forget one first, or restore it elsewhere.",
+            "challengeMissing": "This deployment has no Turnstile key, so creating and restoring are switched off."
+        },
+        "usageFull": "This server is full. Queries and delete mutations still work, so the way back is to delete records you no longer need; create, update and patch return an error until there is room.",
+        "card": {
+            "open": "Open",
+            "paused": "Paused",
+            "counts": "{types, number} types · {records, number} records"
+        },
+        "tabs": {
+            "schema": "Schema",
+            "playground": "Run a query",
+            "data": "Document",
+            "logs": "Operations",
+            "settings": "Settings"
+        },
+        "schema": {
+            "title": "Derived schema",
+            "description": "Built from your document on every request, so it is never out of date. Every name below is one this tool chose — rename a key in the document and the schema follows.",
+            "sdlLabel": "SDL",
+            "copySdl": "Copy SDL",
+            "downloadSdl": "Download schema.graphql",
+            "downloadIntrospection": "Download introspection JSON",
+            "typesHeading": "Types",
+            "resourceColumn": "Document key",
+            "typeColumn": "Type",
+            "queryColumn": "Query fields",
+            "mutationColumn": "Mutations",
+            "recordsColumn": "Records",
+            "kindCollection": "Collection",
+            "kindSingular": "Single object",
+            "kindOpaque": "Opaque value",
+            "relationsHeading": "Relations",
+            "relationOne": "{from}.{field} → one {to}",
+            "relationMany": "{from}.{field} → many {to}",
+            "noRelations": "No relations. A field named like postId on one collection, pointing at a posts collection, publishes one in both directions.",
+            "renamedHeading": "Names this tool had to change",
+            "skippedHeading": "Keys that publish nothing",
+            "emptyTitle": "Nothing to publish yet",
+            "emptyBody": "This document has no collection and no object in it. Add a top-level key holding an array of objects, and a type, a list field and four mutations appear here."
+        },
+        "skipReasons": {
+            "unroutable_name": "The key has characters that cannot appear in an address. It is still stored and still served inside its parent.",
+            "unnameable": "Nothing usable was left after removing the characters GraphQL forbids in a name.",
+            "no_fields": "The object has no keys, and a GraphQL type must have at least one field. It is readable as JSON; add a key and it becomes a type."
+        },
+        "renameReasons": {
+            "invalid_characters": "GraphQL names have no hyphens, so the parts were joined.",
+            "leading_digit": "A GraphQL name cannot start with a digit, so one underscore was added.",
+            "collision": "Another key already wanted this name."
+        },
+        "playground": {
+            "title": "Run a query",
+            "description": "This posts to the real endpoint from your browser, exactly as your own client would — same rate limit, same rules. What you see here is what your code gets.",
+            "queryLabel": "Query",
+            "variablesLabel": "Variables",
+            "variablesPlaceholder": "'{' '}'",
+            "run": "Run",
+            "running": "Running",
+            "reset": "Back to the example",
+            "responseLabel": "Response",
+            "responseEmpty": "Press Run to send the query above.",
+            "statusLine": "{status, number} · {ms, number} ms",
+            "costLine": "cost {cost, number} · depth {depth, number}",
+            "invalidVariables": "Variables must be a JSON object.",
+            "requestFailed": "The request did not complete. Check your connection and try again.",
+            "pausedHint": "This server is paused, so it answers 503. Resume it in Settings to run a query.",
+            "queryTooLong": "This query is longer than the {limit, number} characters the endpoint reads."
+        },
+        "snippets": {
+            "title": "Call it from your code",
+            "description": "The endpoint speaks GraphQL over HTTP: POST for anything, GET for a read. There is nothing to authenticate — anyone with the address can call it.",
+            "curl": "curl",
+            "fetch": "fetch",
+            "apollo": "Apollo Client",
+            "copy": "Copy",
+            "copied": "Copied"
+        },
+        "logs": {
+            "title": "Recent operations",
+            "description": "The last {max, number} operations this server answered. The operation name and its cost are kept; the query text is not, because a query is mostly your own field names against your own data.",
+            "refresh": "Refresh",
+            "clear": "Clear",
+            "empty": "Nothing has called this server yet.",
+            "emptyHint": "Run a query above, or point a client at the address.",
+            "operationColumn": "Operation",
+            "typeColumn": "Type",
+            "statusColumn": "Status",
+            "costColumn": "Cost",
+            "durationColumn": "Time",
+            "whenColumn": "When",
+            "anonymous": "(anonymous)",
+            "durationValue": "{ms, number} ms"
+        },
+        "workbench": {
+            "back": "All servers",
+            "subtitle": "One address, three methods. Point a client at it — it answers whether or not this page is open.",
+            "tabsLabel": "Server sections",
+            "pause": "Pause",
+            "resume": "Resume",
+            "pausedNote": "Paused: the endpoint answers 503 until you resume. Nothing has been deleted.",
+            "dataDescription": "The live document. Editing it here replaces everything at once and rebuilds the schema — and it is the only way to add a field the schema does not already know about.",
+            "save": "Save document",
+            "download": "Download db.json",
+            "reset": "Reset to the original",
+            "unsaved": "Unsaved changes.",
+            "nameLabel": "Name",
+            "rename": "Rename",
+            "dangerTitle": "Leaving",
+            "forget": "Forget here",
+            "forgetDescription": "Removes this server from this browser only. It keeps answering, and your recovery key still brings it back.",
+            "forgetConfirm": "Forget it here?",
+            "delete": "Delete",
+            "deleteDescription": "Deletes the server, its document and its operation log, everywhere. This cannot be undone.",
+            "deleteConfirm": "Delete permanently?"
+        },
+        "recovery": {
+            "title": "Save this recovery key",
+            "forServer": "for {name}",
+            "description": "It is the only way back to this server from a browser that does not already own it — including this one after you clear cookies. We store only a hash of it, so it cannot be shown again or looked up.",
+            "copy": "Copy key",
+            "copied": "Copied",
+            "warning": "Shown once. You can't recover it later.",
+            "saved": "I have saved it",
+            "rotateTitle": "Recovery key",
+            "rotateDescription": "Draw a new one if the old key may have been seen by somebody else. The previous key stops working immediately, and anyone using it loses access.",
+            "rotateAction": "Draw a new key",
+            "rotateConfirm": "Replace the old key?"
+        },
+        "errors": {
+            "invalid_name": "Give the server a name — anything up to sixty characters.",
+            "invalid_key": "An address is 3–32 characters of lower-case letters, digits and single hyphens, and cannot start or end with one.",
+            "key_taken": "That address is already in use. Try another.",
+            "storage_unavailable": "This deployment has no database configured, so the studio has nowhere to keep a server.",
+            "cookie_full": "This browser is already holding the maximum number of servers.",
+            "challenge_failed": "The challenge did not verify. Try again.",
+            "quota_exhausted": "This network has created enough servers for now. Try again in an hour.",
+            "write_failed": "That did not save. Try again.",
+            "not_owner": "This browser does not own that server.",
+            "not_found": "That server no longer exists.",
+            "invalid_recovery_key": "A recovery key is sixteen characters, usually written as four groups of four.",
+            "unknown_recovery_key": "No server answers to that key."
+        },
+        "toast": {
+            "created": "Server created.",
+            "imported": "Server restored.",
+            "saved": "Document saved.",
+            "reset": "Document reset.",
+            "renamed": "Renamed.",
+            "paused": "Paused.",
+            "resumed": "Resumed.",
+            "rotated": "New recovery key drawn.",
+            "deleted": "Server deleted.",
+            "forgotten": "Forgotten on this browser.",
+            "copyFailed": "Could not copy.",
+            "downloadFailed": "Could not download the file."
+        },
+        "article": {
+            "introTitle": "What this is",
+            "introBody": "You give it a JSON document; it gives you a GraphQL endpoint. Every top-level key holding an array of objects becomes a type with a list field, a by-id field, a page envelope and four mutations. Every lone object becomes a type you can read and replace. Every foreign key becomes a relation you can follow from either end. Nothing is configured and nothing is generated into a file — the schema is derived from the document on every request, so it is never out of step with the data.",
+            "introSibling": "The JSON Server Studio serves the same document as REST. The two run side by side on the same file, and a document sorted through one comes back in the same order through the other.",
+            "schemaTitle": "How the schema is derived",
+            "schemaBody": "A collection's fields come from reading every record, not a sample — a type inferred from the first fifty records that record four thousand contradicts is a schema its own data fails to validate against. A whole number inside GraphQL's 32-bit Int is Int; anything larger is Float, because serialising a bigger value through Int is an error at response time rather than a rounding. A field that is a string in one record and a number in another is JSON, not the wider of the two. A field absent or null anywhere is nullable. A nested object is JSON rather than a generated nested type, because a name invented from a field key would collide across collections and multiply the schema by the document's depth.",
+            "namesTitle": "Names, and when they change",
+            "namesBody": "posts becomes the type Post, the fields posts and post, and the mutations createPost, updatePost, patchPost and deletePost. The inflector carries the irregulars — people becomes Person, categories becomes Category, series stays series — because a wrong guess here is a published type name that ends up in whatever your codegen wrote. It is not complete, and no inflector is, so the studio prints the derived name beside every key: a guess it got wrong is visible before anything depends on it. GraphQL has no hyphen in its name grammar, so blog-posts is published as blogPosts, and a key starting with a digit gains one underscore. Both are reported rather than done quietly.",
+            "relationsTitle": "Relations",
+            "relationsBody": "A field named like the singular of a collection followed by Id — postId against a posts collection — publishes Comment.post and Post.comments in one go. That convention is json-server's, so a document that works there works here. Three rules keep it honest: the foreign key has to actually be present on the child, a relation never shadows a field the document already has, and a self-reference is skipped. Both sides take page arguments, and the many side is the reason to reach for GraphQL over the REST studio — you get both ends in one round trip and pick the fields on each.",
+            "queryTitle": "Filtering, sorting and paging",
+            "queryBody": "Every list field takes where, orderBy, order, page and perPage. The filters are typed inputs rather than a convention, so an IDE completes them and a codegen types them: views: '{' gt: 100 '}', title: '{' contains: \"draft\" '}', id: '{' in: [\"1\", \"2\"] '}'. Clauses on different fields AND together, and AND, OR and NOT nest. Fields of type JSON and list fields have no filter, because there is no comparison over an arbitrary nested value that means anything and one that quietly matched nothing would be worse than none. perPage defaults to ten — a list field with no ceiling would make the cost estimate below impossible.",
+            "mutationTitle": "Mutations",
+            "mutationBody": "create returns the record including the id it was given, which is the only way you learn what to ask for next. update replaces every field; patch merges. A record's id is absent from the update input rather than accepted and ignored, so you find out at validation instead of discovering your write went somewhere else. Mutations are refused over GET: the specification reserves GET for safe requests, and honouring that is what stops a link — in an email, in a crawler's queue, in a chat client's preview fetcher — from writing to your fixture. The input types hold the fields the collection already has, so adding a new field means editing the document rather than inventing one through the API.",
+            "limitsTitle": "What it refuses, and why",
+            "limitsBody": "GraphQL moves the cost of a request from the server's route table to your query, which is the whole security difference from a REST fixture. A single document can ask for every collection, joined to itself, many times over, in two hundred bytes — and the derived relations are cyclic by construction, since a post has comments and every comment has a post. So three bounds run before any resolver: depth stops the cycle, an estimated node count stops breadth, and a root-field count stops aliasing one field two hundred times. Every response carries x-graphql-cost and x-graphql-depth so you can watch the estimate climb as you nest, rather than discovering the ceiling as a mysterious 400. Introspection is exempt from all of it, because its cost is bounded by the schema and an endpoint no IDE can read is most of the point gone.",
+            "storageTitle": "Size, and the way back from full",
+            "storageBody": "A document may be up to {upload} when it is pasted in, and may grow to {stored} before writes stop. The gap is deliberate: a server created at its own ceiling would be full before its first mutation. Past {warn, number}% the usage bar changes tone and names the bytes left, so the lock is something you saw coming. When it does lock, queries and delete mutations keep working — deleting a record is the way out, and a ceiling that refused every write would be a trap whose only escape is discarding the whole document.",
+            "privacyTitle": "What is stored, and what is not",
+            "privacyBody": "The document is stored, because serving it is the point. The last {logs, number} operations are logged as a name, a type, a status, a duration and a cost — the query text is not kept, because a query is mostly your own field names against your own data and a second copy of that is more than this service should hold. A browser's claim on a server is a random secret in an HttpOnly cookie; the server stores only its hash. The recovery key is shown once and stored only as a hash, so it cannot be looked up or shown again. Deleting a server removes its document, its logs and every browser's access.",
+            "faqTitle": "Common questions",
+            "argsTitle": "Arguments every list field takes",
+            "argColumn": "Argument",
+            "doesColumn": "What it does",
+            "whenColumn": "Reach for it when",
+            "argWhere": "Filters the collection with typed comparisons.",
+            "argWhereWhen": "You want a subset. It is the one argument an IDE can complete for you, because it is a real input type rather than a convention.",
+            "argOrderBy": "Names the field to sort on, as an enum of that type's own fields.",
+            "argOrderByWhen": "Order matters. JSON and list fields are absent from the enum — there is no sort over an arbitrary nested value.",
+            "argOrder": "ASC or DESC. Defaults to ASC.",
+            "argOrderWhen": "You passed orderBy. On its own it does nothing.",
+            "argPage": "Which page, 1-based. Defaults to 1.",
+            "argPageWhen": "You are walking a collection. A page past the end is empty rather than an error, so a loop ends cleanly.",
+            "argPerPage": "How many records per page. Defaults to {default, number}, capped at {max, number}.",
+            "argPerPageWhen": "Always worth thinking about — this is the number the cost estimate multiplies down your query tree.",
+            "argsCaveat": "Two things a table cannot hold. orderBy disappears entirely from a type with no sortable field, so a schema that has it is telling you something. And perPage having a default is what makes the cost bound possible at all: without one, every list would have to be assumed at its maximum and ordinary two-level queries would be refused."
+        },
+        "faq": {
+            "q1": "Is the endpoint public?",
+            "a1": "Yes. Anyone with the address can query it and can run its mutations. There is no key and no authentication — that is what makes it useful for a front end on localhost and what makes it wrong for anything private. Pause the server from its settings tab when you are not using it; it then answers 503 rather than serving.",
+            "q2": "Can I use it with Apollo, urql or graphql-codegen?",
+            "a2": "Yes. Introspection is on, the SDL is a normal GraphQL schema using the standard scalars plus one JSON scalar, and the studio offers both schema.graphql and the introspection JSON as downloads. Point apollo client:download-schema or graphql-codegen at the endpoint and it works like any other server.",
+            "q3": "Why did my query come back as too costly?",
+            "a3": "The estimate multiplies each list field's page size down the query tree, so nesting three ten-item lists is a thousand nodes before any field is read. Narrow it with a smaller perPage, a where filter, or fewer nested relations. Every response carries x-graphql-cost, so you can see what a query costs before it becomes a problem.",
+            "q4": "Why is my Post type called Postt, or my people collection called Peopl?",
+            "a4": "The inflector guessed wrong. It carries the common irregulars but it is not a dictionary, and the studio prints the derived name beside every key so a wrong guess is visible. Rename the key in your document to something it reads correctly — the schema follows the document, always.",
+            "q5": "Can I add a field through a mutation?",
+            "a5": "No. The input types hold the fields the collection already has, so a value of the wrong shape is refused at validation rather than stored and discovered later. To add a field, edit the document in the Document tab and save — the schema rebuilds from it immediately.",
+            "q6": "Does it support subscriptions?",
+            "a6": "No. A subscription needs a transport that stays open and a source of events, and a stored fixture has neither. A schema that advertised subscriptions and never fired one would be worse than saying so.",
+            "q7": "What happens if I stop using it?",
+            "a7": "Nothing is deleted automatically today, but this is a free fixture service and dormant servers may be swept in future. Anything you would mind losing belongs somewhere else — and the document is one download away in the Document tab.",
+            "q8": "Can the same document be served as REST and GraphQL at once?",
+            "a8": "Not from one server, but the two studios read the same db.json, so you can paste one document into both and compare. They deliberately agree on the things that could otherwise differ: how records sort, how ids are generated and coerced, what counts as a collection, and where the size ceiling is."
         }
     }
 }

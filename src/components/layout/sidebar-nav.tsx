@@ -5,6 +5,7 @@ import {
     IconLayoutDashboard,
     IconSearch,
     IconServer2,
+    IconTopologyStar3,
     IconX,
 } from "@tabler/icons-react";
 import { motion } from "motion/react";
@@ -236,6 +237,7 @@ export function SidebarNav({
     // moment somebody opened a workspace.
     const mockActive = pathname === "/mock" || pathname.startsWith("/mock/");
     const jsonActive = pathname === "/json" || pathname.startsWith("/json/");
+    const graphqlActive = pathname === "/graphql" || pathname.startsWith("/graphql/");
 
     function renderRow(tool: LocalizedTool) {
         const available = tool.status === "available";
@@ -380,6 +382,24 @@ export function SidebarNav({
                                     accentClass={TOOL_ACCENT_VARS.amber}
                                     icon={
                                         <IconDatabase
+                                            className="size-4"
+                                            stroke={1.75}
+                                            aria-hidden="true"
+                                        />
+                                    }
+                                />
+                            )}
+                            {matchedSectionIds.has("graphql-server") && (
+                                <NavRow
+                                    label={t("graphqlServers")}
+                                    href="/graphql"
+                                    active={graphqlActive}
+                                    collapsed={collapsed}
+                                    layoutIdPrefix={layoutIdPrefix}
+                                    onNavigate={onNavigate}
+                                    accentClass={TOOL_ACCENT_VARS.rose}
+                                    icon={
+                                        <IconTopologyStar3
                                             className="size-4"
                                             stroke={1.75}
                                             aria-hidden="true"
