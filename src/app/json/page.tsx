@@ -4,8 +4,15 @@ import { getLocale, getTranslations } from "next-intl/server";
 
 import { FadeIn, Reveal } from "@/components/motion/reveal";
 import { getServerOverview } from "@/modules/json-server/actions/servers";
+import {
+    getJsonServerFaqEntries,
+    JsonServerArticle,
+} from "@/modules/json-server/components/json-server-article";
 import { ServerLauncher } from "@/modules/json-server/components/server-launcher";
+import { JsonLd } from "@/modules/seo/components/json-ld";
 import { buildPageMetadata } from "@/modules/seo/domain/metadata";
+import { buildToolJsonLd } from "@/modules/seo/domain/structured-data";
+import { getToolById } from "@/modules/tools/domain/tool-catalog";
 
 const SECTION_PATH = "/json";
 
@@ -41,9 +48,12 @@ export async function generateMetadata(): Promise<Metadata> {
  * page copy rather than a collapsed panel.
  */
 export default async function JsonServerStudioPage() {
-    const [t, overview] = await Promise.all([
+    const [t, tTools, overview, faqs, locale] = await Promise.all([
         getTranslations("jsonServer.hero"),
+        getTranslations("tools"),
         getServerOverview(),
+        getJsonServerFaqEntries(),
+        getLocale(),
     ]);
 
     const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_KEY ?? null;
@@ -56,6 +66,17 @@ export default async function JsonServerStudioPage() {
 
     return (
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-8 sm:px-6 lg:py-12">
+            <JsonLd
+                data={buildToolJsonLd({
+                    name: tTools("json-server.name"),
+                    description: tTools("json-server.description"),
+                    path: SECTION_PATH,
+                    locale,
+                    keywords: getToolById("json-server")?.keywords,
+                    faqs,
+                })}
+            />
+
             <FadeIn>
                 <header className="flex flex-col gap-3">
                     <p className="text-muted-foreground text-[0.6875rem] font-semibold tracking-[0.09em] uppercase">
@@ -110,6 +131,10 @@ export default async function JsonServerStudioPage() {
                         {t("disclosureBody")}
                     </p>
                 </section>
+            </Reveal>
+
+            <Reveal className="mt-4">
+                <JsonServerArticle />
             </Reveal>
         </div>
     );

@@ -187,7 +187,36 @@ export function SidebarNav({
     const [query, setQuery] = useState("");
     const searchId = useId();
 
-    const filtered = useMemo(() => filterTools(tools, query), [tools, query]);
+    /**
+     * Sections never enter a category group.
+     *
+     * Each studio already owns a row in the STUDIO block below, and `/mock`
+     * matches both that row and a Network-category copy of itself — so both
+     * read as active and hand two elements the same `layoutId`. Framer Motion
+     * resolves that by keeping one, which is why the indicator *disappeared*
+     * rather than doubling. `getToolsByCategory()` has always excluded them;
+     * this is the rail agreeing with it.
+     */
+    const pages = useMemo(() => tools.filter((tool) => tool.isSection !== true), [tools]);
+
+    /**
+     * Which studios the current query matches, so a section stays findable by
+     * search — the catalog test that keeps them out of every grid also requires
+     * that. Empty query matches everything, which is what makes the block its
+     * own default state rather than a special case.
+     */
+    const matchedSectionIds = useMemo(
+        () =>
+            new Set(
+                filterTools(
+                    tools.filter((tool) => tool.isSection === true),
+                    query,
+                ).map((tool) => tool.id),
+            ),
+        [tools, query],
+    );
+
+    const filtered = useMemo(() => filterTools(pages, query), [pages, query]);
 
     // Grouped only while browsing. A search is already a ranking, and slicing
     // three matches across five headings buries them.
@@ -202,8 +231,9 @@ export function SidebarNav({
     );
 
     const overviewActive = pathname === "/";
-    // Sections rather than catalog entries: each studio is a route tree, not a
-    // page, so neither is one of `tools` and neither appears under a category.
+    // Each studio is a route tree rather than a page, so every path beneath its
+    // root belongs to it — `pathname === href` would drop the highlight the
+    // moment somebody opened a workspace.
     const mockActive = pathname === "/mock" || pathname.startsWith("/mock/");
     const jsonActive = pathname === "/json" || pathname.startsWith("/json/");
 
@@ -314,69 +344,86 @@ export function SidebarNav({
                                 }
                             />
                         </ul>
+                    </>
+                )}
 
+                {matchedSectionIds.size > 0 && (
+                    <>
                         <SectionLabel ruleWhenCollapsed>{t("sectionStudio")}</SectionLabel>
                         <ul className="flex flex-col gap-0.5">
-                            <NavRow
-                                label={t("mockServers")}
-                                href="/mock"
-                                active={mockActive}
-                                collapsed={collapsed}
-                                layoutIdPrefix={layoutIdPrefix}
-                                onNavigate={onNavigate}
-                                accentClass={TOOL_ACCENT_VARS.cyan}
-                                icon={
-                                    <IconServer2
-                                        className="size-4"
-                                        stroke={1.75}
-                                        aria-hidden="true"
-                                    />
-                                }
-                            />
-                            <NavRow
-                                label={t("jsonServers")}
-                                href="/json"
-                                active={jsonActive}
-                                collapsed={collapsed}
-                                layoutIdPrefix={layoutIdPrefix}
-                                onNavigate={onNavigate}
-                                accentClass={TOOL_ACCENT_VARS.amber}
-                                icon={
-                                    <IconDatabase
-                                        className="size-4"
-                                        stroke={1.75}
-                                        aria-hidden="true"
-                                    />
-                                }
-                            />
+                            {matchedSectionIds.has("mock-server") && (
+                                <NavRow
+                                    label={t("mockServers")}
+                                    href="/mock"
+                                    active={mockActive}
+                                    collapsed={collapsed}
+                                    layoutIdPrefix={layoutIdPrefix}
+                                    onNavigate={onNavigate}
+                                    accentClass={TOOL_ACCENT_VARS.cyan}
+                                    icon={
+                                        <IconServer2
+                                            className="size-4"
+                                            stroke={1.75}
+                                            aria-hidden="true"
+                                        />
+                                    }
+                                />
+                            )}
+                            {matchedSectionIds.has("json-server") && (
+                                <NavRow
+                                    label={t("jsonServers")}
+                                    href="/json"
+                                    active={jsonActive}
+                                    collapsed={collapsed}
+                                    layoutIdPrefix={layoutIdPrefix}
+                                    onNavigate={onNavigate}
+                                    accentClass={TOOL_ACCENT_VARS.amber}
+                                    icon={
+                                        <IconDatabase
+                                            className="size-4"
+                                            stroke={1.75}
+                                            aria-hidden="true"
+                                        />
+                                    }
+                                />
+                            )}
                         </ul>
                     </>
                 )}
 
-                {filtered.length === 0 ? (
-                    <>
-                        <SectionLabel ruleWhenCollapsed>{t("sectionTools")}</SectionLabel>
-                        <p className="text-muted-foreground px-2 py-6 text-center text-xs group-data-[collapsed=true]/shell:hidden">
-                            {t("searchEmpty", { query })}
-                            <span className="text-muted-foreground/70 mt-1 block">
-                                {t("searchEmptyHint")}
-                            </span>
-                        </p>
-                    </>
-                ) : query.length > 0 ? (
-                    <>
-                        <SectionLabel
-                            ruleWhenCollapsed
-                            trailing={
-                                <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 font-mono text-[0.625rem] leading-none tabular-nums">
-                                    {format.number(filtered.length)}
-                                </span>
-                            }
-                        >
-                            {t("sectionTools")}
-                        </SectionLabel>
-                        <ul className="flex flex-col gap-0.5">{filtered.map(renderRow)}</ul>
-                    </>
+                {/* Three states, in the order they are decided: browsing,
+                    a search with page results, and a search with none. The last
+                    one renders nothing at all when a studio above matched it —
+                    "no tools match" under a row that plainly does is worse than
+                    silence. */}
+                {query.length > 0 ? (
+                    filtered.length > 0 ? (
+                        <>
+                            <SectionLabel
+                                ruleWhenCollapsed
+                                trailing={
+                                    <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 font-mono text-[0.625rem] leading-none tabular-nums">
+                                        {format.number(filtered.length)}
+                                    </span>
+                                }
+                            >
+                                {t("sectionTools")}
+                            </SectionLabel>
+                            <ul className="flex flex-col gap-0.5">{filtered.map(renderRow)}</ul>
+                        </>
+                    ) : (
+                        matchedSectionIds.size === 0 && (
+                            <>
+                                <SectionLabel ruleWhenCollapsed>{t("sectionTools")}</SectionLabel>
+                                <p className="text-muted-foreground px-2 py-6 text-center text-xs group-data-[collapsed=true]/shell:hidden">
+                                    {t("searchEmpty", { query })}
+                                    <span className="text-muted-foreground/70 mt-1 block">
+                                        {t("searchEmptyHint")}
+                                    </span>
+                                </p>
+                            </>
+                        )
+                    )
                 ) : (
                     groups.map((group) => (
                         <div key={group.category}>

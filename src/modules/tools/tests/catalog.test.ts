@@ -85,6 +85,25 @@ describe("tool catalog", () => {
         expect(getAvailableTools().some((tool) => tool.isSection === true)).toBe(true);
     });
 
+    /**
+     * The rail hand-writes one row per section under its STUDIO heading, and
+     * excludes sections from every category group — a section appearing in both
+     * places would light two rows for one path, and two elements sharing a
+     * `layoutId` is what makes the indicator vanish rather than double.
+     *
+     * The cost of that is this list: a section the rail does not name is not in
+     * the rail at all. Pinning it here is what turns "invisible in the sidebar"
+     * into a failing test rather than something noticed after release.
+     */
+    test("names every section the sidebar hand-writes a row for", () => {
+        const sections = getTools()
+            .filter((tool) => tool.isSection === true)
+            .map((tool) => tool.id)
+            .toSorted();
+
+        expect(sections).toEqual(["json-server", "mock-server"]);
+    });
+
     test("ships the UUID generator", () => {
         const uuid = getToolById("uuid");
 
