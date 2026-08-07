@@ -3,8 +3,11 @@
 Thanks for taking the time. ToolForge is a small, opinionated codebase, and the rules below exist
 so that every tool in it looks and behaves like it was built by the same person.
 
-This file is the working agreement. [CLAUDE.md](CLAUDE.md) is the long-form version with the
-reasoning behind each rule — read it before a substantial change.
+This file is the working agreement. [CLAUDE.md](CLAUDE.md) is the operating manual — the rules
+themselves, graded by how badly breaking one hurts — and [docs/](docs/README.md) is the long-form
+handbook holding the reasoning behind each rule, the reusable patterns, and a case study per
+subsystem. Read `CLAUDE.md` before a substantial change, then the one or two `docs/` pages covering
+what you are about to touch.
 
 ---
 
@@ -57,9 +60,12 @@ already does once, and it will be sent back.
 
 **Before the agent writes anything, it must read:**
 
-- **[CLAUDE.md](CLAUDE.md)** — the full engineering guidelines. This is the authority on structure,
-  the design system, i18n, testing, and what is forbidden. Load it into context; do not summarise
+- **[CLAUDE.md](CLAUDE.md)** — the operating manual. This is the authority on what is required and
+  what is forbidden, and it carries the documentation index. Load it into context; do not summarise
   it and hope.
+- **[docs/](docs/README.md)** — the handbook behind those rules. The agent does not need all of it:
+  `CLAUDE.md` says which page covers structure, the design system, i18n, hydration, testing,
+  security, and each individual module. It must open the ones its task touches.
 - **[AGENTS.md](AGENTS.md)** — short, and easy to skip at your peril. This is **not** the Next.js
   in the model's training data. Version 16 changed APIs, conventions, and file names. The guides in
   `node_modules/next/dist/docs/` are the source of truth, not the model's memory of Next 13.

@@ -437,13 +437,16 @@ Contributions are welcome, and building a new tool is the best place to start.
 
 - [CONTRIBUTING.md](CONTRIBUTING.md) — workflow, branch and commit rules, the PR checklist
 - [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — how we treat each other
-- [CLAUDE.md](CLAUDE.md) — the full engineering guidelines, in depth
+- [CLAUDE.md](CLAUDE.md) — the operating manual: the rules, the workflow, the decision trees
+- [docs/](docs/README.md) — the engineering handbook: the reasoning behind each rule, the reusable
+  patterns, and a case study per subsystem
 - [AGENTS.md](AGENTS.md) — read this before writing Next.js code; v16 is not what you remember
 
 Work happens on a branch, never on `main`, and commits use
 [Conventional Commits](CONTRIBUTING.md#commit-messages) (`feat:`, `fix:`, `refactor:`, `chore:`, …).
 
-**Using an AI coding agent?** It must read [CLAUDE.md](CLAUDE.md) and [AGENTS.md](AGENTS.md) first,
+**Using an AI coding agent?** It must read [CLAUDE.md](CLAUDE.md) and [AGENTS.md](AGENTS.md) first —
+plus whichever [docs/](docs/README.md) page covers what it is about to touch —
 and follow the [`add-tool` skill](.agents/skills/add-tool/SKILL.md) for anything that touches a
 tool — new, changed, or refactored. Details in
 [Using an AI coding agent](CONTRIBUTING.md#using-an-ai-coding-agent). You remain the author of

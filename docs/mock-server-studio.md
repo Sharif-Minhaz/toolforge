@@ -301,7 +301,8 @@ Recovery key format: **Crockford base32, 4 groups of 4** — `8QXK-H72D-9FLC-4M2
 80 bits. Crockford excludes `I`, `L`, `O`, `U`, which kills both transcription
 errors and accidental words. Stored as `sha256(key)`.
 
-The cookie is a credential store, so — per the rule already in `CLAUDE.md` —
+The cookie is a credential store, so — per the rule in
+[`patterns/browser-persistence.md`](patterns/browser-persistence.md) —
 the UI says so, caps the list, and offers a button that empties it.
 
 **"3 workspaces per browser" is a UI affordance, not a limit.** The real limit is
@@ -498,7 +499,8 @@ were separate canvas nodes in the brief; here they are one dropdown.
 
 `FakerFnId` is a **curated literal union of ~40 ids**, not the whole Faker
 surface. It has to be a union rather than a string so `faker.<id>.label` stays a
-statically checked message key — the rule already in `CLAUDE.md`.
+statically checked message key — the rule in
+[`internationalization.md`](internationalization.md).
 
 `template` is what replaces typed template syntax. The UI is a chip input:
 literal text and value chips side by side, never `{{ }}`.
@@ -626,7 +628,8 @@ Every one gets a `loading.tsx` with skeletons matching the real layout.
 
 ### 7.3 API surface
 
-Studio mutations are **Server Actions**, per `CLAUDE.md`. They are same-origin UI
+Studio mutations are **Server Actions**, per [`server-and-data.md`](server-and-data.md).
+They are same-origin UI
 interactions and get CSRF protection and end-to-end typing for free.
 
 ```
@@ -1015,7 +1018,7 @@ cross-origin call, so counting them halves that caller's effective budget. Taken
 deliberately: the alternative is a verb that reaches the database unmetered.
 
 **`repository/rate-limit.ts` keeps an in-memory map, and it is not the limit.**
-`CLAUDE.md` is explicit that a per-process counter is a limit in name only, and
+[`security.md`](security.md) is explicit that a per-process counter is a limit in name only, and
 that rule stands — the counters are rows. What the map holds is a _refusal
 already learned from Postgres_: "this key is over until T". Within one window a
 count only goes up, so no instance can be under before T, which makes the cache
@@ -1279,8 +1282,8 @@ Everything below runs in `bun test` against `domain/`.
 
 ### The independent check
 
-Following the rule already in `CLAUDE.md` — _verify against something that is not
-you_:
+Following the rule in [`testing.md`](testing.md) — _verify against something that
+is not you_:
 
 **OpenAPI spec → import → execute → validate the produced response against that
 same spec's response schema, using `ajv`.** A wrong value provider, a wrong array
@@ -1346,7 +1349,7 @@ how the response is built, not a prerequisite for the product being useful.
 Reused, nothing added: `zod`, `prisma`, `pg`, Turnstile, `address-guard`,
 `logEvent`, `code-editor`, `highlight`, `scan-radar`, `use-result-scroll`.
 
-**Supabase has no role here.** `CLAUDE.md` restricts it to Auth, Storage and
+**Supabase has no role here.** [`server-and-data.md`](server-and-data.md) restricts it to Auth, Storage and
 Realtime; this feature has no accounts and no files. It stays unused until
 real-time collaboration is on the table.
 
@@ -1363,6 +1366,7 @@ Per the _Documentation Is Part of the Change_ rule, landing this touches:
   degrades when each is blank
 - `CONTRIBUTING.md` — the node registry, since adding a node is a contributor
   workflow
-- `CLAUDE.md` — the two-tier node model and the route-matching rules, both of
-  which the next author would otherwise redesign
+- [`case-studies/mock-server.md`](case-studies/mock-server.md) — the two-tier node
+  model and the route-matching rules, both of which the next author would
+  otherwise redesign
 - This file, kept current as milestones land
