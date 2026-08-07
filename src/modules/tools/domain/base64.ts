@@ -81,8 +81,12 @@ export function bytesToBase64(
  * Whitespace is stripped because a blob copied out of a log or a terminal
  * arrives wrapped, and both alphabets are accepted because neither `-_` nor
  * `+/` is ambiguous — no byte string can be read two ways.
+ *
+ * The buffer type is spelled out for the same reason it is on `hexToBytes`:
+ * Web Crypto refuses a `Uint8Array` that might be backed by a
+ * `SharedArrayBuffer`, and this one never is.
  */
-export function base64ToBytes(text: string): Uint8Array | null {
+export function base64ToBytes(text: string): Uint8Array<ArrayBuffer> | null {
     const compact = text.replace(/\s+/g, "").replace(/=+$/, "");
 
     // Four symbols carry three bytes, so a remainder of one leaves six bits

@@ -22,8 +22,14 @@ export function bytesToHex(bytes: Uint8Array): string {
     return hex;
 }
 
-/** `null` rather than a throw: a pasted string being wrong is expected input. */
-export function hexToBytes(hex: string): Uint8Array | null {
+/**
+ * `null` rather than a throw: a pasted string being wrong is expected input.
+ *
+ * The buffer type is spelled out because Web Crypto's `BufferSource` will not
+ * take a `Uint8Array` that might be backed by a `SharedArrayBuffer`. This one
+ * never is, and saying so here saves every caller a defensive copy.
+ */
+export function hexToBytes(hex: string): Uint8Array<ArrayBuffer> | null {
     if (hex.length % 2 !== 0 || !HEX_PATTERN.test(hex)) {
         return null;
     }

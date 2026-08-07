@@ -155,6 +155,10 @@
             "name": "Hash Generator / Verifier",
             "description": "Hash text with MD5 or SHA, or a password with bcrypt or Argon2 — then check one."
         },
+        "aes": {
+            "name": "AES Encryption / Decryption",
+            "description": "Encrypt and decrypt text or a file with AES in CBC, GCM or CTR mode, with every parameter on screen."
+        },
         "json": {
             "name": "JSON Formatter",
             "description": "Prettify, minify, and validate JSON with precise error positions."
@@ -331,9 +335,9 @@
                 "title": "Make a favicon",
                 "description": "Turn one logo into favicon.ico, every icon size, and the HTML to link them."
             },
-            "domainInspect": {
-                "title": "Inspect a domain",
-                "description": "DNS records, registrar, hosting and stack, from one lookup."
+            "aesEncrypt": {
+                "title": "Encrypt some text",
+                "description": "AES-256 in GCM mode, with the salt and IV shown beside it."
             }
         },
         "featured": {
@@ -1269,6 +1273,289 @@
                 "a6": "For non-adversarial integrity, yes. Checking that a file arrived intact over a flaky connection, or keying a cache, is fine — nobody is crafting a collision to corrupt your cache. It is not safe for anything an attacker touches: colliding MD5 inputs can be produced in seconds on a laptop, which is why it was removed from certificates.",
                 "q7": "Why is the cost factor capped at 14 when bcrypt allows 31?",
                 "a7": "The cap is about this page, not about bcrypt. Hashing runs on the same thread that draws the interface, and each cost step doubles the time — 14 already freezes the tab for about a second. Your server has no such constraint and should generally run 10 to 12."
+            }
+        }
+    },
+    "aes": {
+        "meta": {
+            "title": "AES Encryption / Decryption — CBC, GCM and CTR, In Your Browser",
+            "description": "Encrypt and decrypt text or a file with AES-128, AES-192 or AES-256 in CBC, GCM or CTR mode. Derive the key from a passphrase with PBKDF2-HMAC-SHA256, or paste a raw key, and see the salt and IV that produced the result. Runs entirely in your browser — nothing is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Security",
+            "title": "AES Encryption / Decryption",
+            "subtitle": "Encrypt text or a file with AES in CBC, GCM or CTR mode, or read a ciphertext back. Every parameter that produced the result — the salt, the initialisation vector, the iteration count — is on screen, so the same bytes can be reproduced in any language. Nothing leaves this tab.",
+            "badgeModes": "CBC, GCM and CTR",
+            "badgeOffline": "Works offline",
+            "badgeKdf": "PBKDF2-HMAC-SHA256"
+        },
+        "workbench": {
+            "title": "AES workbench",
+            "description": "Pick a mode and a key size, type a passphrase, and the result updates as you go. Open a file to encrypt its bytes, or switch to Decrypt to read a ciphertext back with the same parameters.",
+            "secretsNotice": "Everything here runs in this tab and no value ever reaches a URL. Even so, treat any web page as untrusted with a secret you actually use — this one included.",
+            "directionLabel": "Direction",
+            "directions": {
+                "encrypt": "Encrypt",
+                "decrypt": "Decrypt"
+            },
+            "modeLabel": "Cipher mode",
+            "modeHint": {
+                "cbc": "Chains each block into the next. Widely supported, and it cannot detect tampering.",
+                "gcm": "Encrypts and authenticates at once, so an altered ciphertext is refused.",
+                "ctr": "Turns the cipher into a keystream. No padding, and no tamper detection."
+            },
+            "keySizeLabel": "Key size",
+            "keySizeHint": "All three are unbroken. Chrome does not implement the middle one.",
+            "keySizeOption": "{bits, number} bits",
+            "keyLabel": "Key",
+            "keySourceLabel": "Where the key comes from",
+            "keySources": {
+                "passphrase": "Passphrase",
+                "hex": "Hex key",
+                "base64": "Base64 key"
+            },
+            "keyPlaceholder": {
+                "passphrase": "Type a passphrase",
+                "hex": "Paste the key as hex",
+                "base64": "Paste the key as base64"
+            },
+            "keyHint": {
+                "passphrase": "Stretched into a key with PBKDF2, using the salt and iteration count under Advanced settings.",
+                "hex": "Exactly {bytes, number} bytes of hex, for a {bits, number}-bit key. Nothing is derived and nothing is padded.",
+                "base64": "Exactly {bytes, number} bytes of base64, for a {bits, number}-bit key. Nothing is derived and nothing is padded."
+            },
+            "showKey": "Show the key",
+            "hideKey": "Hide the key",
+            "inputLabel": {
+                "plaintext": "Plaintext",
+                "ciphertext": "Ciphertext"
+            },
+            "inputPlaceholder": {
+                "plaintext": "Type or paste what you want encrypted",
+                "ciphertext": "Paste the ciphertext to read back"
+            },
+            "encodingLabel": {
+                "plaintext": "How the plaintext is written",
+                "ciphertext": "How the ciphertext is written"
+            },
+            "clear": "Clear",
+            "openFile": "File",
+            "removeFile": "Remove the file",
+            "fileHint": {
+                "plaintext": "Or open a file, and its bytes are encrypted exactly as they are.",
+                "ciphertext": "Or open a file holding the ciphertext as text — a .txt saved from this page, for instance.",
+                "encodingIgnored": "A file is already bytes, so the plaintext encoding has nothing to act on and is switched off."
+            },
+            "outputLabel": {
+                "ciphertext": "Ciphertext",
+                "plaintext": "Plaintext"
+            },
+            "outputPlaceholder": "The result appears here",
+            "copyOutput": {
+                "ciphertext": "Copy ciphertext",
+                "plaintext": "Copy plaintext"
+            },
+            "download": "Download",
+            "downloadBytes": "Bytes",
+            "downloadHint": "Text saves the box as you see it; Bytes saves the plaintext as the bytes it actually is.",
+            "swap": "Use the result as the input",
+            "status": {
+                "awaitingInput": "Waiting for something to work on",
+                "working": {
+                    "encrypt": "Encrypting…",
+                    "decrypt": "Decrypting…"
+                },
+                "done": {
+                    "encrypt": "Encrypted with {cipher} in {mode} mode",
+                    "decrypt": "Decrypted with {cipher} in {mode} mode"
+                }
+            },
+            "notices": {
+                "authenticated": "GCM checks the ciphertext before decrypting it, so a single altered byte is refused rather than turned into plausible-looking rubbish.",
+                "shortTag": "This tag is {bits, number} bits rather than the full 128, so a forged ciphertext has a correspondingly better chance of passing the check. Shorten it only to match a system that already does.",
+                "unauthenticated": "This mode cannot detect tampering. An altered ciphertext decrypts without complaint, and a wrong key produces output rather than an error. Use GCM unless you are matching a system that does not."
+            },
+            "advanced": {
+                "title": "Advanced settings",
+                "disabledForRawKey": "A raw key is the key, so nothing is derived from it — the salt and the iteration count below do not apply.",
+                "saltLabel": "Salt",
+                "saltHint": "Mixed into the key derivation so the same passphrase gives a different key each time. Not secret; store it beside the ciphertext.",
+                "ivLabel": "Initialisation vector",
+                "ivHint": "{bytes, number} bytes, so that identical plaintexts encrypt differently. Not secret; store it beside the ciphertext.",
+                "regenerateSalt": "Draw a new salt",
+                "copySalt": "Copy the salt",
+                "regenerateIv": "Draw a new IV",
+                "copyIv": "Copy the IV",
+                "tagLengthLabel": "Authentication tag",
+                "tagLengthOption": "{bits, number} bits ({bytes, number} bytes)",
+                "tagLengthHint": "How many bits of the tag GCM keeps. A shorter tag is the full one cut short, and exactly that many bits of forgery resistance.",
+                "tagLengthDisabled": "Only GCM authenticates, so only GCM has a tag. CBC and CTR ignore this entirely.",
+                "iterationsLabel": "PBKDF2 iterations",
+                "iterationsHint": "How much work one key derivation takes. OWASP currently recommends {recommended, number} for PBKDF2-HMAC-SHA256.",
+                "iterationsSlow": "At this count a single derivation blocks the tab for around a second. It is computed once per passphrase, not once per keystroke.",
+                "presets": "Presets"
+            }
+        },
+        "errors": {
+            "empty_input": "Type or paste something to work on.",
+            "empty_key": "Type a passphrase, or paste a key.",
+            "too_large": "That is past the ceiling of {limit, number} characters — or the same number of bytes, for a file. Trim it and try again.",
+            "fileTooLarge": "{name} is larger than {limit, number} bytes. Pick a smaller file.",
+            "fileUnreadable": "That file could not be read. Try opening it again.",
+            "key_too_large": "That key is longer than {limit, number} characters. It is refused rather than truncated, because a shortened secret derives a different key without saying so.",
+            "invalid_input_encoding": "That does not read as {encoding}. Change the encoding beside the box, or correct the value.",
+            "invalid_key_encoding": "That key does not read as the encoding chosen for it.",
+            "invalid_key_length": "A raw key has to be exactly {expected, number} bytes for this key size, and this one is {actual, number}. Nothing is padded or truncated.",
+            "invalid_salt": "The salt has to be hexadecimal, at least one byte and at most {max, number}.",
+            "invalid_iv": "The initialisation vector has to be exactly {bytes, number} bytes of hexadecimal for this mode.",
+            "invalid_iterations": "The iteration count has to be a whole number between {min, number} and {max, number}.",
+            "key_derivation_failed": "The key could not be derived. Reload the page and try again.",
+            "unaligned_ciphertext": "CBC ciphertext is always a whole number of sixteen-byte blocks, and this is not. Check that none of it was lost in copying.",
+            "ciphertext_too_short": "GCM ciphertext carries a {bytes, number} byte authentication tag, so it can never be shorter than that.",
+            "unsupported_key_size": "This browser's Web Crypto does not implement {cipher}. Chrome refuses that key size; Firefox accepts it. Pick another size, or use a different browser.",
+            "authentication_failed": "The authentication tag does not match. Either the ciphertext was altered, or the key, IV or mode is not the one it was encrypted with.",
+            "decryption_failed": "That could not be decrypted. Check the key, the IV and the mode — an unauthenticated mode cannot tell you which of them is wrong.",
+            "undecodable_text": "The result decrypted, but the bytes are not valid UTF-8. Either something in the key, the IV or the mode is wrong, or the plaintext was never text — switch the output to Hex to see it."
+        },
+        "toast": {
+            "copied": "Copied to clipboard",
+            "fileLoaded": "Opened {name}",
+            "copyFailedEmpty": "There is nothing to copy yet.",
+            "copyFailedUnsupported": "This browser does not allow clipboard access.",
+            "copyFailedDenied": "Clipboard permission was denied.",
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The download could not be started.",
+            "saltRegenerated": "Drew a fresh salt",
+            "ivRegenerated": "Drew a fresh IV"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "What AES actually is",
+                "p1": "AES is a block cipher. It takes exactly sixteen bytes of input and a key of sixteen, twenty-four or thirty-two bytes, and produces exactly sixteen bytes of output. That is the whole of it. Everything else — encrypting a message longer than one block, encrypting one shorter, encrypting two messages with the same key — is the job of a mode of operation wrapped around it.",
+                "p2": "The cipher itself has been standardised since 2001 and remains unbroken: there is no practical attack on AES-128, let alone AES-256. Essentially every failure of a system that uses AES is a failure of what was wrapped around it — a reused initialisation vector, a key derived from a password with no stretching, a ciphertext nobody checked before decrypting.",
+                "p3": "This tool exists to make that wrapping visible. The mode, the key size, the salt, the initialisation vector and the iteration count are all on screen and all editable, because those are the values that decide whether the same input gives the same output somewhere else. A tool that hid them would be easier to use and impossible to check.",
+                "p4": "AES is symmetric: the same key encrypts and decrypts. It is the wrong tool when the two ends cannot already share a secret — that is what public-key cryptography is for — and the right one for encrypting something you will read back yourself, or that you can hand a key to out of band."
+            },
+            "modes": {
+                "title": "The three modes, and what each one promises",
+                "intro": "The mode decides how blocks are chained, how long the initialisation vector is, and — the part that matters most — whether anybody would notice a ciphertext being altered on the way.",
+                "tableCaption": "The three cipher modes, their IV widths, and what each one detects",
+                "colMode": "Mode",
+                "colIv": "IV width",
+                "colDetects": "Detects tampering",
+                "colUseFor": "Reach for it when",
+                "ivWidth": "{bytes, number} bytes",
+                "cbcDetects": "No. An altered ciphertext decrypts into altered plaintext, and an attacker who can flip bits in one block can flip chosen bits in the next.",
+                "gcmDetects": "Yes. An authentication tag is computed over the ciphertext and checked before anything is returned. It is 128 bits by default and can be truncated to any of the widths the specification lists.",
+                "ctrDetects": "No, and worse than CBC in one respect: flipping a bit of ciphertext flips exactly that bit of plaintext, with nothing else disturbed.",
+                "cbcUseFor": "Matching a system that already uses it. It is the most widely implemented mode and the one most existing ciphertext is written in.",
+                "gcmUseFor": "Anything new. It is the default here, and the only mode on this page that will tell you when something is wrong.",
+                "ctrUseFor": "Matching a system that uses it, or encrypting a stream whose length must not change — CTR output is exactly as long as its input.",
+                "tamperNote": "That column is the whole argument for GCM. Under CBC and CTR, decryption always succeeds in the sense that bytes come out; whether they are the bytes anybody wrote is a question the cipher does not answer. The only reason this page ever reports a problem under those modes is that the UTF-8 reader downstream refuses the result — switch the output to Hex and even that goes quiet.",
+                "reuseNote": "Never use the same initialisation vector twice with the same key. Under CTR and GCM this is catastrophic rather than merely weak: two messages encrypted with the same keystream can be combined to remove the keystream entirely, and under GCM it also leaks the value used to compute the authentication tags. The IV is not secret and does not need to be — it needs to be different every time, which is what the regenerate button is for.",
+                "ecbNote": "ECB is deliberately absent. No browser implements it, so offering it would mean writing a block cipher by hand on a page whose entire promise is that it does not — and ECB encrypts identical plaintext blocks to identical ciphertext blocks, which leaves the structure of the data legible in the ciphertext. If you need to reproduce an ECB ciphertext, a command-line tool is the honest answer."
+            },
+            "keys": {
+                "title": "Where the key comes from",
+                "p1": "AES wants a key of exactly sixteen, twenty-four or thirty-two bytes of full-entropy randomness. A passphrase is neither of those things: it is text, it is the wrong length, and its entropy is far below its byte count. Handing one to AES directly — padding it with zeros, or hashing it once — is the single most common way a system that uses AES correctly still ends up broken.",
+                "p2": "A key derivation function fixes both problems at once. PBKDF2 takes the passphrase and a salt, runs an HMAC over them a great many times, and returns exactly as many bytes as you asked for. The iteration count is the point: it makes each guess expensive, so an attacker working through a password list pays that cost for every attempt rather than once.",
+                "p3": "The salt is what stops one precomputed table working against everybody. It is not secret and does not need to be — it is stored in plain sight beside the ciphertext, exactly as it is shown here. What it must be is different for every key derived. Regenerating it is what makes the same passphrase produce a different key.",
+                "p4": "Choose Hex key or Base64 key when you already hold key bytes — from a key manager, from a configuration file, from another tool. Those are taken as they are: nothing is derived, nothing is padded, and a key of the wrong width is refused rather than quietly stretched to fit. Under a raw key the salt and the iteration count do nothing at all, and are disabled to say so."
+            },
+            "options": {
+                "title": "Every setting, and when it matters",
+                "intro": "Which settings apply depends on the mode and on where the key comes from. A setting that cannot apply is disabled with a note saying why, rather than being quietly ignored.",
+                "tableCaption": "Every setting in the workbench, what it does, and when to reach for it",
+                "colOption": "Setting",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "directionName": "Direction",
+                "directionDoes": "Switches between producing a ciphertext and reading one back.",
+                "directionWhen": "Always. It also swaps which box the two encoding pickers apply to.",
+                "modeName": "Cipher mode",
+                "modeDoes": "Picks how blocks are chained, how wide the IV is, and whether tampering is detected.",
+                "modeWhen": "Always. Leave it on GCM unless you are matching a system that uses something else.",
+                "keySizeName": "Key size",
+                "keySizeDoes": "Sets how many bytes of key AES is given.",
+                "keySizeWhen": "Matching an existing system. All three are unbroken, and 256 is the default here because it costs nothing to choose.",
+                "keySourceName": "Key source",
+                "keySourceDoes": "Decides whether the box below holds a passphrase to stretch or the key bytes themselves.",
+                "keySourceWhen": "You already hold a key rather than a password. Switching to a raw key disables the salt and the iteration count entirely.",
+                "keyName": "Key",
+                "keyDoes": "The passphrase or the raw key. Masked by default, and revealable.",
+                "keyWhen": "Always. This is the only value on the page that is actually secret.",
+                "fileName": "File",
+                "fileDoes": "Replaces the typed box with an opened file.",
+                "fileWhen": "Encrypting something that is not text, or decrypting a ciphertext you saved to disk. Encrypting takes the file bytes as the plaintext; decrypting reads the file as text.",
+                "textEncodingName": "Plaintext encoding",
+                "textEncodingDoes": "Says how the plaintext side is written — as text, as hex, or as base64.",
+                "textEncodingWhen": "The plaintext is not text. Encrypting raw bytes, or reading back a decryption that is not valid UTF-8, both need Hex.",
+                "cipherEncodingName": "Ciphertext encoding",
+                "cipherEncodingDoes": "Says how the ciphertext side is written. Never as text, because ciphertext is not text.",
+                "cipherEncodingWhen": "Matching whatever produced or expects the ciphertext. Base64 is more compact; hex is easier to compare by eye.",
+                "saltName": "Salt",
+                "saltDoes": "Random bytes mixed into the key derivation, so the same passphrase yields a different key.",
+                "saltWhen": "Decrypting something encrypted elsewhere — paste that system's salt. Draw a new one for every fresh encryption.",
+                "ivName": "Initialisation vector",
+                "ivDoes": "Random bytes that make identical plaintexts encrypt to different ciphertexts.",
+                "ivWhen": "Decrypting something encrypted elsewhere. Otherwise draw a new one every time, and never reuse one with the same key.",
+                "tagLengthName": "Authentication tag",
+                "tagLengthDoes": "Sets how many bits of the GCM tag are kept and appended to the ciphertext.",
+                "tagLengthWhen": "Matching a system that uses a shortened tag — 96 bits is common where every byte on the wire counts. Leave it at 128 otherwise.",
+                "iterationsName": "PBKDF2 iterations",
+                "iterationsDoes": "Sets how much work deriving the key takes.",
+                "iterationsWhen": "Matching an existing system's setting, or working out what your servers can carry. Higher is better right up to the point it is annoying.",
+                "swapName": "Use the result as the input",
+                "swapDoes": "Moves the result into the input box and flips the direction.",
+                "swapWhen": "Checking that a ciphertext reads back — encrypt, press it, and the same parameters decrypt what you just produced.",
+                "downloadName": "Download",
+                "downloadDoes": "Saves the current result as a timestamped text file.",
+                "downloadWhen": "You want the ciphertext on disk. It deliberately saves only the payload, so the file cannot be mistaken for a complete record.",
+                "downloadBytesName": "Bytes",
+                "downloadBytesDoes": "Saves the decrypted result as the bytes it actually is, rather than as the hex or base64 shown in the box.",
+                "downloadBytesWhen": "You decrypted a file and want the file back. It appears only while decrypting, because a ciphertext is already text.",
+                "rawKeyNote": "The salt and the iteration count belong to the key derivation, so under a raw key they are disabled rather than ignored. This matters more than it looks: a tool that left them enabled and quietly did nothing with them would let you spend an afternoon adjusting a number that changes no byte of the output.",
+                "fileNote": "The two directions treat a file differently, and the asymmetry is what makes the round trip close. Encrypting takes the file's bytes as the plaintext, so the plaintext encoding is switched off — those bytes are the message. Decrypting reads the file as text, because a ciphertext saved from this page is hex or base64 in a .txt. So: open a picture, encrypt, download the text; later open that text, decrypt, and press Bytes to get the picture back. One thing to expect on the way — a decrypted picture is not valid UTF-8, so the output box refuses to render it until you switch the plaintext encoding to Hex. That refusal is the same one that tells you a key was wrong, and it keeps its own name rather than being softened into an empty box.",
+                "ivWidthNote": "Changing the mode redraws the initialisation vector, because the widths differ — twelve bytes for GCM, a full sixteen-byte block for CBC and CTR. Carrying one across would leave the field holding a value the next operation refuses.",
+                "tagNote": "The tag width is not recorded in the ciphertext, so it has to be agreed out of band exactly like the key and the IV. Decrypting with the wrong width reads part of the tag as ciphertext and the check fails — which is the authenticated mode working, not a fault. Truncation is genuine truncation: a 96-bit tag is the first twelve bytes of the 128-bit one, and buys back four bytes per message in return for thirty-two bits of forgery resistance. That is a trade worth making only when something else is dictating it.",
+                "defaultsNote": "The defaults are AES-256 in GCM mode, a passphrase stretched through PBKDF2-HMAC-SHA256 at the current OWASP iteration count, a sixteen-byte salt, and base64 output. Those are the settings to keep unless something else is dictating them."
+            },
+            "interop": {
+                "title": "Reproducing this somewhere else",
+                "intro": "Everything needed to get the same bytes from another language is on screen. There is no hidden step and no envelope format of our own.",
+                "p1": "Derive the key the same way. PBKDF2 with HMAC-SHA256, the salt exactly as shown, the iteration count exactly as shown, and an output length matching the key size. In Node that is crypto.pbkdf2Sync; in Python, hashlib.pbkdf2_hmac; in Java, PBKDF2WithHmacSHA256. A raw key skips this step entirely.",
+                "p2": "Use the same mode with the same initialisation vector, and under GCM the same tag width. CBC applies PKCS#7 padding, which every standard library does by default. GCM appends its authentication tag to the ciphertext, which is what Web Crypto returns as one value and what most other libraries hand back separately — if the other side wants the tag on its own, it is the last bytes, as many as the tag width says, and Node takes that width as authTagLength. CTR here counts in the low sixty-four bits of the counter block, which is the common default.",
+                "p3": "Read the ciphertext in the same encoding. Hex and base64 describe the same bytes; the picker changes only how they are written down.",
+                "p4": "If the bytes still differ, the difference is almost always the key derivation rather than the cipher. Set the iteration count to something small, print the derived key on both sides, and compare those first — the cipher itself is the part least likely to be wrong.",
+                "envelopeNote": "There is deliberately no combined output format here — no header packing the salt, the IV and the ciphertext into one blob. Several exist, they disagree with each other, and every one of them hides a parameter that this page is trying to show you. Storing three visible values beside a ciphertext is less convenient and considerably easier to get right."
+            },
+            "useCases": {
+                "title": "What people use this for",
+                "p1": "Checking an implementation. You have written encryption into an application and want to know whether it produces what it should. Paste the same key material, salt and IV here and compare the ciphertext byte for byte.",
+                "p2": "Reading something back. A configuration value, a stored field, a message from a colleague — you have the ciphertext and the parameters and simply need the plaintext, without writing a script to get it.",
+                "p3": "Understanding what a mode actually promises. Encrypt something under CTR, change one character of the ciphertext, decrypt it, and watch exactly one character of the plaintext change. Then do the same under GCM and watch it refuse. That demonstration is worth more than any amount of prose about authenticated encryption."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Is anything I type sent to a server?",
+                "a1": "No. Every operation runs through your browser's own Web Crypto implementation, and the page makes no network request while encrypting or decrypting. There is also deliberately no URL parameter carrying the payload, the key, the salt or the IV: a value in a URL ends up in browser history, in proxy and server logs, and in the referrer header of every outbound link. That said, treat any web page as untrusted with a secret you actually use.",
+                "q2": "Which mode should I choose?",
+                "a2": "GCM, unless something else is dictating the choice. It is the only mode here that authenticates, meaning it checks the ciphertext before decrypting it and refuses one that has been altered. CBC and CTR are here so you can read ciphertext that already exists; they are not the ones to pick for something new.",
+                "q3": "Why does encrypting the same text twice give different results?",
+                "a3": "Because the salt and the initialisation vector are random, and both feed into the result. That is the correct behaviour: if identical plaintexts produced identical ciphertexts, an observer would learn which of your messages are the same as each other without decrypting any of them. Both values are stored in plain sight beside the ciphertext, which is why they are shown rather than hidden.",
+                "q4": "AES-256 refuses to work in my browser. Why?",
+                "a4": "It should not, and 256 is the default here. What some browsers do refuse is AES-192: Chrome's Web Crypto implementation does not include it, while Firefox does. That is a browser limitation rather than anything about the algorithm, and the tool says so rather than silently offering a size that cannot run.",
+                "q5": "I decrypted something and got nonsense instead of an error.",
+                "a5": "That is CBC or CTR behaving exactly as specified. Neither mode can tell a right key from a wrong one — they transform bytes either way. The only thing that ever complains is the UTF-8 reader, and only when the resulting bytes happen not to be valid text. GCM is the mode that answers this question, which is the reason it is the default.",
+                "q6": "Do I need to keep the salt and the IV secret?",
+                "a6": "No. Neither is secret and neither needs to be. Store both beside the ciphertext — you cannot decrypt without them, and knowing them helps an attacker not at all. What matters is that they are different every time: reusing an IV with the same key is a genuine break, particularly under CTR and GCM.",
+                "q7": "Can I use a password directly as the key?",
+                "a7": "Not here, and you should not want to elsewhere. A password is the wrong length and has far less entropy than its byte count suggests, so using one as key bytes is one of the standard ways a correct use of AES still ends up broken. Choose Passphrase and the tool stretches it with PBKDF2; choose Hex key or Base64 key when you genuinely hold key bytes already.",
+                "q8": "How many iterations should I set?",
+                "a8": "The default is the current OWASP recommendation for PBKDF2-HMAC-SHA256, and there is little reason to go below it. Higher is better until the wait becomes annoying — and here it is paid once per passphrase rather than once per keystroke, because the derived key is kept for as long as nothing it depends on changes. If you are reproducing another system's output, use whatever that system uses."
             }
         }
     },

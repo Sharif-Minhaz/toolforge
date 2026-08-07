@@ -57,6 +57,7 @@ docs/
 | A format somebody else has to read | [`docs/testing.md`](docs/testing.md) |
 | An outbound request from the server | [`docs/patterns/outbound-requests.md`](docs/patterns/outbound-requests.md), [`docs/security.md`](docs/security.md) |
 | A free-text field | [`docs/patterns/input-limits.md`](docs/patterns/input-limits.md) |
+| `aes` | [`docs/case-studies/aes.md`](docs/case-studies/aes.md) |
 | `blur-placeholder` | [`docs/case-studies/blurhash.md`](docs/case-studies/blurhash.md) |
 | `bson` | [`docs/case-studies/bson.md`](docs/case-studies/bson.md) |
 | `curl` | [`docs/case-studies/curl.md`](docs/case-studies/curl.md) |

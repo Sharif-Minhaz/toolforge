@@ -23,6 +23,7 @@ import {
     IconRadar2,
     IconScissors,
     IconRegex,
+    IconShieldLock,
     IconTerminal2,
     IconTextScan2,
     IconTextSize,
@@ -66,6 +67,7 @@ const ICONS: Record<ToolIconName, ComponentType<IconProps>> = {
     network: IconNetwork,
     server: IconServer2,
     graph: IconTopologyStar3,
+    shield: IconShieldLock,
 };
 
 type ToolIconProps = {

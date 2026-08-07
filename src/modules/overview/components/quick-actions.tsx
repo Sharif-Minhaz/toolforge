@@ -4,7 +4,7 @@ import {
     IconBolt,
     IconBraces,
     IconKey,
-    IconRadar2,
+    IconShieldLock,
     IconTransform,
 } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
@@ -58,14 +58,14 @@ export async function QuickActions() {
             Icon: IconTransform,
             accent: "[--tool-accent:var(--brand-emerald)]",
         },
-        // The list is capped at six. The cURL converter made way for this one,
-        // being the lowest-popularity tool that was represented here.
+        // The list is capped at six. The Domain Inspector made way for this
+        // one, being the lowest-popularity tool that was represented here.
         {
-            key: "domainInspect",
-            href: "/tools/domain-inspector",
-            title: t("domainInspect.title"),
-            description: t("domainInspect.description"),
-            Icon: IconRadar2,
+            key: "aesEncrypt",
+            href: "/tools/aes",
+            title: t("aesEncrypt.title"),
+            description: t("aesEncrypt.description"),
+            Icon: IconShieldLock,
             accent: "[--tool-accent:var(--brand-cyan)]",
         },
     ];

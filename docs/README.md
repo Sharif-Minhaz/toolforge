@@ -118,6 +118,7 @@ records a defect that was expensive to find and is easy to reintroduce.
 
 | Module | Document |
 | --- | --- |
+| `aes` | [`case-studies/aes.md`](case-studies/aes.md) |
 | `blur-placeholder` | [`case-studies/blurhash.md`](case-studies/blurhash.md) |
 | `bson` | [`case-studies/bson.md`](case-studies/bson.md) |
 | `curl` | [`case-studies/curl.md`](case-studies/curl.md) |

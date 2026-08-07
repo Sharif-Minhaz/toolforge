@@ -140,6 +140,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.hash.errors,
             toast: messages.hash.toast,
         },
+        aes: {
+            workbench: messages.aes.workbench,
+            errors: messages.aes.errors,
+            toast: messages.aes.toast,
+        },
         json: {
             workbench: messages.json.workbench,
             report: messages.json.report,

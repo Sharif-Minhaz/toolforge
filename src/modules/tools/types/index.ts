@@ -20,6 +20,7 @@ export const TOOL_IDS = [
     "base64",
     "jwt",
     "hash",
+    "aes",
     "json",
     "url",
     "url-parser",
@@ -106,7 +107,8 @@ export type ToolIconName =
     | "database"
     | "network"
     | "server"
-    | "graph";
+    | "graph"
+    | "shield";
 
 export type Tool = {
     readonly id: ToolId;
