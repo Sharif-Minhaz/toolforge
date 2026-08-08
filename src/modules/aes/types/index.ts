@@ -70,6 +70,7 @@ export type AesFailureReason =
     | "invalid_key_length"
     | "invalid_salt"
     | "invalid_iv"
+    | "unsupported_iv_length"
     | "invalid_iterations"
     | "key_derivation_failed"
     | "unaligned_ciphertext"

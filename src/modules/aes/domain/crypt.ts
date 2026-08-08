@@ -4,6 +4,7 @@ import {
     aesAlgorithmName,
     isAuthenticated,
     isBlockAligned,
+    isIvLengthSupported,
     ivBytesFor,
     readIvBytes,
     subtleParams,
@@ -122,6 +123,14 @@ export async function runAes(
             reason: "invalid_iv",
             expectedBytes: ivBytesFor(options.mode),
         };
+    }
+
+    // Asked before the operation rather than after it, so an engine that will
+    // not take this width says so plainly instead of surfacing as a failed tag
+    // check — which is what a wrong key looks like, and would send a reader
+    // hunting for the wrong problem.
+    if (!(await isIvLengthSupported(options.mode, iv.length))) {
+        return { ok: false, reason: "unsupported_iv_length", actualBytes: iv.length };
     }
 
     const key = await resolveKey(keyInput(request));

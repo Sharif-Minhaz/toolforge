@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { MAX_PBKDF2_ITERATIONS, MIN_PBKDF2_ITERATIONS } from "../domain/constants";
-import { ivBytesFor } from "../domain/modes";
+import { readIvBytes } from "../domain/modes";
 import {
     AES_CIPHER_ENCODINGS,
     AES_DIRECTIONS,
@@ -65,13 +65,13 @@ export const aesOptionsSchema = z
         textEncoding: aesTextEncodingSchema,
         cipherEncoding: aesCipherEncodingSchema,
     })
-    .refine(
-        (options) => options.ivHex.replace(/\s+/g, "").length === ivBytesFor(options.mode) * 2,
-        {
-            path: ["ivHex"],
-            message: "The IV must be as wide as the mode requires",
-        },
-    );
+    // The one cross-field rule in the tool, and it is asked of the domain
+    // rather than restated here — CBC and CTR need exactly a block, GCM takes
+    // any nonce width it is given.
+    .refine((options) => readIvBytes(options.mode, options.ivHex) !== null, {
+        path: ["ivHex"],
+        message: "The IV must be a width this mode accepts",
+    });
 
 export type AesOptionsInput = z.input<typeof aesOptionsSchema>;
 

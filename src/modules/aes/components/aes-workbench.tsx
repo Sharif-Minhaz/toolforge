@@ -1,12 +1,19 @@
 "use client";
 
-import { IconArrowsUpDown } from "@tabler/icons-react";
+import { IconArrowsUpDown, IconRotate2 } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Card,
+    CardAction,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -23,6 +30,7 @@ import {
     MAX_AES_INPUT_BYTES,
     MAX_AES_INPUT_LENGTH,
     MAX_AES_SECRET_LENGTH,
+    MAX_GCM_NONCE_BYTES,
     MAX_PBKDF2_ITERATIONS,
     MAX_SALT_BYTES,
     MIN_PBKDF2_ITERATIONS,
@@ -36,10 +44,11 @@ import {
     usesKeyDerivation,
 } from "../domain/key";
 import { CIPHER_ENCODING_LABELS, MODE_LABELS, TEXT_ENCODING_LABELS } from "../domain/labels";
-import { isAuthenticated, isValidIvHex, ivBytesFor } from "../domain/modes";
+import { acceptsVariableIv, isAuthenticated, isValidIvHex, ivBytesFor } from "../domain/modes";
 import { createAesBlobDownload, createAesExportFile } from "../domain/export";
+import { generateKeyMaterial } from "../domain/generate";
 import { isCipherEncoding, isTextEncoding } from "../domain/payload";
-import { randomIvHex, randomSaltHex } from "../domain/params";
+import { randomHex, randomIvHex, randomSaltHex, redrawIvHex } from "../domain/params";
 import {
     AES_CIPHER_ENCODINGS,
     AES_KEY_SIZES,
@@ -61,7 +70,7 @@ import { KeyPanel } from "./key-panel";
 import { OutputPanel } from "./output-panel";
 import { PayloadPanel, type LoadedFile } from "./payload-panel";
 
-type CopyTarget = "output" | HexTarget;
+type CopyTarget = "output" | "key" | HexTarget;
 
 /**
  * How many derived keys are kept. One per passphrase, salt, iteration count and
@@ -92,6 +101,14 @@ export function AesWorkbench({ initialDirection, initialOptions }: AesWorkbenchP
     const [file, setFile] = useState<LoadedFile | null>(null);
     const [secret, setSecret] = useState("");
     const [options, setOptions] = useState<AesOptions>(initialOptions);
+    /**
+     * What Reset last restored, which is what "unchanged" is measured against.
+     * It is not `initialOptions`, because resetting draws a fresh salt and IV —
+     * so a workbench that has just been reset would otherwise read as changed
+     * for ever afterwards.
+     */
+    const [baseline, setBaseline] = useState<AesOptions>(initialOptions);
+    const [keyRevealed, setKeyRevealed] = useState(false);
     const [copied, setCopied] = useCopyFeedback<CopyTarget>();
     const [computed, setComputed] = useState<{ key: string; result: AesResult } | null>(null);
 
@@ -182,7 +199,14 @@ export function AesWorkbench({ initialDirection, initialOptions }: AesWorkbenchP
                     actual: failure.actualBytes ?? 0,
                 });
             case "invalid_iv":
-                return tErrors("invalid_iv", { bytes: failure.expectedBytes ?? 0 });
+                return acceptsVariableIv(options.mode)
+                    ? tErrors("invalid_iv_variable", { max: MAX_GCM_NONCE_BYTES })
+                    : tErrors("invalid_iv", { bytes: failure.expectedBytes ?? 0 });
+            case "unsupported_iv_length":
+                return tErrors("unsupported_iv_length", {
+                    bytes: failure.actualBytes ?? 0,
+                    recommended: ivBytesFor(options.mode),
+                });
             case "invalid_salt":
                 return tErrors("invalid_salt", { max: MAX_SALT_BYTES });
             case "invalid_iterations":
@@ -244,6 +268,33 @@ export function AesWorkbench({ initialDirection, initialOptions }: AesWorkbenchP
             : { tone: "success", message: t("notices.authenticated") };
     })();
 
+    /**
+     * Every setting, in a fixed order, with the two random ones left out — they
+     * are noise the reader did not choose, and Reset redraws them anyway.
+     * Written out rather than destructured so adding a ninth option is a
+     * compile-time decision instead of a silent omission.
+     */
+    function comparableSettings(candidate: AesOptions): string {
+        return JSON.stringify([
+            candidate.mode,
+            candidate.keySize,
+            candidate.keySource,
+            candidate.tagLength,
+            candidate.iterations,
+            candidate.textEncoding,
+            candidate.cipherEncoding,
+        ]);
+    }
+
+    const pristine =
+        input.length === 0 &&
+        secret.length === 0 &&
+        file === null &&
+        direction === initialDirection &&
+        options.saltHex === baseline.saltHex &&
+        options.ivHex === baseline.ivHex &&
+        comparableSettings(options) === comparableSettings(baseline);
+
     function updateOptions(patch: Partial<AesOptions>) {
         setOptions((current) => ({ ...current, ...patch }));
     }
@@ -257,6 +308,28 @@ export function AesWorkbench({ initialDirection, initialOptions }: AesWorkbenchP
         updateOptions(widthChanged ? { mode, ivHex: randomIvHex(mode) } : { mode });
     }
 
+    /**
+     * Draws a secret in whichever form the field is currently reading, and
+     * reveals it — a key you cannot see is no use for pasting into the system
+     * that has to share it. A discrete press, so nothing here is debounced.
+     */
+    function handleGenerateKey() {
+        setSecret(generateKeyMaterial(options.keySource, options.keySize));
+        setKeyRevealed(true);
+        toast.success(tToast(`keyGenerated.${options.keySource}`));
+    }
+
+    /**
+     * The picker is a generator: choosing a width draws a nonce at it rather
+     * than trying to stretch or trim the one already there. Trimming would
+     * produce a value the reader never chose, under a control that said it was
+     * only changing the length.
+     */
+    function handleNonceWidthChange(bytes: number) {
+        updateOptions({ ivHex: randomHex(bytes) });
+        toast.success(tToast("ivRegenerated"));
+    }
+
     function handleRegenerate(target: HexTarget) {
         if (target === "salt") {
             updateOptions({ saltHex: randomSaltHex() });
@@ -265,7 +338,9 @@ export function AesWorkbench({ initialDirection, initialOptions }: AesWorkbenchP
             return;
         }
 
-        updateOptions({ ivHex: randomIvHex(options.mode) });
+        // At the width already in the field, not the mode's default — see
+        // `redrawIvHex`.
+        updateOptions({ ivHex: redrawIvHex(options.mode, options.ivHex) });
         toast.success(tToast("ivRegenerated"));
     }
 
@@ -295,6 +370,40 @@ export function AesWorkbench({ initialDirection, initialOptions }: AesWorkbenchP
         }
     }
 
+    /**
+     * Everything back to how the page opened, and nothing left behind.
+     *
+     * Back to how it *opened* rather than to the built-in defaults, because a
+     * link carrying `?mode=cbc&keySize=128` asked for those and discarding them
+     * would make the reader read the link again. The salt and the IV are the
+     * exception: they are redrawn rather than restored, since starting over
+     * with the initialisation vector you may already have encrypted under is
+     * the one thing this tool warns about most loudly.
+     *
+     * The derived-key cache goes too. It holds real key material, and "restart
+     * everything" that quietly kept it would not be that.
+     */
+    function handleReset() {
+        const fresh: AesOptions = {
+            ...initialOptions,
+            saltHex: randomSaltHex(),
+            ivHex: randomIvHex(initialOptions.mode),
+        };
+
+        keyCache.current.clear();
+
+        setDirection(initialDirection);
+        setInput("");
+        setFile(null);
+        setSecret("");
+        setKeyRevealed(false);
+        setComputed(null);
+        setOptions(fresh);
+        setBaseline(fresh);
+
+        toast.success(tToast("reset"));
+    }
+
     /** Feeds the result back in, so encrypt → decrypt is one press. */
     function handleSwap() {
         if (output.length === 0) {
@@ -317,10 +426,22 @@ export function AesWorkbench({ initialDirection, initialOptions }: AesWorkbenchP
         toast.error(message);
     }
 
+    /** Exhaustive rather than nested ternaries, so a fifth target cannot be missed. */
+    function valueFor(target: CopyTarget): string {
+        switch (target) {
+            case "output":
+                return output;
+            case "key":
+                return secret;
+            case "salt":
+                return options.saltHex;
+            case "iv":
+                return options.ivHex;
+        }
+    }
+
     async function handleCopy(target: CopyTarget) {
-        const value =
-            target === "output" ? output : target === "salt" ? options.saltHex : options.ivHex;
-        const result = await copyText(value);
+        const result = await copyText(valueFor(target));
 
         if (!result.ok) {
             reportCopyFailure(result);
@@ -416,6 +537,23 @@ export function AesWorkbench({ initialDirection, initialOptions }: AesWorkbenchP
             <CardHeader>
                 <CardTitle className="text-lg">{t("title")}</CardTitle>
                 <CardDescription>{t("description")}</CardDescription>
+                <CardAction>
+                    {/* Quiet until there is something to undo, so it never
+                        reads as a button that might do nothing. */}
+                    <button
+                        type="button"
+                        onClick={handleReset}
+                        disabled={pristine}
+                        title={t("resetHint")}
+                        className={cn(
+                            buttonVariants({ variant: "outline", size: "sm" }),
+                            "h-7 px-2 text-[0.6875rem]",
+                        )}
+                    >
+                        <IconRotate2 className="size-3.5" stroke={1.8} aria-hidden="true" />
+                        {t("reset")}
+                    </button>
+                </CardAction>
             </CardHeader>
 
             <CardContent className="flex min-w-0 flex-col gap-5">
@@ -463,8 +601,13 @@ export function AesWorkbench({ initialDirection, initialOptions }: AesWorkbenchP
                     source={options.keySource}
                     keySize={options.keySize}
                     value={secret}
+                    revealed={keyRevealed}
+                    copied={copied === "key"}
+                    onRevealedChange={setKeyRevealed}
                     onSourceChange={(keySource: AesKeySource) => updateOptions({ keySource })}
                     onValueChange={setSecret}
+                    onGenerate={handleGenerateKey}
+                    onCopy={() => void handleCopy("key")}
                 />
 
                 <PayloadPanel
@@ -485,7 +628,7 @@ export function AesWorkbench({ initialDirection, initialOptions }: AesWorkbenchP
 
                 <AdvancedSettings
                     options={options}
-                    copied={copied === "output" ? null : copied}
+                    copied={copied === "salt" || copied === "iv" ? copied : null}
                     saltInvalid={
                         usesKeyDerivation(options.keySource) &&
                         readSaltBytes(options.saltHex) === null
@@ -494,6 +637,7 @@ export function AesWorkbench({ initialDirection, initialOptions }: AesWorkbenchP
                     onChange={updateOptions}
                     onRegenerate={handleRegenerate}
                     onCopy={(target) => void handleCopy(target)}
+                    onNonceWidthChange={handleNonceWidthChange}
                 />
 
                 <div className="flex items-center gap-3">

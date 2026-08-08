@@ -105,6 +105,43 @@ rather than letting it pass unremarked.
 
 ---
 
+## GCM's nonce width is a parameter, not a constant
+
+The first real interop test failed, and the error came from the *other* tool:
+
+```
+Invalid IV length. Expected 16 bytes, but got 12 bytes.
+```
+
+Twelve bytes is what NIST SP 800-38D recommends and what this tool draws. But
+GCM accepts a nonce of **any** length — ninety-six bits is used directly, and
+every other width is run through GHASH first. Those are two different
+constructions producing two different keystreams, both legal. Plenty of
+libraries (Java's `GCMParameterSpec` among them) default to sixteen, so a tool
+that hard-codes twelve simply cannot read what they wrote.
+
+Three things fell out of fixing it:
+
+- **The width is variable only for GCM.** For CBC and CTR the IV *is* a block —
+  sixteen bytes is arithmetic, not convention — so `acceptsVariableIv` gates it
+  and `readIvBytes` enforces one rule per mode.
+- **Runtimes disagree at the short end.** Node refuses any nonce under twelve
+  bytes; Bun accepts a single byte. Same shape as the AES-192 problem, so it
+  gets the same answer: the accepted range is a static rule, and the engine's
+  opinion is absorbed by a **cached capability probe** (`isIvLengthSupported`)
+  that asks *before* the operation. Asking after would surface as a failed tag
+  check, which is what a wrong key looks like — sending a reader hunting for
+  the wrong problem entirely.
+- **Regenerate has to keep the width.** Drawing a fresh nonce at the mode's
+  default would silently undo a reader's deliberate choice of sixteen, and the
+  next ciphertext would be unreadable by the system they set it for, with
+  nothing on screen having changed. `redrawIvHex` reads the width out of the
+  field rather than off the mode.
+
+Two OpenSSL-computed vectors pin the non-96-bit path, at sixteen bytes and at
+eight, and the eight-byte one asserts the documented refusal on runtimes that
+will not take it.
+
 ## Why there is no ECB, and no combined output format
 
 Both are deliberate absences, and both are documented in the article rather than

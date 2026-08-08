@@ -8,9 +8,16 @@ import { cn } from "@/lib/utils";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { MAX_SALT_BYTES } from "../domain/constants";
 import { isGcmTagLength, usesKeyDerivation } from "../domain/key";
-import { isAuthenticated, ivBytesFor } from "../domain/modes";
+import {
+    acceptsVariableIv,
+    isAuthenticated,
+    ivBytesFor,
+    maxIvBytesFor,
+    readIvBytes,
+} from "../domain/modes";
 import { GCM_TAG_LENGTHS, type AesOptions } from "../types";
 import { HexField } from "./hex-field";
+import { NonceWidthSelect } from "./nonce-width-select";
 import { IterationField } from "./iteration-field";
 
 /**
@@ -34,6 +41,8 @@ type AdvancedSettingsProps = {
     onChange: (patch: Partial<AesOptions>) => void;
     onRegenerate: (target: HexTarget) => void;
     onCopy: (target: HexTarget) => void;
+    /** Draws a fresh nonce at the chosen width. GCM only. */
+    onNonceWidthChange: (bytes: number) => void;
 };
 
 export function AdvancedSettings({
@@ -44,6 +53,7 @@ export function AdvancedSettings({
     onChange,
     onRegenerate,
     onCopy,
+    onNonceWidthChange,
 }: AdvancedSettingsProps) {
     const t = useTranslations("aes.workbench.advanced");
 
@@ -51,6 +61,10 @@ export function AdvancedSettings({
     // count would sit there accepting values that change nothing at all.
     const derived = usesKeyDerivation(options.keySource);
     const authenticated = isAuthenticated(options.mode);
+    // What is in the field, not what the mode draws — a pasted nonce of an
+    // unusual width has to keep reading as that width.
+    const currentIvBytes =
+        readIvBytes(options.mode, options.ivHex)?.length ?? ivBytesFor(options.mode);
 
     const tagLengthItems: Record<string, ReactNode> = Object.fromEntries(
         GCM_TAG_LENGTHS.map((bits) => [
@@ -85,10 +99,15 @@ export function AdvancedSettings({
                     </p>
                 )}
 
-                <div className="grid gap-4 sm:grid-cols-2">
+                {/* `items-start`, so a taller hint in one column cannot stretch
+                    the other and pull its field off the line. */}
+                <div className="grid items-start gap-4 sm:grid-cols-2">
                     <HexField
                         label={t("saltLabel")}
-                        hint={t("saltHint")}
+                        // A disabled control that still describes itself
+                        // working is the panel arguing with itself. Each one
+                        // says why it is off instead.
+                        hint={derived ? t("saltHint") : t("saltDisabled")}
                         value={options.saltHex}
                         maxLength={MAX_SALT_BYTES * 2}
                         disabled={!derived}
@@ -103,9 +122,21 @@ export function AdvancedSettings({
 
                     <HexField
                         label={t("ivLabel")}
-                        hint={t("ivHint", { bytes: ivBytesFor(options.mode) })}
+                        hint={
+                            acceptsVariableIv(options.mode)
+                                ? t("ivHintVariable", { bytes: ivBytesFor(options.mode) })
+                                : t("ivHint", { bytes: ivBytesFor(options.mode) })
+                        }
                         value={options.ivHex}
-                        maxLength={ivBytesFor(options.mode) * 2}
+                        maxLength={maxIvBytesFor(options.mode) * 2}
+                        trailing={
+                            acceptsVariableIv(options.mode) ? (
+                                <NonceWidthSelect
+                                    value={currentIvBytes}
+                                    onChange={onNonceWidthChange}
+                                />
+                            ) : undefined
+                        }
                         disabled={false}
                         invalid={ivInvalid}
                         copied={copied === "iv"}

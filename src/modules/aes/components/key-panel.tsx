@@ -1,10 +1,9 @@
 "use client";
 
-import { IconEye, IconEyeOff } from "@tabler/icons-react";
+import { IconDice5, IconEye, IconEyeOff } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
-import { useId, useState, type ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
     Select,
@@ -13,18 +12,29 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { IconCopyButton } from "@/modules/tools/components/copy-button";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { MAX_AES_SECRET_LENGTH } from "../domain/constants";
 import { isKeySource } from "../domain/payload";
 import { AES_KEY_SOURCES, type AesKeySize, type AesKeySource } from "../types";
+import { FieldAction, FieldDivider, FieldShell, FIELD_INPUT } from "./field-shell";
 
 type KeyPanelProps = {
     source: AesKeySource;
     keySize: AesKeySize;
     value: string;
+    /**
+     * Owned by the workbench rather than here, so pressing Generate can reveal
+     * what it drew. A key you cannot read is no use for pasting into the system
+     * that has to share it.
+     */
+    revealed: boolean;
+    copied: boolean;
+    onRevealedChange: (revealed: boolean) => void;
     onSourceChange: (source: AesKeySource) => void;
     onValueChange: (value: string) => void;
+    onGenerate: () => void;
+    onCopy: () => void;
 };
 
 /**
@@ -38,9 +48,19 @@ type KeyPanelProps = {
  * Masked by default and revealable, because a hex key has to be checked
  * character by character against wherever it came from.
  */
-export function KeyPanel({ source, keySize, value, onSourceChange, onValueChange }: KeyPanelProps) {
+export function KeyPanel({
+    source,
+    keySize,
+    value,
+    revealed,
+    copied,
+    onRevealedChange,
+    onSourceChange,
+    onValueChange,
+    onGenerate,
+    onCopy,
+}: KeyPanelProps) {
     const t = useTranslations("aes.workbench");
-    const [revealed, setRevealed] = useState(false);
 
     const inputId = useId();
     const sourceLabelId = useId();
@@ -90,8 +110,8 @@ export function KeyPanel({ source, keySize, value, onSourceChange, onValueChange
                 </div>
             </div>
 
-            <div className="flex items-center gap-1.5">
-                <Input
+            <FieldShell invalid={limit.state === "over"}>
+                <input
                     id={inputId}
                     type={revealed ? "text" : "password"}
                     value={value}
@@ -103,26 +123,33 @@ export function KeyPanel({ source, keySize, value, onSourceChange, onValueChange
                     aria-describedby={meterId}
                     aria-invalid={limit.state === "over"}
                     placeholder={t(`keyPlaceholder.${source}`)}
-                    className="h-9 min-w-0 flex-1 font-mono text-[0.8125rem]"
+                    className={FIELD_INPUT}
                 />
-                <button
-                    type="button"
-                    onClick={() => setRevealed((current) => !current)}
-                    aria-label={revealed ? t("hideKey") : t("showKey")}
-                    aria-pressed={revealed}
-                    className={cn(
-                        "text-muted-foreground grid size-7 shrink-0 place-items-center rounded-lg",
-                        "hover:bg-muted hover:text-foreground transition-colors duration-200",
-                        "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
-                    )}
+
+                <FieldDivider />
+
+                <FieldAction label={t(`generateKey.${source}`)} onClick={onGenerate}>
+                    <IconDice5 className="size-4" stroke={1.8} aria-hidden="true" />
+                </FieldAction>
+                <IconCopyButton
+                    copied={copied}
+                    onClick={onCopy}
+                    disabled={value.length === 0}
+                    aria-label={t("copyKey")}
+                    title={t("copyKey")}
+                    className="disabled:pointer-events-none disabled:opacity-40"
+                />
+                <FieldAction
+                    label={revealed ? t("hideKey") : t("showKey")}
+                    onClick={() => onRevealedChange(!revealed)}
                 >
                     {revealed ? (
                         <IconEyeOff className="size-4" stroke={1.8} aria-hidden="true" />
                     ) : (
                         <IconEye className="size-4" stroke={1.8} aria-hidden="true" />
                     )}
-                </button>
-            </div>
+                </FieldAction>
+            </FieldShell>
 
             <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
                 {t(`keyHint.${source}`, { bits: keySize, bytes: keySize / 8 })}

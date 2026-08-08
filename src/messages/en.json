@@ -1292,6 +1292,8 @@
         "workbench": {
             "title": "AES workbench",
             "description": "Pick a mode and a key size, type a passphrase, and the result updates as you go. Open a file to encrypt its bytes, or switch to Decrypt to read a ciphertext back with the same parameters.",
+            "reset": "Reset",
+            "resetHint": "Clears both boxes and the key, and puts every setting back to how this page opened — with a fresh salt and IV.",
             "secretsNotice": "Everything here runs in this tab and no value ever reaches a URL. Even so, treat any web page as untrusted with a secret you actually use — this one included.",
             "directionLabel": "Direction",
             "directions": {
@@ -1326,6 +1328,12 @@
             },
             "showKey": "Show the key",
             "hideKey": "Hide the key",
+            "copyKey": "Copy the key",
+            "generateKey": {
+                "passphrase": "Generate a random passphrase",
+                "hex": "Generate a random hex key",
+                "base64": "Generate a random base64 key"
+            },
             "inputLabel": {
                 "plaintext": "Plaintext",
                 "ciphertext": "Ciphertext"
@@ -1379,9 +1387,13 @@
                 "title": "Advanced settings",
                 "disabledForRawKey": "A raw key is the key, so nothing is derived from it — the salt and the iteration count below do not apply.",
                 "saltLabel": "Salt",
-                "saltHint": "Mixed into the key derivation so the same passphrase gives a different key each time. Not secret; store it beside the ciphertext.",
+                "saltHint": "Random, so the same passphrase gives a different key. Hex. Not secret — store it beside the ciphertext.",
+                "saltDisabled": "Nothing is derived from a raw key, so there is nothing to salt.",
                 "ivLabel": "Initialisation vector",
-                "ivHint": "{bytes, number} bytes, so that identical plaintexts encrypt differently. Not secret; store it beside the ciphertext.",
+                "ivHint": "{bytes, number} bytes of hex, so identical plaintexts encrypt differently. Not secret — store it beside the ciphertext.",
+                "ivHintVariable": "Hex. 12 bytes is standard; switch to 16 if the other tool demands it. Regenerate keeps the width.",
+                "nonceWidthLabel": "Nonce width",
+                "nonceWidthOption": "{bytes, number} bytes",
                 "regenerateSalt": "Draw a new salt",
                 "copySalt": "Copy the salt",
                 "regenerateIv": "Draw a new IV",
@@ -1392,6 +1404,7 @@
                 "tagLengthDisabled": "Only GCM authenticates, so only GCM has a tag. CBC and CTR ignore this entirely.",
                 "iterationsLabel": "PBKDF2 iterations",
                 "iterationsHint": "How much work one key derivation takes. OWASP currently recommends {recommended, number} for PBKDF2-HMAC-SHA256.",
+                "iterationsDisabled": "Nothing is derived from a raw key, so there is no work to set.",
                 "iterationsSlow": "At this count a single derivation blocks the tab for around a second. It is computed once per passphrase, not once per keystroke.",
                 "presets": "Presets"
             }
@@ -1408,6 +1421,8 @@
             "invalid_key_length": "A raw key has to be exactly {expected, number} bytes for this key size, and this one is {actual, number}. Nothing is padded or truncated.",
             "invalid_salt": "The salt has to be hexadecimal, at least one byte and at most {max, number}.",
             "invalid_iv": "The initialisation vector has to be exactly {bytes, number} bytes of hexadecimal for this mode.",
+            "invalid_iv_variable": "GCM takes a nonce of any width, but it has to be hexadecimal and at most {max, number} bytes.",
+            "unsupported_iv_length": "This browser will not take a {bytes, number} byte GCM nonce. Runtimes disagree below {recommended, number} bytes; try {recommended, number}, or a wider one.",
             "invalid_iterations": "The iteration count has to be a whole number between {min, number} and {max, number}.",
             "key_derivation_failed": "The key could not be derived. Reload the page and try again.",
             "unaligned_ciphertext": "CBC ciphertext is always a whole number of sixteen-byte blocks, and this is not. Check that none of it was lost in copying.",
@@ -1425,8 +1440,14 @@
             "copyFailedDenied": "Clipboard permission was denied.",
             "downloaded": "Saved {filename}",
             "downloadFailed": "The download could not be started.",
+            "reset": "Everything is back to how the page opened",
             "saltRegenerated": "Drew a fresh salt",
-            "ivRegenerated": "Drew a fresh IV"
+            "ivRegenerated": "Drew a fresh IV",
+            "keyGenerated": {
+                "passphrase": "Drew a fresh passphrase",
+                "hex": "Drew a fresh hex key",
+                "base64": "Drew a fresh base64 key"
+            }
         },
         "toc": {
             "title": "On this page"
@@ -1487,6 +1508,9 @@
                 "keyName": "Key",
                 "keyDoes": "The passphrase or the raw key. Masked by default, and revealable.",
                 "keyWhen": "Always. This is the only value on the page that is actually secret.",
+                "generateKeyName": "Generate a key",
+                "generateKeyDoes": "Draws a random secret in whichever form the key field is reading, and reveals it.",
+                "generateKeyWhen": "You need a key rather than one you already hold. It is drawn from the browser's cryptographic random source, never from Math.random.",
                 "fileName": "File",
                 "fileDoes": "Replaces the typed box with an opened file.",
                 "fileWhen": "Encrypting something that is not text, or decrypting a ciphertext you saved to disk. Encrypting takes the file bytes as the plaintext; decrypting reads the file as text.",
@@ -1501,7 +1525,7 @@
                 "saltWhen": "Decrypting something encrypted elsewhere — paste that system's salt. Draw a new one for every fresh encryption.",
                 "ivName": "Initialisation vector",
                 "ivDoes": "Random bytes that make identical plaintexts encrypt to different ciphertexts.",
-                "ivWhen": "Decrypting something encrypted elsewhere. Otherwise draw a new one every time, and never reuse one with the same key.",
+                "ivWhen": "Decrypting something encrypted elsewhere — paste their IV, and under GCM its width is kept. Otherwise draw a new one every time, and never reuse one with the same key.",
                 "tagLengthName": "Authentication tag",
                 "tagLengthDoes": "Sets how many bits of the GCM tag are kept and appended to the ciphertext.",
                 "tagLengthWhen": "Matching a system that uses a shortened tag — 96 bits is common where every byte on the wire counts. Leave it at 128 otherwise.",
@@ -1511,6 +1535,9 @@
                 "swapName": "Use the result as the input",
                 "swapDoes": "Moves the result into the input box and flips the direction.",
                 "swapWhen": "Checking that a ciphertext reads back — encrypt, press it, and the same parameters decrypt what you just produced.",
+                "resetName": "Reset",
+                "resetDoes": "Empties both boxes and the key, restores every setting to how the page opened, and draws a fresh salt and IV.",
+                "resetWhen": "Starting a different job. It also drops the derived key held in memory, so nothing from the last one is carried into the next.",
                 "downloadName": "Download",
                 "downloadDoes": "Saves the current result as a timestamped text file.",
                 "downloadWhen": "You want the ciphertext on disk. It deliberately saves only the payload, so the file cannot be mistaken for a complete record.",
@@ -1518,8 +1545,9 @@
                 "downloadBytesDoes": "Saves the decrypted result as the bytes it actually is, rather than as the hex or base64 shown in the box.",
                 "downloadBytesWhen": "You decrypted a file and want the file back. It appears only while decrypting, because a ciphertext is already text.",
                 "rawKeyNote": "The salt and the iteration count belong to the key derivation, so under a raw key they are disabled rather than ignored. This matters more than it looks: a tool that left them enabled and quietly did nothing with them would let you spend an afternoon adjusting a number that changes no byte of the output.",
+                "generateNote": "The generate button follows the key source. Under Hex key or Base64 key it draws exactly the bytes the chosen key size wants. Under Passphrase it draws one long enough to be worth as much as the key it will derive — forty-three characters at 256 bits — because stretching cannot create entropy it was not given. Iterations make each guess expensive; they do not make a short secret long. The alphabet is RFC 3986's unreserved set, so the result survives a shell, a URL and a config file without escaping.",
                 "fileNote": "The two directions treat a file differently, and the asymmetry is what makes the round trip close. Encrypting takes the file's bytes as the plaintext, so the plaintext encoding is switched off — those bytes are the message. Decrypting reads the file as text, because a ciphertext saved from this page is hex or base64 in a .txt. So: open a picture, encrypt, download the text; later open that text, decrypt, and press Bytes to get the picture back. One thing to expect on the way — a decrypted picture is not valid UTF-8, so the output box refuses to render it until you switch the plaintext encoding to Hex. That refusal is the same one that tells you a key was wrong, and it keeps its own name rather than being softened into an empty box.",
-                "ivWidthNote": "Changing the mode redraws the initialisation vector, because the widths differ — twelve bytes for GCM, a full sixteen-byte block for CBC and CTR. Carrying one across would leave the field holding a value the next operation refuses.",
+                "ivWidthNote": "Changing the mode redraws the initialisation vector, because the modes disagree about it. CBC and CTR need exactly one sixteen-byte block — there the IV is a block, so the width is arithmetic. GCM is different: its nonce may be any width, twelve bytes used directly and anything else run through GHASH first, which is a different construction producing a different keystream. Twelve is the recommendation and what the button draws, but plenty of systems use sixteen, so paste theirs and the redraw button will keep that width from then on. Runtimes disagree below twelve bytes, and one that will not take a width says so rather than failing as a bad tag.",
                 "tagNote": "The tag width is not recorded in the ciphertext, so it has to be agreed out of band exactly like the key and the IV. Decrypting with the wrong width reads part of the tag as ciphertext and the check fails — which is the authenticated mode working, not a fault. Truncation is genuine truncation: a 96-bit tag is the first twelve bytes of the 128-bit one, and buys back four bytes per message in return for thirty-two bits of forgery resistance. That is a trade worth making only when something else is dictating it.",
                 "defaultsNote": "The defaults are AES-256 in GCM mode, a passphrase stretched through PBKDF2-HMAC-SHA256 at the current OWASP iteration count, a sixteen-byte salt, and base64 output. Those are the settings to keep unless something else is dictating them."
             },

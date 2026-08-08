@@ -2,7 +2,7 @@ import { bytesToHex } from "@/modules/tools/domain/hex";
 import { cryptoRandomBytes } from "@/modules/tools/domain/random";
 import type { RandomBytes } from "@/modules/tools/types";
 import { AES_SALT_BYTES } from "./constants";
-import { ivBytesFor } from "./modes";
+import { ivBytesFor, readIvBytes } from "./modes";
 import type { AesMode } from "../types";
 
 /**
@@ -34,4 +34,23 @@ export function randomSaltHex(randomBytes: RandomBytes = cryptoRandomBytes): str
  */
 export function randomIvHex(mode: AesMode, randomBytes: RandomBytes = cryptoRandomBytes): string {
     return randomHex(ivBytesFor(mode), randomBytes);
+}
+
+/**
+ * A fresh IV at the width already in the field, falling back to the mode's own
+ * when what is there cannot be read.
+ *
+ * Under GCM the width is a choice rather than a constant, and a reader who set
+ * it to sixteen to match another system did so on purpose. Redrawing at twelve
+ * would quietly undo that, and the next ciphertext would be unreadable by the
+ * thing they were trying to match — with nothing on screen having changed.
+ */
+export function redrawIvHex(
+    mode: AesMode,
+    currentIvHex: string,
+    randomBytes: RandomBytes = cryptoRandomBytes,
+): string {
+    const current = readIvBytes(mode, currentIvHex);
+
+    return randomHex(current?.length ?? ivBytesFor(mode), randomBytes);
 }

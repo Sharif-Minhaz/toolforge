@@ -1,12 +1,12 @@
 "use client";
 
 import { IconRefresh } from "@tabler/icons-react";
-import { useId } from "react";
+import { useId, type ReactNode } from "react";
 
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
+import { FieldAction, FieldDivider, FieldShell, FIELD_INPUT } from "./field-shell";
 
 type HexFieldProps = {
     label: string;
@@ -23,6 +23,8 @@ type HexFieldProps = {
     copied: boolean;
     regenerateLabel: string;
     copyLabel: string;
+    /** Rendered beside the label — the GCM nonce puts its width picker here. */
+    trailing?: ReactNode;
     onChange: (value: string) => void;
     onRegenerate: () => void;
     onCopy: () => void;
@@ -39,6 +41,7 @@ export function HexField({
     copied,
     regenerateLabel,
     copyLabel,
+    trailing,
     onChange,
     onRegenerate,
     onCopy,
@@ -48,16 +51,18 @@ export function HexField({
 
     return (
         <div className={cn("flex min-w-0 flex-col gap-1.5", disabled && "opacity-55")}>
-            <Label htmlFor={inputId} className="text-muted-foreground text-xs">
-                <span className="leading-[1.3]">{label}</span>
-            </Label>
+            {/* Fixed height rather than `min-h`: this row holds a bare label in
+                one column and a select in the other, and the two have to land
+                on the same line. */}
+            <div className="flex h-7 items-center justify-between gap-2">
+                <Label htmlFor={inputId} className="text-muted-foreground truncate text-xs">
+                    <span className="leading-[1.3]">{label}</span>
+                </Label>
+                {trailing}
+            </div>
 
-            <p id={hintId} className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                {hint}
-            </p>
-
-            <div className="flex items-center gap-1.5">
-                <Input
+            <FieldShell invalid={invalid} disabled={disabled}>
+                <input
                     id={inputId}
                     value={value}
                     onChange={(event) => onChange(event.target.value)}
@@ -69,30 +74,31 @@ export function HexField({
                     autoCapitalize="off"
                     aria-describedby={hintId}
                     aria-invalid={invalid}
-                    className="h-9 min-w-0 flex-1 font-mono text-[0.8125rem]"
+                    className={FIELD_INPUT}
                 />
-                <button
-                    type="button"
-                    onClick={onRegenerate}
-                    disabled={disabled}
-                    aria-label={regenerateLabel}
-                    className={cn(
-                        "text-muted-foreground grid size-7 shrink-0 place-items-center rounded-lg",
-                        "hover:bg-muted hover:text-foreground transition-colors duration-200",
-                        "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
-                        "disabled:pointer-events-none disabled:opacity-40",
-                    )}
-                >
+
+                <FieldDivider />
+
+                <FieldAction label={regenerateLabel} disabled={disabled} onClick={onRegenerate}>
                     <IconRefresh className="size-4" stroke={1.8} aria-hidden="true" />
-                </button>
+                </FieldAction>
                 <IconCopyButton
                     copied={copied}
                     onClick={onCopy}
                     disabled={disabled || value.length === 0}
                     aria-label={copyLabel}
+                    title={copyLabel}
                     className="disabled:pointer-events-none disabled:opacity-40"
                 />
-            </div>
+            </FieldShell>
+
+            {/* Under the field, not above it. A hint that wraps to a different
+                number of lines than its neighbour's would otherwise push the
+                two inputs onto different rows — and it is where every other
+                field on the site keeps its hint. */}
+            <p id={hintId} className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                {hint}
+            </p>
         </div>
     );
 }

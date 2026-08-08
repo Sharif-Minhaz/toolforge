@@ -1,4 +1,4 @@
-import { AES_SALT_BYTES, DEFAULT_AES_OPTIONS } from "../domain/constants";
+import { AES_SALT_BYTES, DEFAULT_AES_OPTIONS, MIN_PBKDF2_ITERATIONS } from "../domain/constants";
 import { ivBytesFor } from "../domain/modes";
 import type { AesOptions, AesRequest, AesSource } from "../types";
 
@@ -18,6 +18,12 @@ export function options(overrides: Partial<AesOptions> = {}): AesOptions {
         ...DEFAULT_AES_OPTIONS,
         saltHex: "00".repeat(AES_SALT_BYTES),
         ivHex: "00".repeat(ivBytesFor(mode)),
+        // The floor, not the shipped default. Six hundred thousand rounds is
+        // most of a second, and a suite that pays it once per case spends
+        // minutes proving things that have nothing to do with the iteration
+        // count — and gets close enough to the per-test timeout to be fragile
+        // on a loaded machine. Cases that are about the count set it.
+        iterations: MIN_PBKDF2_ITERATIONS,
         ...overrides,
         mode,
     };

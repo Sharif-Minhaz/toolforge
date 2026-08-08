@@ -24,6 +24,7 @@ const OPTION_ROWS = [
     "keySize",
     "keySource",
     "key",
+    "generateKey",
     "file",
     "textEncoding",
     "cipherEncoding",
@@ -32,6 +33,7 @@ const OPTION_ROWS = [
     "tagLength",
     "iterations",
     "swap",
+    "reset",
     "download",
     "downloadBytes",
 ] as const;
@@ -188,6 +190,7 @@ export async function AesArticle() {
 
                     <div className={`mt-5 ${PROSE}`}>
                         <p>{t("options.rawKeyNote")}</p>
+                        <p>{t("options.generateNote")}</p>
                         <p>{t("options.fileNote")}</p>
                         <p>{t("options.ivWidthNote")}</p>
                         <p>{t("options.tagNote")}</p>

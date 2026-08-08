@@ -1,11 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+    MAX_GCM_NONCE_BYTES,
     MAX_PBKDF2_ITERATIONS,
     MIN_PBKDF2_ITERATIONS,
     DEFAULT_PBKDF2_ITERATIONS,
 } from "../domain/constants";
-import { ivBytesFor } from "../domain/modes";
+import { acceptsVariableIv, ivBytesFor } from "../domain/modes";
 import { AES_KEY_SIZES, AES_MODES } from "../types";
 import {
     aesKeySizeSchema,
@@ -33,12 +34,23 @@ describe("aesOptionsSchema", () => {
             expect(aesOptionsSchema.safeParse(options({ mode })).success).toBe(true);
         });
 
-        test(`rejects a ${mode} IV of any other width`, () => {
-            const wrong = options({ mode, ivHex: "00".repeat(ivBytesFor(mode) + 1) });
+        test(`rejects a ${mode} IV the mode cannot take`, () => {
+            // GCM's nonce is variable, so "one byte over" is legitimate there;
+            // what it still refuses is a width past the ceiling.
+            const tooWide = acceptsVariableIv(mode)
+                ? MAX_GCM_NONCE_BYTES + 1
+                : ivBytesFor(mode) + 1;
+            const wrong = options({ mode, ivHex: "00".repeat(tooWide) });
 
             expect(aesOptionsSchema.safeParse(wrong).success).toBe(false);
         });
     }
+
+    test("accepts the 16-byte GCM nonce other tools demand", () => {
+        const wide = options({ mode: "gcm", ivHex: "00".repeat(16) });
+
+        expect(aesOptionsSchema.safeParse(wide).success).toBe(true);
+    });
 
     test("tolerates whitespace inside the IV", () => {
         const spaced = options({ mode: "gcm", ivHex: "00 ".repeat(12).trim() });

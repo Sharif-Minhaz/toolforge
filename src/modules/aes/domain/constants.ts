@@ -53,6 +53,35 @@ export const DEFAULT_GCM_TAG_LENGTH: GcmTagLength = 128;
  */
 export const CTR_COUNTER_BITS = 64;
 
+/**
+ * What GCM's nonce is allowed to be here.
+ *
+ * Twelve bytes is what `ivBytesFor` draws and what NIST SP 800-38D recommends,
+ * because a 96-bit nonce is used directly while any other width is first run
+ * through GHASH — a different construction producing a different keystream.
+ * Both are legal GCM, which is exactly the problem: a tool that fixed the width
+ * at twelve could not read what a system using sixteen had written.
+ *
+ * The bounds are a static rule rather than a probe. Runtimes disagree about the
+ * short end — Node refuses anything under twelve, Bun accepts a single byte —
+ * so the range stays the same everywhere and an engine that will not take a
+ * width says so through `unsupported_iv_length`.
+ */
+export const MIN_GCM_NONCE_BYTES = 1;
+
+export const MAX_GCM_NONCE_BYTES = 64;
+
+/**
+ * The two widths that actually exist in the wild, offered as a picker so a
+ * reader can draw one rather than hand-type thirty-two hex characters.
+ *
+ * Twelve is the recommendation. Sixteen is what a great many libraries default
+ * to — Java's `GCMParameterSpec` among them — and several tools refuse anything
+ * else outright. Any other width can still be pasted; the picker grows to show
+ * it rather than pretending it is not there.
+ */
+export const GCM_NONCE_WIDTH_PRESETS = [12, 16] as const;
+
 export const PBKDF2_HASH = "SHA-256";
 
 export const MIN_PBKDF2_ITERATIONS = 1_000;

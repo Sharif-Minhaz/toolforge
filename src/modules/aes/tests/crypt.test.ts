@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { DEFAULT_GCM_TAG_LENGTH, MAX_AES_INPUT_LENGTH } from "../domain/constants";
 import { tagBytesFor } from "../domain/modes";
 import { runAes } from "../domain/crypt";
-import { ivBytesFor } from "../domain/modes";
+import { acceptsVariableIv, ivBytesFor } from "../domain/modes";
 import { AES_MODES, type AesMode } from "../types";
 
 /** The tag at the default width, which is what these cases encrypt with. */
@@ -135,7 +135,10 @@ describe("refusals about the payload", () => {
 });
 
 describe("refusals about the initialisation vector", () => {
-    for (const mode of AES_MODES) {
+    // GCM is excluded on purpose: its nonce may be any width, which is what
+    // lets this tool read a ciphertext a system using sixteen bytes wrote.
+    // `nonce.test.ts` covers it, ceiling included.
+    for (const mode of AES_MODES.filter((candidate) => !acceptsVariableIv(candidate))) {
         test(`${mode} states the width it needs`, async () => {
             const result = await runAes(
                 request({ options: { mode, ivHex: "00".repeat(ivBytesFor(mode) + 1) } }),

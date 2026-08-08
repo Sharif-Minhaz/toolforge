@@ -59,7 +59,9 @@ export function IterationField({ value, disabled, onChange }: IterationFieldProp
             </Label>
 
             <p id={hintId} className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                {t("iterationsHint", { recommended: DEFAULT_PBKDF2_ITERATIONS })}
+                {disabled
+                    ? t("iterationsDisabled")
+                    : t("iterationsHint", { recommended: DEFAULT_PBKDF2_ITERATIONS })}
             </p>
 
             <div className="flex flex-wrap items-center gap-3">

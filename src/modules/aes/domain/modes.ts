@@ -1,5 +1,5 @@
 import { hexToBytes } from "@/modules/tools/domain/hex";
-import { CTR_COUNTER_BITS } from "./constants";
+import { CTR_COUNTER_BITS, MAX_GCM_NONCE_BYTES, MIN_GCM_NONCE_BYTES } from "./constants";
 import type { AesMode, CipherBytes, GcmTagLength } from "../types";
 
 /**
@@ -41,14 +41,89 @@ export function isBlockAligned(mode: AesMode): boolean {
 }
 
 /**
- * The IV as bytes, or `null` when it is not hex or not the width the mode
- * needs. One reader for both the cipher and the field that shows it invalid, so
+ * Whether the mode lets the nonce be a width other than the one drawn.
+ *
+ * Only GCM. CBC chains a full block into the next and CTR counts inside one, so
+ * for both the IV *is* a block and sixteen bytes is arithmetic rather than
+ * convention. GCM takes a nonce of any length — twelve directly, anything else
+ * through GHASH first — which is why systems disagree about it and why this
+ * tool has to accept what they chose.
+ */
+export function acceptsVariableIv(mode: AesMode): boolean {
+    return mode === "gcm";
+}
+
+/** The widest IV the field should let anybody type, per mode. */
+export function maxIvBytesFor(mode: AesMode): number {
+    return acceptsVariableIv(mode) ? MAX_GCM_NONCE_BYTES : ivBytesFor(mode);
+}
+
+/**
+ * The IV as bytes, or `null` when it is not hex or not a width the mode can
+ * take. One reader for both the cipher and the field that shows it invalid, so
  * the box can never look accepted while the operation refuses it.
  */
 export function readIvBytes(mode: AesMode, ivHex: string): CipherBytes | null {
     const bytes = hexToBytes(ivHex.replace(/\s+/g, ""));
 
-    return bytes === null || bytes.length !== ivBytesFor(mode) ? null : bytes;
+    if (bytes === null) {
+        return null;
+    }
+
+    if (!acceptsVariableIv(mode)) {
+        return bytes.length === ivBytesFor(mode) ? bytes : null;
+    }
+
+    const withinRange = bytes.length >= MIN_GCM_NONCE_BYTES && bytes.length <= MAX_GCM_NONCE_BYTES;
+
+    return withinRange ? bytes : null;
+}
+
+/**
+ * Whether this engine will actually take a nonce of that width.
+ *
+ * Runtimes disagree below twelve bytes — Node refuses, Bun accepts — so the
+ * range above stays a static rule and the difference is absorbed here, by doing
+ * the thing rather than by reading a property. Cached per width, because the
+ * answer cannot change within a session and the probe is a real encryption.
+ */
+const nonceSupport = new Map<number, boolean>();
+
+export async function isIvLengthSupported(mode: AesMode, length: number): Promise<boolean> {
+    if (!acceptsVariableIv(mode) || length === ivBytesFor(mode)) {
+        return true;
+    }
+
+    const cached = nonceSupport.get(length);
+
+    if (cached !== undefined) {
+        return cached;
+    }
+
+    let supported: boolean;
+
+    try {
+        const key = await crypto.subtle.importKey(
+            "raw",
+            new Uint8Array(16),
+            { name: "AES-GCM" },
+            false,
+            ["encrypt"],
+        );
+
+        await crypto.subtle.encrypt(
+            { name: "AES-GCM", iv: new Uint8Array(length) },
+            key,
+            new Uint8Array(1),
+        );
+        supported = true;
+    } catch {
+        supported = false;
+    }
+
+    nonceSupport.set(length, supported);
+
+    return supported;
 }
 
 export function isValidIvHex(mode: AesMode, ivHex: string): boolean {
