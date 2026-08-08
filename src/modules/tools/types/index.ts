@@ -21,6 +21,7 @@ export const TOOL_IDS = [
     "jwt",
     "hash",
     "aes",
+    "rsa",
     "json",
     "url",
     "url-parser",
@@ -108,7 +109,8 @@ export type ToolIconName =
     | "network"
     | "server"
     | "graph"
-    | "shield";
+    | "shield"
+    | "certificate";
 
 export type Tool = {
     readonly id: ToolId;

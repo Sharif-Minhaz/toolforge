@@ -3,8 +3,8 @@ import {
     IconBinary,
     IconBolt,
     IconBraces,
+    IconCertificate,
     IconKey,
-    IconShieldLock,
     IconTransform,
 } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
@@ -58,15 +58,16 @@ export async function QuickActions() {
             Icon: IconTransform,
             accent: "[--tool-accent:var(--brand-emerald)]",
         },
-        // The list is capped at six. The Domain Inspector made way for this
-        // one, being the lowest-popularity tool that was represented here.
+        // The list is capped at six. AES made way for this one, being the
+        // lowest-popularity tool that was represented here — the same trade the
+        // Domain Inspector made when AES arrived.
         {
-            key: "aesEncrypt",
-            href: "/tools/aes",
-            title: t("aesEncrypt.title"),
-            description: t("aesEncrypt.description"),
-            Icon: IconShieldLock,
-            accent: "[--tool-accent:var(--brand-cyan)]",
+            key: "rsaKeys",
+            href: "/tools/rsa",
+            title: t("rsaKeys.title"),
+            description: t("rsaKeys.description"),
+            Icon: IconCertificate,
+            accent: "[--tool-accent:var(--brand-amber)]",
         },
     ];
 

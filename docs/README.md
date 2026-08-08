@@ -130,6 +130,7 @@ records a defect that was expensive to find and is easy to reintroduce.
 | `mock-server` | [`case-studies/mock-server.md`](case-studies/mock-server.md), [`mock-server-studio.md`](mock-server-studio.md) |
 | `port-scanner` | [`case-studies/port-scanner.md`](case-studies/port-scanner.md) |
 | `qr` | [`case-studies/qr.md`](case-studies/qr.md) |
+| `rsa` | [`case-studies/rsa.md`](case-studies/rsa.md) |
 | `short-links`, `shortener` | [`case-studies/short-links.md`](case-studies/short-links.md) |
 | `url-parser` | [`patterns/derived-state-editors.md`](patterns/derived-state-editors.md) |
 | `watermark-remover`, `ai-*` | [`case-studies/watermark-remover.md`](case-studies/watermark-remover.md) |

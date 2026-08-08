@@ -5,6 +5,7 @@ import {
     IconBlur,
     IconBraces,
     IconCalendarTime,
+    IconCertificate,
     IconClockHour4,
     IconDatabaseCog,
     IconEraser,
@@ -68,6 +69,7 @@ const ICONS: Record<ToolIconName, ComponentType<IconProps>> = {
     server: IconServer2,
     graph: IconTopologyStar3,
     shield: IconShieldLock,
+    certificate: IconCertificate,
 };
 
 type ToolIconProps = {

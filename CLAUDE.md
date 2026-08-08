@@ -69,6 +69,7 @@ docs/
 | `mock-server` | [`docs/case-studies/mock-server.md`](docs/case-studies/mock-server.md) |
 | `port-scanner` | [`docs/case-studies/port-scanner.md`](docs/case-studies/port-scanner.md) |
 | `qr` | [`docs/case-studies/qr.md`](docs/case-studies/qr.md) |
+| `rsa` | [`docs/case-studies/rsa.md`](docs/case-studies/rsa.md) |
 | `short-links`, `shortener` | [`docs/case-studies/short-links.md`](docs/case-studies/short-links.md) |
 | `url-parser` | [`docs/patterns/derived-state-editors.md`](docs/patterns/derived-state-editors.md) |
 | `watermark-remover`, `ai-*` | [`docs/case-studies/watermark-remover.md`](docs/case-studies/watermark-remover.md) |
