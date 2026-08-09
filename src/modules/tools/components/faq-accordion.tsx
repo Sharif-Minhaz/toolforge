@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import {
     Accordion,
     AccordionContent,
@@ -10,7 +12,16 @@ import { cn } from "@/lib/utils";
 
 export type FaqEntry = {
     readonly question: string;
+    /**
+     * Plain text. Structured data carries this one, so it stays a string even
+     * when the message marks something up — `t.markup` with `PLAIN_TAGS`.
+     */
     readonly answer: string;
+    /**
+     * The same answer with its `<code>` markup rendered, for the panel. Supply
+     * it whenever the message has tags; `answer` keeps feeding the JSON-LD.
+     */
+    readonly answerNode?: ReactNode;
 };
 
 type FaqAccordionProps = {
@@ -46,7 +57,7 @@ export function FaqAccordion({ items, defaultOpenIndex = 0, className }: FaqAcco
                         {item.question}
                     </AccordionTrigger>
                     <AccordionContent className="text-muted-foreground pb-4 text-[0.9375rem] leading-7">
-                        {item.answer}
+                        {item.answerNode ?? item.answer}
                     </AccordionContent>
                 </AccordionItem>
             ))}

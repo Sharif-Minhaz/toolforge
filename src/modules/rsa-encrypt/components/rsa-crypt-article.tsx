@@ -1,6 +1,13 @@
 import { getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PLAIN_TAGS,
+    PROSE,
+    PROSE_TEXT,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 
@@ -28,19 +35,53 @@ const OPTION_ROWS = [
     "reset",
 ] as const;
 
-/** Question/answer pairs, shared by the FAQ section and its structured data. */
+/**
+ * Question/answer pairs, shared by the FAQ section and its structured data.
+ *
+ * Each answer is read twice from one marked-up message: `t.rich` for the panel,
+ * `t.markup` for the JSON-LD, which cannot hold an element and must not hold a
+ * literal `<code>` either.
+ */
 export async function getRsaCryptFaqEntries(): Promise<FaqEntry[]> {
     const t = await getTranslations("rsaEncrypt.article");
 
     return [
-        { question: t("faq.q1"), answer: t("faq.a1") },
-        { question: t("faq.q2"), answer: t("faq.a2") },
-        { question: t("faq.q3"), answer: t("faq.a3") },
+        {
+            question: t("faq.q1"),
+            answer: t.markup("faq.a1", PLAIN_TAGS),
+            answerNode: t.rich("faq.a1", ARTICLE_TAGS),
+        },
+        {
+            question: t("faq.q2"),
+            answer: t.markup("faq.a2", PLAIN_TAGS),
+            answerNode: t.rich("faq.a2", ARTICLE_TAGS),
+        },
+        {
+            question: t("faq.q3"),
+            answer: t.markup("faq.a3", PLAIN_TAGS),
+            answerNode: t.rich("faq.a3", ARTICLE_TAGS),
+        },
         { question: t("faq.q4"), answer: t("faq.a4") },
-        { question: t("faq.q5"), answer: t("faq.a5") },
-        { question: t("faq.q6"), answer: t("faq.a6") },
-        { question: t("faq.q7"), answer: t("faq.a7") },
-        { question: t("faq.q8"), answer: t("faq.a8") },
+        {
+            question: t("faq.q5"),
+            answer: t.markup("faq.a5", PLAIN_TAGS),
+            answerNode: t.rich("faq.a5", ARTICLE_TAGS),
+        },
+        {
+            question: t("faq.q6"),
+            answer: t.markup("faq.a6", PLAIN_TAGS),
+            answerNode: t.rich("faq.a6", ARTICLE_TAGS),
+        },
+        {
+            question: t("faq.q7"),
+            answer: t.markup("faq.a7", PLAIN_TAGS),
+            answerNode: t.rich("faq.a7", ARTICLE_TAGS),
+        },
+        {
+            question: t("faq.q8"),
+            answer: t.markup("faq.a8", PLAIN_TAGS),
+            answerNode: t.rich("faq.a8", ARTICLE_TAGS),
+        },
     ];
 }
 
@@ -65,19 +106,20 @@ export async function RsaCryptArticle() {
             <article className="flex min-w-0 flex-col gap-12 xl:order-1">
                 <ArticleSection id="understanding" title={t("understanding.title")}>
                     <div className={PROSE}>
-                        <p>{t("understanding.p1")}</p>
-                        <p>{t("understanding.p2")}</p>
-                        <p>{t("understanding.p3")}</p>
-                        <p>{t("understanding.p4")}</p>
+                        <p>{t.rich("understanding.p1", ARTICLE_TAGS)}</p>
+                        <ArticleExample>
+                            {t.rich("understanding.example", ARTICLE_TAGS)}
+                        </ArticleExample>
+                        <p>{t.rich("understanding.p2", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
                 <ArticleSection id="oaep" title={t("oaep.title")}>
                     <div className={PROSE}>
                         <p>{t("oaep.p1")}</p>
-                        <p>{t("oaep.p2")}</p>
-                        <p>{t("oaep.p3")}</p>
-                        <p>{t("oaep.p4")}</p>
+                        <p>{t.rich("oaep.p2", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("oaep.p3", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("oaep.p4", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
@@ -86,7 +128,7 @@ export async function RsaCryptArticle() {
                         <p>{t("keys.p1")}</p>
                         <p>{t("keys.p2")}</p>
                         <p>{t("keys.p3")}</p>
-                        <p>{t("keys.p4")}</p>
+                        <p>{t.rich("keys.p4", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
@@ -121,10 +163,10 @@ export async function RsaCryptArticle() {
                                             {t(`options.${row}Name`)}
                                         </th>
                                         <td className="text-muted-foreground px-4 py-3">
-                                            {t(`options.${row}Does`)}
+                                            {t.rich(`options.${row}Does`, ARTICLE_TAGS)}
                                         </td>
                                         <td className="text-muted-foreground px-4 py-3">
-                                            {t(`options.${row}When`)}
+                                            {t.rich(`options.${row}When`, ARTICLE_TAGS)}
                                         </td>
                                     </tr>
                                 ))}
@@ -133,11 +175,11 @@ export async function RsaCryptArticle() {
                     </div>
 
                     <div className={`mt-5 ${PROSE}`}>
-                        <p>{t("options.sizeNote")}</p>
-                        <p>{t("options.hashSizeNote")}</p>
+                        <p>{t.rich("options.sizeNote", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("options.hashSizeNote", ARTICLE_TAGS)}</p>
                         <p>{t("options.keyKindNote")}</p>
-                        <p>{t("options.pkcs1Note")}</p>
-                        <p>{t("options.randomNote")}</p>
+                        <p>{t.rich("options.pkcs1Note", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("options.randomNote", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
@@ -145,19 +187,19 @@ export async function RsaCryptArticle() {
                     <p className={PROSE_TEXT}>{t("interop.intro")}</p>
 
                     <ol className={`mt-4 list-decimal space-y-4 pl-5 ${PROSE_TEXT}`}>
-                        <li>{t("interop.p1")}</li>
-                        <li>{t("interop.p2")}</li>
-                        <li>{t("interop.p3")}</li>
+                        <li>{t.rich("interop.p1", ARTICLE_TAGS)}</li>
+                        <li>{t.rich("interop.p2", ARTICLE_TAGS)}</li>
+                        <li>{t.rich("interop.p3", ARTICLE_TAGS)}</li>
                     </ol>
 
                     <div className={`mt-5 ${PROSE}`}>
-                        <p>{t("interop.hashNote")}</p>
+                        <p>{t.rich("interop.hashNote", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
                 <ArticleSection id="useCases" title={t("useCases.title")}>
                     <div className={PROSE}>
-                        <p>{t("useCases.p1")}</p>
+                        <p>{t.rich("useCases.p1", ARTICLE_TAGS)}</p>
                         <p>{t("useCases.p2")}</p>
                         <p>{t("useCases.p3")}</p>
                     </div>

@@ -1170,9 +1170,9 @@
         "article": {
             "understanding": {
                 "title": "What a hash actually is",
-                "p1": "A hash function takes any amount of input and returns a fixed-length value. The same input always gives the same output, and there is no way to run it backwards — the only way to find an input that produces a given hash is to try inputs until one does. That one-way property is what makes hashes useful for checking things rather than storing them.",
-                "p2": "Two properties matter in practice. Preimage resistance means that, given a hash, you cannot work out an input that produces it. Collision resistance means you cannot find two different inputs that hash to the same value. MD5 and SHA-1 still have their preimage resistance intact, but their collision resistance is thoroughly broken — which is why they survive as checksums and have no business anywhere near a signature.",
-                "p3": "Password hashing is a different job wearing the same word. A digest is designed to be fast, and an attacker with a stolen database wants exactly that speed. bcrypt and Argon2 are built to be slow and memory-hungry on purpose, and they salt every hash so two identical passwords do not produce the same stored value."
+                "p1": "A hash takes any amount of input and hands back a fixed-length value. Same input, same output, and no way back — the only route from a hash to an input is guessing until one matches.",
+                "example": "<code>hello</code> → <code>2cf24dba…938b9824</code> — <code>sha-256</code>, always 64 hex characters, whether the input was one byte or a gigabyte",
+                "p2": "One question decides which algorithm you want: data, or a password? <code>sha-256</code> is fast, and speed is exactly what an attacker holding a stolen database wants — <code>bcrypt</code> and <code>argon2id</code> are slow and salted on purpose. <code>md5</code> and <code>sha-1</code> are neither, and their collision resistance broke years ago."
             },
             "choosing": {
                 "title": "Choosing an algorithm",
@@ -1945,24 +1945,23 @@
         "article": {
             "understanding": {
                 "title": "What this page does",
-                "p1": "RSA encryption runs one way through a key pair. Anyone holding the public key can seal something that only the private half opens, which is what makes it possible to receive a secret from somebody you have never exchanged one with.",
-                "p2": "It is not a bulk cipher and was never meant to be. One operation carries one payload smaller than the modulus and produces exactly one modulus-wide block — 256 bytes for a 2048-bit key, whether the message was five bytes or a hundred and ninety.",
-                "p3": "So the shape of real use is almost always the same: encrypt a symmetric key with RSA, encrypt the message with that symmetric key, and send both. This page does the first half; the AES tool does the second.",
-                "p4": "Everything happens in this tab, through your browser's own Web Crypto. The key you paste and the payload you type are never uploaded, and no request on this page carries either."
+                "p1": "RSA runs one way through a key pair: anyone holding the public key can seal something only the private half opens. That is what lets you receive a secret from somebody you have never exchanged one with.",
+                "example": "<code>hello</code> → <code>a3f1…c92b</code> — one 256-byte block from a 2048-bit key, whether the message was 5 bytes or 190",
+                "p2": "It is not a bulk cipher: one pass carries one payload smaller than the modulus. So real systems seal an <code>AES-GCM</code> key with <code>RSA-OAEP</code> and seal the message with that key — this page does the first half, the AES tool the second. Everything runs in this tab through your browser's own <code>Web Crypto</code>; nothing you paste is uploaded."
             },
             "oaep": {
                 "title": "Why OAEP is the only padding here",
                 "p1": "RSA on its own is a single modular exponentiation, and using it directly is unsafe in ways that have nothing to do with the key size — identical messages produce identical ciphertexts, and small messages under a small exponent can be recovered by taking a cube root. The padding is what fixes that, and it is not optional.",
-                "p2": "Two paddings exist. RSAES-PKCS1-v1_5 came first and is the one Bleichenbacher broke in 1998: an attacker who can tell a padding error apart from any other error recovers the plaintext, and twenty-five years of variants have followed. OAEP came second, is provably secure under stronger assumptions, and is what every current recommendation names.",
-                "p3": "Only OAEP is offered here, and that is a fact about the platform before it is a preference. RSAES-PKCS1-v1_5 is not in the Web Crypto specification, no browser has ever implemented it, and engines that once did now answer with a deprecation error. Shipping it would mean hand-rolling modular exponentiation and a padding scheme on a page whose whole premise is that it does not hand-roll ciphers.",
-                "p4": "OAEP is also randomised, which surprises people: encrypting the same message twice under the same key gives two different blocks. That is correct and necessary — a deterministic ciphertext tells an observer when you sent the same thing twice."
+                "p2": "Two paddings exist. <code>RSAES-PKCS1-v1_5</code> came first and is the one Bleichenbacher broke in 1998: an attacker who can tell a padding error apart from any other error recovers the plaintext, and twenty-five years of variants have followed. <code>RSA-OAEP</code> came second, is provably secure under stronger assumptions, and is what every current recommendation names.",
+                "p3": "Only <code>RSA-OAEP</code> is offered here, and that is a fact about the platform before it is a preference. <code>RSAES-PKCS1-v1_5</code> is not in the <code>Web Crypto</code> specification, no browser has ever implemented it, and engines that once did now answer with a deprecation error. Shipping it would mean hand-rolling modular exponentiation and a padding scheme on a page whose whole premise is that it does not hand-roll ciphers.",
+                "p4": "<code>RSA-OAEP</code> is also randomised, which surprises people: encrypting the same message twice under the same key gives two different blocks. That is correct and necessary — a deterministic ciphertext tells an observer when you sent the same thing twice."
             },
             "keys": {
                 "title": "Which key goes in which box",
                 "p1": "Encrypting takes the public key; decrypting takes the private one. That is the whole rule, and the Key Type toggle exists so a mistake is named rather than turning into a failed operation with no explanation.",
                 "p2": "Under Decrypt the toggle is fixed at Private and says why. A public key cannot decrypt — this is not a policy but arithmetic: the number that reverses the public exponent is only in the private key.",
                 "p3": "The other direction is allowed and is a convenience worth having. If the only thing you have to hand is the private key, select Private under Encrypt and the public half is derived from it — the modulus and the public exponent are both already in there.",
-                "p4": "Every container is read: PEM under any of its four headers, the same bytes as base64 DER, or a JWK. PKCS#1 blocks are included even though Web Crypto cannot import one, because they are wrapped into the container it can before it ever sees them."
+                "p4": "Every container is read: <code>PEM</code> under any of its four headers, the same bytes as base64 <code>DER</code>, or a <code>JWK</code>. <code>PKCS#1</code> blocks are included even though <code>Web Crypto</code> cannot import one, because they are wrapped into the container it can before it ever sees them."
             },
             "options": {
                 "title": "Every control on the page",
@@ -1975,23 +1974,23 @@
                 "directionDoes": "Which way the operation runs, and therefore which half of the pair it needs.",
                 "directionWhen": "Encrypt to seal something; Decrypt to open what was sealed for you.",
                 "keyFormatName": "Key format",
-                "keyFormatDoes": "How the pasted key is written — a headered PEM block, one base64 line, or JSON.",
-                "keyFormatWhen": "Match whatever you copied. PEM is what a file holds; DER is what an environment variable holds; JWK is what a JOSE library hands you.",
+                "keyFormatDoes": "How the pasted key is written — a headered <code>PEM</code> block, one base64 <code>DER</code> line, or a <code>JWK</code> object.",
+                "keyFormatWhen": "Match whatever you copied. <code>PEM</code> is what a file holds; <code>DER</code> is what an environment variable holds; <code>JWK</code> is what a <code>JOSE</code> library hands you.",
                 "keyKindName": "Key type",
                 "keyKindDoes": "Which half is in the box. Fixed at Private under Decrypt, where nothing else can work.",
                 "keyKindWhen": "Set it to Private under Encrypt when the private key is all you have; the public half is derived.",
                 "paddingName": "Padding scheme",
-                "paddingDoes": "How the message is prepared before the modular exponentiation. OAEP, and only OAEP.",
+                "paddingDoes": "How the message is prepared before the modular exponentiation. <code>RSA-OAEP</code>, and only <code>RSA-OAEP</code>.",
                 "paddingWhen": "Never — there is nothing else to pick, and the section above says why.",
                 "hashName": "Hash algorithm",
-                "hashDoes": "The digest OAEP builds its mask from. It also decides how much room is left for the message.",
-                "hashWhen": "SHA-256 unless the system on the other side asks for more. Both ends must agree.",
+                "hashDoes": "The digest <code>RSA-OAEP</code> builds its mask from. It also decides how much room is left for the message.",
+                "hashWhen": "<code>SHA-256</code> unless the system on the other side asks for more. Both ends must agree.",
                 "keyName": "Key box",
                 "keyDoes": "Takes the key exactly as pasted, or as an uploaded file.",
                 "keyWhen": "Always. The block can be surrounded by a shell prompt or blank lines and still be read.",
                 "payloadName": "Payload box",
                 "payloadDoes": "The plaintext going in, or the ciphertext coming back — with a picker saying how it is written.",
-                "payloadWhen": "Use Hex or Base64 when the payload is bytes rather than text; UTF-8 for a message.",
+                "payloadWhen": "Use <code>Hex</code> or <code>Base64</code> when the payload is bytes rather than text; <code>UTF-8</code> for a message.",
                 "outputName": "Result",
                 "outputDoes": "The answer, in whichever encoding its own picker names, with the size limit and the failure reported underneath.",
                 "outputWhen": "Read it, copy it, or download it.",
@@ -2001,44 +2000,44 @@
                 "resetName": "Reset all",
                 "resetDoes": "Clears the key, the payload and the result, and drops every imported key from memory.",
                 "resetWhen": "Before working with somebody else's key, or to clear one off the screen.",
-                "sizeNote": "The size limit is the control nobody expects. OAEP spends two digests and a byte of the modulus on padding, so a 2048-bit key with SHA-256 carries 190 bytes and not one more. The figure is shown under the box before you hit it, and the refusal repeats it with what you actually typed.",
-                "hashSizeNote": "Widening the digest narrows the message twice over: SHA-512 under the same 2048-bit key leaves 126 bytes. Under a 1024-bit key it leaves nothing at all — the padding needs 130 bytes inside a 128-byte modulus — and that combination gets its own refusal rather than being reported as a message that was too long.",
+                "sizeNote": "The size limit is the control nobody expects. <code>RSA-OAEP</code> spends two digests and a byte of the modulus on padding, so a 2048-bit key with <code>SHA-256</code> carries 190 bytes and not one more. The figure is shown under the box before you hit it, and the refusal repeats it with what you actually typed.",
+                "hashSizeNote": "Widening the digest narrows the message twice over: <code>SHA-512</code> under the same 2048-bit key leaves 126 bytes. Under a 1024-bit key it leaves nothing at all — the padding needs 130 bytes inside a 128-byte modulus — and that combination gets its own refusal rather than being reported as a message that was too long.",
                 "keyKindNote": "The Key Type toggle is disabled rather than hidden under Decrypt. A control that vanishes reads as a bug; one that is visibly off with a sentence beside it teaches the rule.",
-                "pkcs1Note": "PKCS#1 blocks are accepted even though Web Crypto cannot read one. They are wrapped back into the container it does read first, using the same code the key generator uses to unwrap them — which is checked byte for byte against a separate ASN.1 implementation.",
-                "randomNote": "Encrypting the same message twice gives two different results. That is OAEP working, not the tool being inconsistent."
+                "pkcs1Note": "<code>PKCS#1</code> blocks are accepted even though <code>Web Crypto</code> cannot read one. They are wrapped back into the container it does read first, using the same code the key generator uses to unwrap them — which is checked byte for byte against a separate <code>ASN.1</code> implementation.",
+                "randomNote": "Encrypting the same message twice gives two different results. That is <code>RSA-OAEP</code> working, not the tool being inconsistent."
             },
             "interop": {
                 "title": "Checking it against something that is not this page",
                 "intro": "Three checks, in the order they tend to fail:",
-                "p1": "Decrypt it elsewhere. `openssl pkeyutl -decrypt -inkey private.pem -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -in ciphertext.bin` opens what this page wrote, once the base64 has been decoded to bytes.",
-                "p2": "Encrypt elsewhere and open it here. The same command with `-encrypt` and the public key produces a block this page reads — provided the hash matches on both sides, which is the thing that usually does not.",
-                "p3": "Check the key first, separately. If a key is refused here, `openssl pkey -in key.pem -noout -text` will say whether the block is intact before you go looking for a padding problem.",
-                "hashNote": "The digest is the commonest mismatch, because nothing in a ciphertext records which one was used. OpenSSL defaults `rsa_oaep_md` to SHA-1 when it is not given, which will never match anything this page produces — name it explicitly on both sides."
+                "p1": "Decrypt it elsewhere. <code>openssl pkeyutl -decrypt -inkey private.pem -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -in ciphertext.bin</code> opens what this page wrote, once the base64 has been decoded to bytes.",
+                "p2": "Encrypt elsewhere and open it here. The same command with <code>-encrypt</code> and the public key produces a block this page reads — provided the hash matches on both sides, which is the thing that usually does not.",
+                "p3": "Check the key first, separately. If a key is refused here, <code>openssl pkey -in key.pem -noout -text</code> will say whether the block is intact before you go looking for a padding problem.",
+                "hashNote": "The digest is the commonest mismatch, because nothing in a ciphertext records which one was used. OpenSSL defaults <code>rsa_oaep_md</code> to <code>SHA-1</code> when it is not given, which will never match anything this page produces — name it explicitly on both sides."
             },
             "useCases": {
                 "title": "What people use this for",
-                "p1": "Wrapping a symmetric key. Generate an AES key, encrypt it here against the recipient's public key, and send the wrapped key alongside the AES-encrypted message. This is what virtually every real system built on RSA is doing.",
+                "p1": "Wrapping a symmetric key. Generate an <code>AES</code> key, encrypt it here against the recipient's public key, and send the wrapped key alongside the AES-encrypted message. This is what virtually every real system built on RSA is doing.",
                 "p2": "Checking an integration. When a partner's service will not accept your ciphertext, encrypting the same payload here with the same key and hash tells you whether the problem is your code or your parameters.",
                 "p3": "Learning where the limits are. Watching five bytes become 256, and a 191-byte message be refused under a 2048-bit key, makes the shape of RSA concrete in a way a paragraph does not."
             },
             "faq": {
                 "title": "Frequently asked questions",
                 "q1": "Is my private key sent anywhere?",
-                "a1": "No. It is read by your browser's Web Crypto, in this tab, and no request on this page carries it. There is no server-side step to opt out of — the page has nowhere to send it from, because the key exists only in the tab's memory and is gone when you close it.",
+                "a1": "No. It is read by your browser's <code>Web Crypto</code>, in this tab, and no request on this page carries it. There is no server-side step to opt out of — the page has nowhere to send it from, because the key exists only in the tab's memory and is gone when you close it.",
                 "q2": "Why will it not encrypt my message?",
-                "a2": "Almost always because it is longer than RSA carries. A 2048-bit key with SHA-256 takes 190 bytes and no more, because OAEP spends the rest of the modulus on padding. The figure for your key is under the box, and the fix is not a bigger key but a different shape: encrypt a symmetric key with RSA, and the message with that.",
+                "a2": "Almost always because it is longer than RSA carries. A 2048-bit key with <code>SHA-256</code> takes 190 bytes and no more, because <code>RSA-OAEP</code> spends the rest of the modulus on padding. The figure for your key is under the box, and the fix is not a bigger key but a different shape: encrypt a symmetric key with RSA, and the message with that.",
                 "q3": "Why is there only one padding scheme?",
-                "a3": "Because browsers implement only one. RSAES-PKCS1-v1_5 is not part of the Web Crypto specification and never has been, and the engines that once offered it now return a deprecation error. It is also the padding Bleichenbacher's attack targets, so its absence costs less than it looks.",
+                "a3": "Because browsers implement only one. <code>RSAES-PKCS1-v1_5</code> is not part of the <code>Web Crypto</code> specification and never has been, and the engines that once offered it now return a deprecation error. It is also the padding Bleichenbacher's attack targets, so its absence costs less than it looks.",
                 "q4": "Can I encrypt with a private key?",
-                "a4": "Select Private under Encrypt and it works, but not in the way the question usually means. The public half is derived from the private key and used for the encryption — because encrypting *with* a private key is signing, which is a different operation with a different tool.",
+                "a4": "Select Private under Encrypt and it works, but not in the way the question usually means. The public half is derived from the private key and used for the encryption — because encrypting with a private key is signing — a different operation, with a different tool.",
                 "q5": "Why does the same message give a different result every time?",
-                "a5": "OAEP is randomised: it mixes a fresh random seed into every operation. That is deliberate and necessary — a deterministic ciphertext would let an observer tell when you sent the same thing twice. Every one of those different blocks decrypts back to the same message.",
+                "a5": "<code>RSA-OAEP</code> is randomised: it mixes a fresh random seed into every operation. That is deliberate and necessary — a deterministic ciphertext would let an observer tell when you sent the same thing twice. Every one of those different blocks decrypts back to the same message.",
                 "q6": "It decrypted but the output is nonsense. What happened?",
-                "a6": "If OAEP had failed you would have got a refusal instead, so the bytes are genuinely what was sealed — they are just not text in the encoding selected. Switch the result encoding to Hex or Base64, or use Save as bytes if what you decrypted was a file.",
+                "a6": "If <code>RSA-OAEP</code> had failed you would have got a refusal instead, so the bytes are genuinely what was sealed — they are just not text in the encoding selected. Switch the result encoding to <code>Hex</code> or <code>Base64</code>, or use Save as bytes if what you decrypted was a file.",
                 "q7": "Which key formats can I paste?",
-                "a7": "PEM under any of its four RSA headers, the same bytes as a single base64 DER line, or a JWK. PKCS#1 blocks work even though Web Crypto cannot import one directly — they are wrapped into a container it accepts on the way in. A key generated on the RSA Key Generator page will paste in whichever form you exported it.",
+                "a7": "<code>PEM</code> under any of its four RSA headers, the same bytes as a single base64 <code>DER</code> line, or a <code>JWK</code>. <code>PKCS#1</code> blocks work even though <code>Web Crypto</code> cannot import one directly — they are wrapped into a container it accepts on the way in. A key generated on the RSA Key Generator page will paste in whichever form you exported it.",
                 "q8": "The other system rejects my ciphertext. Where do I start?",
-                "a8": "With the hash. Nothing in an RSA ciphertext records which digest OAEP used, so a mismatch is silent until decryption fails — and OpenSSL defaults to SHA-1 when `rsa_oaep_md` is not given, which never matches anything this page writes. Name the digest explicitly on both sides before looking anywhere else."
+                "a8": "With the hash. Nothing in an RSA ciphertext records which digest <code>RSA-OAEP</code> used, so a mismatch is silent until decryption fails — and OpenSSL defaults to <code>SHA-1</code> when <code>rsa_oaep_md</code> is not given, which never matches anything this page writes. Name the digest explicitly on both sides before looking anywhere else."
             }
         }
     },

@@ -64,6 +64,8 @@ docs/
 │   └── documentation.md        documentation is part of the change
 │
 ├── patterns/                   reusable shapes — "copy this whenever X"
+│   ├── article-openings.md     a tool article's first section: two paragraphs,
+│   │                           one worked example, code words in the catalogue
 │   ├── input-limits.md         every free-text box's ceiling and countdown
 │   ├── browser-persistence.md  remembering something in the reader's browser
 │   ├── derived-state-editors.md  two editors over one value (URL Parser)
@@ -107,6 +109,7 @@ docs/
 | Writing anything that touches Prisma or Supabase | [`server-and-data.md`](server-and-data.md) |
 | Writing a client component | [`hydration-and-platform-pitfalls.md`](hydration-and-platform-pitfalls.md), [`coding-standards.md`](coding-standards.md) |
 | Adding user-facing text | [`internationalization.md`](internationalization.md) |
+| Writing a tool article's opening section | [`patterns/article-openings.md`](patterns/article-openings.md) |
 | Styling or animating | [`design-system.md`](design-system.md) |
 | Writing tests | [`testing.md`](testing.md) |
 | Emitting a format somebody else will read | [`testing.md`](testing.md), [`patterns/format-conversion.md`](patterns/format-conversion.md) |

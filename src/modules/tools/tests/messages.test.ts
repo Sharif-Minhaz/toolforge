@@ -43,6 +43,44 @@ const KNOWN_MALFORMED: ReadonlySet<string> = new Set([
     "imageConverter.workbench.snippetDescription",
 ]);
 
+/**
+ * A backtick in a message renders as a backtick.
+ *
+ * There is no Markdown anywhere in the message pipeline, so a value written as
+ * `openssl pkey …` reaches the reader with the quotes still around it. The fix
+ * is `<code>` markup rendered through `t.rich` —
+ * `docs/patterns/article-openings.md`.
+ */
+const BACKTICKS_ON_PURPOSE: ReadonlySet<string> = new Set([
+    // A Markdown document is the content of this one. Its fences are the point.
+    "markdown.sample.document",
+]);
+
+/**
+ * Messages whose backticks were meant to be code spans and are not. Every one of
+ * them shows the quotes to a reader today. They clear as each article is marked
+ * up; shorten this list, never add to it.
+ */
+const UNMARKED_CODE_SPANS: ReadonlySet<string> = new Set([
+    "hash.article.passwords.p4",
+    "imageCompressor.article.howItWorks.p1",
+    "imageCompressor.article.howItWorks.p3",
+    "markdown.article.understanding.p2",
+    "rsa.article.containers.jwkNote",
+    "rsa.article.containers.opensslNote",
+    "rsa.article.faq.a6",
+    "rsa.article.faq.a7",
+    "rsa.article.interop.p1",
+    "rsa.article.interop.p2",
+    "rsa.article.interop.p3",
+    "rsa.article.options.defaultsNote",
+    "rsa.article.options.hashDoes",
+    "rsa.article.options.hashNote",
+    "rsa.article.useCases.p1",
+    "rsa.workbench.hashHint",
+    "rsa.workbench.outputFormatHint.jwk",
+]);
+
 type MessageTree = { [key: string]: string | MessageTree };
 
 function flatten(tree: MessageTree, prefix = ""): readonly (readonly [string, string])[] {
@@ -86,6 +124,42 @@ describe("message catalogues parse as ICU MessageFormat", () => {
             expect([...KNOWN_MALFORMED].filter((key) => !keys.has(key))).toEqual([]);
         });
     }
+
+    for (const [locale, catalogue] of CATALOGUES) {
+        test(`${locale}.json marks code up rather than quoting it`, () => {
+            const quoted = flatten(catalogue)
+                .filter(([key, value]) => value.includes("`") && !BACKTICKS_ON_PURPOSE.has(key))
+                .map(([key]) => key)
+                .filter((key) => !UNMARKED_CODE_SPANS.has(key));
+
+            expect(quoted).toEqual([]);
+        });
+    }
+
+    test("every quarantined backtick is still there, in at least one locale", () => {
+        const values = CATALOGUES.map(([, catalogue]) => new Map(flatten(catalogue)));
+
+        const repaired = [...UNMARKED_CODE_SPANS].filter(
+            (key) => !values.some((locale) => locale.get(key)?.includes("`")),
+        );
+
+        expect(repaired).toEqual([]);
+    });
+
+    test("a message marked up in one locale is marked up in the other", () => {
+        const [en_, bn_] = CATALOGUES.map(([, catalogue]) => new Map(flatten(catalogue)));
+
+        // A `<code>` in one catalogue and plain text in the other means one
+        // reader gets the box and the other does not — which is a translation
+        // that silently dropped the tag, or one that never got it.
+        const mismatched = [...(en_ ?? new Map()).keys()].filter(
+            (key) =>
+                (en_?.get(key)?.includes("<code>") ?? false) !==
+                (bn_?.get(key)?.includes("<code>") ?? false),
+        );
+
+        expect(mismatched).toEqual([]);
+    });
 
     test("every quarantined message really is malformed, in both locales", () => {
         for (const [locale, catalogue] of CATALOGUES) {
