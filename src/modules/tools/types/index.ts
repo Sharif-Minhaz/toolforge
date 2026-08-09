@@ -22,6 +22,7 @@ export const TOOL_IDS = [
     "hash",
     "aes",
     "rsa",
+    "rsa-encrypt",
     "json",
     "url",
     "url-parser",
@@ -110,7 +111,8 @@ export type ToolIconName =
     | "server"
     | "graph"
     | "shield"
-    | "certificate";
+    | "certificate"
+    | "lock-code";
 
 export type Tool = {
     readonly id: ToolId;
@@ -188,6 +190,57 @@ export type TextCodecFailure = {
     /** 1-based line, set only while converting each line separately. */
     readonly line?: number;
 };
+
+/**
+ * Bytes on their way to Web Crypto.
+ *
+ * `BufferSource` refuses a `Uint8Array` that might be backed by a
+ * `SharedArrayBuffer`. Nothing here ever is, so the buffer type is named once
+ * rather than asserted at every call site.
+ */
+export type CipherBytes = Uint8Array<ArrayBuffer>;
+
+/**
+ * The three ways a plaintext payload can be written, shared by every tool with
+ * a "what is in this box" picker over it.
+ */
+export const PAYLOAD_TEXT_ENCODINGS = ["utf-8", "hex", "base64"] as const;
+
+export type PayloadTextEncoding = (typeof PAYLOAD_TEXT_ENCODINGS)[number];
+
+/** The same for a payload that was never text. Never UTF-8: ciphertext is not text. */
+export const PAYLOAD_BINARY_ENCODINGS = ["hex", "base64"] as const;
+
+export type PayloadBinaryEncoding = (typeof PAYLOAD_BINARY_ENCODINGS)[number];
+
+/**
+ * Which DER container an RSA key is written into, shared by the generator and
+ * the encryption tool.
+ *
+ * `pkcs8` is the modern pair — `PRIVATE KEY` wrapping the RSA numbers next to an
+ * algorithm identifier, with `PUBLIC KEY` (SubjectPublicKeyInfo) opposite it.
+ * `pkcs1` is the bare RSA structure that predates both, written as
+ * `RSA PRIVATE KEY` and `RSA PUBLIC KEY`, and is what a great deal of older
+ * tooling still expects.
+ */
+export const RSA_KEY_FORMATS = ["pkcs8", "pkcs1"] as const;
+
+export type RsaKeyFormat = (typeof RSA_KEY_FORMATS)[number];
+
+/** Which half of a key pair an operation, a copy or a download is about. */
+export const RSA_KEY_KINDS = ["public", "private"] as const;
+
+export type RsaKeyKind = (typeof RSA_KEY_KINDS)[number];
+
+/** The four PEM headers an RSA key can carry, keyed by what they hold. */
+export const PEM_LABELS = {
+    spki: "PUBLIC KEY",
+    pkcs8: "PRIVATE KEY",
+    pkcs1Public: "RSA PUBLIC KEY",
+    pkcs1Private: "RSA PRIVATE KEY",
+} as const;
+
+export type PemLabel = (typeof PEM_LABELS)[keyof typeof PEM_LABELS];
 
 export type EncodeBytesResult =
     { readonly ok: true; readonly bytes: Uint8Array } | TextCodecFailure;

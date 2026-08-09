@@ -26,6 +26,11 @@ import type { StatusTone } from "@/modules/tools/components/status-strip";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveBlob, saveFile } from "@/modules/tools/domain/file-saver";
 import {
+    PAYLOAD_BINARY_ENCODINGS,
+    PAYLOAD_TEXT_ENCODINGS,
+    type CipherBytes,
+} from "@/modules/tools/types";
+import {
     DEFAULT_GCM_TAG_LENGTH,
     MAX_AES_INPUT_BYTES,
     MAX_AES_INPUT_LENGTH,
@@ -47,13 +52,11 @@ import { CIPHER_ENCODING_LABELS, MODE_LABELS, TEXT_ENCODING_LABELS } from "../do
 import { acceptsVariableIv, isAuthenticated, isValidIvHex, ivBytesFor } from "../domain/modes";
 import { createAesBlobDownload, createAesExportFile } from "../domain/export";
 import { generateKeyMaterial } from "../domain/generate";
-import { isCipherEncoding, isTextEncoding } from "../domain/payload";
+import { isBinaryEncoding, isTextEncoding } from "@/modules/tools/domain/payload-codec";
 import { randomHex, randomIvHex, randomSaltHex, redrawIvHex } from "../domain/params";
 import {
-    AES_CIPHER_ENCODINGS,
     AES_KEY_SIZES,
     AES_MODES,
-    AES_TEXT_ENCODINGS,
     type AesDirection,
     type AesKeyInput,
     type AesKeyResult,
@@ -62,7 +65,6 @@ import {
     type AesOptions,
     type AesResult,
     type AesSource,
-    type CipherBytes,
 } from "../types";
 import { AdvancedSettings, type HexTarget } from "./advanced-settings";
 import { DirectionSelector } from "./direction-selector";
@@ -508,14 +510,14 @@ export function AesWorkbench({ initialDirection, initialOptions }: AesWorkbenchP
             return;
         }
 
-        if (isCipherEncoding(next)) {
+        if (isBinaryEncoding(next)) {
             updateOptions({ cipherEncoding: next });
         }
     }
 
     function handleOutputEncodingChange(next: string) {
         if (encrypting) {
-            if (isCipherEncoding(next)) {
+            if (isBinaryEncoding(next)) {
                 updateOptions({ cipherEncoding: next });
             }
 
@@ -616,7 +618,7 @@ export function AesWorkbench({ initialDirection, initialOptions }: AesWorkbenchP
                     file={file}
                     encoding={encrypting ? options.textEncoding : options.cipherEncoding}
                     encodingItems={encrypting ? textEncodingItems : cipherEncodingItems}
-                    encodingValues={encrypting ? AES_TEXT_ENCODINGS : AES_CIPHER_ENCODINGS}
+                    encodingValues={encrypting ? PAYLOAD_TEXT_ENCODINGS : PAYLOAD_BINARY_ENCODINGS}
                     encodingApplies={
                         encrypting ? supportsPlaintextEncoding(direction, source) : true
                     }
@@ -669,7 +671,7 @@ export function AesWorkbench({ initialDirection, initialOptions }: AesWorkbenchP
                     output={output}
                     encoding={encrypting ? options.cipherEncoding : options.textEncoding}
                     encodingItems={encrypting ? cipherEncodingItems : textEncodingItems}
-                    encodingValues={encrypting ? AES_CIPHER_ENCODINGS : AES_TEXT_ENCODINGS}
+                    encodingValues={encrypting ? PAYLOAD_BINARY_ENCODINGS : PAYLOAD_TEXT_ENCODINGS}
                     onEncodingChange={handleOutputEncodingChange}
                     status={status}
                     notice={notice}

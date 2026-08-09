@@ -82,6 +82,7 @@ needs. Its current contents:
 | Input ceilings | `domain/input-limit.ts`, `components/input-limit-meter.tsx`, `domain/payload-size.ts` |
 | Numbers too big to punctuate | `domain/magnitude.ts`, `components/use-readable-number.ts` |
 | Bringing a result into view | `components/use-result-scroll.ts` |
+| Cipher payloads and RSA keys | `domain/payload-codec.ts` (UTF-8 / hex / base64, both directions), `domain/pem.ts` (RFC 7468 blocks), `domain/rsa-der.ts` (PKCS#1 ↔ SPKI / PKCS#8, both ways) |
 
 ### Modules that carry design notes
 

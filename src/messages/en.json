@@ -163,6 +163,10 @@
             "name": "RSA Key Generator",
             "description": "Generate an RSA key pair as PEM, DER or JWK, in a PKCS#8 or PKCS#1 container, at the modulus width and public exponent you pick."
         },
+        "rsa-encrypt": {
+            "name": "RSA Encrypt / Decrypt",
+            "description": "Encrypt a short payload with an RSA public key and decrypt it with the private half, using OAEP with the hash you pick."
+        },
         "json": {
             "name": "JSON Formatter",
             "description": "Prettify, minify, and validate JSON with precise error positions."
@@ -1805,6 +1809,236 @@
                 "a7": "Generally not. The hash is chosen again when the key is imported, so a PEM or DER block usually carries no record of it. Where it does show up unmistakably is a JWK, whose `alg` field is built from the usage and the hash together — signing with SHA-256 becomes RS256, and SHA-512 becomes RS512.",
                 "q8": "I changed a setting and the keys went faint. Why?",
                 "a8": "Because they no longer match the settings above them. Four things are minted into a key — its size, its exponent, its algorithm and its hash — so changing any of those leaves the keys on screen valid but no longer an answer to what is now selected. They are dimmed rather than deleted, and generating again replaces them. Changing the container or the rendering does not do this, because those are rewritten from the key already in hand."
+            }
+        }
+    },
+    "rsaEncrypt": {
+        "meta": {
+            "title": "RSA Encrypt / Decrypt — OAEP In Your Browser, With Your Own Keys",
+            "description": "Encrypt a short payload with an RSA public key and decrypt it with the private half, using RSA-OAEP with SHA-256, SHA-384 or SHA-512. Takes a key as PEM, base64 DER or JWK, in a PKCS#8 or PKCS#1 container. Runs entirely in your browser — no key and no message is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Security",
+            "title": "RSA Encrypt / Decrypt",
+            "subtitle": "Seal a short payload against an RSA public key, or open one with the private half. Paste the key in whichever form you have it — PEM, base64 DER or JWK, PKCS#8 or PKCS#1 — and the message size RSA will actually accept is on screen before you hit it. Nothing leaves this tab.",
+            "badgePadding": "RSA-OAEP",
+            "badgeOffline": "Works offline",
+            "badgeFormats": "PEM, DER and JWK"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "workbench": {
+            "title": "Encrypt and decrypt",
+            "description": "Paste a key, put something in the box, and the answer appears underneath. Both steps happen in this tab.",
+            "reset": "Reset all",
+            "resetHint": "Clears the key, the payload and the result, and puts every setting back",
+            "localNotice": "The key and the payload are read by your browser's own Web Crypto. Nothing is uploaded, and no request on this page carries either of them.",
+            "directionLabel": "Direction",
+            "directions": {
+                "encrypt": "Encrypt",
+                "decrypt": "Decrypt"
+            },
+            "keyFormatLabel": "Key format",
+            "keyFormatHint": {
+                "pem": "A headered block. The header says which container it is, so PKCS#1 and PKCS#8 are both read.",
+                "der": "One unwrapped base64 line, with no header. Both containers are tried.",
+                "jwk": "The RSA numbers as JSON. Whether the private exponent is present says which half it is."
+            },
+            "keyKindLabel": "Key type",
+            "keyKind": {
+                "public": "Public",
+                "private": "Private"
+            },
+            "keyKindHint": "Paste the private half instead and its public key is derived from it.",
+            "keyKindDisabled": "Only the private half can decrypt — the number that undoes the public one is not in a public key.",
+            "paddingLabel": "Padding scheme",
+            "paddingHint": "The only padding a browser implements. RSAES-PKCS1-v1_5 was withdrawn from Web Crypto and is not offered here; the article says why.",
+            "hashLabel": "Hash algorithm",
+            "hashHint": "Both sides have to agree on it. A wider digest is stronger and leaves less room for the message.",
+            "keyLabel": {
+                "public": "Public key",
+                "private": "Private key"
+            },
+            "keyNotice": "Pasted here and nowhere else. A private key in this box never reaches a server, a log, or the address bar.",
+            "uploadKey": "Upload key file",
+            "clear": "Clear",
+            "inputLabel": {
+                "plaintext": "Plaintext",
+                "ciphertext": "Ciphertext"
+            },
+            "inputPlaceholder": {
+                "plaintext": "Enter text to encrypt",
+                "ciphertext": "Enter ciphertext to decrypt"
+            },
+            "encodingLabel": {
+                "plaintext": "Plaintext encoding",
+                "ciphertext": "Ciphertext encoding"
+            },
+            "openFile": "Open file",
+            "removeFile": "Remove the opened file",
+            "payloadHint": {
+                "plaintext": "This key and hash leave room for {bytes, number} bytes. RSA does not stream — anything longer needs a symmetric key that this encrypts instead.",
+                "ciphertext": "One modulus-wide block, in the encoding the picker names.",
+                "awaitingKey": "The size RSA will accept depends on the key, so it appears once one is in."
+            },
+            "outputLabel": {
+                "ciphertext": "Encrypted data",
+                "plaintext": "Decrypted data"
+            },
+            "outputPlaceholder": "The result will appear here",
+            "copyOutput": {
+                "ciphertext": "Copy the ciphertext",
+                "plaintext": "Copy the plaintext"
+            },
+            "download": "Download",
+            "downloadBytes": "Save as bytes",
+            "downloadHint": "Download saves what is on screen as text. Save as bytes writes the decrypted bytes themselves, which is what closes the loop for a file.",
+            "status": {
+                "awaitingKey": "Waiting for a key",
+                "awaitingInput": "Waiting for something to work on",
+                "working": {
+                    "encrypt": "Encrypting…",
+                    "decrypt": "Decrypting…"
+                },
+                "done": {
+                    "encrypt": "Encrypted with a {bits, number, ::group-off}-bit key, OAEP with {hash}",
+                    "decrypt": "Decrypted with a {bits, number, ::group-off}-bit key, OAEP with {hash}"
+                }
+            },
+            "notices": {
+                "authenticated": "OAEP checks its own padding, so a wrong key or an altered ciphertext is refused rather than turned into rubbish.",
+                "notBulk": "RSA is not a bulk cipher. One operation carries one short payload and produces one modulus-wide block.",
+                "blockSize": "Whatever goes in, one modulus-wide block comes out — {bytes, number} bytes is the most that will fit going the other way."
+            }
+        },
+        "errors": {
+            "no_key": "Paste a key above before anything can be encrypted or decrypted.",
+            "unreadable_key": "This does not read as a key in {format} form.",
+            "wrong_key_kind": {
+                "public": "That is a public key, and this step needs the private half.",
+                "private": "That is a private key, and the Key Type picker says Public."
+            },
+            "key_rejected": "That parsed as a key, but this browser would not accept it — check it is an RSA key and that it copied over whole.",
+            "hash_too_large_for_key": "{hash} needs more room than a {bits, number, ::group-off}-bit key has. Use a key of at least {needed, number, ::group-off} bits, or a shorter digest.",
+            "no_input": "Put something in the box above.",
+            "input_too_large": "That is longer than this box accepts.",
+            "invalid_input_encoding": "That is not valid {encoding}.",
+            "message_too_long": "RSA carries {limit, number} bytes under this key and hash, and that is {actual, number}. Encrypt a symmetric key with this instead, and encrypt the message with that.",
+            "encryption_failed": "The message could not be encrypted with this key.",
+            "decryption_failed": "This did not come from that key under these settings — the key, the hash, or the ciphertext itself is not the one it was sealed with.",
+            "undecodable_text": "It decrypted, but the bytes are not text in this encoding. Try Hex or Base64, or save them as bytes.",
+            "fileTooLarge": "{name} is larger than this tool reads ({limit, number} bytes).",
+            "fileUnreadable": "That file could not be read."
+        },
+        "toast": {
+            "copied": "Copied to clipboard",
+            "copyFailedEmpty": "There is nothing to copy yet.",
+            "copyFailedUnsupported": "This browser does not allow clipboard access.",
+            "copyFailedDenied": "Clipboard permission was denied.",
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The download could not be started.",
+            "reset": "Everything is back to how the page opened",
+            "fileLoaded": "Opened {name}",
+            "keyLoaded": "Loaded the key from {name}"
+        },
+        "article": {
+            "understanding": {
+                "title": "What this page does",
+                "p1": "RSA encryption runs one way through a key pair. Anyone holding the public key can seal something that only the private half opens, which is what makes it possible to receive a secret from somebody you have never exchanged one with.",
+                "p2": "It is not a bulk cipher and was never meant to be. One operation carries one payload smaller than the modulus and produces exactly one modulus-wide block — 256 bytes for a 2048-bit key, whether the message was five bytes or a hundred and ninety.",
+                "p3": "So the shape of real use is almost always the same: encrypt a symmetric key with RSA, encrypt the message with that symmetric key, and send both. This page does the first half; the AES tool does the second.",
+                "p4": "Everything happens in this tab, through your browser's own Web Crypto. The key you paste and the payload you type are never uploaded, and no request on this page carries either."
+            },
+            "oaep": {
+                "title": "Why OAEP is the only padding here",
+                "p1": "RSA on its own is a single modular exponentiation, and using it directly is unsafe in ways that have nothing to do with the key size — identical messages produce identical ciphertexts, and small messages under a small exponent can be recovered by taking a cube root. The padding is what fixes that, and it is not optional.",
+                "p2": "Two paddings exist. RSAES-PKCS1-v1_5 came first and is the one Bleichenbacher broke in 1998: an attacker who can tell a padding error apart from any other error recovers the plaintext, and twenty-five years of variants have followed. OAEP came second, is provably secure under stronger assumptions, and is what every current recommendation names.",
+                "p3": "Only OAEP is offered here, and that is a fact about the platform before it is a preference. RSAES-PKCS1-v1_5 is not in the Web Crypto specification, no browser has ever implemented it, and engines that once did now answer with a deprecation error. Shipping it would mean hand-rolling modular exponentiation and a padding scheme on a page whose whole premise is that it does not hand-roll ciphers.",
+                "p4": "OAEP is also randomised, which surprises people: encrypting the same message twice under the same key gives two different blocks. That is correct and necessary — a deterministic ciphertext tells an observer when you sent the same thing twice."
+            },
+            "keys": {
+                "title": "Which key goes in which box",
+                "p1": "Encrypting takes the public key; decrypting takes the private one. That is the whole rule, and the Key Type toggle exists so a mistake is named rather than turning into a failed operation with no explanation.",
+                "p2": "Under Decrypt the toggle is fixed at Private and says why. A public key cannot decrypt — this is not a policy but arithmetic: the number that reverses the public exponent is only in the private key.",
+                "p3": "The other direction is allowed and is a convenience worth having. If the only thing you have to hand is the private key, select Private under Encrypt and the public half is derived from it — the modulus and the public exponent are both already in there.",
+                "p4": "Every container is read: PEM under any of its four headers, the same bytes as base64 DER, or a JWK. PKCS#1 blocks are included even though Web Crypto cannot import one, because they are wrapped into the container it can before it ever sees them."
+            },
+            "options": {
+                "title": "Every control on the page",
+                "intro": "Five settings and two boxes, and one of the settings has only one legal value.",
+                "tableCaption": "Every control the workbench offers, what it changes, and when to reach for it",
+                "colOption": "Control",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "directionName": "Encrypt / Decrypt",
+                "directionDoes": "Which way the operation runs, and therefore which half of the pair it needs.",
+                "directionWhen": "Encrypt to seal something; Decrypt to open what was sealed for you.",
+                "keyFormatName": "Key format",
+                "keyFormatDoes": "How the pasted key is written — a headered PEM block, one base64 line, or JSON.",
+                "keyFormatWhen": "Match whatever you copied. PEM is what a file holds; DER is what an environment variable holds; JWK is what a JOSE library hands you.",
+                "keyKindName": "Key type",
+                "keyKindDoes": "Which half is in the box. Fixed at Private under Decrypt, where nothing else can work.",
+                "keyKindWhen": "Set it to Private under Encrypt when the private key is all you have; the public half is derived.",
+                "paddingName": "Padding scheme",
+                "paddingDoes": "How the message is prepared before the modular exponentiation. OAEP, and only OAEP.",
+                "paddingWhen": "Never — there is nothing else to pick, and the section above says why.",
+                "hashName": "Hash algorithm",
+                "hashDoes": "The digest OAEP builds its mask from. It also decides how much room is left for the message.",
+                "hashWhen": "SHA-256 unless the system on the other side asks for more. Both ends must agree.",
+                "keyName": "Key box",
+                "keyDoes": "Takes the key exactly as pasted, or as an uploaded file.",
+                "keyWhen": "Always. The block can be surrounded by a shell prompt or blank lines and still be read.",
+                "payloadName": "Payload box",
+                "payloadDoes": "The plaintext going in, or the ciphertext coming back — with a picker saying how it is written.",
+                "payloadWhen": "Use Hex or Base64 when the payload is bytes rather than text; UTF-8 for a message.",
+                "outputName": "Result",
+                "outputDoes": "The answer, in whichever encoding its own picker names, with the size limit and the failure reported underneath.",
+                "outputWhen": "Read it, copy it, or download it.",
+                "downloadName": "Download / Save as bytes",
+                "downloadDoes": "Saves the result as the text on screen, or — after decrypting — as the raw bytes.",
+                "downloadWhen": "Save as bytes whenever the thing you decrypted was a file rather than a message.",
+                "resetName": "Reset all",
+                "resetDoes": "Clears the key, the payload and the result, and drops every imported key from memory.",
+                "resetWhen": "Before working with somebody else's key, or to clear one off the screen.",
+                "sizeNote": "The size limit is the control nobody expects. OAEP spends two digests and a byte of the modulus on padding, so a 2048-bit key with SHA-256 carries 190 bytes and not one more. The figure is shown under the box before you hit it, and the refusal repeats it with what you actually typed.",
+                "hashSizeNote": "Widening the digest narrows the message twice over: SHA-512 under the same 2048-bit key leaves 126 bytes. Under a 1024-bit key it leaves nothing at all — the padding needs 130 bytes inside a 128-byte modulus — and that combination gets its own refusal rather than being reported as a message that was too long.",
+                "keyKindNote": "The Key Type toggle is disabled rather than hidden under Decrypt. A control that vanishes reads as a bug; one that is visibly off with a sentence beside it teaches the rule.",
+                "pkcs1Note": "PKCS#1 blocks are accepted even though Web Crypto cannot read one. They are wrapped back into the container it does read first, using the same code the key generator uses to unwrap them — which is checked byte for byte against a separate ASN.1 implementation.",
+                "randomNote": "Encrypting the same message twice gives two different results. That is OAEP working, not the tool being inconsistent."
+            },
+            "interop": {
+                "title": "Checking it against something that is not this page",
+                "intro": "Three checks, in the order they tend to fail:",
+                "p1": "Decrypt it elsewhere. `openssl pkeyutl -decrypt -inkey private.pem -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -in ciphertext.bin` opens what this page wrote, once the base64 has been decoded to bytes.",
+                "p2": "Encrypt elsewhere and open it here. The same command with `-encrypt` and the public key produces a block this page reads — provided the hash matches on both sides, which is the thing that usually does not.",
+                "p3": "Check the key first, separately. If a key is refused here, `openssl pkey -in key.pem -noout -text` will say whether the block is intact before you go looking for a padding problem.",
+                "hashNote": "The digest is the commonest mismatch, because nothing in a ciphertext records which one was used. OpenSSL defaults `rsa_oaep_md` to SHA-1 when it is not given, which will never match anything this page produces — name it explicitly on both sides."
+            },
+            "useCases": {
+                "title": "What people use this for",
+                "p1": "Wrapping a symmetric key. Generate an AES key, encrypt it here against the recipient's public key, and send the wrapped key alongside the AES-encrypted message. This is what virtually every real system built on RSA is doing.",
+                "p2": "Checking an integration. When a partner's service will not accept your ciphertext, encrypting the same payload here with the same key and hash tells you whether the problem is your code or your parameters.",
+                "p3": "Learning where the limits are. Watching five bytes become 256, and a 191-byte message be refused under a 2048-bit key, makes the shape of RSA concrete in a way a paragraph does not."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Is my private key sent anywhere?",
+                "a1": "No. It is read by your browser's Web Crypto, in this tab, and no request on this page carries it. There is no server-side step to opt out of — the page has nowhere to send it from, because the key exists only in the tab's memory and is gone when you close it.",
+                "q2": "Why will it not encrypt my message?",
+                "a2": "Almost always because it is longer than RSA carries. A 2048-bit key with SHA-256 takes 190 bytes and no more, because OAEP spends the rest of the modulus on padding. The figure for your key is under the box, and the fix is not a bigger key but a different shape: encrypt a symmetric key with RSA, and the message with that.",
+                "q3": "Why is there only one padding scheme?",
+                "a3": "Because browsers implement only one. RSAES-PKCS1-v1_5 is not part of the Web Crypto specification and never has been, and the engines that once offered it now return a deprecation error. It is also the padding Bleichenbacher's attack targets, so its absence costs less than it looks.",
+                "q4": "Can I encrypt with a private key?",
+                "a4": "Select Private under Encrypt and it works, but not in the way the question usually means. The public half is derived from the private key and used for the encryption — because encrypting *with* a private key is signing, which is a different operation with a different tool.",
+                "q5": "Why does the same message give a different result every time?",
+                "a5": "OAEP is randomised: it mixes a fresh random seed into every operation. That is deliberate and necessary — a deterministic ciphertext would let an observer tell when you sent the same thing twice. Every one of those different blocks decrypts back to the same message.",
+                "q6": "It decrypted but the output is nonsense. What happened?",
+                "a6": "If OAEP had failed you would have got a refusal instead, so the bytes are genuinely what was sealed — they are just not text in the encoding selected. Switch the result encoding to Hex or Base64, or use Save as bytes if what you decrypted was a file.",
+                "q7": "Which key formats can I paste?",
+                "a7": "PEM under any of its four RSA headers, the same bytes as a single base64 DER line, or a JWK. PKCS#1 blocks work even though Web Crypto cannot import one directly — they are wrapped into a container it accepts on the way in. A key generated on the RSA Key Generator page will paste in whichever form you exported it.",
+                "q8": "The other system rejects my ciphertext. Where do I start?",
+                "a8": "With the hash. Nothing in an RSA ciphertext records which digest OAEP used, so a mismatch is silent until decryption fails — and OpenSSL defaults to SHA-1 when `rsa_oaep_md` is not given, which never matches anything this page writes. Name the digest explicitly on both sides before looking anywhere else."
             }
         }
     },

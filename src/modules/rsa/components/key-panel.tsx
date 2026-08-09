@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
 import { StatusStrip } from "@/modules/tools/components/status-strip";
-import type { RsaKeyKind, RsaRenderedKey } from "../types";
+import type { RsaKeyKind } from "@/modules/tools/types";
+import type { RsaRenderedKey } from "../types";
 
 type KeyPanelProps = {
     kind: RsaKeyKind;

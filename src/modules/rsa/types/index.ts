@@ -1,3 +1,5 @@
+import type { PemLabel, RsaKeyFormat, RsaKeyKind } from "@/modules/tools/types";
+
 /**
  * Modulus widths offered, weakest first — which is also the order the picker
  * reads in, because it is the order a reader thinks in when they are reproducing
@@ -33,33 +35,10 @@ export const RSA_HASHES = ["SHA-256", "SHA-384", "SHA-512"] as const;
 
 export type RsaHash = (typeof RSA_HASHES)[number];
 
-/**
- * Which DER container the two keys are written into.
- *
- * `pkcs8` is the modern pair — `PRIVATE KEY` wrapping the RSA numbers next to an
- * algorithm identifier, with `PUBLIC KEY` (SubjectPublicKeyInfo) opposite it.
- * `pkcs1` is the bare RSA structure that predates both, written as
- * `RSA PRIVATE KEY` and `RSA PUBLIC KEY`, and is what a great deal of older
- * tooling still expects.
- */
-export const RSA_KEY_FORMATS = ["pkcs8", "pkcs1"] as const;
-
-export type RsaKeyFormat = (typeof RSA_KEY_FORMATS)[number];
-
 /** How the container is rendered on screen and in the downloaded file. */
 export const RSA_OUTPUT_FORMATS = ["pem", "der", "jwk"] as const;
 
 export type RsaOutputFormat = (typeof RSA_OUTPUT_FORMATS)[number];
-
-/** The five PEM headers this tool can write, keyed by what they hold. */
-export const PEM_LABELS = {
-    spki: "PUBLIC KEY",
-    pkcs8: "PRIVATE KEY",
-    pkcs1Public: "RSA PUBLIC KEY",
-    pkcs1Private: "RSA PRIVATE KEY",
-} as const;
-
-export type PemLabel = (typeof PEM_LABELS)[keyof typeof PEM_LABELS];
 
 /**
  * Every way a generation can be refused, each keeping its own name.
@@ -157,11 +136,6 @@ export type RsaOptions = {
      */
     readonly publicExponent: string;
 };
-
-/** Which half of the pair a download or a copy is about. */
-export const RSA_KEY_KINDS = ["public", "private"] as const;
-
-export type RsaKeyKind = (typeof RSA_KEY_KINDS)[number];
 
 export type RsaExportRequest = {
     readonly kind: RsaKeyKind;

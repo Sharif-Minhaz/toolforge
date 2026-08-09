@@ -1,11 +1,16 @@
 import { bytesToBase64 } from "@/modules/tools/domain/base64";
 import { RSA_ALGORITHM_NAMES } from "./constants";
-import { readModulusBits, readPublicExponent, unwrapPkcs8, unwrapSpki } from "./der";
+import { toPem } from "@/modules/tools/domain/pem";
+import {
+    pemLabelFor,
+    readModulusBits,
+    readPublicExponent,
+    unwrapPkcs8,
+    unwrapSpki,
+} from "@/modules/tools/domain/rsa-der";
 import { exponentToBytes, isPortableExponent, parsePublicExponent } from "./exponent";
-import { pemLabelFor, toPem } from "./pem";
+import type { RsaKeyFormat, RsaKeyKind } from "@/modules/tools/types";
 import type {
-    RsaKeyFormat,
-    RsaKeyKind,
     RsaKeyMaterial,
     RsaKeyPair,
     RsaMaterialResult,

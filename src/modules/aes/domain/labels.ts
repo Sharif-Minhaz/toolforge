@@ -1,4 +1,5 @@
-import type { AesCipherEncoding, AesMode, AesTextEncoding } from "../types";
+import type { PayloadBinaryEncoding, PayloadTextEncoding } from "@/modules/tools/types";
+import type { AesMode } from "../types";
 
 /**
  * Proper names, which are data rather than copy.
@@ -14,13 +15,13 @@ export const MODE_LABELS: Record<AesMode, string> = {
     ctr: "CTR",
 };
 
-export const TEXT_ENCODING_LABELS: Record<AesTextEncoding, string> = {
+export const TEXT_ENCODING_LABELS: Record<PayloadTextEncoding, string> = {
     "utf-8": "UTF-8",
     hex: "Hex",
     base64: "Base64",
 };
 
-export const CIPHER_ENCODING_LABELS: Record<AesCipherEncoding, string> = {
+export const CIPHER_ENCODING_LABELS: Record<PayloadBinaryEncoding, string> = {
     hex: "Hex",
     base64: "Base64",
 };

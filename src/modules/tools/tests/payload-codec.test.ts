@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { decodeCipher, decodeText, encodeCipher, encodeText } from "../domain/payload";
+import { decodeBinary, decodeText, encodeBinary, encodeText } from "../domain/payload-codec";
 
 describe("decodeText", () => {
     test("reads UTF-8 by encoding the characters", () => {
@@ -61,18 +61,18 @@ describe("the ciphertext side", () => {
     test("round-trips through hex", () => {
         const bytes = new Uint8Array([0x00, 0x7f, 0xff]);
 
-        expect([...(decodeCipher(encodeCipher(bytes, "hex"), "hex") ?? [])]).toEqual([...bytes]);
+        expect([...(decodeBinary(encodeBinary(bytes, "hex"), "hex") ?? [])]).toEqual([...bytes]);
     });
 
     test("round-trips through base64", () => {
         const bytes = new Uint8Array([0x00, 0x7f, 0xff]);
 
-        expect([...(decodeCipher(encodeCipher(bytes, "base64"), "base64") ?? [])]).toEqual([
+        expect([...(decodeBinary(encodeBinary(bytes, "base64"), "base64") ?? [])]).toEqual([
             ...bytes,
         ]);
     });
 
     test("reads a base64 payload that arrived wrapped", () => {
-        expect(decodeCipher("aGVs\nbG8=", "base64")).not.toBeNull();
+        expect(decodeBinary("aGVs\nbG8=", "base64")).not.toBeNull();
     });
 });

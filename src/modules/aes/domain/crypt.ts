@@ -10,7 +10,13 @@ import {
     subtleParams,
     tagBytesFor,
 } from "./modes";
-import { decodeCipher, decodeText, encodeCipher, encodeText } from "./payload";
+import {
+    decodeBinary,
+    decodeText,
+    encodeBinary,
+    encodeText,
+} from "@/modules/tools/domain/payload-codec";
+import type { CipherBytes } from "@/modules/tools/types";
 import type {
     AesDirection,
     AesKeyInput,
@@ -19,7 +25,6 @@ import type {
     AesRequest,
     AesResult,
     AesSource,
-    CipherBytes,
 } from "../types";
 
 /** The block width AES works in, and therefore what CBC ciphertext is a multiple of. */
@@ -164,7 +169,7 @@ export async function runAes(
 
             return {
                 ok: true,
-                output: encodeCipher(encrypted, options.cipherEncoding),
+                output: encodeBinary(encrypted, options.cipherEncoding),
                 bytes: encrypted,
                 inputBytes: plaintext.length,
                 outputBytes: encrypted.length,
@@ -174,7 +179,7 @@ export async function runAes(
         }
     }
 
-    const ciphertext = decodeCipher(readSourceText(source), options.cipherEncoding);
+    const ciphertext = decodeBinary(readSourceText(source), options.cipherEncoding);
 
     if (ciphertext === null) {
         return { ok: false, reason: "invalid_input_encoding" };

@@ -2,13 +2,8 @@ import { z } from "zod";
 
 import { MAX_PUBLIC_EXPONENT_LENGTH } from "../domain/constants";
 import { parsePublicExponent } from "../domain/exponent";
-import {
-    RSA_HASHES,
-    RSA_KEY_FORMATS,
-    RSA_KEY_SIZES,
-    RSA_OUTPUT_FORMATS,
-    RSA_USAGES,
-} from "../types";
+import { RSA_KEY_FORMATS } from "@/modules/tools/types";
+import { RSA_HASHES, RSA_KEY_SIZES, RSA_OUTPUT_FORMATS, RSA_USAGES } from "../types";
 
 export const rsaKeySizeSchema = z.union(
     RSA_KEY_SIZES.map((size) => z.literal(size)) as [

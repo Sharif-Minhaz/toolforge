@@ -2,13 +2,12 @@ import { z } from "zod";
 
 import { MAX_PBKDF2_ITERATIONS, MIN_PBKDF2_ITERATIONS } from "../domain/constants";
 import { readIvBytes } from "../domain/modes";
+import { PAYLOAD_BINARY_ENCODINGS, PAYLOAD_TEXT_ENCODINGS } from "@/modules/tools/types";
 import {
-    AES_CIPHER_ENCODINGS,
     AES_DIRECTIONS,
     AES_KEY_SIZES,
     AES_KEY_SOURCES,
     AES_MODES,
-    AES_TEXT_ENCODINGS,
     GCM_TAG_LENGTHS,
 } from "../types";
 
@@ -32,9 +31,9 @@ export const gcmTagLengthSchema = z.union(
     ],
 );
 
-export const aesTextEncodingSchema = z.enum(AES_TEXT_ENCODINGS);
+export const aesTextEncodingSchema = z.enum(PAYLOAD_TEXT_ENCODINGS);
 
-export const aesCipherEncodingSchema = z.enum(AES_CIPHER_ENCODINGS);
+export const aesCipherEncodingSchema = z.enum(PAYLOAD_BINARY_ENCODINGS);
 
 export const pbkdf2IterationsSchema = z
     .number()

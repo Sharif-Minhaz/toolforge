@@ -77,6 +77,7 @@ docs/
 │   └── maps.md                 putting something on a map
 │
 ├── case-studies/               what one subsystem cost, and what it taught
+│   ├── aes.md
 │   ├── blurhash.md
 │   ├── bson.md
 │   ├── curl.md
@@ -88,6 +89,8 @@ docs/
 │   ├── mock-server.md
 │   ├── port-scanner.md
 │   ├── qr.md
+│   ├── rsa.md
+│   ├── rsa-encrypt.md
 │   ├── short-links.md
 │   └── watermark-remover.md
 │
@@ -131,6 +134,7 @@ records a defect that was expensive to find and is easy to reintroduce.
 | `port-scanner` | [`case-studies/port-scanner.md`](case-studies/port-scanner.md) |
 | `qr` | [`case-studies/qr.md`](case-studies/qr.md) |
 | `rsa` | [`case-studies/rsa.md`](case-studies/rsa.md) |
+| `rsa-encrypt` | [`case-studies/rsa-encrypt.md`](case-studies/rsa-encrypt.md) |
 | `short-links`, `shortener` | [`case-studies/short-links.md`](case-studies/short-links.md) |
 | `url-parser` | [`patterns/derived-state-editors.md`](patterns/derived-state-editors.md) |
 | `watermark-remover`, `ai-*` | [`case-studies/watermark-remover.md`](case-studies/watermark-remover.md) |

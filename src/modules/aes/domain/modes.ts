@@ -1,6 +1,7 @@
 import { hexToBytes } from "@/modules/tools/domain/hex";
 import { CTR_COUNTER_BITS, MAX_GCM_NONCE_BYTES, MIN_GCM_NONCE_BYTES } from "./constants";
-import type { AesMode, CipherBytes, GcmTagLength } from "../types";
+import type { CipherBytes } from "@/modules/tools/types";
+import type { AesMode, GcmTagLength } from "../types";
 
 /**
  * What each mode needs and what each mode promises.

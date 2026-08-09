@@ -351,7 +351,16 @@ export function SidebarNav({
 
                 {matchedSectionIds.size > 0 && (
                     <>
-                        <SectionLabel ruleWhenCollapsed>{t("sectionStudio")}</SectionLabel>
+                        <SectionLabel
+                            ruleWhenCollapsed
+                            trailing={
+                                <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 font-mono text-[0.625rem] leading-none tabular-nums">
+                                    {format.number(matchedSectionIds.size)}
+                                </span>
+                            }
+                        >
+                            {t("sectionStudio")}
+                        </SectionLabel>
                         <ul className="flex flex-col gap-0.5">
                             {matchedSectionIds.has("mock-server") && (
                                 <NavRow

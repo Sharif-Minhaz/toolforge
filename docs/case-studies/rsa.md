@@ -1,7 +1,9 @@
 # RSA — A Container Web Crypto Will Not Write
 
-`src/modules/rsa/`. Read before touching `der.ts`, the exponent field, or the
-split between generating a key and rendering one.
+`src/modules/rsa/`, plus `tools/domain/rsa-der.ts` and `tools/domain/pem.ts`,
+which this tool used to own and now shares with the RSA Encrypt / Decrypt page.
+Read before touching the DER layer, the exponent field, or the split between
+generating a key and rendering one.
 
 ---
 
@@ -25,9 +27,13 @@ inside a BIT STRING; `PrivateKeyInfo` carries `RSAPrivateKey` inside an OCTET
 STRING. So the work is unwrapping, not re-encoding, and the bytes that come out
 are the bytes OpenSSL would have written.
 
-`der.ts` is therefore a reader and never a writer. It walks tag-length-value
-headers, checks the tags it expects, and slices. It is about 150 lines and it
-has no encoder in it at all.
+`rsa-der.ts` was therefore a reader and nothing else for as long as only the
+generator used it: it walks tag-length-value headers, checks the tags it
+expects, and slices. The encryption tool needed the same journey in reverse — a
+pasted `BEGIN RSA PRIVATE KEY` block cannot be imported by Web Crypto either —
+so it now has a writer beside the reader, built the same way: a fixed fifteen-byte
+`rsaEncryption` AlgorithmIdentifier, a DER length encoder, and nothing that
+touches the RSA numbers themselves.
 
 ## Proving the claim against something that is not us
 
@@ -35,17 +41,21 @@ has no encoder in it at all.
 parser, so a test that fed the result back to Web Crypto would prove nothing —
 Web Crypto cannot read PKCS#1, which is the entire reason the file exists.
 
-`tests/der.test.ts` hands every block to **`node:crypto`**, a completely separate
+`tools/tests/rsa-der.test.ts` hands every block to **`node:crypto`**, a completely separate
 ASN.1 implementation with its own PKCS#1 parser and its own DER writer, and
-checks three things:
+checks four things:
 
 1. `createPublicKey` reads the unwrapped PKCS#1 PEM and re-exports SPKI that
    matches the original byte for byte.
 2. The same for `createPrivateKey` and PKCS#8.
 3. `node:crypto`'s own `export({ type: "pkcs1", format: "der" })` produces
    exactly what the unwrapper lifted out.
+4. And in the other direction, `wrapPkcs1AsSpki` and `wrapPkcs1AsPkcs8` rebuild
+   the original SPKI and PKCS#8 byte for byte, at 1024, 2048 and 4096 bits —
+   which is what exercises both sides of DER's short-form length cutoff and both
+   long-form widths.
 
-The third is the strongest form: two independent implementations agreeing on
+The last two are the strongest form: two independent implementations agreeing on
 every byte. See
 [`../testing.md`](../testing.md#verifying-against-something-that-is-not-you).
 

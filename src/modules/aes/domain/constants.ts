@@ -1,11 +1,10 @@
+import type { PayloadBinaryEncoding, PayloadTextEncoding } from "@/modules/tools/types";
 import type {
-    AesCipherEncoding,
     AesDirection,
     AesKeySize,
     AesKeySource,
     AesMode,
     AesOptions,
-    AesTextEncoding,
     GcmTagLength,
 } from "../types";
 
@@ -22,9 +21,9 @@ export const DEFAULT_AES_KEY_SIZE: AesKeySize = 256;
 
 export const DEFAULT_AES_KEY_SOURCE: AesKeySource = "passphrase";
 
-export const DEFAULT_TEXT_ENCODING: AesTextEncoding = "utf-8";
+export const DEFAULT_TEXT_ENCODING: PayloadTextEncoding = "utf-8";
 
-export const DEFAULT_CIPHER_ENCODING: AesCipherEncoding = "base64";
+export const DEFAULT_CIPHER_ENCODING: PayloadBinaryEncoding = "base64";
 
 /** What the generator draws, which is what every PBKDF2 recommendation asks for. */
 export const AES_SALT_BYTES = 16;

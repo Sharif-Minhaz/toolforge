@@ -16,6 +16,7 @@ import {
     IconLetterCase,
     IconLink,
     IconLock,
+    IconLockCode,
     IconMarkdown,
     IconNetwork,
     IconPalette,
@@ -70,6 +71,7 @@ const ICONS: Record<ToolIconName, ComponentType<IconProps>> = {
     graph: IconTopologyStar3,
     shield: IconShieldLock,
     certificate: IconCertificate,
+    "lock-code": IconLockCode,
 };
 
 type ToolIconProps = {

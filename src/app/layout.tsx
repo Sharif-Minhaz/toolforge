@@ -150,6 +150,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.rsa.errors,
             toast: messages.rsa.toast,
         },
+        rsaEncrypt: {
+            workbench: messages.rsaEncrypt.workbench,
+            errors: messages.rsaEncrypt.errors,
+            toast: messages.rsaEncrypt.toast,
+        },
         json: {
             workbench: messages.json.workbench,
             report: messages.json.report,

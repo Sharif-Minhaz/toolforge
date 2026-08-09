@@ -4,8 +4,8 @@ import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/ar
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 import { KEY_FORMAT_LABELS, RSA_ALGORITHM_NAMES } from "../domain/constants";
-import { pemLabelFor } from "../domain/pem";
-import { RSA_KEY_FORMATS } from "../types";
+import { pemLabelFor } from "@/modules/tools/domain/rsa-der";
+import { RSA_KEY_FORMATS } from "@/modules/tools/types";
 
 export const RSA_ARTICLE_SECTIONS = [
     { id: "understanding", titleKey: "understanding.title" },

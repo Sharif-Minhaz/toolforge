@@ -15,7 +15,7 @@ import {
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { MAX_AES_SECRET_LENGTH } from "../domain/constants";
-import { isKeySource } from "../domain/payload";
+import { isKeySource } from "../domain/key";
 import { AES_KEY_SOURCES, type AesKeySize, type AesKeySource } from "../types";
 import { FieldAction, FieldDivider, FieldShell, FIELD_INPUT } from "./field-shell";
 

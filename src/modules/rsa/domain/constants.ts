@@ -1,11 +1,5 @@
-import type {
-    RsaHash,
-    RsaKeyFormat,
-    RsaKeySize,
-    RsaOptions,
-    RsaOutputFormat,
-    RsaUsage,
-} from "../types";
+import type { RsaKeyFormat } from "@/modules/tools/types";
+import type { RsaHash, RsaKeySize, RsaOptions, RsaOutputFormat, RsaUsage } from "../types";
 
 /**
  * Two thousand forty-eight bits, which is the floor every current guideline
@@ -69,9 +63,6 @@ export const WEAK_KEY_SIZE_CEILING = 1024;
  * primes, so the cost climbs far faster than the bit count does.
  */
 export const SLOW_KEY_SIZE_FLOOR = 4096;
-
-/** PEM bodies wrap at 64 base64 characters, per RFC 7468. */
-export const PEM_LINE_LENGTH = 64;
 
 /** Web Crypto algorithm names, which are proper names and never translated. */
 export const RSA_ALGORITHM_NAMES: Record<RsaUsage, string> = {

@@ -1,23 +1,33 @@
+import {
+    PEM_LABELS,
+    type CipherBytes,
+    type PemLabel,
+    type RsaKeyFormat,
+    type RsaKeyKind,
+} from "../types";
+
 /**
- * Just enough DER to take the PKCS#1 structure back out of the two containers
- * Web Crypto will export.
+ * Just enough DER to move an RSA key between the two containers it is written
+ * in, in both directions.
  *
- * Web Crypto writes `spki` and `pkcs8` and nothing else — there is no
- * `exportKey("pkcs1", …)` in the specification, and there is no sign of one
- * arriving. A PKCS#1 block is not a re-encoding of either, though: both
- * containers carry the bare `RSAPublicKey` or `RSAPrivateKey` verbatim inside
- * them, one inside a BIT STRING and one inside an OCTET STRING. So the work here
- * is unwrapping, not re-encoding, and the bytes that come out are the same bytes
- * OpenSSL would have written.
+ * Web Crypto reads and writes `spki` and `pkcs8` and nothing else — there is no
+ * `pkcs1` in the specification, and there is no sign of one arriving. A PKCS#1
+ * block is not a re-encoding of either, though: both containers carry the bare
+ * `RSAPublicKey` or `RSAPrivateKey` verbatim inside them, one inside a BIT
+ * STRING and one inside an OCTET STRING. So the work here is unwrapping and
+ * wrapping, never re-encoding the RSA numbers themselves, and the bytes that
+ * come out are the same bytes OpenSSL would have written.
  *
- * That claim is not taken on trust: `tests/der.test.ts` hands every block this
- * file produces to `node:crypto`, which is a completely separate ASN.1 reader,
- * and checks that re-exporting from there reproduces the original SPKI and
- * PKCS#8 byte for byte.
+ * That claim is not taken on trust: `tools/tests/rsa-der.test.ts` hands every
+ * block this file produces to `node:crypto`, which is a completely separate
+ * ASN.1 implementation, and checks it round-trips byte for byte.
  *
  * Only the shapes those two containers actually take are handled. Anything else
  * returns `null` rather than throwing — a reader gets a named refusal, never a
  * stack trace.
+ *
+ * Shared by the key generator, which unwraps to offer PKCS#1 output, and by the
+ * encryption tool, which wraps so a pasted PKCS#1 block can be imported at all.
  */
 
 /** One tag-length-value header, already resolved past the long-form length. */
@@ -90,7 +100,7 @@ function readTagged(bytes: Uint8Array, offset: number, tag: number): Tlv | null 
  * octet. For a public key that is always zero, and a non-zero value means this
  * is not the structure it claims to be rather than something to skip past.
  */
-export function unwrapSpki(spki: Uint8Array): Uint8Array | null {
+export function unwrapSpki(spki: CipherBytes): CipherBytes | null {
     const sequence = readTagged(spki, 0, SEQUENCE);
 
     if (sequence === null) {
@@ -120,7 +130,7 @@ export function unwrapSpki(spki: Uint8Array): Uint8Array | null {
  * `EncryptedPrivateKeyInfo` differ in their first field and confusing the two
  * would hand back a passphrase-wrapped blob labelled as a key.
  */
-export function unwrapPkcs8(pkcs8: Uint8Array): Uint8Array | null {
+export function unwrapPkcs8(pkcs8: CipherBytes): CipherBytes | null {
     const sequence = readTagged(pkcs8, 0, SEQUENCE);
 
     if (sequence === null) {
@@ -234,4 +244,105 @@ function readRsaField(
     return pkcs1PublicKey[start] === 0x00 && field.end - start === 1
         ? null
         : { start, end: field.end };
+}
+
+/**
+ * Which of the four headers an RSA key gets, from the two things that decide it.
+ *
+ * The pairing is not symmetric in its naming and that trips people up: PKCS#8's
+ * private half says `PRIVATE KEY` while its public half says `PUBLIC KEY` and is
+ * strictly a SubjectPublicKeyInfo, which is a different specification again.
+ * PKCS#1's two halves are the ones that read as a matching pair.
+ */
+export function pemLabelFor(format: RsaKeyFormat, kind: RsaKeyKind): PemLabel {
+    if (format === "pkcs8") {
+        return kind === "public" ? PEM_LABELS.spki : PEM_LABELS.pkcs8;
+    }
+
+    return kind === "public" ? PEM_LABELS.pkcs1Public : PEM_LABELS.pkcs1Private;
+}
+
+/**
+ * `AlgorithmIdentifier` for `rsaEncryption`, complete: the OID
+ * 1.2.840.113549.1.1.1 followed by the explicit NULL parameters RFC 3279
+ * requires.
+ *
+ * A fixed constant rather than an encoder, because there is exactly one of these
+ * and every RSA key in every container this tool touches carries it verbatim.
+ * Writing a general OID encoder to produce fifteen known bytes would be more
+ * code and more ways to be wrong.
+ */
+const RSA_ENCRYPTION_ALGORITHM = new Uint8Array([
+    0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00,
+]);
+
+/** `INTEGER 0` — the version field of a `PrivateKeyInfo`. */
+const PKCS8_VERSION = new Uint8Array([0x02, 0x01, 0x00]);
+
+/**
+ * A DER length: short form below 128, otherwise a leading byte counting the
+ * big-endian length bytes that follow.
+ *
+ * DER, unlike BER, requires the *shortest* encoding — 127 has to be `7f` and
+ * never `81 7f`. A reader that accepted both would still refuse to round-trip,
+ * because the bytes would differ from what every other writer produces.
+ */
+function encodeLength(length: number): number[] {
+    if (length < 0x80) {
+        return [length];
+    }
+
+    const bytes: number[] = [];
+    let remaining = length;
+
+    while (remaining > 0) {
+        bytes.unshift(remaining % 256);
+        remaining = Math.floor(remaining / 256);
+    }
+
+    return [0x80 | bytes.length, ...bytes];
+}
+
+/** One tag-length-value, with its parts already in hand. */
+function writeTlv(tag: number, ...content: readonly Uint8Array[]): Uint8Array<ArrayBuffer> {
+    const length = content.reduce((total, part) => total + part.length, 0);
+    const header = [tag, ...encodeLength(length)];
+    const out = new Uint8Array(header.length + length);
+
+    out.set(header, 0);
+
+    let offset = header.length;
+
+    for (const part of content) {
+        out.set(part, offset);
+        offset += part.length;
+    }
+
+    return out;
+}
+
+/**
+ * `RSAPublicKey` → `SubjectPublicKeyInfo`, which is the only public container
+ * Web Crypto will import.
+ *
+ * The BIT STRING's leading `0x00` counts the unused bits in its final octet. For
+ * a DER structure it is always zero, and it is content rather than framing —
+ * omitting it produces a block that parses and then decodes to nonsense.
+ */
+export function wrapPkcs1AsSpki(pkcs1PublicKey: Uint8Array): Uint8Array<ArrayBuffer> {
+    return writeTlv(
+        SEQUENCE,
+        RSA_ENCRYPTION_ALGORITHM,
+        writeTlv(BIT_STRING, new Uint8Array([0x00]), pkcs1PublicKey),
+    );
+}
+
+/** `RSAPrivateKey` → `PrivateKeyInfo`, likewise the only private one it takes. */
+export function wrapPkcs1AsPkcs8(pkcs1PrivateKey: Uint8Array): Uint8Array<ArrayBuffer> {
+    return writeTlv(
+        SEQUENCE,
+        PKCS8_VERSION,
+        RSA_ENCRYPTION_ALGORITHM,
+        writeTlv(OCTET_STRING, pkcs1PrivateKey),
+    );
 }

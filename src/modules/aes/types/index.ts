@@ -1,3 +1,9 @@
+import type {
+    CipherBytes,
+    PayloadBinaryEncoding,
+    PayloadTextEncoding,
+} from "@/modules/tools/types";
+
 export const AES_DIRECTIONS = ["encrypt", "decrypt"] as const;
 
 export type AesDirection = (typeof AES_DIRECTIONS)[number];
@@ -40,16 +46,6 @@ export type GcmTagLength = (typeof GCM_TAG_LENGTHS)[number];
 export const AES_KEY_SOURCES = ["passphrase", "hex", "base64"] as const;
 
 export type AesKeySource = (typeof AES_KEY_SOURCES)[number];
-
-/** How the plaintext side of the operation is written. */
-export const AES_TEXT_ENCODINGS = ["utf-8", "hex", "base64"] as const;
-
-export type AesTextEncoding = (typeof AES_TEXT_ENCODINGS)[number];
-
-/** How the ciphertext side is written. Never UTF-8: ciphertext is not text. */
-export const AES_CIPHER_ENCODINGS = ["hex", "base64"] as const;
-
-export type AesCipherEncoding = (typeof AES_CIPHER_ENCODINGS)[number];
 
 /**
  * Every way an operation can be refused, each keeping its own name.
@@ -105,15 +101,6 @@ export type AesSuccess = {
 
 export type AesResult = AesSuccess | AesFailure;
 
-/**
- * Bytes on their way to Web Crypto.
- *
- * `BufferSource` refuses a `Uint8Array` that might be backed by a
- * `SharedArrayBuffer`. Nothing here ever is, so the buffer type is named once
- * rather than asserted at every call site.
- */
-export type CipherBytes = Uint8Array<ArrayBuffer>;
-
 export type AesKeyResult = { readonly ok: true; readonly bytes: CipherBytes } | AesFailure;
 
 /** Everything the key depends on, and nothing else — this is what a cache keys on. */
@@ -144,9 +131,9 @@ export type AesOptions = {
     readonly tagLength: GcmTagLength;
     readonly iterations: number;
     /** Applies to the plaintext side, whichever box that is in this direction. */
-    readonly textEncoding: AesTextEncoding;
+    readonly textEncoding: PayloadTextEncoding;
     /** Applies to the ciphertext side, likewise. */
-    readonly cipherEncoding: AesCipherEncoding;
+    readonly cipherEncoding: PayloadBinaryEncoding;
 };
 
 /**

@@ -42,15 +42,13 @@ import {
     isWeakKeySize,
     keyFormatApplies,
 } from "../domain/options";
+import { RSA_KEY_FORMATS, RSA_KEY_KINDS, type RsaKeyKind } from "@/modules/tools/types";
 import {
     RSA_HASHES,
-    RSA_KEY_FORMATS,
-    RSA_KEY_KINDS,
     RSA_KEY_SIZES,
     RSA_OUTPUT_FORMATS,
     RSA_USAGES,
     type RsaFailureReason,
-    type RsaKeyKind,
     type RsaKeyMaterial,
     type RsaOptions,
 } from "../types";

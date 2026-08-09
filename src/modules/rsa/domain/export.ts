@@ -1,6 +1,7 @@
 import { buildZipArchive } from "@/modules/tools/domain/archive";
 import type { BlobDownload, DownloadFile } from "@/modules/tools/types";
-import type { RsaArchiveRequest, RsaExportRequest, RsaKeyKind, RsaOutputFormat } from "../types";
+import type { RsaKeyKind } from "@/modules/tools/types";
+import type { RsaArchiveRequest, RsaExportRequest, RsaOutputFormat } from "../types";
 
 const TEXT_MIME_TYPE = "text/plain;charset=utf-8";
 

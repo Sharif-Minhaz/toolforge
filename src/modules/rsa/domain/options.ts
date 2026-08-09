@@ -1,12 +1,11 @@
 import { SLOW_KEY_SIZE_FLOOR, WEAK_KEY_SIZE_CEILING } from "./constants";
+import { RSA_KEY_FORMATS, type RsaKeyFormat } from "@/modules/tools/types";
 import {
     RSA_HASHES,
-    RSA_KEY_FORMATS,
     RSA_KEY_SIZES,
     RSA_OUTPUT_FORMATS,
     RSA_USAGES,
     type RsaHash,
-    type RsaKeyFormat,
     type RsaKeySize,
     type RsaOutputFormat,
     type RsaUsage,

@@ -8,14 +8,15 @@ import {
     MIN_SALT_BYTES,
     PBKDF2_HASH,
 } from "./constants";
+import type { CipherBytes } from "@/modules/tools/types";
 import {
+    AES_KEY_SOURCES,
     AES_KEY_SIZES,
     GCM_TAG_LENGTHS,
     type AesKeyInput,
     type AesKeyResult,
     type AesKeySize,
     type AesKeySource,
-    type CipherBytes,
     type GcmTagLength,
 } from "../types";
 
@@ -149,4 +150,12 @@ export async function resolveAesKey(input: AesKeyInput): Promise<AesKeyResult> {
         // engine itself refused. Its own message is deliberately not surfaced.
         return { ok: false, reason: "key_derivation_failed" };
     }
+}
+
+/**
+ * The key-source picker hands back a bare string, because a `<Select>` deals in
+ * strings. Narrowed here, at the boundary, rather than cast at the call site.
+ */
+export function isKeySource(value: string): value is AesKeySource {
+    return (AES_KEY_SOURCES as readonly string[]).includes(value);
 }
