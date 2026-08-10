@@ -151,7 +151,7 @@ export async function HashArticle() {
                         <p>{t("passwords.p1")}</p>
                         <p>{t("passwords.p2")}</p>
                         <p>{t("passwords.p3")}</p>
-                        <p>{t("passwords.p4")}</p>
+                        <p>{t.rich("passwords.p4", ARTICLE_TAGS)}</p>
                         <p>{t("passwords.p5")}</p>
                     </div>
                 </ArticleSection>

@@ -1,6 +1,12 @@
 import { getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PROSE,
+    PROSE_TEXT,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 import {
@@ -61,9 +67,21 @@ export async function ShortenerArticle() {
             <article className="flex min-w-0 flex-col gap-12 xl:order-1">
                 <ArticleSection id="understanding" title={t("understanding.title")}>
                     <div className={PROSE}>
-                        <p>{t("understanding.p1", { length: SLUG_LENGTH })}</p>
-                        <p>{t("understanding.p2")}</p>
-                        <p>{t("understanding.p3", { limit: MAX_TARGET_URL_LENGTH })}</p>
+                        <p>
+                            {t.rich("understanding.p1", {
+                                ...ARTICLE_TAGS,
+                                length: SLUG_LENGTH,
+                            })}
+                        </p>
+                        <ArticleExample>
+                            {t.rich("understanding.example", ARTICLE_TAGS)}
+                        </ArticleExample>
+                        <p>
+                            {t.rich("understanding.p2", {
+                                ...ARTICLE_TAGS,
+                                limit: MAX_TARGET_URL_LENGTH,
+                            })}
+                        </p>
                     </div>
                 </ArticleSection>
 

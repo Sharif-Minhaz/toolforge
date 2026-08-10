@@ -1,6 +1,13 @@
 import { getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PLAIN_TAGS,
+    PROSE,
+    PROSE_TEXT,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 import { SEPARATOR_CHARACTERS } from "../domain/constants";
@@ -14,13 +21,27 @@ export const SLUG_ARTICLE_SECTIONS = [
     { id: "faq", titleKey: "faq.title" },
 ] as const;
 
-/** Question/answer pairs, shared by the FAQ section and its structured data. */
+/**
+ * Question/answer pairs, shared by the FAQ section and its structured data.
+ *
+ * A marked-up answer is read twice from one message: `t.rich` for the panel,
+ * `t.markup` for the JSON-LD, which can hold neither an element nor a literal
+ * `<code>`.
+ */
 export async function getSlugFaqEntries(): Promise<FaqEntry[]> {
     const t = await getTranslations("slug.article");
 
     return [
-        { question: t("faq.q1"), answer: t("faq.a1") },
-        { question: t("faq.q2"), answer: t("faq.a2") },
+        {
+            question: t("faq.q1"),
+            answer: t.markup("faq.a1", PLAIN_TAGS),
+            answerNode: t.rich("faq.a1", ARTICLE_TAGS),
+        },
+        {
+            question: t("faq.q2"),
+            answer: t.markup("faq.a2", PLAIN_TAGS),
+            answerNode: t.rich("faq.a2", ARTICLE_TAGS),
+        },
         { question: t("faq.q3"), answer: t("faq.a3") },
         { question: t("faq.q4"), answer: t("faq.a4") },
         { question: t("faq.q5"), answer: t("faq.a5") },
@@ -61,9 +82,11 @@ export async function SlugArticle() {
             <article className="flex min-w-0 flex-col gap-12 xl:order-1">
                 <ArticleSection id="understanding" title={t("understanding.title")}>
                     <div className={PROSE}>
-                        <p>{t("understanding.p1")}</p>
-                        <p>{t("understanding.p2")}</p>
-                        <p>{t("understanding.p3")}</p>
+                        <p>{t.rich("understanding.p1", ARTICLE_TAGS)}</p>
+                        <ArticleExample>
+                            {t.rich("understanding.example", ARTICLE_TAGS)}
+                        </ArticleExample>
+                        <p>{t.rich("understanding.p2", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
@@ -110,7 +133,7 @@ export async function SlugArticle() {
                     </div>
 
                     <div className={`mt-5 ${PROSE}`}>
-                        <p>{t("separators.custom")}</p>
+                        <p>{t.rich("separators.custom", ARTICLE_TAGS)}</p>
                         <p>{t("separators.refused")}</p>
                     </div>
                 </ArticleSection>
@@ -146,10 +169,10 @@ export async function SlugArticle() {
                                             {t(`options.${row}Name`)}
                                         </th>
                                         <td className="text-muted-foreground px-4 py-3">
-                                            {t(`options.${row}Does`)}
+                                            {t.rich(`options.${row}Does`, ARTICLE_TAGS)}
                                         </td>
                                         <td className="text-muted-foreground px-4 py-3">
-                                            {t(`options.${row}When`)}
+                                            {t.rich(`options.${row}When`, ARTICLE_TAGS)}
                                         </td>
                                     </tr>
                                 ))}
@@ -158,7 +181,7 @@ export async function SlugArticle() {
                     </div>
 
                     <div className={`mt-5 ${PROSE}`}>
-                        <p>{t("options.orderNote")}</p>
+                        <p>{t.rich("options.orderNote", ARTICLE_TAGS)}</p>
                         <p>{t("options.lengthNote")}</p>
                         <p>{t("options.defaultsNote")}</p>
                     </div>
@@ -166,7 +189,7 @@ export async function SlugArticle() {
 
                 <ArticleSection id="scripts" title={t("scripts.title")}>
                     <div className={PROSE}>
-                        <p>{t("scripts.p1")}</p>
+                        <p>{t.rich("scripts.p1", ARTICLE_TAGS)}</p>
                         <p>{t("scripts.p2")}</p>
                         <p>{t("scripts.p3")}</p>
                     </div>

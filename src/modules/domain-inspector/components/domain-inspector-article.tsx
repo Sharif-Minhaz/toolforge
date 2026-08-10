@@ -1,6 +1,12 @@
 import { getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PROSE,
+    PROSE_TEXT,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 import { DNS_RECORD_TYPES } from "../types";
@@ -71,8 +77,8 @@ export async function DomainInspectorArticle() {
                 <ArticleSection id="what" title={t("what.title")}>
                     <div className={PROSE}>
                         <p>{t("what.p1")}</p>
+                        <ArticleExample>{t.rich("what.example", ARTICLE_TAGS)}</ArticleExample>
                         <p>{t("what.p2")}</p>
-                        <p>{t("what.p3")}</p>
                     </div>
                 </ArticleSection>
 

@@ -1,6 +1,13 @@
 import { getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PLAIN_TAGS,
+    PROSE,
+    PROSE_TEXT,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 import { REPLACEMENT_TOKENS } from "../domain/constants";
@@ -18,18 +25,21 @@ export const REGEX_ARTICLE_SECTIONS = [
     { id: "faq", titleKey: "faq.title" },
 ] as const;
 
-/** Question/answer pairs, shared by the FAQ section and its structured data. */
+/**
+ * Question/answer pairs, shared by the FAQ section and its structured data.
+ *
+ * A marked-up answer is read twice from one message: `t.rich` for the panel,
+ * `t.markup` for the JSON-LD, which can hold neither an element nor a literal
+ * `<code>`.
+ */
 export async function getRegexFaqEntries(): Promise<FaqEntry[]> {
     const t = await getTranslations("regex.article");
 
-    return [
-        { question: t("faq.q1"), answer: t("faq.a1") },
-        { question: t("faq.q2"), answer: t("faq.a2") },
-        { question: t("faq.q3"), answer: t("faq.a3") },
-        { question: t("faq.q4"), answer: t("faq.a4") },
-        { question: t("faq.q5"), answer: t("faq.a5") },
-        { question: t("faq.q6"), answer: t("faq.a6") },
-    ];
+    return (["1", "2", "3", "4", "5", "6"] as const).map((index) => ({
+        question: t(`faq.q${index}`),
+        answer: t.markup(`faq.a${index}`, PLAIN_TAGS),
+        answerNode: t.rich(`faq.a${index}`, ARTICLE_TAGS),
+    }));
 }
 
 /**
@@ -72,8 +82,10 @@ export async function RegexArticle() {
                 <ArticleSection id="understanding" title={t("understanding.title")}>
                     <div className={PROSE}>
                         <p>{t("understanding.p1")}</p>
+                        <ArticleExample>
+                            {t.rich("understanding.example", ARTICLE_TAGS)}
+                        </ArticleExample>
                         <p>{t("understanding.p2")}</p>
-                        <p>{t("understanding.p3")}</p>
                     </div>
                 </ArticleSection>
 
@@ -111,7 +123,7 @@ export async function RegexArticle() {
                                             {t(`syntax.${row.key}Means`)}
                                         </td>
                                         <td className="text-muted-foreground px-4 py-3">
-                                            {t(`syntax.${row.key}Example`)}
+                                            {t.rich(`syntax.${row.key}Example`, ARTICLE_TAGS)}
                                         </td>
                                     </tr>
                                 ))}
@@ -119,7 +131,7 @@ export async function RegexArticle() {
                         </table>
                     </div>
 
-                    <p className={`mt-5 ${PROSE_TEXT}`}>{t("syntax.note")}</p>
+                    <p className={`mt-5 ${PROSE_TEXT}`}>{t.rich("syntax.note", ARTICLE_TAGS)}</p>
                 </ArticleSection>
 
                 <ArticleSection id="flags" title={t("flags.title")}>
@@ -158,10 +170,10 @@ export async function RegexArticle() {
                                             </span>
                                         </th>
                                         <td className="text-muted-foreground px-4 py-3">
-                                            {t(`flags.${flag}Does`)}
+                                            {t.rich(`flags.${flag}Does`, ARTICLE_TAGS)}
                                         </td>
                                         <td className="text-muted-foreground px-4 py-3">
-                                            {t(`flags.${flag}When`)}
+                                            {t.rich(`flags.${flag}When`, ARTICLE_TAGS)}
                                         </td>
                                     </tr>
                                 ))}
@@ -178,8 +190,8 @@ export async function RegexArticle() {
                 <ArticleSection id="modes" title={t("modes.title")}>
                     <div className={PROSE}>
                         <p>{t("modes.intro")}</p>
-                        <p>{t("modes.match")}</p>
-                        <p>{t("modes.substitute")}</p>
+                        <p>{t.rich("modes.match", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("modes.substitute", ARTICLE_TAGS)}</p>
                         <p>{t("modes.list")}</p>
                     </div>
 
@@ -206,7 +218,7 @@ export async function RegexArticle() {
                                             {token}
                                         </th>
                                         <td className="text-muted-foreground px-4 py-3">
-                                            {t(`modes.token_${key}`)}
+                                            {t.rich(`modes.token_${key}`, ARTICLE_TAGS)}
                                         </td>
                                     </tr>
                                 ))}
@@ -214,12 +226,12 @@ export async function RegexArticle() {
                         </table>
                     </div>
 
-                    <p className={`mt-5 ${PROSE_TEXT}`}>{t("modes.zeroNote")}</p>
+                    <p className={`mt-5 ${PROSE_TEXT}`}>{t.rich("modes.zeroNote", ARTICLE_TAGS)}</p>
                 </ArticleSection>
 
                 <ArticleSection id="delimiters" title={t("delimiters.title")}>
                     <div className={PROSE}>
-                        <p>{t("delimiters.p1")}</p>
+                        <p>{t.rich("delimiters.p1", ARTICLE_TAGS)}</p>
                         <p>{t("delimiters.p2")}</p>
                     </div>
 
@@ -247,15 +259,15 @@ export async function RegexArticle() {
 
                 <ArticleSection id="engine" title={t("engine.title")}>
                     <div className={PROSE}>
-                        <p>{t("engine.p1")}</p>
-                        <p>{t("engine.p2")}</p>
-                        <p>{t("engine.p3")}</p>
+                        <p>{t.rich("engine.p1", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("engine.p2", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("engine.p3", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
                 <ArticleSection id="performance" title={t("performance.title")}>
                     <div className={PROSE}>
-                        <p>{t("performance.p1")}</p>
+                        <p>{t.rich("performance.p1", ARTICLE_TAGS)}</p>
                         <p>{t("performance.p2")}</p>
                         <p>{t("performance.p3")}</p>
                         <p>{t("performance.p4")}</p>

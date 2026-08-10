@@ -1,6 +1,13 @@
 import { getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PLAIN_TAGS,
+    PROSE,
+    PROSE_TEXT,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 import { MODE_LABELS } from "../domain/labels";
@@ -38,20 +45,21 @@ const OPTION_ROWS = [
     "downloadBytes",
 ] as const;
 
-/** Question/answer pairs, shared by the FAQ section and its structured data. */
+/**
+ * Question/answer pairs, shared by the FAQ section and its structured data.
+ *
+ * A marked-up answer is read twice from one message: `t.rich` for the panel,
+ * `t.markup` for the JSON-LD, which can hold neither an element nor a literal
+ * `<code>`.
+ */
 export async function getAesFaqEntries(): Promise<FaqEntry[]> {
     const t = await getTranslations("aes.article");
 
-    return [
-        { question: t("faq.q1"), answer: t("faq.a1") },
-        { question: t("faq.q2"), answer: t("faq.a2") },
-        { question: t("faq.q3"), answer: t("faq.a3") },
-        { question: t("faq.q4"), answer: t("faq.a4") },
-        { question: t("faq.q5"), answer: t("faq.a5") },
-        { question: t("faq.q6"), answer: t("faq.a6") },
-        { question: t("faq.q7"), answer: t("faq.a7") },
-        { question: t("faq.q8"), answer: t("faq.a8") },
-    ];
+    return (["1", "2", "3", "4", "5", "6", "7", "8"] as const).map((index) => ({
+        question: t(`faq.q${index}`),
+        answer: t.markup(`faq.a${index}`, PLAIN_TAGS),
+        answerNode: t.rich(`faq.a${index}`, ARTICLE_TAGS),
+    }));
 }
 
 export async function AesArticle() {
@@ -76,9 +84,10 @@ export async function AesArticle() {
                 <ArticleSection id="understanding" title={t("understanding.title")}>
                     <div className={PROSE}>
                         <p>{t("understanding.p1")}</p>
-                        <p>{t("understanding.p2")}</p>
-                        <p>{t("understanding.p3")}</p>
-                        <p>{t("understanding.p4")}</p>
+                        <ArticleExample>
+                            {t.rich("understanding.example", ARTICLE_TAGS)}
+                        </ArticleExample>
+                        <p>{t.rich("understanding.p2", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
@@ -139,8 +148,9 @@ export async function AesArticle() {
 
                 <ArticleSection id="keys" title={t("keys.title")}>
                     <div className={PROSE}>
+                        <p>{t("keys.symmetry")}</p>
                         <p>{t("keys.p1")}</p>
-                        <p>{t("keys.p2")}</p>
+                        <p>{t.rich("keys.p2", ARTICLE_TAGS)}</p>
                         <p>{t("keys.p3")}</p>
                         <p>{t("keys.p4")}</p>
                     </div>
@@ -177,10 +187,10 @@ export async function AesArticle() {
                                             {t(`options.${row}Name`)}
                                         </th>
                                         <td className="text-muted-foreground px-4 py-3">
-                                            {t(`options.${row}Does`)}
+                                            {t.rich(`options.${row}Does`, ARTICLE_TAGS)}
                                         </td>
                                         <td className="text-muted-foreground px-4 py-3">
-                                            {t(`options.${row}When`)}
+                                            {t.rich(`options.${row}When`, ARTICLE_TAGS)}
                                         </td>
                                     </tr>
                                 ))}
@@ -191,10 +201,10 @@ export async function AesArticle() {
                     <div className={`mt-5 ${PROSE}`}>
                         <p>{t("options.rawKeyNote")}</p>
                         <p>{t("options.generateNote")}</p>
-                        <p>{t("options.fileNote")}</p>
-                        <p>{t("options.ivWidthNote")}</p>
+                        <p>{t.rich("options.fileNote", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("options.ivWidthNote", ARTICLE_TAGS)}</p>
                         <p>{t("options.tagNote")}</p>
-                        <p>{t("options.defaultsNote")}</p>
+                        <p>{t.rich("options.defaultsNote", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
@@ -202,8 +212,8 @@ export async function AesArticle() {
                     <p className={PROSE_TEXT}>{t("interop.intro")}</p>
 
                     <ol className={`mt-4 list-decimal space-y-4 pl-5 ${PROSE_TEXT}`}>
-                        <li>{t("interop.p1")}</li>
-                        <li>{t("interop.p2")}</li>
+                        <li>{t.rich("interop.p1", ARTICLE_TAGS)}</li>
+                        <li>{t.rich("interop.p2", ARTICLE_TAGS)}</li>
                         <li>{t("interop.p3")}</li>
                         <li>{t("interop.p4")}</li>
                     </ol>

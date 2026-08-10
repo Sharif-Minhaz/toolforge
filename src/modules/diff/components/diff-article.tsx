@@ -1,6 +1,12 @@
 import { getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PROSE,
+    PROSE_TEXT,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 
@@ -59,9 +65,10 @@ export async function DiffArticle() {
                 <ArticleSection id="howItWorks" title={t("howItWorks.title")}>
                     <div className={PROSE}>
                         <p>{t("howItWorks.p1")}</p>
+                        <ArticleExample>
+                            {t.rich("howItWorks.example", ARTICLE_TAGS)}
+                        </ArticleExample>
                         <p>{t("howItWorks.p2")}</p>
-                        <p>{t("howItWorks.p3")}</p>
-                        <p>{t("howItWorks.p4")}</p>
                     </div>
                 </ArticleSection>
 
@@ -124,8 +131,8 @@ export async function DiffArticle() {
 
                 <ArticleSection id="patch" title={t("patch.title")}>
                     <div className={PROSE}>
-                        <p>{t("patch.p1")}</p>
-                        <p>{t("patch.p2")}</p>
+                        <p>{t.rich("patch.p1", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("patch.p2", ARTICLE_TAGS)}</p>
                         <p>{t("patch.p3")}</p>
                     </div>
                 </ArticleSection>

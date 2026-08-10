@@ -1,6 +1,11 @@
 import { getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PROSE,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 import { CONVERSION_TARGETS } from "../types";
@@ -71,10 +76,11 @@ export async function ImageConverterArticle() {
             <article className="flex min-w-0 flex-col gap-12 xl:order-1">
                 <ArticleSection id="howItWorks" title={t("howItWorks.title")}>
                     <div className={PROSE}>
-                        <p>{t("howItWorks.p1")}</p>
+                        <p>{t.rich("howItWorks.p1", ARTICLE_TAGS)}</p>
+                        <ArticleExample>
+                            {t.rich("howItWorks.example", ARTICLE_TAGS)}
+                        </ArticleExample>
                         <p>{t("howItWorks.p2")}</p>
-                        <p>{t("howItWorks.p3")}</p>
-                        <p>{t("howItWorks.p4")}</p>
                     </div>
                 </ArticleSection>
 
@@ -222,6 +228,7 @@ export async function ImageConverterArticle() {
                         <p>{t("limits.p1")}</p>
                         <p>{t("limits.p2")}</p>
                         <p>{t("limits.p3")}</p>
+                        <p>{t.rich("limits.codecLoading", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 

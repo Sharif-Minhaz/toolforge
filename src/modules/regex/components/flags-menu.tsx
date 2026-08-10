@@ -10,6 +10,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { ARTICLE_TAGS } from "@/modules/tools/components/article-section";
 import { FLAG_LETTERS, formatFlagLetters } from "../domain/flags";
 import { REGEX_FLAGS, type RegexFlag } from "../types";
 
@@ -59,7 +60,7 @@ export function FlagsMenu({ value, onToggle }: FlagsMenuProps) {
                                 {t(`flags.${flag}.name`)}
                             </span>
                             <span className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                                {t(`flags.${flag}.hint`)}
+                                {t.rich(`flags.${flag}.hint`, ARTICLE_TAGS)}
                             </span>
                         </span>
                     </DropdownMenuCheckboxItem>

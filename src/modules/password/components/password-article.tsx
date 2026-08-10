@@ -1,6 +1,13 @@
 import { getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PLAIN_TAGS,
+    PROSE,
+    PROSE_TEXT,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 import { superscript } from "@/modules/tools/domain/magnitude";
@@ -24,13 +31,23 @@ export const PASSWORD_ARTICLE_SECTIONS = [
     { id: "faq", titleKey: "faq.title" },
 ] as const;
 
-/** Question/answer pairs, shared by the FAQ section and its structured data. */
+/**
+ * Question/answer pairs, shared by the FAQ section and its structured data.
+ *
+ * A marked-up answer is read twice from one message: `t.rich` for the panel,
+ * `t.markup` for the JSON-LD, which can hold neither an element nor a literal
+ * `<code>`.
+ */
 export async function getPasswordFaqEntries(): Promise<FaqEntry[]> {
     const t = await getTranslations("password.article");
 
     return [
         { question: t("faq.q1"), answer: t("faq.a1") },
-        { question: t("faq.q2"), answer: t("faq.a2") },
+        {
+            question: t("faq.q2"),
+            answer: t.markup("faq.a2", PLAIN_TAGS),
+            answerNode: t.rich("faq.a2", ARTICLE_TAGS),
+        },
         { question: t("faq.q3"), answer: t("faq.a3") },
         { question: t("faq.q4"), answer: t("faq.a4") },
         { question: t("faq.q5"), answer: t("faq.a5") },
@@ -80,17 +97,19 @@ export async function PasswordArticle() {
             <article className="flex min-w-0 flex-col gap-12 xl:order-1">
                 <ArticleSection id="understanding" title={t("understanding.title")}>
                     <div className={PROSE}>
-                        <p>{t("understanding.p1")}</p>
-                        <p>{t("understanding.p2")}</p>
-                        <p>{t("understanding.p3")}</p>
+                        <p>{t.rich("understanding.p1", ARTICLE_TAGS)}</p>
+                        <ArticleExample>
+                            {t.rich("understanding.example", ARTICLE_TAGS)}
+                        </ArticleExample>
+                        <p>{t.rich("understanding.p2", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
                 <ArticleSection id="entropy" title={t("entropy.title")}>
                     <div className={PROSE}>
                         <p>{t("entropy.p1")}</p>
-                        <p>{t("entropy.p2")}</p>
-                        <p>{t("entropy.p3")}</p>
+                        <p>{t.rich("entropy.p2", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("entropy.p3", ARTICLE_TAGS)}</p>
                         <p>{t("entropy.p4")}</p>
                     </div>
 
@@ -169,7 +188,7 @@ export async function PasswordArticle() {
                                             {formatRate(ATTACK_GUESSES_PER_SECOND[model])}
                                         </td>
                                         <td className="text-muted-foreground px-4 py-3">
-                                            {t(`attackers.when.${model}`)}
+                                            {t.rich(`attackers.when.${model}`, ARTICLE_TAGS)}
                                         </td>
                                     </tr>
                                 ))}
@@ -178,8 +197,8 @@ export async function PasswordArticle() {
                     </div>
 
                     <div className={`mt-5 ${PROSE}`}>
-                        <p>{t("attackers.roundingNote")}</p>
-                        <p>{t("attackers.magnitudeNote")}</p>
+                        <p>{t.rich("attackers.roundingNote", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("attackers.magnitudeNote", ARTICLE_TAGS)}</p>
                         <p>{t("attackers.averageNote")}</p>
                         <p>{t("attackers.knowledgeNote")}</p>
                     </div>
@@ -284,11 +303,21 @@ export async function PasswordArticle() {
 
                     <div className={`mt-5 ${PROSE}`}>
                         <p>{t("options.modeGatingNote")}</p>
-                        <p>{t("options.similarSetNote", { characters: SIMILAR_CHARACTERS })}</p>
-                        <p>{t("options.ambiguousSetNote", { characters: AMBIGUOUS_CHARACTERS })}</p>
-                        <p>{t("options.capitalizeNote")}</p>
-                        <p>{t("options.separatorNote")}</p>
-                        <p>{t("options.defaultsNote")}</p>
+                        <p>
+                            {t.rich("options.similarSetNote", {
+                                ...ARTICLE_TAGS,
+                                characters: SIMILAR_CHARACTERS,
+                            })}
+                        </p>
+                        <p>
+                            {t.rich("options.ambiguousSetNote", {
+                                ...ARTICLE_TAGS,
+                                characters: AMBIGUOUS_CHARACTERS,
+                            })}
+                        </p>
+                        <p>{t.rich("options.capitalizeNote", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("options.separatorNote", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("options.defaultsNote", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
@@ -296,7 +325,7 @@ export async function PasswordArticle() {
                     <div className={PROSE}>
                         <p>{t("privacy.p1")}</p>
                         <p>{t("privacy.p2")}</p>
-                        <p>{t("privacy.p3")}</p>
+                        <p>{t.rich("privacy.p3", ARTICLE_TAGS)}</p>
                         <p>{t("privacy.p4")}</p>
                         <p>{t("privacy.p5")}</p>
                     </div>

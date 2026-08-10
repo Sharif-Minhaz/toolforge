@@ -1,6 +1,13 @@
 import { getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PLAIN_TAGS,
+    PROSE,
+    PROSE_TEXT,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 
@@ -13,14 +20,32 @@ export const UUID_ARTICLE_SECTIONS = [
     { id: "faq", titleKey: "faq.title" },
 ] as const;
 
-/** Question/answer pairs, shared by the FAQ section and its structured data. */
+/**
+ * Question/answer pairs, shared by the FAQ section and its structured data.
+ *
+ * A marked-up answer is read twice from one message: `t.rich` for the panel,
+ * `t.markup` for the JSON-LD, which can hold neither an element nor a literal
+ * `<code>`.
+ */
 export async function getUuidFaqEntries(): Promise<FaqEntry[]> {
     const t = await getTranslations("uuid.article");
 
     return [
-        { question: t("faq.q1"), answer: t("faq.a1") },
-        { question: t("faq.q2"), answer: t("faq.a2") },
-        { question: t("faq.q3"), answer: t("faq.a3") },
+        {
+            question: t("faq.q1"),
+            answer: t.markup("faq.a1", PLAIN_TAGS),
+            answerNode: t.rich("faq.a1", ARTICLE_TAGS),
+        },
+        {
+            question: t("faq.q2"),
+            answer: t.markup("faq.a2", PLAIN_TAGS),
+            answerNode: t.rich("faq.a2", ARTICLE_TAGS),
+        },
+        {
+            question: t("faq.q3"),
+            answer: t.markup("faq.a3", PLAIN_TAGS),
+            answerNode: t.rich("faq.a3", ARTICLE_TAGS),
+        },
         { question: t("faq.q4"), answer: t("faq.a4") },
     ];
 }
@@ -37,26 +62,12 @@ export async function UuidArticle() {
         label: t(section.titleKey),
     }));
 
-    const versionRows = [
-        {
-            version: "v1",
-            basis: t("types.v1Basis"),
-            sortable: t("types.v1Sortable"),
-            bestFor: t("types.v1BestFor"),
-        },
-        {
-            version: "v4",
-            basis: t("types.v4Basis"),
-            sortable: t("types.v4Sortable"),
-            bestFor: t("types.v4BestFor"),
-        },
-        {
-            version: "v7",
-            basis: t("types.v7Basis"),
-            sortable: t("types.v7Sortable"),
-            bestFor: t("types.v7BestFor"),
-        },
-    ];
+    const versionRows = (["v1", "v4", "v7"] as const).map((version) => ({
+        version,
+        basis: t.rich(`types.${version}Basis`, ARTICLE_TAGS),
+        sortable: t.rich(`types.${version}Sortable`, ARTICLE_TAGS),
+        bestFor: t.rich(`types.${version}BestFor`, ARTICLE_TAGS),
+    }));
 
     return (
         <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_14rem] xl:gap-12">
@@ -67,9 +78,11 @@ export async function UuidArticle() {
             <article className="flex min-w-0 flex-col gap-12 xl:order-1">
                 <ArticleSection id="understanding" title={t("understanding.title")}>
                     <div className={PROSE}>
-                        <p>{t("understanding.p1")}</p>
-                        <p>{t("understanding.p2")}</p>
-                        <p>{t("understanding.p3")}</p>
+                        <p>{t.rich("understanding.p1", ARTICLE_TAGS)}</p>
+                        <ArticleExample>
+                            {t.rich("understanding.example", ARTICLE_TAGS)}
+                        </ArticleExample>
+                        <p>{t.rich("understanding.p2", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
@@ -77,7 +90,7 @@ export async function UuidArticle() {
                     <div className={PROSE}>
                         <p>{t("why.p1")}</p>
                         <p>{t("why.p2")}</p>
-                        <p>{t("why.p3")}</p>
+                        <p>{t.rich("why.p3", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
@@ -129,20 +142,20 @@ export async function UuidArticle() {
                         </table>
                     </div>
 
-                    <p className={`mt-5 ${PROSE_TEXT}`}>{t("types.others")}</p>
+                    <p className={`mt-5 ${PROSE_TEXT}`}>{t.rich("types.others", ARTICLE_TAGS)}</p>
                 </ArticleSection>
 
                 <ArticleSection id="howItWorks" title={t("howItWorks.title")}>
                     <div className={PROSE}>
-                        <p>{t("howItWorks.p1")}</p>
-                        <p>{t("howItWorks.p2")}</p>
+                        <p>{t.rich("howItWorks.p1", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("howItWorks.p2", ARTICLE_TAGS)}</p>
                         <p>{t("howItWorks.p3")}</p>
                     </div>
                 </ArticleSection>
 
                 <ArticleSection id="useCases" title={t("useCases.title")}>
                     <div className={PROSE}>
-                        <p>{t("useCases.p1")}</p>
+                        <p>{t.rich("useCases.p1", ARTICLE_TAGS)}</p>
                         <p>{t("useCases.p2")}</p>
                         <p>{t("useCases.p3")}</p>
                     </div>

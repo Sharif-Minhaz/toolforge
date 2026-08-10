@@ -5,6 +5,9 @@
 first section of every tool article — the one a reader hits before they have
 decided whether the page is the one they wanted.
 
+Every tool article follows it now. A new one starts here rather than arriving at
+it later.
+
 Everything below it may stay as long as it needs to be. The tables in
 particular are the part readers come back for, and their structure is not up for
 change here.
@@ -93,8 +96,25 @@ There is no Markdown anywhere in the message pipeline. A value written as
 
 reaches the reader with the quotes still around it, in a font that has not
 changed. This was live on four tools before anybody noticed, which is why
-`tools/tests/messages.test.ts` now fails on a backtick in any message outside a
-short quarantine list. Convert them as you touch each article; never add one.
+`tools/tests/messages.test.ts` fails on a backtick in any message outside a
+short quarantine list. That list is empty; keep it that way.
+
+## A brace or an angle bracket has to be escaped
+
+The same message is ICU MessageFormat, so `{` opens an argument and `<` opens a
+tag. Both are ordinary characters in the values these articles quote, and both
+have to be wrapped in apostrophes to survive:
+
+```jsonc
+"example": "<code>'{'\"id\":42'}'</code> → the same document over seven indented lines"
+"groupsExample": "<code>(?'<'year>\\d'{'4'}')</code> captures four digits as <code>year</code>."
+```
+
+A lone apostrophe inside a `<code>` span needs doubling — `<code>''</code>` —
+because `'<` would otherwise swallow the closing tag. An unescaped one does not
+throw: next-intl reports `INVALID_MESSAGE` and renders the key path where the
+words should be, which is why the test parses every message rather than trusting
+the page to complain.
 
 ## A marked-up answer still owes the JSON-LD a plain string
 

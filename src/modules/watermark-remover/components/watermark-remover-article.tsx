@@ -1,6 +1,12 @@
 import { getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PROSE,
+    PROSE_TEXT,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 
@@ -68,9 +74,10 @@ export async function WatermarkRemoverArticle() {
                 <ArticleSection id="howItWorks" title={t("howItWorks.title")}>
                     <div className={PROSE}>
                         <p>{t("howItWorks.p1")}</p>
+                        <ArticleExample>
+                            {t.rich("howItWorks.example", ARTICLE_TAGS)}
+                        </ArticleExample>
                         <p>{t("howItWorks.p2")}</p>
-                        <p>{t("howItWorks.p3")}</p>
-                        <p>{t("howItWorks.p4")}</p>
                     </div>
                 </ArticleSection>
 
@@ -175,6 +182,7 @@ export async function WatermarkRemoverArticle() {
                         <p>{t("quality.p1")}</p>
                         <p>{t("quality.p2")}</p>
                         <p>{t("quality.p3")}</p>
+                        <p>{t("quality.composite")}</p>
                     </div>
                 </ArticleSection>
 

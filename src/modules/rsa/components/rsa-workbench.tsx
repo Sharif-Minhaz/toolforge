@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
+import { ARTICLE_TAGS } from "@/modules/tools/components/article-section";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
@@ -374,7 +375,7 @@ export function RsaWorkbench({ initialOptions }: RsaWorkbenchProps) {
 
                     <OptionSelect
                         label={t("outputFormatLabel")}
-                        hint={t(`outputFormatHint.${options.outputFormat}`)}
+                        hint={t.rich(`outputFormatHint.${options.outputFormat}`, ARTICLE_TAGS)}
                         value={options.outputFormat}
                         items={outputFormatItems}
                         values={RSA_OUTPUT_FORMATS}
@@ -402,7 +403,7 @@ export function RsaWorkbench({ initialOptions }: RsaWorkbenchProps) {
 
                     <OptionSelect
                         label={t("hashLabel")}
-                        hint={t("hashHint")}
+                        hint={t.rich("hashHint", ARTICLE_TAGS)}
                         value={options.hash}
                         items={hashItems}
                         values={RSA_HASHES}

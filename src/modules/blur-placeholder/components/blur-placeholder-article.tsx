@@ -1,6 +1,11 @@
 import { getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PROSE,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 
@@ -67,9 +72,8 @@ export async function BlurPlaceholderArticle() {
                 <ArticleSection id="whatItIs" title={t("whatItIs.title")}>
                     <div className={PROSE}>
                         <p>{t("whatItIs.p1")}</p>
-                        <p>{t("whatItIs.p2")}</p>
-                        <p>{t("whatItIs.p3")}</p>
-                        <p>{t("whatItIs.p4")}</p>
+                        <ArticleExample>{t.rich("whatItIs.example", ARTICLE_TAGS)}</ArticleExample>
+                        <p>{t.rich("whatItIs.p2", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 

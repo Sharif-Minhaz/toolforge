@@ -1,6 +1,13 @@
 import { getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PLAIN_TAGS,
+    PROSE,
+    PROSE_TEXT,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 import { REGISTERED_CLAIMS } from "../types";
@@ -38,18 +45,21 @@ const ALGORITHM_ROWS = [
     { family: "eddsa", names: "EdDSA" },
 ] as const;
 
-/** Question/answer pairs, shared by the FAQ section and its structured data. */
+/**
+ * Question/answer pairs, shared by the FAQ section and its structured data.
+ *
+ * A marked-up answer is read twice from one message: `t.rich` for the panel,
+ * `t.markup` for the JSON-LD, which can hold neither an element nor a literal
+ * `<code>`.
+ */
 export async function getJwtFaqEntries(): Promise<FaqEntry[]> {
     const t = await getTranslations("jwt.article");
 
-    return [
-        { question: t("faq.q1"), answer: t("faq.a1") },
-        { question: t("faq.q2"), answer: t("faq.a2") },
-        { question: t("faq.q3"), answer: t("faq.a3") },
-        { question: t("faq.q4"), answer: t("faq.a4") },
-        { question: t("faq.q5"), answer: t("faq.a5") },
-        { question: t("faq.q6"), answer: t("faq.a6") },
-    ];
+    return (["1", "2", "3", "4", "5", "6"] as const).map((index) => ({
+        question: t(`faq.q${index}`),
+        answer: t.markup(`faq.a${index}`, PLAIN_TAGS),
+        answerNode: t.rich(`faq.a${index}`, ARTICLE_TAGS),
+    }));
 }
 
 const TABLE_WRAP = "ring-border/80 mt-5 overflow-x-auto rounded-xl ring-1 ring-inset";
@@ -78,9 +88,11 @@ export async function JwtArticle() {
             <article className="flex min-w-0 flex-col gap-12 xl:order-1">
                 <ArticleSection id="understanding" title={t("understanding.title")}>
                     <div className={PROSE}>
-                        <p>{t("understanding.p1")}</p>
-                        <p>{t("understanding.p2")}</p>
-                        <p>{t("understanding.p3")}</p>
+                        <p>{t.rich("understanding.p1", ARTICLE_TAGS)}</p>
+                        <ArticleExample>
+                            {t.rich("understanding.example", ARTICLE_TAGS)}
+                        </ArticleExample>
+                        <p>{t.rich("understanding.p2", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
@@ -112,7 +124,7 @@ export async function JwtArticle() {
                                             {t(`anatomy.${segment}Name`)}
                                         </th>
                                         <td className={BODY_CELL}>
-                                            {t(`anatomy.${segment}Holds`)}
+                                            {t.rich(`anatomy.${segment}Holds`, ARTICLE_TAGS)}
                                         </td>
                                         <td className={BODY_CELL}>
                                             {t(`anatomy.${segment}Signed`)}
@@ -123,12 +135,14 @@ export async function JwtArticle() {
                         </table>
                     </div>
 
-                    <p className={`mt-5 ${PROSE_TEXT}`}>{t("anatomy.encoding")}</p>
+                    <p className={`mt-5 ${PROSE_TEXT}`}>
+                        {t.rich("anatomy.encoding", ARTICLE_TAGS)}
+                    </p>
                 </ArticleSection>
 
                 <ArticleSection id="claims" title={t("claims.title")}>
                     <div className={PROSE}>
-                        <p>{t("claims.intro")}</p>
+                        <p>{t.rich("claims.intro", ARTICLE_TAGS)}</p>
                     </div>
 
                     <div className={TABLE_WRAP}>
@@ -154,7 +168,9 @@ export async function JwtArticle() {
                                             {claim}
                                         </th>
                                         <td className={BODY_CELL}>{t(`claims.${claim}Name`)}</td>
-                                        <td className={BODY_CELL}>{t(`claims.${claim}Detail`)}</td>
+                                        <td className={BODY_CELL}>
+                                            {t.rich(`claims.${claim}Detail`, ARTICLE_TAGS)}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -166,7 +182,7 @@ export async function JwtArticle() {
 
                 <ArticleSection id="algorithms" title={t("algorithms.title")}>
                     <div className={PROSE}>
-                        <p>{t("algorithms.intro")}</p>
+                        <p>{t.rich("algorithms.intro", ARTICLE_TAGS)}</p>
                     </div>
 
                     <div className={TABLE_WRAP}>
@@ -203,7 +219,7 @@ export async function JwtArticle() {
                                             {t(`algorithms.${row.family}Key`)}
                                         </td>
                                         <td className={BODY_CELL}>
-                                            {t(`algorithms.${row.family}When`)}
+                                            {t.rich(`algorithms.${row.family}When`, ARTICLE_TAGS)}
                                         </td>
                                     </tr>
                                 ))}
@@ -212,16 +228,16 @@ export async function JwtArticle() {
                     </div>
 
                     <div className={`mt-5 ${PROSE}`}>
-                        <p>{t("algorithms.noneNote")}</p>
-                        <p>{t("algorithms.sizeNote")}</p>
+                        <p>{t.rich("algorithms.noneNote", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("algorithms.sizeNote", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
                 <ArticleSection id="verifying" title={t("verifying.title")}>
                     <div className={PROSE}>
                         <p>{t("verifying.p1")}</p>
-                        <p>{t("verifying.p2")}</p>
-                        <p>{t("verifying.p3")}</p>
+                        <p>{t.rich("verifying.p2", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("verifying.p3", ARTICLE_TAGS)}</p>
                         <p>{t("verifying.p4")}</p>
                     </div>
                 </ArticleSection>
@@ -253,8 +269,12 @@ export async function JwtArticle() {
                                         <th scope="row" className={`${ROW_HEAD} whitespace-nowrap`}>
                                             {t(`options.${row}Name`)}
                                         </th>
-                                        <td className={BODY_CELL}>{t(`options.${row}Does`)}</td>
-                                        <td className={BODY_CELL}>{t(`options.${row}When`)}</td>
+                                        <td className={BODY_CELL}>
+                                            {t.rich(`options.${row}Does`, ARTICLE_TAGS)}
+                                        </td>
+                                        <td className={BODY_CELL}>
+                                            {t.rich(`options.${row}When`, ARTICLE_TAGS)}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -262,18 +282,18 @@ export async function JwtArticle() {
                     </div>
 
                     <div className={`mt-5 ${PROSE}`}>
-                        <p>{t("options.headerOwnsAlg")}</p>
-                        <p>{t("options.noTokenParam")}</p>
+                        <p>{t.rich("options.headerOwnsAlg", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("options.noTokenParam", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
                 <ArticleSection id="pitfalls" title={t("pitfalls.title")}>
                     <div className={PROSE}>
                         <p>{t("pitfalls.p1")}</p>
-                        <p>{t("pitfalls.p2")}</p>
-                        <p>{t("pitfalls.p3")}</p>
-                        <p>{t("pitfalls.p4")}</p>
-                        <p>{t("pitfalls.p5")}</p>
+                        <p>{t.rich("pitfalls.p2", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("pitfalls.p3", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("pitfalls.p4", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("pitfalls.p5", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 

@@ -1,6 +1,13 @@
 import { getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PLAIN_TAGS,
+    PROSE,
+    PROSE_TEXT,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 import { TAILWIND_VERSION } from "../domain/tailwind-palette";
@@ -16,17 +23,35 @@ export const COLOR_ARTICLE_SECTIONS = [
     { id: "faq", titleKey: "faq.title" },
 ] as const;
 
-/** Question/answer pairs, shared by the FAQ section and its structured data. */
+/**
+ * Question/answer pairs, shared by the FAQ section and its structured data.
+ *
+ * A marked-up answer is read twice from one message: `t.rich` for the panel,
+ * `t.markup` for the JSON-LD, which can hold neither an element nor a literal
+ * `<code>`.
+ */
 export async function getColorFaqEntries(): Promise<FaqEntry[]> {
     const t = await getTranslations("color.article");
 
     return [
         { question: t("faq.q1"), answer: t("faq.a1") },
         { question: t("faq.q2"), answer: t("faq.a2") },
-        { question: t("faq.q3"), answer: t("faq.a3") },
+        {
+            question: t("faq.q3"),
+            answer: t.markup("faq.a3", PLAIN_TAGS),
+            answerNode: t.rich("faq.a3", ARTICLE_TAGS),
+        },
         { question: t("faq.q4"), answer: t("faq.a4") },
-        { question: t("faq.q5"), answer: t("faq.a5") },
-        { question: t("faq.q6"), answer: t("faq.a6") },
+        {
+            question: t("faq.q5"),
+            answer: t.markup("faq.a5", PLAIN_TAGS),
+            answerNode: t.rich("faq.a5", ARTICLE_TAGS),
+        },
+        {
+            question: t("faq.q6"),
+            answer: t.markup("faq.a6", PLAIN_TAGS),
+            answerNode: t.rich("faq.a6", ARTICLE_TAGS),
+        },
     ];
 }
 
@@ -66,8 +91,10 @@ export async function ColorArticle() {
                 <ArticleSection id="understanding" title={t("understanding.title")}>
                     <div className={PROSE}>
                         <p>{t("understanding.p1")}</p>
+                        <ArticleExample>
+                            {t.rich("understanding.example", ARTICLE_TAGS)}
+                        </ArticleExample>
                         <p>{t("understanding.p2")}</p>
-                        <p>{t("understanding.p3")}</p>
                     </div>
                 </ArticleSection>
 
@@ -164,7 +191,7 @@ export async function ColorArticle() {
                     <div className={`mt-5 ${PROSE}`}>
                         <p>{t("controls.alphaNote")}</p>
                         <p>{t("controls.notationNote")}</p>
-                        <p>{t("controls.clampNote")}</p>
+                        <p>{t.rich("controls.clampNote", ARTICLE_TAGS)}</p>
                         <p>{t("controls.defaultsNote")}</p>
                     </div>
                 </ArticleSection>
@@ -181,14 +208,14 @@ export async function ColorArticle() {
                     <div className={PROSE}>
                         <p>{t("scales.p1")}</p>
                         <p>{t("scales.p2")}</p>
-                        <p>{t("scales.p3")}</p>
+                        <p>{t.rich("scales.p3", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
                 <ArticleSection id="palettes" title={t("palettes.title")}>
                     <div className={PROSE}>
                         <p>{t("palettes.p1", { version: TAILWIND_VERSION })}</p>
-                        <p>{t("palettes.p2")}</p>
+                        <p>{t.rich("palettes.p2", ARTICLE_TAGS)}</p>
                         <p>{t("palettes.p3")}</p>
                     </div>
                 </ArticleSection>

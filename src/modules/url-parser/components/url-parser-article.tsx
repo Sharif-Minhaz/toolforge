@@ -1,6 +1,13 @@
 import { getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PLAIN_TAGS,
+    PROSE,
+    PROSE_TEXT,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 import { URL_PART_IDS } from "../types";
@@ -14,18 +21,21 @@ export const URL_PARSER_ARTICLE_SECTIONS = [
     { id: "faq", titleKey: "faq.title" },
 ] as const;
 
-/** Question/answer pairs, shared by the FAQ section and its structured data. */
+/**
+ * Question/answer pairs, shared by the FAQ section and its structured data.
+ *
+ * A marked-up answer is read twice from one message: `t.rich` for the panel,
+ * `t.markup` for the JSON-LD, which can hold neither an element nor a literal
+ * `<code>`.
+ */
 export async function getUrlParserFaqEntries(): Promise<FaqEntry[]> {
     const t = await getTranslations("urlParser.article");
 
-    return [
-        { question: t("faq.q1"), answer: t("faq.a1") },
-        { question: t("faq.q2"), answer: t("faq.a2") },
-        { question: t("faq.q3"), answer: t("faq.a3") },
-        { question: t("faq.q4"), answer: t("faq.a4") },
-        { question: t("faq.q5"), answer: t("faq.a5") },
-        { question: t("faq.q6"), answer: t("faq.a6") },
-    ];
+    return (["1", "2", "3", "4", "5", "6"] as const).map((index) => ({
+        question: t(`faq.q${index}`),
+        answer: t.markup(`faq.a${index}`, PLAIN_TAGS),
+        answerNode: t.rich(`faq.a${index}`, ARTICLE_TAGS),
+    }));
 }
 
 export async function UrlParserArticle() {
@@ -51,8 +61,10 @@ export async function UrlParserArticle() {
                 <ArticleSection id="understanding" title={t("understanding.title")}>
                     <div className={PROSE}>
                         <p>{t("understanding.p1")}</p>
-                        <p>{t("understanding.p2")}</p>
-                        <p>{t("understanding.p3")}</p>
+                        <ArticleExample>
+                            {t.rich("understanding.example", ARTICLE_TAGS)}
+                        </ArticleExample>
+                        <p>{t.rich("understanding.p2", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
@@ -89,10 +101,10 @@ export async function UrlParserArticle() {
                                             {tParts(part)}
                                         </th>
                                         <td className="text-muted-foreground px-4 py-3">
-                                            {t(`parts.${part}Holds`)}
+                                            {t.rich(`parts.${part}Holds`, ARTICLE_TAGS)}
                                         </td>
                                         <td className="text-muted-foreground px-4 py-3">
-                                            {t(`parts.${part}Watch`)}
+                                            {t.rich(`parts.${part}Watch`, ARTICLE_TAGS)}
                                         </td>
                                     </tr>
                                 ))}
@@ -103,17 +115,17 @@ export async function UrlParserArticle() {
 
                 <ArticleSection id="params" title={t("params.title")}>
                     <div className={PROSE}>
-                        <p>{t("params.p1")}</p>
-                        <p>{t("params.p2")}</p>
-                        <p>{t("params.p3")}</p>
+                        <p>{t.rich("params.p1", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("params.p2", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("params.p3", ARTICLE_TAGS)}</p>
                         <p>{t("params.p4")}</p>
                     </div>
                 </ArticleSection>
 
                 <ArticleSection id="normalisation" title={t("normalisation.title")}>
                     <div className={PROSE}>
-                        <p>{t("normalisation.p1")}</p>
-                        <p>{t("normalisation.p2")}</p>
+                        <p>{t.rich("normalisation.p1", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("normalisation.p2", ARTICLE_TAGS)}</p>
                         <p>{t("normalisation.p3")}</p>
                     </div>
                 </ArticleSection>
@@ -121,7 +133,7 @@ export async function UrlParserArticle() {
                 <ArticleSection id="useCases" title={t("useCases.title")}>
                     <div className={PROSE}>
                         <p>{t("useCases.p1")}</p>
-                        <p>{t("useCases.p2")}</p>
+                        <p>{t.rich("useCases.p2", ARTICLE_TAGS)}</p>
                     </div>
 
                     <p className={`mt-5 ${PROSE_TEXT}`}>{t("useCases.p3")}</p>

@@ -1,6 +1,13 @@
 import { getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PLAIN_TAGS,
+    PROSE,
+    PROSE_TEXT,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 
@@ -16,15 +23,33 @@ export const JSON_ARTICLE_SECTIONS = [
     { id: "faq", titleKey: "faq.title" },
 ] as const;
 
-/** Question/answer pairs, shared by the FAQ section and its structured data. */
+/**
+ * Question/answer pairs, shared by the FAQ section and its structured data.
+ *
+ * A marked-up answer is read twice from one message: `t.rich` for the panel,
+ * `t.markup` for the JSON-LD, which can hold neither an element nor a literal
+ * `<code>`.
+ */
 export async function getJsonFaqEntries(): Promise<FaqEntry[]> {
     const t = await getTranslations("json.article");
 
     return [
         { question: t("faq.q1"), answer: t("faq.a1") },
-        { question: t("faq.q2"), answer: t("faq.a2") },
-        { question: t("faq.q3"), answer: t("faq.a3") },
-        { question: t("faq.q4"), answer: t("faq.a4") },
+        {
+            question: t("faq.q2"),
+            answer: t.markup("faq.a2", PLAIN_TAGS),
+            answerNode: t.rich("faq.a2", ARTICLE_TAGS),
+        },
+        {
+            question: t("faq.q3"),
+            answer: t.markup("faq.a3", PLAIN_TAGS),
+            answerNode: t.rich("faq.a3", ARTICLE_TAGS),
+        },
+        {
+            question: t("faq.q4"),
+            answer: t.markup("faq.a4", PLAIN_TAGS),
+            answerNode: t.rich("faq.a4", ARTICLE_TAGS),
+        },
         { question: t("faq.q5"), answer: t("faq.a5") },
         { question: t("faq.q6"), answer: t("faq.a6") },
         { question: t("faq.q7"), answer: t("faq.a7") },
@@ -94,8 +119,10 @@ export async function JsonArticle() {
                 <ArticleSection id="understanding" title={t("understanding.title")}>
                     <div className={PROSE}>
                         <p>{t("understanding.p1")}</p>
+                        <ArticleExample>
+                            {t.rich("understanding.example", ARTICLE_TAGS)}
+                        </ArticleExample>
                         <p>{t("understanding.p2")}</p>
-                        <p>{t("understanding.p3")}</p>
                     </div>
                 </ArticleSection>
 
@@ -228,10 +255,10 @@ export async function JsonArticle() {
                                             {t(`options.${row}Name`)}
                                         </th>
                                         <td className="text-muted-foreground px-4 py-3">
-                                            {t(`options.${row}Does`)}
+                                            {t.rich(`options.${row}Does`, ARTICLE_TAGS)}
                                         </td>
                                         <td className="text-muted-foreground px-4 py-3">
-                                            {t(`options.${row}When`)}
+                                            {t.rich(`options.${row}When`, ARTICLE_TAGS)}
                                         </td>
                                     </tr>
                                 ))}
@@ -255,8 +282,8 @@ export async function JsonArticle() {
 
                 <ArticleSection id="howItWorks" title={t("howItWorks.title")}>
                     <div className={PROSE}>
-                        <p>{t("howItWorks.p1")}</p>
-                        <p>{t("howItWorks.p2")}</p>
+                        <p>{t.rich("howItWorks.p1", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("howItWorks.p2", ARTICLE_TAGS)}</p>
                         <p>{t("howItWorks.p3")}</p>
                     </div>
                 </ArticleSection>

@@ -1,6 +1,12 @@
 import { getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PROSE,
+    PROSE_TEXT,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 import {
@@ -92,9 +98,10 @@ export async function PortScannerArticle() {
                 <ArticleSection id="understanding" title={t("understanding.title")}>
                     <div className={PROSE}>
                         <p>{t("understanding.p1")}</p>
-                        <p>{t("understanding.p2")}</p>
-                        <p>{t("understanding.p3")}</p>
-                        <p>{t("understanding.p4")}</p>
+                        <ArticleExample>
+                            {t.rich("understanding.example", ARTICLE_TAGS)}
+                        </ArticleExample>
+                        <p>{t.rich("understanding.p2", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
@@ -146,6 +153,10 @@ export async function PortScannerArticle() {
                             </tbody>
                         </table>
                     </div>
+
+                    <p className={`mt-5 ${PROSE_TEXT}`}>
+                        {t.rich("states.noFingerprint", ARTICLE_TAGS)}
+                    </p>
                 </ArticleSection>
 
                 <ArticleSection id="presets" title={t("presets.title")}>

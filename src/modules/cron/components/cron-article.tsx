@@ -1,6 +1,13 @@
 import { getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PLAIN_TAGS,
+    PROSE,
+    PROSE_TEXT,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 
@@ -19,15 +26,14 @@ export const CRON_ARTICLE_SECTIONS = [
 export async function getCronFaqEntries(): Promise<FaqEntry[]> {
     const t = await getTranslations("cron.article");
 
-    return [
-        { question: t("faq.q1"), answer: t("faq.a1") },
-        { question: t("faq.q2"), answer: t("faq.a2") },
-        { question: t("faq.q3"), answer: t("faq.a3") },
-        { question: t("faq.q4"), answer: t("faq.a4") },
-        { question: t("faq.q5"), answer: t("faq.a5") },
-        { question: t("faq.q6"), answer: t("faq.a6") },
-        { question: t("faq.q7"), answer: t("faq.a7") },
-    ];
+    // A marked-up answer is read twice from one message: `t.rich` for the panel,
+    // `t.markup` for the JSON-LD, which can hold neither an element nor a
+    // literal `<code>`.
+    return (["1", "2", "3", "4", "5", "6", "7"] as const).map((index) => ({
+        question: t(`faq.q${index}`),
+        answer: t.markup(`faq.a${index}`, PLAIN_TAGS),
+        answerNode: t.rich(`faq.a${index}`, ARTICLE_TAGS),
+    }));
 }
 
 /**
@@ -93,8 +99,10 @@ export async function CronArticle() {
                 <ArticleSection id="understanding" title={t("understanding.title")}>
                     <div className={PROSE}>
                         <p>{t("understanding.p1")}</p>
+                        <ArticleExample>
+                            {t.rich("understanding.example", ARTICLE_TAGS)}
+                        </ArticleExample>
                         <p>{t("understanding.p2")}</p>
-                        <p>{t("understanding.p3")}</p>
                     </div>
                 </ArticleSection>
 
@@ -194,7 +202,7 @@ export async function CronArticle() {
                     </div>
 
                     <div className={`mt-5 ${PROSE}`}>
-                        <p>{t("syntax.noWrap")}</p>
+                        <p>{t.rich("syntax.noWrap", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
@@ -284,18 +292,18 @@ export async function CronArticle() {
                     </div>
 
                     <div className={`mt-5 ${PROSE}`}>
-                        <p>{t("options.zoneNote")}</p>
+                        <p>{t.rich("options.zoneNote", ARTICLE_TAGS)}</p>
                         <p>{t("options.baseNote")}</p>
                     </div>
                 </ArticleSection>
 
                 <ArticleSection id="traps" title={t("traps.title")}>
                     <div className={PROSE}>
-                        <p>{t("traps.dayUnion")}</p>
-                        <p>{t("traps.stepFromZero")}</p>
-                        <p>{t("traps.dst")}</p>
+                        <p>{t.rich("traps.dayUnion", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("traps.stepFromZero", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("traps.dst", ARTICLE_TAGS)}</p>
                         <p>{t("traps.zoneless")}</p>
-                        <p>{t("traps.overlap")}</p>
+                        <p>{t.rich("traps.overlap", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 

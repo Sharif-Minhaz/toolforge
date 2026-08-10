@@ -1,6 +1,12 @@
 import { getFormatter, getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PROSE,
+    PROSE_TEXT,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 import {
@@ -104,6 +110,7 @@ export async function GraphqlServerArticle() {
                 <ArticleSection id="intro" title={t("introTitle")}>
                     <div className={PROSE}>
                         <p>{t("introBody")}</p>
+                        <ArticleExample>{t.rich("introExample", ARTICLE_TAGS)}</ArticleExample>
                         <p>{t("introSibling")}</p>
                     </div>
                 </ArticleSection>

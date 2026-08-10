@@ -1,6 +1,12 @@
 import { getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PROSE,
+    PROSE_TEXT,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 import {
@@ -207,6 +213,10 @@ export async function MockServerArticle() {
             <article className="flex min-w-0 flex-col gap-12 xl:order-1">
                 <ArticleSection id="flow" title={t("flow.title")}>
                     <p className={PROSE_TEXT}>{t("flow.intro")}</p>
+
+                    <div className="mt-4">
+                        <ArticleExample>{t.rich("flow.example", ARTICLE_TAGS)}</ArticleExample>
+                    </div>
 
                     <ol className="mt-5 flex flex-col gap-4">
                         {FLOW_STEPS.map((step, index) => (

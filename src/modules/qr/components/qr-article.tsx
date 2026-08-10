@@ -1,6 +1,12 @@
 import { getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PROSE,
+    PROSE_TEXT,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 import { EDIT_TOKEN_LENGTH, SLUG_LENGTH } from "@/modules/short-links/domain/constants";
@@ -84,8 +90,15 @@ export async function QrArticle() {
                 <ArticleSection id="understanding" title={t("understanding.title")}>
                     <div className={PROSE}>
                         <p>{t("understanding.p1")}</p>
-                        <p>{t("understanding.p2", { versions: QR_MAX_VERSION })}</p>
-                        <p>{t("understanding.p3")}</p>
+                        <ArticleExample>
+                            {t.rich("understanding.example", ARTICLE_TAGS)}
+                        </ArticleExample>
+                        <p>
+                            {t.rich("understanding.p2", {
+                                ...ARTICLE_TAGS,
+                                versions: QR_MAX_VERSION,
+                            })}
+                        </p>
                     </div>
                 </ArticleSection>
 

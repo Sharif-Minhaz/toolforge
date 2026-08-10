@@ -1,6 +1,12 @@
 import { getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PROSE,
+    PROSE_TEXT,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 import { SHELL_DIALECTS } from "../types";
@@ -119,10 +125,11 @@ export async function CurlArticle() {
             <article className="flex min-w-0 flex-col gap-12 xl:order-1">
                 <ArticleSection id="understanding" title={t("understanding.title")}>
                     <div className={PROSE}>
-                        <p>{t("understanding.p1")}</p>
-                        <p>{t("understanding.p2")}</p>
-                        <p>{t("understanding.p3")}</p>
-                        <p>{t("understanding.p4")}</p>
+                        <p>{t.rich("understanding.p1", ARTICLE_TAGS)}</p>
+                        <ArticleExample>
+                            {t.rich("understanding.example", ARTICLE_TAGS)}
+                        </ArticleExample>
+                        <p>{t.rich("understanding.p2", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
@@ -287,11 +294,11 @@ export async function CurlArticle() {
 
                 <ArticleSection id="gotchas" title={t("gotchas.title")}>
                     <div className={PROSE}>
-                        <p>{t("gotchas.p1")}</p>
-                        <p>{t("gotchas.p2")}</p>
-                        <p>{t("gotchas.p3")}</p>
-                        <p>{t("gotchas.p4")}</p>
-                        <p>{t("gotchas.p5")}</p>
+                        <p>{t.rich("gotchas.p1", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("gotchas.p2", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("gotchas.p3", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("gotchas.p4", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("gotchas.p5", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 

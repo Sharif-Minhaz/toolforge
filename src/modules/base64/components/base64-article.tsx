@@ -1,6 +1,13 @@
 import { getTranslations } from "next-intl/server";
 
-import { ArticleSection, PROSE, PROSE_TEXT } from "@/modules/tools/components/article-section";
+import {
+    ARTICLE_TAGS,
+    ArticleExample,
+    ArticleSection,
+    PLAIN_TAGS,
+    PROSE,
+    PROSE_TEXT,
+} from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 
@@ -14,16 +21,34 @@ export const BASE64_ARTICLE_SECTIONS = [
     { id: "faq", titleKey: "faq.title" },
 ] as const;
 
-/** Question/answer pairs, shared by the FAQ section and its structured data. */
+/**
+ * Question/answer pairs, shared by the FAQ section and its structured data.
+ *
+ * A marked-up answer is read twice from one message: `t.rich` for the panel,
+ * `t.markup` for the JSON-LD, which can hold neither an element nor a literal
+ * `<code>`.
+ */
 export async function getBase64FaqEntries(): Promise<FaqEntry[]> {
     const t = await getTranslations("base64.article");
 
     return [
         { question: t("faq.q1"), answer: t("faq.a1") },
         { question: t("faq.q2"), answer: t("faq.a2") },
-        { question: t("faq.q3"), answer: t("faq.a3") },
-        { question: t("faq.q4"), answer: t("faq.a4") },
-        { question: t("faq.q5"), answer: t("faq.a5") },
+        {
+            question: t("faq.q3"),
+            answer: t.markup("faq.a3", PLAIN_TAGS),
+            answerNode: t.rich("faq.a3", ARTICLE_TAGS),
+        },
+        {
+            question: t("faq.q4"),
+            answer: t.markup("faq.a4", PLAIN_TAGS),
+            answerNode: t.rich("faq.a4", ARTICLE_TAGS),
+        },
+        {
+            question: t("faq.q5"),
+            answer: t.markup("faq.a5", PLAIN_TAGS),
+            answerNode: t.rich("faq.a5", ARTICLE_TAGS),
+        },
         { question: t("faq.q6"), answer: t("faq.a6") },
     ];
 }
@@ -80,9 +105,11 @@ export async function Base64Article() {
             <article className="flex min-w-0 flex-col gap-12 xl:order-1">
                 <ArticleSection id="understanding" title={t("understanding.title")}>
                     <div className={PROSE}>
-                        <p>{t("understanding.p1")}</p>
-                        <p>{t("understanding.p2")}</p>
-                        <p>{t("understanding.p3")}</p>
+                        <p>{t.rich("understanding.p1", ARTICLE_TAGS)}</p>
+                        <ArticleExample>
+                            {t.rich("understanding.example", ARTICLE_TAGS)}
+                        </ArticleExample>
+                        <p>{t.rich("understanding.p2", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
@@ -142,12 +169,14 @@ export async function Base64Article() {
                         </table>
                     </div>
 
-                    <p className={`mt-5 ${PROSE_TEXT}`}>{t("variants.others")}</p>
+                    <p className={`mt-5 ${PROSE_TEXT}`}>
+                        {t.rich("variants.others", ARTICLE_TAGS)}
+                    </p>
                 </ArticleSection>
 
                 <ArticleSection id="options" title={t("options.title")}>
                     <div className={PROSE}>
-                        <p>{t("options.intro")}</p>
+                        <p>{t.rich("options.intro", ARTICLE_TAGS)}</p>
                     </div>
 
                     <div className="ring-border/80 mt-5 overflow-x-auto rounded-xl ring-1 ring-inset">
@@ -176,10 +205,10 @@ export async function Base64Article() {
                                             {t(`options.${row}Name`)}
                                         </th>
                                         <td className="text-muted-foreground px-4 py-3">
-                                            {t(`options.${row}Does`)}
+                                            {t.rich(`options.${row}Does`, ARTICLE_TAGS)}
                                         </td>
                                         <td className="text-muted-foreground px-4 py-3">
-                                            {t(`options.${row}When`)}
+                                            {t.rich(`options.${row}When`, ARTICLE_TAGS)}
                                         </td>
                                     </tr>
                                 ))}
@@ -188,23 +217,23 @@ export async function Base64Article() {
                     </div>
 
                     <div className={`mt-5 ${PROSE}`}>
-                        <p>{t("options.charsetNote")}</p>
+                        <p>{t.rich("options.charsetNote", ARTICLE_TAGS)}</p>
                         <p>{t("options.defaultsNote")}</p>
                     </div>
                 </ArticleSection>
 
                 <ArticleSection id="howItWorks" title={t("howItWorks.title")}>
                     <div className={PROSE}>
-                        <p>{t("howItWorks.p1")}</p>
-                        <p>{t("howItWorks.p2")}</p>
-                        <p>{t("howItWorks.p3")}</p>
+                        <p>{t.rich("howItWorks.p1", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("howItWorks.p2", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("howItWorks.p3", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 
                 <ArticleSection id="useCases" title={t("useCases.title")}>
                     <div className={PROSE}>
                         <p>{t("useCases.p1")}</p>
-                        <p>{t("useCases.p2")}</p>
+                        <p>{t.rich("useCases.p2", ARTICLE_TAGS)}</p>
                         <p>{t("useCases.p3")}</p>
                     </div>
                 </ArticleSection>

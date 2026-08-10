@@ -34,12 +34,7 @@ import en from "@/messages/en.json";
 const KNOWN_MALFORMED: ReadonlySet<string> = new Set([
     // `{` from a `\p{…}` escape or a `\d{4}` quantifier.
     "markdown.sample.document",
-    "regex.workbench.flags.unicode.hint",
-    "regex.article.flags.unicodeDoes",
-    // `<` from an HTML element or a named capture group.
-    "markdown.article.safety.p1",
-    "regex.article.syntax.groupsExample",
-    "regex.article.modes.token_named",
+    // `<` from an HTML element.
     "imageConverter.workbench.snippetDescription",
 ]);
 
@@ -60,26 +55,12 @@ const BACKTICKS_ON_PURPOSE: ReadonlySet<string> = new Set([
  * Messages whose backticks were meant to be code spans and are not. Every one of
  * them shows the quotes to a reader today. They clear as each article is marked
  * up; shorten this list, never add to it.
+ *
+ * Empty since every tool article was marked up. Keep it — a future import may
+ * arrive with backticks in it, and a named quarantine is better than a skipped
+ * assertion.
  */
-const UNMARKED_CODE_SPANS: ReadonlySet<string> = new Set([
-    "hash.article.passwords.p4",
-    "imageCompressor.article.howItWorks.p1",
-    "imageCompressor.article.howItWorks.p3",
-    "markdown.article.understanding.p2",
-    "rsa.article.containers.jwkNote",
-    "rsa.article.containers.opensslNote",
-    "rsa.article.faq.a6",
-    "rsa.article.faq.a7",
-    "rsa.article.interop.p1",
-    "rsa.article.interop.p2",
-    "rsa.article.interop.p3",
-    "rsa.article.options.defaultsNote",
-    "rsa.article.options.hashDoes",
-    "rsa.article.options.hashNote",
-    "rsa.article.useCases.p1",
-    "rsa.workbench.hashHint",
-    "rsa.workbench.outputFormatHint.jwk",
-]);
+const UNMARKED_CODE_SPANS: ReadonlySet<string> = new Set([]);
 
 type MessageTree = { [key: string]: string | MessageTree };
 
