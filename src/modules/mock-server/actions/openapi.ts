@@ -35,6 +35,12 @@ const importSchema = z.object({
     workspaceId: workspaceIdSchema,
     name: z.string().max(200),
     text: z.string().max(MAX_DOCUMENT_BYTES),
+    /**
+     * Whether required headers, query keys and body fields become a guard node.
+     * Absent means yes — an older client, and the honest reading of a document
+     * that marks a field required.
+     */
+    enforceRequired: z.boolean().optional(),
 });
 
 async function ownsWorkspace(workspaceId: string): Promise<boolean> {
@@ -56,6 +62,15 @@ export type ImportReport = {
     readonly serverId: string;
     readonly serverKey: string;
     readonly created: number;
+    /**
+     * How many of those carry a guard over required fields.
+     *
+     * Reported rather than left to be discovered, because a guard changes what
+     * the mock answers: a route that used to reply 200 to anything now replies
+     * 400 to a request missing a header. That is the point of it, and it is
+     * still a thing the reader should be told in the same breath as the count.
+     */
+    readonly guarded: number;
     /** Operations the document had that could not be taken, with a reason. */
     readonly skipped: readonly { readonly path: string; readonly reason: string }[];
 };
@@ -79,7 +94,9 @@ export async function importOpenApi(input: unknown): Promise<ImportResult> {
         return { ok: false, reason: document.reason };
     }
 
-    const read = readOpenApi(document.document);
+    const read = readOpenApi(document.document, {
+        enforceRequired: parsed.data.enforceRequired ?? true,
+    });
 
     if (read.endpoints.length === 0) {
         return { ok: false, reason: "no_operations" };
@@ -123,6 +140,7 @@ export async function importOpenApi(input: unknown): Promise<ImportResult> {
 
     const skipped = [...read.skipped];
     let inserted = 0;
+    let guarded = 0;
 
     for (const endpoint of read.endpoints.slice(0, MAX_ENDPOINTS_PER_SERVER)) {
         const pattern = parsePathPattern(endpoint.path);
@@ -138,6 +156,10 @@ export async function importOpenApi(input: unknown): Promise<ImportResult> {
             name: endpoint.name,
             method: endpoint.method,
             parsed: pattern.parsed,
+            // The whole document the reader built: the response shaped from the
+            // schema, the declared request shape on the entry node, and the
+            // guard when the operation marks anything required.
+            graph: endpoint.graph,
         });
 
         if (!result.ok) {
@@ -148,6 +170,10 @@ export async function importOpenApi(input: unknown): Promise<ImportResult> {
         }
 
         inserted += 1;
+
+        if (endpoint.required.length > 0) {
+            guarded += 1;
+        }
     }
 
     return {
@@ -155,6 +181,7 @@ export async function importOpenApi(input: unknown): Promise<ImportResult> {
         serverId: server.server.id,
         serverKey: server.server.key,
         created: inserted,
+        guarded,
         skipped,
     };
 }

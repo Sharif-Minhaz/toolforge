@@ -1,5 +1,5 @@
 import { UPLOAD_FILE_KEYS } from "./request-body";
-import type { JsonValue, RequestSource } from "../types/graph";
+import type { DeclaredRequestShape, JsonValue, RequestSource } from "../types/graph";
 
 /**
  * What can go in a path box, and how sure we are of each answer.
@@ -25,6 +25,11 @@ import type { JsonValue, RequestSource } from "../types/graph";
  * - The three properties of an upload are *ours*. `multipart/form-data` is
  *   parsed by this server into `{ filename, contentType, size }`, so after a dot
  *   those are known without having seen a single request.
+ * - A *declared* name is what the document a route was imported from said it
+ *   carries. It is neither of the two: not measured, like an observed key, and
+ *   not guaranteed, like a path parameter — a claim about the contract, which
+ *   may be out of date and which nothing here enforces. It is also the only
+ *   kind available before the route has ever been called.
  *
  * `origin` carries that distinction to the UI, which labels each group. A
  * picker that presented a guess and a certainty identically would be worse than
@@ -32,12 +37,20 @@ import type { JsonValue, RequestSource } from "../types/graph";
  *
  * Pure and framework-free. The observed half is collected on the server from
  * request logs — see `actions/request-shape.ts` — because a log row holds
- * values as well as keys and only the keys have any business being here.
+ * values as well as keys and only the keys have any business being here. The
+ * declared half comes off the graph's own entry node, so it costs no round trip.
  */
 
 export type JsonTypeName = "string" | "number" | "boolean" | "null" | "object" | "array";
 
-export const SUGGESTION_ORIGINS = ["route", "graph", "observed", "upload", "common"] as const;
+export const SUGGESTION_ORIGINS = [
+    "route",
+    "graph",
+    "declared",
+    "observed",
+    "upload",
+    "common",
+] as const;
 
 export type SuggestionOrigin = (typeof SUGGESTION_ORIGINS)[number];
 
@@ -73,11 +86,17 @@ export type RequestFacts = {
     /** `:name` segments of the route being edited, plus `*` for a wildcard. */
     readonly params: readonly string[];
     readonly observed: ObservedShape;
+    /**
+     * What the document this route was imported from said it carries. Null for
+     * a hand-built route, which is most of them.
+     */
+    readonly declared?: DeclaredRequestShape | null;
 };
 
 export const EMPTY_REQUEST_FACTS: RequestFacts = {
     params: [],
     observed: EMPTY_OBSERVED_SHAPE,
+    declared: null,
 };
 
 /** Enough to fill a scrolling list; past this nobody is reading, they are typing. */
@@ -129,9 +148,10 @@ export const COMMON_REQUEST_HEADERS: readonly string[] = [
 const ORIGIN_RANK: Record<SuggestionOrigin, number> = {
     route: 0,
     graph: 0,
-    observed: 1,
-    upload: 2,
-    common: 3,
+    declared: 1,
+    observed: 2,
+    upload: 3,
+    common: 4,
 };
 
 export function jsonTypeName(value: JsonValue): JsonTypeName {
@@ -295,6 +315,32 @@ function named(names: readonly string[], origin: SuggestionOrigin): readonly Pat
     return names.map((path) => ({ path, origin }));
 }
 
+/**
+ * The body paths a declared example implies.
+ *
+ * The same walk the observed half uses, over a value that came from a schema
+ * rather than from a request — which is the point: a route imported this
+ * morning offers `payer` and `amount` before anybody has called it once.
+ */
+function declaredBodyPaths(declared: DeclaredRequestShape | null | undefined) {
+    if (declared === null || declared === undefined || declared.body === null) {
+        return [];
+    }
+
+    return [...collectObservedPaths(declared.body).entries()].map(([path, type]) => ({
+        path,
+        origin: "declared" as const,
+        type,
+    }));
+}
+
+function declaredNames(fields: readonly { readonly name: string }[] | undefined) {
+    return named(
+        (fields ?? []).map((field) => field.name),
+        "declared",
+    );
+}
+
 /** Everything on offer for one source, before the typed text narrows it. */
 export function requestCandidates(
     source: RequestSource,
@@ -306,16 +352,29 @@ export function requestCandidates(
             return named(facts.params, "route");
 
         case "query":
-            return named(facts.observed.query, "observed");
-
-        case "header":
             return dedupe([
-                ...named(facts.observed.headers, "observed"),
-                ...named(COMMON_REQUEST_HEADERS, "common"),
+                ...declaredNames(facts.declared?.query),
+                ...named(facts.observed.query, "observed"),
             ]);
+
+        // Folded, and only here: header names are case-insensitive to
+        // `readStringMap`, so a document's `channelId` and a log row's
+        // `channelid` are one header and must not be offered as two. Query keys
+        // and body paths are case-*sensitive*, where folding would merge two
+        // different fields into one wrong suggestion.
+        case "header":
+            return dedupe(
+                [
+                    ...declaredNames(facts.declared?.headers),
+                    ...named(facts.observed.headers, "observed"),
+                    ...named(COMMON_REQUEST_HEADERS, "common"),
+                ],
+                true,
+            );
 
         case "body":
             return dedupe([
+                ...declaredBodyPaths(facts.declared),
                 ...facts.observed.body.map((entry) => ({
                     path: entry.path,
                     origin: "observed" as const,
@@ -334,15 +393,17 @@ export function requestCandidates(
 }
 
 /** First spelling wins, which is why the exact sources are listed first. */
-function dedupe(all: readonly PathSuggestion[]): readonly PathSuggestion[] {
+function dedupe(all: readonly PathSuggestion[], fold = false): readonly PathSuggestion[] {
     const seen = new Set<string>();
 
     return all.filter((entry) => {
-        if (seen.has(entry.path)) {
+        const key = fold ? entry.path.toLowerCase() : entry.path;
+
+        if (seen.has(key)) {
             return false;
         }
 
-        seen.add(entry.path);
+        seen.add(key);
 
         return true;
     });

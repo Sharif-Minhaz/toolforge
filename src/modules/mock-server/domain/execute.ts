@@ -11,6 +11,7 @@ import {
     runSetVariable,
     runSwitch,
     runTransform,
+    runValidate,
 } from "./nodes";
 import { resolveValue } from "./values";
 import type { LogLine } from "./nodes";
@@ -62,6 +63,9 @@ function runNode(node: GraphNode, context: ExecutionContext, log: LogLine[]): No
 
         case "auth":
             return runAuth(node, context);
+
+        case "validate":
+            return runValidate(node, context);
 
         case "condition":
             return runCondition(node, context);

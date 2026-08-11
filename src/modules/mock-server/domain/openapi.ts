@@ -1,9 +1,20 @@
 import { DEFAULT_CONTENT_TYPE } from "./content-type";
 import { MAX_ENDPOINTS_PER_SERVER, MAX_PATH_SEGMENTS } from "./constants";
-import { createDefaultGraph } from "./graph";
+import { autoLayout } from "./graph-edit";
+import { DEFAULT_MISSING_VARIABLE, type RequiredField } from "./node-registry";
 import { parsePathPattern } from "./path-pattern";
 import { fromJson } from "./value-edit";
-import { HTTP_METHODS, type GraphDocument, type HttpMethod, type JsonValue } from "../types/graph";
+import {
+    GRAPH_SCHEMA_VERSION,
+    HTTP_METHODS,
+    type DeclaredField,
+    type DeclaredRequestShape,
+    type GraphDocument,
+    type GraphNode,
+    type HttpMethod,
+    type JsonValue,
+    type RequestSource,
+} from "../types/graph";
 
 /**
  * Turning an OpenAPI document into endpoints.
@@ -29,11 +40,41 @@ import { HTTP_METHODS, type GraphDocument, type HttpMethod, type JsonValue } fro
  * **Paths are rewritten, not passed through.** OpenAPI writes `{id}` and this
  * router writes `:id`. Getting that wrong produces endpoints that look right in
  * the list and match nothing.
+ *
+ * **The request half is read too, and it used to be thrown away.** An operation
+ * is not only a response: it declares headers, query keys and a body, and says
+ * which of them a caller may not omit. bKash's recurring-payment gateway wants
+ * `version`, `channelId` and `timeStamp` on every call and seven fields in the
+ * subscription body — and an import that produced nine routes answering 200 to
+ * an empty request modelled none of that. Rebuilding it by hand is ten
+ * `condition` nodes per route, which nobody does twice.
+ *
+ * So two things come across besides the response:
+ *
+ * - **The declared shape**, onto the entry node, where the path pickers read it.
+ *   A route imported a minute ago offers `payer` and `channelId` before anybody
+ *   has called it once.
+ * - **A `validate` node**, when the operation marks anything required, wired to
+ *   a 400 that names what was missing. One node with a list, not a chain.
  */
 
 const MAX_SCHEMA_DEPTH = 8;
 
 const MAX_EXAMPLE_ARRAY = 2;
+
+/**
+ * How many required fields one generated guard may hold.
+ *
+ * A schema with sixty required properties is a document describing a form, not
+ * a contract anybody debugs field by field, and a node listing sixty rows is one
+ * nobody can read. What is over the line is left out of the guard rather than
+ * silently dropped from the import — the field is still in the declared shape,
+ * so the picker still offers it.
+ */
+const MAX_REQUIRED_FIELDS = 24;
+
+/** The status a generated guard refuses with. */
+const GUARD_FAILURE_STATUS = 400;
 
 export type OpenApiEndpoint = {
     readonly method: HttpMethod;
@@ -46,6 +87,10 @@ export type OpenApiEndpoint = {
     readonly status: number;
     readonly contentType: string;
     readonly graph: GraphDocument;
+    /** What the operation says a request carries. Also written into the graph. */
+    readonly declared: DeclaredRequestShape;
+    /** What the guard node insists on. Empty when nothing was marked required. */
+    readonly required: readonly RequiredField[];
 };
 
 export type OpenApiImport = {
@@ -228,6 +273,285 @@ export function pickResponse(responses: unknown): {
     };
 }
 
+/** Where OpenAPI says a parameter travels, in this router's vocabulary. */
+const PARAMETER_SOURCE: Readonly<Record<string, RequestSource>> = {
+    header: "header",
+    query: "query",
+    cookie: "cookie",
+    path: "param",
+};
+
+type DeclaredParameter = {
+    readonly source: RequestSource;
+    readonly name: string;
+    readonly required: boolean;
+};
+
+/**
+ * An operation's parameters, with the path item's own merged underneath.
+ *
+ * OpenAPI lets a path item declare parameters every operation on it inherits —
+ * which is exactly how a document expresses "every call to this path needs these
+ * three headers", so reading only the operation's own list misses the common
+ * case. A collision on the same name *and* location is the operation's to win,
+ * per the specification.
+ */
+function readParameters(item: Record<string, unknown>, operation: Record<string, unknown>) {
+    const found = new Map<string, DeclaredParameter>();
+
+    for (const list of [item.parameters, operation.parameters]) {
+        if (!Array.isArray(list)) {
+            continue;
+        }
+
+        for (const raw of list) {
+            if (!isRecord(raw) || typeof raw.name !== "string" || raw.name === "") {
+                continue;
+            }
+
+            const source = typeof raw.in === "string" ? PARAMETER_SOURCE[raw.in] : undefined;
+
+            if (source === undefined) {
+                continue;
+            }
+
+            found.set(`${source}:${raw.name}`, {
+                source,
+                name: raw.name,
+                required: raw.required === true,
+            });
+        }
+    }
+
+    return [...found.values()];
+}
+
+type DeclaredBody = {
+    /** An example of the whole body, from the schema. `null` when there is none. */
+    readonly example: JsonValue;
+    /** Top-level properties the schema marks required, as body paths. */
+    readonly requiredPaths: readonly string[];
+    /** Whether the operation says a body must be sent at all. */
+    readonly required: boolean;
+};
+
+const NO_BODY: DeclaredBody = { example: null, requiredPaths: [], required: false };
+
+/**
+ * The required property names of an object schema, `allOf` included.
+ *
+ * Top level only, deliberately. A nested `required` is a statement about a
+ * sub-object that may itself be optional, and guarding `a.b.c` on a request
+ * whose `a` was never sent produces a refusal naming the wrong field.
+ */
+function requiredProperties(schema: unknown, depth = 0): readonly string[] {
+    if (!isRecord(schema) || depth > MAX_SCHEMA_DEPTH) {
+        return [];
+    }
+
+    const own = Array.isArray(schema.required)
+        ? schema.required.filter((name): name is string => typeof name === "string")
+        : [];
+
+    if (!Array.isArray(schema.allOf)) {
+        return own;
+    }
+
+    return [...own, ...schema.allOf.flatMap((part) => requiredProperties(part, depth + 1))];
+}
+
+/** What an operation's `requestBody` says, as an example plus a required list. */
+export function readRequestBody(operation: Record<string, unknown>): DeclaredBody {
+    const body = operation.requestBody;
+
+    if (!isRecord(body)) {
+        return NO_BODY;
+    }
+
+    const content = isRecord(body.content) ? body.content : {};
+    const jsonKey =
+        Object.keys(content).find((type) => type.includes("json")) ?? Object.keys(content)[0];
+    const media = jsonKey === undefined ? undefined : content[jsonKey];
+    const schema = isRecord(media) ? media.schema : undefined;
+
+    if (schema === undefined) {
+        return { ...NO_BODY, required: body.required === true };
+    }
+
+    return {
+        example: exampleFromSchema(schema),
+        // De-duplicated, because `allOf` merges routinely repeat a name.
+        requiredPaths: [...new Set(requiredProperties(schema))],
+        required: body.required === true,
+    };
+}
+
+/**
+ * What an operation insists a request carries.
+ *
+ * **Path parameters are never guarded.** A request that reached this endpoint
+ * matched its pattern, so `:id` is present by construction — a check on it can
+ * only ever pass, and a row that can only pass is a row that teaches the reader
+ * the node does nothing.
+ */
+function guardFields(
+    parameters: readonly DeclaredParameter[],
+    body: DeclaredBody,
+): readonly RequiredField[] {
+    const fields: RequiredField[] = [];
+
+    for (const parameter of parameters) {
+        if (parameter.required && parameter.source !== "param") {
+            fields.push({
+                id: `f${fields.length + 1}`,
+                source: parameter.source,
+                path: parameter.name,
+            });
+        }
+    }
+
+    // Only when a body is required at all: a schema's `required` list describes
+    // the body's shape *if one is sent*, and an operation with an optional body
+    // is not asking for those fields on a request that carries none.
+    if (body.required) {
+        for (const path of body.requiredPaths) {
+            fields.push({ id: `f${fields.length + 1}`, source: "body", path });
+        }
+    }
+
+    return fields.slice(0, MAX_REQUIRED_FIELDS);
+}
+
+function declaredFields(
+    parameters: readonly DeclaredParameter[],
+    source: RequestSource,
+): readonly DeclaredField[] {
+    return parameters
+        .filter((parameter) => parameter.source === source)
+        .map((parameter) => ({ name: parameter.name, required: parameter.required }));
+}
+
+const RESPONSE_BODY_MESSAGE = "Required fields are missing from the request.";
+
+/**
+ * The graph an imported operation becomes.
+ *
+ * Without required fields it is the shape every route starts in — request wired
+ * to one response — so an import of a document that demands nothing looks
+ * exactly like a hand-built route, which is what it is.
+ *
+ * With them it grows one `validate` node and a second response. That costs the
+ * quick body form on the route page, which can only speak for a graph with a
+ * single response and steps aside when there are two; the flow editor is where
+ * a branching route is edited, and a guard is a branch.
+ */
+function buildGraph(input: {
+    readonly status: number;
+    readonly contentType: string;
+    readonly example: JsonValue;
+    readonly declared: DeclaredRequestShape;
+    readonly required: readonly RequiredField[];
+}): GraphDocument {
+    const entry: GraphNode = {
+        id: "request",
+        kind: "request",
+        position: { x: 0, y: 0 },
+        data: { declared: input.declared },
+    };
+
+    const success: GraphNode = {
+        id: "response",
+        kind: "response",
+        position: { x: 0, y: 0 },
+        data: {
+            status: input.status,
+            contentType: input.contentType,
+            headers: [],
+            // A real value tree, not one opaque blob — so the Response Builder
+            // can open an imported endpoint and edit it field by field, which is
+            // the whole point.
+            body: fromJson(input.example),
+        },
+    };
+
+    if (input.required.length === 0) {
+        return {
+            schemaVersion: GRAPH_SCHEMA_VERSION,
+            nodes: [entry, success],
+            edges: [
+                {
+                    id: "request-response",
+                    source: "request",
+                    sourceHandle: "next",
+                    target: "response",
+                },
+            ],
+        };
+    }
+
+    const guard: GraphNode = {
+        id: "validate-1",
+        kind: "validate",
+        position: { x: 0, y: 0 },
+        data: {
+            fields: input.required as unknown as JsonValue,
+            saveAs: DEFAULT_MISSING_VARIABLE,
+        },
+    };
+
+    const refusal: GraphNode = {
+        id: "response-2",
+        kind: "response",
+        position: { x: 0, y: 0 },
+        data: {
+            status: GUARD_FAILURE_STATUS,
+            contentType: DEFAULT_CONTENT_TYPE,
+            headers: [],
+            // Not `fromJson`: the point of the refusal is the variable the guard
+            // wrote, and a literal copy of the names would say the same thing for
+            // every request whatever it actually left out.
+            body: {
+                kind: "object",
+                fields: [
+                    { key: "message", value: { kind: "static", value: RESPONSE_BODY_MESSAGE } },
+                    { key: "missing", value: { kind: "var", name: DEFAULT_MISSING_VARIABLE } },
+                ],
+            },
+        },
+    };
+
+    // Positions come from the same auto-layout the canvas's "Tidy up" runs, so
+    // an imported graph opens arranged the way a reader would have arranged it.
+    return autoLayout({
+        schemaVersion: GRAPH_SCHEMA_VERSION,
+        nodes: [entry, guard, success, refusal],
+        edges: [
+            {
+                id: "request-validate",
+                source: "request",
+                sourceHandle: "next",
+                target: "validate-1",
+            },
+            { id: "validate-pass", source: "validate-1", sourceHandle: "pass", target: "response" },
+            {
+                id: "validate-fail",
+                source: "validate-1",
+                sourceHandle: "fail",
+                target: "response-2",
+            },
+        ],
+    });
+}
+
+export type ReadOpenApiOptions = {
+    /**
+     * Whether an operation's required fields become a guard node. On by
+     * default: a mock that accepts what the API it stands in for would refuse
+     * is a mock that passes tests the real integration fails.
+     */
+    readonly enforceRequired?: boolean;
+};
+
 /**
  * Reads a dereferenced OpenAPI document into endpoints.
  *
@@ -236,7 +560,9 @@ export function pickResponse(responses: unknown): {
  * paths in it should produce three hundred and ninety-seven endpoints and a
  * list, not an error.
  */
-export function readOpenApi(document: unknown): OpenApiImport {
+export function readOpenApi(document: unknown, options: ReadOpenApiOptions = {}): OpenApiImport {
+    const enforceRequired = options.enforceRequired ?? true;
+
     if (!isRecord(document)) {
         return { title: "", endpoints: [], skipped: [{ path: "", reason: "not_a_document" }] };
     }
@@ -287,7 +613,14 @@ export function readOpenApi(document: unknown): OpenApiImport {
                       ? operation.description
                       : "";
 
-            const base = createDefaultGraph();
+            const parameters = readParameters(item, operation);
+            const body = readRequestBody(operation);
+            const declared: DeclaredRequestShape = {
+                headers: declaredFields(parameters, "header"),
+                query: declaredFields(parameters, "query"),
+                body: body.example,
+            };
+            const required = enforceRequired ? guardFields(parameters, body) : [];
 
             endpoints.push({
                 method,
@@ -303,26 +636,15 @@ export function readOpenApi(document: unknown): OpenApiImport {
                         : "",
                 status: response.status,
                 contentType: response.contentType,
-                graph: {
-                    ...base,
-                    nodes: base.nodes.map((node) =>
-                        node.kind === "response"
-                            ? {
-                                  ...node,
-                                  data: {
-                                      ...node.data,
-                                      status: response.status,
-                                      contentType: response.contentType,
-                                      // A real value tree, not one opaque blob —
-                                      // so the Response Builder can open an
-                                      // imported endpoint and edit it field by
-                                      // field, which is the whole point.
-                                      body: fromJson(example),
-                                  },
-                              }
-                            : node,
-                    ),
-                },
+                declared,
+                required,
+                graph: buildGraph({
+                    status: response.status,
+                    contentType: response.contentType,
+                    example,
+                    declared,
+                    required,
+                }),
             });
         }
     }

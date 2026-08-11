@@ -56,6 +56,7 @@ export const ROUTE_HANDLER_METHODS: readonly HttpMethod[] = [
 export const NODE_KINDS = [
     "request",
     "auth",
+    "validate",
     "condition",
     "switch",
     "delay",
@@ -140,7 +141,9 @@ export type ValueKind = (typeof VALUE_KINDS)[number];
  */
 export const IMPLEMENTED_VALUE_KINDS = VALUE_KINDS;
 
-export type RequestSource = "body" | "header" | "cookie" | "query" | "param";
+export const REQUEST_SOURCES = ["body", "header", "cookie", "query", "param"] as const;
+
+export type RequestSource = (typeof REQUEST_SOURCES)[number];
 
 export type ObjectField = {
     readonly key: string;
@@ -156,8 +159,48 @@ export type HeaderRow = {
     readonly value: string;
 };
 
-/** The entry anchor. Carries no configuration — it is where execution starts. */
-export type RequestNodeData = Record<string, never>;
+/**
+ * One field a document said a request carries, and whether it may be omitted.
+ *
+ * `name` is a header name, a query key or a JSON path into the body, depending
+ * on which list it sits in.
+ */
+export type DeclaredField = {
+    readonly name: string;
+    readonly required: boolean;
+};
+
+/**
+ * What a specification said a request to this route looks like.
+ *
+ * Written by the OpenAPI importer onto the entry node and read by the path
+ * pickers, which is the whole reason it exists: until this was here, the only
+ * thing that could tell the reader a route takes a `channelId` header was
+ * traffic — so a freshly imported route offered nothing until somebody had
+ * already called it blind. A document knows the answer before the first request.
+ *
+ * It is a **claim, not a measurement**, and the picker labels it as one. The
+ * document may be out of date and the mock does not enforce it; enforcement is
+ * what a `validate` node does, and that is a separate node the author can see
+ * and delete.
+ */
+export type DeclaredRequestShape = {
+    readonly headers: readonly DeclaredField[];
+    readonly query: readonly DeclaredField[];
+    /** An example body, whose keys become body paths. `null` for no body. */
+    readonly body: JsonValue;
+};
+
+/**
+ * The entry anchor. Nothing to configure — it is where execution starts.
+ *
+ * `declared` is not configuration: it is what an import read off the document,
+ * carried on the one node that is always present, so a route's contract travels
+ * with its graph rather than in a column nothing else would use.
+ */
+export type RequestNodeData = {
+    readonly declared?: DeclaredRequestShape;
+};
 
 export type ResponseNodeData = {
     readonly status: number;

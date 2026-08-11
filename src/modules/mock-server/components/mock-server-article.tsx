@@ -91,6 +91,7 @@ const VALUE_KIND_ROWS = [
  */
 const NODE_ROWS = [
     { id: "auth", labelKey: "auth", doesKey: "doesAuth", ready: true },
+    { id: "validate", labelKey: "validate", doesKey: "doesValidate", ready: true },
     { id: "condition", labelKey: "condition", doesKey: "doesCondition", ready: true },
     { id: "switch", labelKey: "switch", doesKey: "doesSwitch", ready: true },
     { id: "delay", labelKey: "delay", doesKey: "doesDelay", ready: true },

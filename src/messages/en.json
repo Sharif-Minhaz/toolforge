@@ -7781,6 +7781,7 @@
                 "colNode": "Node",
                 "colDoes": "What it does",
                 "doesAuth": "Checks for a credential of a given shape — API key, bearer token, basic or JWT — and sends the call down its Pass or Fail output. It checks shape, never validity: there is no identity provider behind a mock, so a JWT signature is not verified.",
+                "doesValidate": "Checks that a request carries every field on a list — headers, query keys, body paths — and sends it down Pass or Fail. The names it found missing go into a variable, so the refusal can say which ones. An OpenAPI import writes one of these from whatever the document marked required.",
                 "doesCondition": "Compares two values and branches True or False. Either side can be a fixed value or something out of the request, and the tests include equals, contains, starts with, greater than, is present, is missing and matches pattern.",
                 "doesSwitch": "The same idea with more than two outcomes: one value, a list of cases, and a Default for everything unmatched.",
                 "doesDelay": "Waits before continuing, so you can see what your loading states actually look like.",
@@ -8126,6 +8127,7 @@
         "suggestOrigins": {
             "route": "route",
             "graph": "this flow",
+            "declared": "documented",
             "observed": "seen",
             "upload": "upload",
             "common": "common"
@@ -8194,6 +8196,7 @@
         "nodes": {
             "request": "Request",
             "auth": "Authentication",
+            "validate": "Validate request",
             "condition": "Condition",
             "switch": "Switch",
             "delay": "Delay",
@@ -8274,6 +8277,19 @@
         },
         "inspector": {
             "requestHint": "Where every request starts. Nothing to configure.",
+            "declaredTitle": "What the document said",
+            "declaredHint": "Read from the specification this route was imported from, and offered by the path pickers. It is a claim about the contract, not a measurement of traffic, and nothing here is enforced — the Validate request node is what enforces.",
+            "declaredHeaders": "Headers",
+            "declaredQuery": "Query",
+            "declaredBody": "{count, plural, one {# field in the request body} other {# fields in the request body}}.",
+            "declaredRequired": "(required)",
+            "declaredOptional": "(optional)",
+            "requiredFields": "Fields a request must carry",
+            "requiredFieldsHint": "Every one is checked. A request missing any of them leaves through Fail, with the missing names in the variable below; everything else leaves through Pass. Path parameters are not worth listing — a request that reached this route already has them.",
+            "addRequiredField": "Add field",
+            "removeRequiredField": "Remove field",
+            "missingVariable": "Store the missing names in",
+            "missingVariableHint": "Read it in the refusal's body with Variable, so the response says which fields were absent instead of only that some were. Blank stores nothing.",
             "noOptions": "This node has no options.",
             "authMode": "Scheme",
             "authHeader": "Header name",
@@ -8342,7 +8358,19 @@
         },
         "import": {
             "title": "Import OpenAPI",
-            "subtitle": "Upload or paste a Swagger or OpenAPI document and every operation in it becomes a working endpoint, with a response shaped from its schema. Paths, methods and status codes come across; so does an example wherever the document supplied one.",
+            "subtitle": "Upload or paste a Swagger or OpenAPI document and every operation in it becomes a working endpoint, with a response shaped from its schema. Paths, methods and status codes come across; so does an example wherever the document supplied one, and so does the request half — the headers, query keys and body fields the operation declares, and which of them a caller may not omit.",
+            "exampleLabel": "Start from an example",
+            "exampleHint": "A real document, filled into the box below. Useful for seeing what an import produces before you go and find your own.",
+            "examplePending": "Another API, later.",
+            "examples": {
+                "bkash-subscription": "bKash subscription gateway"
+            },
+            "exampleSummaries": {
+                "bkash-subscription": "Recurring payments, with required headers on most calls."
+            },
+            "exampleMeta": "{operations, number} operations · {required, number} required fields",
+            "enforceLabel": "Enforce what the document requires",
+            "enforceHint": "Where an operation marks a header, query key or body field required, the route gets a Validate request node wired to a 400 that names whatever was missing. Turn this off to import the routes and none of the contract.",
             "nameLabel": "Server name",
             "namePlaceholder": "Taken from the document's title",
             "fileLabel": "Document",
@@ -8353,6 +8381,7 @@
             "failed": "That document could not be read. Check it is valid JSON or YAML and describes at least one operation.",
             "reportTitle": "Imported",
             "reportCreated": "{count, plural, =0 {No endpoints created} one {# endpoint created} other {# endpoints created}}.",
+            "reportGuarded": "{count, plural, one {# of them refuses a request missing a required field} other {# of them refuse a request missing a required field}}, with a 400 naming it.",
             "reportSkipped": "{count, plural, one {# operation could not be taken} other {# operations could not be taken}}:",
             "openServer": "Open the server"
         }

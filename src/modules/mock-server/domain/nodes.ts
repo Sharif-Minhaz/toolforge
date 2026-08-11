@@ -1,7 +1,12 @@
 import { checkAuth, isAuthMode, type AuthConfig } from "./auth-check";
 import { compareValues, isCompareOp, pickWeighted } from "./compare";
 import { MAX_DELAY_MS } from "./constants";
-import { randomBranches, switchCases } from "./node-registry";
+import {
+    DEFAULT_MISSING_VARIABLE,
+    randomBranches,
+    requiredFields,
+    switchCases,
+} from "./node-registry";
 import { resolveValue } from "./values";
 import type { ExecutionContext, GraphNode, JsonValue, NodeResult, ValueExpr } from "../types/graph";
 
@@ -9,7 +14,7 @@ import type { ExecutionContext, GraphNode, JsonValue, NodeResult, ValueExpr } fr
  * What each logic node does when execution reaches it.
  *
  * Kept apart from `execute.ts` so the loop — budgets, tracing, edge following —
- * stays one readable page while the behaviour of eleven node kinds lives here.
+ * stays one readable page while the behaviour of twelve node kinds lives here.
  * Every function is pure over the injected context, so each is unit-tested
  * without a graph, a request or a clock.
  *
@@ -63,6 +68,43 @@ export function runAuth(node: GraphNode, context: ExecutionContext): NodeResult 
     // refusal looks like. A mock whose failure path is hard-coded cannot model
     // an API that answers 403 with a body, which is most of them.
     return { kind: "continue", handle: checkAuth(config, context.request) ? "pass" : "fail" };
+}
+
+export function runValidate(node: GraphNode, context: ExecutionContext): NodeResult {
+    const data = asRecord(node.data);
+    const missing: JsonValue[] = [];
+
+    for (const field of requiredFields(data)) {
+        if (field.path.trim() === "") {
+            // A row the author has not filled in yet. Ignored rather than
+            // failed, for the reason `runSetVariable` ignores a nameless
+            // variable: the field is blank the moment it is added.
+            continue;
+        }
+
+        const resolved = resolveValue(
+            { kind: "request", source: field.source, path: field.path },
+            context,
+        );
+
+        if (!resolved.ok) {
+            return { kind: "error", reason: resolved.reason };
+        }
+
+        if (!compareValues(resolved.value, "exists", null)) {
+            missing.push(`${field.source}.${field.path}`);
+        }
+    }
+
+    const saveAs = readString(data, "saveAs", DEFAULT_MISSING_VARIABLE).trim();
+
+    if (saveAs !== "") {
+        // Written on both paths, so a graph reading it after a pass sees an
+        // empty list rather than whatever the last failure left behind.
+        context.vars[saveAs] = missing;
+    }
+
+    return { kind: "continue", handle: missing.length === 0 ? "pass" : "fail" };
 }
 
 export function runCondition(node: GraphNode, context: ExecutionContext): NodeResult {

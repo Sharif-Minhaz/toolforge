@@ -305,6 +305,74 @@ describe("suggestRequestPaths — query and cookies", () => {
     });
 });
 
+describe("suggestRequestPaths — what a document declared", () => {
+    const declared: RequestFacts = {
+        params: [],
+        observed: EMPTY_REQUEST_FACTS.observed,
+        declared: {
+            headers: [
+                { name: "channelId", required: true },
+                { name: "timeStamp", required: true },
+            ],
+            query: [{ name: "reason", required: true }],
+            body: { payer: "01700000000", amount: 0, extra: { note: "x" } },
+        },
+    };
+
+    /** The point of it: a route imported a minute ago, never called. */
+    test("offers declared headers before anything traffic could say", () => {
+        expect(paths(suggestRequestPaths("header", "", declared)).slice(0, 2)).toEqual([
+            "channelId",
+            "timeStamp",
+        ]);
+    });
+
+    test("offers declared query keys", () => {
+        expect(paths(suggestRequestPaths("query", "", declared))).toEqual(["reason"]);
+    });
+
+    /** Shortest first inside one origin, which is `filterSuggestions`'s order. */
+    test("walks the declared body into paths", () => {
+        expect(paths(suggestRequestPaths("body", "", declared))).toEqual([
+            "extra",
+            "payer",
+            "amount",
+            "extra.note",
+        ]);
+    });
+
+    test("labels them as documented rather than as seen", () => {
+        expect(suggestRequestPaths("body", "pay", declared)[0].origin).toBe("declared");
+    });
+
+    /**
+     * A header list is where the two collide: the document writes `channelId`
+     * and the runtime hands the log row `channelid`, and they are one header.
+     */
+    test("does not offer the same header twice in two cases", () => {
+        const both: RequestFacts = {
+            ...declared,
+            observed: { ...EMPTY_REQUEST_FACTS.observed, headers: ["channelid"], samples: 1 },
+        };
+
+        expect(paths(suggestRequestPaths("header", "channel", both))).toEqual(["channelId"]);
+    });
+
+    /** Query keys are case-sensitive, so the same fold there would be a lie. */
+    test("keeps two query keys that differ only in case", () => {
+        const both: RequestFacts = {
+            ...declared,
+            observed: { ...EMPTY_REQUEST_FACTS.observed, query: ["Reason"], samples: 1 },
+        };
+
+        expect(paths(suggestRequestPaths("query", "", both))).toEqual(["reason", "Reason"]);
+    });
+
+    test("a route with nothing declared behaves exactly as before", () => {
+        expect(paths(suggestRequestPaths("body", "", facts({})))).toEqual([]);
+    });
+});
+
 describe("filterSuggestions", () => {
     test("caps the list", () => {
         const many = Array.from({ length: 200 }, (_, index) => ({

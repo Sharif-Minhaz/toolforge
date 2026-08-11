@@ -142,6 +142,19 @@ export type InsertEndpointRow = {
     readonly name: string;
     readonly method: HttpMethod;
     readonly parsed: ParsedPathPattern;
+    /**
+     * The graph the route starts life with. Absent means the default one, which
+     * is what pressing "Add route" wants.
+     *
+     * It used to be *only* the default one, and that was a silent data loss: the
+     * OpenAPI importer builds a whole graph per operation — the response shaped
+     * from the schema, the declared request shape, the guard over required
+     * fields — handed it to this function, and this function created the row
+     * with `createDefaultGraph()` regardless. Every imported route answered
+     * `{"message":"Hello from ToolForge"}`, which is exactly what the import
+     * panel promised it would not do.
+     */
+    readonly graph?: GraphDocument;
 };
 
 export type EndpointWriteResult =
@@ -163,7 +176,7 @@ export async function insertEndpoint(input: InsertEndpointRow): Promise<Endpoint
                 // Prisma's JSON input type excludes `null` at the top level; a
                 // `GraphDocument` is never null, so the cast asserts what the
                 // type system cannot see through the structural mismatch.
-                graph: createDefaultGraph() as unknown as Prisma.InputJsonValue,
+                graph: (input.graph ?? createDefaultGraph()) as unknown as Prisma.InputJsonValue,
             },
             select: DETAIL_SELECT,
         });

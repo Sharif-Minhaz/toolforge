@@ -1,6 +1,13 @@
 import { DEFAULT_CONTENT_TYPE } from "./content-type";
 import { DEFAULT_RESPONSE_BODY } from "./value-edit";
-import { NODE_KINDS, type GraphNode, type JsonValue, type NodeKind } from "../types/graph";
+import {
+    NODE_KINDS,
+    REQUEST_SOURCES,
+    type GraphNode,
+    type JsonValue,
+    type NodeKind,
+    type RequestSource,
+} from "../types/graph";
 
 /**
  * What each node kind is, as data.
@@ -65,6 +72,16 @@ export type NodeDefinition = {
     readonly accent: "violet" | "cyan" | "amber" | "rose" | "emerald";
 };
 
+/**
+ * Where a `validate` node files the names it found missing.
+ *
+ * A variable rather than a fixed response, so the 400 the author wires to the
+ * fail handle can say *which* field was absent — `{ kind: "var", name: "missing" }`
+ * in the response body is the whole difference between a mock that reproduces
+ * an API's error and one that just refuses.
+ */
+export const DEFAULT_MISSING_VARIABLE = "missing";
+
 const NEXT: readonly NodeHandle[] = [{ id: "next", labelKey: "next" }];
 
 const NONE: readonly NodeHandle[] = [];
@@ -103,6 +120,45 @@ export function switchCases(data: Record<string, JsonValue>): readonly SwitchCas
                 : null;
         })
         .filter((entry): entry is SwitchCase => entry !== null);
+}
+
+/** One thing a `validate` node insists a request carries. */
+export type RequiredField = {
+    readonly id: string;
+    readonly source: RequestSource;
+    /** A header name, a query key, a path parameter, or a path into the body. */
+    readonly path: string;
+};
+
+function isRequestSource(value: unknown): value is RequestSource {
+    return typeof value === "string" && (REQUEST_SOURCES as readonly string[]).includes(value);
+}
+
+/**
+ * A validate node's field list, read defensively — stored data is JSONB.
+ *
+ * A row naming a source this build does not know is dropped rather than
+ * defaulted to `body`: a check against the wrong half of the request would
+ * refuse requests that are perfectly valid, and silently.
+ */
+export function requiredFields(data: Record<string, JsonValue>): readonly RequiredField[] {
+    const fields = data.fields;
+
+    if (!Array.isArray(fields)) {
+        return [];
+    }
+
+    return fields
+        .map((entry) => {
+            const row = asRecord(entry);
+
+            return typeof row.id === "string" &&
+                isRequestSource(row.source) &&
+                typeof row.path === "string"
+                ? { id: row.id, source: row.source, path: row.path }
+                : null;
+        })
+        .filter((entry): entry is RequiredField => entry !== null);
 }
 
 /** The same for a weighted branch. */
@@ -152,6 +208,23 @@ export const NODE_DEFINITIONS: Readonly<Record<NodeKind, NodeDefinition>> = {
             { id: "fail", labelKey: "fail" },
         ],
         defaults: () => ({ mode: "apiKey", header: "x-api-key", value: "", status: 401 }),
+        implemented: true,
+        placeable: true,
+        accent: "rose",
+    },
+    validate: {
+        kind: "validate",
+        acceptsInput: true,
+        terminal: false,
+        // The same two handles `auth` has, and for the same reason: what a
+        // refusal looks like is the author's decision. An API that answers 400
+        // with a body naming the field is the common case and a hard-coded
+        // status could not model it.
+        handles: () => [
+            { id: "pass", labelKey: "pass" },
+            { id: "fail", labelKey: "fail" },
+        ],
+        defaults: () => ({ fields: [], saveAs: DEFAULT_MISSING_VARIABLE }),
         implemented: true,
         placeable: true,
         accent: "rose",

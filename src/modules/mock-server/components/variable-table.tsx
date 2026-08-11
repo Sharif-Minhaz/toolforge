@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
+import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip } from "@/modules/tools/components/status-strip";
 
 import { removeVariable, saveVariable } from "../actions/variables";
@@ -28,9 +29,6 @@ type VariableTableProps = {
     initial: readonly DisplayVariable[];
     environments: readonly string[];
 };
-
-const SELECT_CLASS =
-    "border-input bg-card focus-visible:ring-ring h-9 rounded-lg border px-2 text-xs focus-visible:ring-2 focus-visible:outline-none";
 
 /**
  * The variables a workspace holds, and the form that adds one.
@@ -51,6 +49,13 @@ export function VariableTable({ workspaceId, servers, initial, environments }: V
     const [rows, setRows] = useState<readonly DisplayVariable[]>(initial);
     const [environment, setEnvironment] = useState(environments[0] ?? DEFAULT_ENVIRONMENT);
     const [scopeId, setScopeId] = useState<string>(workspaceId);
+    // The workspace is a scope like any server is, so it heads the same list
+    // rather than being a special first row the picker has to know about.
+    const scopeValues = [workspaceId, ...servers.map((server) => server.id)];
+    const scopeItems: Record<string, string> = {
+        [workspaceId]: t("scopeWorkspace"),
+        ...Object.fromEntries(servers.map((server) => [server.id, server.name])),
+    };
     const [key, setKey] = useState("");
     const [value, setValue] = useState("");
 
@@ -148,19 +153,14 @@ export function VariableTable({ workspaceId, servers, initial, environments }: V
     return (
         <div className="flex min-w-0 flex-col gap-5">
             <div className="flex flex-wrap items-end gap-3">
-                <div className="flex flex-col gap-1.5">
-                    <Label className="text-xs">{t("environment")}</Label>
-                    <select
+                <div className="min-w-44">
+                    <OptionSelect
+                        label={t("environment")}
                         value={environment}
-                        onChange={(event) => setEnvironment(event.target.value)}
-                        className={SELECT_CLASS}
-                    >
-                        {environments.map((name) => (
-                            <option key={name} value={name}>
-                                {name}
-                            </option>
-                        ))}
-                    </select>
+                        values={environments}
+                        items={Object.fromEntries(environments.map((name) => [name, name]))}
+                        onChange={setEnvironment}
+                    />
                 </div>
                 <p className="text-muted-foreground max-w-[54ch] text-xs leading-relaxed">
                     {t("overrideHint")}
@@ -179,21 +179,13 @@ export function VariableTable({ workspaceId, servers, initial, environments }: V
                 </p>
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                    <div className="flex flex-col gap-1.5">
-                        <Label className="text-xs">{t("scope")}</Label>
-                        <select
-                            value={scopeId}
-                            onChange={(event) => setScopeId(event.target.value)}
-                            className={SELECT_CLASS}
-                        >
-                            <option value={workspaceId}>{t("scopeWorkspace")}</option>
-                            {servers.map((server) => (
-                                <option key={server.id} value={server.id}>
-                                    {server.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                    <OptionSelect
+                        label={t("scope")}
+                        value={scopeId}
+                        values={scopeValues}
+                        items={scopeItems}
+                        onChange={setScopeId}
+                    />
 
                     <div className="flex flex-col gap-1.5">
                         <div className="flex flex-wrap items-center justify-between gap-2">

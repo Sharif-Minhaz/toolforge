@@ -25,7 +25,12 @@ import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-
 import { getRequestShape, type RequestShapeResult } from "../actions/request-shape";
 import { createEndpoint, deleteEndpoint, getEndpoint, updateEndpoint } from "../actions/servers";
 import { ALLOWED_CONTENT_TYPES, type AllowedContentType } from "../domain/content-type";
-import { declaredVariables, hasSingleResponse, readResponseBody } from "../domain/graph-edit";
+import {
+    declaredRequestShape,
+    declaredVariables,
+    hasSingleResponse,
+    readResponseBody,
+} from "../domain/graph-edit";
 import { ENDPOINT_NAME_LENGTH, MAX_PATH_LENGTH } from "../domain/constants";
 import { parsePathPattern } from "../domain/path-pattern";
 import { EMPTY_OBSERVED_SHAPE } from "../domain/suggest-path";
@@ -423,6 +428,10 @@ export function EndpointWorkbench({
         request: {
             params: open === null ? [] : routeParams(open.path),
             observed: forOpenRoute?.observed ?? EMPTY_OBSERVED_SHAPE,
+            // Off the graph rather than off the server: what a document said
+            // this route carries was written onto its entry node at import, so
+            // it is here the moment the route opens and needs no round trip.
+            declared: graphReady ? declaredRequestShape(graph) : null,
         },
         vars: graphReady ? declaredVariables(graph) : [],
         envKeys: forOpenRoute?.envKeys ?? [],

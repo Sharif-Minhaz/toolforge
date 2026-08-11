@@ -317,6 +317,229 @@ describe("readOpenApi", () => {
     });
 });
 
+/**
+ * The request half of an operation, which the importer used to read and drop.
+ *
+ * Modelled on bKash's recurring-payment gateway, which is the example the panel
+ * ships: three required headers on every call, a required body with required
+ * fields inside it, and a required query parameter on the cancel.
+ */
+const GATEWAY = {
+    openapi: "3.0.1",
+    info: { title: "gateway", version: "1" },
+    paths: {
+        "/api/subscription": {
+            // Declared on the path item, which is how a document says "every
+            // operation here". Reading only the operation's own list misses it.
+            parameters: [
+                { name: "version", in: "header", required: true, schema: { type: "string" } },
+                { name: "channelId", in: "header", required: true, schema: { type: "string" } },
+            ],
+            post: {
+                operationId: "create",
+                parameters: [
+                    { name: "trace", in: "header", required: false, schema: { type: "string" } },
+                ],
+                requestBody: {
+                    required: true,
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                required: ["currency", "payerType"],
+                                properties: {
+                                    currency: { type: "string", enum: ["BDT"] },
+                                    payerType: { type: "string", enum: ["CUSTOMER"] },
+                                    amount: { type: "number" },
+                                },
+                            },
+                        },
+                    },
+                },
+                responses: { "200": { content: { "application/json": { schema: {} } } } },
+            },
+        },
+        "/api/subscriptions/{id}": {
+            delete: {
+                operationId: "cancel",
+                parameters: [
+                    { name: "id", in: "path", required: true, schema: { type: "string" } },
+                    { name: "reason", in: "query", required: true, schema: { type: "string" } },
+                ],
+                responses: { "200": {} },
+            },
+        },
+    },
+};
+
+function guardOf(graph: { nodes: readonly { kind: string; data: unknown }[] }) {
+    return graph.nodes.find((node) => node.kind === "validate");
+}
+
+describe("readOpenApi: the request half", () => {
+    const result = readOpenApi(GATEWAY);
+    const create = result.endpoints[0];
+    const cancel = result.endpoints[1];
+
+    test("merges the path item's parameters into every operation on it", () => {
+        expect(create.declared.headers.map((field) => field.name)).toEqual([
+            "version",
+            "channelId",
+            "trace",
+        ]);
+    });
+
+    test("keeps optional apart from required", () => {
+        expect(create.declared.headers.map((field) => field.required)).toEqual([true, true, false]);
+    });
+
+    test("carries an example of the request body, for the path pickers", () => {
+        expect(create.declared.body).toEqual({
+            currency: "BDT",
+            payerType: "CUSTOMER",
+            amount: 0,
+        });
+    });
+
+    test("guards the required headers and the required body fields", () => {
+        expect(create.required.map((field) => `${field.source}.${field.path}`)).toEqual([
+            "header.version",
+            "header.channelId",
+            "body.currency",
+            "body.payerType",
+        ]);
+    });
+
+    test("guards a required query parameter", () => {
+        expect(cancel.required.map((field) => `${field.source}.${field.path}`)).toEqual([
+            "query.reason",
+        ]);
+    });
+
+    /** A request that reached this route already has them; a check can only pass. */
+    test("never guards a path parameter", () => {
+        expect(cancel.required.some((field) => field.source === "param")).toBe(false);
+    });
+
+    test("writes the declared shape onto the entry node", () => {
+        const entry = create.graph.nodes.find((node) => node.kind === "request");
+
+        expect(entry?.data).toEqual({ declared: create.declared });
+    });
+
+    test("an operation that requires nothing gets no guard", () => {
+        const plain = readOpenApi(PETSTORE).endpoints[0];
+
+        expect(plain.required).toEqual([]);
+        expect(guardOf(plain.graph)).toBeUndefined();
+        expect(plain.graph.nodes.filter((node) => node.kind === "response")).toHaveLength(1);
+    });
+
+    test("the switch turns the guard off without touching anything else", () => {
+        const unguarded = readOpenApi(GATEWAY, { enforceRequired: false }).endpoints[0];
+
+        expect(unguarded.required).toEqual([]);
+        expect(guardOf(unguarded.graph)).toBeUndefined();
+        // The shape is still read: what the switch turns off is enforcement,
+        // not the half of the document the pickers use.
+        expect(unguarded.declared.headers).toHaveLength(3);
+    });
+
+    /**
+     * The whole point of the node. A caller who forgot two headers should be
+     * told about two headers, in the response body, not just that something was
+     * wrong.
+     */
+    test("a request missing required fields is refused, and the 400 names them", async () => {
+        const executed = await executeGraph(create.graph, {
+            ...context(),
+            request: { ...REQUEST, method: "POST", headers: { version: "1" }, body: {} },
+        });
+
+        expect(executed.ok).toBe(true);
+        expect(executed.ok && executed.response.status).toBe(400);
+        expect(executed.ok && JSON.parse(executed.response.body)).toEqual({
+            message: "Required fields are missing from the request.",
+            missing: ["header.channelId", "body.currency", "body.payerType"],
+        });
+    });
+
+    test("a request carrying all of them gets the documented response", async () => {
+        const executed = await executeGraph(create.graph, {
+            ...context(),
+            request: {
+                ...REQUEST,
+                method: "POST",
+                headers: { version: "1", channelid: "web" },
+                body: { currency: "BDT", payerType: "CUSTOMER" },
+            },
+        });
+
+        expect(executed.ok && executed.response.status).toBe(200);
+    });
+
+    /** HTTP says header names are case-insensitive; the document's spelling is not law. */
+    test("matches a header whatever case it arrived in", async () => {
+        const executed = await executeGraph(create.graph, {
+            ...context(),
+            request: {
+                ...REQUEST,
+                method: "POST",
+                headers: { VERSION: "1", ChannelId: "web" },
+                body: { currency: "BDT", payerType: "CUSTOMER" },
+            },
+        });
+
+        expect(executed.ok && executed.response.status).toBe(200);
+    });
+
+    /**
+     * A schema's `required` describes the body *if one is sent*. An operation
+     * whose body is optional is not asking for those fields on a call with none.
+     */
+    test("does not guard body fields when the body itself is optional", () => {
+        const optional = readOpenApi({
+            paths: {
+                "/x": {
+                    post: {
+                        requestBody: {
+                            content: {
+                                "application/json": {
+                                    schema: { type: "object", required: ["a"] },
+                                },
+                            },
+                        },
+                        responses: { "200": {} },
+                    },
+                },
+            },
+        }).endpoints[0];
+
+        expect(optional.required).toEqual([]);
+    });
+
+    test("ignores a parameter with no name or an unknown location", () => {
+        const odd = readOpenApi({
+            paths: {
+                "/x": {
+                    get: {
+                        parameters: [
+                            { name: "", in: "header", required: true },
+                            { name: "a", in: "nowhere", required: true },
+                            { in: "query", required: true },
+                        ],
+                        responses: { "200": {} },
+                    },
+                },
+            },
+        }).endpoints[0];
+
+        expect(odd.required).toEqual([]);
+        expect(odd.declared.headers).toEqual([]);
+        expect(odd.declared.query).toEqual([]);
+    });
+});
+
 describe("writeOpenApi", () => {
     const document = writeOpenApi("My API", "https://example.com/m/key", [
         {

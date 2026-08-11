@@ -6,7 +6,7 @@ import { MAX_DELAY_MS } from "@/modules/mock-server/domain/constants";
 import { executeGraph } from "@/modules/mock-server/domain/execute";
 import { addNode, connect, emptyGraph, removeNodes } from "@/modules/mock-server/domain/graph-edit";
 import { createDefaultGraph } from "@/modules/mock-server/domain/graph";
-import { planDelay } from "@/modules/mock-server/domain/nodes";
+import { planDelay, runValidate } from "@/modules/mock-server/domain/nodes";
 import { createSeededRandom } from "@/modules/mock-server/domain/seeded-random";
 import type {
     ExecutionContext,
@@ -376,6 +376,106 @@ describe("checkAuth", () => {
                     withHeaders({ authorization: "Bearer other.other.other" }),
                 ),
             ).toBe(false);
+        });
+    });
+});
+
+describe("runValidate", () => {
+    function node(data: Record<string, unknown>): GraphNode {
+        return { id: "validate-1", kind: "validate", position: { x: 0, y: 0 }, data } as GraphNode;
+    }
+
+    const REQUIRED = [
+        { id: "f1", source: "header", path: "x-key" },
+        { id: "f2", source: "body", path: "email" },
+    ];
+
+    function withHeaders(headers: Record<string, string>): ExecutionContext {
+        return context({ request: { ...REQUEST, headers } });
+    }
+
+    test("passes when every field is there", () => {
+        const result = runValidate(node({ fields: REQUIRED }), withHeaders({ "x-key": "abc" }));
+
+        expect(result).toEqual({ kind: "continue", handle: "pass" });
+    });
+
+    test("fails when one is missing", () => {
+        expect(runValidate(node({ fields: REQUIRED }), withHeaders({}))).toEqual({
+            kind: "continue",
+            handle: "fail",
+        });
+    });
+
+    /** Every field, never the first failure: two forgotten headers is two facts. */
+    test("reports all the missing names, not just the first", () => {
+        const ctx = context({ request: { ...REQUEST, headers: {}, body: {} } });
+
+        runValidate(node({ fields: REQUIRED }), ctx);
+
+        expect(ctx.vars.missing).toEqual(["header.x-key", "body.email"]);
+    });
+
+    /** So a graph reading it after a pass sees a list, not the last failure's. */
+    test("writes an empty list on the way past", () => {
+        const ctx = withHeaders({ "x-key": "abc" });
+
+        runValidate(node({ fields: REQUIRED }), ctx);
+
+        expect(ctx.vars.missing).toEqual([]);
+    });
+
+    test("stores under the name the node names", () => {
+        const ctx = withHeaders({});
+
+        runValidate(node({ fields: REQUIRED, saveAs: "absent" }), ctx);
+
+        expect(ctx.vars.absent).toBeDefined();
+        expect(ctx.vars.missing).toBeUndefined();
+    });
+
+    test("a blank variable name stores nothing", () => {
+        const ctx = withHeaders({});
+
+        runValidate(node({ fields: REQUIRED, saveAs: "  " }), ctx);
+
+        expect(Object.keys(ctx.vars)).toEqual([]);
+    });
+
+    /** A header that arrived empty is a header the caller did not really send. */
+    test("an empty value counts as missing", () => {
+        expect(runValidate(node({ fields: REQUIRED }), withHeaders({ "x-key": "" }))).toEqual({
+            kind: "continue",
+            handle: "fail",
+        });
+    });
+
+    test("a row with no path yet is ignored rather than failing", () => {
+        const result = runValidate(
+            node({ fields: [{ id: "f1", source: "header", path: "  " }] }),
+            withHeaders({}),
+        );
+
+        expect(result).toEqual({ kind: "continue", handle: "pass" });
+    });
+
+    /**
+     * Dropped rather than defaulted to `body`: a check against the wrong half of
+     * the request refuses valid requests, and silently.
+     */
+    test("drops a row naming a source this build does not know", () => {
+        const result = runValidate(
+            node({ fields: [{ id: "f1", source: "trailer", path: "x" }] }),
+            withHeaders({}),
+        );
+
+        expect(result).toEqual({ kind: "continue", handle: "pass" });
+    });
+
+    test("a node with no fields at all passes", () => {
+        expect(runValidate(node({}), withHeaders({}))).toEqual({
+            kind: "continue",
+            handle: "pass",
         });
     });
 });

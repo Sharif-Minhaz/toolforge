@@ -18,11 +18,15 @@ import { MAX_NODE_FIELD_LENGTH, MAX_NODE_VALUE_LENGTH } from "../domain/constant
 import { FAKER_CATEGORIES, fakerProvidersByCategory } from "../domain/faker-registry";
 import { suggestNames, suggestRequestPaths } from "../domain/suggest-path";
 import { pathKey, type ValuePath } from "../domain/value-edit";
-import { VALUE_KINDS, type RequestSource, type ValueExpr, type ValueKind } from "../types/graph";
+import {
+    REQUEST_SOURCES,
+    VALUE_KINDS,
+    type RequestSource,
+    type ValueExpr,
+    type ValueKind,
+} from "../types/graph";
 import { PathPicker } from "./path-picker";
 import { useEditorSuggestions } from "./suggestion-context";
-
-const REQUEST_SOURCES = ["body", "header", "cookie", "query", "param"] as const;
 
 const NOW_FORMATS = ["iso", "epochMs", "epochSeconds"] as const;
 
@@ -532,14 +536,17 @@ export function ValueRow({ expr, path, depth, actions, field, label }: ValueRowP
  * keep typing, the second means go and send a request. A picker that said
  * "no suggestions" to both would be the same dead end the plain text box was.
  */
-function RequestPathPicker({
+export function RequestPathPicker({
     source,
     value,
     onChange,
+    className = VALUE_CONTROL,
 }: {
     source: RequestSource;
     value: string;
     onChange: (next: string) => void;
+    /** The validate node's rows are wider than a value line's third of one. */
+    className?: string;
 }) {
     const t = useTranslations("mockServer.builder");
     const tSuggest = useTranslations("mockServer.suggest");
@@ -560,7 +567,13 @@ function RequestPathPicker({
             return tSuggest(request.params.length === 0 ? "emptyParams" : "emptyMatch");
         }
 
-        return tSuggest(fromTraffic && samples === 0 ? "emptyTraffic" : "emptyMatch");
+        // A route imported from a document has a declared shape, so "nothing is
+        // known about what it carries" is no longer true of it even before the
+        // first request — what an empty list means there is that the typed text
+        // matched nothing.
+        const known = request.declared !== null && request.declared !== undefined;
+
+        return tSuggest(fromTraffic && samples === 0 && !known ? "emptyTraffic" : "emptyMatch");
     }
 
     return (
@@ -576,7 +589,7 @@ function RequestPathPicker({
             }
             label={t("pathLabel")}
             placeholder={t("pathPlaceholder")}
-            className={VALUE_CONTROL}
+            className={className}
         />
     );
 }

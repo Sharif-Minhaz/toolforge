@@ -2,25 +2,49 @@
 
 import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { StatusStrip } from "@/modules/tools/components/status-strip";
 
 import { AUTH_MODES } from "../domain/auth-check";
 import { COMPARE_OPS } from "../domain/compare";
 import { MAX_DELAY_MS, MAX_NODE_FIELD_LENGTH, MAX_NODE_VALUE_LENGTH } from "../domain/constants";
-import { nodeDefinition, randomBranches, switchCases } from "../domain/node-registry";
-import type { GraphNode, JsonValue, ValueExpr } from "../types/graph";
+import { readDeclaredShape } from "../domain/graph-edit";
+import {
+    DEFAULT_MISSING_VARIABLE,
+    nodeDefinition,
+    randomBranches,
+    requiredFields,
+    switchCases,
+} from "../domain/node-registry";
+import { collectObservedPaths } from "../domain/suggest-path";
+import {
+    REQUEST_SOURCES,
+    type DeclaredField,
+    type GraphNode,
+    type JsonValue,
+    type ValueExpr,
+} from "../types/graph";
 import { ValueEditor } from "./value-editor";
+import { RequestPathPicker } from "./value-row";
 
 /**
  * The form for whichever node is selected.
  *
  * One component with a branch per kind rather than a registry of components:
  * every inspector is four controls over a `Record<string, JsonValue>`, and
- * eleven files would be eleven places for the label spacing to drift. The
+ * one file per kind would be a dozen places for the label spacing to drift. The
  * registry seam that does matter — handles, defaults, whether a kind runs —
  * is in `domain/node-registry.ts`, where it is framework-free and tested.
  *
@@ -74,17 +98,90 @@ function freeEntryId(taken: readonly { id: string }[], prefix: string): string {
     return `${prefix}${counter}`;
 }
 
-const SELECT_CLASS =
-    "border-input bg-card focus-visible:ring-ring h-9 w-full rounded-lg border px-2 text-xs focus-visible:ring-2 focus-visible:outline-none";
+/**
+ * The rail's dropdowns, on the same Select every option panel on the site uses.
+ *
+ * A native `<select>` was what these were, and it was the one control here the
+ * platform drew itself: the popup came from the operating system, so it ignored
+ * the theme, the radius and the type scale, and beside a Base UI trigger two
+ * rows up it read as a control belonging to a different application.
+ *
+ * `items` goes on the root as well as the list, and that is not redundant —
+ * Base UI reads the value-to-label map from there, and without it the trigger
+ * renders the raw stored value (`notEquals`, `randomBranch`) instead of its
+ * label. The same note is on `OptionSelect`, which this deliberately does not
+ * reuse: that one carries its own `<Label>` and column, and half of these sit
+ * inline in a row beside a path box and a delete button.
+ */
+function InspectorSelect<T extends string>({
+    value,
+    values,
+    items,
+    label,
+    onChange,
+    className,
+}: {
+    value: string;
+    values: readonly T[];
+    items: Record<string, ReactNode>;
+    /** Names the control. Matches the visible `Field` label where there is one. */
+    label: string;
+    onChange: (next: T) => void;
+    className?: string;
+}) {
+    return (
+        <Select
+            items={items}
+            value={value}
+            onValueChange={(next) => {
+                if (next !== null) {
+                    onChange(next as T);
+                }
+            }}
+        >
+            <SelectTrigger aria-label={label} className={cn("w-full text-xs", className)}>
+                <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="max-h-72">
+                {values.map((item) => (
+                    <SelectItem key={item} value={item} className="text-xs">
+                        {items[item]}
+                    </SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
+    );
+}
+
+const LOG_LEVELS = ["debug", "info", "warn"] as const;
+
+/** Level names are the words the trace prints, so they are not translated. */
+const LOG_LEVEL_ITEMS: Record<string, ReactNode> = Object.fromEntries(
+    LOG_LEVELS.map((level) => [level, level]),
+);
 
 export function NodeInspector({ node, onChange }: NodeInspectorProps) {
     const t = useTranslations("mockServer.inspector");
     const tOps = useTranslations("mockServer.compareOps");
     const tAuth = useTranslations("mockServer.authModes");
+    const tBuilder = useTranslations("mockServer.builder");
     const tStudio = useTranslations("mockServer.studio");
 
     const data = asRecord(node.data);
     const patch = (next: Record<string, JsonValue>) => onChange({ ...data, ...next });
+
+    // Rebuilt each render rather than memoised: a dozen entries costs less than
+    // the dependency array that would keep them, and only one of the three is
+    // ever mounted at a time.
+    const authItems: Record<string, ReactNode> = Object.fromEntries(
+        AUTH_MODES.map((mode) => [mode, tAuth(mode)]),
+    );
+    const opItems: Record<string, ReactNode> = Object.fromEntries(
+        COMPARE_OPS.map((op) => [op, tOps(op)]),
+    );
+    const sourceItems: Record<string, ReactNode> = Object.fromEntries(
+        REQUEST_SOURCES.map((source) => [source, tBuilder(`sources.${source}`)]),
+    );
 
     if (!nodeDefinition(node.kind).implemented) {
         return <StatusStrip tone="warning" message={tStudio("nodeNotReady")} />;
@@ -92,23 +189,117 @@ export function NodeInspector({ node, onChange }: NodeInspectorProps) {
 
     switch (node.kind) {
         case "request":
-            return <p className="text-muted-foreground text-xs">{t("requestHint")}</p>;
+            return <RequestNodeSummary data={data} />;
+
+        case "validate": {
+            const fields = requiredFields(data);
+
+            return (
+                <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-2">
+                        <Label className="text-xs">{t("requiredFields")}</Label>
+                        <p className="text-muted-foreground text-[0.6875rem] leading-normal">
+                            {t("requiredFieldsHint")}
+                        </p>
+
+                        {fields.map((field, index) => (
+                            // `flex-wrap`, because `RequestPathPicker` renders its
+                            // suggestion list as a `basis-full` sibling that has to
+                            // wrap under the row rather than fight it for width.
+                            <div key={field.id} className="flex flex-wrap items-center gap-1.5">
+                                <InspectorSelect
+                                    value={field.source}
+                                    values={REQUEST_SOURCES}
+                                    items={sourceItems}
+                                    label={tBuilder("sourceLabel")}
+                                    onChange={(source) =>
+                                        patch({
+                                            fields: fields.map((row, at) =>
+                                                at === index ? { ...row, source } : row,
+                                            ) as unknown as JsonValue,
+                                        })
+                                    }
+                                    className="w-auto min-w-24 flex-none"
+                                />
+
+                                <RequestPathPicker
+                                    source={field.source}
+                                    value={field.path}
+                                    onChange={(path) =>
+                                        patch({
+                                            fields: fields.map((row, at) =>
+                                                at === index ? { ...row, path } : row,
+                                            ) as unknown as JsonValue,
+                                        })
+                                    }
+                                    className="h-8 min-w-0 flex-1 basis-32 text-xs"
+                                />
+
+                                <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="ghost"
+                                    className="text-muted-foreground hover:text-destructive size-8 shrink-0"
+                                    aria-label={t("removeRequiredField")}
+                                    onClick={() =>
+                                        patch({
+                                            fields: fields.filter(
+                                                (_, at) => at !== index,
+                                            ) as unknown as JsonValue,
+                                        })
+                                    }
+                                >
+                                    <IconTrash className="size-3.5" aria-hidden="true" />
+                                </Button>
+                            </div>
+                        ))}
+
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="w-fit gap-1.5"
+                            onClick={() =>
+                                patch({
+                                    fields: [
+                                        ...fields,
+                                        {
+                                            id: freeEntryId(fields, "f"),
+                                            source: "header",
+                                            path: "",
+                                        },
+                                    ] as unknown as JsonValue,
+                                })
+                            }
+                        >
+                            <IconPlus className="size-3.5" aria-hidden="true" />
+                            {t("addRequiredField")}
+                        </Button>
+                    </div>
+
+                    <Field label={t("missingVariable")} hint={t("missingVariableHint")}>
+                        <Input
+                            maxLength={MAX_NODE_FIELD_LENGTH}
+                            value={readString(data, "saveAs", DEFAULT_MISSING_VARIABLE)}
+                            onChange={(event) => patch({ saveAs: event.target.value })}
+                            className="h-9 font-mono text-xs"
+                        />
+                    </Field>
+                </div>
+            );
+        }
 
         case "auth":
             return (
                 <div className="flex flex-col gap-3">
                     <Field label={t("authMode")}>
-                        <select
+                        <InspectorSelect
                             value={readString(data, "mode", "none")}
-                            onChange={(event) => patch({ mode: event.target.value })}
-                            className={SELECT_CLASS}
-                        >
-                            {AUTH_MODES.map((mode) => (
-                                <option key={mode} value={mode}>
-                                    {tAuth(mode)}
-                                </option>
-                            ))}
-                        </select>
+                            values={AUTH_MODES}
+                            items={authItems}
+                            label={t("authMode")}
+                            onChange={(mode) => patch({ mode })}
+                        />
                     </Field>
 
                     {readString(data, "mode", "none") === "apiKey" ? (
@@ -148,17 +339,13 @@ export function NodeInspector({ node, onChange }: NodeInspectorProps) {
                     </Field>
 
                     <Field label={t("conditionOp")}>
-                        <select
+                        <InspectorSelect
                             value={readString(data, "op", "equals")}
-                            onChange={(event) => patch({ op: event.target.value })}
-                            className={SELECT_CLASS}
-                        >
-                            {COMPARE_OPS.map((op) => (
-                                <option key={op} value={op}>
-                                    {tOps(op)}
-                                </option>
-                            ))}
-                        </select>
+                            values={COMPARE_OPS}
+                            items={opItems}
+                            label={t("conditionOp")}
+                            onChange={(op) => patch({ op })}
+                        />
                     </Field>
 
                     <Field label={t("conditionRight")}>
@@ -386,17 +573,13 @@ export function NodeInspector({ node, onChange }: NodeInspectorProps) {
             return (
                 <div className="flex flex-col gap-3">
                     <Field label={t("logLevel")}>
-                        <select
+                        <InspectorSelect
                             value={readString(data, "level", "info")}
-                            onChange={(event) => patch({ level: event.target.value })}
-                            className={SELECT_CLASS}
-                        >
-                            {(["debug", "info", "warn"] as const).map((level) => (
-                                <option key={level} value={level}>
-                                    {level}
-                                </option>
-                            ))}
-                        </select>
+                            values={LOG_LEVELS}
+                            items={LOG_LEVEL_ITEMS}
+                            label={t("logLevel")}
+                            onChange={(level) => patch({ level })}
+                        />
                     </Field>
                     <Field label={t("logMessage")} hint={t("logHint")}>
                         <ValueEditor
@@ -412,6 +595,89 @@ export function NodeInspector({ node, onChange }: NodeInspectorProps) {
         default:
             return <p className="text-muted-foreground text-xs">{t("noOptions")}</p>;
     }
+}
+
+/**
+ * The entry node's panel: a sentence, and what a document said, when there is one.
+ *
+ * Read-only on purpose. This is not configuration the reader typed — it is what
+ * the import found, and a form over it would invite editing a record of
+ * something that happened rather than the behaviour it produced. What enforces
+ * any of it is the `validate` node, which *is* editable and sits right there on
+ * the canvas.
+ */
+function RequestNodeSummary({ data }: { data: Record<string, JsonValue> }) {
+    const t = useTranslations("mockServer.inspector");
+    const declared = readDeclaredShape(data);
+    const bodyFields = declared === null ? [] : [...collectObservedPaths(declared.body).keys()];
+
+    if (declared === null) {
+        return <p className="text-muted-foreground text-xs">{t("requestHint")}</p>;
+    }
+
+    return (
+        <div className="flex flex-col gap-3">
+            <p className="text-muted-foreground text-xs">{t("requestHint")}</p>
+
+            <div className="border-border/70 flex min-w-0 flex-col gap-2 rounded-lg border p-3">
+                <p className="text-foreground text-xs font-medium">{t("declaredTitle")}</p>
+                <p className="text-muted-foreground text-[0.6875rem] leading-normal">
+                    {t("declaredHint")}
+                </p>
+
+                <DeclaredGroup label={t("declaredHeaders")} fields={declared.headers} />
+                <DeclaredGroup label={t("declaredQuery")} fields={declared.query} />
+
+                {bodyFields.length > 0 ? (
+                    <p className="text-muted-foreground text-[0.6875rem] leading-normal">
+                        {t("declaredBody", { count: bodyFields.length })}
+                    </p>
+                ) : null}
+            </div>
+        </div>
+    );
+}
+
+/**
+ * One list of declared names, required ones marked.
+ *
+ * The asterisk is not the only carrier of the fact: each chip's title says it
+ * in words, because a mark distinguishable only by a symbol is a mark somebody
+ * reading with a screen reader does not get.
+ */
+function DeclaredGroup({ label, fields }: { label: string; fields: readonly DeclaredField[] }) {
+    const t = useTranslations("mockServer.inspector");
+
+    if (fields.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="flex min-w-0 flex-col gap-1">
+            <span className="text-muted-foreground text-[0.625rem] font-semibold tracking-[0.09em] uppercase">
+                {label}
+            </span>
+            <ul className="flex flex-wrap gap-1">
+                {fields.map((field) => (
+                    <li
+                        key={field.name}
+                        className="border-border/70 bg-muted/40 rounded-md border px-1.5 py-0.5 font-mono text-[0.6875rem]"
+                    >
+                        {field.name}
+                        {field.required ? (
+                            <span className="text-brand-rose ml-0.5" aria-hidden="true">
+                                *
+                            </span>
+                        ) : null}
+                        <span className="sr-only">
+                            {" "}
+                            {t(field.required ? "declaredRequired" : "declaredOptional")}
+                        </span>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
 }
 
 function Field({

@@ -31,7 +31,7 @@ Four decisions from the Phase 1 review frame everything below.
 A flat graph makes `{id, name, email, profile:{avatar, address:{city, country}}}`
 cost fourteen nodes and thirteen edges. Unreal Blueprint has that problem and it
 is the reason people call it spaghetti. Splitting control flow from data flow
-means the canvas holds eleven node kinds and the object above is six rows in a
+means the canvas holds twelve node kinds and the object above is six rows in a
 tree. Arbitrary nesting comes free because `ValueExpr` is recursive.
 
 The original brief listed the same items twice — once under _Available Nodes_,
@@ -435,12 +435,13 @@ type GraphEdge = {
 version 1 keeps executing after version 2 lands; migration happens on read and
 is written back on the next save.
 
-### 5.2 The eleven node kinds
+### 5.2 The twelve node kinds
 
 | Kind           | Outputs                 | Data                                                             |
 | -------------- | ----------------------- | ---------------------------------------------------------------- |
-| `request`      | `next`                  | none — the entry anchor, exactly one per graph                   |
+| `request`      | `next`                  | the entry anchor, exactly one per graph — plus `declared`, §5.3b |
 | `auth`         | `pass`, `fail`          | `{ mode: "none"\|"apiKey"\|"bearer"\|"basic"\|"jwt", config }`   |
+| `validate`     | `pass`, `fail`          | `{ fields: { id, source, path }[], saveAs: string }`             |
 | `condition`    | `true`, `false`         | `{ left: ValueExpr, op: CompareOp, right: ValueExpr }`           |
 | `switch`       | `case:<id>…`, `default` | `{ operand: ValueExpr, cases: SwitchCase[] }`                    |
 | `delay`        | `next`                  | `{ ms: number } \| { min: number, max: number }`                 |
@@ -476,6 +477,49 @@ type NodeDefinition<D> = {
 
 Registering a node = widen the union, add one entry to each registry, add two
 message keys per locale. Nothing else in the app changes.
+
+### 5.3a `validate`, and why it is not three `condition` nodes
+
+Everything `validate` does is expressible as a chain: one `condition` per field,
+`is present`, false wired to a refusal. It exists because that chain does not
+survive contact with a real document.
+
+bKash's recurring-payment gateway wants `version`, `channelId` and `timeStamp` on
+every call and seven fields inside the subscription body. That is **ten condition
+nodes, ten edges and ten refusal nodes on one route**, and the document has ten
+operations. Nobody builds that twice, and nobody reads it once.
+
+So the list is data on one node:
+
+- **Every field is checked, never the first failure.** A caller who forgot two
+  headers should be told about two headers; stopping at the first fixes an
+  integration one round trip at a time.
+- **The names it found missing go into a variable** — `missing` by default — so
+  the 400 wired to `fail` can say _which_, using the `var` value kind that
+  already existed. A refusal that only says "something was missing" is a refusal
+  somebody has to bisect by hand.
+- **Two handles, not a hard-coded status**, for the reason `auth` has two: an
+  API that answers 422 with its own envelope is most of them, and a node that
+  answered 400 itself could not model one.
+- **Path parameters are never in the list.** A request that reached the route
+  matched its pattern, so the check can only pass — and a row that can only pass
+  teaches the reader that the node does nothing.
+
+### 5.3b What a document said the request carries
+
+The entry node grew one optional field, `declared`, holding the headers, query
+keys and a body example an OpenAPI import read off the operation — each name
+with whether the document marked it required.
+
+It is **a claim, not a measurement**, and that is the whole reason it is separate
+from the guard. What it feeds is the path pickers (§7.8), where it ranks above
+`observed`: the three headers an operation documents are what somebody is looking
+for, and the fifteen a real browser sent are not. What _enforces_ any of it is
+the `validate` node, which is visible on the canvas and can be edited or deleted.
+
+Carried on the graph rather than in a column because it belongs to the route the
+way its response does — it survives export, copy and every read path that
+already exists, and no migration was needed to hold it.
 
 ### 5.4 `ValueExpr`
 
@@ -885,13 +929,25 @@ describes it, and its design is one distinction carried all the way through.
 They cannot be presented identically, so every entry carries an `origin` and the
 UI labels it:
 
-| Origin     | Where it comes from                                    | How sure           |
-| ---------- | ------------------------------------------------------ | ------------------ |
-| `route`    | `parsePathPattern(path).paramNames` plus `*`           | Exact and complete |
-| `graph`    | `declaredVariables(graph)` — this flow's own writes    | Exact              |
-| `upload`   | `UPLOAD_FILE_KEYS`, this server's own multipart parser | Exact              |
-| `observed` | Keys in the last 25 logged requests to this route      | True of those      |
-| `common`   | `COMMON_REQUEST_HEADERS`                               | A guess, labelled  |
+| Origin     | Where it comes from                                    | How sure                    |
+| ---------- | ------------------------------------------------------ | --------------------------- |
+| `route`    | `parsePathPattern(path).paramNames` plus `*`           | Exact and complete          |
+| `graph`    | `declaredVariables(graph)` — this flow's own writes    | Exact                       |
+| `declared` | The entry node's `declared` shape, from an import      | The contract, as documented |
+| `upload`   | `UPLOAD_FILE_KEYS`, this server's own multipart parser | Exact                       |
+| `observed` | Keys in the last 25 logged requests to this route      | True of those               |
+| `common`   | `COMMON_REQUEST_HEADERS`                               | A guess, labelled           |
+
+`declared` outranks `observed` deliberately: a documented header list is the
+three names somebody is looking for, while an observed one is those three buried
+in `accept-encoding` and `user-agent`. It is also the only origin available
+**before the route has ever been called** — which is exactly the moment after an
+import, and the moment the picker was previously emptiest.
+
+Header names are the one place the list is de-duplicated **case-insensitively**,
+because `readStringMap` matches them that way: a document's `channelId` and a log
+row's `channelid` are one header. Query keys and body paths are case-sensitive,
+where the same fold would merge two different fields into one wrong suggestion.
 
 **Keys travel; values never do.** `actions/request-shape.ts` reduces log rows to
 paths on the server. Shipping two hundred bodies to the browser to walk them
@@ -1298,7 +1354,7 @@ rather than byte-wise, because two spellings of the same route are equal.
 
 ## 13. Internationalisation
 
-Roughly 250 new keys: 11 node kinds (name, description, per-field labels),
+Roughly 250 new keys: 12 node kinds (name, description, per-field labels),
 ~40 Faker ids, inspector copy, empty states, error reasons. Both `en.json` and
 `bn.json`, key for key.
 

@@ -58,6 +58,67 @@ answer than matching the characters that were actually sent.
 
 ---
 
+## An importer that builds a document and hands it to a writer which ignores it
+
+`readOpenApi` built a whole `GraphDocument` per operation — the response shaped
+from the schema, an editable value tree, the status code. `importOpenApi` then
+called `insertEndpoint`, whose `InsertEndpointRow` had **no graph field at all**,
+and which created every row with `createDefaultGraph()`.
+
+So every imported route answered `{"message":"Hello from ToolForge"}`, while the
+panel above it promised "a response shaped from its schema". Nothing failed. The
+tests passed, because they asserted on `readOpenApi`'s return value, which was
+correct — the loss happened one layer down, in the gap between a function that
+produces something and a function that never took a parameter for it.
+
+**A producer with no consumer is a defect the type system will not find**, and
+the shape that hides it is an options object with a sensible default: `graph`
+absent means "the default one", which is exactly what pressing _Add route_ wants
+and exactly what made its absence invisible.
+
+The check that would have caught it is the one now in `openapi.test.ts`: execute
+the graph _that was stored_ and assert on the bytes, rather than on the object
+the mapper returned.
+
+## A required header is not a condition; ten of them are not ten conditions
+
+An OpenAPI operation declares more than a response. bKash's recurring-payment
+gateway wants `version`, `channelId` and `timeStamp` on every call and seven
+required fields inside the subscription body, and the importer read none of it —
+so a mock of a gateway that refuses without a header cheerfully answered 200 to
+an empty request, and the only fix was to hand-build ten `condition` nodes per
+route across ten operations.
+
+Two things came out of that, and the split between them is the part worth
+keeping:
+
+- **`validate`** is the enforcement: a list of fields on one node, `pass`/`fail`
+  like `auth`, every field checked rather than the first failure, and the missing
+  names written to a variable so the refusal can name them. See
+  [`../mock-server-studio.md`](../mock-server-studio.md#53a-validate-and-why-it-is-not-three-condition-nodes).
+- **`declared`** on the entry node is the _description_: what the document said,
+  enforced by nothing, read by the path pickers so an imported route offers
+  `payer` and `channelId` before anybody has called it once.
+
+Folding the two together would have been smaller and wrong. A description that
+silently enforced would refuse requests nobody could see a reason for; an
+enforcement with no description would leave the pickers as empty as before.
+
+**The generated guard costs the quick body form.** Two response nodes means
+`hasSingleResponse` is false, so the route page steps aside and points at the
+flow editor — correctly, since there is no honest single-body view of a branching
+route. That is a real trade and it is why the switch in the import panel exists.
+
+## An example is worth more than a placeholder specification
+
+The document a reader reaches for first is the petstore, which declares nothing
+required, carries no headers, and produces routes that answer 200 to anything —
+the one shape this importer has least to show on. `domain/example-specs.ts` ships
+a real payment gateway instead, held as text because the box it fills is a paste
+box and what lands in it should be the characters somebody would have pasted.
+
+---
+
 ## A public response body written by a stranger needs an allowlist, not a warning
 
 While execution shares an origin with the rest of the site, an endpoint that can

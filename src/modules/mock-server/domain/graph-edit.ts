@@ -1,9 +1,12 @@
 import { handlesFor, nodeDefinition } from "./node-registry";
 import {
     GRAPH_SCHEMA_VERSION,
+    type DeclaredField,
+    type DeclaredRequestShape,
     type GraphDocument,
     type GraphEdge,
     type GraphNode,
+    type JsonValue,
     type NodeKind,
     type ValueExpr,
 } from "../types/graph";
@@ -152,6 +155,54 @@ export function declaredVariables(graph: GraphDocument): readonly string[] {
     return names;
 }
 
+function readDeclaredFields(raw: unknown): readonly DeclaredField[] {
+    if (!Array.isArray(raw)) {
+        return [];
+    }
+
+    return raw
+        .map((entry) =>
+            typeof entry === "object" &&
+            entry !== null &&
+            typeof (entry as { name?: unknown }).name === "string"
+                ? {
+                      name: (entry as { name: string }).name,
+                      required: (entry as { required?: unknown }).required === true,
+                  }
+                : null,
+        )
+        .filter((entry): entry is DeclaredField => entry !== null);
+}
+
+/**
+ * What a document said requests to this route carry, off the entry node.
+ *
+ * Null when the route was not imported, which is most of them — the pickers
+ * then show what they always showed. Read defensively for the usual reason: a
+ * graph is JSONB, and this half of it was written by whichever build did the
+ * import.
+ */
+export function declaredRequestShape(graph: GraphDocument): DeclaredRequestShape | null {
+    return readDeclaredShape(graph.nodes.find((node) => node.kind === "request")?.data);
+}
+
+/** The same read off one node's data, for the inspector showing that node. */
+export function readDeclaredShape(data: unknown): DeclaredRequestShape | null {
+    const declared = (data as { declared?: unknown } | undefined)?.declared;
+
+    if (typeof declared !== "object" || declared === null || Array.isArray(declared)) {
+        return null;
+    }
+
+    const row = declared as { headers?: unknown; query?: unknown; body?: unknown };
+
+    return {
+        headers: readDeclaredFields(row.headers),
+        query: readDeclaredFields(row.query),
+        body: (row.body ?? null) as JsonValue,
+    };
+}
+
 export function writeResponseBody(graph: GraphDocument, body: ValueExpr): GraphDocument {
     let written = false;
 
@@ -183,24 +234,6 @@ const NODE_SIZE = { width: 180, height: 56 } as const;
 /** How far a colliding drop steps before trying again. */
 const DROP_STEP = 36;
 
-/**
- * Where a node added from the palette should land.
- *
- * The middle of what the reader is currently looking at, which sounds obvious
- * and was not what happened: the palette used to drop at a fixed point in *graph*
- * coordinates, so once `fitView` had panned away — which it does on every open
- * with more than a node or two — every new node appeared somewhere off-screen
- * and had to be hunted for and dragged back. A canvas that puts new work outside
- * the window is worse than one with no palette at all.
- *
- * Pure, and it takes the viewport rather than reading it, so the arithmetic that
- * inverts React Flow's transform is unit-tested rather than trusted.
- *
- * A drop that would land on an existing node steps down and right until it is
- * clear. Deterministic, because nothing on this site draws from `Math.random` —
- * and a fixed step is also the version that never drops two nodes on the same
- * pixel.
- */
 export function dropPosition(graph: GraphDocument, view: CanvasView | null): CanvasPoint {
     if (view === null || view.size.width === 0 || view.size.height === 0) {
         // Nothing has reported a viewport yet, which happens only before the
