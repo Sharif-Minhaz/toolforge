@@ -259,30 +259,49 @@ export function centeredCrop(bounds: PixelSize, ratio: number | null): CropRect 
 }
 
 /**
- * Re-shapes an existing crop to a new ratio, around its own centre.
+ * Re-shapes an existing crop to a new ratio, keeping its **area** and its
+ * centre.
  *
- * Inscribed rather than circumscribed: the new box fits **inside** what the
- * reader had. Switching the ratio picker from free to 1:1 must not quietly
- * take in more of the picture than was selected a moment ago — that reads as
- * the tool undoing the drag.
+ * This started out inscribing the new shape inside the old box, on the
+ * reasoning that switching from free to 1:1 should not quietly take in more of
+ * the picture than was selected a moment ago. That reasoning is right about the
+ * *first* switch and catastrophic about every one after it: inscribing is a
+ * one-way operation, so 1:1 then 4:3 then 1:1 fits a box inside a box inside a
+ * box and the selection ratchets down to nothing. Each switch was derived from
+ * the previous shape rather than from anything stable.
+ *
+ * Area is the stable thing. `w = √(area · ratio)` and `h = √(area / ratio)`
+ * give the only box of that shape covering as much of the picture as the last
+ * one did, so switching back and forth converges instead of collapsing — and
+ * from a full-frame selection it lands exactly on the largest box of the new
+ * shape, which is what a reader who has not dragged anything yet expects.
+ *
+ * Oversize is handled by scaling both sides by one factor and then **sliding**
+ * the result back inside rather than shrinking it against the edge: a box near
+ * the left margin should move right to fit, not get smaller. That is
+ * `clampCrop`'s order — size first, then position — and it is why this does not
+ * go through `buildRect`, whose centre anchor cannot slide.
  */
 export function applyRatio(rect: CropRect, ratio: number | null, bounds: PixelSize): CropRect {
     if (ratio === null) {
         return clampCrop(rect, bounds);
     }
 
-    const byWidth = { width: rect.width, height: rect.width / ratio };
-    const inscribed =
-        byWidth.height <= rect.height
-            ? byWidth
-            : { width: rect.height * ratio, height: rect.height };
+    const area = Math.max(1, rect.width * rect.height);
+    const wanted = { width: Math.sqrt(area * ratio), height: Math.sqrt(area / ratio) };
 
-    return buildRect(
-        { kind: "center", at: rect.x + rect.width / 2 },
-        { kind: "center", at: rect.y + rect.height / 2 },
-        inscribed.width,
-        inscribed.height,
+    // One factor for both sides, so the shape survives meeting the edge.
+    const scale = Math.min(bounds.width / wanted.width, bounds.height / wanted.height, 1);
+    const width = wanted.width * scale;
+    const height = wanted.height * scale;
+
+    return clampCrop(
+        {
+            x: rect.x + rect.width / 2 - width / 2,
+            y: rect.y + rect.height / 2 - height / 2,
+            width,
+            height,
+        },
         bounds,
-        ratio,
     );
 }

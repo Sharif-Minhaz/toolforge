@@ -6919,7 +6919,7 @@
                 "colDoes": "What it does",
                 "colWhen": "Reach for it when",
                 "ratioName": "Lock the shape",
-                "ratioDoes": "Constrains every crop drag to a ratio — a preset, the picture's own, or two numbers you type.",
+                "ratioDoes": "Constrains every crop drag to a ratio — a preset, the picture’s own, or two numbers you type. Switching between shapes re-derives the box from the one you last placed by hand, keeping its area and its centre, so 1:1 then 4:3 then 1:1 lands back where it started.",
                 "ratioWhen": "The output has to be a known shape, and you would rather drag once than nudge four edges.",
                 "modeName": "Size the result",
                 "modeDoes": "Switches between two typed dimensions, a percentage of the crop, and a published preset.",

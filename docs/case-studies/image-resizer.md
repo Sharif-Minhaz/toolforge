@@ -155,6 +155,47 @@ because the step reverses, and `history` holds the whole previous `Loaded`
 rather than the rectangle that produced it — a rectangle means nothing against a
 frame that has since changed shape.
 
+## Derive from a reference, never from the last result
+
+Reported from use: pick 1:1 and the square is right; switch to 4:3 and the box
+comes back smaller; keep switching and it shrinks away to nothing.
+
+`applyRatio` **inscribed** the new shape inside the current box. The reasoning
+was sound for one switch — going from a free drag to 1:1 should not quietly take
+in more of the picture than was selected a moment ago — and catastrophic for the
+second, because inscribing is one-way. Each switch was derived from the shape
+the previous switch produced, so 1:1 then 4:3 then 1:1 fits a box inside a box
+inside a box and ratchets down monotonically.
+
+Two changes, and both were needed:
+
+1. **Preserve area, not containment.** `w = √(area · ratio)`,
+   `h = √(area / ratio)` is the only box of that shape covering as much of the
+   picture as the last one did. Oversize scales both sides by one factor and then
+   **slides** back inside rather than shrinking against the edge — a box near the
+   left margin should move right to fit, not get smaller. From a full-frame
+   selection it lands exactly on the largest box of the new shape, which is what
+   somebody who has not dragged anything yet expects.
+
+2. **Derive every switch from an anchor.** Area alone still leaks whenever a
+   shape meets the edge and cannot keep it: 1:1 → 16:9 → 1:1 settled 800 → 750
+   and stayed there. Converging beats ratcheting, but it is still visible. So the
+   island holds `cropAnchor` — the box the reader last placed *by hand* — and
+   every ratio is computed from that. The two 1:1 boxes are computed from the
+   same rectangle, so they *are* the same rectangle.
+
+The anchor follows a drag, Select all, Centre, an applied crop and an undo —
+every gesture that is the reader saying where the box goes. It deliberately does
+not follow a ratio switch, which is the whole point.
+
+The general shape is worth keeping: **a control that transforms its own previous
+output accumulates its own rounding and its own clamping.** Give it a stable
+reference and recompute, rather than composing the transform with itself.
+
+The old test asserted the inscribing behaviour, so it had to change — that is a
+behaviour change rather than a refactor, and the replacement asserts the
+round-trip property directly rather than a particular rectangle.
+
 ## The live preview is layout, not pixels
 
 The preview has to answer "what will I get" while the reader is still moving the

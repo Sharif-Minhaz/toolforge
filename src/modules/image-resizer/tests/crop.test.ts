@@ -206,15 +206,55 @@ describe("centeredCrop", () => {
 });
 
 describe("applyRatio", () => {
-    test("inscribes the new shape inside the old selection", () => {
-        // Switching the picker from free to 1:1 must not quietly take in more
-        // of the picture than was selected a moment ago.
+    test("keeps the area and the centre", () => {
+        // 400 × 200 is 80 000 square pixels, and the square of that area is
+        // 283 on a side — an odd number, so the centre lands on a half pixel.
         const reshaped = applyRatio(rect(100, 100, 400, 200), 1, BOUNDS);
 
-        expect(reshaped.width).toBe(200);
-        expect(reshaped.height).toBe(200);
-        expect(reshaped.x + reshaped.width / 2).toBe(300);
-        expect(reshaped.y + reshaped.height / 2).toBe(200);
+        expect(reshaped.width).toBe(283);
+        expect(reshaped.height).toBe(283);
+        expect(Math.abs(reshaped.x + reshaped.width / 2 - 300)).toBeLessThanOrEqual(0.5);
+        expect(Math.abs(reshaped.y + reshaped.height / 2 - 200)).toBeLessThanOrEqual(0.5);
+    });
+
+    test("every shape derived from one reference round-trips exactly", () => {
+        // The reported bug, and the shape of the fix. The island keeps the box
+        // the reader last *dragged* and derives each ratio from that, never from
+        // the shape the previous switch produced — so 1:1, then 4:3, then 1:1
+        // lands back on the same square rather than on a smaller one.
+        const anchor = fullCrop(BOUNDS);
+        const first = applyRatio(anchor, 1, BOUNDS);
+
+        for (const ratio of [4 / 3, 16 / 9, 3 / 2, 45 / 55, 9 / 16]) {
+            applyRatio(anchor, ratio, BOUNDS);
+
+            expect(applyRatio(anchor, 1, BOUNDS)).toEqual(first);
+        }
+    });
+
+    test("and chaining without one converges instead of collapsing", () => {
+        // Defence in depth. Area is lost whenever a shape meets the edge of the
+        // picture and cannot keep it, so chaining is not free — but it settles
+        // rather than ratcheting, which is what the inscribing version did.
+        const square = applyRatio(fullCrop(BOUNDS), 1, BOUNDS);
+        const ratios = [4 / 3, 1, 16 / 9, 3 / 2, 1];
+
+        let crop = square;
+
+        for (let pass = 0; pass < 10; pass += 1) {
+            for (const ratio of ratios) {
+                crop = applyRatio(crop, ratio, BOUNDS);
+            }
+        }
+
+        expect(crop.width).toBe(crop.height);
+        expect(crop.width).toBeGreaterThan(square.width * 0.9);
+    });
+
+    test("takes the largest box of the shape from a full-frame selection", () => {
+        // What somebody who has not dragged anything yet expects: 1:1 over a
+        // 1000 × 800 picture is the 800 × 800 square, not something smaller.
+        expect(applyRatio(fullCrop(BOUNDS), 1, BOUNDS)).toEqual(rect(100, 0, 800, 800));
     });
 
     test("leaves the box alone when the lock is released", () => {
@@ -223,10 +263,21 @@ describe("applyRatio", () => {
         );
     });
 
+    test("slides a box near the edge back inside rather than shrinking it", () => {
+        // Anchoring the centre and shrinking would punish a crop for being near
+        // a margin; the area is what the reader chose, so the box moves.
+        const reshaped = applyRatio(rect(0, 200, 200, 400), 1, BOUNDS);
+
+        expect(reshaped.width).toBe(283);
+        expect(reshaped.x).toBe(0);
+    });
+
     test("keeps the result inside the picture", () => {
         const reshaped = applyRatio(rect(0, 700, 1000, 100), 1, BOUNDS);
 
+        expect(reshaped.x).toBeGreaterThanOrEqual(0);
         expect(reshaped.y).toBeGreaterThanOrEqual(0);
+        expect(reshaped.x + reshaped.width).toBeLessThanOrEqual(BOUNDS.width);
         expect(reshaped.y + reshaped.height).toBeLessThanOrEqual(BOUNDS.height);
     });
 });

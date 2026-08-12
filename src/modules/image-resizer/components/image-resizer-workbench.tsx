@@ -168,6 +168,21 @@ export function ImageResizerWorkbench({
 
     const [loaded, setLoaded] = useState<Loaded | null>(null);
     const [crop, setCrop] = useState<CropRect>({ x: 0, y: 0, width: 1, height: 1 });
+    /**
+     * The box the reader last chose *by hand*, and the reference every ratio is
+     * derived from.
+     *
+     * Without it, switching the shape picker derives each shape from the shape
+     * the previous switch produced: 1:1 then 4:3 then 1:1 fits a box inside a
+     * box inside a box, and the selection ratchets away to nothing. Deriving
+     * from here instead means the round trip is exact — the two 1:1 boxes are
+     * computed from the same rectangle, so they *are* the same rectangle.
+     *
+     * It follows a drag, a Select all, a Centre, an applied crop and an undo,
+     * because every one of those is the reader saying where the box goes. It
+     * deliberately does not follow a ratio switch, which is the whole point.
+     */
+    const [cropAnchor, setCropAnchor] = useState<CropRect>({ x: 0, y: 0, width: 1, height: 1 });
     const [aspect, setAspect] = useState<AspectPreset>("free");
     const [customRatio, setCustomRatio] = useState("");
     const [options, setOptions] = useState<ResizeOptions>(initialOptions);
@@ -248,6 +263,12 @@ export function ImageResizerWorkbench({
      * read what is set, and the note above it says how to get back.
      */
     const settingsLocked = working || cropping;
+
+    /** A box the reader placed: it becomes the crop *and* the new reference. */
+    function placeCrop(next: CropRect) {
+        setCrop(next);
+        setCropAnchor(next);
+    }
 
     function patch(next: Partial<ResizeOptions>) {
         setOptions((current) => ({ ...current, ...next }));
@@ -377,7 +398,7 @@ export function ImageResizerWorkbench({
             setLoaded({ file, previewUrl, pixels, size, hasAlpha });
             // A fresh picture opens as a picture, not as a crop in progress.
             setCropping(false);
-            setCrop(fullCrop(size));
+            placeCrop(fullCrop(size));
         } catch (caught) {
             logEvent("error", "image_resizer.decode_threw", { error: describeError(caught) });
             setReason("undecodable");
@@ -401,7 +422,8 @@ export function ImageResizerWorkbench({
 
         const nextRatio = ratioForPreset(next, loaded.size, parseAspectText(customRatio));
 
-        setCrop(applyRatio(crop, nextRatio, loaded.size));
+        // From the anchor, never from `crop` — see `cropAnchor`.
+        setCrop(applyRatio(cropAnchor, nextRatio, loaded.size));
     }
 
     function selectCustomRatio(text: string) {
@@ -410,7 +432,7 @@ export function ImageResizerWorkbench({
         const parsed = parseAspectText(text);
 
         if (loaded !== null && parsed !== null && aspect === "custom") {
-            setCrop(applyRatio(crop, parsed.width / parsed.height, loaded.size));
+            setCrop(applyRatio(cropAnchor, parsed.width / parsed.height, loaded.size));
         }
     }
 
@@ -524,7 +546,7 @@ export function ImageResizerWorkbench({
                 size,
                 hasAlpha: !isOpaque(cropped),
             });
-            setCrop(fullCrop(size));
+            placeCrop(fullCrop(size));
             // The tool closes on apply: the frame is now the cropped picture,
             // and leaving a box over it would invite a second cut nobody asked
             // for while hiding the result of the first.
@@ -599,7 +621,7 @@ export function ImageResizerWorkbench({
         // Opens on the whole frame under a free crop, or on the largest box of
         // the locked shape — so the first drag adjusts something real rather
         // than starting from a rectangle nobody chose.
-        setCrop(aspect === "free" ? fullCrop(loaded.size) : centeredCrop(loaded.size, ratio));
+        placeCrop(aspect === "free" ? fullCrop(loaded.size) : centeredCrop(loaded.size, ratio));
     }
 
     function stopCropping() {
@@ -608,7 +630,7 @@ export function ImageResizerWorkbench({
         if (loaded !== null) {
             // Leaving without applying puts the box back to the whole frame, so
             // the preview goes on meaning "the picture as it is".
-            setCrop(fullCrop(loaded.size));
+            placeCrop(fullCrop(loaded.size));
         }
     }
 
@@ -626,7 +648,7 @@ export function ImageResizerWorkbench({
 
         setHistory(history.slice(0, -1));
         setLoaded(previous);
-        setCrop(fullCrop(previous.size));
+        placeCrop(fullCrop(previous.size));
         setCropping(false);
         setReason(null);
     }
@@ -793,7 +815,7 @@ export function ImageResizerWorkbench({
                                     crop={crop}
                                     ratio={ratio}
                                     disabled={working}
-                                    onChange={setCrop}
+                                    onChange={placeCrop}
                                     onCommit={() => void handleApplyCrop()}
                                 />
                             ) : (
@@ -813,7 +835,7 @@ export function ImageResizerWorkbench({
                                         <Button
                                             variant="outline"
                                             disabled={working}
-                                            onClick={() => setCrop(fullCrop(loaded.size))}
+                                            onClick={() => placeCrop(fullCrop(loaded.size))}
                                             className="h-8 px-3 text-[0.8125rem]"
                                         >
                                             <IconMaximize
@@ -828,7 +850,7 @@ export function ImageResizerWorkbench({
                                             variant="outline"
                                             disabled={working}
                                             onClick={() =>
-                                                setCrop(centeredCrop(loaded.size, ratio))
+                                                placeCrop(centeredCrop(loaded.size, ratio))
                                             }
                                             className="h-8 px-3 text-[0.8125rem]"
                                         >
