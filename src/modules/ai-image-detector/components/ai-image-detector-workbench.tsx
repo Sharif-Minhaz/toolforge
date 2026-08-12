@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
+import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
@@ -47,9 +48,14 @@ type Analysis = {
 type AiImageDetectorWorkbenchProps = {
     /** `null` when `NEXT_PUBLIC_TURNSTILE_KEY` is absent, which disables the tool. */
     siteKey: string | null;
+    /** Whether this deployment can fetch a picture by its address at all. */
+    urlImportEnabled: boolean;
 };
 
-export function AiImageDetectorWorkbench({ siteKey }: AiImageDetectorWorkbenchProps) {
+export function AiImageDetectorWorkbench({
+    siteKey,
+    urlImportEnabled,
+}: AiImageDetectorWorkbenchProps) {
     const t = useTranslations("aiImageDetector.workbench");
     const tLabels = useTranslations("aiImageDetector.labels");
     const tBands = useTranslations("aiImageDetector.bands");
@@ -345,6 +351,12 @@ export function AiImageDetectorWorkbench({ siteKey }: AiImageDetectorWorkbenchPr
                             {t("dropHint", { limit: byteLabel(MAX_IMAGE_BYTES) })}
                         </span>
                     </label>
+
+                    <ImageSourceControls
+                        onFiles={(files) => void handlePick(files[0])}
+                        disabled={checking}
+                        urlImportEnabled={urlImportEnabled}
+                    />
 
                     <StatusStrip id={hintId} tone={status.tone} message={status.message} />
                 </div>

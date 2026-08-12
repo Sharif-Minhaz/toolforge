@@ -17,6 +17,7 @@ import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
+import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
@@ -69,9 +70,14 @@ type Cleaned = {
 type WatermarkRemoverWorkbenchProps = {
     /** `null` when `NEXT_PUBLIC_TURNSTILE_KEY` is absent, which disables the tool. */
     siteKey: string | null;
+    /** Whether this deployment can fetch a picture by its address at all. */
+    urlImportEnabled: boolean;
 };
 
-export function WatermarkRemoverWorkbench({ siteKey }: WatermarkRemoverWorkbenchProps) {
+export function WatermarkRemoverWorkbench({
+    siteKey,
+    urlImportEnabled,
+}: WatermarkRemoverWorkbenchProps) {
     const t = useTranslations("watermarkRemover.workbench");
     const tErrors = useTranslations("watermarkRemover.errors");
     const tToast = useTranslations("watermarkRemover.toast");
@@ -418,6 +424,12 @@ export function WatermarkRemoverWorkbench({ siteKey }: WatermarkRemoverWorkbench
                             {t("dropHint", { limit: byteLabel(MAX_IMAGE_BYTES) })}
                         </span>
                     </label>
+
+                    <ImageSourceControls
+                        onFiles={(files) => void handlePick(files[0])}
+                        disabled={working}
+                        urlImportEnabled={urlImportEnabled}
+                    />
 
                     <StatusStrip id={hintId} tone={status.tone} message={status.message} />
                 </div>

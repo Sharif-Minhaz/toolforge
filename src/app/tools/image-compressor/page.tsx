@@ -15,6 +15,7 @@ import { JsonLd } from "@/modules/seo/components/json-ld";
 import { buildPageMetadata } from "@/modules/seo/domain/metadata";
 import { buildToolJsonLd } from "@/modules/seo/domain/structured-data";
 import { RelatedTools } from "@/modules/tools/components/related-tools";
+import { isRemoteImageImportConfigured } from "@/modules/tools/repository/remote-image-quota";
 import { getToolById } from "@/modules/tools/domain/tool-catalog";
 
 const TOOL_PATH = "/tools/image-compressor";
@@ -119,7 +120,13 @@ export default async function ImageCompressorToolPage({ searchParams }: ImageCom
                 </FadeIn>
 
                 <FadeIn delay={0.06}>
-                    <ImageCompressorWorkbench initialOptions={initialOptions} />
+                    <ImageCompressorWorkbench
+                        initialOptions={initialOptions}
+                        // Read on the server, because whether this deployment
+                        // has a database and a salt is not something the
+                        // browser can know.
+                        urlImportEnabled={isRemoteImageImportConfigured()}
+                    />
                 </FadeIn>
 
                 <Reveal>

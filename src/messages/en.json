@@ -279,6 +279,10 @@
         "graphql-server": {
             "name": "GraphQL Server",
             "description": "Turn a db.json into a hosted GraphQL API with a derived schema, typed filters, relations and mutations. No account — a recovery key brings a server back in any browser."
+        },
+        "image-resizer": {
+            "name": "Image Resizer & Cropper",
+            "description": "Crop to any ratio by dragging, then resize in pixels, percent, inches or millimetres — passport, print and social presets included."
         }
     },
     "overview": {
@@ -343,9 +347,9 @@
                 "title": "Make a favicon",
                 "description": "Turn one logo into favicon.ico, every icon size, and the HTML to link them."
             },
-            "rsaKeys": {
-                "title": "Generate an RSA key pair",
-                "description": "A 2048-bit PKCS#8 PEM pair, minted in your own tab."
+            "passportPhoto": {
+                "title": "Make a passport photo",
+                "description": "Crop to 45 × 55 mm and export at 300 DPI, ready for a Bangladeshi form."
             }
         },
         "featured": {
@@ -6723,6 +6727,271 @@
             }
         }
     },
+    "imageResizer": {
+        "meta": {
+            "title": "Image Resizer & Cropper — crop to any ratio, resize in px, %, inches or mm",
+            "description": "Drag out the part you want to keep, then size it in pixels, as a percentage, or in millimetres at a print resolution. Passport presets including Bangladesh's 45 × 55 mm, social and print sizes, and a crop that copies pixels instead of resampling them. Runs in your browser."
+        },
+        "hero": {
+            "eyebrow": "Image Resizer",
+            "title": "Image Resizer & Cropper",
+            "subtitle": "Drag out the part you want to keep, then give the result a size — in pixels, as a percentage, or in millimetres at a print resolution. A crop taken at its own size copies the pixels rather than resampling them, so nothing is softened that did not have to be.",
+            "badgeCodecs": "MozJPEG · libwebp · libaom · OxiPNG",
+            "badgeOffline": "Cropping and resizing run offline",
+            "badgePassport": "Passport 45 × 55 mm"
+        },
+        "workbench": {
+            "title": "Crop and resize",
+            "description": "Pick a picture, drag the box over the part you want, then choose a size for the result.",
+            "dropTitle": "Drop a picture, or click to choose one",
+            "dropHint": "JPG, PNG, WebP, AVIF, GIF or BMP, up to {limit}",
+            "statusIdle": "Nothing loaded yet.",
+            "statusReady": "Ready — {width} × {height} px selected.",
+            "statusWorking": "Working…",
+            "cropTitle": "Crop",
+            "cropHint": "Drag inside the box to move it, or a handle to resize. Arrow keys nudge it a pixel at a time; hold Shift for ten. Enter applies the crop.",
+            "cropReadout": "{width} × {height} px at {x}, {y}",
+            "cropRatioReadout": "Shape {ratio}",
+            "cropReset": "Select all",
+            "cropCentre": "Centre",
+            "ratioLabel": "Lock the shape",
+            "ratioHint": "The crop keeps this shape while you drag it.",
+            "ratioFree": "Free",
+            "ratioOriginal": "Original",
+            "ratioCustom": "Custom",
+            "customRatioLabel": "Custom shape",
+            "customRatioPlaceholder": "45:55",
+            "customRatioHint": "Two numbers, as 16:9 or 16/9 — or one, as 1.78.",
+            "customRatioInvalid": "That is not a shape. Try 16:9.",
+            "handleNw": "Resize from the top-left corner",
+            "handleN": "Resize from the top edge",
+            "handleNe": "Resize from the top-right corner",
+            "handleE": "Resize from the right edge",
+            "handleSe": "Resize from the bottom-right corner",
+            "handleS": "Resize from the bottom edge",
+            "handleSw": "Resize from the bottom-left corner",
+            "handleW": "Resize from the left edge",
+            "cropBoxLabel": "Crop area — drag to move, arrow keys to nudge",
+            "modeLabel": "Size the result",
+            "modeDimensions": "By size",
+            "modePercentage": "As a percentage",
+            "modePreset": "From a preset",
+            "widthLabel": "Width",
+            "heightLabel": "Height",
+            "widthPlaceholder": "Auto",
+            "heightPlaceholder": "Auto",
+            "unitLabel": "Unit",
+            "unitPx": "Pixels",
+            "unitIn": "Inches",
+            "unitCm": "Centimetres",
+            "unitMm": "Millimetres",
+            "dimensionsHint": "Leave one side blank and it follows the other.",
+            "dpiLabel": "Resolution",
+            "dpiUnit": "DPI",
+            "dpiHint": "What a printer is told to print at. 45 × 55 mm is {width} × {height} px here.",
+            "dpiHintScreen": "Only read when a length is in inches or millimetres, or when the resolution is written into the file.",
+            "percentageLabel": "Size",
+            "percentageHint": "{value}% of the crop — {width} × {height} px.",
+            "presetGroupLabel": "Kind",
+            "presetGroupPhoto": "Document photo",
+            "presetGroupPrint": "Print",
+            "presetGroupSocial": "Social media",
+            "presetPlatformLabel": "Where it is for",
+            "presetLabel": "Size",
+            "presetHint": "{width} × {height} px at {dpi} DPI.",
+            "presetHintPixels": "{width} × {height} px.",
+            "fitLabel": "When the shapes differ",
+            "fitContain": "Fit inside (pad)",
+            "fitCover": "Fill (crop the overflow)",
+            "fitStretch": "Stretch",
+            "fitHintContain": "The whole crop is kept and the difference becomes background. Nothing is cut.",
+            "fitHintCover": "The box is filled and the overflow falls off the long edge.",
+            "fitHintStretch": "Every pixel is kept and the picture is distorted.",
+            "fitHintExact": "The crop already matches this box, so nothing is padded or cut.",
+            "backgroundLabel": "Background",
+            "backgroundColor": "Pick a colour",
+            "backgroundTransparent": "Transparent",
+            "backgroundColorLabel": "Background colour",
+            "backgroundHint": "Fills whatever the picture does not cover, and whatever it shows through.",
+            "backgroundDisabledHint": "Nothing to fill: the crop covers the whole box and has no transparency.",
+            "backgroundJpegHint": "JPEG has no transparency, so this colour is what shows through anything that had it.",
+            "formatLabel": "Save as",
+            "qualityLabel": "Quality",
+            "qualityHint": "{value} of 100. Below about 70 the softening starts to show on faces.",
+            "qualityHintLossless": "PNG is lossless here, so quality does nothing.",
+            "densityLabel": "Write the resolution into the file",
+            "densityHint": "So a printer lays it out at {dpi} DPI rather than guessing 72 and printing it four times too big.",
+            "densityUnavailable": "Only PNG and JPEG can carry a resolution. WebP and AVIF have nowhere to put one.",
+            "export": "Export",
+            "exporting": "Exporting…",
+            "reset": "Start over",
+            "outputCopied": "The pixels will be copied, not resampled.",
+            "outputResampled": "Scaled with Lanczos3.",
+            "previewAlt": "The picture you loaded, with the crop area over it",
+            "metadataNote": "Decoding to pixels drops EXIF, GPS and the colour profile, and applies the orientation tag rather than dropping it — so a photograph taken sideways comes back upright. Only the resolution you asked for is written back.",
+            "privacyNote": "Cropping, resizing and encoding all happen in this tab. Nothing you pick, drop or paste is uploaded.",
+            "statusCropped": "Cropped — the picture is now {width} × {height} px.",
+            "applyCrop": "Apply crop",
+            "undo": "Undo",
+            "exportSummary": "Export writes {width} × {height} px as {format}.",
+            "lockAspectOn": "Sides are linked — unlink to type each one freely",
+            "lockAspectOff": "Sides are unlinked — link to keep the shape",
+            "lockAspectHintOn": "Linked: type one side and the other follows the crop’s shape.",
+            "lockAspectHintOff": "Unlinked: each side takes whatever you type.",
+            "previewTitle": "Preview",
+            "outputReadout": "{width} × {height} px out",
+            "previewHint": "This is what Export will write — the size, the padding and the background, updated as you change them. It cannot show what the encoder does to the pixels; that is what the format and quality controls are for.",
+            "cropStart": "Crop",
+            "cropCancel": "Cancel",
+            "resultAlt": "The picture at the size and shape Export will write it",
+            "settingsLockedHint": "The size settings are on hold while you crop — apply the crop or cancel it to reach them again. The shape lock below still works."
+        },
+        "formats": {
+            "original": "Original",
+            "png": "PNG",
+            "jpeg": "JPG",
+            "webp": "WEBP",
+            "avif": "AVIF",
+            "originalHint": "Keeps the format you loaded. GIF and BMP become PNG, which is lossless.",
+            "pngHint": "Lossless. The only format that can hand back the cropped pixels unchanged.",
+            "jpegHint": "Lossy, universally readable, no transparency. What a passport form expects.",
+            "webpHint": "Lossy or lossless, smaller than JPEG at the same quality, with transparency.",
+            "avifHint": "Smallest of the four at the same quality, and the slowest to write."
+        },
+        "errors": {
+            "empty_file": "That file is empty.",
+            "unsupported_type": "That is not an image this site can read. JPG, PNG, WebP, AVIF, GIF and BMP all work.",
+            "too_large": "That file is over {limit}.",
+            "too_many_pixels": "That picture is over {count} megapixels, which is more than a browser tab can hold.",
+            "undecodable": "That file could not be decoded. It may be truncated or misnamed.",
+            "empty_crop": "The crop is empty. Drag out an area first.",
+            "output_too_large": "That would produce an image over {count} megapixels. Ask for a smaller size.",
+            "encode_failed": "The encoder could not write that file."
+        },
+        "toast": {
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The download could not start.",
+            "cropped": "Cropped to {width} × {height}."
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "howItWorks": {
+                "title": "How it works",
+                "p1": "The picture is decoded to raw pixels in your tab, and the crop is a row-by-row copy of the rectangle you dragged — no interpolation, no colour conversion, no rounding. Only after that is anything scaled, and only if the size you asked for differs from the crop’s own.",
+                "example": "<code>4000 × 3000</code> → crop <code>1200 × 1200</code> → export <code>1200 × 1200</code> — the bytes are copied; ask for <code>600 × 600</code> instead and Lanczos3 runs",
+                "p2": "So the step that can still cost you quality is the last one: writing those pixels as a JPEG re-compresses them however careful the crop was. Choose <code>PNG</code> and the crop comes back exactly as it went in. All of it happens here — nothing is uploaded unless you paste a picture’s address, and that field says so above the controls."
+            },
+            "crop": {
+                "title": "Cropping",
+                "body1": "The frame shows the output until you ask for the crop tool: the size, the padding and the background you have chosen, redrawn as you change them. Press Crop and the picture itself appears with a box over it — drag anywhere inside to move it, or one of the eight handles to resize. The side opposite the handle stays where it is, which is what makes a corner drag feel like dragging a corner. Arrow keys nudge the box a pixel at a time and Shift-arrow moves it ten, so a crop can be placed exactly without a steady hand.",
+                "body2": "Locking a shape constrains every drag to it. The lock survives running into the edge of the picture: rather than clamping the two sides separately — which would satisfy the boundary and quietly abandon the ratio at the exact moment you were relying on it — the box scales down as a whole until it fits.",
+                "body3": "Applying a crop changes the picture rather than producing a copy beside it: the frame shows what you now have, the box resets to all of it, and the next crop is taken from this one. Undo puts the previous version back, pixels and all, as many steps as you have taken."
+            },
+            "sizing": {
+                "title": "Three ways to name a size",
+                "body1": "\"By size\" takes two numbers in whichever unit you pick. Leave one blank and it follows the other, so \"1200 wide\" is one number rather than arithmetic. The shape it follows is the crop's, not the original picture's — using the original would letterbox every photograph you had just cropped.",
+                "body2": "\"As a percentage\" is relative to the crop, so 100% is the crop at its own size and nothing is resampled. Above 100% the picture is enlarged, which invents detail rather than recovering it.",
+                "body3": "\"From a preset\" is somebody else's number: a passport office's, a printer's, or a platform's. Document sizes are stored as millimetres and become pixels at whatever resolution you are working at, which is why changing the DPI changes the pixel size of a passport photo and not of an Instagram post."
+            },
+            "presets": {
+                "title": "Passport, print and social sizes",
+                "intro": "Document photographs are defined on paper, so they are stored here in millimetres with the resolution the issuing authority prints at. The pixel size follows from the two.",
+                "tableCaption": "Document photo sizes and what they come to at 300 DPI",
+                "colName": "Size",
+                "colPhysical": "On paper",
+                "colPixels": "At 300 DPI",
+                "outro": "Every document preset asks for \"fit inside\" rather than \"fill\", on purpose: a passport office rejects a photograph with the top of a head missing, and filling a box you typed is exactly how that happens. Social and print presets leave the choice to you.",
+                "note": "These numbers change when the authority that publishes them changes them. Check yours against the form you are filling in — this tool can give you 45 × 55 mm exactly, and cannot know whether 45 × 55 mm is still what you were asked for."
+            },
+            "dpi": {
+                "title": "Why the resolution is written into the file",
+                "body1": "A 45 × 55 mm passport photograph at 300 DPI is 531 × 650 pixels, and pixels are all a file normally carries. Every program that prints it then has to guess a resolution, and most guess 72 — which puts that photograph on paper at 188 × 229 mm. The pixels are right, the print is four times too big, and you find out at the counter.",
+                "body2": "So the resolution goes in the file. PNG carries it in a pHYs chunk, in pixels per metre; JPEG carries it in the JFIF segment, in dots per inch. Both are written here when the switch is on, and both are read by ImageMagick, Pillow, Photoshop, Word and every print shop's software.",
+                "body3": "WebP and AVIF have nowhere to put it, so the switch goes dead for those two rather than pretending. If you need a print at a guaranteed size, use PNG or JPEG."
+            },
+            "controls": {
+                "title": "Every control",
+                "intro": "The order the settings are applied in is: crop, then scale, then pad or clip, then flatten transparency if the format cannot hold it, then encode.",
+                "tableCaption": "What each control does and when to move it",
+                "colControl": "Control",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "ratioName": "Lock the shape",
+                "ratioDoes": "Constrains every crop drag to a ratio — a preset, the picture's own, or two numbers you type.",
+                "ratioWhen": "The output has to be a known shape, and you would rather drag once than nudge four edges.",
+                "modeName": "Size the result",
+                "modeDoes": "Switches between two typed dimensions, a percentage of the crop, and a published preset.",
+                "modeWhen": "See the section above — each answers a different question.",
+                "unitName": "Unit",
+                "unitDoes": "Reads your two dimensions as pixels, inches, centimetres or millimetres.",
+                "unitWhen": "The size you were given is on paper rather than on a screen.",
+                "dpiName": "Resolution",
+                "dpiDoes": "Converts physical lengths to pixels, and is what gets written into the file.",
+                "dpiWhen": "You are printing. 300 is what \"print quality\" means; 600 is for small photographs on good paper.",
+                "lockName": "The chain between width and height",
+                "lockDoes": "Linked, typing one side sets the other from the crop’s shape. Unlinked, each side takes whatever positive number you type.",
+                "lockWhen": "Unlink it only to distort deliberately, or when a form gives you both numbers and they do not match the crop.",
+                "fitName": "When the shapes differ",
+                "fitDoes": "Chooses between padding the difference, cutting it, and stretching to hide it.",
+                "fitWhen": "The box you asked for is a different shape from the crop. It has no effect when they match.",
+                "backgroundName": "Background",
+                "backgroundDoes": "Fills the padding, and whatever the picture is transparent through.",
+                "backgroundWhen": "You are padding to a shape, or writing a transparent picture into a JPEG.",
+                "formatName": "Save as",
+                "formatDoes": "Picks the encoder. \"Original\" keeps what you loaded, except GIF and BMP, which become PNG.",
+                "formatWhen": "The form asks for a JPG, or you want the crop back losslessly and choose PNG.",
+                "qualityName": "Quality",
+                "qualityDoes": "Sets the encoder's quality from 10 to 100. Ignored by PNG, which is lossless here.",
+                "qualityWhen": "The file has to be under a size limit, or the default is visibly soft.",
+                "densityName": "Write the resolution into the file",
+                "densityDoes": "Adds a pHYs chunk to a PNG or sets the JFIF density on a JPEG.",
+                "densityWhen": "The result is going to a printer rather than a screen.",
+                "cropName": "Crop",
+                "cropDoes": "Opens the crop tool over the picture and puts the size settings on hold. Apply crop then cuts the picture down to the box; Cancel leaves it alone. The shape lock stays available throughout.",
+                "cropWhen": "You want part of the picture. Out of the tool the frame is a preview instead, which is why it is not always on.",
+                "undoName": "Undo",
+                "undoDoes": "Puts the previous version back, pixels and all.",
+                "undoWhen": "You cropped too far. Every crop you have applied is on the stack, so you can walk all the way back to the file you opened.",
+                "exportName": "Export",
+                "exportDoes": "Encodes the picture at the size and format chosen and saves the file. There is no preview step — the line under the buttons already says what will come out.",
+                "exportWhen": "You are done."
+            },
+            "quality": {
+                "title": "What actually costs you quality",
+                "body1": "Three separate things, and only the first is free. Cropping costs nothing — the pixels are copied. Scaling costs a little, and costs it once: Lanczos3 is about as good as a resampler gets, but an enlargement invents detail and a large reduction discards it, and neither is reversible.",
+                "body2": "Re-encoding is the one people miss. Saving a JPEG as a JPEG re-compresses it even if you changed nothing, and the losses compound each time. If the source was a JPEG and the destination has to be one, do the crop and the resize in a single pass here rather than in three tools in a row.",
+                "body3": "If you want the cropped pixels back exactly as they were, ask for the crop’s own size and save as PNG. The line under the buttons says so before you press Export, not after."
+            },
+            "limits": {
+                "title": "Limits",
+                "body": "One file at a time, up to {bytes} and {pixels} megapixels — four bytes a pixel is what has to fit in the tab, and a small file can hold a very large picture. The output is capped at the same megapixel count, because a tiny crop enlarged to twenty thousand pixels square asks for more memory than the source ever did. Fetching a picture by its address is capped lower still, at {remote}, since those bytes cross the network twice."
+            },
+            "privacy": {
+                "title": "What leaves your browser",
+                "body1": "Choosing a file, dropping one, and pasting one all stay in this tab. The picture is decoded, cropped, scaled and encoded by WebAssembly running in the page, and no request carries any of it anywhere.",
+                "body2": "Fetching a picture by its public address is the exception, and the field says so above the controls. The address you paste is sent to our server, which downloads the picture and hands the bytes back — because a cross-origin image drawn into a canvas taints it, and the tab is then not allowed to read its own pixels. The site you name sees our server's address and a user agent naming this site, never your address. Nothing about the fetch is stored beyond a counter that says how often somebody fetched, and never who."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Does cropping lose quality?",
+                "a1": "The crop itself does not — it copies the pixels you selected, byte for byte. What can lose quality is the step after it: scaling to a different size, and re-encoding to a lossy format. Ask for the crop’s own size and save as PNG and nothing is lost at all; the line under the buttons says which of the two will happen before you press Export.",
+                "q2": "How do I make a Bangladeshi passport photo?",
+                "a2": "Lock the crop to 45:55 or pick the Bangladesh passport preset, drag the box over the face, then export. The preset is 45 × 55 mm at 300 DPI, which is 531 × 650 pixels, and it writes 300 DPI into the file so a lab prints it at the right size. Choose JPG if the form asks for one.",
+                "q3": "Why is my print the wrong size when the pixels are right?",
+                "a3": "Because the file did not say what resolution it was for, so the program printing it guessed — usually 72 DPI, which comes out about four times too big for a 300 DPI photograph. Turn on \"write the resolution into the file\" and use PNG or JPEG; WebP and AVIF have nowhere to carry it.",
+                "q4": "Can I crop to a shape that is not on the list?",
+                "a4": "Yes. Choose Custom and type two numbers — 45:55, 16/9, or a single decimal like 1.78. The crop then keeps that shape however you drag it.",
+                "q5": "Can I paste a screenshot instead of saving it first?",
+                "a5": "Press Ctrl+V anywhere on the page. There is also a Paste button for browsers and devices where a paste event will not reach the page; that one asks for clipboard permission the first time, because the click is on our button rather than on the platform's paste.",
+                "q6": "What happens to a picture with a transparent background?",
+                "a6": "It keeps its transparency in PNG, WebP and AVIF. JPEG has no alpha channel at all, so anything transparent is flattened onto the background colour on the way in — which is why that colour stays live even when nothing is being padded.",
+                "q7": "Is anything uploaded?",
+                "a7": "Only if you paste a picture's address, and only that address. Everything else — the file you choose, the crop, the resize, the encode — happens in this tab."
+            }
+        }
+    },
     "blurPlaceholder": {
         "meta": {
             "title": "Blur Placeholder Generator — BlurHash and blurDataURL in your browser",
@@ -8970,6 +9239,29 @@
             "a7": "Nothing is deleted automatically today, but this is a free fixture service and dormant servers may be swept in future. Anything you would mind losing belongs somewhere else — and the document is one download away in the Document tab.",
             "q8": "Can the same document be served as REST and GraphQL at once?",
             "a8": "Not from one server, but the two studios read the same db.json, so you can paste one document into both and compare. They deliberately agree on the things that could otherwise differ: how records sort, how ids are generated and coerced, what counts as a collection, and where the size ceiling is."
+        }
+    },
+    "imageIntake": {
+        "pasteHint": "Press Ctrl+V anywhere on this page to paste a picture from your clipboard.",
+        "pasteButton": "Paste",
+        "clipboardDenied": "Your browser would not hand over the clipboard. Allow clipboard access, or press Ctrl+V instead.",
+        "urlLabel": "Or paste a picture's address",
+        "urlPlaceholder": "https://example.com/photo.jpg",
+        "import": "Fetch",
+        "importing": "Fetching…",
+        "urlPrivacyNote": "This is the one thing here that leaves your browser: the address is sent to our server, which downloads the picture and hands the bytes back. The site you name sees our server's address, not yours. Picking, dropping and pasting never leave this tab.",
+        "errors": {
+            "invalid_url": "That is not a web address. It needs to start with http:// or https://.",
+            "scheme_not_allowed": "Only http:// and https:// addresses can be fetched.",
+            "blocked_address": "That address resolves somewhere this server will not connect to.",
+            "too_many_redirects": "That address redirected too many times.",
+            "not_an_image": "What came back was not an image this site can read. Check the link points at the picture itself rather than at the page around it.",
+            "too_large": "That picture is larger than a URL import allows. Download it and drop the file in instead.",
+            "empty_response": "That address returned nothing at all.",
+            "timed_out": "That host took too long to answer.",
+            "upstream_failed": "That host refused the request or returned an error.",
+            "rate_limited": "Too many pictures fetched from this network just now. Wait a minute, or drop the file in instead.",
+            "not_configured": "Fetching by address is not configured on this deployment. Picking, dropping and pasting all still work."
         }
     }
 }

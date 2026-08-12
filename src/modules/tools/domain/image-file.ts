@@ -1,3 +1,5 @@
+import { DECODABLE_IMAGE_TYPES, type DecodableImageType } from "../types";
+
 /**
  * The two things about a file that decide whether it is worth uploading. A plain
  * shape rather than a `File`, so the rule is testable without one.
@@ -66,4 +68,47 @@ export function checkImageFile<T extends string>(
     }
 
     return { ok: true, type };
+}
+
+/**
+ * The extension each decodable type is normally written with.
+ *
+ * Wider than `RASTER_FORMAT_EXTENSIONS` in `image-codec.ts`, which covers only
+ * the four formats this site can *write*. This one answers a different
+ * question: what to call a file that arrived without a name — a clipboard paste
+ * or a URL whose path ends in `/`.
+ */
+export const IMAGE_TYPE_EXTENSIONS: Record<DecodableImageType, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/avif": "avif",
+    "image/gif": "gif",
+    "image/bmp": "bmp",
+};
+
+export function isDecodableImageType(raw: string): raw is DecodableImageType {
+    return isAllowedImageType(raw, DECODABLE_IMAGE_TYPES);
+}
+
+/** `null` rather than a guessed extension: a name with no suffix beats a wrong one. */
+export function extensionForImageType(raw: string): string | null {
+    const type = normalizeImageType(raw);
+
+    return isDecodableImageType(type) ? IMAGE_TYPE_EXTENSIONS[type] : null;
+}
+
+/**
+ * Puts the right extension on a stem, replacing one that disagrees with the
+ * bytes.
+ *
+ * A URL ending `photo.jpg` that serves `image/png` is common enough — a CDN
+ * that re-encodes on the fly does it — and saving those bytes as `.jpg` gives
+ * the reader a file their own operating system opens with the wrong decoder.
+ * The bytes are the source of truth; the path is a hint about the name.
+ */
+export function withImageExtension(stem: string, type: string): string {
+    const extension = extensionForImageType(type);
+
+    return extension === null ? stem : `${stem}.${extension}`;
 }

@@ -3,7 +3,7 @@ import {
     IconBinary,
     IconBolt,
     IconBraces,
-    IconCertificate,
+    IconCrop,
     IconKey,
     IconTransform,
 } from "@tabler/icons-react";
@@ -58,16 +58,16 @@ export async function QuickActions() {
             Icon: IconTransform,
             accent: "[--tool-accent:var(--brand-emerald)]",
         },
-        // The list is capped at six. AES made way for this one, being the
-        // lowest-popularity tool that was represented here — the same trade the
-        // Domain Inspector made when AES arrived.
+        // The list is capped at six. The RSA generator made way for this one,
+        // being the lowest-popularity tool that was represented here — the same
+        // trade AES made when RSA arrived, and the Domain Inspector before it.
         {
-            key: "rsaKeys",
-            href: "/tools/rsa",
-            title: t("rsaKeys.title"),
-            description: t("rsaKeys.description"),
-            Icon: IconCertificate,
-            accent: "[--tool-accent:var(--brand-amber)]",
+            key: "passportPhoto",
+            href: "/tools/image-resizer?mode=preset&preset=bd-passport",
+            title: t("passportPhoto.title"),
+            description: t("passportPhoto.description"),
+            Icon: IconCrop,
+            accent: "[--tool-accent:var(--brand-cyan)]",
         },
     ];
 

@@ -66,6 +66,7 @@ docs/
 | `domain-inspector` | [`docs/case-studies/domain-inspector.md`](docs/case-studies/domain-inspector.md) |
 | `graphql-server` | [`docs/case-studies/graphql-server.md`](docs/case-studies/graphql-server.md) |
 | `image-compressor`, `image-converter` | [`docs/case-studies/image-codecs.md`](docs/case-studies/image-codecs.md) |
+| `image-resizer`, any image tool's intake | [`docs/case-studies/image-resizer.md`](docs/case-studies/image-resizer.md) |
 | `json-server` | [`docs/case-studies/json-server.md`](docs/case-studies/json-server.md) |
 | `mock-server` | [`docs/case-studies/mock-server.md`](docs/case-studies/mock-server.md) |
 | `port-scanner` | [`docs/case-studies/port-scanner.md`](docs/case-studies/port-scanner.md) |

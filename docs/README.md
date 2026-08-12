@@ -87,6 +87,7 @@ docs/
 │   ├── domain-inspector.md
 │   ├── graphql-server.md
 │   ├── image-codecs.md
+│   ├── image-resizer.md
 │   ├── json-server.md
 │   ├── mock-server.md
 │   ├── port-scanner.md
@@ -132,6 +133,7 @@ records a defect that was expensive to find and is easy to reintroduce.
 | `domain-inspector` | [`case-studies/domain-inspector.md`](case-studies/domain-inspector.md), [`patterns/maps.md`](patterns/maps.md) |
 | `graphql-server` | [`case-studies/graphql-server.md`](case-studies/graphql-server.md) |
 | `image-compressor`, `image-converter` | [`case-studies/image-codecs.md`](case-studies/image-codecs.md) |
+| `image-resizer`, any image tool's intake | [`case-studies/image-resizer.md`](case-studies/image-resizer.md) |
 | `json-server` | [`case-studies/json-server.md`](case-studies/json-server.md), [`patterns/growth-ceilings.md`](patterns/growth-ceilings.md) |
 | `mock-server` | [`case-studies/mock-server.md`](case-studies/mock-server.md), [`mock-server-studio.md`](mock-server-studio.md) |
 | `port-scanner` | [`case-studies/port-scanner.md`](case-studies/port-scanner.md) |

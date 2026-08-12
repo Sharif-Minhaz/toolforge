@@ -5,7 +5,11 @@ import {
     isAllowedImageType,
     normalizeImageType,
     type ImageFileLimits,
+    extensionForImageType,
+    IMAGE_TYPE_EXTENSIONS,
+    withImageExtension,
 } from "@/modules/tools/domain/image-file";
+import { DECODABLE_IMAGE_TYPES } from "@/modules/tools/types";
 
 const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp"] as const;
 
@@ -114,5 +118,37 @@ describe("checkImageFile", () => {
             ok: false,
             reason: "unsupported_type",
         });
+    });
+});
+
+describe("extensionForImageType", () => {
+    test("names every type this site can decode", () => {
+        for (const type of DECODABLE_IMAGE_TYPES) {
+            expect(extensionForImageType(type)).toBe(IMAGE_TYPE_EXTENSIONS[type]);
+        }
+    });
+
+    test("writes JPEG as jpg", () => {
+        expect(extensionForImageType("image/jpeg")).toBe("jpg");
+    });
+
+    test("normalises casing and parameters", () => {
+        expect(extensionForImageType("IMAGE/WEBP; q=1")).toBe("webp");
+    });
+
+    test("refuses to guess for a type nothing here decodes", () => {
+        expect(extensionForImageType("image/tiff")).toBeNull();
+        expect(extensionForImageType("application/pdf")).toBeNull();
+        expect(extensionForImageType("")).toBeNull();
+    });
+});
+
+describe("withImageExtension", () => {
+    test("puts the extension the bytes ask for on the stem", () => {
+        expect(withImageExtension("cat", "image/png")).toBe("cat.png");
+    });
+
+    test("leaves the stem alone when the type says nothing", () => {
+        expect(withImageExtension("cat", "application/octet-stream")).toBe("cat");
     });
 });

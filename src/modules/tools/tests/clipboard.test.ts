@@ -1,6 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
-import { copyText, type ClipboardWriter } from "@/modules/tools/domain/clipboard";
+import {
+    copyText,
+    readClipboardImage,
+    type ClipboardImageItem,
+    type ClipboardReader,
+    type ClipboardWriter,
+} from "@/modules/tools/domain/clipboard";
 
 function writer(impl: (text: string) => Promise<void>): ClipboardWriter {
     return { writeText: impl };
@@ -56,5 +62,69 @@ describe("copyText", () => {
         );
 
         expect(captured).toBe("a\nb\nc");
+    });
+});
+
+function reader(items: readonly ClipboardImageItem[]): ClipboardReader {
+    return { read: async () => items };
+}
+
+function item(types: readonly string[], payload = "bytes"): ClipboardImageItem {
+    return { types, getType: async () => new Blob([payload], { type: types[0] }) };
+}
+
+describe("readClipboardImage", () => {
+    test("returns the picture on the clipboard", async () => {
+        const result = await readClipboardImage(reader([item(["image/png"])]));
+
+        expect(result.ok).toBe(true);
+        expect(result.ok && result.type).toBe("image/png");
+    });
+
+    test("prefers PNG over the BMP Windows puts beside it", async () => {
+        const result = await readClipboardImage(reader([item(["image/bmp", "image/png"])]));
+
+        expect(result.ok && result.type).toBe("image/png");
+    });
+
+    test("walks past an item holding only text", async () => {
+        const result = await readClipboardImage(
+            reader([item(["text/plain"]), item(["image/jpeg"])]),
+        );
+
+        expect(result.ok && result.type).toBe("image/jpeg");
+    });
+
+    test("reports an empty clipboard rather than a denial", async () => {
+        expect(await readClipboardImage(reader([item(["text/plain"])]))).toEqual({
+            ok: false,
+            reason: "empty",
+        });
+        expect(await readClipboardImage(reader([]))).toEqual({ ok: false, reason: "empty" });
+    });
+
+    test("reports unsupported where the browser has no async clipboard read", async () => {
+        expect(await readClipboardImage(undefined)).toEqual({ ok: false, reason: "unsupported" });
+    });
+
+    test("converts a refused permission into a denied result rather than throwing", async () => {
+        const result = await readClipboardImage({
+            read: () => Promise.reject(new Error("NotAllowedError")),
+        });
+
+        expect(result).toEqual({ ok: false, reason: "denied" });
+    });
+
+    test("converts a refusal to hand over the format into a denied result", async () => {
+        const result = await readClipboardImage(
+            reader([
+                {
+                    types: ["image/png"],
+                    getType: () => Promise.reject(new Error("NotAllowedError")),
+                },
+            ]),
+        );
+
+        expect(result).toEqual({ ok: false, reason: "denied" });
     });
 });

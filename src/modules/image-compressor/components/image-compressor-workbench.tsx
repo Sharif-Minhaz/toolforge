@@ -17,6 +17,7 @@ import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
+import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { buildZipArchive } from "@/modules/tools/domain/archive";
@@ -82,9 +83,14 @@ function fromMaxEdge(maxEdge: number | null): string {
 type ImageCompressorWorkbenchProps = {
     /** Parsed from the search params on the server, so a shared link opens ready. */
     initialOptions: CompressionOptions;
+    /** Whether this deployment can fetch a picture by its address at all. */
+    urlImportEnabled: boolean;
 };
 
-export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWorkbenchProps) {
+export function ImageCompressorWorkbench({
+    initialOptions,
+    urlImportEnabled,
+}: ImageCompressorWorkbenchProps) {
     const t = useTranslations("imageCompressor.workbench");
     const tFormats = useTranslations("imageCompressor.formats");
     const tErrors = useTranslations("imageCompressor.errors");
@@ -289,8 +295,8 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
         }
     }
 
-    function handlePick(picked: FileList | null) {
-        if (picked === null || working) {
+    function handlePick(picked: readonly File[]) {
+        if (working) {
             return;
         }
 
@@ -338,7 +344,7 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
     function handleDrop(event: DragEvent<HTMLLabelElement>) {
         event.preventDefault();
         setDragging(false);
-        handlePick(event.dataTransfer.files);
+        handlePick([...event.dataTransfer.files]);
     }
 
     function releasePreview(url: string) {
@@ -446,7 +452,7 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
                         disabled={working}
                         aria-describedby={hintId}
                         onChange={(event) => {
-                            handlePick(event.target.files);
+                            handlePick([...(event.target.files ?? [])]);
                             // Cleared so picking the same file twice still fires.
                             event.target.value = "";
                         }}
@@ -482,6 +488,12 @@ export function ImageCompressorWorkbench({ initialOptions }: ImageCompressorWork
                             })}
                         </span>
                     </label>
+
+                    <ImageSourceControls
+                        onFiles={handlePick}
+                        disabled={working}
+                        urlImportEnabled={urlImportEnabled}
+                    />
 
                     <StatusStrip id={hintId} tone={status.tone} message={status.message} />
                 </div>

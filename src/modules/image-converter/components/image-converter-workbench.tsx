@@ -19,6 +19,7 @@ import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
+import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
 import { buildZipArchive } from "@/modules/tools/domain/archive";
@@ -91,9 +92,14 @@ function fromMaxEdge(maxEdge: number | null): string {
 type ImageConverterWorkbenchProps = {
     /** Parsed from the search params on the server, so a shared link opens ready. */
     initialOptions: ConversionOptions;
+    /** Whether this deployment can fetch a picture by its address at all. */
+    urlImportEnabled: boolean;
 };
 
-export function ImageConverterWorkbench({ initialOptions }: ImageConverterWorkbenchProps) {
+export function ImageConverterWorkbench({
+    initialOptions,
+    urlImportEnabled,
+}: ImageConverterWorkbenchProps) {
     const t = useTranslations("imageConverter.workbench");
     const tTargets = useTranslations("imageConverter.targets");
     const tBackgrounds = useTranslations("imageConverter.backgrounds");
@@ -313,8 +319,8 @@ export function ImageConverterWorkbench({ initialOptions }: ImageConverterWorkbe
         }
     }
 
-    function handlePick(picked: FileList | null) {
-        if (picked === null || working) {
+    function handlePick(picked: readonly File[]) {
+        if (working) {
             return;
         }
 
@@ -362,7 +368,7 @@ export function ImageConverterWorkbench({ initialOptions }: ImageConverterWorkbe
     function handleDrop(event: DragEvent<HTMLLabelElement>) {
         event.preventDefault();
         setDragging(false);
-        handlePick(event.dataTransfer.files);
+        handlePick([...event.dataTransfer.files]);
     }
 
     function releasePreview(url: string) {
@@ -509,7 +515,7 @@ export function ImageConverterWorkbench({ initialOptions }: ImageConverterWorkbe
                         disabled={working}
                         aria-describedby={hintId}
                         onChange={(event) => {
-                            handlePick(event.target.files);
+                            handlePick([...(event.target.files ?? [])]);
                             // Cleared so picking the same file twice still fires.
                             event.target.value = "";
                         }}
@@ -545,6 +551,12 @@ export function ImageConverterWorkbench({ initialOptions }: ImageConverterWorkbe
                             })}
                         </span>
                     </label>
+
+                    <ImageSourceControls
+                        onFiles={handlePick}
+                        disabled={working}
+                        urlImportEnabled={urlImportEnabled}
+                    />
 
                     <StatusStrip id={hintId} tone={status.tone} message={status.message} />
                 </div>

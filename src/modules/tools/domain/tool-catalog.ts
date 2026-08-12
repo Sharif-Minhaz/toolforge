@@ -674,7 +674,10 @@ const TOOLS: readonly Tool[] = [
         href: "/tools/image-compressor",
         category: "media",
         status: "available",
-        runsOn: "browser",
+        // Everything it does happens in the tab. Pulling a picture in by its
+        // public address does not, because a cross-origin image taints the
+        // canvas — the URL field says so above the controls.
+        runsOn: "hybrid",
         accent: "emerald",
         icon: "compress",
         addedOn: "2026-08-03",
@@ -706,7 +709,10 @@ const TOOLS: readonly Tool[] = [
         href: "/tools/image-converter",
         category: "media",
         status: "available",
-        runsOn: "browser",
+        // Everything it does happens in the tab. Pulling a picture in by its
+        // public address does not, because a cross-origin image taints the
+        // canvas — the URL field says so above the controls.
+        runsOn: "hybrid",
         accent: "cyan",
         icon: "transform",
         addedOn: "2026-08-03",
@@ -737,11 +743,58 @@ const TOOLS: readonly Tool[] = [
         ],
     },
     {
+        id: "image-resizer",
+        href: "/tools/image-resizer",
+        category: "media",
+        status: "available",
+        // Cropping and resizing never leave the tab. Pulling a picture in by
+        // its public address does, because a cross-origin image taints the
+        // canvas — the URL field says so above the controls.
+        runsOn: "hybrid",
+        accent: "violet",
+        icon: "crop",
+        addedOn: "2026-08-12",
+        featured: true,
+        popularity: 86,
+        keywords: [
+            "image resizer",
+            "resize image",
+            "crop image",
+            "image cropper",
+            "crop photo",
+            "passport photo",
+            "passport size photo",
+            "45x55",
+            "bangladesh passport photo",
+            "nid photo size",
+            "stamp size photo",
+            "visa photo",
+            "photo size converter",
+            "aspect ratio crop",
+            "custom aspect ratio",
+            "resize by percentage",
+            "resize in inches",
+            "resize in mm",
+            "dpi",
+            "300 dpi",
+            "print size",
+            "social media image size",
+            "instagram size",
+            "facebook cover size",
+            "youtube thumbnail size",
+            "lossless crop",
+            "change image dimensions",
+        ],
+    },
+    {
         id: "blur-placeholder",
         href: "/tools/blur-placeholder",
         category: "media",
         status: "available",
-        runsOn: "browser",
+        // Everything it does happens in the tab. Pulling a picture in by its
+        // public address does not, because a cross-origin image taints the
+        // canvas — the URL field says so above the controls.
+        runsOn: "hybrid",
         accent: "violet",
         icon: "blur",
         addedOn: "2026-08-03",

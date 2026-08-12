@@ -3,6 +3,7 @@
 import { useFormatter, useTranslations } from "next-intl";
 
 import { cn } from "@/lib/utils";
+import { previewFrameMaxWidth } from "@/modules/tools/domain/preview-frame";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
 import { buildSnippet, SNIPPET_KINDS, type SnippetKind } from "../domain/snippets";
@@ -55,7 +56,11 @@ export function PlaceholderOutput({
         filename,
     });
 
-    const frame = "ring-border/70 overflow-hidden rounded-xl ring-1 ring-inset";
+    const frame = "ring-border/70 mx-auto w-full overflow-hidden rounded-xl ring-1 ring-inset";
+    // Both frames get the same ceiling, so a tall screenshot's pair stays side
+    // by side and on one screen instead of running down the page.
+    // See `tools/domain/preview-frame.ts`.
+    const frameStyle = { maxWidth: previewFrameMaxWidth(placeholder) };
     const caption = "text-muted-foreground text-[0.6875rem] leading-normal";
 
     return (
@@ -76,6 +81,7 @@ export function PlaceholderOutput({
                         <div
                             className={frame}
                             style={{
+                                ...frameStyle,
                                 aspectRatio: `${placeholder.width} / ${placeholder.height}`,
                             }}
                         >
@@ -94,7 +100,7 @@ export function PlaceholderOutput({
                 )}
 
                 <figure className="flex min-w-0 flex-col gap-1.5">
-                    <div className={frame}>
+                    <div className={frame} style={frameStyle}>
                         <BlurPreview
                             hash={placeholder.hash}
                             width={placeholder.width}

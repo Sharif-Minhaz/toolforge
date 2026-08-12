@@ -6,6 +6,7 @@ import { useId, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
+import { previewFrameMaxWidth } from "@/modules/tools/domain/preview-frame";
 import type { SourceImageFacts } from "../types";
 
 /** Divider starts in the middle, so both halves are visible before any input. */
@@ -60,7 +61,13 @@ export function CleanedResult({
              * reader's own photograph, so they need contrast against arbitrary
              * pixels rather than against either theme's surfaces.
              */}
-            <div className="group/compare relative isolate min-w-0 overflow-hidden rounded-lg select-none">
+            <div
+                // Capped by width rather than by height, so the clipped original
+                // above still lines up pixel for pixel with the repainted one
+                // underneath it. See `tools/domain/preview-frame.ts`.
+                style={{ maxWidth: previewFrameMaxWidth(facts) }}
+                className="group/compare relative isolate mx-auto min-w-0 overflow-hidden rounded-lg select-none"
+            >
                 {/*
                  * Plain `<img>`s, deliberately: both sources are object URLs for
                  * bytes made in this browser, so there is no origin to allowlist

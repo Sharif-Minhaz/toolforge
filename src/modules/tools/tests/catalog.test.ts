@@ -170,6 +170,12 @@ describe("tool catalog", () => {
         const networked = [
             "qr",
             "shortener",
+            // The four image tools are local in every other respect; each one's
+            // "paste a picture's address" field is what makes it a hybrid.
+            "image-compressor",
+            "image-converter",
+            "image-resizer",
+            "blur-placeholder",
             "ai-image-detector",
             "ai-text-detector",
             "watermark-remover",

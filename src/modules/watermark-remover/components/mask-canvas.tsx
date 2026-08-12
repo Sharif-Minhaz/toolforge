@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 
 import { cn } from "@/lib/utils";
+import { previewFrameMaxWidth } from "@/modules/tools/domain/preview-frame";
 import {
     CARET_RING_COLOR,
     CARET_SHADOW_COLOR,
@@ -214,7 +215,14 @@ export function MaskCanvas({
     }
 
     return (
-        <div className="ring-border/70 bg-muted/40 relative min-w-0 overflow-hidden rounded-xl ring-1 ring-inset">
+        <div
+            // Capped by width rather than by height, so the canvas stays laid
+            // exactly over the picture — one scale factor still converts a
+            // pointer position into image pixels, which is what every stroke is
+            // stored in. See `tools/domain/preview-frame.ts`.
+            style={{ maxWidth: previewFrameMaxWidth(size) }}
+            className="ring-border/70 bg-muted/40 relative mx-auto min-w-0 overflow-hidden rounded-xl ring-1 ring-inset"
+        >
             {/*
              * A plain `<img>`, deliberately: the source is an object URL for a
              * file the reader just chose, so there is no origin to allowlist and

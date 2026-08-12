@@ -311,6 +311,16 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.imageConverter.errors,
             toast: messages.imageConverter.toast,
         },
+        imageResizer: {
+            workbench: messages.imageResizer.workbench,
+            formats: messages.imageResizer.formats,
+            errors: messages.imageResizer.errors,
+            toast: messages.imageResizer.toast,
+        },
+        // Shipped to every page rather than to the image tools' routes: the
+        // paste-and-fetch controls are one shared island, and six copies of the
+        // same namespace slice is six places to forget one.
+        imageIntake: messages.imageIntake,
         blurPlaceholder: {
             workbench: messages.blurPlaceholder.workbench,
             modes: messages.blurPlaceholder.modes,

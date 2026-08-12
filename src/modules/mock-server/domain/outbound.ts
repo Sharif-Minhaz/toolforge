@@ -1,3 +1,4 @@
+import { ALLOWED_PUBLIC_URL_SCHEMES, checkPublicUrl } from "@/modules/tools/domain/public-url";
 import type { JsonValue } from "../types/graph";
 
 /**
@@ -18,7 +19,7 @@ import type { JsonValue } from "../types/graph";
  */
 
 /** Only these two. No `file:`, no `gopher:`, no `data:`. */
-export const ALLOWED_OUTBOUND_SCHEMES = ["http:", "https:"] as const;
+export const ALLOWED_OUTBOUND_SCHEMES = ALLOWED_PUBLIC_URL_SCHEMES;
 
 /** Per execution. A graph cannot become a fan-out engine. */
 export const MAX_OUTBOUND_CALLS = 3;
@@ -73,25 +74,9 @@ export type UrlCheck =
  * guard runs after because it needs a DNS answer.
  */
 export function checkOutboundUrl(raw: string): UrlCheck {
-    let url: URL;
-
-    try {
-        url = new URL(raw.trim());
-    } catch {
-        return { ok: false, reason: "invalid_url" };
-    }
-
-    if (!(ALLOWED_OUTBOUND_SCHEMES as readonly string[]).includes(url.protocol)) {
-        return { ok: false, reason: "scheme_not_allowed" };
-    }
-
-    // Credentials in a URL would be sent to whatever the guard resolves, and
-    // they are never something a mock's author needs to express this way.
-    if (url.username !== "" || url.password !== "") {
-        return { ok: false, reason: "invalid_url" };
-    }
-
-    return { ok: true, url };
+    // Both of `PublicUrlProblem`'s members are also `OutboundProblem` members,
+    // so the shared refusal passes straight through rather than being remapped.
+    return checkPublicUrl(raw);
 }
 
 export type OutboundHeaders = Readonly<Record<string, string>>;

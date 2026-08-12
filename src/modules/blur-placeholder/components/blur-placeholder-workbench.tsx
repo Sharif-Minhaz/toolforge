@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
+import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
 import { copyText } from "@/modules/tools/domain/clipboard";
@@ -72,12 +73,15 @@ type BlurPlaceholderWorkbenchProps = {
     initialMode: BlurMode;
     initialOptions: BlurPlaceholderOptions;
     initialHash: string;
+    /** Whether this deployment can fetch a picture by its address at all. */
+    urlImportEnabled: boolean;
 };
 
 export function BlurPlaceholderWorkbench({
     initialMode,
     initialOptions,
     initialHash,
+    urlImportEnabled,
 }: BlurPlaceholderWorkbenchProps) {
     const t = useTranslations("blurPlaceholder.workbench");
     const tErrors = useTranslations("blurPlaceholder.errors");
@@ -273,10 +277,10 @@ export function BlurPlaceholderWorkbench({
         previewUrls.current.delete(url);
     }
 
-    async function handlePick(files: FileList | null) {
-        const file = files?.item(0);
+    async function handlePick(files: readonly File[]) {
+        const file = files[0];
 
-        if (file == null || reading) {
+        if (file === undefined || reading) {
             return;
         }
 
@@ -330,7 +334,7 @@ export function BlurPlaceholderWorkbench({
     function handleDrop(event: DragEvent<HTMLLabelElement>) {
         event.preventDefault();
         setDragging(false);
-        void handlePick(event.dataTransfer.files);
+        void handlePick([...event.dataTransfer.files]);
     }
 
     function handleClear() {
@@ -410,7 +414,7 @@ export function BlurPlaceholderWorkbench({
                                 disabled={reading}
                                 aria-describedby={hintId}
                                 onChange={(event) => {
-                                    void handlePick(event.target.files);
+                                    void handlePick([...(event.target.files ?? [])]);
                                     // Cleared so picking the same file twice fires.
                                     event.target.value = "";
                                 }}
@@ -445,6 +449,12 @@ export function BlurPlaceholderWorkbench({
                             </label>
                         </>
                     )}
+
+                    <ImageSourceControls
+                        onFiles={(files) => void handlePick(files)}
+                        disabled={reading}
+                        urlImportEnabled={urlImportEnabled}
+                    />
 
                     <StatusStrip id={hintId} tone={status.tone} message={status.message} />
                 </div>
