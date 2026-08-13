@@ -6,14 +6,16 @@ import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { cryptoRandomBytes } from "@/modules/tools/domain/random";
 
 import { MAX_ENDPOINTS_PER_SERVER } from "../domain/constants";
+import type { ImportFormat } from "../domain/import";
 import { readOpenApi, writeOpenApi, type ExportEndpoint } from "../domain/openapi";
 import { parsePathPattern } from "../domain/path-pattern";
+import { readPostman } from "../domain/postman";
 import { createServerKey, suggestServerKey } from "@/modules/tools/domain/server-key";
 import { toJson } from "../domain/value-edit";
 import { checkWorkspaceName } from "../domain/workspace-name";
 import { isMockStorageConfigured } from "../repository/config";
 import { insertEndpoint } from "../repository/endpoints";
-import { MAX_DOCUMENT_BYTES, parseOpenApiText } from "../repository/openapi";
+import { MAX_DOCUMENT_BYTES, parseImportText } from "../repository/openapi";
 import { findServerDetail, insertServer, isServerLimitReached } from "../repository/servers";
 import { readWorkspaceSecrets } from "../repository/session";
 import { findEndpoint } from "../repository/endpoints";
@@ -22,7 +24,12 @@ import type { JsonValue } from "../types/graph";
 import { workspaceIdSchema } from "../validation";
 
 /**
- * Importing an OpenAPI document, and exporting one back.
+ * Importing an API document, and exporting an OpenAPI one back.
+ *
+ * Two notations come in — an OpenAPI or Swagger specification, and a Postman
+ * collection — and which one arrived is read off the document rather than asked
+ * for. Everything after that point is the same: `ImportedDocument` in, one
+ * server and a row per endpoint out.
  *
  * The import is chunked in the sense that matters: endpoints are inserted one
  * at a time and a failure on any single one is recorded rather than rolling the
@@ -61,7 +68,19 @@ export type ImportReport = {
     readonly ok: true;
     readonly serverId: string;
     readonly serverKey: string;
+    /** Which notation the document turned out to be, for the report's wording. */
+    readonly format: ImportFormat;
     readonly created: number;
+    /**
+     * How many answer with a body the document itself supplied.
+     *
+     * The rest answer the placeholder a hand-built route starts on, and the
+     * difference is the one thing a Postman import has to say out loud: a
+     * collection whose requests were never sent carries no saved responses at
+     * all, so every route it produces is a working route with nothing in it.
+     * Reported as a count rather than discovered one endpoint at a time.
+     */
+    readonly examples: number;
     /**
      * How many of those carry a guard over required fields.
      *
@@ -77,7 +96,7 @@ export type ImportReport = {
 
 export type ImportResult = ImportReport | { readonly ok: false; readonly reason: string };
 
-export async function importOpenApi(input: unknown): Promise<ImportResult> {
+export async function importDocument(input: unknown): Promise<ImportResult> {
     const parsed = importSchema.safeParse(input);
 
     if (!parsed.success) {
@@ -88,15 +107,17 @@ export async function importOpenApi(input: unknown): Promise<ImportResult> {
         return { ok: false, reason: "not_owner" };
     }
 
-    const document = await parseOpenApiText(parsed.data.text);
+    const document = await parseImportText(parsed.data.text);
 
     if (!document.ok) {
         return { ok: false, reason: document.reason };
     }
 
-    const read = readOpenApi(document.document, {
-        enforceRequired: parsed.data.enforceRequired ?? true,
-    });
+    const options = { enforceRequired: parsed.data.enforceRequired ?? true };
+    const read =
+        document.format === "postman"
+            ? readPostman(document.document, options)
+            : readOpenApi(document.document, options);
 
     if (read.endpoints.length === 0) {
         return { ok: false, reason: "no_operations" };
@@ -141,6 +162,7 @@ export async function importOpenApi(input: unknown): Promise<ImportResult> {
     const skipped = [...read.skipped];
     let inserted = 0;
     let guarded = 0;
+    let examples = 0;
 
     for (const endpoint of read.endpoints.slice(0, MAX_ENDPOINTS_PER_SERVER)) {
         const pattern = parsePathPattern(endpoint.path);
@@ -174,13 +196,19 @@ export async function importOpenApi(input: unknown): Promise<ImportResult> {
         if (endpoint.required.length > 0) {
             guarded += 1;
         }
+
+        if (endpoint.fromExample) {
+            examples += 1;
+        }
     }
 
     return {
         ok: true,
         serverId: server.server.id,
         serverKey: server.server.key,
+        format: document.format,
         created: inserted,
+        examples,
         guarded,
         skipped,
     };

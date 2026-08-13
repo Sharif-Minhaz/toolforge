@@ -1,6 +1,6 @@
 "use client";
 
-import { IconFileImport, IconLoader2, IconUpload } from "@tabler/icons-react";
+import { IconEraser, IconFileImport, IconLoader2, IconUpload } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -20,16 +20,46 @@ import {
 
 import { StatusStrip } from "@/modules/tools/components/status-strip";
 
-import { importOpenApi, type ImportReport } from "../actions/openapi";
+import { importDocument, type ImportReport } from "../actions/openapi";
 import { MAX_OPENAPI_DOCUMENT_BYTES, WORKSPACE_NAME_LENGTH } from "../domain/constants";
 import { EXAMPLE_SLOTS, EXAMPLE_SPECS, type ExampleSpec } from "../domain/example-specs";
 
-type OpenApiImportProps = {
+type ImportPanelProps = {
     workspaceId: string;
 };
 
 /**
- * Uploading or pasting an OpenAPI document.
+ * The refusals worth their own sentence.
+ *
+ * A reader can do something about each of these — shrink the document, bring a
+ * different one, delete a server — and telling them "that could not be read"
+ * instead would send somebody hunting for a syntax error in a file that parses
+ * perfectly. Everything else collapses to the general message, because a
+ * database that would not take a row is not a thing the reader can act on.
+ *
+ * Held as a literal union so the message keys are literal too.
+ */
+const NAMED_FAILURES = [
+    "too_large",
+    "unknown_format",
+    "no_operations",
+    "server_limit_reached",
+] as const;
+
+type NamedFailure = (typeof NAMED_FAILURES)[number] | "generic";
+
+function namedFailure(reason: string): NamedFailure {
+    return NAMED_FAILURES.find((name) => name === reason) ?? "generic";
+}
+
+/**
+ * Uploading or pasting an API document.
+ *
+ * Two notations land in this one box — an OpenAPI or Swagger specification, and
+ * a Postman collection — and the box does not ask which. There is no file name
+ * on a paste, a dropdown to pick the format would be a question the document's
+ * own first key already answers, and getting it wrong would refuse a perfectly
+ * good file for the sake of a control nobody wants to operate.
  *
  * The file is read in the browser and sent as text rather than as a multipart
  * upload: it is a few hundred kilobytes at most, the Server Action boundary
@@ -38,9 +68,13 @@ type OpenApiImportProps = {
  *
  * The report afterwards is the point. An import that says "created 397" and
  * silently dropped three is worse than one that lists them — a silent
- * truncation reads as complete coverage.
+ * truncation reads as complete coverage. The same reasoning is why it counts
+ * how many routes answer with a body the document actually supplied: a
+ * collection saved without responses produces routes that all answer the same
+ * placeholder, and a reader who is not told will read twelve working routes as
+ * twelve imported ones.
  */
-export function OpenApiImport({ workspaceId }: OpenApiImportProps) {
+export function ImportPanel({ workspaceId }: ImportPanelProps) {
     const t = useTranslations("mockServer.import");
     const router = useRouter();
 
@@ -49,6 +83,7 @@ export function OpenApiImport({ workspaceId }: OpenApiImportProps) {
     const enforceId = useId();
     const exampleId = useId();
     const fileRef = useRef<HTMLInputElement>(null);
+    const editorId = `${textId}-editor`;
 
     const [name, setName] = useState("");
     const [text, setText] = useState("");
@@ -69,8 +104,10 @@ export function OpenApiImport({ workspaceId }: OpenApiImportProps) {
     // import's own failure keeps the strip to itself.
     const textStatus = useInputLimitStatus(textLimit, byteLabel);
     const [report, setReport] = useState<ImportReport | null>(null);
-    const [failure, setFailure] = useState<string | null>(null);
+    const [failure, setFailure] = useState<NamedFailure | null>(null);
     const [pending, startTransition] = useTransition();
+
+    const filled = text !== "" || name !== "" || report !== null || failure !== null;
 
     /**
      * Fills the box from a bundled document.
@@ -97,8 +134,45 @@ export function OpenApiImport({ workspaceId }: OpenApiImportProps) {
         setFailure(null);
 
         if (name === "") {
-            setName(file.name.replace(/\.(json|ya?ml)$/iu, ""));
+            // `.postman_collection` before the extension, because that is what
+            // Postman's own exporter appends — and a server called
+            // "Payments.postman_collection" is a file name somebody would then
+            // have to go and edit.
+            setName(
+                file.name
+                    .replace(/\.(json|ya?ml)$/iu, "")
+                    .replace(/\.postman_collection$/iu, "")
+                    .trim(),
+            );
         }
+    }
+
+    /**
+     * Empties the panel.
+     *
+     * A megabyte of pasted JSON cannot be cleared by selecting it — the box
+     * scrolls — so without this the only way out of a document you changed your
+     * mind about is to reload the page and lose the name with it.
+     *
+     * The enforce switch is deliberately left alone: it is a setting the reader
+     * chose about how imports should work, not one of the fields they are
+     * clearing, and resetting it under them would undo a decision they made on
+     * purpose. Focus moves to the paste box, because the button is about to
+     * disable itself and focus on a disabled control belongs to nothing.
+     */
+    function clear() {
+        setText("");
+        setName("");
+        setReport(null);
+        setFailure(null);
+
+        // The value has to be cleared or picking the same file a second time
+        // fires no `change` event and the panel would sit there looking broken.
+        if (fileRef.current !== null) {
+            fileRef.current.value = "";
+        }
+
+        document.getElementById(editorId)?.focus();
     }
 
     function submit() {
@@ -110,10 +184,10 @@ export function OpenApiImport({ workspaceId }: OpenApiImportProps) {
         setReport(null);
 
         startTransition(async () => {
-            const result = await importOpenApi({ workspaceId, name, text, enforceRequired });
+            const result = await importDocument({ workspaceId, name, text, enforceRequired });
 
             if (!result.ok) {
-                setFailure(result.reason);
+                setFailure(namedFailure(result.reason));
 
                 return;
             }
@@ -253,11 +327,13 @@ export function OpenApiImport({ workspaceId }: OpenApiImportProps) {
                     {t("textHint")}
                 </p>
                 <CodeEditor
-                    id={`${textId}-editor`}
+                    id={editorId}
                     value={text}
                     onChange={setText}
                     language="json"
-                    placeholder='{ "openapi": "3.1.0", ... }'
+                    // Both shapes, because a box that only shows one reads as a
+                    // box that only takes one.
+                    placeholder='{ "openapi": "3.1.0", ... }   or   { "info": { ... }, "item": [ ... ] }'
                     className="min-h-64"
                 />
 
@@ -301,7 +377,22 @@ export function OpenApiImport({ workspaceId }: OpenApiImportProps) {
                     {t("importAction")}
                 </Button>
 
-                {failure !== null ? <StatusStrip tone="error" message={t("failed")} /> : null}
+                <Button
+                    type="button"
+                    variant="outline"
+                    // Disabled rather than hidden: a button that appears when
+                    // you start typing is a button nobody knows is coming.
+                    disabled={pending || !filled}
+                    onClick={clear}
+                    className="gap-1.5"
+                >
+                    <IconEraser className="size-4" aria-hidden="true" />
+                    {t("clearAction")}
+                </Button>
+
+                {failure !== null ? (
+                    <StatusStrip tone="error" message={t(`failures.${failure}`)} />
+                ) : null}
             </div>
 
             {report !== null ? (
@@ -314,6 +405,9 @@ export function OpenApiImport({ workspaceId }: OpenApiImportProps) {
                     </h2>
                     <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
                         {t("reportCreated", { count: report.created })}
+                        {report.created > 0
+                            ? ` ${t("reportExamples", { count: report.examples })}`
+                            : ""}
                         {report.guarded > 0
                             ? ` ${t("reportGuarded", { count: report.guarded })}`
                             : ""}

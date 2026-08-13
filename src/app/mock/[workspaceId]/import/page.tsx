@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 
 import { FadeIn, Reveal } from "@/components/motion/reveal";
-import { OpenApiImport } from "@/modules/mock-server/components/openapi-import";
+import { ImportPanel } from "@/modules/mock-server/components/import-panel";
 
 export const metadata: Metadata = {
     robots: { index: false, follow: false },
@@ -43,7 +43,7 @@ export default async function ImportPage({ params }: ImportPageProps) {
             </FadeIn>
 
             <Reveal>
-                <OpenApiImport workspaceId={workspaceId} />
+                <ImportPanel workspaceId={workspaceId} />
             </Reveal>
         </div>
     );

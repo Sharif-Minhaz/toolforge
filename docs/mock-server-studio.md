@@ -665,7 +665,7 @@ src/app/m/[serverKey]/[[...path]]/       public execution
 | `/mock/[workspaceId]/servers/[serverId]/e/[endpointId]` | **The studio**                                          |
 | `/mock/[workspaceId]/logs`                              | Searchable log table                                    |
 | `/mock/[workspaceId]/environments`                      | Variables, per scope, per environment                   |
-| `/mock/[workspaceId]/import`                            | OpenAPI upload and mapping preview                      |
+| `/mock/[workspaceId]/import`                            | OpenAPI or Postman upload and mapping preview           |
 | `/mock/[workspaceId]/settings`                          | Rename, recovery key, delete, forget-on-this-device     |
 
 Every one gets a `loading.tsx` with skeletons matching the real layout.
@@ -1335,6 +1335,7 @@ Everything below runs in `bun test` against `domain/`.
 | `migrate.ts`   | Every schema version migrates forward and still executes                                                        |
 | `quota.ts`     | Window arithmetic, mirroring the port-scanner tests                                                             |
 | `openapi.ts`   | Spec → graph, `$ref`, `allOf`, circular refs hitting the depth cap                                              |
+| `postman.ts`   | Collection → graph, folder trees, `{{variable}}` paths, saved responses, the bodies Postman writes              |
 
 ### The independent check
 
@@ -1381,7 +1382,7 @@ Each is independently shippable and leaves the product working.
 | **M4** ✅    | Logic nodes        | `auth`, `condition`, `switch`, `delay`, `randomBranch`, `setVariable`, `log`, plus an inspector for each. `transform` is declared and deliberately unimplemented — the Response Builder already expresses it |
 | **M5** ✅    | Logs and trace     | Searchable table, write-path redaction, 500-row and 7-day retention, per-node trace, `after()` so logging never delays a response                                                                            |
 | **M6** ✅    | Environments       | Workspace/server/collection scopes with narrowest-wins, named environments, secrets masked before they cross the action boundary                                                                             |
-| **M7** ✅    | OpenAPI            | JSON and YAML import, internal `$ref` resolution, schema-to-example mapping, a skipped-operations report, and export back to OpenAPI 3.1                                                                     |
+| **M7** ✅    | Import and export  | OpenAPI in JSON or YAML with internal `$ref` resolution and schema-to-example mapping, Postman collections v2.1 with saved responses and folder trees, a skipped-operations report on both, and export back to OpenAPI 3.1                                                                     |
 | **M8** ✅    | Outbound           | `httpRequest` behind `guardAddresses`, resolve-then-connect, per-hop redirect guarding, streaming size cap, and a fail-closed per-workspace quota                                                            |
 
 **M1 is the one that matters most.** It ships a working, publicly-callable mock

@@ -109,6 +109,56 @@ enforcement with no description would leave the pickers as empty as before.
 flow editor — correctly, since there is no honest single-body view of a branching
 route. That is a real trade and it is why the switch in the import panel exists.
 
+## A contract and a sample are not the same document
+
+The second importer is Postman, and everything hard about it is that a
+collection is **not a specification**. An OpenAPI operation says what a caller
+*must* send; a Postman request shows what one *did* send. Every mapping in
+`domain/postman.ts` is therefore a reading of a sample, and three of them are
+worth stating:
+
+- **A header the saved request carries is a header the API wanted**, so it is
+  guarded — but only because the enforce switch exists to say otherwise. The
+  exception is the set a client writes for itself (`Postman-Token`,
+  `User-Agent`, `Content-Length`…): guarding one of those builds a route that
+  refuses every request not made by Postman.
+- **A `{{variable}}` in a path is a parameter, not its value.** Substituting the
+  collection variable would produce `/users/42`, which answers one call and 404s
+  the rest; `:userId` answers all of them. Only the leading `{{baseUrl}}` is
+  resolved away, because that one is an address and the address is this
+  studio's to choose.
+- **The response is whatever was saved beside the request, and usually nothing
+  was.** `item.response[]` is populated only where somebody pressed Send and
+  kept the result.
+
+That last one is the defect this reader would have shipped. A collection with no
+saved responses produces routes that every one of them answer the same
+placeholder — and a report saying "12 endpoints created" describes that
+outcome exactly as well as it describes a real import. So `ImportedEndpoint`
+carries `fromExample`, the action counts it, and the panel says which of the two
+happened. **A number that is correct for both the good case and the bad one is
+not a report**; it is a number that will be read as the good case.
+
+The same field fixed a quieter version of it in the OpenAPI reader: an operation
+whose response declares no content used to import as a route answering a literal
+`null`, because `exampleFromSchema(undefined)` is `null` and nothing
+distinguished "the document says null" from "the document says nothing". The
+graph builder now takes `JsonValue | undefined` and those routes start on the
+placeholder a hand-built route starts on.
+
+## Two readers, one graph
+
+`domain/import.ts` came out of the second importer and holds what neither format
+owns: the shape of an imported route, `buildImportGraph`, the guard's field
+numbering, and `detectImportFormat`.
+
+The detection is the part worth copying. **Nobody is asked which format they
+pasted**, because a paste box has no file name, the document's first key already
+answers it, and a dropdown set wrong refuses a perfectly good file. A parsed
+value that is neither gets its own refusal — `unknown_format`, apart from
+`invalid_syntax` — since "this file is broken" and "this is the wrong file" send
+a reader to two different places.
+
 ## An example is worth more than a placeholder specification
 
 The document a reader reaches for first is the petstore, which declares nothing

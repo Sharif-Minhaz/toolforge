@@ -3,12 +3,19 @@ import "server-only";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 
 import { MAX_OPENAPI_DOCUMENT_BYTES } from "../domain/constants";
+import { detectImportFormat, type ImportFormat } from "../domain/import";
 
 /**
- * Getting an OpenAPI document into a plain value.
+ * Getting an imported document into a plain value.
  *
- * Two jobs, both server-only: parse whatever notation arrived, and resolve the
- * `$ref` pointers so `domain/openapi.ts` never has to know they existed.
+ * Three jobs, all server-only: parse whatever notation arrived, work out which
+ * of the two document formats it is, and — for OpenAPI — resolve the `$ref`
+ * pointers so `domain/openapi.ts` never has to know they existed.
+ *
+ * A Postman collection is not dereferenced, because it has no `$ref` to
+ * resolve: its bodies are strings, so nothing inside one can name a pointer.
+ * Walking a two-megabyte collection to replace nothing would be work every
+ * import of one paid for.
  *
  * **The resolver is written here rather than taken from a package.** The
  * repository's rule is to depend on a reference implementation when somebody
@@ -26,13 +33,13 @@ import { MAX_OPENAPI_DOCUMENT_BYTES } from "../domain/constants";
 const MAX_REF_DEPTH = 12;
 
 export type ParseResult =
-    | { readonly ok: true; readonly document: unknown }
-    | { readonly ok: false; readonly reason: "invalid_syntax" | "too_large" };
+    | { readonly ok: true; readonly format: ImportFormat; readonly document: unknown }
+    | { readonly ok: false; readonly reason: "invalid_syntax" | "too_large" | "unknown_format" };
 
 /** Re-exported so existing callers keep their name for it. */
 export const MAX_DOCUMENT_BYTES = MAX_OPENAPI_DOCUMENT_BYTES;
 
-export async function parseOpenApiText(text: string): Promise<ParseResult> {
+export async function parseImportText(text: string): Promise<ParseResult> {
     if (new TextEncoder().encode(text).length > MAX_DOCUMENT_BYTES) {
         return { ok: false, reason: "too_large" };
     }
@@ -43,24 +50,44 @@ export async function parseOpenApiText(text: string): Promise<ParseResult> {
         return { ok: false, reason: "invalid_syntax" };
     }
 
+    const parsed = await parseNotation(trimmed);
+
+    if (parsed === null) {
+        return { ok: false, reason: "invalid_syntax" };
+    }
+
+    const format = detectImportFormat(parsed);
+
+    if (format === null) {
+        // Valid JSON or YAML, and not a document this importer reads. Named
+        // apart from a syntax error because they are different mistakes: one is
+        // a broken file, the other is the wrong file.
+        return { ok: false, reason: "unknown_format" };
+    }
+
+    return { ok: true, format, document: format === "openapi" ? dereference(parsed) : parsed };
+}
+
+async function parseNotation(trimmed: string): Promise<unknown> {
     // JSON is a subset of YAML, so one path would work — but `JSON.parse` is an
-    // order of magnitude faster and most specs are JSON, so it is tried first.
+    // order of magnitude faster and most documents are JSON, so it is tried
+    // first. A Postman collection is only ever JSON.
     if (trimmed.startsWith("{")) {
         try {
-            return { ok: true, document: dereference(JSON.parse(trimmed)) };
+            return JSON.parse(trimmed);
         } catch {
-            return { ok: false, reason: "invalid_syntax" };
+            return null;
         }
     }
 
     try {
         const { parse } = await import("yaml");
 
-        return { ok: true, document: dereference(parse(trimmed) as unknown) };
+        return (parse(trimmed) as unknown) ?? null;
     } catch (caught) {
         logEvent("warn", "mock_server.openapi_parse_failed", { error: describeError(caught) });
 
-        return { ok: false, reason: "invalid_syntax" };
+        return null;
     }
 }
 
