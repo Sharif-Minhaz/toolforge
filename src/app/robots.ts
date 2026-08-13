@@ -32,6 +32,11 @@ export default function robots(): MetadataRoute.Robots {
                 // still needs the cookie, but an indexed URL is an invitation
                 // to try the door.
                 "/mock/",
+                // A JSON-RPC endpoint is not content, and every request to it
+                // spends a rate-limit counter. The guide at `/mcp` is what
+                // should be found; the address it documents is not. The handler
+                // sets `X-Robots-Tag: noindex` too — this saves the request.
+                "/api/",
             ],
         },
         sitemap: absoluteUrl("/sitemap.xml"),

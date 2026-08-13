@@ -144,6 +144,6 @@ and stays ASCII in both. Outside it, Bangla prose takes Bangla digits — ২৫
 ## A disclosure is not a paragraph you can cut
 
 If the opening was where a tool said "nothing is uploaded", the trimmed opening
-still says it — folded into `p2` rather than given a paragraph. Rule 31 is about
+still says it — folded into `p2` rather than given a paragraph. Rule 32 is about
 where a limitation appears, and the article's first section is often the only
 place it appeared.

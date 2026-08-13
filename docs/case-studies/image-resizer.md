@@ -333,7 +333,7 @@ Three details specific to fetching a picture rather than a page:
 Converter and Blur Placeholder Generator were `runsOn: "browser"` and are now
 `"hybrid"`, and the front page's "sends nothing anywhere" count dropped by
 three. That is the honest bookkeeping: the field is on the page whether or not
-anybody uses it, and rule 31 puts its disclosure above the controls rather than
+anybody uses it, and rule 32 puts its disclosure above the controls rather than
 in the article. The counter is asserted by name in
 `tools/tests/catalog.test.ts`, so a fourth tool growing a network path cannot
 slip past it.

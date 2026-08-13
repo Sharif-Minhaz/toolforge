@@ -2,7 +2,8 @@ import type { CompareFailure, CompareResult, DetectedHash } from "../types";
 import { BCRYPT_MAX_PASSWORD_BYTES, MAX_HASH_INPUT_LENGTH } from "./constants";
 import { detectHash } from "./detect";
 import { digestText } from "./digest";
-import { timingSafeEqual, utf8ByteLength } from "./encoding";
+import { timingSafeEqual } from "@/modules/tools/domain/timing-safe";
+import { utf8ByteLength } from "./encoding";
 import { verifyArgon2, verifyBcrypt } from "./password";
 
 export type CompareRequest = {

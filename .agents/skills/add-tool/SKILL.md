@@ -45,8 +45,9 @@ same checks.
    `getTranslations` is a presenter.
 4. **Both locales, every key.** `en.json` and `bn.json` change in the same edit.
 5. **Light and dark via semantic tokens only.** No raw colours, ever.
-6. **Never commit, branch, or push.** Note that `git mv` stages — say so in the handoff.
-7. **Never start a dev server, build, or browser without asking that time.**
+6. **Every server-runnable tool is exposed over MCP**, in the same change. See *Step 8b*.
+7. **Never commit, branch, or push.** Note that `git mv` stages — say so in the handoff.
+8. **Never start a dev server, build, or browser without asking that time.**
 
 ---
 
@@ -167,6 +168,60 @@ defaults assume. See `base64.article.options`.
   flipping the status is what publishes the route. Confirm it appears rather than assuming it —
   a tool left at `"planned"` is silently absent from the sitemap.
 
+## Step 8b — expose it over MCP
+
+`CLAUDE.md` rule 20. A tool whose domain layer runs on the server is callable by an assistant,
+and leaving it out means the MCP endpoint quietly describes a smaller ToolForge than the site
+does.
+
+**Decide first, in one question:** does the work need a canvas, a web worker, a browser cookie,
+or somebody else's API budget?
+
+```
+No  → it gets an adapter. Always.
+Yes → it does not, and the reason goes in the comment block at the top of
+      src/modules/mcp/tools/index.ts, beside the four already there.
+```
+
+An adapter is one file in `src/modules/mcp/tools/<tool>.ts` and one line in `MCP_TOOLS`:
+
+```ts
+export const slugCreateTool = defineMcpTool({
+    toolId: "slug",              // catalogue id — half the tool's name
+    verb: "create",              // the other half; name is built, never written
+    title: "Slugify text",
+    description: "…",            // written for a model choosing between thirty tools
+    kind: "offline",             // "network" only if the call leaves this process
+    inputSchema: z.object({ … }),
+    run: (input) => { … },
+});
+```
+
+Five rules, each of which has already gone wrong once:
+
+1. **Call the domain function. Never reimplement.** The adapter parses, calls, and maps. If
+   it contains an `if` about the *problem* rather than about the *result*, it is in the wrong
+   layer.
+2. **Reuse the tool's own validation schemas** — `slugSeparatorSchema`, not a fresh `z.enum`.
+   Add `.default()` from the module's `DEFAULT_*` constant to every optional argument. A field
+   that is neither required nor defaulted arrives as `undefined` in the handler, and
+   `tests/registry.test.ts` fails on it.
+3. **Every failure keeps the domain's own reason string.** `refuseWithReason(tool, reason, …)`.
+   Never invent a second vocabulary for the same refusals.
+4. **`kind: "network"` for anything that makes an outbound request or writes a row**, which
+   puts it behind `MCP_ACCESS_TOKEN` and refuses it when no token is configured. If the page
+   protects it with a Turnstile challenge, the token is what replaces that proof — decide
+   deliberately, do not simply drop the challenge.
+5. **Return anything the caller cannot see but will need again.** The AES adapter returns the
+   salt and IV it drew, because an MCP caller has no field to read them off and a ciphertext
+   without them is unreadable by anything, including this tool a second later.
+
+Then: nothing else. The `/mcp` guide page's table, the tool count and the registry tests all read
+`MCP_TOOLS`. Run `bun test src/modules/mcp` and the protocol test will drive your new tool through
+the SDK's own client.
+
+Read [`docs/case-studies/mcp.md`](../../../docs/case-studies/mcp.md) before the first one.
+
 ## Step 9 — update the documentation
 
 A tool is not shipped until the docs stop describing the repository as it was before it.
@@ -174,6 +229,8 @@ Documentation drift is a defect in *this* change, never a follow-up.
 
 - **`README.md` Tools table** — add the row (name, route, category, one line on what it does)
   and remove the tool from the planned list underneath.
+- **`README.md` MCP section** — the tool-count sentence and the list of what is exposed, whenever
+  an adapter is added or removed.
 - **`example.env` and the README environment table** — together, never one without the other.
   Say what each variable is for and what degrades when it is blank.
 - **README configuration table** — any new top-level config file, or a change to what an
@@ -232,6 +289,8 @@ This is the step that gets skipped. Adding, removing, or renaming a control mean
 3. `loading.tsx` — the skeleton must still match the real layout.
 4. Both locales for every string above.
 5. Tests for the new behaviour, and the shared-domain tests if a signature moved.
+6. The **MCP adapter** in `src/modules/mcp/tools/`, if the tool has one — a control added to the
+   page and not to the adapter is a tool that behaves differently depending on who asks.
 
 Treat "the copy underneath still describes the old tool" as a bug in the change, not a
 follow-up.
@@ -301,6 +360,7 @@ they should not.
 | Structured data `<script>` | `@/modules/seo/components/json-ld` |
 | Canonical URLs, OG image, site constants | `@/modules/seo/domain/site` |
 | Structured logging | `@/modules/observability/domain/logger` |
+| MCP tool definition | `@/modules/mcp/domain/define-tool` |
 
 Shared UI belongs in `modules/tools/`, never inside another tool's module. If a second tool
 needs something the first one owns, lift it — and update the first tool's imports in the

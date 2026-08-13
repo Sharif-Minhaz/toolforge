@@ -25,7 +25,7 @@ and a padding scheme whose entire public history is Bleichenbacher's attack
 against it.
 
 The first was chosen, and the reasoning matters more than the outcome:
-[decision tree 44](../../CLAUDE.md#44-implement-it-or-depend-on-it) says that
+[decision tree 45](../../CLAUDE.md#45-implement-it-or-depend-on-it) says that
 when somebody else reads the output you depend on the reference implementation
 rather than writing your own. There is no reference implementation available in a
 browser. That is a reason not to ship the feature, not a reason to write one.

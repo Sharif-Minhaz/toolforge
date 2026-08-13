@@ -135,6 +135,7 @@ records a defect that was expensive to find and is easy to reintroduce.
 | `image-compressor`, `image-converter` | [`case-studies/image-codecs.md`](case-studies/image-codecs.md) |
 | `image-resizer`, any image tool's intake | [`case-studies/image-resizer.md`](case-studies/image-resizer.md) |
 | `json-server` | [`case-studies/json-server.md`](case-studies/json-server.md), [`patterns/growth-ceilings.md`](patterns/growth-ceilings.md) |
+| `mcp`, or any tool's MCP adapter | [`case-studies/mcp.md`](case-studies/mcp.md) |
 | `mock-server` | [`case-studies/mock-server.md`](case-studies/mock-server.md), [`mock-server-studio.md`](mock-server-studio.md) |
 | `port-scanner` | [`case-studies/port-scanner.md`](case-studies/port-scanner.md) |
 | `qr` | [`case-studies/qr.md`](case-studies/qr.md) |

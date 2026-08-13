@@ -68,6 +68,7 @@ docs/
 | `image-compressor`, `image-converter` | [`docs/case-studies/image-codecs.md`](docs/case-studies/image-codecs.md) |
 | `image-resizer`, any image tool's intake | [`docs/case-studies/image-resizer.md`](docs/case-studies/image-resizer.md) |
 | `json-server` | [`docs/case-studies/json-server.md`](docs/case-studies/json-server.md) |
+| `mcp`, or any tool's MCP adapter | [`docs/case-studies/mcp.md`](docs/case-studies/mcp.md) |
 | `mock-server` | [`docs/case-studies/mock-server.md`](docs/case-studies/mock-server.md) |
 | `port-scanner` | [`docs/case-studies/port-scanner.md`](docs/case-studies/port-scanner.md) |
 | `qr` | [`docs/case-studies/qr.md`](docs/case-studies/qr.md) |
@@ -101,6 +102,7 @@ docs/
 - Server component by default; the client island stays small.
 - Every user-facing string in `en.json` **and** `bn.json`, together.
 - Every free-text field gets a ceiling and a visible countdown.
+- An MCP adapter for anything that runs on the server, beside the tests.
 - Typed errors, named refusals, no swallowed exceptions.
 - No `console.*`; `logEvent` instead.
 
@@ -122,6 +124,8 @@ Then check, by reading the diff:
 - [ ] **Accessibility** — keyboard, focus, labels, and a text equivalent for
       anything conveyed by hover or colour.
 - [ ] **Light and dark** both reasoned about.
+- [ ] **MCP** — a new or changed server-runnable tool has its adapter in
+      `src/modules/mcp/tools/`, and the registry test is green.
 - [ ] **Documentation** updated in this change, not the next one.
 - [ ] **UI verified visually?** If not, say so plainly and hand over the list in
       [`docs/workflow/verification.md`](docs/workflow/verification.md).
@@ -193,57 +197,64 @@ Rules below are graded. Treat them differently:
     [`docs/workflow/documentation.md`](docs/workflow/documentation.md)
 19. **Say plainly when UI work has not been checked in a browser**, and list what
     needs looking at.
+20. **Expose every server-runnable tool over MCP, in the same change that ships
+    it.** If the domain layer runs without a canvas, a worker or a browser
+    cookie, it gets an adapter in `src/modules/mcp/tools/` and an entry in
+    `MCP_TOOLS`. A tool that genuinely cannot — it needs pixels, it mints a
+    cookie-owned resource, it spends somebody's API budget — says so in
+    `tools/index.ts` and on `/mcp`, rather than being left out quietly. →
+    [`docs/case-studies/mcp.md`](docs/case-studies/mcp.md)
 
 ## Strong conventions
 
-20. **Prefer Server Components.** Client components only for browser APIs, state,
+21. **Prefer Server Components.** Client components only for browser APIs, state,
     animation or event handlers, and kept small.
-21. **Prefer Server Actions over Route Handlers.** A Route Handler is for a caller
+22. **Prefer Server Actions over Route Handlers.** A Route Handler is for a caller
     that is not our UI: webhooks, uploads, streaming, third-party callbacks, or
     somebody else's browser following a link.
-22. **Check shadcn/ui before building any UI component**
+23. **Check shadcn/ui before building any UI component**
     (`bunx --bun shadcn@latest add <component>`).
-23. **Use design tokens; never raw colours.** Code uses `--syntax-*`, never
+24. **Use design tokens; never raw colours.** Code uses `--syntax-*`, never
     `--brand-*`. The one exception is a canvas paint colour over a photograph —
     comment it.
-24. **Every async page has a `loading.tsx` with skeletons that match the layout.**
+25. **Every async page has a `loading.tsx` with skeletons that match the layout.**
     Never a blank page. Always expose Loading, Success, Error and Empty.
-25. **Test the domain layer, not the markup**, and get `bun test` green before
+26. **Test the domain layer, not the markup**, and get `bun test` green before
     writing UI. Inject anything touching the DOM, the clipboard, the clock or
     randomness.
-26. **Verify against something that is not you** whenever a tool emits a format or
+27. **Verify against something that is not you** whenever a tool emits a format or
     reproduces a behaviour something else must read. →
     [`docs/testing.md`](docs/testing.md#verifying-against-something-that-is-not-you)
-27. **Every refusal keeps its own name.** `missing`, `pending` and `expired` are
+28. **Every refusal keeps its own name.** `missing`, `pending` and `expired` are
     three states, not one error.
-28. **A complaint about the input belongs beside the input; a complaint about the
+29. **A complaint about the input belongs beside the input; a complaint about the
     operation belongs where the answer would have been.**
-29. **Bring a result produced by a press into view** with `useResultScroll` — and
+30. **Bring a result produced by a press into view** with `useResultScroll` — and
     never scroll to a destination that can turn out empty.
-30. **Add to `tools/` the moment a second tool needs it**, whole, in the same
+31. **Add to `tools/` the moment a second tool needs it**, whole, in the same
     change. Do not add to `lib/`.
-31. **Do not disclose a limitation only in the article.** If a tool cannot keep
+32. **Do not disclose a limitation only in the article.** If a tool cannot keep
     the site's "nothing is uploaded" promise, the disclosure sits above the
     controls.
-32. **Prettier is the source of truth.** Format, organize imports, remove unused
+33. **Prettier is the source of truth.** Format, organize imports, remove unused
     ones.
 
 ## Guidelines
 
-33. Think before writing code; prefer simplicity and single responsibility.
-34. Functions do one thing. Early returns. Avoid deep nesting. Explicit names.
-35. Refactor duplication immediately — unless removing it costs more than it
-    saves (rule 39's fourth branch).
-36. Prefer Suspense, streaming, lazy loading and dynamic imports; avoid
+34. Think before writing code; prefer simplicity and single responsibility.
+35. Functions do one thing. Early returns. Avoid deep nesting. Explicit names.
+36. Refactor duplication immediately — unless removing it costs more than it
+    saves (rule 40's fourth branch).
+37. Prefer Suspense, streaming, lazy loading and dynamic imports; avoid
     unnecessary client rendering and memoization.
-37. Cap prose at `max-w-[68ch]`; let tables break out inside `overflow-x-auto`.
-38. Leave the codebase cleaner than you found it.
+38. Cap prose at `max-w-[68ch]`; let tables break out inside `overflow-x-auto`.
+39. Leave the codebase cleaner than you found it.
 
 ---
 
 ## Decision trees
 
-### 39. Should this be shared?
+### 40. Should this be shared?
 
 ```
 1. Search src/modules/tools/ and neighbouring modules.
@@ -254,7 +265,7 @@ Rules below are graded. Treat them differently:
 ```
 → [`docs/architecture.md`](docs/architecture.md#when-to-lift-something-into-the-shared-layer)
 
-### 40. Server component, client island, or action?
+### 41. Server component, client island, or action?
 
 ```
 Does it need browser APIs, state, animation or an event handler?
@@ -266,7 +277,7 @@ Does it need browser APIs, state, animation or an event handler?
 ```
 → [`docs/server-and-data.md`](docs/server-and-data.md)
 
-### 41. Cap the field, or warn?
+### 42. Cap the field, or warn?
 
 ```
 Short identity field (name, alias, hostname, key, colour, header)?
@@ -280,7 +291,7 @@ Content box (db.json, curl command, JWT, Markdown, OpenAPI)?
 ```
 → [`docs/patterns/input-limits.md`](docs/patterns/input-limits.md)
 
-### 42. Debounce this input?
+### 43. Debounce this input?
 
 ```
 Expensive derivation?                          → 300 ms. (the default)
@@ -291,7 +302,7 @@ Sits behind a caret (highlighting)?            → never. Use a length ceiling.
 Where a debounce is deliberately absent, say so in a comment.
 → [`docs/engineering-principles.md`](docs/engineering-principles.md#match-the-mechanism-to-the-cost)
 
-### 43. Which way should this gate fail?
+### 44. Which way should this gate fail?
 
 ```
 If the gate is bypassed, what does the service become?
@@ -302,7 +313,7 @@ If the gate is bypassed, what does the service become?
 ```
 → [`docs/security.md`](docs/security.md#decide-which-way-a-gate-fails)
 
-### 44. Implement it, or depend on it?
+### 45. Implement it, or depend on it?
 
 ```
 Who reads the output?
@@ -313,7 +324,7 @@ Who reads the output?
 ```
 → [`docs/engineering-principles.md`](docs/engineering-principles.md#depend-or-implement)
 
-### 45. The reference implementation has a bug. Match it?
+### 46. The reference implementation has a bug. Match it?
 
 ```
 Does it change bytes or responses other people read?
@@ -327,7 +338,7 @@ Does it change bytes or responses other people read?
 ```
 → [`docs/engineering-principles.md`](docs/engineering-principles.md#cloning-behaviour-match-diverge-or-refuse)
 
-### 46. Where does this new knowledge go?
+### 47. Where does this new knowledge go?
 
 ```
 A rule the next author must not break?  → one line here + reasoning in docs/.

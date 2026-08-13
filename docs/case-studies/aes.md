@@ -71,7 +71,7 @@ wrong key, because it is a property of the mode rather than a defect to fix.
 ## Cross-verification
 
 Ciphertext is read by other people, so
-[rule 44](../../CLAUDE.md#decision-trees) applies: depend on the reference
+[rule 45](../../CLAUDE.md#decision-trees) applies: depend on the reference
 implementation, and check against something that is not you.
 
 Every constant in `tests/vectors.test.ts` is a published vector — NIST SP 800-38A

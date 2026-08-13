@@ -239,6 +239,51 @@ Each row keeps its **edit link** — otherwise a one-time credential nobody save
 credential store: it is capped at twenty entries, it says so on the page, and it has a button that
 empties it. Clear it on a shared machine.
 
+## MCP server
+
+ToolForge also speaks the [Model Context Protocol](https://modelcontextprotocol.io), so an
+assistant can call the toolbox instead of guessing at it. One endpoint, `POST /api/mcp`, using the
+Streamable HTTP transport, stateless.
+
+```bash
+claude mcp add --transport http toolforge https://<your-host>/api/mcp
+```
+
+Claude Code, Claude Desktop, claude.ai custom connectors, ChatGPT connectors, Cursor and the MCP
+Inspector all connect the same way. The in-app guide at **`/mcp`** carries the per-client config,
+a copyable address for the host you are actually on, the token instructions and the full tool
+table; it also reports whether *this* deployment is configured to serve MCP at all.
+
+Twenty-eight tools are exposed, every one of them calling the same `domain/` function its tool page
+calls — so an answer over MCP and an answer on the page cannot disagree. They cover UUIDs, Base64,
+URL encoding and parsing, JSON, JWT (decode, verify, sign), hashing (generate, compare, identify),
+AES, RSA (generate, encrypt/decrypt), passwords, lorem, slugs, diffs, regex, Markdown, colours,
+cron, timestamps, BSON/TOON, curl conversion, QR codes, the domain inspector, and the catalogue
+itself.
+
+Two gates sit in front of them:
+
+- **Rate limit, always.** Sixty calls a minute per caller and six hundred a minute per tool, in
+  Postgres under the `mcp:call` namespace of `service_quota`. It **fails closed** — without
+  `DATABASE_URL` and `MCP_IP_SALT` the endpoint refuses every request rather than running
+  unmetered, because an open JSON-RPC endpoint that will generate 4096-bit RSA keys on demand is a
+  scriptable way to spend a deployment's whole CPU budget.
+- **A bearer token, for outbound requests only.** The Domain Inspector reaches other people's
+  hosts from this server's address, so it requires `MCP_ACCESS_TOKEN` in an
+  `Authorization: Bearer` header — and is refused outright when no token is configured. Every
+  other tool is arithmetic on the caller's own argument and needs nothing.
+
+What is deliberately absent, and why, is documented on the page and in
+[`docs/case-studies/mcp.md`](docs/case-studies/mcp.md): the image tools need a browser canvas, the
+studios and the shortener mint resources owned by a browser cookie, the AI tools spend a
+third-party budget, and the port scanner is not something to put behind a model that can be talked
+into things.
+
+> **MCP is the one place ToolForge's "nothing is uploaded" promise does not hold**, and the guide
+> page says so above the instructions rather than in an article. Arguments travel to the server,
+> are used, and are discarded — nothing is stored — but they also pass through whoever runs the
+> assistant, and that conversation is retained by them.
+
 ## Stack
 
 Next.js 16 (App Router) · React 19 · TypeScript (strict) · Tailwind CSS v4 · Base UI via
@@ -300,6 +345,8 @@ Open [http://localhost:3000](http://localhost:3000).
 | `MOCK_IP_SALT`                         | Mock Server Studio                                 | Salt mixed into a caller's address before it is hashed into `mock_quota`, which meters three things: workspace creation per network per hour, outbound HTTP-request nodes per workspace per hour, and public requests to `/m/<key>/…` per minute (120 per calling address, 1200 per server). Any long random string. Blank — or `DATABASE_URL` blank — and the studio refuses to create or import a workspace **and refuses to answer on `/m/<key>/…` at all**, rather than running any of the three unmetered. Rotating it resets every open window                                              |
 | `JSON_SERVER_IP_SALT`                  | JSON Server Studio                                 | Salt mixed into a caller's address before it is hashed into `service_quota`, which meters two things: JSON server creation per network per hour, and public requests to `/j/<key>/…` per minute (120 per calling address, 1200 per server). Any long random string. Blank — or `DATABASE_URL` blank — and the studio refuses to create or restore a server **and refuses to answer on `/j/<key>/…` at all**, rather than running either unmetered: a JSON server stores whatever is posted to it, so an unmetered one is free hosting for a stranger's data. Rotating it resets every open window |
 | `GRAPHQL_SERVER_IP_SALT`               | GraphQL Server Studio                              | Salt mixed into a caller's address before it is hashed into `service_quota`, which meters two things: GraphQL server creation per network per hour, and public requests to `/g/<key>` per minute (60 per calling address, 600 per server — half the JSON studio's, because one GraphQL document can be far more work than one REST read). Any long random string. Blank — or `DATABASE_URL` blank — and the studio refuses to create or restore a server **and refuses to answer on `/g/<key>` at all**, rather than running either unmetered: a GraphQL server stores whatever its mutations are given, so an unmetered one is free hosting for a stranger's data. Rotating it resets every open window |
+| `MCP_IP_SALT`                          | MCP server                                         | Salt mixed into a caller's address before it is hashed into `service_quota` under the `mcp:call` namespace. **Without it `/api/mcp` refuses every request** — an unmetered JSON-RPC endpoint that runs Argon2 and RSA generation on demand is not something to leave open. Any long random string; changing it resets every window. |
+| `MCP_ACCESS_TOKEN`                     | MCP networked tools                                | Bearer token for the MCP tools that make outbound requests — currently only the Domain Inspector. Blank, and those tools refuse with `token_missing` while every offline tool keeps working. Server-only, read per request, so rotating it takes effect immediately. |
 | `NEXT_PUBLIC_TURNSTILE_KEY`            | AI tools, short links, network tools, all studios  | Turnstile site key. Absent, and those features render disabled rather than unprotected.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `TURNSTILE_SECRET`                     | AI tools, short links, network tools, all studios  | Turnstile secret, read only by `src/modules/tools/repository/turnstile.ts`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
@@ -385,6 +432,8 @@ src/
     mock/                 the Mock Server Studio — a route tree, not a single-page tool
     json/                 the JSON Server Studio — a route tree, not a single-page tool
     graphql/              the GraphQL Server Studio — a route tree, not a single-page tool
+    mcp/                  the MCP connection guide — how an assistant reaches the toolbox
+    api/mcp/              route handler — the Model Context Protocol endpoint
     j/[serverKey]/        route handler — where a hosted json-server answers
     g/[serverKey]/        route handler — where a hosted GraphQL server answers
     q/[slug]/             route handler — the redirect a printed dynamic QR code follows

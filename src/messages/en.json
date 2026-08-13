@@ -72,7 +72,8 @@
         "mockServers": "Mock Servers",
         "jsonServers": "JSON Servers",
         "sectionStudio": "Studio",
-        "graphqlServers": "GraphQL Servers"
+        "graphqlServers": "GraphQL Servers",
+        "mcp": "MCP"
     },
     "theme": {
         "label": "Theme",
@@ -9270,6 +9271,153 @@
             "upstream_failed": "That host refused the request or returned an error.",
             "rate_limited": "Too many pictures fetched from this network just now. Wait a minute, or drop the file in instead.",
             "not_configured": "Fetching by address is not configured on this deployment. Picking, dropping and pasting all still work."
+        }
+    },
+    "mcp": {
+        "meta": {
+            "title": "ToolForge MCP Server — Connect Claude and ChatGPT",
+            "description": "Connect Claude, ChatGPT, Cursor or any MCP client to ToolForge. One HTTP endpoint exposes encoding, hashing, encryption, JWT, formatting, text and domain tools as callable tools."
+        },
+        "hero": {
+            "eyebrow": "MCP",
+            "title": "Use ToolForge from your assistant",
+            "subtitle": "ToolForge speaks the Model Context Protocol. Point Claude, ChatGPT, Cursor or any other MCP client at one address and the toolbox becomes something you can ask for by name, mid-conversation.",
+            "badgeProtocol": "Streamable HTTP",
+            "badgeServer": "Runs on the server",
+            "badgeGated": "Token for outbound calls"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "connect": {
+            "quotaMissing": "This deployment cannot serve MCP yet. The endpoint meters every caller, and metering needs both a database and MCP_IP_SALT — without them it refuses every request rather than running unmetered. Set both, then reload this page.",
+            "endpointBody": "One endpoint, for every client and every tool. It speaks Streamable HTTP and it is stateless: no session to open, nothing to keep alive, and no id to lose when a serverless instance is recycled.",
+            "endpointTransport": "Set the transport to HTTP, not SSE — the older Server-Sent Events transport is a different shape and this endpoint does not answer it.",
+            "clientsBody": "Every offline tool works with nothing but the address. A token is only needed for the tools that make outbound requests, and those are named further down.",
+            "probeTitle": "Checking it by hand",
+            "probeBody": "One request, no client. A working endpoint answers with its name, version and protocol version.",
+            "tokenBody": "Most of what ToolForge exposes is arithmetic on your own input — encoding, hashing, parsing — and costs this deployment a few milliseconds of CPU. Those tools are open to anyone, bounded by the rate limit rather than by a password.",
+            "tokenScope": "One tool is different. The domain inspector reaches other people's hosts, from this server's address, with this site's name on the packets. Left open, that is a scanner a stranger's assistant can drive. So it is gated on a bearer token — and when no token is configured it is refused rather than served, because a gate that opens when its configuration is missing is not a gate.",
+            "tokenPresent": "This deployment has a token configured. Networked tools will work for a client that sends it.",
+            "tokenAbsent": "This deployment has no MCP_ACCESS_TOKEN set. Every offline tool works; the domain inspector will refuse with token_missing until one is configured.",
+            "tokenMintTitle": "Minting one",
+            "tokenRotate": "Rotating it is a one-line change and takes effect on the next request — the value is read from the environment per call, not captured at startup. Clients holding the old token start failing immediately, which is the point.",
+            "tokenPath": "The token is only ever sent as an Authorization header to {path}. It never appears in a URL, so it cannot end up in browser history, a proxy log or a Referer header.",
+            "client": {
+                "claudeCode": {
+                    "name": "Claude Code",
+                    "hint": "Run this once; the server is remembered for the project."
+                },
+                "claudeDesktop": {
+                    "name": "Claude Desktop",
+                    "hint": "Add it to claude_desktop_config.json and restart the app. On claude.ai, add it as a custom connector and paste the address instead."
+                },
+                "chatgpt": {
+                    "name": "ChatGPT",
+                    "hint": "Settings → Connectors → Add. Paste the address as the MCP server URL. Developer mode has to be on for a custom connector to appear."
+                },
+                "cursor": {
+                    "name": "Cursor and other editors",
+                    "hint": "Add it to .cursor/mcp.json in the project, or to the global config for every project."
+                }
+            }
+        },
+        "tools": {
+            "body": "{count} tools, all running on the server. Every one of them is the same code the tool page runs, so an answer here and an answer there cannot disagree.",
+            "columnName": "MCP tool",
+            "columnTool": "ToolForge tool",
+            "columnAccess": "Access",
+            "catalogRow": "The catalogue itself",
+            "access": {
+                "offline": "Open",
+                "network": "Token"
+            }
+        },
+        "article": {
+            "what": {
+                "title": "What this is",
+                "p1": "The Model Context Protocol is a standard way for an assistant to call something that is not itself. A client connects to a server, asks what tools it has, and from then on the model can call them — with arguments it chose, and results it reads before answering you.",
+                "example": "You: <code>decode this JWT and tell me when it expires</code> → the assistant calls <code>toolforge_jwt_decode</code> → it answers from the real claims, not from a guess",
+                "p2": "That last part is the difference worth understanding. A model asked to base64-decode a string will often produce something that looks right and is wrong in the middle. A model that calls a decoder gets the actual bytes. The same holds for a hash, a cron expression, a diff, or the expiry on a certificate.",
+                "p3": "Everything here runs on the ToolForge server rather than in your browser, which is a real departure from how the rest of this site works — the tool pages do their work in the tab and upload nothing. Over MCP, whatever you pass as an argument reaches this server, and the tools that reach the network reach it from here."
+            },
+            "endpoint": {
+                "title": "The address"
+            },
+            "clients": {
+                "title": "Connecting a client"
+            },
+            "token": {
+                "title": "The access token"
+            },
+            "tools": {
+                "title": "What is exposed"
+            },
+            "examples": {
+                "title": "What asking looks like",
+                "p1": "You do not name the tool. You ask for the thing, and the assistant picks — which is why every tool here carries a description written for a model choosing between thirty of them.",
+                "decode": {
+                    "ask": "<code>Is this token expired?</code>",
+                    "runs": "Calls toolforge_jwt_decode, reads exp against the clock, and warns you if the token is unsigned."
+                },
+                "hash": {
+                    "ask": "<code>Hash this password with Argon2id at the OWASP settings</code>",
+                    "runs": "Calls toolforge_hash_generate with a freshly generated salt, and returns the encoded hash with its parameters inside it."
+                },
+                "cron": {
+                    "ask": "<code>When does 0 3 * * 1-5 next fire in Dhaka?</code>",
+                    "runs": "Calls toolforge_cron_explain, which returns real instants in that zone — and flags any run a daylight-saving jump would erase."
+                },
+                "diff": {
+                    "ask": "<code>What changed between these two config files?</code>",
+                    "runs": "Calls toolforge_diff_compare and gets a unified patch back, which is far cheaper to read than two files side by side."
+                },
+                "domain": {
+                    "ask": "<code>Is example.com's certificate about to expire?</code>",
+                    "runs": "Calls toolforge_domain_inspector_inspect — the one tool that needs the token, because it reaches the host to find out."
+                }
+            },
+            "limits": {
+                "title": "Limits",
+                "p1": "<address></address> calls a minute per caller, and <tool></tool> a minute per tool across everyone. The first bounds one client in a loop; the second bounds a flood spread across many, which no per-caller limit can do.",
+                "p2": "A refusal clears inside a minute and says when, in a Retry-After header and in the rate-limit headers on every answer. A client watching those sees its budget counting down before anything breaks.",
+                "p3": "Individual tools keep their own ceilings — the diff refuses documents past its line count, the QR encoder past what the specification can carry — and those are the same ceilings the tool pages hold."
+            },
+            "absent": {
+                "title": "What is not here, and why",
+                "p1": "Four groups are missing on purpose. Each one is a fact about the tool rather than a gap in the endpoint, and <code>toolforge_catalog_list</code> returns the web address of every one of them so an assistant can send you to the page instead of reporting a dead end.",
+                "images": {
+                    "title": "The image tools",
+                    "body": "The compressor, converter, resizer and blur placeholder decode pixels in a canvas and re-encode them through WebAssembly codecs built for a browser. There is no canvas in a request handler, and a server-side reimplementation would be a second encoder to keep in step with the first."
+                },
+                "studios": {
+                    "title": "The server studios and the shortener",
+                    "body": "Each of them mints a public address and stores what is posted to it, against an ownership model built on browser cookies. An MCP client has no cookie jar and no way to prove it owns what it created, so creating one here would mint something nobody could ever reclaim."
+                },
+                "ai": {
+                    "title": "The AI tools",
+                    "body": "The text and image detectors and the watermark remover spend a third-party API budget on every call. That is a decision about money rather than about capability, and it belongs to whoever is paying."
+                },
+                "scanner": {
+                    "title": "The port scanner",
+                    "body": "Its whole function is to touch somebody else's host on ports they did not offer. Behind a model that can be talked into things, a token is not the protection it looks like."
+                }
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Do I need an API key?",
+                "a1": "Not for most of it. Every offline tool — encoding, hashing, encryption, JWTs, formatting, diffing, colours, cron, timestamps — works with nothing but the address. Only the domain inspector asks for a bearer token, because it is the only one that makes outbound requests. Set <code>MCP_ACCESS_TOKEN</code> on the deployment and send it as <code>Authorization: Bearer</code>.",
+                "q2": "Is my data private here?",
+                "a2": "Less private than on the tool pages, and that is worth being exact about. A tool page does its work in your browser and uploads nothing. Over MCP, arguments travel to this server, are used, and are discarded — nothing is stored — but they also travel through your assistant, and whoever runs that assistant keeps the conversation. Do not pass a production secret through a chat you would not want retained.",
+                "q3": "Which MCP clients work?",
+                "a3": "Anything that speaks Streamable HTTP: Claude Code, Claude Desktop, claude.ai custom connectors, ChatGPT connectors in developer mode, Cursor, Windsurf, Zed, and the MCP Inspector. The older SSE transport is a different shape and is not served.",
+                "q4": "Why does my client show no tools?",
+                "a4": "Three usual causes. The transport is set to SSE rather than HTTP. The address is missing <code>/api/mcp</code> at the end. Or the deployment has no database and no <code>MCP_IP_SALT</code>, in which case the endpoint refuses every request — the banner at the top of this page says so when that is the case.",
+                "q5": "Can I run this against my own deployment?",
+                "a5": "Yes, and that is the intended arrangement for anything sensitive. ToolForge is MIT-licensed and self-hostable; point the client at your own host and both the token and the rate limit are yours to set.",
+                "q6": "Does calling a tool cost me anything?",
+                "a6": "No. There is no billing, no account and no sign-up. The rate limit exists so one caller cannot spend the whole deployment's budget, not to sell you a larger one."
+            }
         }
     }
 }

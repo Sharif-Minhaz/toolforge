@@ -1,14 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import {
-    bytesToBase64,
-    isBase64,
-    timingSafeEqual,
-    utf8ByteLength,
-} from "@/modules/hash/domain/encoding";
+import { bytesToBase64, isBase64, utf8ByteLength } from "@/modules/hash/domain/encoding";
 
 // Hex moved to `tools/domain/hex.ts` once the BSON converter needed it too;
-// its assertions travelled with it to `tools/tests/hex.test.ts`.
+// its assertions travelled with it to `tools/tests/hex.test.ts`. `timingSafeEqual`
+// followed the same road to `tools/domain/timing-safe.ts` when the MCP endpoint
+// needed it for its bearer token.
 
 describe("bytesToBase64", () => {
     for (const [bytes, expected] of [
@@ -60,27 +57,5 @@ describe("utf8ByteLength", () => {
     test("differs from the code-unit count for astral characters", () => {
         expect("🔐".length).toBe(2);
         expect(utf8ByteLength("🔐")).toBe(4);
-    });
-});
-
-describe("timingSafeEqual", () => {
-    test("matches identical strings", () => {
-        expect(timingSafeEqual("deadbeef", "deadbeef")).toBe(true);
-    });
-
-    test("rejects a single differing character", () => {
-        expect(timingSafeEqual("deadbeef", "deadbeee")).toBe(false);
-    });
-
-    test("rejects strings of different lengths", () => {
-        expect(timingSafeEqual("dead", "deadbeef")).toBe(false);
-    });
-
-    test("treats two empty strings as equal", () => {
-        expect(timingSafeEqual("", "")).toBe(true);
-    });
-
-    test("is case-sensitive, because base64 digests are", () => {
-        expect(timingSafeEqual("Zm9v", "zm9V")).toBe(false);
     });
 });

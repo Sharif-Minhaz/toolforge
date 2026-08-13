@@ -3,6 +3,7 @@
 import {
     IconDatabase,
     IconLayoutDashboard,
+    IconPlugConnected,
     IconSearch,
     IconServer2,
     IconTopologyStar3,
@@ -232,6 +233,7 @@ export function SidebarNav({
     );
 
     const overviewActive = pathname === "/";
+    const mcpActive = pathname === "/mcp";
     // Each studio is a route tree rather than a page, so every path beneath its
     // root belongs to it — `pathname === href` would drop the highlight the
     // moment somebody opened a workspace.
@@ -339,6 +341,25 @@ export function SidebarNav({
                                 accentClass={TOOL_ACCENT_VARS.violet}
                                 icon={
                                     <IconLayoutDashboard
+                                        className="size-4"
+                                        stroke={1.75}
+                                        aria-hidden="true"
+                                    />
+                                }
+                            />
+                            {/* General rather than Tools: the MCP guide is how
+                                the toolbox is reached from somewhere else, not
+                                another utility to sit between two of them. */}
+                            <NavRow
+                                label={t("mcp")}
+                                href="/mcp"
+                                active={mcpActive}
+                                collapsed={collapsed}
+                                layoutIdPrefix={layoutIdPrefix}
+                                onNavigate={onNavigate}
+                                accentClass={TOOL_ACCENT_VARS.emerald}
+                                icon={
+                                    <IconPlugConnected
                                         className="size-4"
                                         stroke={1.75}
                                         aria-hidden="true"
