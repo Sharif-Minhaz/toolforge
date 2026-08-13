@@ -117,7 +117,22 @@ describe("tools/call", () => {
         expect((result.structuredContent as { reason: string }).reason).toBe("invalid_character");
     });
 
-    test("puts the summary in the text content a client shows", async () => {
+    /*
+     * The regression that made every tool useless in one client and fine in
+     * another.
+     *
+     * The first version of this test asserted that the text block held the
+     * summary — which it did, and which was the bug. A client that reads only
+     * `content` (the claude.ai connector does) handed the model `Encoded 20
+     * bytes` and no output, so the model did the work itself and reported that
+     * the tool had returned nothing useful. Meanwhile Claude Code read
+     * `structuredContent` and everything looked correct.
+     *
+     * So the assertion is now about the requirement rather than about what the
+     * code happened to do: whichever field a client reads, it gets the same
+     * complete answer.
+     */
+    test("puts the whole answer in the text block, not a summary of it", async () => {
         const result = await client.callTool({
             name: "toolforge_slug_create",
             arguments: { text: "Héllo, World!" },
@@ -125,7 +140,32 @@ describe("tools/call", () => {
         const [block] = result.content as { type: string; text: string }[];
 
         expect(block?.type).toBe("text");
-        expect(block?.text).toBe("hello-world");
+
+        const fromText: unknown = JSON.parse(block?.text ?? "");
+
+        expect(fromText).toEqual(result.structuredContent as unknown as object);
+        expect((fromText as { slug: string }).slug).toBe("hello-world");
+        expect((fromText as { summary: string }).summary).toBe("hello-world");
+    });
+
+    test("carries the payload in the text block for every kind of tool", async () => {
+        // One generator, one converter, one refusal — the three shapes a client
+        // can be handed. A tool whose text block cannot be parsed, or whose
+        // parsed form is missing the field the summary talks about, is a tool
+        // that will look broken to whoever reads `content`.
+        for (const [name, args, field] of [
+            ["toolforge_uuid_generate", {}, "uuids"],
+            ["toolforge_base64_convert", { text: "hi" }, "output"],
+            ["toolforge_password_generate", {}, "password"],
+            ["toolforge_qr_generate", { kind: "text", text: "hi" }, "svg"],
+        ] as const) {
+            const result = await client.callTool({ name, arguments: args });
+            const [block] = result.content as { type: string; text: string }[];
+            const parsed = JSON.parse(block?.text ?? "") as Record<string, unknown>;
+
+            expect(parsed[field]).toBeDefined();
+            expect(parsed).toEqual(result.structuredContent as unknown as Record<string, unknown>);
+        }
     });
 
     test("refuses a networked tool when no token was presented", async () => {

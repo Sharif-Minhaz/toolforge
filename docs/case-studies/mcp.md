@@ -107,6 +107,32 @@ is rejected by clients.
 
 ## Traps this hit
 
+**The text block has to carry the whole answer.** This one shipped, and it made
+every tool useless in one client while looking perfect in another.
+
+`CallToolResult` has two places an answer can go: `content`, a list of blocks,
+and `structuredContent`, an object. The first version put `summary` in the text
+block and the real payload in `structuredContent` only. Clients do not agree
+about which to read. Claude Code surfaced `structuredContent`, so every test and
+every manual check passed. The claude.ai connector surfaced `content` alone — so
+a model asked to encode a string was handed the literal text `Encoded 20 bytes`,
+concluded the tool had returned nothing usable, and did the work itself by hand.
+Every call succeeded; every result was worthless.
+
+The specification says a tool returning structured content SHOULD also return
+the serialized JSON in a text block, and that SHOULD is not decorative. Both
+fields now carry the same object.
+
+The test that was supposed to catch this is the reason it shipped:
+
+```ts
+expect(block?.text).toBe("hello-world");   // asserted the bug, and passed
+```
+
+It asserted what the code did rather than what a client needs. Its replacement
+parses the text block and requires it to equal `structuredContent` — a
+requirement no implementation detail can satisfy accidentally.
+
 **`server-only` in the import graph makes the registry untestable.** The Domain
 Inspector's `runInspection` is marked `server-only`, and importing it statically
 put that marker in the graph of `tools/index.ts` — which the tests load outside

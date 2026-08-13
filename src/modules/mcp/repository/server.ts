@@ -38,20 +38,39 @@ import { MCP_TOOLS } from "../tools";
 /**
  * Our outcome, as the protocol says it.
  *
- * Both halves of the result are filled in on purpose. `content` is what a model
- * reads and what an older client shows; `structuredContent` is the same answer
- * as data for a client that can use it. Sending only the second would leave the
- * first blank in transcripts, which is how a working tool comes to look broken.
+ * **The text block carries the whole answer, not a summary of it**, and that
+ * sentence is the fix for the one bug that made every tool here look broken.
+ *
+ * The first version put only `summary` in `content` and the real payload in
+ * `structuredContent`, on the assumption that a client reads both. Clients do
+ * not agree about that. Claude Code surfaced `structuredContent` and everything
+ * worked; the claude.ai connector surfaced `content` alone, so a model asked to
+ * encode a string received the literal text `Encoded 20 bytes` and nothing else
+ * — and, having been handed no output, went away and did the work itself. Every
+ * tool appeared to answer, and every answer was useless.
+ *
+ * The specification is explicit about this and we were not following it: a tool
+ * returning structured content SHOULD also return the serialized JSON in a text
+ * block. So both fields now carry the same object. A client that reads either
+ * one gets the complete result, and a client that reads both sees no
+ * disagreement.
+ *
+ * `structuredContent` is kept rather than dropped even though no tool here
+ * declares an `outputSchema` — it costs one field, and it is what the clients
+ * that do prefer it will read.
  *
  * A refusal sets `isError`, so a client renders it as a failed call rather than
  * as an answer that happens to contain the word "refused".
  */
 function toCallToolResult(outcome: McpToolOutcome): CallToolResult {
     const data = outcome.ok ? outcome.data : (outcome.data ?? { reason: outcome.reason });
+    const payload = { summary: outcome.summary, ...asRecord(data) };
 
     return {
-        content: [{ type: "text", text: outcome.summary }],
-        structuredContent: { summary: outcome.summary, ...asRecord(data) },
+        // Compact rather than indented. A model parses either, and the domain
+        // report is large enough that the whitespace would be a real cost.
+        content: [{ type: "text", text: JSON.stringify(payload) }],
+        structuredContent: payload,
         ...(outcome.ok ? {} : { isError: true }),
     };
 }
