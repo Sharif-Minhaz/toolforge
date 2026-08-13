@@ -212,6 +212,10 @@
             "name": "Password Generator",
             "description": "Create strong passphrases with entropy scoring built in."
         },
+        "secret": {
+            "name": "Secret Key Generator",
+            "description": "Draw random bytes and spell them as base64url, hex or base32."
+        },
         "qr": {
             "name": "QR Code Generator / Reader",
             "description": "Build styled QR codes for links, Wi-Fi and contacts, then read them back."
@@ -344,13 +348,13 @@
                 "title": "Beautify JSON",
                 "description": "Paste a single-line payload and read it properly, with any error pinned to its line."
             },
+            "secretKey": {
+                "title": "Draw an AUTH_SECRET",
+                "description": "32 random bytes as base64url, ready for a .env line."
+            },
             "faviconPack": {
                 "title": "Make a favicon",
                 "description": "Turn one logo into favicon.ico, every icon size, and the HTML to link them."
-            },
-            "passportPhoto": {
-                "title": "Make a passport photo",
-                "description": "Crop to 45 × 55 mm and export at 300 DPI, ready for a Bangladeshi form."
             }
         },
         "featured": {
@@ -5319,6 +5323,220 @@
                 "a6": "Because it is a rule, and an attacker searching this keyspace applies the same rule for free. Upper-casing the first letter of every word turns one candidate into exactly one different candidate — the set does not grow. Any transformation you could describe in a sentence costs them nothing. Only choices made at random count, which is why the digit option adds bits and the capitalisation option does not.",
                 "q7": "Can I reuse a strong password across sites?",
                 "a7": "No. Strength protects against guessing, and reuse is not a guessing problem: when a site is breached and had stored passwords badly, the attacker gets yours directly and tries it on your email. A unique password per account is the highest-value habit here, and it is only practical with a manager."
+            }
+        }
+    },
+    "secret": {
+        "meta": {
+            "title": "Secret Key Generator — random bytes as base64url, hex or base32",
+            "description": "Generate an AUTH_SECRET, a JWT signing key or an API key in your browser. Pick the byte count and the encoding, see the exact entropy, and copy the equivalent openssl rand pipeline. Nothing is sent anywhere."
+        },
+        "hero": {
+            "eyebrow": "Security",
+            "title": "Secret Key Generator",
+            "subtitle": "The value that goes in AUTH_SECRET, not the one somebody types into a login form. Bytes drawn from the Web Crypto API in this tab, spelled in whichever alphabet your config file will accept, with the exact entropy and the openssl pipeline that produces the same shape.",
+            "badgeLocal": "Never sent anywhere",
+            "badgeCrypto": "Web Crypto randomness",
+            "badgeExact": "Exact entropy"
+        },
+        "workbench": {
+            "title": "Draw a secret key",
+            "description": "Every value is drawn in this browser tab. Nothing is uploaded, logged or saved.",
+            "drawing": "Drawing a key in your browser.",
+            "copy": "Copy key",
+            "regenerate": "New key",
+            "announcement": "New key ready: {bytes, number} bytes, {bits, number} bits, rated {grade}.",
+            "statsLabel": "Key figures",
+            "bits": "{value} bits",
+            "stats": {
+                "entropy": "Entropy",
+                "bytes": "Bytes",
+                "characters": "Characters",
+                "grade": "Rating"
+            },
+            "usesLabel": "This size is the key length for",
+            "byteLabel": "Bytes of randomness",
+            "byteHint": "Between {min, number} and {max, number}. The only control here that changes the entropy.",
+            "bytePresets": "Common key sizes",
+            "decrease": "One byte fewer",
+            "increase": "One byte more",
+            "encodingLabel": "Encoding",
+            "paddingLabel": "Keep padding",
+            "paddingHint": "The trailing = characters. Drop them for a URL, a cookie or a path segment.",
+            "paddingUnavailable": "Hex spends two characters a byte, so there is nothing to pad.",
+            "shapeLabel": "Output",
+            "nameLabel": "Variable name",
+            "nameHint": "Letters, digits and underscores. Cannot start with a digit.",
+            "nameUnavailable": "Only used by the .env and export outputs.",
+            "commandLabel": "The same thing, in a shell",
+            "copyCommand": "Copy command",
+            "commandPlaceholder": "The equivalent command appears here.",
+            "commandNote": "Run it anywhere openssl is installed. It draws a different key, the same way.",
+            "commandBase32Note": "base32 comes from GNU coreutils rather than openssl, and a stock macOS does not ship it. Everything else in the pipeline is portable."
+        },
+        "encodings": {
+            "base64url": {
+                "hint": "Survives a URL, a cookie and a .env line with nothing escaped. The usual answer."
+            },
+            "base64": {
+                "hint": "The classic openssl output. Contains + and /, which a URL percent-encodes."
+            },
+            "hex": {
+                "hint": "Two characters a byte. The longest, and the one every language reads without a library."
+            },
+            "base32": {
+                "hint": "Letters and 2–7 only, no lower case. What a TOTP secret uses."
+            }
+        },
+        "shapes": {
+            "bare": {
+                "label": "Just the key",
+                "hint": "The key and nothing around it."
+            },
+            "env": {
+                "label": ".env line",
+                "hint": "NAME=value, ready to paste into a .env file."
+            },
+            "export": {
+                "label": "export line",
+                "hint": "export NAME=\"value\", quoted for a shell."
+            }
+        },
+        "grades": {
+            "below-recommended": "Below recommended",
+            "strong": "Strong",
+            "very-strong": "Very strong"
+        },
+        "errors": {
+            "generic": "Could not draw a key. Try a different byte count.",
+            "byteRange": "Pick between {min, number} and {max, number} bytes.",
+            "variableName": "A variable name starts with a letter or an underscore, and holds only letters, digits and underscores."
+        },
+        "toast": {
+            "copied": "Key copied. It stays on your clipboard until something replaces it.",
+            "copiedCommand": "Command copied.",
+            "copyFailedEmpty": "Nothing to copy yet.",
+            "copyFailedUnsupported": "This browser will not let the page use the clipboard. Select the key and copy it by hand.",
+            "copyFailedDenied": "Clipboard permission was denied."
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "A key is not a password",
+                "p1": "Both are secrets, and that is where the resemblance ends. A password is remembered and typed by a person, which is why it is short, why it is guessable, and why it has to be stored behind a deliberately slow hash like <code>bcrypt</code> or <code>argon2</code>. A key is never remembered and never typed — it is written once into a config file and read back by a machine. Nothing about it needs to be memorable, so nothing about it needs to be weak.",
+                "p2": "That changes what you generate. There is no reason to draw a key from a keyboard alphabet, and no reason to stop at a length somebody would be willing to type. You draw bytes, as many as the algorithm wants, and then you decide how to write them down.",
+                "example": "<code>{command}</code> → {characters, number} characters carrying exactly {bits, number} bits",
+                "p3": "That line is the reason most people arrive here. It draws 32 bytes, prints them as base64, swaps the two characters a URL would object to, and strips the padding. The tool above is the same three steps with the pieces named and each one turned into a control.",
+                "p4": "Where does a key like that go? <code>AUTH_SECRET</code>, a JWT signing secret, a session cookie key, a CSRF token, a webhook signing secret, an API key you issue, or the key for a symmetric cipher. Every one of them wants the same thing: a value nobody can predict, in a form the surrounding file will accept unchanged."
+            },
+            "command": {
+                "title": "Reading the openssl one-liner",
+                "intro": "The pipeline changes with the settings above, and every stage of it earns its place. Here is what each one does.",
+                "tableCaption": "What each stage of the openssl pipeline does",
+                "colStage": "Stage",
+                "colDoes": "What it does",
+                "stages": {
+                    "randDoes": "Draws 32 bytes from OpenSSL's cryptographic generator and prints them as base64. The count is bytes, not characters — this is where the entropy is decided, and nothing after it adds any.",
+                    "alphabetDoes": "Swaps the two symbols standard base64 uses that a URL does not. <code>+</code> becomes <code>-</code> and <code>/</code> becomes <code>_</code>, which is the whole difference between base64 and base64url.",
+                    "paddingDoes": "Removes the trailing padding. It carries no information — it exists so a strict decoder knows where a block ended — and it is one more character a URL percent-encodes as <code>%3D</code>."
+                },
+                "wrapNote": "One stage is missing from most copies of that command, and above 48 bytes it matters: <code>openssl</code> breaks its base64 output every 64 characters. Ask for a longer key and a newline lands inside it, silently, with nothing in the output to say so. The command here adds the strip when the length needs it:",
+                "base32Note": "The base32 line reaches for <code>base32</code> from GNU coreutils rather than <code>openssl</code>, which cannot write that alphabet. A stock macOS does not ship it, and there is no portable alternative worth printing in its place, so the command says plainly what it needs.",
+                "parityNote": "The command and the key above come from different generators — OpenSSL's and your browser's — so running it will not reproduce what is on screen. What it reproduces is the shape: the same byte count, the same alphabet, the same padding."
+            },
+            "encodings": {
+                "title": "Four ways to write the same bytes",
+                "intro": "An encoding decides which characters carry the key. It never decides how much entropy the key holds. The widths below are for the default 32 bytes, unpadded.",
+                "tableCaption": "Encodings, their alphabets, and their widths for {bytes, number} bytes",
+                "colEncoding": "Encoding",
+                "colAlphabet": "Alphabet",
+                "colWidth": "Characters for {bytes, number} bytes",
+                "colWhen": "Reach for it when",
+                "when": {
+                    "base64url": "The value is going into a URL, a cookie, a path segment or a <code>.env</code> file. Nothing in the alphabet needs escaping anywhere.",
+                    "base64": "You are matching something that already emits standard base64 — an existing config, a library default, somebody's README.",
+                    "hex": "You want the form every language reads without a library, or the destination accepts only <code>0-9a-f</code>.",
+                    "base32": "A TOTP secret, or anything else that has to survive being read aloud or typed back in."
+                },
+                "entropyNote": "Notice that the widths differ and the entropy does not. 32 bytes are 256 bits as 43 base64url characters, as 52 base32 characters, and as 64 hex characters. A longer string is not a stronger key — it is the same key spelled less densely.",
+                "paddingNote": "Padding is the <code>=</code> at the end of a base64 or base32 string, and it carries no information at all. Keep it when the consumer is a strict decoder; drop it when the value is going into a URL, where each <code>=</code> becomes <code>%3D</code>.",
+                "respellNote": "Changing the encoding, the padding or the output above respells the key already on screen. It does not draw a new one — that would make the four rows impossible to compare against one another. Only the byte count and the New key button draw again."
+            },
+            "sizing": {
+                "title": "How many bytes",
+                "p1": "The byte count is the only setting that changes how hard the key is to guess, and it does so exactly: every byte from a cryptographic generator carries eight bits, so the entropy is a multiplication rather than the estimate a password generator has to make.",
+                "p2": "The right number is usually decided for you by whatever consumes the key. <code>HMAC-SHA256</code> wants 32; <code>AES-128</code> wants exactly 16 and will not take 17. Where nothing specifies one, 32 bytes is the answer that fits nearly everything.",
+                "tableCaption": "Byte counts, their entropy, and the algorithms they match",
+                "colBytes": "Bytes",
+                "colBits": "Bits",
+                "colGrade": "Rating",
+                "colUses": "Key length for",
+                "gradeNote": "The {grades, number} ratings are bands over the bit count rather than opinions about your setup: below {strong, number} bits the key becomes the weakest part of any modern construction, and at {veryStrong, number} an exhaustive search is bounded by physics rather than by budget.",
+                "exactNote": "The last column names only exact matches, deliberately. 40 bytes is not an AES-256 key with eight to spare — it is a value AES cannot accept at all. HMAC is the exception: it takes a key of any length, and what is named is the size RFC 2104 recommends, which is the hash's own output length.",
+                "rangeNote": "The field accepts {min, number} to {max, number} bytes. The floor is low enough to reach the weak band on purpose, so the rating has something to say; the ceiling exists so the field has one, not because 512 bytes helps."
+            },
+            "options": {
+                "title": "Every control on this page",
+                "intro": "Five settings, and only the first of them changes the key. The rest change how it is written down.",
+                "tableCaption": "What each control does and when to reach for it",
+                "colOption": "Option",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "bytesName": "Bytes of randomness",
+                "bytesDoes": "How many bytes are drawn. Entropy is exactly eight bits per byte.",
+                "bytesWhen": "Set it to whatever the algorithm consuming the key specifies, and to 32 when nothing does.",
+                "encodingName": "Encoding",
+                "encodingDoes": "Which alphabet spells the bytes: base64url, base64, hex or base32.",
+                "encodingWhen": "Match the file the key is going into. base64url is safe everywhere.",
+                "paddingName": "Keep padding",
+                "paddingDoes": "Keeps the trailing = characters on a base64 or base32 string.",
+                "paddingWhen": "Turn it on for a strict decoder; leave it off for a URL or a .env line.",
+                "shapeName": "Output",
+                "shapeDoes": "Wraps the key as a bare value, a .env assignment, or a shell export line.",
+                "shapeWhen": "Pick the one matching wherever you are about to paste it.",
+                "nameName": "Variable name",
+                "nameDoes": "The name on the left of the = in the .env and export outputs.",
+                "nameWhen": "Set it to the variable the key is for — AUTH_SECRET, JWT_SECRET, whatever your config reads.",
+                "paddingGatingNote": "Two controls go quiet when they cannot do anything. Keep padding is disabled under <code>hex</code>, which spends exactly two characters a byte and so never has a partial group to pad.",
+                "nameGatingNote": "Variable name is disabled under the bare output, which is the key and nothing around it. In both cases the control is disabled and says why, rather than being collected and silently ignored.",
+                "badNameNote": "A name a shell would reject — one starting with a digit, or an empty one — does not blank the key. The output falls back to the bare form and the field says what is wrong with the name, because withholding the value you came for is a worse answer than withholding the wrapper around it.",
+                "quotingNote": "The <code>.env</code> line is deliberately unquoted and the <code>export</code> line is deliberately double-quoted. Dotenv readers are split on whether quotes are part of the value; a shell is not, and an unquoted value there is at the mercy of whatever the encoding happened to draw.",
+                "defaultsNote": "The defaults are 32 bytes as unpadded base64url, bare — the form that goes into <code>AUTH_SECRET</code> without anything having to be escaped, quoted or trimmed."
+            },
+            "privacy": {
+                "title": "Where the key is drawn",
+                "p1": "In your browser tab, by <code>crypto.getRandomValues</code>, and nowhere else. The page you loaded contains no key at all: the server renders a placeholder, and the first value appears once the tab has drawn it.",
+                "p2": "That is deliberate rather than incidental. A key generated on a server travels back inside an HTTP response body, and from there into access logs, into a TLS-terminating proxy, and into anything that buffered the response on the way. None of those are places a secret should be recoverable from.",
+                "p3": "Nothing about the key goes into the URL either. A link carries your settings — <code>?bytes=64&encoding=hex</code> — and never the value, because a URL lands in browser history, in the referrer header, and in every proxy log between here and wherever you go next.",
+                "p4": "The honest caveat: a key that has been displayed on a screen is in a browser tab, in that tab's memory, and on your clipboard the moment you copy it. That is a different threat model from generating it on the machine it will run on. For anything guarding real users, the command above run locally is the stronger habit — and it is printed here for exactly that reason.",
+                "p5": "The same tool over MCP is a further step away again. A key returned to an assistant travels through that conversation and is retained by whatever is holding it, so the MCP description says so and returns the shell command alongside the key."
+            },
+            "practices": {
+                "title": "Living with a generated key",
+                "p1": "Rotate on a schedule, and on suspicion. Rotating a signing key invalidates every token signed with the old one, which is the point — but it is also a logout for everybody holding one, so choose the moment rather than discovering it.",
+                "p2": "Never commit one. A key in git history stays in git history through every clone and every fork, and rewriting the history does not retract the copies. If one lands there, rotate it; do not try to erase it.",
+                "p3": "One key, one job. A single secret shared between session signing, webhook verification and encryption at rest means all three rotate together and all three fall together.",
+                "p4": "Store it where the platform stores secrets — the deployment's environment settings, a secrets manager, a sealed file — rather than in a checked-in <code>.env</code>. The .env output above is for your own machine, not for the repository.",
+                "closing": "None of that is about this tool. It is about the thirty seconds after you paste the value, which is where every key that has ever leaked actually leaked."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Is openssl rand -base64 32 still fine?",
+                "a1": "Yes — it is a good command, and it is what this tool is modelled on. Two things about it are worth knowing: without <code>{swap}</code> the output can contain <code>+</code> and <code>/</code>, which a URL percent-encodes, and above 48 bytes <code>openssl</code> wraps its output at 64 characters, putting a newline inside the key.",
+                "q2": "Why 32 bytes?",
+                "a2": "Because it is the key size HMAC-SHA256, AES-256 and ChaCha20 all specify, so one number answers nearly every question that brings somebody here. Below 16 bytes the key becomes the weakest part of the system; above 32, nothing on that list can use the extra.",
+                "q3": "What is the difference between base64 and base64url?",
+                "a3": "Two characters. Standard base64's 62nd and 63rd symbols are <code>+</code> and <code>/</code>; base64url uses <code>-</code> and <code>_</code> instead. Everything else is identical, the entropy included — which is why switching between them here respells the key rather than drawing a new one.",
+                "q4": "Can I use this for a password?",
+                "a4": "You can, and it will be a very strong one, but it will also be unmemorable and painful to type. The Password Generator is the tool for a value a person has to enter by hand; this one is for a value only a machine ever reads.",
+                "q5": "Is the key ever sent to the server?",
+                "a5": "No. It is drawn in your browser tab by the Web Crypto API and never leaves it. The page arrives with a placeholder rather than a key, precisely so that no secret ever sits inside an HTTP response body.",
+                "q6": "Why does changing the encoding not give me a new key?",
+                "a6": "Because the encoding is a question about how to write the value down, not a request for a different value. Redrawing there would make it impossible to see one key as base64url and then as hex, which is most of what the encoding control is for. The New key button and the byte count are what draw again.",
+                "q7": "What does the padding switch actually change?",
+                "a7": "The trailing <code>=</code> characters, and nothing else. They carry no information — they exist so a strict decoder knows where a block ended. Keep them if the consumer insists on them; drop them if the key is going into a URL, where each one becomes <code>%3D</code>."
             }
         }
     },

@@ -259,6 +259,14 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.password.errors,
             toast: messages.password.toast,
         },
+        secret: {
+            workbench: messages.secret.workbench,
+            encodings: messages.secret.encodings,
+            shapes: messages.secret.shapes,
+            grades: messages.secret.grades,
+            errors: messages.secret.errors,
+            toast: messages.secret.toast,
+        },
         qr: {
             workbench: messages.qr.workbench,
             kinds: messages.qr.kinds,

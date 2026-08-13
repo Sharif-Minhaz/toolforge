@@ -34,6 +34,7 @@ export const TOOL_IDS = [
     "cron",
     "timestamp",
     "password",
+    "secret",
     "qr",
     "shortener",
     "slug",
@@ -114,7 +115,8 @@ export type ToolIconName =
     | "graph"
     | "shield"
     | "certificate"
-    | "lock-code";
+    | "lock-code"
+    | "dice";
 
 export type Tool = {
     readonly id: ToolId;

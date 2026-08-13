@@ -9,6 +9,7 @@ import {
     IconClockHour4,
     IconCrop,
     IconDatabaseCog,
+    IconDice5,
     IconEraser,
     IconFingerprint,
     IconGitCompare,
@@ -73,6 +74,7 @@ const ICONS: Record<ToolIconName, ComponentType<IconProps>> = {
     graph: IconTopologyStar3,
     shield: IconShieldLock,
     certificate: IconCertificate,
+    dice: IconDice5,
     "lock-code": IconLockCode,
 };
 

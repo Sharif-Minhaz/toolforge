@@ -17,6 +17,7 @@ import { passwordGenerateTool } from "./password";
 import { qrGenerateTool } from "./qr";
 import { regexTestTool } from "./regex";
 import { rsaCryptTool, rsaGenerateTool } from "./rsa";
+import { secretGenerateTool } from "./secret";
 import { slugCreateTool } from "./slug";
 import { timestampConvertTool } from "./timestamp";
 import { urlConvertTool, urlParseTool } from "./url";
@@ -78,6 +79,7 @@ export const MCP_TOOLS: readonly McpTool[] = [
     regexTestTool,
     rsaCryptTool,
     rsaGenerateTool,
+    secretGenerateTool,
     slugCreateTool,
     timestampConvertTool,
     urlConvertTool,
