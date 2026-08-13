@@ -133,6 +133,18 @@ It asserted what the code did rather than what a client needs. Its replacement
 parses the text block and requires it to equal `structuredContent` — a
 requirement no implementation detail can satisfy accidentally.
 
+**A near-miss argument name must be refused, not dropped.** Zod's default
+object strips a key it does not recognise. Asking the secret generator for
+`bytes: 64` when the field is `byteLength` therefore produced a 32-byte secret
+and reported success — half the entropy that was asked for, with nothing
+anywhere saying so. A model guessing a plausible field name is exactly the
+caller this endpoint has, so `defineMcpTool` rebuilds every authored shape with
+`z.strictObject`. The call is refused with the offending key named, and the
+published JSON Schema carries `additionalProperties: false` so a client can see
+the constraint before it calls.
+
+Rebuilt centrally rather than authored strict, so no adapter can forget it.
+
 **`server-only` in the import graph makes the registry untestable.** The Domain
 Inspector's `runInspection` is marked `server-only`, and importing it statically
 put that marker in the graph of `tools/index.ts` — which the tests load outside

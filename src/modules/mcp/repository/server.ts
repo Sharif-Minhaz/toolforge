@@ -124,7 +124,11 @@ export function buildMcpServer(bearerToken: string | null): McpServer {
             {
                 title: tool.title,
                 description: tool.description,
-                inputSchema: tool.inputSchema.shape,
+                // The schema object rather than its shape: the SDK builds a
+                // permissive object from a bare shape, and what has to reach
+                // the client is the strict one `defineMcpTool` produced, so the
+                // published JSON Schema carries `additionalProperties: false`.
+                inputSchema: tool.inputSchema,
                 annotations: {
                     title: tool.title,
                     readOnlyHint: tool.readOnly,

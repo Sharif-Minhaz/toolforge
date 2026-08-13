@@ -186,4 +186,36 @@ describe("tools/call", () => {
 
         expect(result.isError).toBe(true);
     });
+
+    /*
+     * The near-miss argument name.
+     *
+     * A loose Zod object strips a key it does not recognise, so asking the
+     * secret generator for `bytes: 64` when the field is `byteLength` returned
+     * a 32-byte secret and reported success. A model that guessed the name had
+     * no way to tell it had been given half the entropy it asked for.
+     */
+    test("refuses an unknown argument instead of silently ignoring it", async () => {
+        const result = await client.callTool({
+            name: "toolforge_uuid_generate",
+            arguments: { quantity: 2, quantitiy: 40 },
+        });
+
+        expect(result.isError).toBe(true);
+
+        const text = (result.content as { text: string }[])[0]?.text ?? "";
+
+        // The offending key is named, so the next attempt can be correct.
+        expect(text).toContain("quantitiy");
+    });
+});
+
+describe("the published schema", () => {
+    test("tells a client that unknown arguments are not accepted", async () => {
+        const { tools } = await client.listTools();
+
+        for (const tool of tools) {
+            expect(tool.inputSchema.additionalProperties).toBe(false);
+        }
+    });
 });

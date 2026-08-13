@@ -1,4 +1,4 @@
-import type { z } from "zod";
+import { z } from "zod";
 
 import type { JsonValue } from "@/modules/tools/types/json-document";
 
@@ -18,6 +18,14 @@ import { buildMcpToolName } from "./tool-name";
  *   against the schema it published, and so does this, because the handler's
  *   argument type is a promise this function makes and `unknown` is what
  *   actually arrives. Two parses of a small object cost nothing measurable.
+ * - **An unknown argument is refused, not dropped.** Zod's default object
+ *   strips a key it does not recognise, which turns a caller's mistake into a
+ *   silently different answer: asking the secret generator for `bytes: 64`
+ *   when the field is `byteLength` returned a 32-byte secret and said nothing.
+ *   A model guessing a plausible name has no way to notice, and 256 bits
+ *   instead of 512 is not a difference to leave to a typo. So every schema is
+ *   rebuilt strict below, which both refuses the call by name and publishes
+ *   `additionalProperties: false` so a client can see the constraint.
  * - **A thrown error becomes a named refusal.** A handler that throws is a
  *   defect, but the caller is a program in the middle of a conversation, and
  *   `internal_error` is a far better answer than a dropped connection. What the
@@ -52,6 +60,11 @@ export function defineMcpTool<Schema extends McpInputSchema>(
 ): McpTool {
     const { toolId, verb, title, description, kind, inputSchema, run } = definition;
 
+    // Rebuilt from the authored shape rather than authored strict, so an
+    // adapter cannot forget. Same fields, same defaults, same published schema
+    // — the only difference is what happens to a key nobody declared.
+    const schema = z.strictObject(inputSchema.shape);
+
     return {
         name: buildMcpToolName(toolId, verb),
         title,
@@ -59,9 +72,9 @@ export function defineMcpTool<Schema extends McpInputSchema>(
         kind,
         toolId,
         readOnly: definition.readOnly ?? true,
-        inputSchema,
+        inputSchema: schema,
         run: async (rawArguments: unknown): Promise<McpToolOutcome> => {
-            const parsed = inputSchema.safeParse(rawArguments ?? {});
+            const parsed = schema.safeParse(rawArguments ?? {});
 
             if (!parsed.success) {
                 return {
