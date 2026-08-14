@@ -8,6 +8,7 @@ import { cronExplainTool } from "./cron";
 import { curlConvertTool } from "./curl";
 import { diffCompareTool } from "./diff";
 import { domainInspectTool } from "./domain-inspector";
+import { equationConvertTool } from "./equation";
 import { hashCompareTool, hashDetectTool, hashGenerateTool } from "./hash";
 import { jsonFormatTool } from "./json";
 import { jwtDecodeTool, jwtSignTool, jwtVerifyTool } from "./jwt";
@@ -46,10 +47,14 @@ import { uuidGenerateTool } from "./uuid";
  *   posted to it, against an ownership model built on browser cookies. An MCP
  *   caller has no cookie jar and no way to prove it owns what it created, so
  *   exposing creation here would mint unreclaimable resources.
- * - **The AI tools** — text and image detectors, watermark remover. They spend
- *   a third-party API budget per call. That is a decision about money rather
- *   than about capability, and it belongs to whoever is paying rather than to
- *   this file.
+ * - **The AI tools** — text and image detectors, watermark remover, and the
+ *   Equation converter's *image* half. They spend a third-party API budget per
+ *   call. That is a decision about money rather than about capability, and it
+ *   belongs to whoever is paying rather than to this file. Note the seam: the
+ *   Equation tool's text half is `toolforge_equation_convert` below and runs
+ *   here like any other offline tool, because turning `x2 + y2 = r2` into LaTeX
+ *   costs nothing. Only reading a picture is withheld — a model that wants an
+ *   equation transcribed already has eyes of its own.
  *
  * The Port Scanner is absent for a different reason again: it is the one tool
  * here whose whole function is to touch somebody else's host on ports they did
@@ -66,6 +71,7 @@ export const MCP_TOOLS: readonly McpTool[] = [
     curlConvertTool,
     diffCompareTool,
     domainInspectTool,
+    equationConvertTool,
     hashCompareTool,
     hashDetectTool,
     hashGenerateTool,

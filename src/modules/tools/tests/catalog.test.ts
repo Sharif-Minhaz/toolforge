@@ -180,6 +180,10 @@ describe("tool catalog", () => {
             "ai-text-detector",
             "watermark-remover",
             "domain-inspector",
+            // Typing an equation never leaves the tab; reading one out of a
+            // picture goes to a recognition model, which is what makes it
+            // hybrid rather than browser-only.
+            "equation",
             "port-scanner",
             "mock-server",
             "json-server",

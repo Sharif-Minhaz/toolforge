@@ -307,6 +307,16 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.textCase.errors,
             toast: messages.textCase.toast,
         },
+        equation: {
+            workbench: messages.equation.workbench,
+            sources: messages.equation.sources,
+            image: messages.equation.image,
+            formats: messages.equation.formats,
+            readings: messages.equation.readings,
+            notes: messages.equation.notes,
+            errors: messages.equation.errors,
+            toast: messages.equation.toast,
+        },
         diff: {
             workbench: messages.diff.workbench,
             errors: messages.diff.errors,

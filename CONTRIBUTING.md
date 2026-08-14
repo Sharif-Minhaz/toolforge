@@ -424,7 +424,8 @@ Reuse what exists rather than rebuilding it:
 | Calendar + clock, one field           | `@/modules/tools/components/date-time-picker`       |
 | Highlighted, editable code box        | `@/modules/tools/components/code-editor`            |
 | Highlighted, read-only code box       | `@/modules/tools/components/code-block`             |
-| Display tokenizer, six languages      | `@/modules/tools/domain/highlight`                  |
+| Display tokenizer, seven languages    | `@/modules/tools/domain/highlight`                  |
+| TeX to KaTeX markup or MathML         | `@/modules/tools/domain/math`                       |
 | Bytes ↔ hex, strictly                 | `@/modules/tools/domain/hex`                        |
 | Address family and public/private     | `@/modules/tools/domain/ip`                         |
 | Hostname syntax, no suffix list       | `@/modules/tools/domain/host-syntax`                |

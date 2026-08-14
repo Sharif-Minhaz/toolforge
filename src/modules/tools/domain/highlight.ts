@@ -53,6 +53,7 @@ export const HIGHLIGHT_LANGUAGES = [
     "graphql",
     "toon",
     "hex",
+    "latex",
     "plain",
 ] as const;
 
@@ -753,6 +754,82 @@ function highlightHex(input: string): Token[] {
     return sink.drain();
 }
 
+/* ---------------------------------------------------------------- latex --- */
+
+/**
+ * A control sequence: a backslash followed by letters (`\frac`, `\alpha`), or a
+ * backslash followed by exactly one non-letter, which is how TeX escapes its own
+ * punctuation (`\{`, `\%`, `\\`).
+ *
+ * The single-character form has to come second in the alternation *and* be
+ * anchored, or `\\alpha` — an escaped backslash followed by a command — would
+ * match as one four-letter run and lose the boundary between them.
+ */
+const LATEX_COMMAND = /^\\(?:[A-Za-z]+|.)/;
+
+/** Superscript, subscript and the primes that read as one. */
+const LATEX_OPERATORS = "^_'";
+
+const LATEX_BRACES = "{}[]()";
+
+/**
+ * TeX comments run from an unescaped `%` to the end of the line. An escaped one
+ * never reaches here — `LATEX_COMMAND` has already taken `\%` as a command.
+ */
+function highlightLatex(input: string): Token[] {
+    const sink = new TokenSink();
+    let index = 0;
+
+    while (index < input.length) {
+        const rest = input.slice(index);
+        const character = rest[0];
+
+        if (character === "\\") {
+            const command = LATEX_COMMAND.exec(rest)?.[0];
+
+            // A trailing lone backslash matches the single-character branch
+            // only when something follows it; at end of input it is punctuation.
+            sink.push("command", command ?? character);
+            index += command?.length ?? 1;
+            continue;
+        }
+
+        if (character === "%") {
+            const end = rest.indexOf("\n");
+            const comment = end === -1 ? rest : rest.slice(0, end);
+
+            sink.push("comment", comment);
+            index += comment.length;
+            continue;
+        }
+
+        if (LATEX_BRACES.includes(character)) {
+            sink.push("punctuation", character);
+            index += 1;
+            continue;
+        }
+
+        if (LATEX_OPERATORS.includes(character)) {
+            sink.push("operator", character);
+            index += 1;
+            continue;
+        }
+
+        const number = /^\d+(?:\.\d+)?/.exec(rest)?.[0];
+
+        if (number !== undefined) {
+            sink.push("number", number);
+            index += number.length;
+            continue;
+        }
+
+        sink.push("plain", character);
+        index += 1;
+    }
+
+    return sink.drain();
+}
+
 /* --------------------------------------------------------------- public --- */
 
 /**
@@ -789,5 +866,7 @@ export function highlight(input: string, language: HighlightLanguage): readonly 
             return highlightToon(input);
         case "hex":
             return highlightHex(input);
+        case "latex":
+            return highlightLatex(input);
     }
 }

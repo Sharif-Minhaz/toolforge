@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { renderMath } from "../domain/math";
+import { renderMath } from "@/modules/tools/domain/math";
 
 type MathFormulaProps = {
     tex: string;
@@ -10,7 +10,8 @@ type MathFormulaProps = {
 
 /**
  * The one place in the preview that injects markup, and the string comes from
- * KaTeX rather than from the author — see `domain/math.ts` for why that is safe.
+ * KaTeX rather than from the author — see `tools/domain/math.ts` for why that is
+ * safe.
  *
  * Broken TeX falls back to the source in destructive colour with KaTeX's own
  * message on the tooltip, so a half-typed formula reads as unfinished instead of

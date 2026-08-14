@@ -417,3 +417,74 @@ describe("highlight — javascript", () => {
         expect(kinds("// one\n/* two */", "javascript")).toEqual(["comment", "plain", "comment"]);
     });
 });
+
+describe("highlight — latex", () => {
+    test("colours a control sequence, its braces and its numbers apart", () => {
+        expect(highlight("\\frac{1}{2}", "latex")).toEqual([
+            { kind: "command", text: "\\frac" },
+            { kind: "punctuation", text: "{" },
+            { kind: "number", text: "1" },
+            { kind: "punctuation", text: "}{" },
+            { kind: "number", text: "2" },
+            { kind: "punctuation", text: "}" },
+        ]);
+    });
+
+    test("ends a command at the first non-letter, so the argument stays separate", () => {
+        expect(highlight("\\alpha x", "latex")).toEqual([
+            { kind: "command", text: "\\alpha" },
+            { kind: "plain", text: " x" },
+        ]);
+    });
+
+    test("reads an escaped punctuation mark as one command, not as a stray backslash", () => {
+        expect(kinds("\\% \\{ \\,", "latex")).toEqual([
+            "command",
+            "plain",
+            "command",
+            "plain",
+            "command",
+        ]);
+    });
+
+    test("keeps an escaped backslash from swallowing the letters after it", () => {
+        // `\\alpha` is a line break followed by the plain letters `alpha`.
+        // Matching the letter branch first would take the whole thing as one
+        // command — and the sink merges neighbours of one kind, so the boundary
+        // would not merely move, it would vanish.
+        expect(highlight("\\\\alpha", "latex")).toEqual([
+            { kind: "command", text: "\\\\" },
+            { kind: "plain", text: "alpha" },
+        ]);
+    });
+
+    test("marks superscript, subscript and prime as operators", () => {
+        expect(kinds("x^2_i'", "latex")).toEqual([
+            "plain",
+            "operator",
+            "number",
+            "operator",
+            "plain",
+            "operator",
+        ]);
+    });
+
+    test("runs a comment to the end of its line and no further", () => {
+        expect(kinds("x % note\ny", "latex")).toEqual(["plain", "comment", "plain"]);
+    });
+
+    test("leaves an escaped percent as a command rather than opening a comment", () => {
+        expect(highlight("50\\% of x", "latex")).toEqual([
+            { kind: "number", text: "50" },
+            { kind: "command", text: "\\%" },
+            { kind: "plain", text: " of x" },
+        ]);
+    });
+
+    test("survives a trailing lone backslash", () => {
+        expect(highlight("x \\", "latex")).toEqual([
+            { kind: "plain", text: "x " },
+            { kind: "command", text: "\\" },
+        ]);
+    });
+});

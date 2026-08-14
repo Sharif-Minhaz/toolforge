@@ -1,7 +1,8 @@
 # Watermark Remover — Calling a Metered Worker
 
 `src/modules/watermark-remover/`, and every other tool that fronts a Workers AI
-model (`ai-image-detector`, `ai-text-detector`).
+model (`ai-image-detector`, `ai-text-detector`, and the image half of
+`equation`).
 
 Every one of them reads its endpoint and bearer key in `repository/`, on the
 server, and never from the browser. Two consequences fall out of that, both found

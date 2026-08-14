@@ -39,6 +39,7 @@ export const TOOL_IDS = [
     "shortener",
     "slug",
     "text-case",
+    "equation",
     "diff",
     "image-compressor",
     "image-converter",
@@ -101,6 +102,7 @@ export type ToolIconName =
     | "scissors"
     | "slug"
     | "case"
+    | "math"
     | "diff"
     | "photo"
     | "scan"

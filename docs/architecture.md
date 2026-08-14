@@ -75,6 +75,7 @@ needs. Its current contents:
 | Randomness | `domain/random.ts` (injectable source) |
 | Images | `domain/image-codec.ts`, `domain/pixels.ts`, `domain/archive.ts`, `domain/base64.ts`, `domain/hex.ts`, `domain/filenames.ts` |
 | Code display | `domain/highlight.ts`, `components/code-editor.tsx`, `components/code-block.tsx` |
+| Maths rendering | `domain/math.ts` — KaTeX to HTML-plus-MathML for the eye and the screen reader, or to a bare `<math>` element for a document, both with typed failures and `trust` off |
 | JSON reading and writing | `domain/json-parser.ts`, `domain/json-serialize.ts` over `types/json-tree.ts` |
 | Network | `domain/ip.ts`, `domain/host-syntax.ts`, `repository/address-guard.ts`, `components/scan-radar.tsx` |
 | Account-free identity and metering | `domain/browser-secret.ts`, `domain/recovery-key.ts`, `domain/secret-cookie.ts`, `domain/server-key.ts`, `domain/rate-window.ts`, `repository/rate-counter.ts` |

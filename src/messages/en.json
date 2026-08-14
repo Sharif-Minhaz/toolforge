@@ -232,6 +232,10 @@
             "name": "Text Case Converter",
             "description": "Convert text between fourteen cases, from Sentence case and Title Case to camelCase and snake_case."
         },
+        "equation": {
+            "name": "Equation to LaTeX Converter",
+            "description": "Turn plain-text maths into clean LaTeX, edit it, and see it rendered live by KaTeX."
+        },
         "diff": {
             "name": "Diff Checker",
             "description": "Compare two blocks of text with word-level highlighting."
@@ -6474,6 +6478,207 @@
                 "a5": "Because there were no words in the text to build a name from. The identifier cases keep only letters and digits, so something like <code>!!! ???</code> leaves nothing behind — and an empty box would look like a bug rather than an answer, so the tool says so instead.",
                 "q6": "How much text can I paste at once?",
                 "a6": "Up to {max} characters, which is a long chapter. Past that the tool refuses rather than freezing the tab, and the counter above the box starts warning you well before you reach it."
+            }
+        }
+    },
+    "equation": {
+        "meta": {
+            "title": "Equation to LaTeX Converter — Image or Plain Text to KaTeX",
+            "description": "Read the equations in a screenshot, or turn plain-text maths into clean LaTeX, and see it rendered as you edit. Reads implied powers, fractions, roots, Greek names and sigma notation, converts a whole list a line at a time, and copies as LaTeX, Markdown or MathML."
+        },
+        "hero": {
+            "eyebrow": "Text",
+            "title": "Equation to LaTeX Converter",
+            "subtitle": "Drop a screenshot of an equation, or paste maths that lost its formatting — a plain 2 where you meant a squared, a slash where you meant a fraction. Get LaTeX back, edit it by hand, watch KaTeX render it as you type, and take it as LaTeX, Markdown or MathML.",
+            "badgeKatex": "Rendered by KaTeX",
+            "badgeOffline": "Text mode works offline",
+            "badgeBulk": "Line by line"
+        },
+        "workbench": {
+            "title": "Convert an equation",
+            "description": "One equation per line. Nothing you type leaves this tab.",
+            "inputLabel": "Plain text",
+            "clear": "Clear the input",
+            "convert": "Convert to LaTeX",
+            "reconvert": "Convert again",
+            "reconvertHint": "Converting again replaces every equation below, including any you have edited.",
+            "sourceLabel": "Generated LaTeX",
+            "sourcePlaceholder": "The LaTeX appears here",
+            "sourceEdited": "edited",
+            "previewLabel": "Preview",
+            "previewEmpty": "The rendered equation appears here.",
+            "displayLabel": "Display mode",
+            "displayHint": "Centres the equation on its own line, the way a document sets a numbered formula.",
+            "inlineHint": "Sets the equation in the run of a sentence, at text size.",
+            "equationTab": "Equation {number}",
+            "equationsLabel": "Equations",
+            "copy": "Copy",
+            "copyAll": "Copy all",
+            "copyFormatLabel": "Copy as",
+            "download": "Download",
+            "statusEmpty": "Type an equation and press Convert.",
+            "statusReady": "{count, plural, one {# equation} other {# equations}} converted.",
+            "statusGuessed": "{count, plural, one {# equation} other {# equations}} converted. Check the guesses below against the preview.",
+            "characters": "{count} characters",
+            "sourceModeLabel": "Read from"
+        },
+        "sources": {
+            "text": "Text",
+            "image": "Image"
+        },
+        "image": {
+            "disclosure": "Reading a picture is the one thing here that leaves your browser. The image is sent to this site's server and on to a recognition model, used once, and not stored. Typing an equation instead never sends anything.",
+            "dropTitle": "Choose an image, or drop one here",
+            "replaceTitle": "Choose a different image, or drop one here",
+            "dropHint": "PNG, JPEG or WebP, up to {limit}.",
+            "previewAlt": "Preview of {name}",
+            "remove": "Remove",
+            "read": "Read the equations",
+            "reading": "Reading the image…",
+            "pickPrompt": "Choose an image of up to {limit} to read.",
+            "challengePending": "Solve the challenge to read this image.",
+            "challengeFailed": "The challenge could not be completed. Try it again.",
+            "ready": "Ready to read."
+        },
+        "formats": {
+            "latex": "LaTeX",
+            "markdown": "Markdown",
+            "markdownBlock": "Markdown block",
+            "mathml": "MathML"
+        },
+        "readings": {
+            "label": "Other ways to read this line",
+            "hint": "Not what you meant? Write it outright in the input — _ for a subscript (H_2O), ^ for a superscript (a^2), / for a fraction — then convert again. An input that says which is never guessed at.",
+            "power": "Digits as powers",
+            "subscript": "Digits as subscripts",
+            "literal": "Digits kept as typed",
+            "narrowFraction": "Fraction over the last factor only"
+        },
+        "notes": {
+            "title": "Guessed while converting",
+            "implied_power": "Read digits after a letter as a power.",
+            "implied_subscript": "Read digits after a letter as a subscript.",
+            "implied_fraction": "Guessed where the fraction's numerator and denominator start and end.",
+            "closed_group": "Closed a bracket that was left open.",
+            "recognized": "Read out of a picture by a model. Check it against the preview."
+        },
+        "errors": {
+            "empty_input": "There is nothing to convert yet. Type an equation above.",
+            "too_long": "That is longer than {max} characters. Convert it a few equations at a time.",
+            "too_many_equations": "That is more than {max} equations. Convert them in smaller batches, so the tabs stay usable.",
+            "renderFailed": "KaTeX cannot render this source.",
+            "mathmlFailed": "MathML needs source KaTeX can parse, and this cannot be rendered yet.",
+            "missing_image": "No image reached the server. Choose one and try again.",
+            "empty_file": "That file is empty.",
+            "unsupported_type": "The recognizer reads PNG, JPEG and WebP. Convert the image first.",
+            "too_large": "That image is larger than {limit}. Crop it to the equation, or save it smaller.",
+            "too_small": "That image is too small to read. Send the original rather than a thumbnail.",
+            "invalid_request": "The recognizer would not accept that request.",
+            "challenge_required": "This deployment has no Turnstile key, so images cannot be read here. Typing an equation still works.",
+            "challenge_failed": "The challenge could not be verified. Try it again.",
+            "rate_limited": "The recognizer is busy. Wait a moment and try again.",
+            "unauthorized": "This deployment's recognizer key was refused.",
+            "not_configured": "No recognition model is configured on this deployment, so images cannot be read here. Typing an equation still works.",
+            "upstream_unavailable": "The recognizer did not answer. Try again in a moment.",
+            "unreadable_response": "The recognizer answered with something this page could not read.",
+            "no_equation": "No equation could be read in that image. Try a sharper crop showing only the equation."
+        },
+        "toast": {
+            "copied": "LaTeX copied",
+            "copiedAll": "{count, plural, one {# equation} other {# equations}} copied",
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The download could not start.",
+            "copyFailedEmpty": "There is nothing to copy yet.",
+            "copyFailedUnsupported": "This browser will not let the page reach the clipboard.",
+            "copyFailedDenied": "Clipboard access was refused. Copy from the box instead.",
+            "recognized": "{count, plural, one {# equation} other {# equations}} read from the image",
+            "recognizedTruncated": "Kept the first {count, plural, one {# equation} other {# equations}} from the image"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "Why maths loses its shape in plain text",
+                "p1": "Every superscript, fraction bar and integral sign in a piece of maths is carried by the layout rather than by the characters. Copy an equation out of a PDF, a chat message or a spreadsheet cell and the layout is exactly what gets dropped: a raised two becomes an ordinary digit, a fraction bar becomes a slash, and a summation sign becomes the word <code>sum</code> or nothing at all.",
+                "example": "x2 + y2 = r2 → x^2 + y^2 = r^2",
+                "p2": "This tool reads that flattened text back into LaTeX, and renders the result with KaTeX so you can check it. Both halves happen in your browser — the text is never sent anywhere — and the LaTeX stays editable, because a converter that guesses has to let you correct it."
+            },
+            "notation": {
+                "title": "What the converter understands",
+                "intro": "The vocabulary is deliberately small and completely documented, so you can see what it will and will not read rather than guessing at a guesser.",
+                "tableCaption": "The notation the converter reads, with an example of each",
+                "colWrite": "Write",
+                "colNote": "What it does",
+                "powerNote": "Digits straight after a single letter are read as a power. A space stops it, so a letter and a spaced digit stay two separate things.",
+                "fractionNote": "The numerator is the whole term before the slash, back to the nearest plus, minus, equals or comma.",
+                "rootNote": "Roots take a bracketed argument, or the next single thing when there are no brackets.",
+                "sumNote": "Also product, integral, oint, union and intersection. The words from, to and of are all optional — but without of, a limit is one thing.",
+                "limNote": "A limit takes a lower bound only, which is what TeX does with it too.",
+                "greekNote": "Every Greek name, lower and upper. A capital TeX has no command for becomes its Latin letter, which is what a TeX author writes by hand.",
+                "relationNote": "The ASCII spellings of the relations, and the pasted symbols for them as well.",
+                "functionNote": "Set upright, so a function name does not read as a run of variables multiplied together.",
+                "differentialNote": "Read as a differential only on a line that has an integral on it. Anywhere else it is two ordinary letters.",
+                "latexNote": "LaTeX you already have passes through untouched, so you can paste half of it and finish here.",
+                "note": "Anything the table does not cover is passed through exactly as it was typed. That is deliberate: a converter that rewrites what it does not understand produces LaTeX that looks finished and is not."
+            },
+            "pasted": {
+                "title": "Pasting LaTeX an assistant gave you",
+                "intro": "Ask a chatbot for an equation and it answers with the delimiters still attached — because that is how maths is written inside a document, not how a renderer takes it. All five shapes are unwrapped on the way in, so you can paste the reply exactly as it came.",
+                "forms": "Single dollars and double dollars, the TeX pairs, and a fenced code block are all recognised. Anything already clean is left alone, so LaTeX you wrote yourself passes straight through.",
+                "display": "The wrapper is read as well as removed, because it says something the equation itself cannot: double dollars and the square-bracket pair mean the author wanted a display block, single dollars and the round-bracket pair mean inline. The display switch is set from it. Text with no delimiters says nothing about display, so the switch is left where you put it.",
+                "block": "A block spread over several lines — the delimiters on their own lines with the equation between them — is kept as one equation rather than being read as three, two of which would be punctuation."
+            },
+            "guesses": {
+                "title": "Where it guesses, what it offers, and how you settle it",
+                "intro": "Three of those rules resolve a genuine ambiguity in the text. The tool takes a reading, tells you it did, and — where more than one answer is defensible — hands you the alternatives already converted, each with its own preview. You choose by looking rather than by rewriting.",
+                "power": "Digits after a letter. <code>x2</code> is a power, <code>H2O</code> is a subscript, and <code>h264</code> is a name. Nothing whatever in those characters separates them, so the tool stops pretending it can tell: it reads them as powers by default and offers the subscript and the as-typed readings beside it.",
+                "fraction": "How far a fraction reaches. <code>n(n+1)(2n+1)/6</code> most likely means the whole product over six, so that is the default — with the narrower reading, where only the last factor sits over the six, offered next to it.",
+                "bracket": "An unclosed bracket is closed for you rather than refused, because a half-typed line should still show you something. There is nothing to choose here: the other reading is not an equation.",
+                "settle": "The surest fix is to say what you mean in the input, and the tool will not guess at what you have already stated. Write <code>H_2O</code> for a subscript, <code>a^2</code> for a superscript, and brackets around a numerator you want kept whole. An input that settles the question produces one reading and no picker at all.",
+                "verify": "The preview is the check, and it is why the preview is not optional. Read the rendered equation rather than the source: LaTeX that parses is not the same as LaTeX that says what you meant."
+            },
+            "output": {
+                "title": "Taking it away",
+                "intro": "Four formats, from one Copy button with a format picker beside it.",
+                "tableCaption": "The four output formats",
+                "colFormat": "Format",
+                "colGives": "Gives you",
+                "colWhen": "Reach for it when",
+                "latexWhen": "You are writing LaTeX, or pasting into anything that already expects it.",
+                "markdownWhen": "The equation belongs in the run of a sentence, in a Markdown document.",
+                "markdownBlockWhen": "The equation is a display block. The fences go on their own lines, because two dollars on one line are read differently by different parsers.",
+                "mathmlWhen": "You need markup a browser or a screen reader reads natively, with no library. It is produced by KaTeX, so it needs source KaTeX can parse.",
+                "download": "The download is a <code>.tex</code> file with one display block per equation, and the line you typed written above each one as a comment — so the file still says what was generated from what, a week later."
+            },
+            "useCases": {
+                "title": "What people use it for",
+                "p1": "Getting an equation out of a PDF or a slide and into a document. The paste has lost its superscripts and its fraction bars; this puts them back and shows you the result before you commit it to a paper.",
+                "p2": "Writing maths in a notes app, a README or a chat message without remembering LaTeX. Type it the way you would say it, press Convert, copy the Markdown.",
+                "p3": "Checking LaTeX you already have. Paste it in, and the preview tells you whether it renders and what it renders as — which is a great deal faster than a build."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Does my equation get uploaded anywhere?",
+                "a1": "No. The conversion and the rendering both run in your browser, and the page makes no request while you type. You can turn off your connection and it keeps working.",
+                "q2": "Can it read an equation from a screenshot?",
+                "a2": "Yes — switch the input to Image, then choose, drop or paste a PNG, JPEG or WebP. The picture goes to this site's server and on to a recognition model, is used once, and is not stored. That is the one path in this tool that leaves your browser, and the panel says so above the controls. Typing an equation instead sends nothing anywhere.",
+                "q3": "It read my subscript as a power. How do I fix it?",
+                "a3": "Because digits straight after a single letter are read as a power by default, which is right for <code>x2</code> and wrong for <code>H2O</code> or a name like <code>h264</code>. Look under the source box: the other readings are already converted and previewed, so switching to the subscript or the as-typed version is one press. To skip the question entirely, write it outright in the input — <code>H_2O</code> for a subscript, <code>a^2</code> for a superscript — and nothing is guessed at.",
+                "q4": "Will converting again lose my edits?",
+                "a4": "Yes, and the button says so before you press it. Everything below the input is replaced by a fresh conversion, including equations you have edited. Editing the LaTeX never triggers a conversion on its own — only the button does.",
+                "q5": "The preview shows an error. What now?",
+                "a5": "The message under the preview is KaTeX's own, and it names the command or the brace it stopped at. The most common cause is an unbalanced brace introduced while editing. Nothing about a broken equation affects the rest of the page.",
+                "q6": "Can I download the equation as an image?",
+                "a6": "Not at the moment. KaTeX renders to HTML and MathML rather than to a picture, so an SVG or PNG export would mean a second rendering engine and embedded font files — a much larger thing than it looks, and not something worth half-building. The MathML output is the closest thing on offer: a real vector-drawn equation in any browser that reads it.",
+                "q7": "How accurate is the image recognition?",
+                "a7": "Good enough to save you retyping, and not good enough to trust unread. It is a vision model transcribing symbols, so it can misread a subscript for a superscript, drop a bar, or guess wrong at a cramped exponent. Every equation it returns is marked as read from a picture, and the preview beside the source is there for exactly this — read the rendered equation before you use it."
+            },
+            "image": {
+                "title": "Reading an equation from a picture",
+                "intro": "Switch the input to Image and you can choose a file or drop one onto the panel. You do not have to switch first to paste: pressing Ctrl+V with a picture on the clipboard moves you to the Image tab and loads it, wherever you were — pasting an image is unambiguous about what you want, so the tool follows rather than asking. Pasting ordinary text is untouched and still goes into the box you are typing in. PNG, JPEG and WebP, up to five megabytes. A picture with several equations in it comes back as several numbered tabs, each one editable and previewable on its own.",
+                "privacy": "This is the one thing in this tool that leaves your browser, and the panel says so above the controls rather than down here. The image is sent to this site's server, forwarded to a recognition model, used once and discarded — nothing is stored, and no credential ever reaches the page. A challenge sits in front of the request, because a model call costs this deployment money and an open one would be drained by a script within a day.",
+                "limits": "The result is a transcription, not a reading of your intent. Every equation it produces is marked as read from a picture, for the same reason the text converter marks its guesses: the preview is the check. Crop to the equation and send the original rather than a thumbnail — the recognizer refuses anything under a kilobyte, because a file that small is a truncated download rather than a picture of maths."
             }
         }
     },
