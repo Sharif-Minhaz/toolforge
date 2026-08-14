@@ -3,8 +3,8 @@ import {
     IconBinary,
     IconBolt,
     IconBraces,
-    IconDice5,
     IconKey,
+    IconLetterCaseToggle,
     IconTransform,
 } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
@@ -58,16 +58,16 @@ export async function QuickActions() {
             Icon: IconTransform,
             accent: "[--tool-accent:var(--brand-emerald)]",
         },
-        // The list is capped at six. The passport-photo preset made way for this
-        // one, being the lowest-popularity tool that was represented here — the
-        // same trade RSA made when it arrived, AES before that, and the Domain
-        // Inspector before that.
+        // The list is capped at six. The secret generator made way for this one,
+        // being the lowest-popularity tool that was represented here — the same
+        // trade the passport-photo preset made for it, RSA before that, AES
+        // before that, and the Domain Inspector before that.
         {
-            key: "secretKey",
-            href: "/tools/secret?shape=env",
-            title: t("secretKey.title"),
-            description: t("secretKey.description"),
-            Icon: IconDice5,
+            key: "textCaseSentence",
+            href: "/tools/text-case?case=sentence",
+            title: t("textCaseSentence.title"),
+            description: t("textCaseSentence.description"),
+            Icon: IconLetterCaseToggle,
             accent: "[--tool-accent:var(--brand-cyan)]",
         },
     ];

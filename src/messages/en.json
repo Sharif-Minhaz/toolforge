@@ -228,6 +228,10 @@
             "name": "Slug Generator",
             "description": "Produce clean, URL-safe slugs from any headline."
         },
+        "text-case": {
+            "name": "Text Case Converter",
+            "description": "Convert text between fourteen cases, from Sentence case and Title Case to camelCase and snake_case."
+        },
         "diff": {
             "name": "Diff Checker",
             "description": "Compare two blocks of text with word-level highlighting."
@@ -348,13 +352,13 @@
                 "title": "Beautify JSON",
                 "description": "Paste a single-line payload and read it properly, with any error pinned to its line."
             },
-            "secretKey": {
-                "title": "Draw an AUTH_SECRET",
-                "description": "32 random bytes as base64url, ready for a .env line."
-            },
             "faviconPack": {
                 "title": "Make a favicon",
                 "description": "Turn one logo into favicon.ico, every icon size, and the HTML to link them."
+            },
+            "textCaseSentence": {
+                "title": "Fix the caps lock",
+                "description": "Paste a shouted paragraph and read it back as an ordinary sentence."
             }
         },
         "featured": {
@@ -6333,6 +6337,143 @@
                 "a5": "Short enough to read at a glance, long enough to say what the page is. Three to six words, or roughly 40 to 70 characters, covers most pages. The ceiling here cuts on a word boundary, so a capped slug still ends on a whole word.",
                 "q6": "Does any of this leave my browser?",
                 "a6": "No. Every character is transformed by JavaScript running in this tab. Nothing is uploaded, the page keeps no record of what you typed, and the tool works with the network disconnected."
+            }
+        }
+    },
+    "textCase": {
+        "meta": {
+            "title": "Text Case Converter — Sentence, Title, camelCase and Eleven More",
+            "description": "Convert text between fourteen cases: Sentence case, lower, UPPER, Capitalized, Title Case, aLtErNaTiNg, InVeRsE, and the seven programmers use — camelCase, PascalCase, snake_case, kebab-case, CONSTANT_CASE, dot.case and path/case. Repairs a paragraph typed with the caps lock on, converts a pasted list a line at a time, and never leaves your browser."
+        },
+        "hero": {
+            "eyebrow": "Text",
+            "title": "Text Case Converter",
+            "subtitle": "Left the caps lock on? Need a heading as a variable name? Paste the text, pick a case, and take the result — fourteen of them, from Sentence case to path/case, converted as you type.",
+            "badgeCases": "Fourteen cases",
+            "badgeOffline": "Works offline",
+            "badgeBulk": "Line by line"
+        },
+        "workbench": {
+            "title": "Convert a case",
+            "description": "Type or paste the text and pick a case. The result updates as you go, and never leaves this tab.",
+            "inputLabel": "Text",
+            "placeholder": "Accidentally left the caps lock on and typed something?",
+            "placeholderPerLine": "One line per result",
+            "clear": "Clear the text",
+            "caseLabel": "Case",
+            "caseHint": "The first seven rewrite the text where it stands. The last seven take it apart and build an identifier, so the punctuation and spacing go.",
+            "perLineLabel": "One line at a time",
+            "perLineHint": "Converts each line on its own, so a pasted list stays row for row.",
+            "acronymsLabel": "Keep acronyms",
+            "acronymsHint": "Leaves a run of two or more capitals — API, HTTP, JSON — exactly as typed.",
+            "acronymsHintUnavailable": "{name} sets every letter the same way, so there is no acronym for it to keep.",
+            "outputLabel": "Result",
+            "outputPlaceholder": "The converted text appears here",
+            "copy": "Copy",
+            "download": "Download",
+            "stats": "{characters} characters · {words} words · {lines} lines",
+            "statusEmpty": "Type or paste some text to convert it.",
+            "statusReady": "Converted to {name}: {characters} characters, {words} words.",
+            "statusUnchanged": "This text is already in {name}."
+        },
+        "cases": {
+            "sentence": "Sentence case",
+            "lower": "lower case",
+            "upper": "UPPER CASE",
+            "capitalized": "Capitalized Case",
+            "title": "Title Case",
+            "alternating": "aLtErNaTiNg cAsE",
+            "inverse": "InVeRsE CaSe"
+        },
+        "errors": {
+            "tooLong": "That is longer than {max} characters. Shorten it, or paste it in batches.",
+            "emptyResult": "There are no words here to build a name from. {name} keeps only letters and digits, and this text has none."
+        },
+        "toast": {
+            "copied": "Text copied",
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The download could not start.",
+            "copyFailedEmpty": "There is nothing to copy yet.",
+            "copyFailedUnsupported": "This browser will not let the page reach the clipboard.",
+            "copyFailedDenied": "Clipboard access was refused. Copy from the box instead."
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "What a case converter actually changes",
+                "p1": "Case is the one thing about a piece of text that carries meaning without carrying words. <code>HELP</code> and <code>help</code> are the same four letters and two different tones of voice, and <code>userName</code>, <code>user_name</code> and <code>User Name</code> are the same two words wearing three different uniforms — a variable, a database column, and a label on a form.",
+                "example": "ACCIDENTALLY LEFT THE CAPS LOCK ON → Accidentally left the caps lock on",
+                "p2": "Retyping a paragraph to fix that is minutes of work, and retyping a heading as <code>snake_case</code> is minutes plus a typo. This tool does both in a keystroke, entirely inside your browser: nothing you paste is sent anywhere, and the conversion runs on the text as you type it."
+            },
+            "cases": {
+                "title": "The fourteen cases",
+                "intro": "They fall into two families, and the difference is not cosmetic. The first seven rewrite letters where they already stand, so every space, comma and line break survives untouched. The last seven take the text apart into words and build something new out of them, so the punctuation is gone by construction.",
+                "tableCaption": "Every case the converter offers, what it does, and when to reach for it",
+                "colCase": "Case",
+                "colExample": "Example",
+                "colWhen": "Reach for it when",
+                "sentenceWhen": "A paragraph arrived shouting, or a sentence needs its opening capital back. The most common reason anybody opens this page.",
+                "lowerWhen": "You want a flat, quiet baseline — often as a first step before another tool, or to compare two strings by eye.",
+                "upperWhen": "A heading, a warning, a column header, or anything that has to be read from across a room.",
+                "capitalizedWhen": "Every word matters equally: a list of names, a menu, a set of labels down a form.",
+                "titleWhen": "A real headline. Small words such as {smallWords} stay small unless they open or close the line.",
+                "alternatingWhen": "The internet's tone of sarcasm. Also a quick way to see exactly which characters a font renders differently.",
+                "inverseWhen": "The caps lock was on for the shift key rather than instead of it, so every capital is wrong in both directions at once.",
+                "camelWhen": "A JavaScript, Java or C# variable, a JSON key, or anything else the language's own style guide spells this way.",
+                "pascalWhen": "A class, a type, a React component, or a GraphQL type name.",
+                "snakeWhen": "A Python or Ruby name, a SQL column, or an environment file's lower half.",
+                "kebabWhen": "A URL path, a CSS class, an HTML attribute, or a file on disk.",
+                "constantWhen": "An environment variable, a feature flag, or anything else that should look like a constant at a glance.",
+                "dotWhen": "A namespaced key — a config path, a translation id, a metrics name.",
+                "pathWhen": "A route, a folder, or a storage key built out of a phrase.",
+                "note": "None of this is reversible. Case is information, and sending a heading to lower case throws away which words carried a capital — nothing on this page can put back a letter it was never shown. Keep the original if there is any chance you will want it."
+            },
+            "options": {
+                "title": "The two switches",
+                "intro": "Neither of them changes which case you picked. They change what the case is applied to, and which words it is allowed to touch.",
+                "tableCaption": "The options beside the case picker",
+                "colOption": "Option",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "perLineName": "One line at a time",
+                "perLineDoes": "Treats each line as its own passage. A sentence ends at the line break, a title's last word is the last word of that line, and an identifier is built per line rather than running the whole paste together.",
+                "perLineWhen": "You pasted a list. It is on by default, and for text that is one line long it makes no difference at all.",
+                "acronymsName": "Keep acronyms",
+                "acronymsDoes": "Leaves any run of two or more capitals exactly as typed, so <code>parse the JSON body</code> keeps its <code>JSON</code> instead of flattening to <code>Json</code>.",
+                "acronymsWhen": "Your text carries real abbreviations. It is off by default, for the reason below.",
+                "acronymTrap": "The trap is worth stating plainly: in a paragraph typed with the caps lock on, every single word is a run of capitals — so with this switch on, the tool would hand back exactly what you pasted. That is why it starts off. Turn it on for text that is mostly lower case already.",
+                "acronymScope": "Only five cases can honour it — Sentence case, Capitalized Case, Title Case, camelCase and PascalCase — because they are the five that decide capitalisation one word at a time. The other nine set every letter the same way, or fix the case of the whole identifier by definition, so the switch greys out and says why.",
+                "camelNote": "One exception inside that five: camelCase always lowers its first word, whatever the switch says. <code>HTTP response</code> becomes <code>httpResponse</code>, because an identifier that opens with a capital is PascalCase and not camelCase at all."
+            },
+            "words": {
+                "title": "Where the tool thinks a word ends",
+                "p1": "The prose cases only need to find whole words, and they treat an apostrophe as part of one — otherwise Title Case writes <code>Don'T</code>. Combining marks count as letters too, so Bangla and Devanagari words are not shredded into consonants.",
+                "p2": "The identifier cases have the harder job, because they have to find the words inside an existing name. Three rules do it: any character that is not a letter, a mark or a digit ends a word; a lower-case letter or digit followed by a capital ends one, so <code>getUserById</code> is four; and inside a run of capitals, a word begins at the last capital before a lower-case letter, so <code>XMLHttpRequest</code> is <code>XML</code>, <code>Http</code>, <code>Request</code> rather than one long shout.",
+                "p3": "Digits stay attached to the run they were typed in, so <code>utf8Decoder</code> becomes <code>utf8_decoder</code> and not <code>utf_8_decoder</code>. Apostrophes are dropped rather than split on, so <code>don't stop</code> becomes <code>dontStop</code>.",
+                "p4": "Title Case borrows its list of small words — {smallWords} — from the {reference} script that most title-case implementations on the web descend from. That is deliberate: the output is read by other people, who are comparing it against what every other converter produced, and a list we thought was better would only make this tool the odd one out."
+            },
+            "useCases": {
+                "title": "What people use it for",
+                "p1": "The two big ones are opposites. Somebody types half a message with the caps lock on and wants it back as prose; somebody else has a heading, a spreadsheet column or a label from a design file and wants it as a name a language will accept.",
+                "p2": "The line-at-a-time switch is what makes the second one bulk work. Paste a column of forty field labels, pick snake_case, and get forty database columns back in one press — with the blank rows still where they were, so it lines up against the original.",
+                "p3": "It also reads well as a checking tool. Convert a name to every shape you might need and you can see at a glance which one your codebase already uses, before you commit to it in thirty files."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Does my text get uploaded anywhere?",
+                "a1": "No. Every case runs in your browser, on the text in the box, and the page makes no request while you type. You can turn off your connection and it keeps working.",
+                "q2": "What is the difference between Capitalized Case and Title Case?",
+                "a2": "Capitalized Case gives every word a capital. Title Case follows the convention headlines use: small words such as <code>a</code>, <code>the</code>, <code>of</code> and <code>to</code> stay lower case unless they open the line, close it, or follow a colon. So <code>the art of the deal</code> becomes <code>The Art Of The Deal</code> one way and <code>The Art of the Deal</code> the other.",
+                "q3": "Why did Sentence case turn my “I” into “i”?",
+                "a3": "Because it is one letter, and the acronym rule is “two capitals or more”. Deciding that a lone capital I is the English pronoun rather than a variable name, a grade or a Roman numeral would mean the tool guessing at your language, and guessing wrong on the text where it matters. Sentence case does the mechanical thing and leaves that one to you.",
+                "q4": "Can it convert a whole list in one go?",
+                "a4": "Yes — that is what “one line at a time” does, and it is on by default. Each line is converted on its own and the blank ones stay in place, so what comes back lines up row for row against what you pasted.",
+                "q5": "Why did an identifier case give me an error instead of a result?",
+                "a5": "Because there were no words in the text to build a name from. The identifier cases keep only letters and digits, so something like <code>!!! ???</code> leaves nothing behind — and an empty box would look like a bug rather than an answer, so the tool says so instead.",
+                "q6": "How much text can I paste at once?",
+                "a6": "Up to {max} characters, which is a long chapter. Past that the tool refuses rather than freezing the tab, and the counter above the box starts warning you well before you reach it."
             }
         }
     },

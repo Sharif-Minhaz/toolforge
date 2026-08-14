@@ -301,6 +301,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.slug.errors,
             toast: messages.slug.toast,
         },
+        textCase: {
+            workbench: messages.textCase.workbench,
+            cases: messages.textCase.cases,
+            errors: messages.textCase.errors,
+            toast: messages.textCase.toast,
+        },
         diff: {
             workbench: messages.diff.workbench,
             errors: messages.diff.errors,

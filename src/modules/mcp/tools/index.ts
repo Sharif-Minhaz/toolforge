@@ -19,6 +19,7 @@ import { regexTestTool } from "./regex";
 import { rsaCryptTool, rsaGenerateTool } from "./rsa";
 import { secretGenerateTool } from "./secret";
 import { slugCreateTool } from "./slug";
+import { textCaseConvertTool } from "./text-case";
 import { timestampConvertTool } from "./timestamp";
 import { urlConvertTool, urlParseTool } from "./url";
 import { uuidGenerateTool } from "./uuid";
@@ -81,6 +82,7 @@ export const MCP_TOOLS: readonly McpTool[] = [
     rsaGenerateTool,
     secretGenerateTool,
     slugCreateTool,
+    textCaseConvertTool,
     timestampConvertTool,
     urlConvertTool,
     urlParseTool,

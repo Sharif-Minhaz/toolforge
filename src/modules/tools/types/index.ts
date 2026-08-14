@@ -38,6 +38,7 @@ export const TOOL_IDS = [
     "qr",
     "shortener",
     "slug",
+    "text-case",
     "diff",
     "image-compressor",
     "image-converter",
@@ -99,6 +100,7 @@ export type ToolIconName =
     | "qrcode"
     | "scissors"
     | "slug"
+    | "case"
     | "diff"
     | "photo"
     | "scan"
