@@ -181,6 +181,13 @@
     --shell-glow-a: oklch(0.53 0.225 277 / 12%);
     --shell-glow-b: oklch(0.62 0.16 205 / 10%);
     --panel-highlight: oklch(1 0 0 / 70%);
+
+    /* The two squares behind a picture with an alpha channel. Themed, because
+       the checkerboard is chrome the reader is meant to read *as* chrome — but
+       kept low-contrast, since a busy ground makes a soft cut-out edge look
+       ragged when it is not. */
+    --checker-a: oklch(0.955 0.002 264);
+    --checker-b: oklch(0.885 0.004 264);
 }
 
 .dark {
@@ -234,6 +241,9 @@
     --sidebar-border: oklch(1 0 0 / 8%);
     --sidebar-ring: oklch(0.66 0.185 277);
 
+    --checker-a: oklch(0.28 0.008 264);
+    --checker-b: oklch(0.222 0.009 264);
+
     --grid-line: oklch(1 0 0 / 5%);
     --shell-glow-a: oklch(0.66 0.185 277 / 18%);
     --shell-glow-b: oklch(0.72 0.13 205 / 12%);
@@ -246,6 +256,20 @@
         linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
         linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
     background-size: var(--grid-size, 3.5rem) var(--grid-size, 3.5rem);
+}
+
+/*
+ * The ground under a picture that has an alpha channel.
+ *
+ * Without it, "transparent" is drawn as whatever surface happens to be behind
+ * the image — which on the dark theme makes a cut-out over a dark card
+ * indistinguishable from one on a black background, and is exactly the question
+ * the reader opened a background remover to answer.
+ */
+@utility bg-checkerboard {
+    background-image: repeating-conic-gradient(var(--checker-b) 0% 25%, var(--checker-a) 0% 50%);
+    background-size: var(--checker-size, 16px) var(--checker-size, 16px);
+    background-position: 0 0;
 }
 
 /* One-pixel top highlight that gives floating panels a lit edge. */

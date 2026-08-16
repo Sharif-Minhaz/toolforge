@@ -59,6 +59,7 @@ docs/
 | An outbound request from the server | [`docs/patterns/outbound-requests.md`](docs/patterns/outbound-requests.md), [`docs/security.md`](docs/security.md) |
 | A free-text field | [`docs/patterns/input-limits.md`](docs/patterns/input-limits.md) |
 | `aes` | [`docs/case-studies/aes.md`](docs/case-studies/aes.md) |
+| `background-remover` | [`docs/case-studies/background-remover.md`](docs/case-studies/background-remover.md) |
 | `blur-placeholder` | [`docs/case-studies/blurhash.md`](docs/case-studies/blurhash.md) |
 | `bson` | [`docs/case-studies/bson.md`](docs/case-studies/bson.md) |
 | `curl` | [`docs/case-studies/curl.md`](docs/case-studies/curl.md) |

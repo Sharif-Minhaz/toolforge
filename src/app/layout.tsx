@@ -244,6 +244,15 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.aiImageDetector.errors,
             toast: messages.aiImageDetector.toast,
         },
+        backgroundRemover: {
+            workbench: messages.backgroundRemover.workbench,
+            qualities: messages.backgroundRemover.qualities,
+            strip: messages.backgroundRemover.strip,
+            backgrounds: messages.backgroundRemover.backgrounds,
+            result: messages.backgroundRemover.result,
+            errors: messages.backgroundRemover.errors,
+            toast: messages.backgroundRemover.toast,
+        },
         watermarkRemover: {
             workbench: messages.watermarkRemover.workbench,
             result: messages.watermarkRemover.result,
@@ -345,6 +354,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         // paste-and-fetch controls are one shared island, and six copies of the
         // same namespace slice is six places to forget one.
         imageIntake: messages.imageIntake,
+        compareSlider: messages.compareSlider,
         blurPlaceholder: {
             workbench: messages.blurPlaceholder.workbench,
             modes: messages.blurPlaceholder.modes,

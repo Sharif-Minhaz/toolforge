@@ -248,6 +248,10 @@
             "name": "Image Converter",
             "description": "Convert between PNG, JPG, WebP and AVIF, or turn one picture into a favicon.ico and a full favicon pack — all in your browser."
         },
+        "background-remover": {
+            "name": "Background Remover",
+            "description": "Cut the background out of a photo in your browser, then drop in a colour, a blurred version of the original, or a free stock photograph."
+        },
         "blur-placeholder": {
             "name": "Blur Placeholder Generator",
             "description": "Turn a picture into a BlurHash string and a blurDataURL you can paste straight into next/image — or decode a hash back into a preview."
@@ -360,9 +364,9 @@
                 "title": "Make a favicon",
                 "description": "Turn one logo into favicon.ico, every icon size, and the HTML to link them."
             },
-            "textCaseSentence": {
-                "title": "Fix the caps lock",
-                "description": "Paste a shouted paragraph and read it back as an ordinary sentence."
+            "cutoutBackground": {
+                "title": "Cut out a background",
+                "description": "Remove the background from a photo in your browser, then swap in a colour, a blur, or a free stock shot."
             }
         },
         "featured": {
@@ -4900,13 +4904,8 @@
         },
         "result": {
             "label": "Before and after",
-            "before": "Original",
-            "after": "Repainted",
             "beforeAlt": "{name} before the watermark was removed",
             "afterAlt": "{name} after the watermark was removed",
-            "compareLabel": "Reveal the original",
-            "compareValue": "{percent} of the original shown",
-            "compareHint": "Drag the divider across the picture, or focus it and use the arrow keys, to check the repaint against what you started with.",
             "dimensions": "Dimensions",
             "pixels": "{width} × {height} px",
             "size": "Download size",
@@ -7557,6 +7556,301 @@
             }
         }
     },
+    "backgroundRemover": {
+        "meta": {
+            "title": "Background Remover — Cut Out and Replace Backgrounds",
+            "description": "Remove the background from any picture without uploading it. Replace it with transparency, a solid colour, the original blurred, or a free Pexels photograph, and download a PNG, JPEG or WebP."
+        },
+        "hero": {
+            "eyebrow": "Background Remover",
+            "title": "Background Remover",
+            "subtitle": "Drop in a photograph, cut the subject out of it, and put whatever you like behind — nothing, a colour, the same picture thrown out of focus, or a free stock shot. The cut-out runs in this tab; the picture is never uploaded.",
+            "badgeLocal": "Runs in your browser",
+            "badgeModel": "Open segmentation model",
+            "badgeBackgrounds": "Blur, photo and colour"
+        },
+        "workbench": {
+            "title": "Cut out and replace",
+            "description": "Up to five pictures at once, each with its own cut-out, its own background and its own before-and-after slider.",
+            "dropTitle": "Drop a picture, or choose one",
+            "dropHint": "JPEG, PNG, WebP or AVIF, up to {limit}. Up to {max} at a time.",
+            "quality": "Cut-out quality",
+            "qualityHint": "About {size} to download the first time, including the runtime. Cached afterwards.",
+            "pickPrompt": "Choose a picture up to {limit} to get started.",
+            "readyToRemove": "Ready. Press Remove background to cut the subject out.",
+            "cutoutReady": "Cut out. Pick a background below, or download it as it is.",
+            "resultStale": "The picture below was made with different settings. Press Remove background again, or change a background to redraw it.",
+            "downloadingModel": "Fetching the model…",
+            "computing": "Cutting the subject out…",
+            "remove": "Remove background",
+            "removeAgain": "Cut out again",
+            "working": "Working…",
+            "clearAll": "Clear all",
+            "sourceAlt": "{name}, before anything was removed",
+            "beforeAlt": "{name}, with its original background",
+            "afterAlt": "{name}, with the background removed",
+            "privacyNote": "Everything except the model download and the stock search happens in this tab. Nothing you drop in is uploaded, stored or logged."
+        },
+        "qualities": {
+            "fast": "Fast — {size}",
+            "balanced": "Balanced — {size}",
+            "best": "Best — {size}"
+        },
+        "strip": {
+            "label": "Open pictures",
+            "add": "Add another picture",
+            "full": "All five slots are full. Close one to add another.",
+            "slot": "Show {name}",
+            "remove": "Close {name}",
+            "hint": "{remaining, plural, =0 {No slots left.} one {One more slot.} other {# more slots.}} Each picture keeps its own cut-out and background."
+        },
+        "backgrounds": {
+            "label": "Background",
+            "tabs": {
+                "blur": "Blur",
+                "photo": "Photo",
+                "color": "Colour"
+            },
+            "lockedHint": "Cut the subject out first — there is nothing to put a background behind yet.",
+            "blur": {
+                "strength": "Strength",
+                "hint": "The picture's own background, blurred by {radius} px at this size. Nothing is downloaded and nothing leaves the tab."
+            },
+            "color": {
+                "transparent": "No background — keep it transparent",
+                "customLabel": "Or a colour of your own",
+                "wheelLabel": "Pick a colour"
+            },
+            "swatches": {
+                "white": "White",
+                "paper": "Paper grey",
+                "ink": "Ink black",
+                "red": "Red",
+                "pink": "Pink",
+                "orchid": "Orchid",
+                "violet": "Violet",
+                "indigo": "Indigo",
+                "sky": "Sky blue",
+                "cyan": "Cyan",
+                "teal": "Teal",
+                "green": "Green",
+                "lime": "Lime",
+                "amber": "Amber",
+                "orange": "Orange",
+                "clay": "Clay brown",
+                "peach": "Peach",
+                "mist": "Mist blue",
+                "sage": "Sage green",
+                "blush": "Blush"
+            },
+            "photo": {
+                "searchLabel": "Search free backgrounds",
+                "searchPlaceholder": "office, beach, studio wall…",
+                "searchHint": "Free landscape photographs from Pexels, filtered toward places rather than people. Only what you type is sent — never your picture.",
+                "searchDisabled": "Stock search is not configured on this deployment. You can still use a background of your own, a colour, or the blur.",
+                "upload": "Use a background of your own",
+                "empty": "Nothing people-free found for {query}. Try a broader word, or one of the chips above.",
+                "loadMore": "Show more",
+                "loadingMore": "Loading…",
+                "attribution": "Photographs by their authors, free to use under the <pexels>Pexels licence</pexels>.",
+                "topics": {
+                    "nature": "Nature",
+                    "mountains": "Mountains",
+                    "forest": "Forest",
+                    "water": "Lake & river",
+                    "beach": "Beach",
+                    "sky": "Sky",
+                    "grass": "Grass",
+                    "flowers": "Flowers",
+                    "wildlife": "Wildlife",
+                    "interior": "Interior",
+                    "architecture": "Architecture",
+                    "city": "City",
+                    "artwork": "Artwork",
+                    "texture": "Texture"
+                }
+            }
+        },
+        "result": {
+            "dimensions": "Dimensions",
+            "pixels": "{width} × {height} px",
+            "size": "Download size",
+            "format": "Download as",
+            "formatHint": "PNG keeps transparency and is lossless. WebP keeps transparency and is smaller. JPEG is smaller still and has no transparency.",
+            "formats": {
+                "png": "PNG",
+                "jpeg": "JPEG",
+                "webp": "WebP"
+            },
+            "alphaWarning": "JPEG has no transparency, so the cut-out will be flattened onto white. Choose PNG or WebP to keep it transparent.",
+            "download": "Download",
+            "credit": "Background photograph by <photographer>{name}</photographer> on <source>Pexels</source>.",
+            "note": "The result is at the original pixel dimensions. The subject keeps every pixel it arrived with — only its edge is computed at the model's own resolution."
+        },
+        "errors": {
+            "empty_file": "That file is empty.",
+            "unsupported_type": "That format cannot be read here. Use JPEG, PNG, WebP or AVIF.",
+            "too_large": "That picture is larger than {limit}. Resize it first, or use a smaller copy.",
+            "undecodable_image": "Your browser could not decode that picture. It may be damaged, or saved in a format it does not read.",
+            "model_unavailable": "The segmentation model could not be fetched. Check your connection and try again — it is about a hundred megabytes the first time.",
+            "removal_failed": "The model ran but could not finish. Try a lower cut-out quality, or a smaller picture.",
+            "compose_failed": "The result could not be drawn. Try a different background, or a smaller picture.",
+            "invalid_request": "That search could not be read.",
+            "not_configured": "Stock search is not configured on this deployment.",
+            "rate_limited": "Stock search is busy. The allowance is shared by everyone using this site, so wait a minute and try again.",
+            "upstream_unavailable": "Pexels did not answer. Try again in a moment.",
+            "unreadable_response": "Pexels answered with something this page could not read."
+        },
+        "toast": {
+            "removed": "Background removed.",
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The download could not be started.",
+            "slotsFull": "{count, plural, one {One picture was} other {# pictures were}} left out — only {max} fit at a time."
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "whatItIs": {
+                "title": "What this does",
+                "p1": "A background remover separates the subject of a photograph from everything behind it, and gives you back the subject on its own with a transparent edge. This one does it with an open segmentation model, <code>ISNet</code>, compiled to WebAssembly and run inside your browser tab.",
+                "example": "a portrait on a busy street → the same portrait, alone, on a transparent background — then on white, or on a beach",
+                "p2": "Your picture is never uploaded. The model's weights are, however, fetched from IMG.LY's CDN the first time you press the button — roughly a hundred megabytes, cached by your browser afterwards — and searching for a stock background asks Pexels through this server. Neither carries your photograph, and each is stated beside the control it belongs to: the download size on the quality picker, and what Pexels sees under the search field."
+            },
+            "howItWorks": {
+                "title": "How the cut-out is made",
+                "p1": "The model is a salient-object segmentation network. It does not know what a person is; it predicts, for every pixel, how likely that pixel is to belong to whatever the picture is about. The output is not a shape but an alpha channel — a greyscale image the same size as the input, where white is definitely subject, black is definitely background, and everything in between is the soft edge that makes hair and fur look right.",
+                "p2": "That alpha channel is what this page asks for, rather than a finished cut-out. The reason is resolution. The model works at its own fixed input size whatever you give it, so segmenting a scaled-down copy of a twelve-megapixel photograph loses nothing — the mask would have been computed at that size either way. Handing back the full-resolution original with that mask applied means the subject keeps every pixel it arrived with.",
+                "p3": "The mask is then scaled up over the original with the browser's own bilinear filter and applied with a single composite operation, <code>destination-in</code>, which multiplies the picture's alpha by the mask's. That is one hardware-accelerated draw rather than a loop over several million pixels in JavaScript.",
+                "p4": "Where a WebGPU adapter is available the model runs on the graphics card, which is usually the difference between a couple of seconds and twenty. Where it is not, the same weights run through WebAssembly on the processor. You are not asked to choose: the library probes for an adapter and falls back on its own.",
+                "p5": "None of this is a service call. There is no queue, no per-image cost and no upload — which also means the speed is your machine's, not a server's, and a slower laptop will take longer than a fast one on the same picture."
+            },
+            "controls": {
+                "title": "Every control on this page",
+                "intro": "Eleven controls, and the ones that matter most are the two that decide what you wait for and what you get back.",
+                "tableCaption": "Every control in the Background Remover and what it does",
+                "colControl": "Control",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "sourceName": "Picture",
+                "sourceDoes": "Takes a JPEG, PNG, WebP or AVIF by drop, by picker, by paste, or by public address. Up to five are open at once.",
+                "sourceWhen": "Always — it is the input.",
+                "qualityName": "Cut-out quality",
+                "qualityDoes": "Chooses which of three weight sets the model uses, and therefore both how good the edge is and how much is downloaded the first time.",
+                "qualityWhen": "Drop to Fast on a slow connection; go to Best when the edge is hair, fur or foliage.",
+                "removeName": "Remove background",
+                "removeDoes": "Runs the model on the open picture and applies the result. Pressing it again re-runs it, which is what you want after changing the quality.",
+                "removeWhen": "Once per picture, and again after changing the quality.",
+                "blurName": "Blur",
+                "blurDoes": "Puts the picture's own background back, thrown out of focus. The strength is 1–100, a share of the picture's shorter side rather than a pixel count.",
+                "blurWhen": "Portrait-mode depth, or hiding a messy room without changing where the photograph was taken.",
+                "photoName": "Photo",
+                "photoDoes": "Searches Pexels for a free landscape background and composites the one you pick behind the subject, cropped to fill. Typing overrides the chip.",
+                "photoWhen": "Putting a product or a portrait somewhere it was not.",
+                "uploadName": "Your own background",
+                "uploadDoes": "Uses a picture from your own machine as the background. It stays in this tab like everything else.",
+                "uploadWhen": "A brand backdrop, a room you photographed separately, or anything the stock search will not have.",
+                "colorName": "Colour",
+                "colorDoes": "Fills the background with one of twenty swatches or a colour you name in <code>#rrggbb</code>.",
+                "colorWhen": "Marketplace listings, ID photographs, and anywhere a flat ground is required.",
+                "transparentName": "No background",
+                "transparentDoes": "Leaves the background transparent — the first tile in the Colour tab, and where every picture starts.",
+                "transparentWhen": "Anything you will composite somewhere else.",
+                "formatName": "Download as",
+                "formatDoes": "Writes the result as PNG, JPEG or WebP. Defaults to PNG while the background is transparent and JPEG once it is not.",
+                "formatWhen": "Change it when the program on the other end is fussy, or when the file is bigger than you want.",
+                "compareName": "Before-and-after slider",
+                "compareDoes": "Drags a divider across the result, with the original above and the cut-out below. Arrow keys move it too.",
+                "compareWhen": "Checking the edge, which is the only part worth checking.",
+                "stripName": "Picture strip",
+                "stripDoes": "Switches between the pictures you have open. Each keeps its own cut-out, background, format and slider position.",
+                "stripWhen": "Working through several shots without losing what you set on the last one.",
+                "lockedNote": "Every background tab is locked until the picture has been cut out. There is nothing to put a background behind before that, and a picker that composites nothing would be a control that lies about what it does.",
+                "tabNote": "Switching to Blur or Colour applies that background straight away, using whatever you last chose there. The Photo tab is the exception: it leaves the current background alone until you press a tile, because there is no sensible default photograph and picking one for you would put a stranger's picture behind yours.",
+                "qualityNote": "Changing the cut-out quality does not redo the cut-out on its own. The mask you already have is still on screen, and pressing Remove background again is what fetches the new weights and re-runs it — so switching quality out of curiosity costs nothing until you ask for it.",
+                "topicsName": "Backdrop topics",
+                "topicsDoes": "Fourteen chips — Nature, Lake &amp; river, Sky, Interior, Wildlife, Artwork and the rest — each of which searches for a <code>place</code> rather than letting the stock library show you whatever it is featuring.",
+                "topicsWhen": "Almost always. Start here and type only when no chip is close enough."
+            },
+            "backgrounds": {
+                "title": "The four kinds of background",
+                "p1": "Transparent is the default and the one that composes with everything else. It is written as PNG or WebP; JPEG has no alpha channel, so choosing it flattens the cut-out onto white and the page says so before you download.",
+                "p2": "A colour is a flat fill behind the subject. Twenty swatches cover the usual cases — marketplace white, passport blue, a near-black for product shots — and the field beside them takes any <code>#rrggbb</code> value, with three-digit shorthand expanded rather than refused.",
+                "p3": "Blur is the picture's own background, drawn behind the subject and thrown out of focus. It is the only background here that needs nothing at all: no download, no search, no second file. The blur is drawn past the edges of the frame before it is applied, because a blur at the edge of a canvas averages the picture against the nothing outside it and leaves a pale border around the whole photograph.",
+                "p4": "A photograph — stock or your own — is scaled to cover the frame and centred, never letterboxed. Letterboxing a background would leave transparent stripes down the sides that you would not find until after you downloaded it.",
+                "p5": "The stock backgrounds are biased toward places rather than people, which needs saying plainly because it is a bias and not a filter: the Pexels API has no way to exclude photographs of people, so this page does two blunt things instead. Each chip searches several place words at once — <code>forest trees woodland path</code> rather than just forest — because a bare noun returns a good deal of somebody walking through the thing rather than the thing. And any photograph whose description names a person is dropped before the grid is drawn. Neither is exact. A photograph with no description at all is kept, since nothing is known about it and discarding every undescribed picture would empty most pages, so the occasional person still gets through."
+            },
+            "slots": {
+                "title": "Five pictures, five separate jobs",
+                "p1": "The strip along the bottom holds up to five pictures. Pressing one shows that picture with its own cut-out, its own background, its own download format and its own slider position. Nothing you do to one slot reaches another.",
+                "p2": "There is deliberately no batch button and no apply-to-all. Each cut-out holds a decoded bitmap in memory — four bytes a pixel, so a twelve-megapixel photograph is forty-eight megabytes before anything is drawn — and running five at once is how a tab is killed halfway through. Five open at once, one running at a time, is the shape that survives a phone.",
+                "p3": "Closing a slot moves you to the one on its right, or to the one on its left if it was the last. Closing a slot that is not the one on screen leaves you where you were."
+            },
+            "quality": {
+                "title": "Which cut-out quality to use",
+                "p1": "The three settings are three sizes of the same network. Fast is an eight-bit quantised copy at roughly forty megabytes; Balanced is half-precision at about eighty-four; Best is the full model at around a hundred and seventy.",
+                "p2": "The difference is almost entirely in the edge. On a subject with a hard outline — a bottle, a phone, a car — all three produce a cut-out you would struggle to tell apart. On hair, fur, foliage, or anything with a soft or wispy boundary, the gap is obvious and worth the download.",
+                "p3": "Balanced is the default because the question people open a background remover to answer is usually whether the hair looks right, and the quantised model is visibly worse at exactly that. Shipping the cheap answer by default and hoping nobody looked closely is not the trade this page makes.",
+                "p4": "Whichever you choose is fetched once and cached by your browser, so the second picture is as fast as the model itself. Switching between them means fetching the other one."
+            },
+            "formats": {
+                "title": "What to download it as",
+                "intro": "Three formats, and the only question that really matters is whether the transparency has to survive.",
+                "tableCaption": "Download formats and what each keeps",
+                "colFormat": "Format",
+                "colAlpha": "Transparency",
+                "colWhen": "Reach for it when",
+                "pngName": "PNG",
+                "pngAlpha": "Kept",
+                "pngWhen": "The default for a transparent cut-out, and what every design tool reads. Lossless, and larger than the other two.",
+                "jpegName": "JPEG",
+                "jpegAlpha": "Dropped",
+                "jpegWhen": "The default once there is an opaque background. Smallest for photographic content, and accepted by everything.",
+                "webpName": "WebP",
+                "webpAlpha": "Kept",
+                "webpWhen": "Transparency at roughly a third of the PNG. Fine for the web; still not read by some older desktop software.",
+                "note": "AVIF is missing on purpose. Browser support for writing it through <code>canvas.toBlob</code> is uneven enough that you would sometimes press Download and silently receive a PNG, and a format picker that quietly ignores you is worse than one option fewer."
+            },
+            "licensing": {
+                "title": "Using the stock backgrounds",
+                "p1": "The Photo tab searches Pexels. Their photographs are free to use, including commercially, without permission and without payment — the full terms are the <code>Pexels licence</code>, and this page links to it under the grid.",
+                "p2": "Credit is not required by that licence, but it is asked for, and it is the least the person who took the photograph is owed. The photographer's name and a link to the picture's page on Pexels are shown beside the result whenever a stock background is in use.",
+                "p3": "What the licence does not allow is redistributing the photographs themselves as stock, or using an identifiable person in them to imply an endorsement. Compositing one behind your own subject is exactly what it is for; selling the background on its own is not."
+            },
+            "limits": {
+                "title": "Where it struggles",
+                "p1": "The model finds the salient object. If a photograph has two equally prominent subjects, or none, its guess about which one you meant may not be yours — and there is no brush here to correct it. A picture with one clear subject is what this is good at.",
+                "p2": "Glass, smoke, water and motion blur are hard for every segmentation model, this one included. Semi-transparent regions come back either fully kept or fully cut, because the network was trained on a task where that distinction mostly does not arise.",
+                "p3": "Very fine hair against a background of a similar colour is the classic failure. Best helps; it does not fix it. Where the result matters more than the minute, a manual mask in a proper editor is still the honest answer.",
+                "p4": "A picture over twenty megabytes is refused, and anything over two thousand and forty-eight pixels on its longer side is scaled down before segmentation — never before output. The subject you download is at the size you dropped in."
+            },
+            "privacy": {
+                "title": "What leaves your browser",
+                "p1": "Your picture does not. The cut-out, the blur, the colour fill and the composite all happen on a <code>canvas</code> in this tab, and there is no request anywhere in that path.",
+                "p2": "Two things do use the network, and neither carries your photograph. The model's weights come from IMG.LY's CDN at <code>staticimgly.com</code> the first time you press the button. Searching the Photo tab sends your search term to Pexels through this server, which passes back the results — Pexels learns that this site searched for a word, not who searched for it.",
+                "p3": "Choosing a stock background then downloads that photograph from Pexels' image host directly into your browser, where it is drawn behind your subject. Using a background of your own, a colour or the blur touches the network not at all."
+            },
+            "faq": {
+                "title": "Questions",
+                "q1": "Is my photo uploaded anywhere?",
+                "a1": "No. The segmentation runs in your browser tab through WebAssembly, and the composite is drawn on a canvas there too. The only network requests this page makes are for the model's weights and, if you use the Photo tab, for stock photographs — neither carries your picture.",
+                "q2": "Why is the first cut-out so slow?",
+                "a2": "The model has to be downloaded before it can run — between forty and a hundred and seventy megabytes depending on the quality you chose. Your browser caches it, so every cut-out after the first starts immediately.",
+                "q3": "Does this use an AI service or an API key?",
+                "a3": "No. It uses an open, published segmentation model that runs locally. There is no account, no key, no per-image cost and no request to any model provider.",
+                "q4": "Which quality should I pick?",
+                "a4": "Balanced, unless you have a reason. Drop to Fast on a slow connection or for a subject with a hard outline; go to Best when the edge is hair, fur or foliage and you can afford the download.",
+                "q5": "Can I do several pictures at once?",
+                "a5": "You can have five open at once and switch between them freely, but each is cut out on its own when you press the button for it. That is deliberate: each cut-out holds a full decoded bitmap in memory, and running five together is how a browser tab runs out of it.",
+                "q6": "Why can I not choose a background before removing it?",
+                "a6": "Because there is nothing to put a background behind until the subject has been cut out. The tabs unlock the moment the cut-out finishes, and after that changing a background is instant — it is a canvas redraw, not another run of the model.",
+                "q7": "Can I use the stock backgrounds commercially?",
+                "a7": "Yes. Pexels photographs are free for commercial use without permission or payment. Credit is not required but is asked for, and this page shows the photographer's name and a link beside your result. You may not redistribute the photographs as stock in their own right.",
+                "q8": "The edge around the hair is wrong. What can I do?",
+                "a8": "Try Best, which is meaningfully better on soft boundaries. Beyond that, a picture where the subject and the background are close in colour is genuinely hard for every model of this kind, and a manual mask in a full editor is the honest answer when the result has to be exact."
+            }
+        }
+    },
     "blurPlaceholder": {
         "meta": {
             "title": "Blur Placeholder Generator — BlurHash and blurDataURL in your browser",
@@ -9837,6 +10131,13 @@
             "not_configured": "Fetching by address is not configured on this deployment. Picking, dropping and pasting all still work."
         }
     },
+    "compareSlider": {
+        "before": "Original",
+        "after": "Result",
+        "label": "Reveal the original",
+        "valueText": "{percent} of the original shown",
+        "hint": "Drag the divider across the picture, or focus it and use the arrow keys, to check the result against what you started with."
+    },
     "mcp": {
         "meta": {
             "title": "ToolForge MCP Server — Connect Claude and ChatGPT",
@@ -9952,7 +10253,7 @@
                 "p1": "Four groups are missing on purpose. Each one is a fact about the tool rather than a gap in the endpoint, and <code>toolforge_catalog_list</code> returns the web address of every one of them so an assistant can send you to the page instead of reporting a dead end.",
                 "images": {
                     "title": "The image tools",
-                    "body": "The compressor, converter, resizer and blur placeholder decode pixels in a canvas and re-encode them through WebAssembly codecs built for a browser. There is no canvas in a request handler, and a server-side reimplementation would be a second encoder to keep in step with the first."
+                    "body": "The compressor, converter, resizer, blur placeholder and background remover decode pixels in a canvas and re-encode them through WebAssembly codecs built for a browser. There is no canvas in a request handler, and a server-side reimplementation would be a second encoder to keep in step with the first. The background remover adds a second reason: its segmentation weights are fetched into the reader's own browser and cached there, so running it here would move a hundred-megabyte download and the inference behind it onto this deployment for every call."
                 },
                 "studios": {
                     "title": "The server studios and the shortener",

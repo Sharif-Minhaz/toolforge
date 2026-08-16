@@ -44,6 +44,7 @@ export const TOOL_IDS = [
     "image-compressor",
     "image-converter",
     "image-resizer",
+    "background-remover",
     "blur-placeholder",
     "ai-image-detector",
     "ai-text-detector",
@@ -107,6 +108,7 @@ export type ToolIconName =
     | "photo"
     | "scan"
     | "eraser"
+    | "background"
     | "compress"
     | "crop"
     | "transform"

@@ -1,10 +1,10 @@
 import {
     IconArrowRight,
+    IconBackground,
     IconBinary,
     IconBolt,
     IconBraces,
     IconKey,
-    IconLetterCaseToggle,
     IconTransform,
 } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
@@ -58,17 +58,18 @@ export async function QuickActions() {
             Icon: IconTransform,
             accent: "[--tool-accent:var(--brand-emerald)]",
         },
-        // The list is capped at six. The secret generator made way for this one,
-        // being the lowest-popularity tool that was represented here — the same
-        // trade the passport-photo preset made for it, RSA before that, AES
-        // before that, and the Domain Inspector before that.
+        // The list is capped at six. The text-case converter made way for this
+        // one, being the lowest-popularity tool that was represented here — the
+        // same trade the secret generator made for it, the passport-photo preset
+        // before that, RSA before that, AES before that, and the Domain
+        // Inspector before that.
         {
-            key: "textCaseSentence",
-            href: "/tools/text-case?case=sentence",
-            title: t("textCaseSentence.title"),
-            description: t("textCaseSentence.description"),
-            Icon: IconLetterCaseToggle,
-            accent: "[--tool-accent:var(--brand-cyan)]",
+            key: "cutoutBackground",
+            href: "/tools/background-remover",
+            title: t("cutoutBackground.title"),
+            description: t("cutoutBackground.description"),
+            Icon: IconBackground,
+            accent: "[--tool-accent:var(--brand-amber)]",
         },
     ];
 

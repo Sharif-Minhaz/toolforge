@@ -36,12 +36,17 @@ import { uuidGenerateTool } from "./uuid";
  * **What is deliberately absent, and why.** Three groups, each for a reason
  * that is a fact about the tool rather than a gap in this file:
  *
- * - **The image tools** — compressor, converter, resizer, blur placeholder.
- *   They decode pixels in a canvas and re-encode them through WebAssembly
- *   codecs built for the browser. There is no canvas in a request handler, and
- *   a server-side reimplementation would be a second encoder to keep in step
- *   with the one on the page. `toolforge_catalog_list` returns their addresses
- *   so a caller can send somebody to the page instead.
+ * - **The image tools** — compressor, converter, resizer, blur placeholder, and
+ *   the Background Remover. They decode pixels in a canvas and re-encode them
+ *   through WebAssembly codecs built for the browser. There is no canvas in a
+ *   request handler, and a server-side reimplementation would be a second
+ *   encoder to keep in step with the one on the page. The Background Remover
+ *   adds a second reason on top of the first: its segmentation weights are
+ *   fetched into the *reader's* browser and cached there, so running it here
+ *   would move a hundred-megabyte download and the inference that follows onto
+ *   this deployment for every call — the tool is local precisely so that cost
+ *   is not ours to pay. `toolforge_catalog_list` returns their addresses so a
+ *   caller can send somebody to the page instead.
  * - **The studios** — Mock Server, JSON Server, GraphQL Server, and the URL
  *   Shortener. Every one of them mints a public address and stores what is
  *   posted to it, against an ownership model built on browser cookies. An MCP

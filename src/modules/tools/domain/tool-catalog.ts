@@ -872,6 +872,47 @@ const TOOLS: readonly Tool[] = [
         ],
     },
     {
+        id: "background-remover",
+        href: "/tools/background-remover",
+        category: "media",
+        status: "available",
+        // The cut-out is a segmentation model compiled to WebAssembly running in
+        // the reader's own tab, so no photograph ever leaves it. Two things do
+        // reach the network and neither carries the picture: the model weights
+        // come from a CDN on first use, and searching for a stock background
+        // asks Pexels through this server. Both are disclosed above the
+        // controls, not only in the article.
+        runsOn: "hybrid",
+        accent: "rose",
+        icon: "background",
+        addedOn: "2026-08-16",
+        featured: true,
+        popularity: 84,
+        keywords: [
+            "remove background",
+            "background remover",
+            "bg remover",
+            "transparent background",
+            "cut out",
+            "cutout",
+            "png transparent",
+            "remove bg",
+            "erase background",
+            "change background",
+            "replace background",
+            "product photo background",
+            "profile picture background",
+            "isnet",
+            "u2net",
+            "image matting",
+            "image segmentation",
+            "alpha channel",
+            "blur background",
+            "portrait mode",
+            "pexels background",
+        ],
+    },
+    {
         id: "blur-placeholder",
         href: "/tools/blur-placeholder",
         category: "media",

@@ -176,6 +176,11 @@ describe("tool catalog", () => {
             "image-converter",
             "image-resizer",
             "blur-placeholder",
+            // The cut-out itself runs in the tab and the photograph never
+            // leaves it, but the segmentation weights come from a CDN and the
+            // stock-background search goes through this server — so it is
+            // hybrid for two reasons rather than the paste field's one.
+            "background-remover",
             "ai-image-detector",
             "ai-text-detector",
             "watermark-remover",

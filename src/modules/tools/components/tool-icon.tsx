@@ -1,6 +1,7 @@
 import {
     IconServer2,
     IconArrowsMinimize,
+    IconBackground,
     IconBinary,
     IconBlur,
     IconBraces,
@@ -66,6 +67,7 @@ const ICONS: Record<ToolIconName, ComponentType<IconProps>> = {
     photo: IconPhotoScan,
     scan: IconTextScan2,
     eraser: IconEraser,
+    background: IconBackground,
     compress: IconArrowsMinimize,
     crop: IconCrop,
     transform: IconTransform,
