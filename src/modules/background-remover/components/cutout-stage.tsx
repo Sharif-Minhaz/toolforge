@@ -120,6 +120,12 @@ export function CutoutStage({
                                 <p className="text-center text-[0.6875rem] leading-normal text-white/85 tabular-nums">
                                     {formatter.number(progress.ratio, { style: "percent" })}
                                 </p>
+
+                                {progress.phase === "download" && (
+                                    <p className="text-center text-[0.6875rem] leading-normal text-white/70">
+                                        {t("downloadingOnce")}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     )}

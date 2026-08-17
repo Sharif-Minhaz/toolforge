@@ -5,7 +5,7 @@ import {
     blurredBackgroundRect,
     coverRect,
     overscanRect,
-    segmentationSize,
+    scaleFactor,
 } from "../domain/compose-geometry";
 import { BLUR_OVERSCAN_FACTOR, MAX_BLUR_SHARE } from "../domain/constants";
 
@@ -167,33 +167,41 @@ describe("blurredBackgroundRect", () => {
     });
 });
 
-describe("segmentationSize", () => {
-    test("leaves a picture that already fits completely alone", () => {
+/**
+ * There is deliberately no `segmentationSize` here any more. It was a second
+ * copy of `fitWithinEdge` in `tools/domain/pixels.ts`, which already had its own
+ * tests — `CLAUDE.md` rule 40, step one: search before writing.
+ */
+describe("scaleFactor", () => {
+    test("is one when nothing was scaled", () => {
         const size = { width: 800, height: 600 };
 
-        expect(segmentationSize(size, 2048)).toBe(size);
+        expect(scaleFactor(size, size)).toBe(1);
     });
 
-    test("caps the longer side and keeps the aspect ratio", () => {
-        const capped = segmentationSize({ width: 6000, height: 4000 }, 2048);
-
-        expect(capped.width).toBe(2048);
-        expect(capped.height).toBe(1365);
+    test("reports the ratio of the long edges", () => {
+        expect(scaleFactor({ width: 4000, height: 3000 }, { width: 1000, height: 750 })).toBe(0.25);
     });
 
-    test("caps a portrait by its height", () => {
-        const capped = segmentationSize({ width: 3000, height: 6000 }, 1200);
-
-        expect(capped.height).toBe(1200);
-        expect(capped.width).toBe(600);
+    test("reads a portrait by its height, which is its long edge", () => {
+        expect(scaleFactor({ width: 600, height: 2400 }, { width: 150, height: 600 })).toBe(0.25);
     });
 
-    test("never rounds a side down to zero", () => {
-        // A canvas with a zero side throws rather than degrading, so a strip
-        // this extreme has to come back as one pixel tall.
-        const capped = segmentationSize({ width: 8000, height: 2 }, 1024);
+    test("a degenerate source scales by one rather than dividing by zero", () => {
+        // Feeds a blur radius; a NaN here would reach `ctx.filter` and silently
+        // paint nothing at all.
+        expect(scaleFactor({ width: 0, height: 0 }, { width: 10, height: 10 })).toBe(1);
+    });
 
-        expect(capped.width).toBe(1024);
-        expect(capped.height).toBeGreaterThanOrEqual(1);
+    test("scaling a blur radius by it keeps the apparent strength", () => {
+        // The property the small-canvas blur depends on: a quarter-size canvas
+        // needs a quarter-size radius to look the same once scaled back up.
+        const full = { width: 4000, height: 3000 };
+        const small = { width: 900, height: 675 };
+
+        expect(blurRadiusPx(full, 60) * scaleFactor(full, small)).toBeCloseTo(
+            blurRadiusPx(small, 60),
+            0,
+        );
     });
 });

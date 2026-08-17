@@ -6,17 +6,16 @@ import { useFormatter, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
+import type { PixelSize } from "@/modules/tools/types";
 
 import { keepsAlpha } from "../domain/filenames";
-import {
-    COMPOSITE_FORMATS,
-    type BackgroundChoice,
-    type CompositeFormat,
-    type SourceImageFacts,
-} from "../types";
+import { COMPOSITE_FORMATS, type BackgroundChoice, type CompositeFormat } from "../types";
 
 type CompositeActionsProps = {
-    readonly facts: SourceImageFacts;
+    /** What the file is, not what was dropped in. */
+    readonly size: PixelSize;
+    /** What was dropped in, so the panel can say when the two differ. */
+    readonly sourceSize: PixelSize;
     readonly resultBytes: number;
     readonly background: BackgroundChoice;
     readonly format: CompositeFormat;
@@ -36,7 +35,8 @@ type CompositeActionsProps = {
  * on rather than a control they cannot press and are left to guess about.
  */
 export function CompositeActions({
-    facts,
+    size,
+    sourceSize,
     resultBytes,
     background,
     format,
@@ -49,6 +49,7 @@ export function CompositeActions({
     const byteLabel = useByteLabel();
 
     const losesTransparency = background.kind === "transparent" && !keepsAlpha(format);
+    const scaledDown = size.width < sourceSize.width || size.height < sourceSize.height;
 
     return (
         <div className="flex min-w-0 flex-col gap-3">
@@ -59,8 +60,8 @@ export function CompositeActions({
                     </dt>
                     <dd className="font-mono text-sm tabular-nums">
                         {t("pixels", {
-                            width: formatter.number(facts.width),
-                            height: formatter.number(facts.height),
+                            width: formatter.number(size.width),
+                            height: formatter.number(size.height),
                         })}
                     </dd>
                 </div>
@@ -127,6 +128,18 @@ export function CompositeActions({
              * to whoever is deciding whether the photograph may be used — and one
              * credit in the right place beats two in two.
              */}
+            {scaledDown && (
+                // Said here rather than only in the article: the reader is about
+                // to press Download, and a file that is not the size they dropped
+                // in is something they must learn now, not from its properties.
+                <p className="text-muted-foreground max-w-[68ch] text-[0.6875rem] leading-normal">
+                    {t("scaledNote", {
+                        width: formatter.number(sourceSize.width),
+                        height: formatter.number(sourceSize.height),
+                    })}
+                </p>
+            )}
+
             <p className="text-muted-foreground max-w-[68ch] text-[0.8125rem] leading-6">
                 {t("note")}
             </p>

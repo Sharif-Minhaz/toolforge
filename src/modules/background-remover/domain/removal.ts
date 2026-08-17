@@ -60,6 +60,45 @@ export function readProgress(key: string, current: number, total: number): Cutou
     return null;
 }
 
+/**
+ * How long the assets have to be arriving before the reader is told they are
+ * downloading.
+ *
+ * The library reports `fetch:` progress whether the bytes come from the network
+ * or straight back out of the browser cache, and it cannot tell the difference
+ * either. So "Fetching the model…" appeared on **every** run, including the ones
+ * where the model was already there and the whole load was over in a blink —
+ * which reads as the page doing pointless work every time.
+ *
+ * Elapsed time is the signal that actually separates the two. A cached read
+ * finishes far inside this; a hundred megabytes over a real connection does not.
+ * Picked well above a cache read and well below any genuine download, so neither
+ * case is a close call.
+ */
+export const DOWNLOAD_LABEL_DELAY_MS = 700;
+
+/**
+ * Which phase to *show*, as opposed to which one the library reported.
+ *
+ * Kept apart from `readProgress` on purpose: that function's job is to say
+ * faithfully what the library said, and this one's is to decide what is worth
+ * telling the reader. Folding them together would mean the raw signal is no
+ * longer available to the log, and a threshold would be buried in a parser.
+ *
+ * Computing is always reported as computing — only the download label waits.
+ */
+export function resolveProgressPhase(
+    reported: ProgressPhase,
+    elapsedMs: number,
+    thresholdMs = DOWNLOAD_LABEL_DELAY_MS,
+): ProgressPhase {
+    if (reported === "compute") {
+        return "compute";
+    }
+
+    return elapsedMs >= thresholdMs ? "download" : "compute";
+}
+
 function clampRatio(value: number): number {
     if (!Number.isFinite(value)) {
         return 0;

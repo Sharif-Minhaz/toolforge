@@ -133,13 +133,56 @@ export const DEFAULT_BACKGROUND_COLOR = "#ffffff";
 /**
  * Ceiling on the longer side of the picture the model is handed.
  *
- * The cut-out is computed at this size and the resulting alpha is scaled back up
- * over the full-resolution original, so a 6000 px photograph still downloads at
- * 6000 px — what is capped is the segmentation, not the output. Past roughly this
- * the model's own 1024 px input means the extra pixels are thrown away before
- * inference anyway, and all they cost is the memory that kills the tab.
+ * **1024, because that is the model's own input size.** IMG.LY resizes whatever
+ * it is given to 1024 × 1024 before inference and scales the mask back
+ * afterwards — and both of those resizes are a bilinear loop *in JavaScript, on
+ * the main thread*, four `ndarray.get()` calls per pixel per channel. Handing it
+ * a 2048-wide copy therefore bought exactly nothing at the boundary, because the
+ * mask is computed at 1024 either way, and cost about six times the main-thread
+ * work to scale a mask back up to a size this page immediately scales again.
+ *
+ * The downsample to 1024 now happens once, on the GPU, in `toSegmentationInput`.
+ * That is both faster and a better filter than the loop it replaces.
  */
-export const MAX_SEGMENTATION_SIDE = 2048;
+export const MAX_SEGMENTATION_SIDE = 1024;
+
+/**
+ * Ceiling on the longer side of the finished picture.
+ *
+ * Four bytes a pixel, and a composite needs **two** canvases live at once — the
+ * subject with its alpha applied, and the frame it is drawn onto. At a
+ * twelve-megapixel source that is 48 MB each, on top of the decoded original,
+ * on top of a WebAssembly heap holding a model, times up to five open slots.
+ * That is not a slow page; it is the tab being killed, and it took a reader's
+ * whole machine down with it once.
+ *
+ * 2560 is deliberately generous — larger than any screen this is likely to be
+ * shown on, and larger than every marketplace and print-on-demand upload limit
+ * worth naming. It also costs less than it looks: the alpha channel is computed
+ * at 1024 whatever happens, so the *edge* of the cut-out has no more detail at
+ * 6000 px than it does here. What a bigger number would buy is a bigger file,
+ * not a better cut-out.
+ *
+ * A picture that is already smaller is never scaled up, and the result panel
+ * says so whenever a picture was scaled down.
+ */
+export const MAX_COMPOSITE_SIDE = 2560;
+
+/**
+ * Ceiling on the longer side of the canvas a blurred background is drawn on
+ * before being scaled up to the frame.
+ *
+ * `ctx.filter = "blur(150px)"` across several megapixels is one of the most
+ * expensive things a 2D canvas can be asked to do, and it is pure main-thread
+ * time — seconds of it, with the tab unresponsive throughout.
+ *
+ * It is also completely unnecessary. A blur *is* the destruction of fine detail:
+ * blurring a quarter-size copy and scaling it back up is visually
+ * indistinguishable from blurring at full size, because there is nothing left in
+ * the result that a quarter-size copy could not carry. The radius is scaled with
+ * the canvas so the strength stays the same.
+ */
+export const MAX_BLUR_RENDER_SIDE = 900;
 
 /** How many stock photographs one search page holds. Eight rows of three. */
 export const PHOTO_PAGE_SIZE = 24;

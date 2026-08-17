@@ -21,26 +21,73 @@ the **subject's own pixels** come back smaller. There is no setting that avoids
 the trade.
 
 The mask does not have that problem, because **the model computes it at its own
-fixed input size whatever you give it.** Segmenting a 2048 px copy of a 6000 px
-photograph loses nothing that was ever going to be computed, and a mask is a
-smooth, low-frequency image — scaling it back up is what bilinear filtering is
-genuinely good at.
+fixed 1024 × 1024 input whatever you give it.** Segmenting a scaled-down copy
+loses nothing that was ever going to be computed, and a mask is a smooth,
+low-frequency image — scaling it back up is what bilinear filtering is genuinely
+good at.
 
-So: segment small, composite full-size, and apply the mask with one
-`destination-in` draw rather than a loop over several million pixels.
+So: segment small, composite large, and apply the mask with one `destination-in`
+draw rather than a loop over several million pixels.
 
 ```
-source (6000 px) ──┬── scaled to 2048 ── model ── mask (2048)
+source (6000 px) ──┬── scaled to 1024 ── model ── mask (1024)
                    │                                  │
-                   └───────── drawImage ──────────── destination-in ──► cut-out at 6000 px
+                   └───────── drawImage ──────────── destination-in ──► cut-out at 2560 px
 ```
 
-`toSegmentationInput` and `applyMask` in `domain/canvas.ts`; the arithmetic is
-`segmentationSize` in `domain/compose-geometry.ts` and is unit-tested.
+**Segment at exactly the model's input size, not above it.** This started at
+2048 and that was waste, because both of IMG.LY's resizes — down to 1024 × 1024
+before inference, and back up afterwards — are bilinear loops *in JavaScript on
+the main thread*, four `ndarray.get()` calls per pixel per channel. A 2048-wide
+copy bought nothing at the boundary and cost roughly six times the main-thread
+work to produce a mask this page immediately rescales again. The downsample now
+happens once on the GPU, which is both faster and a better filter.
+
+`toSegmentationInput` and `composeResult` in `domain/canvas.ts`. The fit
+arithmetic is `fitWithinEdge` in `tools/domain/pixels.ts` — this module had its
+own copy of it for a while, which is rule 40 step one going unread.
 
 This is the same rule the Watermark Remover's case study states as **"send the
 smallest thing that answers the question"** — applied with no network anywhere in
 the path.
+
+## A canvas is not freed when you drop it
+
+The worst defect this tool shipped. A reader on a 3–4 MB photograph got a frozen
+tab for several seconds, then a crashed browser — and twice, a crashed laptop
+that logged them out.
+
+Three compounding causes, all memory:
+
+- **Nothing bounded the composite.** It was written at the source's own size, so
+  a twelve-megapixel photograph meant two canvases at **48 MB each** — the subject
+  with its alpha, and the frame it is drawn onto — on top of the decoded
+  original, on top of a WebAssembly heap holding an 84 MB model, times up to five
+  open slots. `MAX_COMPOSITE_SIDE` is the fix, and it costs almost nothing real:
+  the alpha channel is computed at 1024 whatever happens, so the cut-out *edge*
+  has no more detail at 6000 px than at 2560.
+- **Dropping the last reference to a canvas does not free it.** It makes it
+  *collectable*. One canvas is allocated per redraw — which is one per step of a
+  slider drag — so a dozen can be queued for a collector that has not run.
+  `releaseCanvas` sets `width = height = 0`, which hands the backing store back
+  immediately, and every canvas in this module now goes through it.
+- **`ctx.filter` with a large radius across megapixels is seconds of main-thread
+  time.** See below.
+
+**Say what the ceiling did.** The result panel names the source's dimensions
+whenever the output is smaller, because somebody about to press Download should
+not learn that from the file's properties afterwards.
+
+## Blur small, scale up
+
+A blur *is* the destruction of fine detail. There is nothing in the result that a
+quarter-size canvas could not carry — so blurring at `MAX_BLUR_RENDER_SIDE` and
+letting `drawImage` scale it back is visually the same picture for a fraction of
+the work, and it is the difference between an unnoticed redraw and a frozen tab.
+
+The radius scales by the same factor (`scaleFactor` in `compose-geometry.ts`), or
+the effect gets weaker as the picture gets bigger — which is the bug this
+otherwise-free optimisation invites.
 
 ## A blur at the edge of a canvas samples nothing
 

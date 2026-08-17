@@ -1,8 +1,20 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 
-import { CUTOUT_MODELS, RUNTIME_WASM_BYTES } from "../domain/constants";
-import { classifyRemovalError, firstRunBytes, readProgress } from "../domain/removal";
+import {
+    CUTOUT_MODELS,
+    MAX_BLUR_RENDER_SIDE,
+    MAX_COMPOSITE_SIDE,
+    MAX_SEGMENTATION_SIDE,
+    RUNTIME_WASM_BYTES,
+} from "../domain/constants";
+import {
+    classifyRemovalError,
+    DOWNLOAD_LABEL_DELAY_MS,
+    firstRunBytes,
+    readProgress,
+    resolveProgressPhase,
+} from "../domain/removal";
 import { CUTOUT_QUALITIES } from "../types";
 
 /** The shipped bundle, which is the only honest source for the two blocks below. */
@@ -37,6 +49,37 @@ describe("readProgress", () => {
     });
 });
 
+describe("resolveProgressPhase", () => {
+    test("a cache read is never announced as a download", () => {
+        // The library reports `fetch:` whether the bytes come off the network or
+        // straight back out of the browser cache — it cannot tell either. On
+        // every run after the first the whole load is over in a blink, and
+        // "Fetching the model…" there reads as pointless work being repeated.
+        expect(resolveProgressPhase("download", 40)).toBe("compute");
+        expect(resolveProgressPhase("download", DOWNLOAD_LABEL_DELAY_MS - 1)).toBe("compute");
+    });
+
+    test("a real download is announced once it has taken long enough to be one", () => {
+        expect(resolveProgressPhase("download", DOWNLOAD_LABEL_DELAY_MS)).toBe("download");
+        expect(resolveProgressPhase("download", 30_000)).toBe("download");
+    });
+
+    test("computing is always computing, whatever the clock says", () => {
+        expect(resolveProgressPhase("compute", 0)).toBe("compute");
+        expect(resolveProgressPhase("compute", 60_000)).toBe("compute");
+    });
+
+    test("takes its threshold as a parameter, so the test does not wait for one", () => {
+        expect(resolveProgressPhase("download", 10, 5)).toBe("download");
+        expect(resolveProgressPhase("download", 4, 5)).toBe("compute");
+    });
+
+    test("the threshold clears a cache read and falls short of any real download", () => {
+        expect(DOWNLOAD_LABEL_DELAY_MS).toBeGreaterThan(200);
+        expect(DOWNLOAD_LABEL_DELAY_MS).toBeLessThan(3_000);
+    });
+});
+
 describe("CUTOUT_MODELS", () => {
     test("every quality names a distinct weight set", () => {
         const models = CUTOUT_QUALITIES.map((quality) => CUTOUT_MODELS[quality].model);
@@ -61,6 +104,40 @@ describe("CUTOUT_MODELS", () => {
 
     test("the GPU runtime is the larger of the two builds", () => {
         expect(RUNTIME_WASM_BYTES.gpu).toBeGreaterThan(RUNTIME_WASM_BYTES.cpu);
+    });
+});
+
+describe("the size ceilings", () => {
+    test("segmentation runs at the model's own input size, and no larger", () => {
+        // Anything above 1024 is scaled to 1024 × 1024 by the library before
+        // inference — in a JavaScript bilinear loop on the main thread — and the
+        // mask is scaled back the same way. Feeding it more bought nothing at
+        // the boundary and cost several times the main-thread work.
+        expect(MAX_SEGMENTATION_SIDE).toBe(1024);
+    });
+
+    test("the composite ceiling is well above the segmentation one", () => {
+        // The subject's own pixels come from the original, not from the
+        // segmentation copy, so the output is allowed to be much larger than the
+        // mask that shaped it.
+        expect(MAX_COMPOSITE_SIDE).toBeGreaterThan(MAX_SEGMENTATION_SIDE);
+    });
+
+    test("the blur canvas is far smaller than the composite it is scaled onto", () => {
+        // A blur destroys the detail a bigger canvas would carry, so rendering
+        // it small and scaling up is free. If these ever converged, the saving
+        // would be gone and the tab would freeze again.
+        expect(MAX_BLUR_RENDER_SIDE).toBeLessThan(MAX_COMPOSITE_SIDE / 2);
+    });
+
+    test("two composite canvases stay inside a sane memory budget", () => {
+        // Four bytes a pixel, two canvases live at once, up to five open slots.
+        // This is the arithmetic that took a reader's machine down when the
+        // ceiling did not exist; keep it honest.
+        const pixels = MAX_COMPOSITE_SIDE * MAX_COMPOSITE_SIDE;
+        const bytesPerComposite = pixels * 4 * 2;
+
+        expect(bytesPerComposite).toBeLessThan(64 * 1024 * 1024);
     });
 });
 

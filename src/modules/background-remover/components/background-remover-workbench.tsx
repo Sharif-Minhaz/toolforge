@@ -17,6 +17,7 @@ import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
 import { loadImageElement } from "@/modules/tools/domain/image-element";
 import { checkImageFile, normalizeImageType } from "@/modules/tools/domain/image-file";
+import type { PixelSize } from "@/modules/tools/types";
 
 import {
     isSameBackground,
@@ -24,7 +25,7 @@ import {
     tabForBackground,
     TRANSPARENT_BACKGROUND,
 } from "../domain/background";
-import { applyMask, composeResult, loadCorsImage, toSegmentationInput } from "../domain/canvas";
+import { composeResult, compositeSize, loadCorsImage, toSegmentationInput } from "../domain/canvas";
 import {
     CUTOUT_MODELS,
     IMAGE_ACCEPT_ATTRIBUTE,
@@ -34,7 +35,12 @@ import {
     RUNTIME_WASM_BYTES,
 } from "../domain/constants";
 import { buildCompositeFilename, defaultCompositeFormat, keepsAlpha } from "../domain/filenames";
-import { computeAlphaMask, firstRunBytes, type CutoutProgress } from "../domain/removal";
+import {
+    computeAlphaMask,
+    firstRunBytes,
+    resolveProgressPhase,
+    type CutoutProgress,
+} from "../domain/removal";
 import { nextSelectionAfterRemoval, planIntake, sheetId } from "../domain/sheets";
 import {
     CUTOUT_QUALITIES,
@@ -66,6 +72,18 @@ type Sheet = {
     readonly element: HTMLImageElement;
     readonly facts: SourceImageFacts;
     readonly working: boolean;
+    /**
+     * True while the composite is being redrawn for a background or format the
+     * reader has just chosen.
+     *
+     * Separate from `working`, which is the *model* running. This one exists so
+     * the "made with different settings" warning can tell the two situations
+     * apart: a composite that no longer matches the controls **and nothing is
+     * doing anything about it** is worth a warning, and one that is mid-redraw
+     * is not. Without it the warning flashed on every swatch press, which trains
+     * the reader to ignore it by the time it means something.
+     */
+    readonly composing: boolean;
     readonly failure: CutoutFailureReason | null;
     readonly progress: CutoutProgress | null;
     /** The model's alpha channel, decoded. `null` until the cut-out has run. */
@@ -81,6 +99,13 @@ type Sheet = {
         /** What it was made under, so staleness is derived rather than stored. */
         readonly background: BackgroundChoice;
         readonly format: CompositeFormat;
+        /**
+         * What it was actually written at, which is the source's size only while
+         * that fits under `MAX_COMPOSITE_SIDE`. Carried rather than recomputed so
+         * the panel reports the file the reader has, not the one they would get
+         * from today's ceiling.
+         */
+        readonly size: PixelSize;
     } | null;
 };
 
@@ -121,6 +146,12 @@ export function BackgroundRemoverWorkbench({
      * `docs/hydration-and-platform-pitfalls.md` opens with.
      */
     const sequence = useRef(0);
+
+    /**
+     * The latest redraw ticket per slot, so an out-of-order one cannot publish a
+     * stale composite or clear a spinner it no longer owns. See `composeInto`.
+     */
+    const composeTickets = useRef(new Map<string, number>());
 
     /**
      * Object URLs this component created and has not handed to a slot yet — the
@@ -172,6 +203,13 @@ export function BackgroundRemoverWorkbench({
      */
     const stale =
         selected?.composite != null &&
+        // Not while a redraw is in flight. The mismatch is real for those few
+        // hundred milliseconds, but "press Remove background again" is the wrong
+        // advice when the thing is already being fixed — and a warning that
+        // flashes on every swatch press is one the reader learns to ignore by
+        // the time it means something.
+        !selected.composing &&
+        !selected.working &&
         (!isSameBackground(selected.composite.background, selected.background) ||
             selected.composite.format !== selected.format);
 
@@ -249,6 +287,7 @@ export function BackgroundRemoverWorkbench({
                         height: element.naturalHeight,
                     },
                     working: false,
+                    composing: false,
                     failure: null,
                     progress: null,
                     mask: null,
@@ -313,12 +352,22 @@ export function BackgroundRemoverWorkbench({
      * queue records, arrived at from the other direction.
      */
     async function handleRemoveBackground(sheet: Sheet) {
+        // Opens on "computing", not "downloading". Asserting a download before
+        // anything has happened is a guess, and it is the wrong one every time
+        // the model is already cached — which is every run after the first.
+        // `resolveProgressPhase` promotes it to a download only once the load
+        // has been slow enough to be one.
         patchSheet(sheet.id, (current) => ({
             ...current,
             working: true,
             failure: null,
-            progress: { phase: "download", ratio: 0 },
+            progress: { phase: "compute", ratio: 0 },
         }));
+
+        // `performance.now()` rather than the clock: monotonic, so a system
+        // clock adjustment mid-download cannot make the label flicker. Read in a
+        // handler rather than during render, so it is not a hydration hazard.
+        const startedAt = performance.now();
 
         try {
             const input = await toSegmentationInput(sheet.element, sheet.facts);
@@ -330,7 +379,13 @@ export function BackgroundRemoverWorkbench({
             }
 
             const result = await computeAlphaMask(input, quality, (progress) =>
-                patchSheet(sheet.id, (current) => ({ ...current, progress })),
+                patchSheet(sheet.id, (current) => ({
+                    ...current,
+                    progress: {
+                        ...progress,
+                        phase: resolveProgressPhase(progress.phase, performance.now() - startedAt),
+                    },
+                })),
             );
 
             if (!result.ok) {
@@ -372,7 +427,12 @@ export function BackgroundRemoverWorkbench({
     }
 
     function fail(id: string, reason: CutoutFailureReason) {
-        patchSheet(id, (current) => ({ ...current, failure: reason, progress: null }));
+        patchSheet(id, (current) => ({
+            ...current,
+            failure: reason,
+            progress: null,
+            composing: false,
+        }));
         toast.error(describeFailure(reason));
     }
 
@@ -380,8 +440,12 @@ export function BackgroundRemoverWorkbench({
      * Redraws one slot's composite.
      *
      * The mask is already in hand, so this never touches the model — changing a
-     * background is a canvas redraw measured in milliseconds, which is why the
-     * pickers apply immediately instead of behind an "apply" button.
+     * background is a canvas redraw, which is why the pickers apply immediately
+     * instead of behind an "apply" button.
+     *
+     * "A redraw" is not always fast, though: a stock background has to be
+     * fetched from Pexels' CDN first, which is where the flash of the stale
+     * warning came from and why `composing` exists.
      */
     async function composeInto(
         id: string,
@@ -393,8 +457,31 @@ export function BackgroundRemoverWorkbench({
             return;
         }
 
+        /**
+         * A per-slot ticket, taken before the first await.
+         *
+         * Dragging the blur slider starts a redraw per step, and they finish out
+         * of order — so a run that has been superseded must neither publish its
+         * result nor clear `composing`, or the newer one's spinner disappears
+         * while it is still going and the warning flashes again. Only the latest
+         * ticket for a slot may touch its state.
+         */
+        const ticket = (composeTickets.current.get(id) ?? 0) + 1;
+
+        composeTickets.current.set(id, ticket);
+
+        const superseded = () => composeTickets.current.get(id) !== ticket;
+
+        // The failure is cleared here rather than on success: starting a fresh
+        // redraw is what makes a previous one's complaint no longer true.
+        patchSheet(id, (current) => ({ ...current, composing: true, failure: null }));
+
         const backgroundImage =
             background.kind === "image" ? await loadCorsImage(background.url) : null;
+
+        if (superseded()) {
+            return;
+        }
 
         if (background.kind === "image" && backgroundImage === null) {
             fail(id, "compose_failed");
@@ -402,22 +489,23 @@ export function BackgroundRemoverWorkbench({
             return;
         }
 
-        const cutout = applyMask(sheet.element, sheet.mask, sheet.facts);
-
-        if (cutout === null) {
-            fail(id, "compose_failed");
-
-            return;
-        }
+        // Capped, and this is the change that stopped a twelve-megapixel
+        // photograph taking the tab — and once a whole machine — down with it.
+        // Two canvases live at four bytes a pixel, times up to five open slots.
+        const size = compositeSize(sheet.facts);
 
         const blob = await composeResult({
             source: sheet.element,
-            size: sheet.facts,
-            cutout,
+            size,
+            mask: sheet.mask,
             background,
             backgroundImage,
             format,
         });
+
+        if (superseded()) {
+            return;
+        }
 
         if (blob === null) {
             logEvent("error", "background_remover.compose_failed");
@@ -438,7 +526,12 @@ export function BackgroundRemoverWorkbench({
                 URL.revokeObjectURL(current.composite.url);
             }
 
-            return { ...current, failure: null, composite: { url, blob, background, format } };
+            return {
+                ...current,
+                failure: null,
+                composing: false,
+                composite: { url, blob, background, format, size },
+            };
         });
     }
 
@@ -531,6 +624,12 @@ export function BackgroundRemoverWorkbench({
             };
         }
 
+        // Before the failure branch, because starting a redraw clears the
+        // previous one's complaint — a spinner is the true state here.
+        if (selected.composing) {
+            return { tone: "pending", message: t("updating") };
+        }
+
         if (selected.failure !== null) {
             return { tone: "error", message: describeFailure(selected.failure) };
         }
@@ -548,13 +647,14 @@ export function BackgroundRemoverWorkbench({
         id: sheet.id,
         name: sheet.facts.name,
         thumbnailUrl: sheet.composite?.url ?? sheet.sourceUrl,
-        state: sheet.working
-            ? "working"
-            : sheet.failure !== null
-              ? "failed"
-              : sheet.mask !== null
-                ? "ready"
-                : "idle",
+        state:
+            sheet.working || sheet.composing
+                ? "working"
+                : sheet.failure !== null
+                  ? "failed"
+                  : sheet.mask !== null
+                    ? "ready"
+                    : "idle",
     }));
 
     const status = describeStatus();
@@ -745,7 +845,11 @@ export function BackgroundRemoverWorkbench({
 
                             {selected.composite !== null && (
                                 <CompositeActions
-                                    facts={selected.facts}
+                                    // The size it was written at, not the source's
+                                    // — those differ whenever the cap bit, and the
+                                    // panel must describe the file the reader has.
+                                    size={selected.composite.size}
+                                    sourceSize={selected.facts}
                                     resultBytes={selected.composite.blob.size}
                                     background={selected.composite.background}
                                     format={selected.format}

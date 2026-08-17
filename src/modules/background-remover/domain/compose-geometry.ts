@@ -125,24 +125,14 @@ export function blurredBackgroundRect(
 }
 
 /**
- * The size the segmentation runs at, with the aspect ratio kept.
+ * How much a picture had to shrink to fit a ceiling, as a ratio of its long edge.
  *
- * Returns the size unchanged when it already fits, so the common case — anything
- * off a phone that has been through this site's resizer — is not resampled for no
- * reason. Never returns a zero side: a 4000×1 strip capped at 2048 would round
- * its height to nothing, and a zero-height canvas throws rather than degrading.
+ * `1` means it did not. Used to scale a blur radius alongside the canvas it is
+ * drawn on, so rendering the blurred background small and scaling it up keeps
+ * the *same* apparent strength rather than a quarter of it.
  */
-export function segmentationSize(size: PixelSize, maxSide: number): PixelSize {
-    const longest = Math.max(size.width, size.height);
+export function scaleFactor(from: PixelSize, to: PixelSize): number {
+    const longest = Math.max(from.width, from.height);
 
-    if (longest <= maxSide || longest <= 0) {
-        return size;
-    }
-
-    const scale = maxSide / longest;
-
-    return {
-        width: Math.max(1, Math.round(size.width * scale)),
-        height: Math.max(1, Math.round(size.height * scale)),
-    };
+    return longest > 0 ? Math.max(to.width, to.height) / longest : 1;
 }

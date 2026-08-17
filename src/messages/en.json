@@ -7581,7 +7581,9 @@
             "cutoutReady": "Cut out. Pick a background below, or download it as it is.",
             "resultStale": "The picture below was made with different settings. Press Remove background again, or change a background to redraw it.",
             "downloadingModel": "Fetching the model…",
+            "downloadingOnce": "First time only — cached after this.",
             "computing": "Cutting the subject out…",
+            "updating": "Applying the background…",
             "remove": "Remove background",
             "removeAgain": "Cut out again",
             "working": "Working…",
@@ -7674,6 +7676,7 @@
         "result": {
             "dimensions": "Dimensions",
             "pixels": "{width} × {height} px",
+            "scaledNote": "Scaled down from {width} × {height} px so the composite fits in a browser tab — the cut-out edge is computed at the model's own resolution either way, so no detail is lost at the boundary.",
             "size": "Download size",
             "format": "Download as",
             "formatHint": "PNG keeps transparency and is lossless. WebP keeps transparency and is smaller. JPEG is smaller still and has no transparency.",
@@ -7685,7 +7688,7 @@
             "alphaWarning": "JPEG has no transparency, so the cut-out will be flattened onto white. Choose PNG or WebP to keep it transparent.",
             "download": "Download",
             "credit": "Background photograph by <photographer>{name}</photographer> on <source>Pexels</source>.",
-            "note": "The result is at the original pixel dimensions. The subject keeps every pixel it arrived with — only its edge is computed at the model's own resolution."
+            "note": "The subject keeps the detail it arrived with, and its edge is computed at the model's own resolution. Very large pictures are written at up to 2,560 px on the long edge, which is where two full-size canvases stop fitting in a browser tab."
         },
         "errors": {
             "empty_file": "That file is empty.",
@@ -7720,7 +7723,7 @@
             "howItWorks": {
                 "title": "How the cut-out is made",
                 "p1": "The model is a salient-object segmentation network. It does not know what a person is; it predicts, for every pixel, how likely that pixel is to belong to whatever the picture is about. The output is not a shape but an alpha channel — a greyscale image the same size as the input, where white is definitely subject, black is definitely background, and everything in between is the soft edge that makes hair and fur look right.",
-                "p2": "That alpha channel is what this page asks for, rather than a finished cut-out. The reason is resolution. The model works at its own fixed input size whatever you give it, so segmenting a scaled-down copy of a twelve-megapixel photograph loses nothing — the mask would have been computed at that size either way. Handing back the full-resolution original with that mask applied means the subject keeps every pixel it arrived with.",
+                "p2": "That alpha channel is what this page asks for, rather than a finished cut-out. The reason is resolution. The model works at its own fixed input size whatever you give it, so segmenting a scaled-down copy of a twelve-megapixel photograph loses nothing — the mask would have been computed at that size either way. Applying that mask to the original rather than to the copy is what keeps the subject sharp: only the boundary comes from the model, and everything inside it is the picture you started with.",
                 "p3": "The mask is then scaled up over the original with the browser's own bilinear filter and applied with a single composite operation, <code>destination-in</code>, which multiplies the picture's alpha by the mask's. That is one hardware-accelerated draw rather than a loop over several million pixels in JavaScript.",
                 "p4": "Where a WebGPU adapter is available the model runs on the graphics card, which is usually the difference between a couple of seconds and twenty. Where it is not, the same weights run through WebAssembly on the processor. You are not asked to choose: the library probes for an adapter and falls back on its own.",
                 "p5": "None of this is a service call. There is no queue, no per-image cost and no upload — which also means the speed is your machine's, not a server's, and a slower laptop will take longer than a fast one on the same picture."
@@ -7822,7 +7825,7 @@
                 "p1": "The model finds the salient object. If a photograph has two equally prominent subjects, or none, its guess about which one you meant may not be yours — and there is no brush here to correct it. A picture with one clear subject is what this is good at.",
                 "p2": "Glass, smoke, water and motion blur are hard for every segmentation model, this one included. Semi-transparent regions come back either fully kept or fully cut, because the network was trained on a task where that distinction mostly does not arise.",
                 "p3": "Very fine hair against a background of a similar colour is the classic failure. Best helps; it does not fix it. Where the result matters more than the minute, a manual mask in a proper editor is still the honest answer.",
-                "p4": "A picture over twenty megabytes is refused, and anything over two thousand and forty-eight pixels on its longer side is scaled down before segmentation — never before output. The subject you download is at the size you dropped in."
+                "p4": "A picture over twenty megabytes is refused, and the finished composite is written at up to 2,560 px on its long edge. That ceiling is about memory rather than taste: a composite needs two canvases live at once, four bytes a pixel each, on top of the decoded original and a WebAssembly heap holding the model — and at twelve megapixels, times five open slots, that is a browser tab being killed rather than a slow page. It costs less than it sounds, because the alpha channel is computed at 1,024 px whatever happens, so the cut-out edge has no more detail at 6,000 px than it does at 2,560. The panel says so whenever a picture was scaled."
             },
             "privacy": {
                 "title": "What leaves your browser",
