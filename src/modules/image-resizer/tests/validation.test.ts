@@ -71,6 +71,14 @@ describe("resizeSearchParamsSchema", () => {
         expect(parsed.quality).toBeUndefined();
     });
 
+    test("reads a zoom, and drops one outside the slider's own range", () => {
+        expect(resizeSearchParamsSchema.parse({ zoom: "160" }).zoom).toBe(160);
+        // Left undefined rather than clamped: the page then opens on 100, which
+        // is the only zoom that is not a visible edit nobody asked for.
+        expect(resizeSearchParamsSchema.parse({ zoom: "5000" }).zoom).toBeUndefined();
+        expect(resizeSearchParamsSchema.parse({ zoom: "wide" }).zoom).toBeUndefined();
+    });
+
     test("survives a completely empty query", () => {
         expect(resizeSearchParamsSchema.parse({}).mode).toBeUndefined();
     });

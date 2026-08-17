@@ -5,17 +5,24 @@ import {
     IconCheck,
     IconCrop,
     IconDownload,
+    IconFlipHorizontal,
+    IconFlipVertical,
     IconFocusCentered,
     IconLink,
     IconLoader2,
     IconMaximize,
+    IconMinus,
     IconPhotoPlus,
+    IconPlus,
+    IconRefresh,
+    IconRotate,
+    IconRotateClockwise,
     IconTrash,
     IconUnlink,
     IconX,
 } from "@tabler/icons-react";
 import { useFormatter, useTranslations } from "next-intl";
-import { useEffect, useId, useRef, useState, type DragEvent } from "react";
+import { useEffect, useId, useRef, useState, type DragEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -51,8 +58,12 @@ import {
     MAX_PERCENTAGE,
     MAX_PIXELS,
     MAX_QUALITY,
+    MAX_ZOOM,
     MIN_PERCENTAGE,
     MIN_QUALITY,
+    MIN_ZOOM,
+    DEFAULT_ZOOM,
+    ZOOM_STEP,
 } from "../domain/constants";
 import { applyRatio, centeredCrop, fullCrop, isFullCrop } from "../domain/crop";
 import { densityApplies } from "../domain/density";
@@ -62,10 +73,20 @@ import {
     clampDpi,
     clampPercentage,
     clampQuality,
+    clampZoom,
     qualityApplies,
     resolveFormat,
     supportsAlpha,
 } from "../domain/options";
+import {
+    MAX_ANGLE,
+    MIN_ANGLE,
+    flipPixels,
+    normalizeAngle,
+    rotatePixels,
+    rotateQuarterTurns,
+    rotatedSize,
+} from "../domain/orient";
 import { copiesPixels, planRender } from "../domain/plan";
 import { findPreset, presetDpi } from "../domain/presets";
 import { pixelsToPreviewBlob, renderImage } from "../domain/render";
@@ -81,6 +102,7 @@ import {
     type BackgroundKind,
     type CropRect,
     type FitMode,
+    type FlipAxis,
     type LengthUnit,
     type OutputFormat,
     type ResizeFailureReason,
@@ -139,6 +161,43 @@ const BACKGROUND_LABEL_KEY = {
 
 const DPI_VALUES = DPI_PRESETS.map(String);
 
+/**
+ * A square, icon-only press — the rotate-and-flip row, and the two either side
+ * of the zoom slider.
+ *
+ * Icon-only so five of them fit on a phone under the picture, and so a slider in
+ * a 20 rem column keeps room to drag. That puts the whole meaning in the label,
+ * which is therefore given twice: as `aria-label` for anyone not looking at it,
+ * and as `title` for a pointer hovering a glyph it cannot read. Neither is
+ * optional here.
+ */
+function IconPress({
+    label,
+    disabled,
+    onClick,
+    children,
+    className,
+}: {
+    label: string;
+    disabled: boolean;
+    onClick: () => void;
+    children: ReactNode;
+    className?: string;
+}) {
+    return (
+        <Button
+            variant="outline"
+            aria-label={label}
+            title={label}
+            disabled={disabled}
+            onClick={onClick}
+            className={cn("size-8 shrink-0 p-0", className)}
+        >
+            {children}
+        </Button>
+    );
+}
+
 type ImageResizerWorkbenchProps = {
     /** Parsed from the search params on the server, so a shared link opens ready. */
     readonly initialOptions: ResizeOptions;
@@ -164,7 +223,11 @@ export function ImageResizerWorkbench({
     const percentId = useId();
     const qualityId = useId();
     const colorId = useId();
+    const zoomId = useId();
     const ratioTextId = useId();
+    const transformId = useId();
+    const angleId = useId();
+    const angleHintId = useId();
 
     const [loaded, setLoaded] = useState<Loaded | null>(null);
     const [crop, setCrop] = useState<CropRect>({ x: 0, y: 0, width: 1, height: 1 });
@@ -185,6 +248,11 @@ export function ImageResizerWorkbench({
     const [cropAnchor, setCropAnchor] = useState<CropRect>({ x: 0, y: 0, width: 1, height: 1 });
     const [aspect, setAspect] = useState<AspectPreset>("free");
     const [customRatio, setCustomRatio] = useState("");
+    /**
+     * The free-angle field, kept as text so a half-typed `-` or an empty box is
+     * a state the reader can be in rather than a zero that appeared under them.
+     */
+    const [angleText, setAngleText] = useState("");
     const [options, setOptions] = useState<ResizeOptions>(initialOptions);
     const [dragging, setDragging] = useState(false);
     const [working, setWorking] = useState(false);
@@ -249,6 +317,33 @@ export function ImageResizerWorkbench({
     // Cropping to the whole frame would replace the picture with itself, so
     // the button says so by going dead rather than by doing nothing.
     const cropChangesSomething = loaded !== null && !isFullCrop(crop, loaded.size);
+
+    /**
+     * What the free-angle field currently means, in four separate states rather
+     * than one boolean, because they call for four different sentences.
+     *
+     * An empty box is not an error — nothing has been asked for yet. A number
+     * past a full turn is. `360` is neither: it parses, it is in range, and it
+     * would hand back the picture unchanged, so the button goes dead the same
+     * way it does for a crop of the whole frame.
+     */
+    const typedAngle = angleText.trim() === "" ? null : Number(angleText);
+    const angleInRange =
+        typedAngle !== null &&
+        Number.isFinite(typedAngle) &&
+        typedAngle >= MIN_ANGLE &&
+        typedAngle <= MAX_ANGLE;
+    const angleInvalid = typedAngle !== null && !angleInRange;
+    const angleTurns = angleInRange && normalizeAngle(typedAngle) !== 0;
+    /**
+     * A free angle grows the canvas to fit the corners, so a 40 MP picture at
+     * 45° asks for 57 MP — past the ceiling the decoder itself enforces.
+     * Checked before the press rather than after, because "after" is the tab
+     * the reader was working in.
+     */
+    const angleOutput = angleTurns && loaded !== null ? rotatedSize(loaded.size, typedAngle) : null;
+    const angleTooLarge =
+        angleOutput !== null && angleOutput.width * angleOutput.height > MAX_PIXELS;
     /**
      * The settings panel is closed while the crop tool is open.
      *
@@ -272,6 +367,23 @@ export function ImageResizerWorkbench({
 
     function patch(next: Partial<ResizeOptions>) {
         setOptions((current) => ({ ...current, ...next }));
+    }
+
+    /**
+     * Steps the zoom, from the value in state rather than from the last press.
+     *
+     * Snapped onto the step grid first, so a 137% left behind by a drag walks to
+     * 140 and 135 rather than to 142 and 132 — a stepper that inherits an
+     * off-grid remainder never lands on a round number again. Snapped *towards*
+     * the press, so neither button ever moves more than one step.
+     */
+    function nudgeZoom(by: number) {
+        const grid =
+            by > 0
+                ? Math.floor(options.zoom / ZOOM_STEP) * ZOOM_STEP
+                : Math.ceil(options.zoom / ZOOM_STEP) * ZOOM_STEP;
+
+        patch({ zoom: clampZoom(grid + by) });
     }
 
     function describeFailure(value: ResizeFailureReason): string {
@@ -501,21 +613,27 @@ export function ImageResizerWorkbench({
     }
 
     /**
-     * Applies the crop to the picture itself.
+     * Replaces the picture in the frame with a new set of pixels, reversibly.
      *
-     * The frame then shows the cropped picture and the box resets to all of it,
-     * so a second crop is taken from the first — which is what "crop, then
-     * adjust, then crop again" has to mean. The previous version goes on the
-     * undo stack whole.
+     * Cropping, turning and mirroring are one edit from here. Each changes the
+     * picture **in place** rather than producing a copy beside it: the frame
+     * shows what the reader now has, the box resets to all of it, and the next
+     * edit is taken from this one. Which is only safe to offer because the step
+     * reverses — the whole previous `Loaded` goes on the undo stack, pixels and
+     * all, because a rectangle means nothing against a frame that has since
+     * changed shape.
      *
      * Nothing is encoded for the file here. The preview is a throwaway PNG from
-     * the browser's own writer, and `pixels` stays the source of truth, so
-     * cropping four times costs four canvas writes rather than four trips
-     * through OxiPNG — and the export still runs once, from the pixels, at the
-     * quality asked for.
+     * the browser's own writer, and `pixels` stays the source of truth, so four
+     * edits cost four canvas writes rather than four trips through OxiPNG — and
+     * the export still runs once, from the pixels, at the quality asked for.
      */
-    async function handleApplyCrop() {
-        if (loaded === null || working || !cropChangesSomething) {
+    async function replacePixels(
+        produce: () => RgbaImage,
+        event: string,
+        describe: (size: PixelSize) => string,
+    ) {
+        if (loaded === null || working) {
             return;
         }
 
@@ -523,8 +641,8 @@ export function ImageResizerWorkbench({
         setReason(null);
 
         try {
-            const cropped = cropPixels(loaded.pixels, crop);
-            const blob = await pixelsToPreviewBlob(cropped);
+            const next = produce();
+            const blob = await pixelsToPreviewBlob(next);
 
             if (blob === null) {
                 setReason("encode_failed");
@@ -536,33 +654,113 @@ export function ImageResizerWorkbench({
 
             objectUrls.current.add(previewUrl);
 
-            const size = { width: cropped.width, height: cropped.height };
+            const size = { width: next.width, height: next.height };
 
             setHistory([...history, loaded]);
-            setLoaded({
-                ...loaded,
-                previewUrl,
-                pixels: cropped,
-                size,
-                hasAlpha: !isOpaque(cropped),
-            });
+            setLoaded({ ...loaded, previewUrl, pixels: next, size, hasAlpha: !isOpaque(next) });
             placeCrop(fullCrop(size));
-            // The tool closes on apply: the frame is now the cropped picture,
-            // and leaving a box over it would invite a second cut nobody asked
-            // for while hiding the result of the first.
+            // The crop tool closes on apply: the frame is now the cropped
+            // picture, and leaving a box over it would invite a second cut
+            // nobody asked for while hiding the result of the first.
             setCropping(false);
-            toast.success(
-                tToast("cropped", {
-                    width: format.number(size.width),
-                    height: format.number(size.height),
-                }),
-            );
+            toast.success(describe(size));
         } catch (caught) {
-            logEvent("error", "image_resizer.crop_threw", { error: describeError(caught) });
+            logEvent("error", event, { error: describeError(caught) });
             setReason("encode_failed");
         } finally {
             setWorking(false);
         }
+    }
+
+    async function handleApplyCrop() {
+        if (loaded === null || !cropChangesSomething) {
+            return;
+        }
+
+        const pixels = loaded.pixels;
+
+        await replacePixels(
+            () => cropPixels(pixels, crop),
+            "image_resizer.crop_threw",
+            (size) =>
+                tToast("cropped", {
+                    width: format.number(size.width),
+                    height: format.number(size.height),
+                }),
+        );
+    }
+
+    /**
+     * A quarter turn or a mirror — the transforms that move bytes without
+     * touching them.
+     *
+     * The toast names the new size because a quarter turn swaps the sides, and
+     * a portrait that has just become a landscape is worth reading rather than
+     * inferring from the frame.
+     */
+    async function handleQuarterTurn(turns: number) {
+        if (loaded === null) {
+            return;
+        }
+
+        const pixels = loaded.pixels;
+
+        await replacePixels(
+            () => rotateQuarterTurns(pixels, turns),
+            "image_resizer.rotate_threw",
+            (size) =>
+                tToast("rotated", {
+                    width: format.number(size.width),
+                    height: format.number(size.height),
+                }),
+        );
+    }
+
+    async function handleFlip(axis: FlipAxis) {
+        if (loaded === null) {
+            return;
+        }
+
+        const pixels = loaded.pixels;
+
+        await replacePixels(
+            () => flipPixels(pixels, axis),
+            "image_resizer.flip_threw",
+            () => tToast(axis === "horizontal" ? "flippedHorizontal" : "flippedVertical"),
+        );
+    }
+
+    /**
+     * The free angle, which is the one transform here that is not exact.
+     *
+     * Refused rather than attempted when the rotated box would pass the
+     * decoder's own ceiling: the canvas grows to fit the corners, so an angle
+     * near 45° asks for around 1.4 times the pixels it started with.
+     */
+    async function handleFreeRotate() {
+        if (loaded === null || typedAngle === null || !angleTurns) {
+            return;
+        }
+
+        if (angleTooLarge) {
+            setReason("too_many_pixels");
+            toast.error(describeFailure("too_many_pixels"));
+
+            return;
+        }
+
+        const pixels = loaded.pixels;
+        const angle = typedAngle;
+
+        await replacePixels(
+            () => rotatePixels(pixels, angle),
+            "image_resizer.rotate_threw",
+            (size) =>
+                tToast("rotated", {
+                    width: format.number(size.width),
+                    height: format.number(size.height),
+                }),
+        );
     }
 
     // The latest closure over the crop and the picture, so the listener below
@@ -871,6 +1069,179 @@ export function ImageResizerWorkbench({
                                         </span>
                                     </div>
                                 </>
+                            )}
+
+                            {/*
+                             * Beside the picture rather than in the settings
+                             * column, and hidden while cropping. A turn is an
+                             * edit to the picture in the frame, like a crop and
+                             * unlike a setting — and doing it under an open crop
+                             * box would move the box out from under the reader's
+                             * pointer mid-drag.
+                             */}
+                            {!cropping && (
+                                <div className="flex min-w-0 flex-col gap-1.5">
+                                    <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                                        <span
+                                            id={transformId}
+                                            className="text-muted-foreground mr-0.5 text-xs leading-[1.3]"
+                                        >
+                                            {t("transformLabel")}
+                                        </span>
+
+                                        <div
+                                            role="group"
+                                            aria-labelledby={transformId}
+                                            className="flex shrink-0 items-center gap-1.5"
+                                        >
+                                            <IconPress
+                                                label={t("rotateLeft")}
+                                                disabled={working}
+                                                onClick={() => void handleQuarterTurn(3)}
+                                            >
+                                                <IconRotate
+                                                    className="size-4"
+                                                    stroke={1.8}
+                                                    aria-hidden="true"
+                                                />
+                                            </IconPress>
+
+                                            <IconPress
+                                                label={t("rotateRight")}
+                                                disabled={working}
+                                                onClick={() => void handleQuarterTurn(1)}
+                                            >
+                                                <IconRotateClockwise
+                                                    className="size-4"
+                                                    stroke={1.8}
+                                                    aria-hidden="true"
+                                                />
+                                            </IconPress>
+
+                                            {/*
+                                             * Spelt out rather than drawn. Two
+                                             * curved arrows are already the two
+                                             * buttons beside it, and a third
+                                             * that means "both ways at once" is
+                                             * a glyph nobody reads correctly.
+                                             */}
+                                            <Button
+                                                variant="outline"
+                                                aria-label={t("rotateHalf")}
+                                                title={t("rotateHalf")}
+                                                disabled={working}
+                                                onClick={() => void handleQuarterTurn(2)}
+                                                className="h-8 shrink-0 px-2 font-mono text-[0.6875rem] tabular-nums"
+                                            >
+                                                {t("rotateHalfShort")}
+                                            </Button>
+
+                                            <span
+                                                aria-hidden="true"
+                                                className="bg-border/70 mx-0.5 h-5 w-px shrink-0"
+                                            />
+
+                                            <IconPress
+                                                label={t("flipHorizontal")}
+                                                disabled={working}
+                                                onClick={() => void handleFlip("horizontal")}
+                                            >
+                                                <IconFlipHorizontal
+                                                    className="size-4"
+                                                    stroke={1.8}
+                                                    aria-hidden="true"
+                                                />
+                                            </IconPress>
+
+                                            <IconPress
+                                                label={t("flipVertical")}
+                                                disabled={working}
+                                                onClick={() => void handleFlip("vertical")}
+                                            >
+                                                <IconFlipVertical
+                                                    className="size-4"
+                                                    stroke={1.8}
+                                                    aria-hidden="true"
+                                                />
+                                            </IconPress>
+                                        </div>
+
+                                        <div className="flex min-w-0 items-center gap-1.5 sm:ml-auto">
+                                            <Label htmlFor={angleId} className="sr-only">
+                                                {t("angleLabel")}
+                                            </Label>
+                                            <Input
+                                                id={angleId}
+                                                type="number"
+                                                inputMode="numeric"
+                                                min={MIN_ANGLE}
+                                                max={MAX_ANGLE}
+                                                value={angleText}
+                                                placeholder={t("anglePlaceholder")}
+                                                disabled={working}
+                                                aria-invalid={angleInvalid ? true : undefined}
+                                                // The line below, which is where
+                                                // the refusal is rendered — not
+                                                // the group heading, which
+                                                // describes the row rather than
+                                                // this field.
+                                                aria-describedby={angleHintId}
+                                                onChange={(event) =>
+                                                    setAngleText(event.target.value)
+                                                }
+                                                className="h-8 w-20 min-w-0 font-mono text-[0.8125rem] tabular-nums"
+                                            />
+                                            {/*
+                                             * A press rather than a live
+                                             * derivation: a free angle is a full
+                                             * resample of every pixel, and doing
+                                             * one per keystroke would run four
+                                             * of them on the way to `45`.
+                                             */}
+                                            <Button
+                                                variant="outline"
+                                                disabled={working || !angleTurns || angleTooLarge}
+                                                onClick={() => void handleFreeRotate()}
+                                                className="h-8 shrink-0 px-2.5 text-[0.8125rem]"
+                                            >
+                                                <IconRefresh
+                                                    className="size-4"
+                                                    stroke={1.8}
+                                                    aria-hidden="true"
+                                                />
+                                                {t("angleApply")}
+                                            </Button>
+                                        </div>
+                                    </div>
+
+                                    <p
+                                        id={angleHintId}
+                                        className={cn(
+                                            "text-[0.6875rem] leading-[1.4]",
+                                            angleInvalid || angleTooLarge
+                                                ? "text-destructive"
+                                                : "text-muted-foreground",
+                                        )}
+                                    >
+                                        {angleInvalid
+                                            ? t("angleInvalid", {
+                                                  min: format.number(MIN_ANGLE),
+                                                  max: format.number(MAX_ANGLE),
+                                              })
+                                            : angleTooLarge
+                                              ? t("angleTooLarge", {
+                                                    count: format.number(
+                                                        Math.round(MAX_PIXELS / 1_000_000),
+                                                    ),
+                                                })
+                                              : angleOutput !== null
+                                                ? t("angleHint", {
+                                                      width: format.number(angleOutput.width),
+                                                      height: format.number(angleOutput.height),
+                                                  })
+                                                : t("transformHint")}
+                                    </p>
+                                </div>
                             )}
 
                             {/*
@@ -1333,6 +1704,104 @@ export function ImageResizerWorkbench({
                                 )}
                                 onChange={(next) => patch({ fit: next })}
                             />
+
+                            {/*
+                             * Under the fit picker, because it is the same
+                             * question one step finer: `fit` decides how the
+                             * picture meets the frame, and this decides how far
+                             * past that it is pushed. Above 100% the overflow is
+                             * cut, which is the whole point — a freely rotated
+                             * photograph has transparent corners, and zooming
+                             * until they leave the frame is how they go away.
+                             */}
+                            <div className="flex min-w-0 flex-col gap-1.5">
+                                <div className="flex min-w-0 items-center justify-between gap-2">
+                                    <span
+                                        id={zoomId}
+                                        className="text-muted-foreground text-xs leading-[1.3]"
+                                    >
+                                        {t("zoomLabel")}
+                                    </span>
+                                    {options.zoom !== DEFAULT_ZOOM && (
+                                        <button
+                                            type="button"
+                                            disabled={settingsLocked}
+                                            onClick={() => patch({ zoom: DEFAULT_ZOOM })}
+                                            className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-md text-[0.6875rem] underline underline-offset-2 transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:opacity-55"
+                                        >
+                                            {t("zoomReset")}
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="flex min-w-0 items-center gap-2">
+                                    {/*
+                                     * A press either side of the drag, because
+                                     * the last five percent of a zoom is the
+                                     * part that matters and a 20 rem slider is
+                                     * about three pixels per step. Bounded by
+                                     * the same clamp the slider is, so neither
+                                     * button can walk past an end.
+                                     */}
+                                    <IconPress
+                                        label={t("zoomOut", { step: format.number(ZOOM_STEP) })}
+                                        disabled={settingsLocked || options.zoom <= MIN_ZOOM}
+                                        onClick={() => nudgeZoom(-ZOOM_STEP)}
+                                        className="size-7"
+                                    >
+                                        <IconMinus
+                                            className="size-4"
+                                            stroke={2}
+                                            aria-hidden="true"
+                                        />
+                                    </IconPress>
+
+                                    <Slider
+                                        aria-labelledby={zoomId}
+                                        value={options.zoom}
+                                        min={MIN_ZOOM}
+                                        max={MAX_ZOOM}
+                                        disabled={settingsLocked}
+                                        onValueChange={(next) =>
+                                            patch({
+                                                zoom: clampZoom(
+                                                    Array.isArray(next)
+                                                        ? (next[0] ?? options.zoom)
+                                                        : next,
+                                                ),
+                                            })
+                                        }
+                                        className="min-w-0 flex-1"
+                                    />
+
+                                    <IconPress
+                                        label={t("zoomIn", { step: format.number(ZOOM_STEP) })}
+                                        disabled={settingsLocked || options.zoom >= MAX_ZOOM}
+                                        onClick={() => nudgeZoom(ZOOM_STEP)}
+                                        className="size-7"
+                                    >
+                                        <IconPlus
+                                            className="size-4"
+                                            stroke={2}
+                                            aria-hidden="true"
+                                        />
+                                    </IconPress>
+
+                                    <span className="w-11 shrink-0 text-right font-mono text-sm tabular-nums">
+                                        {options.zoom}%
+                                    </span>
+                                </div>
+                                <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                                    {plan !== null && plan.clips
+                                        ? t("zoomHintClips", {
+                                              value: format.number(options.zoom),
+                                          })
+                                        : options.zoom === DEFAULT_ZOOM
+                                          ? t("zoomHintExact")
+                                          : t("zoomHintPads", {
+                                                value: format.number(options.zoom),
+                                            })}
+                                </p>
+                            </div>
 
                             <div className="flex min-w-0 flex-col gap-1.5">
                                 <OptionSelect<BackgroundKind>

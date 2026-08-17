@@ -7,8 +7,10 @@ import {
     MAX_QUALITY,
     MIN_DIMENSION,
     MIN_DPI,
+    MAX_ZOOM,
     MIN_PERCENTAGE,
     MIN_QUALITY,
+    MIN_ZOOM,
 } from "../domain/constants";
 import { SIZE_PRESETS } from "../domain/presets";
 import { BACKGROUND_KINDS, FIT_MODES, LENGTH_UNITS, OUTPUT_FORMATS, RESIZE_MODES } from "../types";
@@ -30,6 +32,8 @@ export const dpiSchema = z.number().int().min(MIN_DPI).max(MAX_DPI);
 export const percentageSchema = z.number().int().min(MIN_PERCENTAGE).max(MAX_PERCENTAGE);
 
 export const qualitySchema = z.number().int().min(MIN_QUALITY).max(MAX_QUALITY);
+
+export const zoomSchema = z.number().int().min(MIN_ZOOM).max(MAX_ZOOM);
 
 /** `#rgb` or `#rrggbb`. A short identity field, so it is capped, not metered. */
 export const hexColorSchema = z.string().regex(/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/);
@@ -55,6 +59,7 @@ export const resizeOptionsSchema = z.object({
     presetId: presetIdSchema,
     lockAspect: z.boolean(),
     fit: fitModeSchema,
+    zoom: zoomSchema,
     background: backgroundKindSchema,
     backgroundColor: hexColorSchema,
     format: outputFormatSchema,
@@ -79,6 +84,7 @@ export const resizeSearchParamsSchema = z.object({
     percent: z.coerce.number().pipe(percentageSchema).optional().catch(undefined),
     preset: presetIdSchema.optional().catch(undefined),
     fit: fitModeSchema.optional().catch(undefined),
+    zoom: z.coerce.number().pipe(zoomSchema).optional().catch(undefined),
     format: outputFormatSchema.optional().catch(undefined),
     quality: z.coerce.number().pipe(qualitySchema).optional().catch(undefined),
     bg: hexColorSchema.optional().catch(undefined),

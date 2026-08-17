@@ -67,6 +67,17 @@ export type CropRect = {
     readonly height: number;
 };
 
+/**
+ * Which way a mirror runs.
+ *
+ * Named for the axis the picture moves along rather than the axis it is
+ * reflected in, because "flip horizontal" is what every other editor calls
+ * swapping left and right and the opposite convention is a trap.
+ */
+export const FLIP_AXES = ["horizontal", "vertical"] as const;
+
+export type FlipAxis = (typeof FLIP_AXES)[number];
+
 /** The eight drag points on a crop box, named by compass direction. */
 export const CROP_HANDLES = ["nw", "n", "ne", "e", "se", "s", "sw", "w"] as const;
 
@@ -155,6 +166,15 @@ export type ResizeOptions = {
     readonly presetId: string;
     readonly lockAspect: boolean;
     readonly fit: FitMode;
+    /**
+     * How much of the frame the picture covers, as a percentage of whatever
+     * `fit` chose. Above 100 the edges are pushed outside the frame and cut;
+     * below 100 the background shows around them.
+     *
+     * Not the same number as `percentage`, which sizes the file. This one never
+     * changes the output's dimensions — only what lands inside them.
+     */
+    readonly zoom: number;
     readonly background: BackgroundKind;
     /** `#rrggbb`. Only read when `background` is `color`. */
     readonly backgroundColor: string;

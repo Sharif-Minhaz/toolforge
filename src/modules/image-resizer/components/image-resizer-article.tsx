@@ -16,6 +16,7 @@ import { presetsInGroup, presetPixels } from "../domain/presets";
 export const IMAGE_RESIZER_ARTICLE_SECTIONS = [
     { id: "howItWorks", titleKey: "howItWorks.title" },
     { id: "cropping", titleKey: "crop.title" },
+    { id: "orienting", titleKey: "orient.title" },
     { id: "sizing", titleKey: "sizing.title" },
     { id: "presets", titleKey: "presets.title" },
     { id: "resolution", titleKey: "dpi.title" },
@@ -58,6 +59,8 @@ export async function ImageResizerArticle() {
     // Literal unions, so every message key below is checked at compile time.
     const controlRows = [
         "crop",
+        "rotate",
+        "flip",
         "undo",
         "ratio",
         "mode",
@@ -65,6 +68,7 @@ export async function ImageResizerArticle() {
         "dpi",
         "lock",
         "fit",
+        "zoom",
         "background",
         "format",
         "quality",
@@ -104,6 +108,14 @@ export async function ImageResizerArticle() {
                         <p>{t("crop.body1")}</p>
                         <p>{t("crop.body2")}</p>
                         <p>{t("crop.body3")}</p>
+                    </div>
+                </ArticleSection>
+
+                <ArticleSection id="orienting" title={t("orient.title")}>
+                    <div className={PROSE}>
+                        <p>{t("orient.body1")}</p>
+                        <p>{t("orient.body2")}</p>
+                        <p>{t("orient.body3")}</p>
                     </div>
                 </ArticleSection>
 

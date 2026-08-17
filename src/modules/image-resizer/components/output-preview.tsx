@@ -36,8 +36,6 @@ export function OutputPreview({ previewUrl, alt, source, plan, className }: Outp
             style={{
                 aspectRatio: layout.canvasAspect,
                 maxWidth: previewFrameMaxWidth(plan.canvas),
-                // Transparent output keeps the chequerboard underneath; a matte
-                // paints over it, which is exactly what the export does.
                 backgroundColor:
                     plan.matte === null
                         ? undefined
@@ -45,11 +43,21 @@ export function OutputPreview({ previewUrl, alt, source, plan, className }: Outp
             }}
             className={cn(
                 "ring-border/70 relative mx-auto w-full overflow-hidden rounded-xl ring-1 ring-inset",
-                // The chequerboard that means "nothing here", in tokens so it
-                // reads the same in both themes. Painted always and covered by
-                // the matte when there is one, so switching background does not
-                // have to swap two class lists.
-                "bg-[repeating-conic-gradient(var(--muted)_0%_25%,var(--card)_0%_50%)] bg-size-[16px_16px]",
+                /*
+                 * The chequerboard that means "nothing here", and painted only
+                 * when there is nothing there.
+                 *
+                 * It used to be unconditional, on the theory that the matte
+                 * above would cover it. It cannot: the chequerboard is a
+                 * `background-image` and a browser paints those *over*
+                 * `background-color`, so an opaque gradient hid every colour the
+                 * reader picked. The export was compositing onto the matte
+                 * correctly the whole time — only this frame was lying about it,
+                 * which is the worse half, because the frame is what anybody
+                 * checks. Gated the way `compare-slider` and the background
+                 * remover already gate theirs.
+                 */
+                plan.matte === null && "bg-checkerboard",
                 className,
             )}
         >

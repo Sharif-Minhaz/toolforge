@@ -4,6 +4,7 @@ import { DEFAULT_OPTIONS, MAX_OUTPUT_PIXELS } from "@/modules/image-resizer/doma
 import {
     copiesPixels,
     isOutputTooLarge,
+    isPlanTooLarge,
     parseHexColor,
     planRender,
     targetSize,
@@ -195,6 +196,84 @@ describe("planRender — background", () => {
 
     test("transparent keeps the alpha channel", () => {
         expect(planRender(CROP, options({ background: "transparent" })).matte).toBeNull();
+    });
+});
+
+describe("planRender — zoom", () => {
+    const square = options({ mode: "dimensions", width: 1000, height: 1000, fit: "contain" });
+
+    test("100% leaves the fit mode exactly where it was", () => {
+        const plan = planRender(CROP, { ...square, zoom: 100 });
+
+        expect(plan.draw).toEqual({ x: 0, y: 250, width: 1000, height: 500 });
+        expect(plan.clips).toBe(false);
+    });
+
+    test("multiplies whatever the fit mode chose rather than replacing it", () => {
+        const plan = planRender(CROP, { ...square, zoom: 200 });
+
+        expect(plan.draw.width).toBe(2000);
+        expect(plan.draw.height).toBe(1000);
+    });
+
+    test("stays centred, so the box hangs off both sides equally", () => {
+        const plan = planRender(CROP, { ...square, zoom: 200 });
+
+        expect(plan.draw.x).toBe(-500);
+        expect(plan.draw.width + 2 * plan.draw.x).toBe(plan.canvas.width);
+    });
+
+    test("zooming in clips and zooming out does not", () => {
+        expect(planRender(CROP, { ...square, zoom: 200 }).clips).toBe(true);
+        expect(planRender(CROP, { ...square, zoom: 60 }).clips).toBe(false);
+    });
+
+    test("never changes the size of the file, only what lands inside it", () => {
+        for (const zoom of [50, 100, 175, 400]) {
+            expect(planRender(CROP, { ...square, zoom }).canvas).toEqual({
+                width: 1000,
+                height: 1000,
+            });
+        }
+    });
+
+    test("a zoom is a resample, so the copy promise is withdrawn", () => {
+        const exact = options({ mode: "dimensions", width: 1000, height: 500 });
+
+        expect(copiesPixels(planRender(CROP, exact))).toBe(true);
+        expect(copiesPixels(planRender(CROP, { ...exact, zoom: 101 }))).toBe(false);
+    });
+
+    test("scales a stretched draw box too, rather than ignoring the slider", () => {
+        const plan = planRender(CROP, { ...square, fit: "stretch", zoom: 50 });
+
+        expect(plan.draw).toEqual({ x: 250, y: 250, width: 500, height: 500 });
+    });
+
+    test("an unreadable zoom means no zoom, not the minimum", () => {
+        const plan = planRender(CROP, { ...square, zoom: Number.NaN });
+
+        expect(plan.draw).toEqual(planRender(CROP, { ...square, zoom: 100 }).draw);
+    });
+});
+
+describe("isPlanTooLarge", () => {
+    const wide = options({ mode: "dimensions", width: 6000, height: 6000 });
+
+    test("passes a plan both of whose boxes fit", () => {
+        expect(isPlanTooLarge(planRender(CROP, wide))).toBe(false);
+    });
+
+    /**
+     * The check the canvas alone would miss. A 6000 × 6000 file is survivable;
+     * the same file at 400% asks the resampler for 24000 × 12000 first, and
+     * dies inside Lanczos rather than at the guard.
+     */
+    test("refuses a draw box the canvas cap cannot see", () => {
+        const zoomed = planRender(CROP, { ...wide, zoom: 400 });
+
+        expect(isOutputTooLarge(zoomed.canvas)).toBe(false);
+        expect(isPlanTooLarge(zoomed)).toBe(true);
     });
 });
 

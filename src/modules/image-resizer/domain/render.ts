@@ -9,7 +9,7 @@ import { flattenOntoMatte, isOpaque, WHITE_MATTE } from "@/modules/tools/domain/
 import { composePixels, cropPixels } from "./compose";
 import { densityApplies, embedDensity } from "./density";
 import { qualityApplies, resolveFormat, supportsAlpha } from "./options";
-import { copiesPixels, isOutputTooLarge, planRender } from "./plan";
+import { copiesPixels, isPlanTooLarge, planRender } from "./plan";
 import type { CropRect, ResizeOptions, ResizeResult, RgbaImage } from "../types";
 
 /**
@@ -46,8 +46,9 @@ export async function renderImage(
 
     // Checked before anything is allocated: a 1% crop scaled to 20000 × 20000
     // starts from almost nothing and still asks for 1.6 GB, and "after" is a
-    // dead tab rather than an error message.
-    if (isOutputTooLarge(plan.canvas)) {
+    // dead tab rather than an error message. Both boxes, because zoom can make
+    // the resampler's output larger than the file's.
+    if (isPlanTooLarge(plan)) {
         return { ok: false, reason: "output_too_large" };
     }
 

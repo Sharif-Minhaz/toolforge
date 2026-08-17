@@ -1,4 +1,5 @@
 import { MAX_DIMENSION, MAX_OUTPUT_PIXELS, MIN_DIMENSION } from "./constants";
+import { clampZoom } from "./options";
 import { findPreset, presetPixels } from "./presets";
 import { toPixels } from "./units";
 import type { CropRect, RenderPlan, ResizeOptions } from "../types";
@@ -156,17 +157,24 @@ export function planRender(crop: CropRect, options: ResizeOptions): RenderPlan {
     };
 }
 
+/**
+ * Where the crop lands, in two steps: the shape `fit` asks for, then the zoom
+ * over it.
+ *
+ * Zoom multiplies whatever the fit mode chose rather than replacing it, which
+ * is what keeps the three modes meaning what they meant — `contain` at 100%
+ * still fits inside, `stretch` at 100% still fills corner to corner — and makes
+ * "push the edges past the frame and cut them" one number rather than a fourth
+ * fit mode. Past 100% the box is wider than the canvas and `x` goes negative;
+ * both the renderer and the preview clip against the canvas, so that is the
+ * whole of the overflow behaviour.
+ */
 function drawBox(crop: CropRect, canvas: PixelSize, options: ResizeOptions) {
-    if (options.fit === "stretch") {
-        return { x: 0, y: 0, width: canvas.width, height: canvas.height };
-    }
+    const fitted = fitBox(crop, canvas, options.fit);
+    const zoom = clampZoom(options.zoom) / 100;
 
-    const scaleX = canvas.width / crop.width;
-    const scaleY = canvas.height / crop.height;
-    const scale = options.fit === "cover" ? Math.max(scaleX, scaleY) : Math.min(scaleX, scaleY);
-
-    const width = Math.max(1, Math.round(crop.width * scale));
-    const height = Math.max(1, Math.round(crop.height * scale));
+    const width = Math.max(1, Math.round(fitted.width * zoom));
+    const height = Math.max(1, Math.round(fitted.height * zoom));
 
     return {
         // Rounded rather than floored so a one-pixel remainder is split evenly
@@ -175,6 +183,21 @@ function drawBox(crop: CropRect, canvas: PixelSize, options: ResizeOptions) {
         y: Math.round((canvas.height - height) / 2),
         width,
         height,
+    };
+}
+
+function fitBox(crop: CropRect, canvas: PixelSize, fit: ResizeOptions["fit"]): PixelSize {
+    if (fit === "stretch") {
+        return { width: canvas.width, height: canvas.height };
+    }
+
+    const scaleX = canvas.width / crop.width;
+    const scaleY = canvas.height / crop.height;
+    const scale = fit === "cover" ? Math.max(scaleX, scaleY) : Math.min(scaleX, scaleY);
+
+    return {
+        width: Math.max(1, Math.round(crop.width * scale)),
+        height: Math.max(1, Math.round(crop.height * scale)),
     };
 }
 
@@ -187,6 +210,20 @@ function drawBox(crop: CropRect, canvas: PixelSize, options: ResizeOptions) {
  */
 export function isOutputTooLarge(canvas: PixelSize): boolean {
     return canvas.width * canvas.height > MAX_OUTPUT_PIXELS;
+}
+
+/**
+ * The same question asked of both boxes a render allocates, which zoom made
+ * two different questions.
+ *
+ * The canvas is what gets written. The **draw** box is what the resampler is
+ * asked to produce before a pixel of it is thrown away, and past 100% zoom it
+ * is the larger of the two — a phone screenshot in a modest frame at 400% is
+ * sixteen times the pixels the file will keep. Checking only the canvas would
+ * pass that plan and then die inside Lanczos.
+ */
+export function isPlanTooLarge(plan: RenderPlan): boolean {
+    return isOutputTooLarge(plan.canvas) || isOutputTooLarge(plan.draw);
 }
 
 /**

@@ -73,6 +73,7 @@ export default async function ImageResizerToolPage({ searchParams }: ImageResize
         percentage: query.percent ?? DEFAULT_OPTIONS.percentage,
         presetId,
         fit: query.fit ?? preset?.fit ?? DEFAULT_OPTIONS.fit,
+        zoom: query.zoom ?? DEFAULT_OPTIONS.zoom,
         format: query.format ?? DEFAULT_OPTIONS.format,
         quality: query.quality ?? DEFAULT_OPTIONS.quality,
         backgroundColor: query.bg ?? DEFAULT_BACKGROUND_COLOR,

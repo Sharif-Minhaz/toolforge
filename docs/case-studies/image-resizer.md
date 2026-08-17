@@ -155,6 +155,102 @@ because the step reverses, and `history` holds the whole previous `Loaded`
 rather than the rectangle that produced it — a rectangle means nothing against a
 frame that has since changed shape.
 
+## A quarter turn is a permutation; 37° is a resample
+
+Rotate and flip arrived as one request and are two different operations, and the
+tool is built around admitting that rather than smoothing it over.
+
+A quarter turn and a mirror are **permutations**. Every pixel of the result is a
+pixel of the source at a different index — `domain/orient.ts` writes both as an
+inverse mapping over the destination — so the same test that proves `cropPixels`
+copies bytes proves these do: the sorted multiset of the output equals the
+sorted multiset of the input, and four turns is the original file byte for byte.
+That is the tool's headline promise extended, not a second promise beside it.
+
+A free angle cannot be. A pixel grid turned 37° does not land on a pixel grid,
+so every output pixel is a weighted average of four inputs, and the canvas has
+to grow to `|w·cos| + |h·sin|` on each axis to hold the corners the turn pushes
+outside it. Three consequences, each of which had to be decided rather than
+inherited:
+
+- **The angle field dispatches on exactness.** `quarterTurnsFor` answers first,
+  so typing `180` takes the permutation path. A reader who asks for a right
+  angle in the box meant for arbitrary ones should not get a bilinear
+  approximation of one because they used the wrong control.
+- **The sampler is premultiplied.** Averaging unpremultiplied RGBA pulls the
+  colour of a transparent pixel into its neighbours — the same class of mistake
+  as the source-over form above, in the other direction. Invisible over an
+  opaque photograph, a dark fringe the first time somebody turns a logo. The
+  test that catches it puts an opaque red beside a transparent green and asserts
+  no green survives at any alpha.
+- **The new corners are transparent, not painted.** The matte belongs to the
+  export, where `renderImage` already flattens it for a format with no alpha.
+  Baking one in here would put white corners inside a PNG that never asked for
+  them, and would apply the background twice for a JPEG.
+
+And one arithmetic trap worth the line it takes to record. `Math.sin(Math.PI)`
+is 1.2 × 10⁻¹⁶ rather than zero, and `rotatedSize` rounds **up** so no corner is
+clipped — so a half turn came back one pixel wider and one taller, which is a
+transparent hairline down two edges of the picture every time the button was
+pressed. Answering the quarter turns before any trigonometry runs is the fix,
+and the test that found it asserts the boring thing: 180° changes no dimension.
+
+The presses themselves are the crop's own machinery. `replacePixels` is what
+apply-crop, rotate and flip all call — the frame becomes the new picture, the
+box resets to all of it, and the whole previous `Loaded` goes on the undo stack
+— because "applying is an in-place edit" was already the right answer here and a
+second mechanism beside it would have been two undo stacks. They are hidden
+while the crop tool is open for the reason that made the tool opt-in: moving the
+picture out from under a box somebody is still placing leaves the selection
+somewhere nobody chose.
+
+## A `background-image` is painted over a `background-color`
+
+The matte was correct in the file and invisible in the frame for as long as the
+tool has existed, and the reason is one line of CSS.
+
+`OutputPreview` set the chosen colour as an inline `backgroundColor` and then
+carried the chequerboard **unconditionally** as a Tailwind arbitrary background,
+on the reasoning that the matte would cover it. A browser does the opposite:
+`background-image` paints above `background-color`, and the chequerboard is an
+opaque `repeating-conic-gradient`, so it hid every colour anybody picked. Nobody
+noticed while every source was opaque and filled its box — there was nothing to
+see through. Free rotation put transparent corners in the frame, and the bug
+became the first thing a reader saw.
+
+`composePixels` had been compositing onto the matte correctly the whole time, so
+the exported file was right and only the preview lied. That is the worse half:
+the frame is what anybody checks, and a preview that disagrees with the file is
+worth less than no preview.
+
+The fix is `plan.matte === null && "bg-checkerboard"` — the shared utility, gated
+the way `compare-slider` and the background remover already gate theirs. Which is
+the real lesson: two other components had solved this and the third invented a
+worse way. **Transparency is only ever shown by the absence of a ground, never
+by a ground you intend to cover.**
+
+## Zoom multiplies the fit mode; it does not become one
+
+"Zoom the photo to match the frame, and cut what overflows" is a fourth fit mode
+if you build it as one, and then `contain`, `cover`, `stretch` and `zoom` have to
+answer what happens when two of them are chosen at once.
+
+It is one number instead. `drawBox` computes the box `fit` asked for and then
+scales it about the centre by `zoom / 100`, so `contain` at 100% still fits
+inside and `stretch` at 100% still fills corner to corner — nothing about the
+existing three changed. Past 100% the draw box is wider than the canvas and `x`
+goes negative, which needed no new code anywhere: `composePixels` already clamps
+its loop to the canvas and `previewLayout` already emits a negative `left` inside
+an `overflow-hidden` box, both because `cover` could already overflow.
+
+One thing did need new code. `isOutputTooLarge` guarded the **canvas**, which
+under zoom is no longer the biggest thing a render allocates — the draw box is
+what the resampler is asked to produce before any of it is thrown away, and a
+survivable 6000 × 6000 file at 400% asks Lanczos for 24000 × 12000 first.
+`isPlanTooLarge` asks the same question of both boxes, and the test asserts
+exactly the gap: `isOutputTooLarge(plan.canvas)` is `false` for a plan
+`isPlanTooLarge` refuses.
+
 ## Derive from a reference, never from the last result
 
 Reported from use: pick 1:1 and the square is right; switch to 4:3 and the box

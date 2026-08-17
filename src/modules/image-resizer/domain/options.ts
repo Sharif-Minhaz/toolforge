@@ -1,10 +1,13 @@
 import {
+    DEFAULT_ZOOM,
     MAX_DPI,
     MAX_PERCENTAGE,
     MAX_QUALITY,
+    MAX_ZOOM,
     MIN_DPI,
     MIN_PERCENTAGE,
     MIN_QUALITY,
+    MIN_ZOOM,
 } from "./constants";
 import { normalizeImageType } from "@/modules/tools/domain/image-file";
 import type { OutputFormat, ResizeOptions } from "../types";
@@ -72,6 +75,21 @@ export function clampPercentage(value: number): number {
     }
 
     return Math.min(MAX_PERCENTAGE, Math.max(MIN_PERCENTAGE, Math.round(value)));
+}
+
+/**
+ * Falls back to 100 rather than to the minimum, unlike every other clamp here.
+ *
+ * A zoom that cannot be read means "no zoom", and half-sizing somebody's
+ * picture because a number arrived broken would be a visible edit nobody asked
+ * for. The other sliders have no such neutral value to fall back to.
+ */
+export function clampZoom(value: number): number {
+    if (!Number.isFinite(value)) {
+        return DEFAULT_ZOOM;
+    }
+
+    return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(value)));
 }
 
 export function clampDpi(value: number): number {

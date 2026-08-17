@@ -3,6 +3,7 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import { staggerDelay } from "@/components/motion/motion-tokens";
 import { Reveal } from "@/components/motion/reveal";
 import { localizeCategoryGroups } from "@/modules/tools/presenters/localize-tools";
+import { CategoryToolIcons } from "./category-tool-icons";
 import { SectionHeading } from "./section-heading";
 
 export async function CategoryGrid() {
@@ -36,11 +37,29 @@ export async function CategoryGrid() {
                         <p className="text-muted-foreground text-[0.8125rem] leading-relaxed">
                             {group.description}
                         </p>
-                        <p className="text-muted-foreground/80 mt-auto pt-1 text-xs">
-                            {group.availableCount > 0
-                                ? tCommon("toolCount", { count: group.availableCount })
-                                : tCommon("comingSoon")}
-                        </p>
+
+                        <div className="mt-auto flex flex-col gap-2 pt-1">
+                            {/* Narrowed here rather than in the island: the whole
+                                catalog entry would ship its keywords and ranking
+                                hints to the browser for a row of icons. */}
+                            <CategoryToolIcons
+                                label={t("toolsLabel", { category: group.label })}
+                                tools={group.tools.map((tool) => ({
+                                    id: tool.id,
+                                    href: tool.href,
+                                    name: tool.name,
+                                    description: tool.description,
+                                    status: tool.status,
+                                    accent: tool.accent,
+                                    icon: tool.icon,
+                                }))}
+                            />
+                            <p className="text-muted-foreground/80 text-xs">
+                                {group.availableCount > 0
+                                    ? tCommon("toolCount", { count: group.availableCount })
+                                    : tCommon("comingSoon")}
+                            </p>
+                        </div>
                     </Reveal>
                 ))}
             </ul>

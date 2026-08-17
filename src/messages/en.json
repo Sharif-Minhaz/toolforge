@@ -376,7 +376,8 @@
         },
         "categoriesSection": {
             "title": "Browse by category",
-            "description": "Every tool, grouped by the job it does."
+            "description": "Every tool, grouped by the job it does.",
+            "toolsLabel": "Tools in {category}"
         },
         "recent": {
             "title": "Recently added",
@@ -7371,6 +7372,13 @@
             "fitHintContain": "The whole crop is kept and the difference becomes background. Nothing is cut.",
             "fitHintCover": "The box is filled and the overflow falls off the long edge.",
             "fitHintStretch": "Every pixel is kept and the picture is distorted.",
+            "zoomLabel": "Zoom",
+            "zoomReset": "Reset to 100%",
+            "zoomOut": "Zoom out {step}%",
+            "zoomIn": "Zoom in {step}%",
+            "zoomHintExact": "Scales the picture inside the frame without changing the frame. Above 100% the edges are pushed past it and cut; below, the background shows around them.",
+            "zoomHintClips": "At {value}% the picture is larger than the frame, and everything past the edge is cut.",
+            "zoomHintPads": "At {value}% the picture sits inside the frame, and the background fills what is left.",
             "fitHintExact": "The crop already matches this box, so nothing is padded or cut.",
             "backgroundLabel": "Background",
             "backgroundColor": "Pick a colour",
@@ -7406,6 +7414,20 @@
             "outputReadout": "{width} × {height} px out",
             "previewHint": "This is what Export will write — the size, the padding and the background, updated as you change them. It cannot show what the encoder does to the pixels; that is what the format and quality controls are for.",
             "cropStart": "Crop",
+            "transformLabel": "Rotate & flip",
+            "transformHint": "Quarter turns and mirrors move the pixels without touching them — nothing is resampled. A free angle is not exact: it averages neighbours and pads the new corners.",
+            "rotateLeft": "Rotate 90° left",
+            "rotateRight": "Rotate 90° right",
+            "rotateHalf": "Rotate 180°",
+            "rotateHalfShort": "180°",
+            "flipHorizontal": "Flip left to right",
+            "flipVertical": "Flip top to bottom",
+            "angleLabel": "Rotate by any angle, in degrees",
+            "anglePlaceholder": "0°",
+            "angleApply": "Rotate",
+            "angleHint": "This angle gives a {width} × {height} canvas — bigger than the picture, because the corners have to fit, and resampled to get there.",
+            "angleInvalid": "Enter an angle between {min} and {max} degrees.",
+            "angleTooLarge": "Rotated, this picture would pass {count} megapixels. Resize it down first.",
             "cropCancel": "Cancel",
             "resultAlt": "The picture at the size and shape Export will write it",
             "settingsLockedHint": "The size settings are on hold while you crop — apply the crop or cancel it to reach them again. The shape lock below still works."
@@ -7435,7 +7457,10 @@
         "toast": {
             "downloaded": "Saved {filename}",
             "downloadFailed": "The download could not start.",
-            "cropped": "Cropped to {width} × {height}."
+            "cropped": "Cropped to {width} × {height}.",
+            "rotated": "Rotated — now {width} × {height}.",
+            "flippedHorizontal": "Flipped left to right.",
+            "flippedVertical": "Flipped top to bottom."
         },
         "toc": {
             "title": "On this page"
@@ -7452,6 +7477,12 @@
                 "body1": "The frame shows the output until you ask for the crop tool: the size, the padding and the background you have chosen, redrawn as you change them. Press Crop and the picture itself appears with a box over it — drag anywhere inside to move it, or one of the eight handles to resize. The side opposite the handle stays where it is, which is what makes a corner drag feel like dragging a corner. Arrow keys nudge the box a pixel at a time and Shift-arrow moves it ten, so a crop can be placed exactly without a steady hand.",
                 "body2": "Locking a shape constrains every drag to it. The lock survives running into the edge of the picture: rather than clamping the two sides separately — which would satisfy the boundary and quietly abandon the ratio at the exact moment you were relying on it — the box scales down as a whole until it fits.",
                 "body3": "Applying a crop changes the picture rather than producing a copy beside it: the frame shows what you now have, the box resets to all of it, and the next crop is taken from this one. Undo puts the previous version back, pixels and all, as many steps as you have taken."
+            },
+            "orient": {
+                "title": "Rotating and flipping",
+                "body1": "Quarter turns and mirrors cost nothing. Both are permutations: every pixel of the result is a pixel of the source, moved somewhere else. Nothing is averaged, nothing is interpolated, and the bytes that come out are the bytes that went in. Turn a photograph four times and you have the picture you opened back, byte for byte — which is the same promise the crop makes, for the same reason.",
+                "body2": "A free angle cannot work that way. A pixel grid turned 37° does not land on a pixel grid, so every pixel of the result is a weighted average of four neighbours, and the canvas has to grow to fit the corners the turn pushes outside the old one. Those corners are left transparent rather than painted: the background belongs to the export, where it is applied once, and a JPEG — which has no transparency to keep — flattens them onto it there. An angle that happens to be a whole number of quarter turns takes the exact path anyway, so typing 180 is the same press as the 180° button.",
+                "body3": "Every turn and every mirror changes the picture in the frame, exactly as an applied crop does, and goes onto the same undo stack. They are hidden while the crop tool is open: moving the picture out from under a box you are still placing would leave the selection somewhere nobody chose."
             },
             "sizing": {
                 "title": "Three ways to name a size",
@@ -7500,6 +7531,9 @@
                 "fitName": "When the shapes differ",
                 "fitDoes": "Chooses between padding the difference, cutting it, and stretching to hide it.",
                 "fitWhen": "The box you asked for is a different shape from the crop. It has no effect when they match.",
+                "zoomName": "Zoom",
+                "zoomDoes": "Scales the picture inside the output box without changing the box. Past 100% the edges are pushed outside it and cut; below, background shows around them.",
+                "zoomWhen": "You rotated by a free angle and want the transparent corners gone, or you want a margin around the picture that the fit modes cannot give you.",
                 "backgroundName": "Background",
                 "backgroundDoes": "Fills the padding, and whatever the picture is transparent through.",
                 "backgroundWhen": "You are padding to a shape, or writing a transparent picture into a JPEG.",
@@ -7515,6 +7549,12 @@
                 "cropName": "Crop",
                 "cropDoes": "Opens the crop tool over the picture and puts the size settings on hold. Apply crop then cuts the picture down to the box; Cancel leaves it alone. The shape lock stays available throughout.",
                 "cropWhen": "You want part of the picture. Out of the tool the frame is a preview instead, which is why it is not always on.",
+                "rotateName": "Rotate",
+                "rotateDoes": "Turns the picture a quarter turn either way, or a half turn, without resampling it — or by any angle you type, which averages neighbouring pixels and pads the new corners.",
+                "rotateWhen": "The camera was held sideways, or a scan came in crooked.",
+                "flipName": "Flip",
+                "flipDoes": "Mirrors the picture left-to-right or top-to-bottom. Exact: the same bytes, in the other order.",
+                "flipWhen": "A selfie came out backwards, or a scan was fed in the wrong way round.",
                 "undoName": "Undo",
                 "undoDoes": "Puts the previous version back, pixels and all.",
                 "undoWhen": "You cropped too far. Every crop you have applied is on the stack, so you can walk all the way back to the file you opened.",

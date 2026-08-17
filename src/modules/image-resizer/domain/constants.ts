@@ -41,6 +41,30 @@ export const MIN_PERCENTAGE = 1;
 export const MAX_PERCENTAGE = 400;
 
 /**
+ * How far the picture can be pushed around inside its own frame.
+ *
+ * A different thing from `percentage`, and the two are easy to confuse:
+ * percentage decides how big the **file** is, zoom decides how much of the
+ * frame the **picture** covers. 400 is enough to push the transparent corners
+ * of a freely rotated photograph outside the frame entirely, which is the case
+ * that asked for it; 50 leaves a margin of background on all four sides.
+ */
+export const MIN_ZOOM = 50;
+
+export const MAX_ZOOM = 400;
+
+export const DEFAULT_ZOOM = 100;
+
+/**
+ * What one press of the minus or plus beside the slider moves.
+ *
+ * Five rather than one: the reader reaching for a button rather than dragging
+ * wants a step they can see happen, and 350 presses to cross the range is not a
+ * control. The slider itself still stops on every whole percent.
+ */
+export const ZOOM_STEP = 5;
+
+/**
  * Print resolutions. 300 is what every passport office and photo lab means by
  * "print quality", which is why it is the default rather than the screen's 96.
  */
@@ -74,6 +98,7 @@ export const DEFAULT_OPTIONS: ResizeOptions = {
     // `contain` rather than `cover`, because the first thing this tool must
     // never do is cut somebody's head off to fill a box they typed.
     fit: "contain",
+    zoom: DEFAULT_ZOOM,
     background: "color",
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
     format: "original",
