@@ -65,10 +65,12 @@ export function ConversionRow({
                       t("rowFiles", { count: item.result.files.length }),
                   item.result.iconSizes.length > 0 &&
                       t("rowSizes", { sizes: item.result.iconSizes.join(", ") }),
+                  item.result.colors > 0 && t("rowColors", { count: item.result.colors }),
                   item.result.resized &&
                       t("rowResized", { width: item.result.width, height: item.result.height }),
                   item.result.flattened && t("rowFlattened"),
                   item.result.upscaled && t("rowUpscaled"),
+                  item.result.copied && t("rowCopied"),
               ].filter(Boolean);
 
     return (

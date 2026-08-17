@@ -246,7 +246,7 @@
         },
         "image-converter": {
             "name": "Image Converter",
-            "description": "Convert between PNG, JPG, WebP and AVIF, or turn one picture into a favicon.ico and a full favicon pack — all in your browser."
+            "description": "Convert between PNG, JPG, WebP, AVIF and traced SVG, or turn one picture into a favicon.ico and a full favicon pack — all in your browser."
         },
         "background-remover": {
             "name": "Background Remover",
@@ -7050,13 +7050,13 @@
     },
     "imageConverter": {
         "meta": {
-            "title": "Image Converter — PNG, JPG, WebP, AVIF and favicon packs in your browser",
-            "description": "Convert images between PNG, JPG, WebP and AVIF, or turn one picture into a favicon.ico and a full favicon pack. Runs on the same WebAssembly codecs Squoosh uses. Nothing is uploaded."
+            "title": "Image Converter — PNG, JPG, WebP, AVIF, SVG and favicon packs in your browser",
+            "description": "Convert images between PNG, JPG, WebP and AVIF, trace a picture into an SVG, draw an SVG out at any size, or turn one picture into a favicon.ico and a full favicon pack. Nothing is uploaded."
         },
         "hero": {
             "eyebrow": "Image Converter",
             "title": "Image Converter",
-            "subtitle": "Drop in a picture and get it back as PNG, JPG, WebP or AVIF — or as a favicon.ico and the whole set of icons a site needs. Every file is decoded and re-encoded in this tab by the same WebAssembly codecs Squoosh uses, so nothing you drop here ever leaves your machine.",
+            "subtitle": "Drop in a picture and get it back as PNG, JPG, WebP, AVIF or a traced SVG — or as a favicon.ico and the whole set of icons a site needs. Drop an SVG in and it is drawn at whatever size the target asks for. Every file is handled in this tab by the same WebAssembly codecs Squoosh uses, so nothing you drop here ever leaves your machine.",
             "badgeCodecs": "MozJPEG · libwebp · libaom · OxiPNG",
             "badgeOffline": "Runs offline",
             "badgeBatch": "{count} files at a time"
@@ -7065,15 +7065,17 @@
             "title": "Convert images",
             "description": "Pick a target format, drop your files in and press Convert. Everything is converted one file at a time, so the tab stays usable while it works.",
             "dropTitle": "Drop your images here",
-            "dropHint": "JPG, PNG, WebP, AVIF, GIF or BMP · up to {limit} each · {count} files at a time",
+            "dropHint": "JPG, PNG, WebP, AVIF, GIF, BMP or SVG · up to {limit} each · {count} files at a time",
             "targetLabel": "Convert to",
             "qualityLabel": "Quality",
             "qualityHint": "Higher keeps more detail and costs more bytes. {value} suits most pictures.",
             "qualityHintLossless": "PNG is written losslessly, so quality changes nothing. Pick WebP, AVIF or JPG to trade detail for bytes.",
             "qualityHintIcon": "Icons are PNG underneath and always lossless, so quality changes nothing here.",
+            "qualityHintVector": "Higher keeps smaller shapes and follows every corner more closely. {value} suits most drawings.",
             "resizeLabel": "Longest edge",
-            "resizeHint": "Scales down only. A picture already inside the cap is left at its own size.",
+            "resizeHint": "Scales down only. A picture already inside the cap is left at its own size. An SVG source is drawn at this size instead, enlarging if it has to — a vector has no pixels to lose.",
             "resizeHintIcon": "Icon sizes decide the dimensions, so this cap does not apply.",
+            "resizeHintVector": "An SVG scales to any size on its own, so there is nothing to cap. Quality is what decides how much detail the trace keeps.",
             "resizeOriginal": "Keep original size",
             "resizePreset": "{value} px",
             "backgroundLabel": "Background",
@@ -7085,6 +7087,10 @@
             "sizesValue": "{size} × {size}",
             "sizesSummary": "{count, plural, =1 {# size} other {# sizes}}",
             "sizesLastHint": "At least one size has to stay selected.",
+            "colorsLabel": "Colours",
+            "colorsValue": "{count} colours",
+            "colorsHint": "How many flat fills the drawing may use. Fewer is smaller and cleaner; more follows the picture and costs paths.",
+            "colorsHintIdle": "Only the SVG target has a palette to size.",
             "convert": "Convert",
             "working": "Converting {done} of {total}…",
             "clear": "Clear all",
@@ -7100,6 +7106,8 @@
             "rowSizes": "Icons: {sizes}",
             "rowFlattened": "Transparency flattened",
             "rowUpscaled": "Enlarged past the original — some sizes will look soft",
+            "rowCopied": "Already an SVG — copied through unchanged",
+            "rowColors": "{count, plural, =1 {# colour} other {# colours}}",
             "rowResized": "Resized to {width}×{height}",
             "summaryFiles": "{count, plural, =1 {# image converted} other {# images converted}}",
             "summaryOutputs": "{count, plural, =1 {# file out} other {# files out}}",
@@ -7120,12 +7128,14 @@
             "jpeg": "JPG",
             "webp": "WebP",
             "avif": "AVIF",
+            "svg": "SVG (traced)",
             "ico": "ICO (favicon)",
             "favicon": "Favicon pack",
             "pngHint": "Lossless, keeps transparency. The safe choice when the picture has to survive exactly.",
             "jpegHint": "The universal photograph format. No transparency at all.",
             "webpHint": "Smaller than JPG at the same quality, with transparency. Read everywhere that matters.",
             "avifHint": "The smallest of the four, and the slowest to encode. Good support, not universal.",
+            "svgHint": "Traces the picture into flat shapes that scale to any size. Made for logos and stencils, not for photographs.",
             "icoHint": "One .ico holding the square sizes you pick, as PNG inside.",
             "faviconHint": "The .ico plus every PNG size, a web app manifest and the HTML to link them."
         },
@@ -7136,7 +7146,7 @@
         },
         "errors": {
             "empty_file": "That file is empty.",
-            "unsupported_type": "That is not an image this tool can read. Try JPG, PNG, WebP, AVIF, GIF or BMP.",
+            "unsupported_type": "That is not an image this tool can read. Try JPG, PNG, WebP, AVIF, GIF, BMP or SVG.",
             "too_large": "That file is larger than {limit}.",
             "too_many_files": "Only {count} files at a time.",
             "too_many_pixels": "That picture holds more than {count} megapixels, which is more than a browser tab can decode safely.",
@@ -7158,13 +7168,13 @@
         "article": {
             "howItWorks": {
                 "title": "How the conversion works",
-                "p1": "Every file you drop is decoded to raw pixels in this tab, scaled if you asked for that, and handed to a real encoder compiled to WebAssembly — <code>MozJPEG</code> for JPG, <code>libwebp</code> for WebP, <code>libaom</code> for AVIF and <code>OxiPNG</code> for PNG.",
+                "p1": "Every file you drop is decoded to raw pixels in this tab, scaled if you asked for that, and handed to a real encoder compiled to WebAssembly — <code>MozJPEG</code> for JPG, <code>libwebp</code> for WebP, <code>libaom</code> for AVIF and <code>OxiPNG</code> for PNG. The SVG target is the exception, because it has no encoder at all: it writes outlines rather than pixels.",
                 "example": "<code>photo.png</code> → <code>photo.avif</code> — the same pixels through <code>libaom</code>, not through <code>canvas.toBlob</code>",
                 "p2": "These are the same encoders Squoosh runs, and they are why the output is not simply what the browser would have written. Nothing is uploaded: there is no server in this flow at all, the codecs are downloaded once on demand, and everything after that happens on your machine — so a picture converted here never leaves the tab it was dropped into."
             },
             "targets": {
                 "title": "Which format to convert to",
-                "intro": "Four of the six targets name a single encoder. The other two build an icon file, which is a container rather than a format — PNG all the way down, arranged so a browser or an operating system can pick the size it wants.",
+                "intro": "Four of the seven targets name a single encoder. Two build an icon file, which is a container rather than a format — PNG all the way down, arranged so a browser or an operating system can pick the size it wants. The seventh holds no pixels at all: it traces the picture into outlines and writes them as SVG.",
                 "tableCaption": "Conversion targets and what each one is for",
                 "colTarget": "Target",
                 "colDoes": "What you get",
@@ -7177,12 +7187,23 @@
                 "webpWhen": "You want a photograph noticeably smaller than JPG without giving up transparency.",
                 "avifDoes": "An AVIF from libaom, with chroma delta Q and sharp YUV.",
                 "avifWhen": "Size matters more than encode time and you do not need to support every browser ever shipped.",
+                "svgDoes": "An SVG of flat, filled outlines traced from the picture, using as many colours as you allowed.",
+                "svgWhen": "The source is a logo, an icon or flat artwork and it has to scale — a print, a large screen, a cutting machine.",
                 "icoDoes": "One .ico file holding a PNG for each square size you selected.",
                 "icoWhen": "You need a favicon.ico and nothing else — a legacy path, a desktop shortcut, a Windows application icon.",
                 "faviconDoes": "A ZIP holding favicon.ico, four PNG sizes, a site.webmanifest and the HTML to link them.",
                 "faviconWhen": "You are setting up a site's icons from scratch and want the whole set rather than one file.",
                 "note1": "There is no wrong answer between WebP and AVIF; there is only a trade. AVIF is usually smaller at the same visual quality, and it takes appreciably longer to encode — on a large photograph, seconds rather than a moment. WebP encodes fast and is read by everything still receiving security updates.",
                 "note2": "Converting a format into itself is allowed and is not a no-op: it re-encodes the picture at the quality you set, which is how you shrink a WebP that was written at quality 95. It also means the output keeps the input's filename, which is correct — it is the same picture."
+            },
+            "vector": {
+                "title": "SVG, in and out",
+                "p1": "SVG goes both ways here, and the two directions are not mirror images of each other. Reading one is exact: the file describes shapes, the browser draws them at whatever size this tool asks for, and a 24-pixel icon file makes a sharp 512-pixel favicon because there was never a 24-pixel grid to enlarge. Writing one is an approximation, because the picture is a grid and the shapes have to be inferred from it.",
+                "p2": "Dropping an SVG in is the reliable half. The Longest edge control changes meaning for it: for a raster source it is a cap that never enlarges, and for a vector source it is the size to draw at. Leave it on Keep original size and the file's own width and height are used; a file that declares neither is drawn at 512. Pick an icon target and the drawing is rendered at the largest square that target writes, so the big icon is a fresh rendering rather than an enlargement of a small one. One thing the URL field cannot do is fetch an SVG: the import path this site shares between its image tools accepts only the formats a codec decodes, so an SVG has to be dropped in or picked from disk.",
+                "p3": "An SVG is handed to the browser as an image and never as markup on this page, and an image is rendered in what the specification calls secure static mode: no script runs, no external file is fetched, nothing is interactive. That is a guarantee from the browser rather than a filter written here. It has one visible consequence — an SVG that pulls in a bitmap or a webfont over the network loses it, because fetching that file is exactly what the mode blocks.",
+                "p4": "Converting to SVG traces. The colours are cut down to the count you picked by median cut, regions too small for the quality you set are folded into whichever neighbour they share the most border with, and the boundary of every region that survives is followed along the pixel grid and then straightened. Nothing is smoothed into curves: the outlines are polygons whose corners sit on grid vertices, which is why every coordinate in the file is a whole number.",
+                "p5": "That makes it very good at one job and bad at the rest. A logo, an icon, a stencil or a screenshot of flat interface comes out as a few dozen paths, usually smaller than the PNG, and scales forever. A photograph comes out as thousands of paths, larger than the JPEG, looking like a bad watercolour. When a trace comes out wrong the fix is almost always fewer colours rather than more.",
+                "p6": "Asking for SVG with an SVG already in hand copies the file through untouched, bytes and all. Rasterising a vector in order to trace it back into one would replace exact curves with a polygon approximation of a rendering of them — so the row says it was copied rather than pretending work was done."
             },
             "controls": {
                 "title": "Every control on this page",
@@ -7195,10 +7216,10 @@
                 "targetDoes": "Chooses the encoder or the icon container everything in the queue is written with.",
                 "targetWhen": "Always — it is the one setting that decides what the other four mean.",
                 "qualityName": "Quality",
-                "qualityDoes": "Sets the encoder's quality, 10 to 100. Live for JPG, WebP and AVIF only.",
+                "qualityDoes": "Sets the encoder's quality, 10 to 100. Live for JPG, WebP and AVIF, and for SVG — where it buys trace detail rather than encoder bits.",
                 "qualityWhen": "The output is bigger than you want, or a gradient has visible banding in it.",
                 "resizeName": "Longest edge",
-                "resizeDoes": "Caps the longest side in pixels, scaling down with Lanczos3 in linear light. Never enlarges.",
+                "resizeDoes": "Caps the longest side in pixels, scaling down with Lanczos3 in linear light. Never enlarges a raster; an SVG source is drawn at this size instead.",
                 "resizeWhen": "The source is a camera original and the destination is a web page.",
                 "backgroundName": "Background",
                 "backgroundDoes": "Decides what sits behind transparency: keep it, or composite onto white or black.",
@@ -7206,6 +7227,9 @@
                 "sizesName": "Icon sizes",
                 "sizesDoes": "Chooses which squares go inside the .ico. Live for the ICO target only.",
                 "sizesWhen": "You need a size beyond the usual three — a 256 for a desktop shortcut, say.",
+                "colorsName": "Colours",
+                "colorsDoes": "Caps how many flat fills a trace may use. Live for the SVG target only.",
+                "colorsWhen": "A two-colour logo should come out two colours; an illustration needs more, and every extra one costs paths.",
                 "convertName": "Convert",
                 "convertDoes": "Runs every file that has no result yet, one at a time. Files already converted are left alone.",
                 "convertWhen": "You have dropped files in — nothing is encoded until you press it.",
@@ -7265,6 +7289,7 @@
                 "p1": "Forty files at a time, twenty-five megabytes each. Both numbers are about memory in one browser tab rather than about bandwidth, because nothing here is uploaded.",
                 "p2": "There is also a forty-megapixel ceiling, checked after decoding rather than from the file size, because the two are barely related — a two-megabyte PNG can hold a hundred megapixels, and four bytes per pixel is what actually has to fit.",
                 "p3": "The favicon pack does seven encodes per picture where a raster target does one, so a batch of packs takes appreciably longer than the same batch converted to WebP. The progress count is per file, not per encode, so a pack row sits on one number for a while.",
+                "p4": "A trace runs on a grid capped at 1000 pixels on its longest edge, whatever size the picture arrived at. That is not the size control in disguise — the output is a vector and scales to any size regardless. It is that tracing costs work per region, and a larger grid does not find bigger shapes, only more specks of noise to draw an outline around.",
                 "codecLoading": "Codecs load only when they are used. If you never pick AVIF, <code>libaom</code> is never fetched — so the first conversion into a format you have not used yet takes a moment longer while its encoder arrives. Files are then worked through one at a time rather than all at once: a decoded picture costs four bytes per pixel whatever the file size, so converting twenty at the same time is how a tab runs out of memory halfway through. One at a time is also the only way the progress count can be honest."
             },
             "privacy": {
@@ -7282,13 +7307,15 @@
                 "q3": "Why did my transparent logo come out with a white background?",
                 "a3": "Either you converted to JPG, which has no alpha channel and therefore has to put the picture on some colour, or the Background control was set to white. Set it to Keep transparent and convert to PNG, WebP or AVIF instead.",
                 "q4": "Can it convert HEIC, SVG or a RAW file?",
-                "a4": "No. This tool can read whatever your browser can decode — JPG, PNG, WebP, AVIF, GIF and BMP. HEIC is only decodable in Safari, SVG has no intrinsic pixel size to convert from, and RAW formats need a demosaicer that no browser ships. Convert those to PNG elsewhere first.",
+                "a4": "SVG, yes — drop one in, pick any target, and it is drawn at the size you asked for rather than enlarged from a grid. HEIC and RAW, no: HEIC is only decodable in Safari, and RAW formats need a demosaicer that no browser ships. Convert those to PNG elsewhere first.",
                 "q5": "What happens to an animated GIF?",
                 "a5": "You get its first frame. Nothing here writes an animated format, so the other frames have nowhere to go — this is the one case where the conversion loses something the file extension will not warn you about.",
                 "q6": "Why is AVIF taking so long?",
                 "a6": "libaom is a slow encoder, and it is running in WebAssembly on one thread. That is the price of AVIF's size. On a large photograph, expect seconds rather than an instant; on a batch, expect to leave the tab open. WebP gets most of the saving for a fraction of the time.",
                 "q7": "Does converting a JPG to PNG make it better quality?",
-                "a7": "No, and this is worth being clear about. PNG is lossless, so it will preserve exactly what the JPG contained, artefacts included, usually in a much larger file. Detail lost in the original compression is gone; nothing can reconstruct it. Convert to PNG to stop further loss, not to undo loss already taken."
+                "a7": "No, and this is worth being clear about. PNG is lossless, so it will preserve exactly what the JPG contained, artefacts included, usually in a much larger file. Detail lost in the original compression is gone; nothing can reconstruct it. Convert to PNG to stop further loss, not to undo loss already taken.",
+                "q8": "Why does my photograph look terrible as an SVG?",
+                "a8": "Because tracing is not a conversion, it is a re-drawing. A photograph has no flat regions to find, so the tracer invents thousands of small ones — the file is larger than the JPEG and worse to look at. Tracing is for pictures that were drawn: logos, icons, stencils, flat illustration. If you want a photograph smaller, convert it to AVIF or WebP instead."
             }
         }
     },

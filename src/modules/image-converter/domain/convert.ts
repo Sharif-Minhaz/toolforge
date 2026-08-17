@@ -9,7 +9,7 @@ import {
 } from "@/modules/tools/domain/image-codec";
 import { fitWithinEdge, flattenOntoMatte, isOpaque } from "@/modules/tools/domain/pixels";
 import type { MatteColor, PixelSize } from "@/modules/tools/types";
-import { MAX_PIXELS } from "./constants";
+import { MAX_PIXELS, MAX_TRACE_EDGE } from "./constants";
 import {
     buildFaviconHeadHtml,
     buildWebManifest,
@@ -21,7 +21,9 @@ import {
 import { buildConvertedFilename } from "./filenames";
 import { buildIcoFile, type IcoImage } from "./ico";
 import { iconLayout, isUpscale, padToSquare } from "./icon-layout";
-import { resolveBackground, resolveIconSizes, targetFormat } from "./targets";
+import { isSvgSource, rasterizeSvg, readSvgSize, SVG_MIME_TYPE } from "./svg-source";
+import { resolveBackground, resolveIconSizes, svgRenderEdge, targetFormat } from "./targets";
+import { tracePixelsToSvg } from "./vectorize";
 import type { ConversionOptions, ConversionOutcome, ConvertedFile, IconSize } from "../types";
 
 const ICO_MIME_TYPE = "image/vnd.microsoft.icon";
@@ -31,12 +33,17 @@ const HTML_MIME_TYPE = "text/html";
 /**
  * Converts one file end to end.
  *
- * Three shapes come out of here and they share a decode: a raster target writes
- * one file, `ico` writes one file built from several encodes, and `favicon`
- * writes a whole set. What they have in common is that the source is decoded
- * once and every output is scaled from those pixels rather than from each
- * other — chaining a 512 down to a 16 through four intermediate sizes is how an
- * icon ends up mush.
+ * Four shapes come out of here and they share a decode: a raster target writes
+ * one file, `svg` writes one file of outlines rather than pixels, `ico` writes
+ * one file built from several encodes, and `favicon` writes a whole set. What
+ * they have in common is that the source is decoded once and every output is
+ * scaled from those pixels rather than from each other — chaining a 512 down to
+ * a 16 through four intermediate sizes is how an icon ends up mush.
+ *
+ * A source may arrive as markup instead of a grid. An SVG has no pixels until
+ * somebody picks a size, so `svgRenderEdge` picks the one the chosen target is
+ * about to ask for and the browser draws the vector at exactly that size —
+ * which is why a 24-pixel icon file still makes a sharp 512 favicon.
  *
  * A pack is returned as its members rather than as a ZIP, so the batch archive
  * can nest them in a folder instead of burying a ZIP inside a ZIP. The row's
@@ -47,7 +54,23 @@ export async function convertImage(
     options: ConversionOptions,
     createCanvas: CanvasFactory = browserCanvasFactory,
 ): Promise<ConversionOutcome> {
-    const decoded = await decodeToPixels(file, createCanvas);
+    const vectorSource = isSvgSource(file);
+
+    // An SVG asked for as an SVG is already the answer. Rasterising it to trace
+    // it back into outlines would replace exact curves with a polygon
+    // approximation of a rendering of them, which is a worse file that took
+    // longer to make.
+    if (vectorSource && options.target === "svg") {
+        return copyVectorSource(file);
+    }
+
+    // The pixel ceiling is applied to a vector by scaling it rather than by
+    // refusing it: `width="40000"` is a number in a text file, not memory
+    // somebody already spent, so the largest grid this tab holds is a better
+    // answer than turning the drawing away.
+    const decoded = vectorSource
+        ? await rasterizeSvg(file, svgRenderEdge(options), MAX_PIXELS, createCanvas)
+        : await decodeToPixels(file, createCanvas);
 
     if (decoded === null) {
         return { ok: false, reason: "undecodable" };
@@ -66,6 +89,10 @@ export async function convertImage(
 
         if (format !== null) {
             return await convertToRaster(file, decoded, options, matte);
+        }
+
+        if (options.target === "svg") {
+            return await convertToVector(file, decoded, options, matte);
         }
 
         return options.target === "favicon"
@@ -119,6 +146,94 @@ async function convertToRaster(
             flattened: matte !== null,
             resized,
             upscaled: false,
+            copied: false,
+            colors: 0,
+        },
+    };
+}
+
+/**
+ * Traces one picture into outlines.
+ *
+ * The grid is capped at `MAX_TRACE_EDGE` before anything is traced, and that is
+ * not the size control doing its job — the size control is disabled for this
+ * target. Tracing costs work per region, and a larger grid finds the same
+ * shapes plus every speck of noise around them; the output scales to any size
+ * either way, because it is a vector.
+ */
+async function convertToVector(
+    file: File,
+    decoded: ImageData,
+    options: ConversionOptions,
+    matte: MatteColor | null,
+): Promise<ConversionOutcome> {
+    const grid = fitWithinEdge(decoded, MAX_TRACE_EDGE);
+    const resized = grid.width !== decoded.width || grid.height !== decoded.height;
+    const scaled = resized ? await resizePixels(decoded, grid) : decoded;
+    const pixels = matte === null ? scaled : flatten(scaled, matte);
+
+    const traced = tracePixelsToSvg(pixels, {
+        colors: options.colors,
+        quality: options.quality,
+    });
+
+    const blob = new Blob([traced.markup], { type: SVG_MIME_TYPE });
+    const output: ConvertedFile = {
+        name: buildConvertedFilename(file.name, options.target),
+        bytes: blob.size,
+        blob,
+    };
+
+    return {
+        ok: true,
+        image: {
+            target: options.target,
+            files: [output],
+            totalBytes: output.bytes,
+            width: pixels.width,
+            height: pixels.height,
+            iconSizes: [],
+            flattened: matte !== null,
+            resized,
+            upscaled: false,
+            copied: false,
+            colors: traced.colors,
+        },
+    };
+}
+
+/**
+ * Hands an SVG back as it arrived.
+ *
+ * The bytes are passed through rather than re-serialised from text, so a file
+ * that is not UTF-8, or that carries a comment or a licence header, comes out
+ * the file it went in as. The row says it was copied — silence would read as a
+ * conversion that did nothing.
+ */
+async function copyVectorSource(file: File): Promise<ConversionOutcome> {
+    const bytes = await file.arrayBuffer();
+    const size = readSvgSize(new TextDecoder().decode(bytes));
+
+    if (size === null) {
+        return { ok: false, reason: "undecodable" };
+    }
+
+    const blob = new Blob([bytes], { type: SVG_MIME_TYPE });
+
+    return {
+        ok: true,
+        image: {
+            target: "svg",
+            files: [{ name: buildConvertedFilename(file.name, "svg"), bytes: blob.size, blob }],
+            totalBytes: blob.size,
+            width: size.width,
+            height: size.height,
+            iconSizes: [],
+            flattened: false,
+            resized: false,
+            upscaled: false,
+            copied: true,
+            colors: 0,
         },
     };
 }
@@ -156,6 +271,8 @@ async function convertToIco(
             flattened: matte !== null,
             resized: false,
             upscaled: sizes.some((size) => isUpscale(decoded, size)),
+            copied: false,
+            colors: 0,
         },
     };
 }
@@ -212,6 +329,8 @@ async function convertToFaviconPack(
             flattened: matte !== null,
             resized: false,
             upscaled: sizes.some((size) => isUpscale(decoded, size)),
+            copied: false,
+            colors: 0,
         },
     };
 }

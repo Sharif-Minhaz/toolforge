@@ -13,6 +13,7 @@ import { CONVERSION_TARGETS } from "../types";
 export const IMAGE_CONVERTER_ARTICLE_SECTIONS = [
     { id: "howItWorks", titleKey: "howItWorks.title" },
     { id: "targets", titleKey: "targets.title" },
+    { id: "vector", titleKey: "vector.title" },
     { id: "controls", titleKey: "controls.title" },
     { id: "favicon", titleKey: "favicon.title" },
     { id: "icons", titleKey: "icons.title" },
@@ -36,6 +37,7 @@ export async function getImageConverterFaqEntries(): Promise<FaqEntry[]> {
         { question: t("faq.q5"), answer: t("faq.a5") },
         { question: t("faq.q6"), answer: t("faq.a6") },
         { question: t("faq.q7"), answer: t("faq.a7") },
+        { question: t("faq.q8"), answer: t("faq.a8") },
     ];
 }
 
@@ -59,6 +61,7 @@ export async function ImageConverterArticle() {
         "resize",
         "background",
         "sizes",
+        "colors",
         "convert",
         "redo",
         "download",
@@ -129,6 +132,17 @@ export async function ImageConverterArticle() {
                     <div className={`mt-5 ${PROSE}`}>
                         <p>{t("targets.note1")}</p>
                         <p>{t("targets.note2")}</p>
+                    </div>
+                </ArticleSection>
+
+                <ArticleSection id="vector" title={t("vector.title")}>
+                    <div className={PROSE}>
+                        <p>{t("vector.p1")}</p>
+                        <p>{t("vector.p2")}</p>
+                        <p>{t("vector.p3")}</p>
+                        <p>{t("vector.p4")}</p>
+                        <p>{t("vector.p5")}</p>
+                        <p>{t("vector.p6")}</p>
                     </div>
                 </ArticleSection>
 
@@ -228,6 +242,7 @@ export async function ImageConverterArticle() {
                         <p>{t("limits.p1")}</p>
                         <p>{t("limits.p2")}</p>
                         <p>{t("limits.p3")}</p>
+                        <p>{t("limits.p4")}</p>
                         <p>{t.rich("limits.codecLoading", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>

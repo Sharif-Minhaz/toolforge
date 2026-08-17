@@ -23,6 +23,10 @@ describe("buildConvertedFilename", () => {
         expect(buildConvertedFilename("logo.png", "favicon")).toBe("logo.ico");
     });
 
+    test("a traced drawing carries the svg extension", () => {
+        expect(buildConvertedFilename("logo.png", "svg")).toBe("logo.svg");
+    });
+
     test("every target produces a name with an extension on it", () => {
         for (const target of CONVERSION_TARGETS) {
             const name = buildConvertedFilename("x.bin", target);
@@ -45,10 +49,12 @@ describe("buildConvertedFilename", () => {
         expect(buildConvertedFilename("ছবি.png", "webp")).toBe("ছবি.webp");
     });
 
-    test("the raster targets and the extension map agree", () => {
+    test("every target that names no encoder still names an extension", () => {
         for (const target of CONVERSION_TARGETS) {
             if (targetFormat(target) === null) {
-                expect(buildConvertedFilename("x.png", target)).toEndWith(".ico");
+                expect(buildConvertedFilename("x.png", target)).toEndWith(
+                    target === "svg" ? ".svg" : ".ico",
+                );
             }
         }
     });

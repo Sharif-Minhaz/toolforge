@@ -56,6 +56,7 @@ export default async function ImageConverterToolPage({ searchParams }: ImageConv
         maxEdge: named?.maxEdge ?? DEFAULT_OPTIONS.maxEdge,
         background: named?.background ?? DEFAULT_OPTIONS.background,
         iconSizes: named?.sizes ?? DEFAULT_OPTIONS.iconSizes,
+        colors: named?.colors ?? DEFAULT_OPTIONS.colors,
     };
 
     const badges = [

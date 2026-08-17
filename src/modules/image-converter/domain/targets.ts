@@ -1,7 +1,7 @@
 import { BLACK_MATTE, WHITE_MATTE } from "@/modules/tools/domain/pixels";
 import type { MatteColor, RasterFormat } from "@/modules/tools/types";
 import { DEFAULT_ICON_SIZES } from "./constants";
-import { FAVICON_ICO_SIZES } from "./favicon";
+import { FAVICON_ICO_SIZES, FAVICON_PNGS } from "./favicon";
 import {
     BACKGROUND_CHOICES,
     type BackgroundChoice,
@@ -12,8 +12,9 @@ import {
 } from "../types";
 
 /**
- * The encoder a target writes with, or `null` when the target is a container.
- * `ico` and `favicon` are both PNG all the way down.
+ * The encoder a target writes with, or `null` when the target is not a raster
+ * format at all. `ico` and `favicon` are containers, PNG all the way down;
+ * `svg` is not pixels in the first place.
  */
 export function targetFormat(target: ConversionTarget): RasterFormat | null {
     switch (target) {
@@ -22,6 +23,7 @@ export function targetFormat(target: ConversionTarget): RasterFormat | null {
         case "webp":
         case "avif":
             return target;
+        case "svg":
         case "ico":
         case "favicon":
             return null;
@@ -36,15 +38,24 @@ export function isSingleFileTarget(target: ConversionTarget): boolean {
 /**
  * Whether the quality slider changes anything.
  *
- * Only the three lossy encoders spend it. PNG is written losslessly, and the
- * two icon targets are PNG underneath, so for all three the control is disabled
- * with a hint saying why rather than left live and ignored.
+ * The three lossy encoders spend it on the quantiser. SVG spends it on the
+ * trace — how small a speck survives and how closely an outline follows the
+ * pixel staircase — which is the same bargain in a different currency: more
+ * detail, more bytes. PNG is written losslessly and the two icon targets are
+ * PNG underneath, so for those three the control is disabled with a hint saying
+ * why rather than left live and ignored.
  */
 export function qualityApplies(target: ConversionTarget): boolean {
-    return target === "jpeg" || target === "webp" || target === "avif";
+    return target === "jpeg" || target === "webp" || target === "avif" || target === "svg";
 }
 
-/** The longest-edge cap is meaningless when the target picks its own sizes. */
+/**
+ * The longest-edge cap is meaningless when the target picks its own sizes — and
+ * a vector has no size to cap. An SVG traced from a 4000-pixel photograph and
+ * one traced from a 400-pixel copy of it both scale to any size on the page;
+ * what changes is how much detail the trace found, and the quality slider is
+ * already the control for that.
+ */
 export function resizeApplies(target: ConversionTarget): boolean {
     return targetFormat(target) !== null;
 }
@@ -52,6 +63,11 @@ export function resizeApplies(target: ConversionTarget): boolean {
 /** Only a plain `.ico` lets the reader choose; the pack's sizes are fixed. */
 export function iconSizesApply(target: ConversionTarget): boolean {
     return target === "ico";
+}
+
+/** Only a traced drawing has a palette to size. */
+export function colorsApply(target: ConversionTarget): boolean {
+    return target === "svg";
 }
 
 /**
@@ -136,7 +152,39 @@ export function optionsSignature(options: ConversionOptions): string {
         parts.push(`s${resolveIconSizes(options).join("-")}`);
     }
 
+    if (colorsApply(options.target)) {
+        parts.push(`c${options.colors}`);
+    }
+
     return parts.join(":");
+}
+
+/**
+ * The size an SVG *source* is drawn at before anything else happens to it.
+ *
+ * A vector has no pixels until somebody picks a number, and the number that
+ * matters is whatever the chosen target is about to ask for. A raster target
+ * asks for the size cap, or for the file's own declared size when there is no
+ * cap. An icon target asks for the largest square it is going to write, so the
+ * biggest icon comes from a fresh rasterisation rather than from an enlargement
+ * of a smaller one. `null` means "whatever the file says", and the SVG target
+ * never asks at all — an SVG wanted as an SVG is copied, not redrawn.
+ */
+export function svgRenderEdge(options: ConversionOptions): number | null {
+    if (targetFormat(options.target) !== null) {
+        return options.maxEdge;
+    }
+
+    if (options.target === "svg") {
+        return null;
+    }
+
+    const squares = [
+        ...resolveIconSizes(options),
+        ...(options.target === "favicon" ? FAVICON_PNGS.map((png) => png.size) : []),
+    ];
+
+    return squares.length === 0 ? null : Math.max(...squares);
 }
 
 /** What the queue rule needs to know about one row. */

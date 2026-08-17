@@ -12,10 +12,22 @@ import type { ConversionTarget } from "../types";
  * same name, which is correct — it is the same picture, re-encoded.
  */
 export function buildConvertedFilename(originalName: string, target: ConversionTarget): string {
-    const format = targetFormat(target);
-    const extension = format === null ? "ico" : RASTER_FORMAT_EXTENSIONS[format];
+    return `${toFilenameStem(originalName)}.${targetExtension(target)}`;
+}
 
-    return `${toFilenameStem(originalName)}.${extension}`;
+/**
+ * The extension a target's single file takes. The favicon pack is the exception
+ * and does not go through here: every file in it names itself, because a
+ * browser looks those names up by path.
+ */
+export function targetExtension(target: ConversionTarget): string {
+    const format = targetFormat(target);
+
+    if (format !== null) {
+        return RASTER_FORMAT_EXTENSIONS[format];
+    }
+
+    return target === "svg" ? "svg" : "ico";
 }
 
 /** `holiday-favicon.zip` — one source's whole pack, named after the source. */

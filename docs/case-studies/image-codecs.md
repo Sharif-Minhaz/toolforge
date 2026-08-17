@@ -145,6 +145,123 @@ Three "failures", zero defects.
 
 ---
 
+## SVG, which is neither a codec nor a grid
+
+`image-converter/domain/svg-source.ts` reads one; `domain/vectorize.ts` writes one.
+They are separate problems and only one of them is exact.
+
+### Reading one: the browser is the security model, not a filter
+
+**An SVG referenced as an image is rendered in secure static mode.** No script
+runs, no external file is fetched, nothing is interactive — a guarantee from the
+platform, and the reason there is no hand-written sanitiser here. That holds for
+`<img>`, a CSS background and anything else that consumes the file *as an image*;
+it does **not** hold for `<object>`, `<embed>`, an `<iframe>`, or markup parsed
+into this page's DOM. So the file only ever becomes a blob URL handed to an
+`<img>`, and a change that parses it into the document instead throws that
+guarantee away without touching a line that looks security-related.
+
+Two consequences the copy has to carry: an SVG that pulls a bitmap or a webfont
+over the network loses it, because blocking that fetch is exactly what the mode
+does; and a browser that fetched one anyway taints the canvas, so `getImageData`
+throws and the file is reported undecodable rather than half-converted.
+
+**Rewrite the root tag before making the blob — three attributes, for three
+different reasons.**
+
+- `width`/`height` are *replaced*, because the image's own intrinsic size is what
+  a canvas draw reads. Setting them on the element does nothing.
+- `viewBox` is synthesised when the file has none. Without one, a larger `width`
+  only makes a larger canvas: the drawing stays the size it was, in the corner.
+- `xmlns` is added when missing, because a file without it is not SVG to an XML
+  parser and an `<img>` renders it as nothing.
+
+The tag is found by scanning with quote state tracked, not by a regex ending at
+the first `>` — a `>` inside an attribute value is legal and cuts the tag in half.
+
+**The size control changes meaning for a vector source, and that is correct.**
+For a raster it is a cap that never enlarges; for a vector it is the size to draw
+at, because there are no pixels to lose. `svgRenderEdge` is the whole rule: a
+raster target asks for the cap, an icon target asks for the largest square it is
+about to write — so the 512 in a favicon pack is a fresh rasterisation rather than
+an enlargement of the 48.
+
+**The pixel ceiling clamps a vector instead of refusing it.** `width="40000"` is a
+number in a text file, not 6 GB somebody already spent. `clampToPixels` floors
+both edges — rounding lands back over the budget, which is the one thing it exists
+to prevent.
+
+### Writing one: tracing is a re-drawing, and the copy must say so
+
+Quantise (median cut) → despeckle → trace → simplify (Ramer–Douglas–Peucker).
+Every step is a pure function over plain arrays, so `bun test` reaches all of them
+with no canvas — which is the only reason a boundary-follower this fiddly is
+testable at all.
+
+- **Despeckling is not a nicety; it is what makes the target usable.** Without it a
+  photograph traces to one path per stray pixel and the file is larger than the
+  picture it replaced. The quality slider is wired to the minimum region area and
+  the simplification tolerance, which is the same bargain the lossy encoders
+  offer in a different currency. Three things about it were only found by
+  measuring, and all three are the difference between a usable target and a
+  footgun:
+
+    - **A speck must not adopt another speck.** Tallying a region's neighbours by
+      *colour* lets two touching specks take each other's value, stranding the one
+      merged first once the second merges away. The symptom is unmistakable once
+      you look for it: raising the threshold produced *more* regions than lowering
+      it — 237 000 at a floor of two against 265 000 at a floor of four. Counting
+      by neighbouring **region**, and preferring regions that are themselves
+      staying, fixed it (237 000 → 102 000 at the same floor).
+    - **One pass is not enough.** Merging changes which regions touch which, so a
+      speck with no large neighbour on the first pass usually has one on the
+      second. Repeating until nothing moves took a grainy megapixel from 83 000
+      regions to 14 500 — and costs a flat drawing nothing, because the first pass
+      merges nothing and the loop stops.
+    - **The top of the quality range still needs a floor.** With none, quality 100
+      on a grainy megapixel produced 794 000 regions and **25 MB** of path data. A
+      block smaller than 2×2 is grain or a resampling fringe, never a shape
+      somebody drew; refusing it takes that case under 4 MB and leaves a flat
+      drawing byte-for-byte identical.
+
+- **Both noise thresholds scale with the grid, and are quoted against a
+  megapixel.** "Two pixels" is grain in a photograph and a whole feature in a
+  16×16 icon. The speck area scales with area and the simplification tolerance
+  with length, which keeps the two in step as the picture shrinks — without it,
+  tracing a favicon at low quality merges the entire drawing into one blob.
+- **Emit boundary edges with the region always on the same side, then chain
+  them.** Holes then come out wound the other way for free, which is what makes
+  `fill-rule="evenodd"` correct rather than merely smaller. At a vertex where two
+  corners of one region meet diagonally, take the sharpest right turn: it keeps
+  the walk on the outline it arrived on instead of producing a figure of eight.
+- **Simplification only ever drops points, so every coordinate stays an integer
+  grid vertex.** That is why there is no precision setting and nothing to round.
+- **Cap the trace grid (1000 px) and say why.** It is not the size control in
+  disguise — the output is a vector. A larger grid finds the same shapes plus
+  more sensor noise, each speck costing its own outline.
+- **An SVG asked for as an SVG is copied through, bytes and all.** Rasterising a
+  vector to trace it back into one replaces exact curves with a polygon
+  approximation of a rendering of them. The row says `copied`, because silence
+  reads as a conversion that did nothing.
+
+### The cross-check, again with programs already on the machine
+
+Same rule as the `.ico` container, three different readers: Python's
+`xml.etree.ElementTree` decides whether the output is XML at all, ImageMagick's
+`convert` and `identify` decide whether a real renderer draws it and at what size,
+and Pillow compares the rendering to the pixels that were traced.
+
+That measurement also settled a design question rather than merely passing:
+adjacent traced regions share an edge, and tracers commonly paper over the
+resulting hairline seams by stroking each path in its own fill colour. Counting
+where the disagreement actually fell — 97.7% of pixels within tolerance, and the
+remainder sitting on colour boundaries rather than in flat interiors — showed the
+difference was the renderer's antialiasing, not seams. **Measure before adding the
+mitigation; a stroke nobody needed would have thickened every thin shape in every
+logo.**
+
+---
+
 ## Related
 
 - [`blurhash.md`](blurhash.md) — the third image tool, and the reason rendering

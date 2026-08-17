@@ -1,10 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
 import { DEFAULT_ICON_SIZES, DEFAULT_OPTIONS } from "@/modules/image-converter/domain/constants";
-import { FAVICON_ICO_SIZES } from "@/modules/image-converter/domain/favicon";
+import { FAVICON_ICO_SIZES, FAVICON_PNGS } from "@/modules/image-converter/domain/favicon";
 import {
     backgroundValues,
     clampQuality,
+    colorsApply,
     iconSizesApply,
     isRetryableFailure,
     isSingleFileTarget,
@@ -14,6 +15,7 @@ import {
     resizeApplies,
     resolveBackground,
     resolveIconSizes,
+    svgRenderEdge,
     targetFormat,
 } from "@/modules/image-converter/domain/targets";
 import {
@@ -41,6 +43,10 @@ describe("targetFormat", () => {
         expect(targetFormat("favicon")).toBeNull();
     });
 
+    test("svg names no encoder either, because it holds no pixels", () => {
+        expect(targetFormat("svg")).toBeNull();
+    });
+
     test("every target is answered", () => {
         for (const target of CONVERSION_TARGETS) {
             expect(targetFormat(target) === null || typeof targetFormat(target) === "string").toBe(
@@ -51,11 +57,17 @@ describe("targetFormat", () => {
 });
 
 describe("which controls apply", () => {
-    test("quality reaches only the lossy encoders", () => {
+    test("quality reaches the lossy encoders and the trace, nothing else", () => {
         for (const target of CONVERSION_TARGETS) {
             expect(qualityApplies(target)).toBe(
-                target === "jpeg" || target === "webp" || target === "avif",
+                target === "jpeg" || target === "webp" || target === "avif" || target === "svg",
             );
+        }
+    });
+
+    test("only a traced drawing has a palette to size", () => {
+        for (const target of CONVERSION_TARGETS) {
+            expect(colorsApply(target)).toBe(target === "svg");
         }
     });
 
@@ -194,10 +206,44 @@ describe("optionsSignature", () => {
         }
     });
 
+    test("the palette size moves the key only for a trace", () => {
+        for (const target of CONVERSION_TARGETS) {
+            const changed =
+                optionsSignature(options({ target, colors: 4 })) !==
+                optionsSignature(options({ target, colors: 32 }));
+
+            expect(changed).toBe(colorsApply(target));
+        }
+    });
+
     test("two size lists that resolve the same way share a key", () => {
         expect(optionsSignature(options({ target: "ico", iconSizes: [32, 16] }))).toBe(
             optionsSignature(options({ target: "ico", iconSizes: [16, 32] })),
         );
+    });
+});
+
+describe("svgRenderEdge", () => {
+    test("a raster target draws the vector at the size cap it was given", () => {
+        expect(svgRenderEdge(options({ target: "png", maxEdge: 1920 }))).toBe(1920);
+    });
+
+    test("no cap means the file's own declared size", () => {
+        expect(svgRenderEdge(options({ target: "webp", maxEdge: null }))).toBeNull();
+    });
+
+    test("an ico draws it at the largest square it is going to write", () => {
+        expect(svgRenderEdge(options({ target: "ico", iconSizes: [16, 32, 256] }))).toBe(256);
+    });
+
+    test("the pack draws it at its own largest PNG, not at the ico's 48", () => {
+        const largest = Math.max(...FAVICON_PNGS.map((png) => png.size));
+
+        expect(svgRenderEdge(options({ target: "favicon", iconSizes: [16] }))).toBe(largest);
+    });
+
+    test("an SVG wanted as an SVG is never drawn at all", () => {
+        expect(svgRenderEdge(options({ target: "svg", maxEdge: 1920 }))).toBeNull();
     });
 });
 

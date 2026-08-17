@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { MAX_QUALITY, MIN_QUALITY, RESIZE_EDGES } from "../domain/constants";
-import { BACKGROUND_CHOICES, CONVERSION_TARGETS, ICON_SIZES } from "../types";
+import { BACKGROUND_CHOICES, COLOR_COUNTS, CONVERSION_TARGETS, ICON_SIZES } from "../types";
 
 export const conversionTargetSchema = z.enum(CONVERSION_TARGETS);
 
@@ -17,6 +17,13 @@ export const iconSizeSchema = z.union(
 );
 
 export const iconSizesSchema = z.array(iconSizeSchema).min(1);
+
+export const colorCountSchema = z.union(
+    COLOR_COUNTS.map((count) => z.literal(count)) as [
+        z.ZodLiteral<(typeof COLOR_COUNTS)[number]>,
+        ...z.ZodLiteral<(typeof COLOR_COUNTS)[number]>[],
+    ],
+);
 
 /**
  * Only the presets the control offers. An arbitrary edge length would be
@@ -36,6 +43,7 @@ export const conversionOptionsSchema = z.object({
     maxEdge: maxEdgeSchema.nullable(),
     background: backgroundChoiceSchema,
     iconSizes: iconSizesSchema,
+    colors: colorCountSchema,
 });
 
 /**
@@ -58,7 +66,8 @@ const iconSizesParamSchema = z
 
 /**
  * Search-param shape for
- * `/tools/image-converter?target=webp&quality=80&maxEdge=1920&background=white`.
+ * `/tools/image-converter?target=webp&quality=80&maxEdge=1920&background=white`,
+ * or `?target=svg&colors=8&quality=70` for a trace.
  * Each field catches on its own, so one malformed value degrades to its default
  * instead of throwing the whole page away.
  */
@@ -68,4 +77,5 @@ export const conversionSearchParamsSchema = z.object({
     maxEdge: z.coerce.number().pipe(maxEdgeSchema).optional().catch(undefined),
     background: backgroundChoiceSchema.optional().catch(undefined),
     sizes: iconSizesParamSchema.optional().catch(undefined),
+    colors: z.coerce.number().pipe(colorCountSchema).optional().catch(undefined),
 });

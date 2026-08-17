@@ -40,9 +40,11 @@ import { convertImage } from "../domain/convert";
 import { buildFaviconHeadHtml, FAVICON_ICO_SIZES } from "../domain/favicon";
 import { buildArchiveFilename, buildPackFilename } from "../domain/filenames";
 import { buildArchivePaths } from "../domain/outputs";
+import { resolveImageType } from "../domain/svg-source";
 import {
     backgroundValues,
     clampQuality,
+    colorsApply,
     iconSizesApply,
     needsWork,
     optionsSignature,
@@ -53,8 +55,10 @@ import {
 import { IconSizeMenu } from "./icon-size-menu";
 import { ConversionRow } from "./conversion-row";
 import {
+    COLOR_COUNTS,
     CONVERSION_TARGETS,
     type BackgroundChoice,
+    type ColorCount,
     type ConversionFailureReason,
     type ConversionOptions,
     type ConversionTarget,
@@ -79,6 +83,9 @@ const ORIGINAL_EDGE = "original";
 
 const RESIZE_VALUES = RESIZE_EDGES.map((edge) => (edge === null ? ORIGINAL_EDGE : String(edge)));
 
+/** `<Select>` holds strings; the palette sizes are numbers with a literal union. */
+const COLOR_VALUES = COLOR_COUNTS.map(String);
+
 const SNIPPET_KEY = "favicon-head";
 
 function toMaxEdge(value: string): number | null {
@@ -87,6 +94,13 @@ function toMaxEdge(value: string): number | null {
 
 function fromMaxEdge(maxEdge: number | null): string {
     return maxEdge === null ? ORIGINAL_EDGE : String(maxEdge);
+}
+
+/** Falls back rather than throwing: the value can only come from the list above. */
+function toColorCount(value: string, fallback: ColorCount): ColorCount {
+    const parsed = Number(value);
+
+    return COLOR_COUNTS.find((count) => count === parsed) ?? fallback;
 }
 
 type ImageConverterWorkbenchProps = {
@@ -155,6 +169,8 @@ export function ImageConverterWorkbench({
     const qualityLive = qualityApplies(options.target);
     const resizeLive = resizeApplies(options.target);
     const sizesLive = iconSizesApply(options.target);
+    const colorsLive = colorsApply(options.target);
+    const vector = options.target === "svg";
     // The pack's sizes are fixed, so the disabled control shows what will
     // actually be written rather than whatever was last chosen for an ICO.
     const shownSizes = options.target === "favicon" ? FAVICON_ICO_SIZES : options.iconSizes;
@@ -341,7 +357,13 @@ export function ImageConverterWorkbench({
 
             previewUrls.current.add(url);
 
-            const checked = checkImageFile(file, IMAGE_FILE_LIMITS);
+            // The declared type is corrected first, so a `.svg` the platform
+            // handed over with no type at all is not refused by the gate the
+            // picker just let it through.
+            const checked = checkImageFile(
+                { type: resolveImageType(file), size: file.size },
+                IMAGE_FILE_LIMITS,
+            );
 
             return {
                 id: `item-${(nextId.current += 1)}`,
@@ -606,11 +628,13 @@ export function ImageConverterWorkbench({
                             </span>
                         </div>
                         <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                            {qualityLive
-                                ? t("qualityHint", { value: options.quality })
-                                : options.target === "png"
-                                  ? t("qualityHintLossless")
-                                  : t("qualityHintIcon")}
+                            {vector
+                                ? t("qualityHintVector", { value: options.quality })
+                                : qualityLive
+                                  ? t("qualityHint", { value: options.quality })
+                                  : options.target === "png"
+                                    ? t("qualityHintLossless")
+                                    : t("qualityHintIcon")}
                         </p>
                     </div>
 
@@ -632,7 +656,13 @@ export function ImageConverterWorkbench({
 
                     <OptionSelect<string>
                         label={t("resizeLabel")}
-                        hint={resizeLive ? t("resizeHint") : t("resizeHintIcon")}
+                        hint={
+                            resizeLive
+                                ? t("resizeHint")
+                                : vector
+                                  ? t("resizeHintVector")
+                                  : t("resizeHintIcon")
+                        }
                         value={fromMaxEdge(options.maxEdge)}
                         values={RESIZE_VALUES}
                         disabled={working || !resizeLive}
@@ -652,6 +682,23 @@ export function ImageConverterWorkbench({
                         disabled={working || !sizesLive}
                         hint={sizesLive ? t("sizesHint") : t("sizesHintFixed")}
                         onToggle={toggleIconSize}
+                    />
+
+                    <OptionSelect<string>
+                        label={t("colorsLabel")}
+                        hint={colorsLive ? t("colorsHint") : t("colorsHintIdle")}
+                        value={String(options.colors)}
+                        values={COLOR_VALUES}
+                        disabled={working || !colorsLive}
+                        items={Object.fromEntries(
+                            COLOR_VALUES.map((value) => [
+                                value,
+                                t("colorsValue", { count: value }),
+                            ]),
+                        )}
+                        onChange={(next) =>
+                            patchOptions({ colors: toColorCount(next, options.colors) })
+                        }
                     />
                 </div>
 
