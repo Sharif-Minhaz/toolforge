@@ -1,20 +1,5 @@
+import { escapeHtml } from "@/modules/tools/domain/html-escape";
 import type { LoremFormat } from "../types";
-
-const HTML_ESCAPES: Record<string, string> = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
-};
-
-/**
- * The corpora carry no markup, but a reader pasting output into a template
- * should never be the one to discover that. Escaping is unconditional.
- */
-export function escapeHtml(text: string): string {
-    return text.replace(/[&<>"']/g, (character) => HTML_ESCAPES[character]);
-}
 
 /** One rendered block per paragraph, in the requested format. */
 export function renderBlocks(

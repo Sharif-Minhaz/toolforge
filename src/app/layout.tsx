@@ -113,6 +113,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.base64.errors,
             toast: messages.base64.toast,
         },
+        htmlMarkdown: {
+            workbench: messages.htmlMarkdown.workbench,
+            errors: messages.htmlMarkdown.errors,
+            toast: messages.htmlMarkdown.toast,
+        },
         bson: {
             workbench: messages.bson.workbench,
             formats: messages.bson.formats,

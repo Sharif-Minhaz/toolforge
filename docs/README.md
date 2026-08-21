@@ -87,6 +87,7 @@ docs/
 │   ├── diff.md
 │   ├── domain-inspector.md
 │   ├── graphql-server.md
+│   ├── html-markdown.md
 │   ├── image-codecs.md
 │   ├── image-resizer.md
 │   ├── json-server.md
@@ -134,6 +135,7 @@ records a defect that was expensive to find and is easy to reintroduce.
 | `diff` | [`case-studies/diff.md`](case-studies/diff.md) |
 | `domain-inspector` | [`case-studies/domain-inspector.md`](case-studies/domain-inspector.md), [`patterns/maps.md`](patterns/maps.md) |
 | `graphql-server` | [`case-studies/graphql-server.md`](case-studies/graphql-server.md) |
+| `html-markdown` | [`case-studies/html-markdown.md`](case-studies/html-markdown.md), [`patterns/format-conversion.md`](patterns/format-conversion.md) |
 | `image-compressor`, `image-converter` | [`case-studies/image-codecs.md`](case-studies/image-codecs.md) |
 | `image-resizer`, any image tool's intake | [`case-studies/image-resizer.md`](case-studies/image-resizer.md) |
 | `json-server` | [`case-studies/json-server.md`](case-studies/json-server.md), [`patterns/growth-ceilings.md`](patterns/growth-ceilings.md) |

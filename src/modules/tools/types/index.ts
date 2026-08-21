@@ -28,6 +28,7 @@ export const TOOL_IDS = [
     "url-parser",
     "curl",
     "markdown",
+    "html-markdown",
     "regex",
     "lorem",
     "color",
@@ -93,6 +94,7 @@ export type ToolIconName =
     | "link"
     | "world"
     | "markdown"
+    | "html"
     | "regex"
     | "text"
     | "palette"

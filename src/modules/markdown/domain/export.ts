@@ -1,5 +1,6 @@
 import katex from "katex";
 
+import { escapeHtml } from "@/modules/tools/domain/html-escape";
 import type { DownloadFile } from "@/modules/tools/types";
 import type { MarkdownExportFormat, MarkdownExportRequest } from "../types";
 
@@ -46,17 +47,6 @@ blockquote{border-left-color:#3a3b44;color:#a4a5ad}
 th,td{border-color:#3a3b44}
 hr{border-top-color:#3a3b44}
 }`;
-
-const ESCAPES: Readonly<Record<string, string>> = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-};
-
-function escapeHtml(text: string): string {
-    return text.replace(/[&<>"]/g, (character) => ESCAPES[character]);
-}
 
 /** `markdown-20260728T101500Z.md` — sortable and self-describing. */
 export function buildMarkdownExportFilename(

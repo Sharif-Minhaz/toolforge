@@ -188,6 +188,10 @@
             "name": "Markdown Preview",
             "description": "Write markdown and watch it render — Mermaid diagrams, LaTeX maths, and export to HTML or PDF."
         },
+        "html-markdown": {
+            "name": "HTML / Markdown Converter",
+            "description": "Convert HTML to Markdown and Markdown to HTML, with GitHub tables and full control over the output."
+        },
         "regex": {
             "name": "Regex Tester",
             "description": "Match, explain, and replace with regular expressions — live, with every capture group listed."
@@ -364,9 +368,9 @@
                 "title": "Make a favicon",
                 "description": "Turn one logo into favicon.ico, every icon size, and the HTML to link them."
             },
-            "cutoutBackground": {
-                "title": "Cut out a background",
-                "description": "Remove the background from a photo in your browser, then swap in a colour, a blur, or a free stock shot."
+            "htmlToMarkdown": {
+                "title": "Page to Markdown",
+                "description": "Paste HTML and get clean Markdown back, tables and all."
             }
         },
         "featured": {
@@ -3183,6 +3187,191 @@
                 "a5": "Mermaid has to measure rendered text to lay a graph out, so it cannot run before the page reaches a browser, and it is roughly a megabyte of JavaScript that is only downloaded when a document actually contains a diagram. The rest of the preview renders immediately; the diagram fills in a moment later.",
                 "q6": "How large a document can it handle?",
                 "a6": "Up to 250,000 characters, which is several hundred printed pages. Past that the preview reports the limit rather than locking the tab up: parsing runs on the same thread as the interface, so an unbounded document would stop you typing."
+            }
+        }
+    },
+    "htmlMarkdown": {
+        "meta": {
+            "title": "HTML to Markdown and Markdown to HTML Converter",
+            "description": "Convert HTML into Markdown or Markdown back into HTML, with GitHub Flavored Markdown tables, task lists and strikethrough, and full control over how the Markdown is written. Runs entirely in your browser — nothing is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Formatting",
+            "title": "HTML / Markdown Converter",
+            "subtitle": "Paste a page and get Markdown back, or paste Markdown and get the markup. Choose the heading style, the bullet character, fenced or indented code, and whether links stay inline or collect at the end.",
+            "badgeGfm": "Tables and task lists",
+            "badgeOffline": "Works offline",
+            "badgeRoundTrip": "Converts both ways"
+        },
+        "workbench": {
+            "title": "Convert between HTML and Markdown",
+            "description": "Paste or upload a document, pick a direction, and the result updates as you go.",
+            "modeLabel": "Direction",
+            "modes": {
+                "htmlToMarkdown": "HTML to Markdown",
+                "markdownToHtml": "Markdown to HTML"
+            },
+            "inputLabels": {
+                "htmlToMarkdown": "HTML in",
+                "markdownToHtml": "Markdown in"
+            },
+            "outputLabels": {
+                "htmlToMarkdown": "Markdown out",
+                "markdownToHtml": "HTML out"
+            },
+            "placeholders": {
+                "htmlToMarkdown": "Paste HTML, or a whole saved page",
+                "markdownToHtml": "Paste Markdown, or a README"
+            },
+            "outputPlaceholder": "Output will appear here",
+            "upload": "Upload file",
+            "clear": "Clear input",
+            "copy": "Copy",
+            "download": "Download",
+            "swap": "Send the output back as input",
+            "headingStyleLabel": "Heading style",
+            "headings": {
+                "atx": "Hash prefix (ATX)",
+                "setext": "Underlined (setext)"
+            },
+            "bulletMarkerLabel": "Bullet character",
+            "bullets": {
+                "dash": "Dash",
+                "asterisk": "Asterisk",
+                "plus": "Plus"
+            },
+            "codeBlockStyleLabel": "Code blocks",
+            "codeBlocks": {
+                "fenced": "Fenced",
+                "indented": "Indented four spaces"
+            },
+            "codeBlockFencedHint": "A fence names the language, so highlighting survives",
+            "codeBlockIndentedHint": "An indented block has nowhere to name the language, so it is dropped",
+            "emphasisStyleLabel": "Emphasis",
+            "emphases": {
+                "underscore": "Underscore",
+                "asterisk": "Asterisk"
+            },
+            "emphasisStyleHint": "Strong text is always two asterisks",
+            "linkStyleLabel": "Links",
+            "links": {
+                "inlined": "Inline, beside the text",
+                "referenced": "Referenced, collected at the end"
+            },
+            "gfmLabel": "GitHub Flavored Markdown",
+            "gfmHintToMarkdown": "Writes tables, strikethrough and task lists",
+            "gfmHintToHtml": "Reads tables, strikethrough and task lists",
+            "keepHtmlLabel": "Keep inline HTML",
+            "keepHtmlHint": "Leaves tags Markdown cannot say, instead of unwrapping them to their text",
+            "lineBreaksLabel": "Line breaks",
+            "lineBreaksHint": "Turns a single newline into a break, the way a comment box does",
+            "fullDocumentLabel": "Whole document",
+            "fullDocumentHint": "Wraps the markup in a file a browser can open on its own"
+        },
+        "errors": {
+            "tooLarge": "That is more than {limit}. Trim the document and try again.",
+            "unconvertible": "This could not be converted. Check that the input is the format the chosen direction reads.",
+            "removedElements": "Dropped, because their contents were never text: {elements}",
+            "fileTooLarge": "{name} is larger than {limit}.",
+            "fileUnreadable": "That file could not be read."
+        },
+        "toast": {
+            "copied": "Copied to clipboard",
+            "copyFailedUnsupported": "Your browser blocked clipboard access",
+            "copyFailedDenied": "Clipboard permission was denied",
+            "copyFailedEmpty": "Nothing to copy yet",
+            "downloaded": "Downloaded {filename}",
+            "downloadFailed": "The download could not be started",
+            "fileLoaded": "Loaded {name}"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "Two ways of writing the same document",
+                "p1": "HTML names every part of a document with a tag. Markdown names the same parts with punctuation, and leaves anything it has no punctuation for as HTML. Converting one way drops the tags that have a shorter spelling; converting back puts them all in again.",
+                "example": "<code>'<'h1>Release notes'<'/h1></code> → <code># Release notes</code> — one heading, eleven characters shorter",
+                "p2": "The two are not the same size, though, and that is the interesting part. Markdown has no spelling at all for <code>'<'kbd></code> or <code>'<'details></code>, and tables are an extension rather than part of the original language — so this tool writes GitHub's table syntax when you ask for it and keeps everything else as literal tags rather than quietly losing it. Every conversion runs in this tab; no document is uploaded."
+            },
+            "why": {
+                "title": "Why convert instead of retyping",
+                "p1": "A document that already exists is longer than it looks. Retyping a page as Markdown means re-reading every heading level, every list, every link address and every table cell, and the errors that creep in are the ones nobody notices: a level-three heading that became level two, a link that lost its query string, a table row that lost a column.",
+                "p2": "A converter gets all of those right by construction, because it reads the structure rather than the appearance. What it cannot decide is style — whether a bullet is a dash or an asterisk, whether links sit beside their text or collect at the bottom — and that is what the controls are for. Set them once to match the project you are pasting into, and the result needs no cleaning up.",
+                "p3": "The reverse direction earns its place for a different reason: it is how you find out what your Markdown actually says. A renderer shows you a picture of the document; the markup shows you the document."
+            },
+            "mapping": {
+                "title": "What maps to what",
+                "intro": "The left column is what arrives, the right is what gets written. Read it in either direction — the two halves are the same table.",
+                "tableCaption": "HTML elements and their Markdown equivalents",
+                "colHtml": "HTML",
+                "colMarkdown": "Markdown",
+                "gfmNote": "Tables and strikethrough are GitHub's additions rather than original Markdown, so both rows need that switch on — with it off, a table arrives as the text of its cells and nothing else. The last row is not Markdown in any version: <code>'<'kbd></code> has no punctuation to become, so the tag is kept as written and the renderer at the other end passes it through."
+            },
+            "options": {
+                "title": "Every control, and when to reach for it",
+                "intro": "Nine controls. Each one belongs to a direction, and the panel shows only the ones the direction you picked actually reads.",
+                "tableCaption": "Conversion options, what each one does, and when it is the right choice",
+                "colOption": "Option",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "gfmName": "GitHub Flavored Markdown",
+                "gfmDoes": "Adds tables, <code>~~strikethrough~~</code> and <code>- [x]</code> task lists to what gets written, and to what gets read.",
+                "gfmWhen": "Almost always. Turn it off only when the destination is a strict CommonMark renderer that would print the extensions as literal text.",
+                "headingStyleName": "Heading style",
+                "headingStyleDoes": "Writes <code># Title</code>, or writes the title with a rule of <code>=</code> underneath it.",
+                "headingStyleWhen": "Setext suits a document of one or two heading levels and nothing deeper — it has no spelling below the second, which quietly falls back to hashes.",
+                "bulletMarkerName": "Bullet character",
+                "bulletMarkerDoes": "Chooses which of <code>-</code>, <code>*</code> and <code>+</code> starts an unordered list item.",
+                "bulletMarkerWhen": "Your project already picked one and a linter checks it. All three mean the same thing to every renderer.",
+                "codeBlockStyleName": "Code blocks",
+                "codeBlockStyleDoes": "Writes a fenced block, or indents the code by four spaces.",
+                "codeBlockStyleWhen": "Fenced, unless something downstream predates fences. Indenting loses the language name — see below.",
+                "emphasisStyleName": "Emphasis",
+                "emphasisStyleDoes": "Chooses <code>_</code> or <code>*</code> around emphasised text. Strong text is always <code>**</code>.",
+                "emphasisStyleWhen": "Your style guide has an opinion. Underscores read more clearly inside a word that also contains asterisks.",
+                "linkStyleName": "Links",
+                "linkStyleDoes": "Keeps each address beside its text, or replaces it with a number and lists every address at the end.",
+                "linkStyleWhen": "Referenced links keep long paragraphs readable when the same few addresses appear over and over.",
+                "keepHtmlName": "Keep inline HTML",
+                "keepHtmlDoes": "Leaves elements Markdown has no spelling for — <code>'<'sub></code>, <code>'<'kbd></code>, <code>'<'details></code>, <code>'<'figure></code> — as literal tags.",
+                "keepHtmlWhen": "Leave it on unless the destination strips HTML. Turning it off replaces each tag with its bare text, which is not recoverable.",
+                "lineBreaksName": "Line breaks",
+                "lineBreaksDoes": "Turns every single newline into <code>'<'br></code> rather than joining the lines into one paragraph.",
+                "lineBreaksWhen": "The Markdown was written in a comment box or a chat client, where pressing return was meant to break the line.",
+                "fullDocumentName": "Whole document",
+                "fullDocumentDoes": "Wraps the markup in a <code>'<'!doctype html></code> file with a character set, a viewport, and a title taken from the first heading.",
+                "fullDocumentWhen": "You want a file to open rather than a fragment to paste into a template.",
+                "directionNote": "Six of the nine describe how Markdown gets written, so they are hidden while HTML is being written; two describe the HTML, so they are hidden the other way round. Only GitHub Flavored Markdown sits in both, because it changes what each direction understands and not only what it emits.",
+                "fenceNote": "Indented code is the one choice that costs something you cannot get back. A fence can name the language of the code inside it; four spaces of indentation is a block with nowhere to put that name. Convert <code>'<'pre>'<'code class=\"language-ts\"></code> into an indented block and <code>ts</code> is gone from the result — which is why the control says so under its own label rather than leaving you to find it in a diff.",
+                "defaultsNote": "The defaults are what most projects expect to be handed: GitHub Flavored Markdown on, hash-prefixed headings, dashes for bullets, fenced code, underscores for emphasis, links beside their text, and inline HTML kept."
+            },
+            "limits": {
+                "title": "What this tool will not do",
+                "p1": "It reads the document, not the page. A browser runs a <code>'<'script></code> and applies a <code>'<'style></code>; neither one is text, so both are dropped along with <code>'<'noscript></code>, <code>'<'template></code> and everything in the document head — and whatever went is named above the result rather than thrown away in silence. Left alone, the underlying converter would have unwrapped them, which turns a page's JavaScript into a paragraph of prose.",
+                "p2": "It converts what you hand it and fetches nothing. Paste the markup rather than an address: no request leaves this page, which is the same reason nothing you paste leaves it either.",
+                "p3": "A whole document comes out unstyled and declares <code>lang=\"en\"</code>, because this tool knows the document's markup and not its language. Change that attribute and add your own stylesheet — the file is a starting point, not a finished page."
+            },
+            "useCases": {
+                "title": "Where this gets used",
+                "p1": "Moving a published article into a repository, where the README and the docs are Markdown and the original was a web page. Paste the article body, take the Markdown, and the headings, lists, links and tables arrive with their structure intact.",
+                "p2": "Feeding a page to something that reads Markdown better than markup — a note-taking app, a static-site generator, or a language model, all of which do more with prose than with a document that is four fifths <code>'<'div></code>.",
+                "p3": "And the other way, for the small jobs markup is still needed for: a description field that only accepts HTML, an email template, or a content management system whose editor has no Markdown mode."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Does anything I paste get uploaded?",
+                "a1": "No. Both directions run in this tab — the HTML is parsed by your browser and the Markdown is written by your browser. The page makes no request while you convert, which you can confirm in your network panel.",
+                "q2": "Why did my table come out as plain text?",
+                "a2": "Tables are a GitHub extension rather than part of original Markdown, so they need the <code>GitHub Flavored Markdown</code> switch on. With it off there is no table syntax to write, and the converter falls back to the text of each cell.",
+                "q3": "Where did my script tag go?",
+                "a3": "It was dropped, and the notice under the result says so. A <code>'<'script></code> is something a browser runs rather than something a reader reads, so unwrapping it would have turned your JavaScript into a paragraph. The same goes for <code>'<'style></code>, <code>'<'noscript></code> and <code>'<'template></code>.",
+                "q4": "Can I convert a page by pasting its address?",
+                "a4": "No. Fetching a page would mean sending that address to a server, and this tool never sends anything anywhere. Open the page, copy the part you want, and paste the markup — or save it and use the upload button.",
+                "q5": "Is the conversion lossless?",
+                "a5": "In one direction, close to it: with <code>Keep inline HTML</code> on, anything Markdown cannot say survives as a tag. Going back is lossier by nature — Markdown carries no class names, no <code>id</code> attributes and no styling, so an element that had them arrives without them.",
+                "q6": "Why is there a size limit?",
+                "a6": "Converting HTML means building a document tree first, and that happens on the same thread that draws the page. Half a megabyte converts in a moment on a modest phone; several megabytes would freeze the tab while it worked."
             }
         }
     },

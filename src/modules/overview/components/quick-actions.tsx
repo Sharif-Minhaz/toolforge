@@ -1,9 +1,9 @@
 import {
     IconArrowRight,
-    IconBackground,
     IconBinary,
     IconBolt,
     IconBraces,
+    IconHtml,
     IconKey,
     IconTransform,
 } from "@tabler/icons-react";
@@ -58,18 +58,18 @@ export async function QuickActions() {
             Icon: IconTransform,
             accent: "[--tool-accent:var(--brand-emerald)]",
         },
-        // The list is capped at six. The text-case converter made way for this
+        // The list is capped at six. The Background Remover made way for this
         // one, being the lowest-popularity tool that was represented here — the
-        // same trade the secret generator made for it, the passport-photo preset
-        // before that, RSA before that, AES before that, and the Domain
-        // Inspector before that.
+        // same trade the text-case converter made for it, the secret generator
+        // before that, the passport-photo preset before that, RSA before that,
+        // AES before that, and the Domain Inspector before that.
         {
-            key: "cutoutBackground",
-            href: "/tools/background-remover",
-            title: t("cutoutBackground.title"),
-            description: t("cutoutBackground.description"),
-            Icon: IconBackground,
-            accent: "[--tool-accent:var(--brand-amber)]",
+            key: "htmlToMarkdown",
+            href: "/tools/html-markdown",
+            title: t("htmlToMarkdown.title"),
+            description: t("htmlToMarkdown.description"),
+            Icon: IconHtml,
+            accent: "[--tool-accent:var(--brand-cyan)]",
         },
     ];
 

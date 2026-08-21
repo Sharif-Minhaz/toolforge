@@ -10,6 +10,7 @@ import { diffCompareTool } from "./diff";
 import { domainInspectTool } from "./domain-inspector";
 import { equationConvertTool } from "./equation";
 import { hashCompareTool, hashDetectTool, hashGenerateTool } from "./hash";
+import { htmlMarkdownConvertTool } from "./html-markdown";
 import { jsonFormatTool } from "./json";
 import { jwtDecodeTool, jwtSignTool, jwtVerifyTool } from "./jwt";
 import { loremGenerateTool } from "./lorem";
@@ -80,6 +81,7 @@ export const MCP_TOOLS: readonly McpTool[] = [
     hashCompareTool,
     hashDetectTool,
     hashGenerateTool,
+    htmlMarkdownConvertTool,
     jsonFormatTool,
     jwtDecodeTool,
     jwtSignTool,
