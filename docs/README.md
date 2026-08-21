@@ -92,6 +92,7 @@ docs/
 │   ├── image-resizer.md
 │   ├── json-server.md
 │   ├── mock-server.md
+│   ├── pdf-converter.md
 │   ├── port-scanner.md
 │   ├── qr.md
 │   ├── rsa.md
@@ -141,6 +142,7 @@ records a defect that was expensive to find and is easy to reintroduce.
 | `json-server` | [`case-studies/json-server.md`](case-studies/json-server.md), [`patterns/growth-ceilings.md`](patterns/growth-ceilings.md) |
 | `mcp`, or any tool's MCP adapter | [`case-studies/mcp.md`](case-studies/mcp.md) |
 | `mock-server` | [`case-studies/mock-server.md`](case-studies/mock-server.md), [`mock-server-studio.md`](mock-server-studio.md) |
+| `pdf-converter` | [`case-studies/pdf-converter.md`](case-studies/pdf-converter.md), [`patterns/format-conversion.md`](patterns/format-conversion.md) |
 | `port-scanner` | [`case-studies/port-scanner.md`](case-studies/port-scanner.md) |
 | `qr` | [`case-studies/qr.md`](case-studies/qr.md) |
 | `rsa` | [`case-studies/rsa.md`](case-studies/rsa.md) |

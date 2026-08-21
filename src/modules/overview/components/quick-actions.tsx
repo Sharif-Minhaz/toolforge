@@ -3,7 +3,7 @@ import {
     IconBinary,
     IconBolt,
     IconBraces,
-    IconHtml,
+    IconFileTypePdf,
     IconKey,
     IconTransform,
 } from "@tabler/icons-react";
@@ -58,17 +58,18 @@ export async function QuickActions() {
             Icon: IconTransform,
             accent: "[--tool-accent:var(--brand-emerald)]",
         },
-        // The list is capped at six. The Background Remover made way for this
-        // one, being the lowest-popularity tool that was represented here — the
-        // same trade the text-case converter made for it, the secret generator
+        // The list is capped at six. The HTML / Markdown converter made way for
+        // this one at popularity 85 against 86, being the lowest-popularity tool
+        // that was represented here — the same trade the Background Remover made
+        // for it, the text-case converter before that, the secret generator
         // before that, the passport-photo preset before that, RSA before that,
         // AES before that, and the Domain Inspector before that.
         {
-            key: "htmlToMarkdown",
-            href: "/tools/html-markdown",
-            title: t("htmlToMarkdown.title"),
-            description: t("htmlToMarkdown.description"),
-            Icon: IconHtml,
+            key: "wordToPdf",
+            href: "/tools/pdf-converter",
+            title: t("wordToPdf.title"),
+            description: t("wordToPdf.description"),
+            Icon: IconFileTypePdf,
             accent: "[--tool-accent:var(--brand-cyan)]",
         },
     ];

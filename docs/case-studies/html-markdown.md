@@ -1,4 +1,4 @@
-# HTML / Markdown Converter
+# HTML to Markdown
 
 `src/modules/html-markdown/`. Reads one notation and writes the other, in both
 directions.

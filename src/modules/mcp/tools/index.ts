@@ -16,6 +16,7 @@ import { jwtDecodeTool, jwtSignTool, jwtVerifyTool } from "./jwt";
 import { loremGenerateTool } from "./lorem";
 import { markdownAnalyzeTool } from "./markdown";
 import { passwordGenerateTool } from "./password";
+import { pdfConverterConvertTool } from "./pdf-converter";
 import { qrGenerateTool } from "./qr";
 import { regexTestTool } from "./regex";
 import { rsaCryptTool, rsaGenerateTool } from "./rsa";
@@ -89,6 +90,7 @@ export const MCP_TOOLS: readonly McpTool[] = [
     loremGenerateTool,
     markdownAnalyzeTool,
     passwordGenerateTool,
+    pdfConverterConvertTool,
     qrGenerateTool,
     regexTestTool,
     rsaCryptTool,

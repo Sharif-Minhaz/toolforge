@@ -72,6 +72,7 @@ docs/
 | `json-server` | [`docs/case-studies/json-server.md`](docs/case-studies/json-server.md) |
 | `mcp`, or any tool's MCP adapter | [`docs/case-studies/mcp.md`](docs/case-studies/mcp.md) |
 | `mock-server` | [`docs/case-studies/mock-server.md`](docs/case-studies/mock-server.md) |
+| `pdf-converter` | [`docs/case-studies/pdf-converter.md`](docs/case-studies/pdf-converter.md) |
 | `port-scanner` | [`docs/case-studies/port-scanner.md`](docs/case-studies/port-scanner.md) |
 | `qr` | [`docs/case-studies/qr.md`](docs/case-studies/qr.md) |
 | `rsa` | [`docs/case-studies/rsa.md`](docs/case-studies/rsa.md) |

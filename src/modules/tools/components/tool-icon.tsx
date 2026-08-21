@@ -12,6 +12,7 @@ import {
     IconDatabaseCog,
     IconDice5,
     IconEraser,
+    IconFileTypePdf,
     IconFingerprint,
     IconGitCompare,
     IconHash,
@@ -84,6 +85,7 @@ const ICONS: Record<ToolIconName, ComponentType<IconProps>> = {
     certificate: IconCertificate,
     dice: IconDice5,
     "lock-code": IconLockCode,
+    "file-pdf": IconFileTypePdf,
 };
 
 type ToolIconProps = {

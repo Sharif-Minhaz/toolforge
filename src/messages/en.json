@@ -189,8 +189,12 @@
             "description": "Write markdown and watch it render — Mermaid diagrams, LaTeX maths, and export to HTML or PDF."
         },
         "html-markdown": {
-            "name": "HTML / Markdown Converter",
+            "name": "HTML to Markdown",
             "description": "Convert HTML to Markdown and Markdown to HTML, with GitHub tables and full control over the output."
+        },
+        "pdf-converter": {
+            "name": "Document to PDF",
+            "description": "Turn Word, PowerPoint, Excel, HTML, Markdown or MDX into a PDF with real, selectable text."
         },
         "regex": {
             "name": "Regex Tester",
@@ -368,9 +372,9 @@
                 "title": "Make a favicon",
                 "description": "Turn one logo into favicon.ico, every icon size, and the HTML to link them."
             },
-            "htmlToMarkdown": {
-                "title": "Page to Markdown",
-                "description": "Paste HTML and get clean Markdown back, tables and all."
+            "wordToPdf": {
+                "title": "Word to PDF",
+                "description": "Drop a .docx, .pptx or .xlsx and get a PDF with selectable text."
             }
         },
         "featured": {
@@ -3197,7 +3201,7 @@
         },
         "hero": {
             "eyebrow": "Formatting",
-            "title": "HTML / Markdown Converter",
+            "title": "HTML to Markdown",
             "subtitle": "Paste a page and get Markdown back, or paste Markdown and get the markup. Choose the heading style, the bullet character, fenced or indented code, and whether links stay inline or collect at the end.",
             "badgeGfm": "Tables and task lists",
             "badgeOffline": "Works offline",
@@ -3372,6 +3376,285 @@
                 "a5": "In one direction, close to it: with <code>Keep inline HTML</code> on, anything Markdown cannot say survives as a tag. Going back is lossier by nature — Markdown carries no class names, no <code>id</code> attributes and no styling, so an element that had them arrives without them.",
                 "q6": "Why is there a size limit?",
                 "a6": "Converting HTML means building a document tree first, and that happens on the same thread that draws the page. Half a megabyte converts in a moment on a modest phone; several megabytes would freeze the tab while it worked."
+            }
+        }
+    },
+    "pdfConverter": {
+        "meta": {
+            "title": "Convert Word, PowerPoint, Excel, HTML and Markdown to PDF",
+            "description": "Turn a .docx, .pptx, .xlsx, HTML, Markdown or MDX document into a PDF with real, selectable text. Choose the page size, margins, type size and page numbers. Runs entirely in your browser — nothing is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Formatting",
+            "title": "Document to PDF",
+            "subtitle": "Drop in a Word document, a deck or a spreadsheet, or paste Markdown, MDX or HTML. The result is a real PDF — the text stays text, so it can be searched, selected and copied rather than photographed.",
+            "badgeFormats": "Six formats in",
+            "badgeOffline": "Nothing is uploaded",
+            "badgeText": "Selectable text, not pictures"
+        },
+        "workbench": {
+            "title": "Build a PDF",
+            "description": "Pick a file or paste a document, choose how the page should look, and the PDF is written in this tab.",
+            "sourceLabel": "Where the document comes from",
+            "sources": {
+                "file": "Upload a file",
+                "paste": "Paste text"
+            },
+            "formatLabel": "Format",
+            "dropzone": {
+                "idle": "Drop a document here",
+                "dragging": "Release to read it",
+                "hint": "Word, PowerPoint, Excel, HTML, Markdown or MDX — up to {limit}",
+                "replace": "Choose a different file",
+                "remove": "Remove this file",
+                "reading": "Reading the document…"
+            },
+            "pasteLabel": "Document",
+            "pastePlaceholder": "Paste Markdown, MDX or HTML",
+            "clear": "Clear input",
+            "optionsTitle": "How the page should look",
+            "pageSizeLabel": "Page size",
+            "pageSizes": {
+                "a4": "A4",
+                "letter": "Letter",
+                "legal": "Legal",
+                "a3": "A3"
+            },
+            "orientationLabel": "Orientation",
+            "orientations": {
+                "auto": "Match the document",
+                "portrait": "Portrait",
+                "landscape": "Landscape"
+            },
+            "orientationAutoHint": "A wide table turns the page sideways; prose stays upright",
+            "marginLabel": "Margins",
+            "margins": {
+                "narrow": "Narrow",
+                "normal": "Normal",
+                "wide": "Wide"
+            },
+            "fontSizeLabel": "Body size",
+            "fontSizeHint": "Points. Headings and tables are scaled from this",
+            "fontSizeUnit": "{value} pt",
+            "pageNumbersLabel": "Page numbers",
+            "pageNumbersHint": "A centred count in the bottom margin, or the slide number on a deck",
+            "includeImagesLabel": "Include pictures",
+            "includeImagesHint": "Embeds PNG and JPEG. Anything else is dropped and reported",
+            "showLinkUrlsLabel": "Print link addresses",
+            "showLinkUrlsHint": "Writes the address after the link text, so a printed page still has it",
+            "includeSpeakerNotesLabel": "Speaker notes",
+            "includeSpeakerNotesHint": "Adds a page of notes after each slide that has any",
+            "repeatHeaderRowLabel": "Repeat header rows",
+            "repeatHeaderRowHint": "A table spilling onto the next page keeps its column names",
+            "separateSheetsLabel": "A page per sheet",
+            "separateSheetsHint": "Each sheet starts on a new page under its own name",
+            "slidesFixedHint": "A slide brings its own page size, so this has nothing to decide",
+            "sheetOnlyHint": "Spreadsheets only",
+            "slidesOnlyHint": "Presentations only",
+            "notForSheets": "Spreadsheets carry neither",
+            "convert": "Create PDF",
+            "converting": "Writing the PDF…",
+            "summaryTitle": "What was read",
+            "summaryBlocks": "{count, plural, one {# block} other {# blocks}}",
+            "summarySlides": "{count, plural, one {# slide} other {# slides}}",
+            "summaryWords": "{count, plural, one {# word} other {# words}}",
+            "summaryTables": "{count, plural, one {# table} other {# tables}}",
+            "summaryImages": "{count, plural, one {# picture} other {# pictures}}",
+            "resultTitle": "Your PDF",
+            "download": "Download",
+            "openPreview": "Open in a new tab",
+            "startOver": "Convert something else",
+            "emptyTitle": "Nothing to convert yet",
+            "emptyDescription": "Choose a file or paste a document, and a summary of what was read appears here.",
+            "notesLabel": "Notes — slide {number}"
+        },
+        "formats": {
+            "html": "HTML",
+            "markdown": "Markdown",
+            "mdx": "MDX",
+            "docx": "Word (.docx)",
+            "pptx": "PowerPoint (.pptx)",
+            "xlsx": "Excel (.xlsx)"
+        },
+        "scripts": {
+            "latin": "Latin",
+            "bengali": "Bengali",
+            "devanagari": "Devanagari",
+            "arabic": "Arabic",
+            "hebrew": "Hebrew",
+            "thai": "Thai",
+            "cjk": "Chinese, Japanese and Korean",
+            "hangul": "Hangul",
+            "other": "an unrecognised script"
+        },
+        "mdx": {
+            "import": "imports",
+            "export": "exports",
+            "jsx": "components",
+            "expression": "expressions"
+        },
+        "errors": {
+            "empty_source": "That document is empty.",
+            "too_large": "That is more than {limit}. Split the document and try again.",
+            "unknown_format": "This tool reads .docx, .pptx, .xlsx, .html, .md and .mdx. That file is none of them.",
+            "legacy_office_format": "That is a pre-2007 Office file, which is a different format wearing a similar name. Open it and save it as .docx, .pptx or .xlsx first.",
+            "not_a_package": "That file is not a readable Office document. It may have been renamed, or the download may be incomplete.",
+            "wrong_package": "That file is really {actual}, whatever its name says. Rename it and try again.",
+            "malformed_source": "That document could not be read. Try re-saving it from the program that made it.",
+            "no_content": "Nothing readable came out of that document. If it is all pictures, turning pictures on may help.",
+            "too_many_blocks": "That document has more parts than this tool will lay out. Split it and try again.",
+            "fileTooLarge": "{name} is larger than {limit}.",
+            "fileUnreadable": "That file could not be read.",
+            "fontUnavailable": "A font this document needs could not be loaded. Check your connection and try again.",
+            "engineFailed": "The PDF could not be written. If the document has an unusual table, try again without it."
+        },
+        "notices": {
+            "droppedImages": "{count, plural, one {# picture was} other {# pictures were}} left out: {types}. PDF stores only PNG and JPEG.",
+            "remoteImages": "Pictures loaded from the web were left out. Nothing in your document is fetched from anywhere.",
+            "truncatedSheets": "Only the first {kept} of {total} sheets were read.",
+            "truncatedRows": "Only the first {kept} of {total} rows were read.",
+            "truncatedColumns": "Only the first {kept} of {total} columns were read.",
+            "truncatedSlides": "Only the first {kept} of {total} slides were read.",
+            "truncatedBlocks": "Only the first {kept} of {total} parts were read.",
+            "unsupportedScripts": "There is no bundled font for {scripts}, so that text will be blank in the PDF.",
+            "strippedMdx": "MDX {items} were removed — there is no way to run a component into a page."
+        },
+        "toast": {
+            "converted": "PDF ready — {size}",
+            "downloaded": "Downloaded {filename}",
+            "downloadFailed": "The download could not be started",
+            "fileLoaded": "Loaded {name}",
+            "previewBlocked": "Your browser blocked the new tab"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "formats": {
+                "title": "Six ways in, one page out",
+                "p1": "A PDF is where a document goes when it has stopped being edited: it is the same on every screen, it prints the way it looks, and it is what people attach to things. Getting there normally means owning the program that wrote the document. This tool takes the six formats that account for most of what people actually need converted, and writes the page itself.",
+                "p2": "Three of them are text you can paste: HTML, Markdown and MDX. Three are Open XML packages you drop in as files: .docx, .pptx and .xlsx. Underneath, four of the six share a single path — Markdown and MDX become HTML, a Word document becomes HTML, and one reader turns that HTML into the blocks a page is laid out from. A spreadsheet and a deck are different enough to have readers of their own.",
+                "p3": "The pre-2007 binaries — .doc, .ppt, .xls — are not the same format with an older extension. They are a completely different container, and they are refused by name rather than left to fail as a broken archive. Open one and save it again in the modern format, and it will convert."
+            },
+            "text": {
+                "title": "The text stays text",
+                "p1": "There are two ways to turn a document into a PDF in a browser. The common one is to render the document as a picture and put the picture on a page. It is much easier, it looks approximately right, and everything it produces is dead: nothing can be searched, selected, copied, read aloud by a screen reader, or indexed. A four-page memo becomes a four-megabyte photograph of a memo.",
+                "p2": "This tool lays out real text instead. Every paragraph is drawn as glyphs with a font behind them, every table is a table, every link is a link you can click. That means the layout engine has to make real decisions — where a line breaks, when a row is too tall for the page it started on, what a nested list is indented by — and those decisions are what most of this module is.",
+                "p3": "It also means the file is small. The same memo comes out at tens of kilobytes rather than megabytes, because a PDF stores the letters and a reference to the font, not a picture of them."
+            },
+            "options": {
+                "title": "Every control, and when to reach for it",
+                "p1": "Nine controls, and not all of them apply to every format. A control that has nothing to decide for the document you loaded is dimmed rather than hidden, with a note saying why — a missing control is a control you go looking for.",
+                "tableCaption": "Controls, what they do, and when they matter",
+                "columnOption": "Option",
+                "columnDoes": "What it does",
+                "columnWhen": "Reach for it when",
+                "rows": {
+                    "pageSize": {
+                        "does": "A4, Letter, Legal or A3.",
+                        "when": "The PDF is going somewhere that expects one — Letter in North America, A4 nearly everywhere else."
+                    },
+                    "orientation": {
+                        "does": "Upright, sideways, or let the document decide.",
+                        "when": "A wide table is being cut off. The default turns the page sideways once a table passes seven columns."
+                    },
+                    "margin": {
+                        "does": "How much white space frames the page.",
+                        "when": "The document is going to be bound, or you want fewer pages."
+                    },
+                    "fontSize": {
+                        "does": "The body size in points; headings, tables and captions scale from it.",
+                        "when": "The document is long and you want fewer pages, or it is going to be read across a room."
+                    },
+                    "pageNumbers": {
+                        "does": "A centred count in the bottom margin, or the slide number on a deck.",
+                        "when": "The document will be printed, or referred to by page in a meeting."
+                    },
+                    "includeImages": {
+                        "does": "Embeds the pictures the document carries.",
+                        "when": "Turn it off for a text-only copy, or when a scanned image is making the file large."
+                    },
+                    "showLinkUrls": {
+                        "does": "Writes each link's address after its text.",
+                        "when": "The PDF is going to be printed, where a blue word with nothing behind it is a dead end."
+                    },
+                    "includeSpeakerNotes": {
+                        "does": "Adds a page of notes after each slide that has any.",
+                        "when": "You are handing the deck to somebody who has to present it."
+                    },
+                    "repeatHeaderRow": {
+                        "does": "Repeats a table's first row at the top of every page it continues onto.",
+                        "when": "Nearly always, for a table longer than a page. Turn it off only when the first row is not a header."
+                    },
+                    "separateSheets": {
+                        "does": "Starts each sheet on its own page under its own name.",
+                        "when": "The workbook has several sheets that are not meant to be read as one run."
+                    }
+                },
+                "p2": "The interactions are worth stating outright. A presentation ignores the page size, the orientation, the margins and the body size, because a slide already is a page: it has a fixed rectangle and things placed on it, and re-flowing that onto A4 would put every shape somewhere it was not. Speaker notes exist only for a deck. Sheet separation and header repetition exist only where there are sheets and headers. A spreadsheet has no pictures to include and no links to print."
+            },
+            "fidelity": {
+                "title": "What survives, and what does not",
+                "p1": "A converter that claims to be lossless is not describing this problem honestly. Every format here says things a PDF page cannot, and the useful question is which of those things you are likely to miss.",
+                "docx": {
+                    "title": "Word documents",
+                    "body": "Headings, lists including numbering, tables, bold, italic, underline, strikethrough, links and embedded pictures all survive. What does not: page headers and footers, footnotes, comments, tracked changes, columns, text boxes, and any positioning you did by hand. Word's own styling — a coloured heading, a specific typeface — is not carried over; the document is re-set in this tool's typography."
+                },
+                "pptx": {
+                    "title": "Presentations",
+                    "body": "Each slide becomes one page at the deck's own size, and every text box, picture and table keeps the position and size the slide gave it — including shapes inside a group, and shapes that inherited their position from a layout. What does not survive: slide backgrounds and themes, charts and SmartArt, animations and transitions, and any shape that is a drawing rather than text or a picture. Nothing is replaced by a placeholder box, because a box the deck never had is worse than a gap."
+                },
+                "xlsx": {
+                    "title": "Spreadsheets",
+                    "body": "Values, merged cells, date and percentage formats, and the sheet order all survive; hidden sheets are deliberately left out. Formulas are shown as their last calculated result, which is what the file stores. Cell colours, borders, conditional formatting, charts and images are not carried over — a spreadsheet's decoration is generally about editing it rather than reading it. Dates are written as YYYY-MM-DD, in ISO order rather than the sheet's own format, because a PDF gets sent to people and 03/04/2026 means two different days depending on where it lands."
+                },
+                "html": {
+                    "title": "HTML, Markdown and MDX",
+                    "body": "Headings, paragraphs, lists, tables, quotations, code blocks, rules, links and inline pictures survive. Scripts, stylesheets and head metadata are dropped rather than unwrapped into prose. CSS is not applied at all: this reads the structure of the document, not its styling. A picture only travels if it is already inside the file as a data URI — a remote address is never fetched, which is the same promise the rest of this page makes. MDX has its imports, exports, components and brace expressions removed first, and the tool says which kinds it removed."
+                }
+            },
+            "fonts": {
+                "title": "Scripts, fonts, and the empty box problem",
+                "p1": "A PDF does not have fonts the way a web page does. Every glyph on the page has to come from a font embedded in the file, so a converter can only draw the scripts it ships a font for. Most browser-based converters do not mention this, and the result is a page of empty rectangles where somebody's language used to be.",
+                "p2": "This one ships two font packs and says what it cannot do. Latin, Greek and Cyrillic come from Roboto, which is bundled. Bengali comes from Noto Sans Bengali, fetched from this site the first time a document needs it — conjuncts, vowel reordering and Bengali numerals all render properly. Code blocks come from Roboto Mono, fetched the same way. Anything else — Chinese, Japanese, Korean, Arabic, Hebrew, Devanagari, Thai — has no font here, and the tool tells you so above the button rather than letting you find out from the file.",
+                "p3": "The font is chosen per run of characters rather than per paragraph, and that detail matters more than it sounds. Noto Sans Bengali contains no Latin glyphs at all — not a comma, not a full stop, not a digit. A paragraph mixing Bengali and English cannot have one font: it needs the Bengali stretches drawn by one and everything else by the other, split at the character. The danda that ends a Bengali sentence is a case of its own, since Unicode files it under Devanagari while every Indic script uses it."
+            },
+            "privacy": {
+                "title": "Nothing is uploaded",
+                "p1": "The whole conversion happens in this tab. The document is read, laid out and written to a PDF by code running in your browser; no part of it is sent anywhere, and there is no server involved in the conversion at all.",
+                "p2": "Two things do cross the network, and neither carries your document. The page itself is downloaded like any web page. And a font pack is fetched from this site when a document needs one — the request asks for a .ttf file by name and says nothing about what is in the document beyond the fact that it contains Bengali or contains code.",
+                "p3": "A picture referenced by a web address inside an HTML document is deliberately not fetched. It is dropped and reported instead, because a document somebody dropped into this page does not get to make requests from their browser."
+            },
+            "faq": {
+                "title": "Common questions",
+                "text": {
+                    "question": "Can I select and search the text in the PDF?",
+                    "answer": "Yes. The text is laid out as real text with an embedded font, so it can be searched, selected, copied and read by a screen reader. Nothing here is a screenshot of your document."
+                },
+                "server": {
+                    "question": "Is my document uploaded anywhere?",
+                    "answer": "No. The document is read and the PDF is written entirely in your browser. The only thing fetched from this site during a conversion is a font file, when the document contains Bengali text or code."
+                },
+                "doc": {
+                    "question": "Why is my .doc file refused?",
+                    "answer": ".doc, .ppt and .xls are the pre-2007 binary formats, which are a different container rather than an older version of the same one. Open the file in Word, PowerPoint or Excel and save it as .docx, .pptx or .xlsx, and it will convert."
+                },
+                "fidelity": {
+                    "question": "Will the PDF look exactly like the original?",
+                    "answer": "For a presentation, close — each slide keeps its size and every shape keeps its position. For a Word document or a spreadsheet, no: the content is re-set in this tool's typography rather than reproducing the original's styling. What survives in each format is listed above."
+                },
+                "scripts": {
+                    "question": "My language comes out blank. Why?",
+                    "answer": "A PDF can only draw scripts it has an embedded font for, and this tool ships fonts for Latin, Greek, Cyrillic and Bengali. If your document uses another script the tool says so before you press the button, above the controls, rather than leaving you to discover it in the file."
+                },
+                "charts": {
+                    "question": "Where did my chart go?",
+                    "answer": "Charts, SmartArt and other drawings are vector graphics described in the source format's own language, and there is no way to redraw them onto a page without reimplementing that language. They are left out rather than replaced with an empty box, and the tool reports what it dropped."
+                },
+                "size": {
+                    "question": "How large a file can I convert?",
+                    "answer": "Ten megabytes. That is a photograph-heavy deck or a very long report. Since nothing is uploaded, the limit is about how much work your browser is asked to do on one thread rather than about a request body."
+                }
             }
         }
     },

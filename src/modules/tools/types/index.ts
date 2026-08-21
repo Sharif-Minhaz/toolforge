@@ -29,6 +29,7 @@ export const TOOL_IDS = [
     "curl",
     "markdown",
     "html-markdown",
+    "pdf-converter",
     "regex",
     "lorem",
     "color",
@@ -124,7 +125,8 @@ export type ToolIconName =
     | "shield"
     | "certificate"
     | "lock-code"
-    | "dice";
+    | "dice"
+    | "file-pdf";
 
 export type Tool = {
     readonly id: ToolId;

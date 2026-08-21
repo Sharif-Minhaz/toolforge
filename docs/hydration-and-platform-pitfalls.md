@@ -120,6 +120,37 @@ example: [`patterns/maps.md`](patterns/maps.md).
 
 ---
 
+## A library's `browser` field is a second implementation
+
+A package with a `browser` field in its `package.json` ships **two builds**, and
+a bundler picks one without telling anybody. This has now bitten three
+dependencies here, each a little worse than the last:
+
+| Library    | What differs                                       | How it fails                                                |
+| ---------- | -------------------------------------------------- | ----------------------------------------------------------- |
+| `turndown` | which DOM it parses with                            | Silently, until something is converted. See [`case-studies/html-markdown.md`](case-studies/html-markdown.md). |
+| `mammoth`  | **which argument key it accepts** — `arrayBuffer` in the browser, `buffer` on the server | `Could not find file in options`, which names neither build. |
+| `pdfmake`  | `addVirtualFileSystem` exists only on the browser build | `is not a function`, at the moment a font is registered.     |
+
+Three rules, in the order they are worth trying:
+
+1. **Find the call that works on both.** pdfmake's `virtualfs.writeFileSync` is
+   on the shared base class, so naming it instead of the browser-only wrapper
+   removed the question entirely.
+2. **Otherwise, satisfy both at once.** Mammoth takes `{ arrayBuffer, buffer }`
+   happily; each build reads the key it knows. The published type is a union
+   that cannot say "both", which is a fact about the types rather than about the
+   library.
+3. **Only then, avoid the ambiguous call site.** The HTML / Markdown converter
+   converts on the server and passes the result down, so the island never asks
+   the question during its server-rendered pass.
+
+Note the case that is *not* a problem: a module resolved differently in the
+browser and in `bun test` is fine as long as both behave identically — probe
+both and say so in a comment. The failure is a difference nobody checked.
+
+---
+
 ## The checklist
 
 Before shipping a client component, ask:

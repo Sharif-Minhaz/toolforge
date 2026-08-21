@@ -118,6 +118,15 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.htmlMarkdown.errors,
             toast: messages.htmlMarkdown.toast,
         },
+        pdfConverter: {
+            workbench: messages.pdfConverter.workbench,
+            formats: messages.pdfConverter.formats,
+            scripts: messages.pdfConverter.scripts,
+            mdx: messages.pdfConverter.mdx,
+            errors: messages.pdfConverter.errors,
+            notices: messages.pdfConverter.notices,
+            toast: messages.pdfConverter.toast,
+        },
         bson: {
             workbench: messages.bson.workbench,
             formats: messages.bson.formats,

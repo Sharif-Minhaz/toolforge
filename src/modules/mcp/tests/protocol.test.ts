@@ -210,6 +210,83 @@ describe("tools/call", () => {
     });
 });
 
+describe("the PDF converter over the wire", () => {
+    /*
+     * The end of the longest pipeline on this endpoint, driven through the
+     * SDK's own client: Markdown in, a document model, a layout, an embedded
+     * font read off disk, and PDF bytes back as base64.
+     *
+     * Worth doing here rather than only against the domain because two of those
+     * steps are environment-specific — reading `public/fonts` and resolving
+     * pdfmake's server build — and neither is exercised by a call that stays in
+     * one process by accident.
+     */
+    test("writes a real PDF from Markdown", async () => {
+        const result = await client.callTool({
+            name: "toolforge_pdf_converter_convert",
+            arguments: {
+                filename: "notes.md",
+                content: "# Release notes\n\nA paragraph, and a `code` span.\n",
+            },
+        });
+
+        expect(result.isError).toBeFalsy();
+
+        const structured = result.structuredContent as {
+            filename: string;
+            format: string;
+            pdfBase64: string;
+            byteLength: number;
+        };
+
+        expect(structured.filename).toBe("notes.pdf");
+        expect(structured.format).toBe("markdown");
+        expect(structured.byteLength).toBeGreaterThan(1_000);
+        expect(atob(structured.pdfBase64.slice(0, 8)).startsWith("%PDF-")).toBe(true);
+    });
+
+    test("reports the scripts it has no font for rather than shipping empty boxes", async () => {
+        const result = await client.callTool({
+            name: "toolforge_pdf_converter_convert",
+            arguments: { filename: "cjk.md", content: "# 見出し" },
+        });
+
+        expect(
+            (result.structuredContent as { unsupportedScripts: string[] }).unsupportedScripts,
+        ).toEqual(["cjk"]);
+    });
+
+    test("refuses an Office package sent as plain text, by name", async () => {
+        const result = await client.callTool({
+            name: "toolforge_pdf_converter_convert",
+            arguments: { filename: "report.docx", content: "not a package" },
+        });
+
+        expect(result.isError).toBe(true);
+        expect((result.structuredContent as { reason: string }).reason).toBe("binary_required");
+    });
+
+    test("refuses a pre-2007 binary with the advice that fixes it", async () => {
+        const ole = new Uint8Array(64);
+
+        ole.set([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
+
+        const result = await client.callTool({
+            name: "toolforge_pdf_converter_convert",
+            arguments: {
+                filename: "old.docx",
+                content: btoa(String.fromCharCode(...ole)),
+                encoding: "base64",
+            },
+        });
+
+        expect(result.isError).toBe(true);
+        expect((result.structuredContent as { reason: string }).reason).toBe(
+            "legacy_office_format",
+        );
+    });
+});
+
 describe("the published schema", () => {
     test("tells a client that unknown arguments are not accepted", async () => {
         const { tools } = await client.listTools();
