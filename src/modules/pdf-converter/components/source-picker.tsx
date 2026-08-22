@@ -25,6 +25,9 @@ import { PDF_PASTEABLE_FORMATS, type PdfPasteableFormat } from "../types";
 
 /** What the picker offers, by extension and by type, in that order of use. */
 const ACCEPTED_FILES = [
+    ".txt",
+    ".text",
+    ".log",
     ".docx",
     ".pptx",
     ".xlsx",
@@ -37,6 +40,7 @@ const ACCEPTED_FILES = [
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "application/vnd.openxmlformats-officedocument.presentationml.presentation",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "text/plain",
     "text/html",
     "text/markdown",
 ].join(",");

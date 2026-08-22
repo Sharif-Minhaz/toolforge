@@ -154,6 +154,22 @@ describe("real output", () => {
         expect(bengali.length).toBeGreaterThan(latin.length);
     });
 
+    test("a .txt keeps its line breaks and indentation in the PDF", async () => {
+        const document = documentOf(
+            await convertFile({
+                filename: "notes.txt",
+                bytes: new TextEncoder().encode(
+                    "Meeting notes\n\nAgenda\n    1. Budget\n    2. Hiring\n\nJane Smith\n12 Example Road\n",
+                ),
+                options: DEFAULT_PDF_OPTIONS,
+            }),
+        );
+
+        const bytes = await toPdf(document, "notes.txt");
+
+        expect(isPdf(bytes)).toBe(true);
+    });
+
     test("a deck renders one page per slide at the deck's own size", async () => {
         const document = documentOf(
             await convertFile({

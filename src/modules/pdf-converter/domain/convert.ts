@@ -14,6 +14,7 @@ import { blocksText, documentText, firstHeadingText } from "./blocks";
 import { MAX_PDF_BLOCKS, MAX_PDF_SOURCE_BYTES, MAX_PDF_TEXT_LENGTH } from "./constants";
 import { readHtml } from "./read-html";
 import { readMarkdown } from "./read-markdown";
+import { readText } from "./read-text";
 import { unsupportedScriptsIn } from "./scripts";
 
 /**
@@ -46,6 +47,9 @@ import { unsupportedScriptsIn } from "./scripts";
 export function appliesTo(option: keyof PdfConverterOptions, format: PdfSourceFormat): boolean {
     const slides = format === "pptx";
     const sheet = format === "xlsx";
+    // Plain text has no markup at all, so it has no pictures to include, no
+    // links to print, and no table whose header could repeat.
+    const plain = format === "text";
 
     switch (option) {
         // A slide is a fixed rectangle with things placed on it. Re-flowing one
@@ -63,16 +67,16 @@ export function appliesTo(option: keyof PdfConverterOptions, format: PdfSourceFo
         case "includeImages":
             // Nothing here reads pictures out of a workbook: a chart is a
             // drawing part rather than an image, and there is no way to draw one.
-            return !sheet;
+            return !sheet && !plain;
 
         case "showLinkUrls":
-            return !sheet;
+            return !sheet && !plain;
 
         case "includeSpeakerNotes":
             return slides;
 
         case "repeatHeaderRow":
-            return !slides;
+            return !slides && !plain;
 
         case "separateSheets":
             return sheet;
@@ -125,10 +129,7 @@ export function convertText(request: PdfTextRequest): PdfConversionResult {
         return { ok: false, reason: "too_large" };
     }
 
-    const read =
-        format === "html"
-            ? { ...readHtml(text, options), title: null, strippedMdx: [] as const }
-            : readMarkdown(text, { ...options, mdx: format === "mdx" });
+    const read = readPasteable(format, text, options);
 
     return finishFlow({
         format,
@@ -138,6 +139,34 @@ export function convertText(request: PdfTextRequest): PdfConversionResult {
         truncated: [],
         strippedMdx: read.strippedMdx,
     });
+}
+
+/**
+ * The three notations, each to the reader that will not reinterpret it.
+ *
+ * `text` goes to its own reader rather than to Marked with the extensions off,
+ * because there is no "off" that stops a leading `#` becoming a heading. See
+ * `read-text.ts`.
+ */
+function readPasteable(
+    format: PdfPasteableFormat,
+    text: string,
+    options: PdfConverterOptions,
+): {
+    readonly blocks: readonly DocBlock[];
+    readonly title: string | null;
+    readonly droppedImageTypes: readonly string[];
+    readonly strippedMdx: PdfConversionNotes["strippedMdx"];
+} {
+    if (format === "text") {
+        return { ...readText(text), droppedImageTypes: [], strippedMdx: [] };
+    }
+
+    if (format === "html") {
+        return { ...readHtml(text, options), title: null, strippedMdx: [] };
+    }
+
+    return readMarkdown(text, { ...options, mdx: format === "mdx" });
 }
 
 /* ----------------------------------------------------------------- shared --- */

@@ -194,7 +194,7 @@
         },
         "pdf-converter": {
             "name": "Document to PDF",
-            "description": "Turn Word, PowerPoint, Excel, HTML, Markdown or MDX into a PDF with real, selectable text."
+            "description": "Turn Word, PowerPoint, Excel, plain text, HTML, Markdown or MDX into a PDF with real, selectable text."
         },
         "regex": {
             "name": "Regex Tester",
@@ -3381,14 +3381,14 @@
     },
     "pdfConverter": {
         "meta": {
-            "title": "Convert Word, PowerPoint, Excel, HTML and Markdown to PDF",
-            "description": "Turn a .docx, .pptx, .xlsx, HTML, Markdown or MDX document into a PDF with real, selectable text. Choose the page size, margins, type size and page numbers. Runs entirely in your browser — nothing is uploaded."
+            "title": "Convert Word, PowerPoint, Excel, HTML, Markdown and TXT to PDF",
+            "description": "Turn a .docx, .pptx, .xlsx, .txt, HTML, Markdown or MDX document into a PDF with real, selectable text. Choose the page size, margins, type size and page numbers. Runs entirely in your browser — nothing is uploaded."
         },
         "hero": {
             "eyebrow": "Formatting",
             "title": "Document to PDF",
-            "subtitle": "Drop in a Word document, a deck or a spreadsheet, or paste Markdown, MDX or HTML. The result is a real PDF — the text stays text, so it can be searched, selected and copied rather than photographed.",
-            "badgeFormats": "Six formats in",
+            "subtitle": "Drop in a Word document, a deck or a spreadsheet, or paste plain text, Markdown, MDX or HTML. The result is a real PDF — the text stays text, so it can be searched, selected and copied rather than photographed.",
+            "badgeFormats": "Seven formats in",
             "badgeOffline": "Nothing is uploaded",
             "badgeText": "Selectable text, not pictures"
         },
@@ -3404,13 +3404,13 @@
             "dropzone": {
                 "idle": "Drop a document here",
                 "dragging": "Release to read it",
-                "hint": "Word, PowerPoint, Excel, HTML, Markdown or MDX — up to {limit}",
+                "hint": "Word, PowerPoint, Excel, plain text, HTML, Markdown or MDX — up to {limit}",
                 "replace": "Choose a different file",
                 "remove": "Remove this file",
                 "reading": "Reading the document…"
             },
             "pasteLabel": "Document",
-            "pastePlaceholder": "Paste Markdown, MDX or HTML",
+            "pastePlaceholder": "Paste plain text, Markdown, MDX or HTML",
             "clear": "Clear input",
             "optionsTitle": "How the page should look",
             "pageSizeLabel": "Page size",
@@ -3466,9 +3466,11 @@
             "startOver": "Convert something else",
             "emptyTitle": "Nothing to convert yet",
             "emptyDescription": "Choose a file or paste a document, and a summary of what was read appears here.",
-            "notesLabel": "Notes — slide {number}"
+            "notesLabel": "Notes — slide {number}",
+            "notForPlainText": "Plain text carries none"
         },
         "formats": {
+            "text": "Plain text",
             "html": "HTML",
             "markdown": "Markdown",
             "mdx": "MDX",
@@ -3496,7 +3498,7 @@
         "errors": {
             "empty_source": "That document is empty.",
             "too_large": "That is more than {limit}. Split the document and try again.",
-            "unknown_format": "This tool reads .docx, .pptx, .xlsx, .html, .md and .mdx. That file is none of them.",
+            "unknown_format": "This tool reads .docx, .pptx, .xlsx, .txt, .html, .md and .mdx. That file is none of them.",
             "legacy_office_format": "That is a pre-2007 Office file, which is a different format wearing a similar name. Open it and save it as .docx, .pptx or .xlsx first.",
             "not_a_package": "That file is not a readable Office document. It may have been renamed, or the download may be incomplete.",
             "wrong_package": "That file is really {actual}, whatever its name says. Rename it and try again.",
@@ -3531,9 +3533,9 @@
         },
         "article": {
             "formats": {
-                "title": "Six ways in, one page out",
-                "p1": "A PDF is where a document goes when it has stopped being edited: it is the same on every screen, it prints the way it looks, and it is what people attach to things. Getting there normally means owning the program that wrote the document. This tool takes the six formats that account for most of what people actually need converted, and writes the page itself.",
-                "p2": "Three of them are text you can paste: HTML, Markdown and MDX. Three are Open XML packages you drop in as files: .docx, .pptx and .xlsx. Underneath, four of the six share a single path — Markdown and MDX become HTML, a Word document becomes HTML, and one reader turns that HTML into the blocks a page is laid out from. A spreadsheet and a deck are different enough to have readers of their own.",
+                "title": "Seven ways in, one page out",
+                "p1": "A PDF is where a document goes when it has stopped being edited: it is the same on every screen, it prints the way it looks, and it is what people attach to things. Getting there normally means owning the program that wrote the document. This tool takes the seven formats that account for most of what people actually need converted, and writes the page itself.",
+                "p2": "Four of them are text you can paste: plain text, HTML, Markdown and MDX. Three are Open XML packages you drop in as files: .docx, .pptx and .xlsx. Underneath, four of the seven share a single path — Markdown and MDX become HTML, a Word document becomes HTML, and one reader turns that HTML into the blocks a page is laid out from. Plain text, a spreadsheet and a deck are each different enough to have readers of their own.",
                 "p3": "The pre-2007 binaries — .doc, .ppt, .xls — are not the same format with an older extension. They are a completely different container, and they are refused by name rather than left to fail as a broken archive. Open one and save it again in the modern format, and it will convert."
             },
             "text": {
@@ -3611,6 +3613,10 @@
                 "html": {
                     "title": "HTML, Markdown and MDX",
                     "body": "Headings, paragraphs, lists, tables, quotations, code blocks, rules, links and inline pictures survive. Scripts, stylesheets and head metadata are dropped rather than unwrapped into prose. CSS is not applied at all: this reads the structure of the document, not its styling. A picture only travels if it is already inside the file as a data URI — a remote address is never fetched, which is the same promise the rest of this page makes. MDX has its imports, exports, components and brace expressions removed first, and the tool says which kinds it removed."
+                },
+                "text": {
+                    "title": "Plain text",
+                    "body": "A .txt file is drawn exactly as it was written. Nothing is parsed — a leading # is a hash, an asterisk is an asterisk, and underscores either side of a word are underscores. Line breaks are kept, because in a file with no markup they are the only layout it has: an address block, a signature, an indented outline. A blank line starts a new paragraph, and leading indentation survives. What is lost is column alignment — the body face is proportional, so an ASCII table drawn with spaces will not line up. Paste that into the Markdown box inside a fence and it will."
                 }
             },
             "fonts": {

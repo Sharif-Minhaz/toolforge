@@ -222,6 +222,36 @@ describe("file conversion", () => {
         ).toEqual({ ok: false, reason: "empty_source" });
     });
 
+    test("a .txt is read literally, not as Markdown", async () => {
+        const result = expectOk(
+            await convertFile({
+                filename: "notes.txt",
+                bytes: new TextEncoder().encode("# Groceries\n\n* milk\n* eggs\n"),
+                options: options(),
+            }),
+        );
+
+        expect(result.format).toBe("text");
+        // Two paragraphs, not a heading and a bulleted list.
+        expect(result.document.layout === "flow" && result.document.blocks.length).toBe(2);
+        expect(
+            result.document.layout === "flow" &&
+                result.document.blocks.every((block) => block.kind === "paragraph"),
+        ).toBe(true);
+    });
+
+    test("a .log is the same format under a different extension", async () => {
+        const result = expectOk(
+            await convertFile({
+                filename: "server.log",
+                bytes: new TextEncoder().encode("12:00:01 started\n12:00:02 ready\n"),
+                options: options(),
+            }),
+        );
+
+        expect(result.format).toBe("text");
+    });
+
     test("a text format arriving as a file takes the same path as a paste", async () => {
         const result = expectOk(
             await convertFile({
@@ -252,6 +282,16 @@ describe("which controls apply", () => {
     test("sheet separation belongs to a workbook and to nothing else", () => {
         expect(appliesTo("separateSheets", "xlsx")).toBe(true);
         expect(appliesTo("separateSheets", "html")).toBe(false);
+    });
+
+    test("plain text has no pictures, links or table headers to control", () => {
+        expect(appliesTo("includeImages", "text")).toBe(false);
+        expect(appliesTo("showLinkUrls", "text")).toBe(false);
+        expect(appliesTo("repeatHeaderRow", "text")).toBe(false);
+
+        // The page itself is still entirely the reader's to choose.
+        expect(appliesTo("pageSize", "text")).toBe(true);
+        expect(appliesTo("fontSize", "text")).toBe(true);
     });
 
     test("page numbers apply everywhere", () => {

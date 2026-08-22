@@ -58,11 +58,15 @@ export function PdfOptions({ format, options, onChange }: PdfOptionsProps) {
 
     /** The one sentence a dimmed control shows instead of its usual hint. */
     const inapplicable = (option: keyof PdfConverterOptions) => {
+        if (option === "includeSpeakerNotes") {
+            return t("slidesOnlyHint");
+        }
+
         if (slides) {
             return t("slidesFixedHint");
         }
 
-        return option === "includeSpeakerNotes" ? t("slidesOnlyHint") : t("notForSheets");
+        return format === "text" ? t("notForPlainText") : t("notForSheets");
     };
 
     return (

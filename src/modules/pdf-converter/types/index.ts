@@ -1,18 +1,32 @@
 /**
- * The six notations this tool reads. Each is a *file* first — the three text
+ * The seven notations this tool reads. Each is a *file* first — the four text
  * ones can also be pasted, which is what `PDF_PASTEABLE_FORMATS` below is for.
+ *
+ * `text` is plain text with no markup at all, and it is deliberately its own
+ * format rather than Markdown with the parser turned off. Markdown would read a
+ * `#` at the start of a line as a heading, a `*` as a bullet and an underscore
+ * as emphasis — a `.txt` file means none of those, and a converter that decided
+ * otherwise would silently restructure somebody's notes.
  *
  * `docx`, `pptx` and `xlsx` name the Open XML packages, never the pre-2007
  * binaries. `.doc`, `.ppt` and `.xls` are a different file format wearing a
  * similar extension, and the reader is told so by name rather than watching a
  * ZIP reader fail on bytes that were never a ZIP.
  */
-export const PDF_SOURCE_FORMATS = ["html", "markdown", "mdx", "docx", "pptx", "xlsx"] as const;
+export const PDF_SOURCE_FORMATS = [
+    "text",
+    "html",
+    "markdown",
+    "mdx",
+    "docx",
+    "pptx",
+    "xlsx",
+] as const;
 
 export type PdfSourceFormat = (typeof PDF_SOURCE_FORMATS)[number];
 
 /** The formats a person can paste rather than pick off disk. */
-export const PDF_PASTEABLE_FORMATS = ["html", "markdown", "mdx"] as const;
+export const PDF_PASTEABLE_FORMATS = ["text", "html", "markdown", "mdx"] as const;
 
 export type PdfPasteableFormat = (typeof PDF_PASTEABLE_FORMATS)[number];
 
@@ -33,6 +47,15 @@ export type InlineRun = {
     readonly strike?: boolean;
     /** Monospace, and left out of the link colouring above. */
     readonly code?: boolean;
+    /**
+     * The leading whitespace in `text` is content rather than layout.
+     *
+     * A fact about the text, not about how it is styled — which is why it is
+     * separate from `code`. Plain text needs indentation kept in the body face;
+     * `code` needs it kept *and* monospaced. A renderer that keyed one off the
+     * other would have to draw an indented `.txt` file as a code listing.
+     */
+    readonly preserveSpaces?: boolean;
     /** Absolute destination, or `null` for a link with nowhere to go. */
     readonly link?: string;
 };

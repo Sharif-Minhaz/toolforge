@@ -64,7 +64,7 @@ export const pdfConverterConvertTool = defineMcpTool({
     verb: "convert",
     title: "Convert a document to PDF",
     description:
-        "Turn a Word (.docx), PowerPoint (.pptx), Excel (.xlsx), HTML, Markdown or MDX document into a PDF with real, selectable text — not a picture of the page. The format is taken from `filename`, so pass a real one. Office packages must arrive base64-encoded; the three text notations may be sent as plain text. Returns the PDF as base64 along with what was read and anything that had to be left out: pictures PDF cannot store, sheets or rows cut at a ceiling, and scripts there is no bundled font for (Latin, Greek, Cyrillic and Bengali are covered; CJK, Arabic, Hebrew, Devanagari and Thai are not).",
+        "Turn a Word (.docx), PowerPoint (.pptx), Excel (.xlsx), plain text (.txt), HTML, Markdown or MDX document into a PDF with real, selectable text — not a picture of the page. The format is taken from `filename`, so pass a real one, and note that `.txt` is read literally rather than as Markdown. Office packages must arrive base64-encoded; the four text notations may be sent as plain text. Returns the PDF as base64 along with what was read and anything that had to be left out: pictures PDF cannot store, sheets or rows cut at a ceiling, and scripts there is no bundled font for (Latin, Greek, Cyrillic and Bengali are covered; CJK, Arabic, Hebrew, Devanagari and Thai are not).",
     kind: "offline",
     inputSchema: z.object({
         filename: z
@@ -127,7 +127,7 @@ export const pdfConverterConvertTool = defineMcpTool({
         if (format === null) {
             return refuseWithReason("PDF Converter", "unknown_format", {
                 filename,
-                readable: [".docx", ".pptx", ".xlsx", ".html", ".md", ".mdx"],
+                readable: [".docx", ".pptx", ".xlsx", ".txt", ".html", ".md", ".mdx"],
             });
         }
 

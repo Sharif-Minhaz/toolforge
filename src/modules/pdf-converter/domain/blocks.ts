@@ -21,6 +21,7 @@ function sameMarks(left: InlineRun, right: InlineRun): boolean {
         left.underline === right.underline &&
         left.strike === right.strike &&
         left.code === right.code &&
+        left.preserveSpaces === right.preserveSpaces &&
         left.link === right.link
     );
 }

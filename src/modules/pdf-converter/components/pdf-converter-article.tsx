@@ -28,7 +28,7 @@ const OPTION_ROWS = [
     "separateSheets",
 ] as const;
 
-const FIDELITY_ROWS = ["docx", "pptx", "xlsx", "html"] as const;
+const FIDELITY_ROWS = ["docx", "pptx", "xlsx", "html", "text"] as const;
 
 const FAQ_KEYS = ["text", "server", "doc", "fidelity", "scripts", "charts", "size"] as const;
 

@@ -148,7 +148,7 @@ function renderRun(run: InlineRun, context: RunContext): ContentText[] {
         // what puts an inline `identifier` back on the same optical line as
         // the words around it.
         fontSize: monospaced ? round(context.sizePt * 0.9) : undefined,
-        preserveLeadingSpaces: monospaced ? true : undefined,
+        preserveLeadingSpaces: monospaced || run.preserveSpaces === true ? true : undefined,
     }));
 
     if (!shouldPrintUrl(run, context.options)) {

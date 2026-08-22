@@ -1,16 +1,17 @@
 # Document to PDF
 
-`src/modules/pdf-converter/`. Six formats in — HTML, Markdown, MDX, `.docx`,
-`.pptx`, `.xlsx` — and a PDF out, laid out as real text in the reader's own tab.
+`src/modules/pdf-converter/`. Seven formats in — plain text, HTML, Markdown,
+MDX, `.docx`, `.pptx`, `.xlsx` — and a PDF out, laid out as real text in the
+reader's own tab.
 
 The shape is [`../patterns/format-conversion.md`](../patterns/format-conversion.md)
-stretched further than any other tool here stretches it: four readers, one
+stretched further than any other tool here stretches it: five readers, one
 document model, two renderers, and an engine at the end that only runs where
 there is a font to run it with. Everything below is what that cost.
 
 ---
 
-## The seam is HTML, and four of the six formats meet at it
+## The seam is HTML, and four of the seven formats meet at it
 
 Markdown becomes HTML through Marked. MDX becomes Markdown and then HTML. A
 Word document becomes HTML through Mammoth. HTML is already HTML. One reader —
@@ -18,8 +19,9 @@ Word document becomes HTML through Mammoth. HTML is already HTML. One reader —
 one answer to "what does a nested list inside a table cell become", instead of
 four answers that agree until somebody changes one.
 
-Only the two formats that are genuinely not documents get readers of their own:
-a workbook is a grid, and a deck is a set of boxes at coordinates.
+Three formats stay out of that path, each for its own reason: a workbook is a
+grid, a deck is a set of boxes at coordinates, and plain text is the subject of
+the next section.
 
 Decision tree 45 was applied twice with different answers, and both are worth
 recording:
@@ -29,7 +31,44 @@ recording:
 | Markdown, MDX    | [Marked](https://marked.js.org/)                              | CommonMark plus GFM is a specification with a settled implementation.                                                                                                                                                                                                                                                                                                               |
 | HTML             | [node-html-parser](https://github.com/taoqf/node-html-parser) | The _input_ is authored by everybody — a scraper, a CMS, Word's own exporter. A hand-rolled tokeniser meets its first unclosed `<p>` in somebody's saved page.                                                                                                                                                                                                                      |
 | `.docx`          | [Mammoth](https://github.com/mwilliamson/mammoth.js)          | A `.docx` is not one format. It is numbering definitions, a style hierarchy with inheritance, a relationship graph, and fifteen years of what Word emits rather than what ECMA-376 says.                                                                                                                                                                                            |
+| plain text       | written, in forty lines                                       | There is nothing to depend on. A `.txt` has no grammar, so the whole job is deciding what its blank lines and indentation mean — see below.                                                                                                                                                                                                                                         |
 | `.xlsx`, `.pptx` | written, on `fflate` and `@xmldom/xmldom`                     | Narrow reads — sheet order, shared strings, cell values, shape transforms — consumed by nothing but this tool's own renderer. And the maintained alternative for spreadsheets is not maintained: SheetJS's last release on the public registry is `0.18.5` from 2022, because the project moved distribution off npm. Rule 45 says check who maintains it _before_ depending on it. |
+
+---
+
+## Plain text is its own format because there is no "parse nothing"
+
+Reading a `.txt` through Marked with the extensions turned off was the obvious
+one-line implementation, and it is wrong in a way that is invisible until it
+lands in somebody's document. There is no setting that stops CommonMark reading
+a leading `#` as a heading, a `*` as a bullet, or `_word_` as emphasis. A
+shopping list written with asterisks comes back as a bulleted list. A comment
+block starting with `#` comes back as an `<h1>`. Nothing errors; the document
+is simply restructured.
+
+So `text` is a member of `PDF_SOURCE_FORMATS` in its own right, and
+`domain/read-text.ts` is forty lines that parse nothing at all. Three decisions
+in it are the whole reader:
+
+- **A blank line is a paragraph break.** The one convention every plain-text
+  file actually follows.
+- **Line breaks inside a paragraph are kept.** A `.txt` is hard-wrapped by
+  whoever wrote it, and those breaks are its only layout — an address block, a
+  signature, an indented outline. Re-flowing them into justified paragraphs
+  reads better on the two files that were prose and destroys every other one.
+- **Leading indentation survives, trailing whitespace does not.** Indentation is
+  an outline level; trailing spaces are an artefact nothing reads.
+
+Keeping the indentation needed one addition to the model. `InlineRun` already
+had `code`, which means _monospace **and** whitespace-significant_, and plain
+text needs the second without the first — an indented `.txt` drawn as a grey
+code listing would be a worse answer than a lost indent. `preserveSpaces` is
+therefore its own flag, and it is a fact about the text rather than about the
+styling.
+
+What that costs is column alignment: the body face is proportional, so an ASCII
+table drawn with spaces will not line up. The article says so and points at the
+Markdown box with a fence, which is the tool that already does that job.
 
 ---
 

@@ -12,6 +12,9 @@ import type { PdfSourceFormat } from "../types";
  */
 
 const EXTENSIONS: Readonly<Record<string, PdfSourceFormat>> = {
+    txt: "text",
+    text: "text",
+    log: "text",
     html: "html",
     htm: "html",
     xhtml: "html",
