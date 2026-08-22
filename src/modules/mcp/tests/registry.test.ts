@@ -87,7 +87,10 @@ describe("the MCP registry", () => {
         // Deliberately exact rather than a lower bound. A tool that starts
         // making outbound requests without being declared `network` is exactly
         // the change this assertion exists to stop.
-        expect(networked).toEqual(["toolforge_domain_inspector_inspect"]);
+        expect(networked).toEqual([
+            "toolforge_domain_inspector_inspect",
+            "toolforge_subdomain_lookup_lookup",
+        ]);
     });
 
     test("finds a tool by name and nothing by a near miss", () => {

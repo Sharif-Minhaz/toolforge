@@ -392,6 +392,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.portScanner.errors,
             toast: messages.portScanner.toast,
         },
+        subdomainLookup: {
+            workbench: messages.subdomainLookup.workbench,
+            sorts: messages.subdomainLookup.sorts,
+            sortHints: messages.subdomainLookup.sortHints,
+            errors: messages.subdomainLookup.errors,
+            toast: messages.subdomainLookup.toast,
+        },
         // The studio's own hero and disclosure copy stays on the server; only
         // the launcher island's strings cross.
         mockServer: {

@@ -54,6 +54,7 @@ export const TOOL_IDS = [
     "domain-inspector",
     "bson",
     "port-scanner",
+    "subdomain-lookup",
     "mock-server",
     "json-server",
     "graphql-server",
@@ -126,7 +127,8 @@ export type ToolIconName =
     | "certificate"
     | "lock-code"
     | "dice"
-    | "file-pdf";
+    | "file-pdf"
+    | "sitemap";
 
 export type Tool = {
     readonly id: ToolId;

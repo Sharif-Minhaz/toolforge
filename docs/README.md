@@ -98,6 +98,7 @@ docs/
 │   ├── rsa.md
 │   ├── rsa-encrypt.md
 │   ├── short-links.md
+│   ├── subdomain-lookup.md
 │   └── watermark-remover.md
 │
 └── mock-server-studio.md       the full system design for the Mock Server Studio
@@ -148,6 +149,7 @@ records a defect that was expensive to find and is easy to reintroduce.
 | `rsa` | [`case-studies/rsa.md`](case-studies/rsa.md) |
 | `rsa-encrypt` | [`case-studies/rsa-encrypt.md`](case-studies/rsa-encrypt.md) |
 | `short-links`, `shortener` | [`case-studies/short-links.md`](case-studies/short-links.md) |
+| `subdomain-lookup` | [`case-studies/subdomain-lookup.md`](case-studies/subdomain-lookup.md) |
 | `url-parser` | [`patterns/derived-state-editors.md`](patterns/derived-state-editors.md) |
 | `watermark-remover`, `ai-*` | [`case-studies/watermark-remover.md`](case-studies/watermark-remover.md) |
 | `timestamp` | [`hydration-and-platform-pitfalls.md`](hydration-and-platform-pitfalls.md) |

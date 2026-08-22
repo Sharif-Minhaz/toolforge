@@ -190,6 +190,7 @@ describe("tool catalog", () => {
             // hybrid rather than browser-only.
             "equation",
             "port-scanner",
+            "subdomain-lookup",
             "mock-server",
             "json-server",
             "graphql-server",

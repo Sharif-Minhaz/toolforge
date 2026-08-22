@@ -78,6 +78,7 @@ docs/
 | `rsa` | [`docs/case-studies/rsa.md`](docs/case-studies/rsa.md) |
 | `rsa-encrypt` | [`docs/case-studies/rsa-encrypt.md`](docs/case-studies/rsa-encrypt.md) |
 | `short-links`, `shortener` | [`docs/case-studies/short-links.md`](docs/case-studies/short-links.md) |
+| `subdomain-lookup` | [`docs/case-studies/subdomain-lookup.md`](docs/case-studies/subdomain-lookup.md) |
 | `url-parser` | [`docs/patterns/derived-state-editors.md`](docs/patterns/derived-state-editors.md) |
 | `watermark-remover`, `ai-*` | [`docs/case-studies/watermark-remover.md`](docs/case-studies/watermark-remover.md) |
 

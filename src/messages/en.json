@@ -293,6 +293,10 @@
             "name": "Port Scanner",
             "description": "Check whether a TCP port is open on a public host or on your own address, with open, closed and filtered told apart. Nmap's most-scanned ports plus web, mail, database and remote-access presets."
         },
+        "subdomain-lookup": {
+            "name": "Subdomain Lookup",
+            "description": "Find every subdomain a public certificate transparency index holds for a domain, with the date each name was first seen. Filter, order and download the whole list as text, CSV or JSON — long answers are paged, not truncated."
+        },
         "mock-server": {
             "name": "Mock Server Studio",
             "description": "Build mock REST APIs visually and call them from a real URL. No account — a recovery key moves a workspace between browsers."
@@ -9366,6 +9370,206 @@
                 "a6": "No, TCP only. UDP has no handshake, so there is nothing to observe: an open UDP port and a filtered one both usually answer with silence, and telling them apart means sending protocol-specific payloads and waiting far longer per port. A UDP scan that reported anything useful here would be guessing.",
                 "q7": "Is it legal to scan a host I do not own?",
                 "a7": "It depends where you are, where the host is, and what you agreed to — and in several jurisdictions the answer is no. Unauthorised probing falls under computer misuse law in the UK, the US and elsewhere. Scan your own hosts, or ones you have written permission to test. This is not legal advice."
+            }
+        }
+    },
+    "subdomainLookup": {
+        "meta": {
+            "title": "Subdomain Finder — Every Name a Domain Has on File",
+            "description": "Find the subdomains of any domain from certificate transparency logs and public zone data. Type an apex like example.com and get every name the index holds, with the date each one was first seen, a live filter, hierarchical ordering, and a download as plain text, CSV or JSON. Large answers are paged rather than truncated, so a domain with twenty thousand names is still readable. The lookup runs on our servers against the public crt.name index and is rate limited."
+        },
+        "hero": {
+            "eyebrow": "Network",
+            "title": "Subdomain Lookup",
+            "subtitle": "Every subdomain a public index has on file for one domain, with the date each name first appeared. Filter it, order it, and take the whole list with you.",
+            "badgeSource": "Certificate transparency",
+            "badgeDates": "First-seen dates",
+            "badgeLarge": "Built for long answers"
+        },
+        "workbench": {
+            "title": "Look up a domain",
+            "description": "One query against a public index of names harvested from certificate transparency logs, retired CT archives, zone files and crawls. Nothing is probed and no DNS request is made on your behalf.",
+            "disclosureTitle": "This one is not private, and cannot be",
+            "disclosure": "The index lives at crt.name, so the domain you type leaves your browser and reaches a third party through our servers. They see our address, not yours. Nothing about the lookup is stored except a count against a hash of your address, so the hourly limit can be enforced.",
+            "sharedBudget": "The upstream index is free and meters by address — and the address it sees is ours, shared by everyone here. That is why this tool has an hourly ceiling of its own.",
+            "apexLabel": "Domain",
+            "apexPlaceholder": "example.com",
+            "apexHint": "The registrable domain. Type a subdomain or a full URL and it is widened to the domain it belongs to.",
+            "lookup": "Find subdomains",
+            "looking": "Looking up…",
+            "quotaRemaining": "{remaining, plural, =0 {No lookups left} one {# lookup left} other {# lookups left}} this hour",
+            "quotaUnavailable": "Subdomain lookup is not configured on this deployment.",
+            "statusIdle": "Enter a domain to see every subdomain on file for it.",
+            "statusLooking": "Reading the index for {apex}…",
+            "statusDone": "{total, plural, =0 {No names on file} one {# name on file} other {# names on file}} for {apex}.",
+            "narrowed": "You typed {typed}. Subdomains are indexed by registrable domain, so the lookup was widened to {apex} — every name under what you typed is in this list.",
+            "resultsTitle": "Names on file",
+            "fetchedAt": "Read {time}",
+            "summaryTotal": "Names",
+            "summaryRecent": "New in 30 days",
+            "summaryDepth": "Deepest level",
+            "summaryDated": "With a date",
+            "dateRange": "First seen between {oldest} and {newest}.",
+            "noDates": "None of these names carried a first-seen date.",
+            "apexMissing": "The domain itself is not in the index — only names below it. That is common and says nothing about whether it resolves.",
+            "truncated": "The index holds {returned, number} names and this list is the first {kept, number}. The download carries the same {kept, number}, not the rest — narrow the domain to see the remainder.",
+            "filterLabel": "Filter",
+            "filterPlaceholder": "staging, api, vpn…",
+            "sortLabel": "Order",
+            "matchCount": "{shown, number} of {total, number} shown",
+            "noMatches": "No name contains that. Clear the filter to see all {total, number} again.",
+            "clearFilter": "Clear filter",
+            "tableCaption": "Subdomains of {apex}, with the level below the domain and the date each name was first seen.",
+            "colName": "Subdomain",
+            "colDepth": "Level",
+            "colFirstSeen": "First seen",
+            "undated": "Unknown",
+            "apexRow": "the domain itself",
+            "pageStatus": "Page {page, number} of {pages, number}",
+            "previousPage": "Previous page",
+            "nextPage": "Next page",
+            "copy": "Copy names",
+            "downloadTxt": "TXT",
+            "downloadCsv": "CSV",
+            "downloadJson": "JSON",
+            "exportNote": "A copy or a download takes every name matching the current filter, in the current order — not just the page on screen.",
+            "emptyTitle": "Nothing on file",
+            "emptyBody": "The index holds no name for {apex}. A domain that has never had a publicly logged certificate, and appears in none of the zone files or crawls behind the index, looks exactly like this — it does not mean the domain has no subdomains.",
+            "freshness": "A name is here because something published it once. It may no longer resolve, and a name that resolves may not be here."
+        },
+        "sorts": {
+            "hierarchy": "Tree order",
+            "name": "Alphabetical",
+            "newest": "Newest first",
+            "oldest": "Oldest first",
+            "depth": "Deepest first"
+        },
+        "sortHints": {
+            "hierarchy": "Compares labels right to left, so every name under one branch sits together.",
+            "name": "Plain A to Z on the whole name, which splits branches apart.",
+            "newest": "Most recently seen first. Undated names go last.",
+            "oldest": "Longest on file first. Undated names go last.",
+            "depth": "Most labels first, which surfaces the deeply nested names."
+        },
+        "errors": {
+            "empty_input": "Enter a domain first.",
+            "too_long": "That is longer than a hostname can be.",
+            "invalid_hostname": "That is not a domain. Try example.com, or paste a URL.",
+            "unknown_suffix": "There is no public registry behind that suffix, so nothing indexes names under it. Names like localhost, .local and .internal only exist on somebody's own network.",
+            "ip_address": "That is an IP address. Subdomains belong to a domain name — try the name that points at it.",
+            "apex_too_large": "The index holds too many names for that domain to serve in one answer. That happens on the largest domains on the internet; try one of its subdomains as the domain instead.",
+            "upstream_refused": "The index would not accept that domain.",
+            "upstream_exhausted": "This site has used its whole daily allowance at the index. It refills at midnight UTC.",
+            "upstream_unavailable": "The index did not answer. Try again in a moment.",
+            "response_too_large": "The answer was larger than this tool will read. That domain has more names than can be handled here.",
+            "rate_limited": "You have used every lookup for this hour. It resets shortly.",
+            "not_configured": "Subdomain lookup is not configured on this deployment."
+        },
+        "toast": {
+            "copied": "{count, plural, one {# name copied} other {# names copied}}",
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The download could not be started",
+            "copyFailedEmpty": "There is nothing to copy yet",
+            "copyFailedUnsupported": "This browser will not let the page write to the clipboard",
+            "copyFailedDenied": "Clipboard permission was not granted"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "What a subdomain lookup can actually see",
+                "p1": "There is no query that asks a domain for its subdomains. DNS answers questions about names you already know: ask for the address of api.example.com and you get one, ask what names exist under example.com and there is no such question to ask. Zone transfers used to answer it and are refused by every nameserver worth running.",
+                "p2": "So every subdomain finder works the same way: it collects names that were published somewhere else and indexes them. The largest such source is certificate transparency — since 2018, browsers reject a certificate that was not logged in a public append-only log, and every certificate carries the hostnames it covers. A staging box that was given HTTPS is a hostname in a public log, permanently.",
+                "example": "example.com → api.example.com, staging.example.com, vpn.example.com …",
+                "p3": "That is the trade this tool makes. It is passive: nothing is probed, no DNS request is made on your behalf, and the domain you name is never contacted. What comes back is what was published, which is not the same as what exists."
+            },
+            "source": {
+                "title": "Where the names come from",
+                "p1": "The index is <code>crt.name</code>, a free public service that reads every usable certificate transparency log in Chrome's and Apple's programs as entries land, pulls the hostnames out of each certificate, and throws the rest away. Retired logs are replayed from the Internet Archive, and names are added from Common Crawl, ICANN CZDS zone files, ProjectDiscovery Chaos and HaGeZi blocklists.",
+                "p2": "Two consequences worth holding on to. A name in this list was published once — it may have been decommissioned years ago and it may not resolve today. And a name that is missing is not proof of absence: a subdomain that never got a public certificate and never appeared in a crawl or a zone file is invisible here.",
+                "p3": "The index never deletes a name, so this is closer to a history than a snapshot. That is exactly what makes it useful for finding the forgotten staging server, and exactly why it should not be read as an inventory of what is live."
+            },
+            "reading": {
+                "title": "Reading the result",
+                "intro": "Four numbers sit above the table, and each one answers a different question.",
+                "tableCaption": "What each figure above the table means",
+                "colFigure": "Figure",
+                "colMeans": "What it means",
+                "totalName": "Names",
+                "totalMeans": "How many distinct names the index holds for this domain, after duplicates are collapsed. The domain itself counts as one when the index has a row for it.",
+                "recentName": "New in 30 days",
+                "recentMeans": "How many were first seen inside the last thirty days. A jump here usually means a certificate was reissued across a range of hosts, or something new was deployed.",
+                "depthName": "Deepest level",
+                "depthMeans": "How many labels the longest name has below the domain. api.example.com is level 1; api.staging.example.com is level 2. Deep nesting is often a sign of per-environment or per-tenant hostnames.",
+                "datedName": "With a date",
+                "datedMeans": "How many carry a first-seen date at all. Names that arrived through a source with no date are listed with an unknown date rather than being given a made-up one."
+            },
+            "options": {
+                "title": "The controls",
+                "tableCaption": "Every control on this tool, what it does, and when to use it",
+                "colOption": "Control",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "domainName": "Domain",
+                "domainDoes": "Names the domain to look up. A subdomain or a full URL is widened to its registrable domain, and the result says so.",
+                "domainWhen": "Always. It is the only input the lookup takes.",
+                "filterName": "Filter",
+                "filterDoes": "Keeps names containing what you type, matched anywhere in the name and ignoring case. It searches the whole result, not the page on screen.",
+                "filterWhen": "The list is long and you are looking for a pattern — staging, vpn, an internal product name.",
+                "sortName": "Order",
+                "sortDoes": "Reorders the whole result. Tree order compares labels right to left; the two date orders put undated names last.",
+                "sortWhen": "Tree order to read the shape of the estate, newest first to see what changed.",
+                "exportName": "Copy and download",
+                "exportDoes": "Takes every name matching the current filter, in the current order. Plain text is one name per line; CSV adds the level and the date; JSON adds the domain, the time of the lookup, and whether the answer was complete.",
+                "exportWhen": "Feeding the list into something else. Plain text pipes straight into a resolver or a scanner.",
+                "caveats": "Two interactions worth knowing. The filter and the order are applied before the export, so what you save is what you are looking at — clear the filter first if you want everything. And paging is only a rendering decision: it never affects the filter, the order, the counts above the table, or what a download contains."
+            },
+            "limits": {
+                "title": "Limits, and why each one is there",
+                "intro": "The index is free, unauthenticated, and meters by address — and the address it sees is this site's, shared by everyone using this page. Most of what follows exists so that one visitor cannot spend the day's allowance for everybody.",
+                "tableCaption": "Every limit this tool runs under",
+                "colLimit": "Limit",
+                "colValue": "Value",
+                "colWhy": "Why",
+                "perVisitor": "Lookups per visitor",
+                "perVisitorWhy": "Generous for a person, and far below the site ceiling, so one caller cannot take the tool away from everyone else.",
+                "perSite": "Lookups per hour, site-wide",
+                "perSiteWhy": "The number that keeps this site inside the upstream's free tier: this an hour is under a thousand a day, which is what the index allows.",
+                "responseSize": "Response read",
+                "responseSizeWhy": "Enforced while the reply streams rather than after it lands, so an answer nobody predicted cannot exhaust the server's memory.",
+                "recordCap": "Names kept",
+                "recordCapWhy": "Bounds what crosses into your browser. When it bites, the result says how many the index held rather than quietly showing a prefix.",
+                "pageSize": "Rows per page",
+                "pageSizeWhy": "Rendering twenty thousand table rows freezes a phone. Nothing is dropped — the filter and every download still reach the whole list.",
+                "upstream": "The very largest domains are refused by the index itself, before any of this applies. Ask it about google.com and it answers that the domain has too many records to serve; there is nothing this tool can do about that except tell you plainly."
+            },
+            "useCases": {
+                "title": "What people use it for",
+                "attackSurface": "Knowing your own attack surface. The honest first step in securing an estate is finding out what is on the internet with your name on it — and it is nearly always more than the list somebody keeps.",
+                "forgotten": "Finding the forgotten box. A staging environment from a project that shipped two years ago is still resolving, still running the framework version it was deployed with, and is in nobody's inventory. Certificate transparency remembers it.",
+                "acquisition": "Due diligence. Before an acquisition or a security review, the subdomain list is the cheapest available picture of what a company actually runs.",
+                "migration": "Checking a migration. After moving to a new provider, the names that still point at the old one are the ones nobody remembered to update.",
+                "bounty": "Authorised testing. Scope for a bug bounty is usually written as a domain and its subdomains, and this is how you find out what that covers."
+            },
+            "faq": {
+                "title": "Questions",
+                "q1": "Is this the same as crt.sh?",
+                "a1": "It draws on the same certificate transparency logs, but crt.sh is a searchable database of whole certificates while the index behind this tool keeps only three fields per name: the domain, the name, and when it was first seen. That is why it can answer a domain-wide query quickly, and why it cannot tell you which certificate a name came from.",
+                "q2": "Does this touch the domain I type?",
+                "a2": "No. The lookup is entirely passive: one request to the index, and nothing to the domain itself. No DNS query is made on your behalf, no port is opened, and the domain's own logs will show nothing.",
+                "q3": "Why are some names missing?",
+                "a3": "Because they were never published anywhere the index reads. A subdomain that has only ever had a private or self-signed certificate, that is not in a crawl, and that does not appear in a zone file leaves no public trace. A wildcard certificate is the common case: *.example.com covers every name under it and publishes none of them.",
+                "q4": "Why do some names have no date?",
+                "a4": "The index draws on sources that carry no timestamp, such as blocklists and some crawl data. Those names are listed with an unknown date rather than being given an invented one, and they sort last under both date orders.",
+                "q5": "A name is listed but does not resolve. Is the tool wrong?",
+                "a5": "No — that is the tool working as designed. The index records that a name was published, and never deletes it. A decommissioned host stays in the list forever, which is a large part of the value: those are exactly the names worth checking.",
+                "q6": "Why was my domain widened to something shorter?",
+                "a6": "The index is keyed by registrable domain, so it can only be asked about an eTLD+1. Type api.staging.example.co.uk and the lookup runs on example.co.uk, which returns a superset of what you asked for — every name under api.staging is in that answer. The result says what it did rather than answering a different question silently.",
+                "q7": "Can I look up any domain, or only my own?",
+                "a7": "Anything the index holds, because all of it is already public — the data comes from logs, zone files and crawls that anyone can read. That is the difference between this and the port scanner: nothing here touches somebody else's machine. What you do with the list is a different question, and the usual rule applies — test only what you own or have written permission to test.",
+                "q8": "What happens with a domain that has thousands of names?",
+                "a8": "The table pages at a hundred rows, while the filter, the ordering, the counts and every download work over the whole result. Past twenty thousand names the tool keeps the first twenty thousand and says so rather than pretending the list is complete. The very largest domains are refused by the index itself with a message saying so."
             }
         }
     },
