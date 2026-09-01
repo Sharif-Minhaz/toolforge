@@ -1,9 +1,10 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import type { ReactNode } from "react";
+import type { ClipboardEvent, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import { toSelectionText } from "../domain/selection";
 import type { CollapsedEntry, DiffRow, DiffSegment, UnifiedLine } from "../types";
 
 /**
@@ -98,6 +99,72 @@ function GapRow({ hidden, columns }: GapRowProps) {
     );
 }
 
+/**
+ * Reading a selection over the table as the lines it looks like.
+ *
+ * A browser copies the DOM it walked, so dragging over the result hands back the
+ * line numbers, the `-`/`+` signs and the labels only a screen reader was meant
+ * to hear — `RemovedMCP_ACCESS_TOKEN=…`, `No line on this side`. That markup is
+ * right for a reader who is listening and wrong for a reader who is pasting, so
+ * the two are told apart by attribute rather than by taking anything away:
+ * content cells are marked `data-diff-copy`, everything that only stands in for
+ * something is marked `data-diff-noise`, and the clipboard is rebuilt from the
+ * first once the second is dropped.
+ */
+function cellTexts(root: ParentNode): string[] {
+    return [...root.querySelectorAll("[data-diff-copy]")].map((cell) => cell.textContent ?? "");
+}
+
+function fragmentRows(fragment: DocumentFragment): string[][] {
+    const rows = [...fragment.querySelectorAll("tr")]
+        .map(cellTexts)
+        // A gap marker is a row with no content cell in it. It counts lines
+        // rather than being one, so it leaves no line behind.
+        .filter((cells) => cells.length > 0);
+
+    if (rows.length > 0) {
+        return rows;
+    }
+
+    // A range that never reached a `tr` clones no row: it either stopped inside
+    // one row's cells, or inside a single cell, where the text is all there is.
+    const cells = cellTexts(fragment);
+
+    return cells.length > 0 ? [cells] : [[fragment.textContent ?? ""]];
+}
+
+function selectionText(selection: Selection): string | null {
+    const rows: string[][] = [];
+
+    // Firefox hands a table selection over as one range per cell, so every range
+    // contributes rather than only the first.
+    for (let index = 0; index < selection.rangeCount; index += 1) {
+        const fragment = selection.getRangeAt(index).cloneContents();
+
+        fragment.querySelectorAll("[data-diff-noise]").forEach((node) => node.remove());
+        rows.push(...fragmentRows(fragment));
+    }
+
+    return rows.length > 0 ? toSelectionText(rows) : null;
+}
+
+function handleCopy(event: ClipboardEvent<HTMLDivElement>) {
+    const selection = window.getSelection();
+
+    if (selection === null || selection.isCollapsed) {
+        return;
+    }
+
+    const text = selectionText(selection);
+
+    if (text === null) {
+        return;
+    }
+
+    event.clipboardData.setData("text/plain", text);
+    event.preventDefault();
+}
+
 type ViewerFrameProps = {
     stale: boolean;
     scroll: boolean;
@@ -116,7 +183,9 @@ function ViewerFrame({ stale, scroll, children }: ViewerFrameProps) {
                 stale && "opacity-55",
             )}
         >
-            <div className={cn(scroll && "overflow-x-auto")}>{children}</div>
+            <div className={cn(scroll && "overflow-x-auto")} onCopy={handleCopy}>
+                {children}
+            </div>
         </div>
     );
 }
@@ -133,7 +202,9 @@ export function SplitDiffView({ entries, stale }: SplitDiffViewProps) {
     return (
         <ViewerFrame stale={stale} scroll>
             <table className="w-full min-w-176 table-fixed border-collapse font-mono text-[0.8125rem] leading-6">
-                <caption className="sr-only">{t("title")}</caption>
+                <caption data-diff-noise="" className="sr-only">
+                    {t("title")}
+                </caption>
                 <colgroup>
                     <col className="w-11" />
                     <col className="w-4" />
@@ -159,6 +230,7 @@ export function SplitDiffView({ entries, stale }: SplitDiffViewProps) {
                                         : ""}
                                 </td>
                                 <td
+                                    data-diff-copy=""
                                     className={cn(
                                         TEXT_CELL,
                                         entry.item.left !== null &&
@@ -167,12 +239,14 @@ export function SplitDiffView({ entries, stale }: SplitDiffViewProps) {
                                     )}
                                 >
                                     {entry.item.type !== "equal" && entry.item.left !== null && (
-                                        <span className="sr-only">
+                                        <span data-diff-noise="" className="sr-only">
                                             {t(`rowTypes.${entry.item.type}`)}{" "}
                                         </span>
                                     )}
                                     {entry.item.left === null ? (
-                                        <span className="sr-only">{t("noLine")}</span>
+                                        <span data-diff-noise="" className="sr-only">
+                                            {t("noLine")}
+                                        </span>
                                     ) : (
                                         <SegmentText
                                             text={entry.item.left}
@@ -188,6 +262,7 @@ export function SplitDiffView({ entries, stale }: SplitDiffViewProps) {
                                         : ""}
                                 </td>
                                 <td
+                                    data-diff-copy=""
                                     className={cn(
                                         TEXT_CELL,
                                         entry.item.right !== null &&
@@ -196,7 +271,9 @@ export function SplitDiffView({ entries, stale }: SplitDiffViewProps) {
                                     )}
                                 >
                                     {entry.item.right === null ? (
-                                        <span className="sr-only">{t("noLine")}</span>
+                                        <span data-diff-noise="" className="sr-only">
+                                            {t("noLine")}
+                                        </span>
                                     ) : (
                                         <SegmentText
                                             text={entry.item.right}
@@ -205,10 +282,14 @@ export function SplitDiffView({ entries, stale }: SplitDiffViewProps) {
                                     )}
                                     {entry.item.ignoredDifference && (
                                         <span
+                                            data-diff-noise=""
                                             title={t("ignoredMarker")}
                                             className="text-brand-amber ml-1.5 align-middle text-[0.625rem] select-none"
                                         >
-                                            ≈<span className="sr-only">{t("ignoredMarker")}</span>
+                                            ≈
+                                            <span data-diff-noise="" className="sr-only">
+                                                {t("ignoredMarker")}
+                                            </span>
                                         </span>
                                     )}
                                 </td>
@@ -233,7 +314,9 @@ export function UnifiedDiffView({ entries, stale }: UnifiedDiffViewProps) {
     return (
         <ViewerFrame stale={stale} scroll={false}>
             <table className="w-full table-fixed border-collapse font-mono text-[0.8125rem] leading-6">
-                <caption className="sr-only">{t("title")}</caption>
+                <caption data-diff-noise="" className="sr-only">
+                    {t("title")}
+                </caption>
                 <colgroup>
                     <col className="w-11" />
                     <col className="w-11" />
@@ -263,9 +346,9 @@ export function UnifiedDiffView({ entries, stale }: UnifiedDiffViewProps) {
                                           ? "+"
                                           : ""}
                                 </td>
-                                <td className={TEXT_CELL}>
+                                <td data-diff-copy="" className={TEXT_CELL}>
                                     {entry.item.kind !== "equal" && (
-                                        <span className="sr-only">
+                                        <span data-diff-noise="" className="sr-only">
                                             {t(
                                                 `rowTypes.${entry.item.kind === "add" ? "insert" : "delete"}`,
                                             )}{" "}
@@ -277,10 +360,14 @@ export function UnifiedDiffView({ entries, stale }: UnifiedDiffViewProps) {
                                     />
                                     {entry.item.ignoredDifference && (
                                         <span
+                                            data-diff-noise=""
                                             title={t("ignoredMarker")}
                                             className="text-brand-amber ml-1.5 align-middle text-[0.625rem] select-none"
                                         >
-                                            ≈<span className="sr-only">{t("ignoredMarker")}</span>
+                                            ≈
+                                            <span data-diff-noise="" className="sr-only">
+                                                {t("ignoredMarker")}
+                                            </span>
                                         </span>
                                     )}
                                 </td>
