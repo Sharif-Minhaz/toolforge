@@ -22,6 +22,7 @@ import { regexTestTool } from "./regex";
 import { rsaCryptTool, rsaGenerateTool } from "./rsa";
 import { secretGenerateTool } from "./secret";
 import { slugCreateTool } from "./slug";
+import { sortLinesTool } from "./sort";
 import { subdomainLookupTool } from "./subdomain-lookup";
 import { textCaseConvertTool } from "./text-case";
 import { timestampConvertTool } from "./timestamp";
@@ -98,6 +99,7 @@ export const MCP_TOOLS: readonly McpTool[] = [
     rsaGenerateTool,
     secretGenerateTool,
     slugCreateTool,
+    sortLinesTool,
     subdomainLookupTool,
     textCaseConvertTool,
     timestampConvertTool,

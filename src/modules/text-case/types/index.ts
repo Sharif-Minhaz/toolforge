@@ -1,3 +1,5 @@
+import type { TextStats } from "@/modules/tools/types";
+
 /**
  * The seven cases that keep the text as prose.
  *
@@ -67,14 +69,6 @@ export type TextCaseFailureReason =
 export type TextCaseFailure = {
     readonly ok: false;
     readonly reason: TextCaseFailureReason;
-};
-
-/** What the counter under a box reports, for the input and the output alike. */
-export type TextStats = {
-    /** Code points, so an emoji or a Bangla conjunct counts once. */
-    readonly characters: number;
-    readonly words: number;
-    readonly lines: number;
 };
 
 export type TextCaseSuccess = {

@@ -17,6 +17,8 @@ import { OptionSwitch } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
+import { describeText } from "@/modules/tools/domain/text-stats";
+import type { TextStats } from "@/modules/tools/types";
 import { saveFile } from "@/modules/tools/domain/file-saver";
 import {
     DEFAULT_TEXT_CASE_OPTIONS,
@@ -25,8 +27,7 @@ import {
 } from "../domain/constants";
 import { convertCase } from "../domain/convert";
 import { createTextCaseExportFile } from "../domain/export";
-import { describeText } from "../domain/statistics";
-import type { TextCase, TextCaseFailure, TextCaseOptions, TextStats } from "../types";
+import type { TextCase, TextCaseFailure, TextCaseOptions } from "../types";
 import { CasePicker } from "./case-picker";
 import { useCaseName } from "./use-case-name";
 

@@ -240,6 +240,10 @@
             "name": "Text Case Converter",
             "description": "Convert text between fourteen cases, from Sentence case and Title Case to camelCase and snake_case."
         },
+        "sort": {
+            "name": "Text Sorter",
+            "description": "Sort pasted lines, remove duplicates and blanks, and write the result back as a plain, bulleted or numbered list."
+        },
         "equation": {
             "name": "Equation to LaTeX Converter",
             "description": "Turn plain-text maths into clean LaTeX, edit it, and see it rendered live by KaTeX."
@@ -6960,6 +6964,239 @@
                 "a5": "Because there were no words in the text to build a name from. The identifier cases keep only letters and digits, so something like <code>!!! ???</code> leaves nothing behind — and an empty box would look like a bug rather than an answer, so the tool says so instead.",
                 "q6": "How much text can I paste at once?",
                 "a6": "Up to {max} characters, which is a long chapter. Past that the tool refuses rather than freezing the tab, and the counter above the box starts warning you well before you reach it."
+            }
+        }
+    },
+    "sort": {
+        "meta": {
+            "title": "Text Sorter — Sort Lines, Remove Duplicates, Build Bullet and Numbered Lists",
+            "description": "Sort pasted lines alphabetically, naturally, by length, in reverse or at random. Strip the duplicates, the blanks and the markers a list already carries, then write it back as plain text, a bulleted list or a numbered one. Smart line detection folds hard-wrapped text back into whole items, so a paragraph copied out of a PDF becomes one bullet rather than nine — and none of it leaves your browser."
+        },
+        "hero": {
+            "eyebrow": "Text",
+            "title": "Text Sorter",
+            "subtitle": "Paste the lines, choose an order, and take the list back as plain rows, bullets or numbers. It works out where each item really ends first, so a paragraph copied out of a PDF is one bullet and not nine.",
+            "badgeOrders": "Five orders",
+            "badgeSmart": "Smart line breaks",
+            "badgeOffline": "Works offline"
+        },
+        "workbench": {
+            "title": "Sort and list",
+            "description": "Paste the lines, pick an order and a shape. The result updates as you type, and never leaves this tab.",
+            "inputLabel": "Lines",
+            "placeholder": "Paste your lines here — one per row, or a whole paragraph",
+            "clear": "Clear the lines",
+            "splitLabel": "Line breaks",
+            "orderLabel": "Order",
+            "sortKeyLabel": "Compare by",
+            "sortKeyUnavailable": "{order} does not compare anything, so there is nothing to compare it by.",
+            "reshuffle": "Shuffle again",
+            "formatLabel": "Write it back as",
+            "bulletStyleLabel": "Bullet",
+            "numberStyleLabel": "Numbering",
+            "formatUnavailable": "{format} does not use this.",
+            "startLabel": "Start at",
+            "startHint": "The first ordinal of the list. Roman numerals and letters have no zero, so an item numbered below one is labelled with the number itself.",
+            "startPresets": "Common starting numbers",
+            "startDecrease": "Start one lower",
+            "startIncrease": "Start one higher",
+            "cleanupLabel": "Cleanup",
+            "trimLabel": "Trim spaces",
+            "trimHint": "Takes the whitespace off both ends of every line before anything else looks at it.",
+            "removeEmptyLabel": "Drop blank lines",
+            "removeEmptyHint": "A blank line is a separator rather than an item, so it is left out of the result.",
+            "duplicatesLabel": "Remove duplicates",
+            "duplicatesHint": "Keeps the first of every repeated line and drops the rest.",
+            "markersLabel": "Strip existing markers",
+            "markersHint": "Removes a bullet or an ordinal a line already carries, so re-listing gives one marker rather than two.",
+            "caseLabel": "Case matters",
+            "caseHint": "Treats A and a as two different characters, when comparing and when spotting a duplicate.",
+            "caseUnavailable": "Nothing in this run reads it. Turn on duplicate removal, or pick an order that compares.",
+            "outputLabel": "Result",
+            "outputPlaceholder": "The sorted list appears here",
+            "copy": "Copy",
+            "download": "Download",
+            "inputStats": "{lines} lines · {items} items",
+            "outputStats": "{items} items · {characters} characters",
+            "joinedNote": "{joined, plural, one {# wrapped line folded back} other {# wrapped lines folded back}} at column {column}",
+            "cleanupNote": "{blanks, plural, one {# blank line} other {# blank lines}} and {duplicates, plural, one {# duplicate} other {# duplicates}} removed.",
+            "statusEmpty": "Paste some lines and they will be sorted as you go.",
+            "statusReady": "{items} items, {order}.",
+            "statusUnchanged": "These lines were already in this order."
+        },
+        "splitModes": {
+            "line": "Every line",
+            "smart": "Smart",
+            "paragraph": "Blank lines only"
+        },
+        "splitHints": {
+            "line": "Every newline starts a new item, exactly as the text was typed.",
+            "smart": "Folds a hard-wrapped line back into the one above it, so a paragraph out of a PDF stays one item. It says underneath how many it folded.",
+            "paragraph": "Only a blank line ends an item. Every newline inside one becomes a single space."
+        },
+        "orders": {
+            "original": "As typed",
+            "ascending": "Ascending",
+            "descending": "Descending",
+            "reverse": "Reverse",
+            "shuffle": "Shuffle"
+        },
+        "orderHints": {
+            "original": "Leaves the order alone. Reach for it when you only want the cleanup or the markers.",
+            "ascending": "Smallest first, by whichever key is chosen beside this.",
+            "descending": "Largest first, by whichever key is chosen beside this.",
+            "reverse": "Turns the list back to front without comparing anything.",
+            "shuffle": "A random arrangement. Press the button for another one."
+        },
+        "sortKeys": {
+            "alphabetical": "Alphabetical",
+            "natural": "Natural",
+            "codepoint": "Code point",
+            "length": "Length"
+        },
+        "sortKeyHints": {
+            "alphabetical": "Letter by letter. The everyday answer.",
+            "natural": "Reads a run of digits as a number, so item2 lands before item10.",
+            "codepoint": "The raw Unicode order, capitals and symbols included. Ignores the case switch.",
+            "length": "Shortest line first, with alphabetical order settling a tie."
+        },
+        "formats": {
+            "plain": "Plain lines",
+            "bullet": "A bulleted list",
+            "numbered": "A numbered list"
+        },
+        "formatHints": {
+            "plain": "One item per line, with nothing added in front of it.",
+            "bullet": "Puts the same marker in front of every item.",
+            "numbered": "Numbers the items after they have been ordered, so the ordinals always run 1, 2, 3 down the page."
+        },
+        "bulletStyles": {
+            "dash": "Hyphen",
+            "asterisk": "Asterisk",
+            "bullet": "Round bullet",
+            "task": "Task box"
+        },
+        "numberStyles": {
+            "decimal": "Number",
+            "paren": "Number and bracket",
+            "padded": "Padded number",
+            "alpha": "Letters",
+            "roman": "Roman numerals"
+        },
+        "errors": {
+            "tooLong": "That is longer than {max} characters. Shorten it, or paste it in batches.",
+            "tooManyItems": "That is more than {max} lines. Sort it in batches.",
+            "emptyResult": "The cleanup left nothing behind. Every line here is blank, a bare marker, or a repeat of another one."
+        },
+        "toast": {
+            "copied": "List copied",
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The download could not start.",
+            "copyFailedEmpty": "There is nothing to copy yet.",
+            "copyFailedUnsupported": "This browser will not let the page reach the clipboard.",
+            "copyFailedDenied": "Clipboard access was refused. Copy from the box instead."
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "What a sorter has to get right",
+                "p1": "Putting a list in order is one line of code, and nobody opens a web page for one line of code. The time goes on everything around it. Half the rows still carry the bullets they arrived with, three of them are blank, two say the same thing twice, and the paragraph in the middle came out of a PDF with a newline every sixty-six characters. Sort that as it stands and you get an alphabetised jumble with <code>-</code> in front of some of it and a sentence broken across three rows.",
+                "example": "- cherry · - apple · - banana → 1. apple · 2. banana · 3. cherry",
+                "p2": "So this page does the whole job in one pass: it works out where each item really ends, cleans the rows, orders them, and writes the markers back on afterwards — in that order, because any other one gets a different answer. All of it runs in this tab, and nothing you paste is sent anywhere."
+            },
+            "splitting": {
+                "title": "Where a line actually ends",
+                "p1": "A text box wraps for display without putting anything into the text, so a line that merely looks wrapped on screen is already one line here and needs no defending. The kind that does is the other one: text that arrived with real newlines inside its sentences, because it was written in a mail client, copied out of a PDF, or run through a formatter at some fixed width. Those newlines describe a window that no longer exists, and treating each one as an item turns one paragraph into nine bullets.",
+                "tableCaption": "The three ways the tool can cut a paste into items",
+                "colMode": "Mode",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "lineDoes": "Starts a new item at every newline, and nowhere else.",
+                "lineWhen": "The paste is already one item per row and you want no guessing at all.",
+                "smartDoes": "Folds a hard-wrapped line back into the one above it, and reports how many it folded.",
+                "smartWhen": "The text came from somewhere that wrapped it — a mail client, a PDF, a terminal, a chat window.",
+                "paragraphDoes": "Ends an item only at a blank line, turning every newline inside a paragraph into a space.",
+                "paragraphWhen": "The paste is a set of paragraphs and the blank lines are already the boundaries.",
+                "p2": "Smart mode is a heuristic, and it is worth knowing exactly when it will act. It first asks whether the text looks hard-wrapped at all: at least two lines within ten characters of the longest one, and that longest line at least forty characters. A short list never passes that test. Neither does one long item among short ones — a long line followed by a short one is indistinguishable from a wrapped line and its tail, so the careful reading wins and both stay separate items.",
+                "p3": "Once a column has been found, a line is folded into the one above it unless one of three things is true: the line above ended in a full stop, question mark, exclamation mark, ellipsis, colon or semicolon; the line below opens with a bullet or an ordinal, which is a boundary somebody wrote on purpose; or the line above stopped well short of the column, which means the return key was pressed rather than the margin reached.",
+                "p4": "One case skips all of that. A line ending in a hyphen with a letter in front of it is a word split across the break, so it is always rejoined and the hyphen goes with it. No writer ends a list item on a hyphen.",
+                "p5": "Because it is a heuristic, it says what it did: the counter under the box reports how many lines were folded and which column it settled on. When it reads the text wrongly, the other two modes are exact, and switching is one click."
+            },
+            "ordering": {
+                "title": "Five orders, four ways to compare",
+                "intro": "Three of the orders compare nothing at all. As typed leaves the rows where they are, reverse turns them back to front, and shuffle draws an arrangement at random — none of them has anything to compare, which is why the key beside them greys out. Only ascending and descending read it.",
+                "tableCaption": "The four sort keys and what each one is for",
+                "colKey": "Key",
+                "colOrders": "Puts in this order",
+                "colWhen": "Reach for it when",
+                "alphabeticalOrders": "apple, Banana, cherry",
+                "alphabeticalWhen": "The everyday answer: names, words, anything you would look up in a list.",
+                "naturalOrders": "file1, file2, file10",
+                "naturalWhen": "The lines carry numbers in them — versions, filenames, ticket ids — and plain alphabetical order puts ten before two.",
+                "codepointOrders": "Banana, apple, äpfel",
+                "codepointWhen": "You want the exact Unicode order a program would use, capitals and symbols and all.",
+                "lengthOrders": "ant, three, seven!!",
+                "lengthWhen": "You are looking for the outliers — the longest lines in a log, the shortest entries in a glossary.",
+                "note": "None of these read your browser's language settings, and that is deliberate rather than an oversight. Collation data comes from whichever machine is asking, so a list ordered by the host could come back one way on the server and another way in your browser, and the page would have to reconcile a difference it cannot see the cause of. Everything here is compared by code point instead. The cost is real and worth stating: with case sensitivity on, every capital sorts before every lowercase letter, and accented letters land after unaccented ones. The gain is that the same list is the same list everywhere."
+            },
+            "formatting": {
+                "title": "Bullets and numbers",
+                "intro": "The markers go on last, after the ordering. That is not a detail — numbering before the sort would sort the ordinals along with the text and hand back a list whose numbers run 2, 1, 3.",
+                "tableCaption": "Every bullet and numbering style the tool writes",
+                "colStyle": "Style",
+                "colExample": "Example",
+                "colWhen": "Reach for it when",
+                "dashWhen": "Markdown, a commit message, a code comment — the hyphen is what almost everything renders.",
+                "asteriskWhen": "Markdown again, where a nested list needs a different marker from its parent.",
+                "bulletWhen": "The list is going into a document or a message rather than into a file a parser reads.",
+                "taskWhen": "A checklist for GitHub, a pull request description, or anywhere a Markdown renderer draws a tick box.",
+                "decimalWhen": "The ordinary numbered list, and what Markdown expects.",
+                "parenWhen": "A legal or academic document, where the bracket form is the convention.",
+                "paddedWhen": "The list is long and the numbers should line up down the left edge.",
+                "alphaWhen": "A sub-list under a numbered one, or a set of options labelled a, b, c.",
+                "romanWhen": "Front matter, an appendix, or an outline whose top level is already numbered.",
+                "note": "Numbering starts wherever you set it, including at zero — a listing of array indices reads better that way. Roman numerals and letters have no zero and no negatives, so an item numbered below one is labelled with the number itself rather than with an empty marker."
+            },
+            "cleanup": {
+                "title": "The five cleanup switches",
+                "intro": "These run before the ordering, on every item the split produced. Four of them are on by default because a pasted list almost always wants them; the fifth changes what counts as the same line.",
+                "tableCaption": "The switches beside the order and format pickers",
+                "colOption": "Option",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "trimDoes": "Removes the whitespace at both ends of every item.",
+                "trimWhen": "Almost always. Leave it off when the indentation is part of what you are sorting — a block of code, for instance.",
+                "removeEmptyDoes": "Drops items that hold nothing but whitespace.",
+                "removeEmptyWhen": "Almost always. Leave it off when the blank rows are spacing you want to keep.",
+                "duplicatesDoes": "Keeps the first of each repeated item and drops every later copy.",
+                "duplicatesWhen": "A merged list, two exports concatenated, or anything you want a unique set out of.",
+                "markersDoes": "Takes off a bullet or an ordinal an item already carries, along with the indentation in front of it.",
+                "markersWhen": "On by default, and the reason re-listing a list does not produce two markers. Turn it off when the marker is content — a line that genuinely begins with a single initial and a full stop, for one.",
+                "caseDoes": "Treats A and a as different characters, both when comparing and when spotting a duplicate.",
+                "caseWhen": "Sorting identifiers or anything else where the capital carries meaning. Off by default, so a list of names does not put every capitalised word above every lowercase one.",
+                "note": "The order is fixed and worth knowing: markers come off first, then the trim, then the blanks, then the duplicates. Stripping after trimming would leave an indented bullet indented; removing duplicates before trimming would treat a line with a trailing space as different from the same line without one."
+            },
+            "useCases": {
+                "title": "What it gets used for",
+                "p1": "Turning a brain dump into an agenda is the common one: paste the rough notes, drop the blanks, strip whatever bullets came along, sort them, and take back a numbered list. So is tidying a list that was merged from two places — remove the duplicates, sort ascending, and the difference between the two sources is immediately visible.",
+                "p2": "Then there are the mechanical uses. Alphabetising an environment file or a list of dependencies so a diff stays readable. Sorting filenames with natural order so <code>file2</code> comes before <code>file10</code>. Finding the longest lines in a log by sorting on length and reading from the bottom. Drawing a name out of a hat with shuffle. And converting a paragraph copied out of a PDF into bullets without first hunting down every stray line break by hand."
+            },
+            "faq": {
+                "title": "Questions people ask",
+                "q1": "Does any of this leave my browser?",
+                "a1": "No. The whole tool is a few pure functions running in this tab, and the page makes no request while you type. You can turn the network off and it will keep working.",
+                "q2": "Why does my list come back in a strange order for accented or non-Latin text?",
+                "a2": "Because the comparison is by Unicode code point rather than by any language's dictionary rules. That is a deliberate trade: reading collation data from the host would let the server and your browser disagree about the same list. It means <code>ä</code> sorts after <code>z</code>, and with case sensitivity on every capital comes before every lowercase letter.",
+                "q3": "Smart mode joined two lines that should have stayed apart. What now?",
+                "a3": "Switch the line-break control to Every line, which starts a new item at every newline and guesses nothing. It is worth checking the counter under the box first — it says how many lines were folded, so you can tell at a glance whether the mode is the problem.",
+                "q4": "Why is the sort key greyed out?",
+                "a4": "Because the order you picked does not compare anything. As typed, reverse and shuffle rearrange the rows without ever looking at what is in them, so there is no key for them to read. Choose ascending or descending and it comes back.",
+                "q5": "Will shuffling twice give the same list?",
+                "a5": "No — each press of the shuffle button draws a fresh arrangement. It is not a cryptographic shuffle and is not meant to be; for anything that has to be unguessable, use the password or secret generator instead.",
+                "q6": "How much can I paste at once?",
+                "a6": "Up to {maxCharacters} characters and {maxItems} lines, whichever it reaches first. Past either, the tool refuses rather than freezing the tab, and says which ceiling you met."
             }
         }
     },

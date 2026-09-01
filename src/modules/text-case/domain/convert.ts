@@ -1,7 +1,7 @@
 import type { IdentifierCase, ProseCase, TextCaseOptions, TextCaseResult } from "../types";
 import { isIdentifierCase, MAX_TEXT_CASE_INPUT_LENGTH } from "./constants";
 import { isSmallWord } from "./small-words";
-import { describeText } from "./statistics";
+import { describeText } from "@/modules/tools/domain/text-stats";
 import { mapProseWords, splitWords, type ProseWord } from "./words";
 
 /**

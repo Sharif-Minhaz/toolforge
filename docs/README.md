@@ -149,6 +149,7 @@ records a defect that was expensive to find and is easy to reintroduce.
 | `rsa` | [`case-studies/rsa.md`](case-studies/rsa.md) |
 | `rsa-encrypt` | [`case-studies/rsa-encrypt.md`](case-studies/rsa-encrypt.md) |
 | `short-links`, `shortener` | [`case-studies/short-links.md`](case-studies/short-links.md) |
+| `sort` | [`case-studies/sort.md`](case-studies/sort.md) |
 | `subdomain-lookup` | [`case-studies/subdomain-lookup.md`](case-studies/subdomain-lookup.md) |
 | `url-parser` | [`patterns/derived-state-editors.md`](patterns/derived-state-editors.md) |
 | `watermark-remover`, `ai-*` | [`case-studies/watermark-remover.md`](case-studies/watermark-remover.md) |

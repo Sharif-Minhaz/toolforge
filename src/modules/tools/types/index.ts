@@ -41,6 +41,7 @@ export const TOOL_IDS = [
     "shortener",
     "slug",
     "text-case",
+    "sort",
     "equation",
     "diff",
     "image-compressor",
@@ -128,7 +129,8 @@ export type ToolIconName =
     | "lock-code"
     | "dice"
     | "file-pdf"
-    | "sitemap";
+    | "sitemap"
+    | "sort";
 
 export type Tool = {
     readonly id: ToolId;
@@ -185,6 +187,19 @@ export type ZonedFields = {
 
 /** Which family an address belongs to. Shared by every tool that reads one. */
 export type IpVersion = 4 | 6;
+
+/**
+ * What the counter under a text box reports, for the input and the output
+ * alike. Shared by every tool that puts one there — the case converter and the
+ * sorter count the same three things and must not disagree about what a line
+ * or a character is.
+ */
+export type TextStats = {
+    /** Code points, so an emoji or a Bangla conjunct counts once. */
+    readonly characters: number;
+    readonly words: number;
+    readonly lines: number;
+};
 
 export const NEWLINE_SEPARATORS = ["lf", "crlf", "cr"] as const;
 
