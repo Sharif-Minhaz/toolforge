@@ -272,6 +272,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             result: messages.watermarkRemover.result,
             errors: messages.watermarkRemover.errors,
             toast: messages.watermarkRemover.toast,
+            video: messages.watermarkRemover.video,
+            videoResult: messages.watermarkRemover.videoResult,
+            videoErrors: messages.watermarkRemover.videoErrors,
+            videoToast: messages.watermarkRemover.videoToast,
         },
         password: {
             workbench: messages.password.workbench,

@@ -8,7 +8,7 @@ const FALLBACK_STEM = "image";
  * is kept rather than discarded: a folder of downloads where every file is called
  * `watermark-removed.png` is a folder nobody can use.
  */
-export function toFilenameStem(originalName: string): string {
+export function toFilenameStem(originalName: string, fallback = FALLBACK_STEM): string {
     const withoutExtension = originalName.replace(/\.[^./\\]+$/, "");
 
     const slug = withoutExtension
@@ -18,7 +18,7 @@ export function toFilenameStem(originalName: string): string {
         .slice(0, MAX_STEM_LENGTH)
         .replace(/-+$/, "");
 
-    return slug.length > 0 ? slug : FALLBACK_STEM;
+    return slug.length > 0 ? slug : fallback;
 }
 
 /** `photo-watermark-removed-20260730T101500Z.png` — sortable and self-describing. */
@@ -29,4 +29,17 @@ export function buildCleanImageFilename(originalName: string, generatedAt: Date)
         .replace(/\.\d{3}Z$/, "Z");
 
     return `${toFilenameStem(originalName)}-watermark-removed-${stamp}.png`;
+}
+
+/** What a clip with no usable name of its own is called. */
+const VIDEO_FALLBACK_STEM = "clip";
+
+/** `clip-watermark-removed-20260730T101500Z.mp4` — the same shape, a new container. */
+export function buildCleanVideoFilename(originalName: string, generatedAt: Date): string {
+    const stamp = generatedAt
+        .toISOString()
+        .replace(/[-:]/g, "")
+        .replace(/\.\d{3}Z$/, "Z");
+
+    return `${toFilenameStem(originalName, VIDEO_FALLBACK_STEM)}-watermark-removed-${stamp}.mp4`;
 }

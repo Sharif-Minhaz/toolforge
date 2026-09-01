@@ -127,6 +127,19 @@ All of these are in `world-map.tsx`.
   rare basemap with a matched light/dark pair — raw OpenStreetMap has no dark twin
   and would leave one theme with a white rectangle in it — and the fetch is
   disclosed in the README rather than left implied.
+- **CARTO watermarks unauthenticated tiles.** Since the free tier started
+  requiring a key, tiles without one still arrive — with `API KEY REQUIRED`
+  repeated diagonally across them, which reads as a broken deployment rather than
+  a missing credential. `NEXT_PUBLIC_BASEMAPS_API_KEY` is appended as `?key=`, and
+  the `NEXT_PUBLIC_` is not carelessness: the reader's browser is what fetches a
+  tile, so the key is in that request under any name, and CARTO's actual control
+  is a referring-domain restriction set on the key rather than secrecy. Read at
+  module scope in `world-map.tsx` rather than threaded down from the page like
+  `NEXT_PUBLIC_TURNSTILE_KEY` — it is a build-time constant Next inlines
+  identically on both sides, not the per-request value rule 6 is about, and four
+  prop hops would break the component's promise that a caller hands it pins and
+  nothing else. Absent, the map degrades rather than refuses: the tiles, the pins
+  and the list beside them all still work.
 - **A map is hover-only, so it can never be the only copy.** Every pin's contents
   also appear as text in the list beside it. `country-chip.tsx` is the same rule at
   chip scale: the two-letter code stays visible next to the flag, because Windows

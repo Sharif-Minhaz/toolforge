@@ -14,6 +14,7 @@ export const WATERMARK_REMOVER_ARTICLE_SECTIONS = [
     { id: "howItWorks", titleKey: "howItWorks.title" },
     { id: "painting", titleKey: "painting.title" },
     { id: "controls", titleKey: "controls.title" },
+    { id: "video", titleKey: "video.title" },
     { id: "quality", titleKey: "quality.title" },
     { id: "rights", titleKey: "rights.title" },
     { id: "limits", titleKey: "limits.title" },
@@ -35,6 +36,20 @@ const CONTROL_ROWS = [
     "challenge",
 ] as const;
 
+/** Mirrors the controls on the video tab, which are not the picture tab's. */
+const VIDEO_CONTROL_ROWS = [
+    "upload",
+    "box",
+    "resize",
+    "scrub",
+    "fill",
+    "reset",
+    "remove",
+    "cancel",
+    "compare",
+    "download",
+] as const;
+
 /** The four shapes a watermark actually turns up in. */
 const SITUATION_ROWS = ["cornerLogo", "tiledText", "overSubject", "largeObject"] as const;
 
@@ -49,6 +64,8 @@ export async function getWatermarkRemoverFaqEntries(): Promise<FaqEntry[]> {
         { question: t("faq.q4"), answer: t("faq.a4") },
         { question: t("faq.q5"), answer: t("faq.a5") },
         { question: t("faq.q6"), answer: t("faq.a6") },
+        { question: t("faq.q7"), answer: t("faq.a7") },
+        { question: t("faq.q8"), answer: t("faq.a8") },
     ];
 }
 
@@ -174,6 +191,56 @@ export async function WatermarkRemoverArticle() {
                     <div className={`mt-5 ${PROSE}`}>
                         <p>{t("controls.dependencyNote")}</p>
                         <p>{t("controls.challengeNote")}</p>
+                    </div>
+                </ArticleSection>
+
+                <ArticleSection id="video" title={t("video.title")}>
+                    <div className={PROSE}>
+                        <p>{t("video.intro")}</p>
+                        <p>{t("video.finding")}</p>
+                        <p>{t("video.filling")}</p>
+                    </div>
+
+                    <div className="ring-border/80 mt-5 overflow-x-auto rounded-xl ring-1 ring-inset">
+                        <table className="w-full min-w-160 border-collapse text-left text-sm">
+                            <caption className="sr-only">{t("video.tableCaption")}</caption>
+                            <thead>
+                                <tr className="bg-muted/60">
+                                    <th scope="col" className="px-4 py-2.5 font-medium">
+                                        {t("video.colControl")}
+                                    </th>
+                                    <th scope="col" className="px-4 py-2.5 font-medium">
+                                        {t("video.colDoes")}
+                                    </th>
+                                    <th scope="col" className="px-4 py-2.5 font-medium">
+                                        {t("video.colWhen")}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-border/70 divide-y">
+                                {VIDEO_CONTROL_ROWS.map((row) => (
+                                    <tr key={row} className="align-top">
+                                        <th
+                                            scope="row"
+                                            className="text-primary px-4 py-3 text-[0.8125rem] font-medium whitespace-nowrap"
+                                        >
+                                            {t(`video.${row}Name`)}
+                                        </th>
+                                        <td className="text-muted-foreground px-4 py-3">
+                                            {t(`video.${row}Does`)}
+                                        </td>
+                                        <td className="text-muted-foreground px-4 py-3">
+                                            {t(`video.${row}When`)}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className={`mt-5 ${PROSE}`}>
+                        <p>{t("video.encodeNote")}</p>
+                        <p>{t("video.limitNote")}</p>
                     </div>
                 </ArticleSection>
 

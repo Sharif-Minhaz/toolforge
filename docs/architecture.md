@@ -107,7 +107,7 @@ ones whose design is documented, and what each one is:
 | `url-parser` | Two editors over one value | [`patterns/derived-state-editors.md`](patterns/derived-state-editors.md) |
 | `diff` | A unified patch nothing else has to reject | [`case-studies/diff.md`](case-studies/diff.md) |
 | `qr` | A hand-written QR encoder | [`case-studies/qr.md`](case-studies/qr.md) |
-| `watermark-remover` | A crop, a metered worker, and a composite back | [`case-studies/watermark-remover.md`](case-studies/watermark-remover.md) |
+| `watermark-remover` | Two tabs, two promises: a metered worker, and a WebCodecs pipeline | [`case-studies/watermark-remover.md`](case-studies/watermark-remover.md) |
 | `uuid`, `overview`, `preferences`, `seo`, `observability` | Platform modules with no special design notes | — |
 
 ---

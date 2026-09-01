@@ -104,6 +104,34 @@ const TILES = {
     dark: "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
 } as const;
 
+/**
+ * CARTO now stamps "API KEY REQUIRED" across unauthenticated basemap tiles, so
+ * the key is what keeps the map readable rather than what unlocks it — without
+ * one the tiles still arrive, watermarked.
+ *
+ * `NEXT_PUBLIC_`, and read here rather than threaded down from the page as
+ * `NEXT_PUBLIC_TURNSTILE_KEY` is. Two reasons. The browser is what fetches a
+ * tile, so the key is in the request either way and a server-only name could
+ * not reach it — CARTO's own model is a public key restricted by referring
+ * domain, which is the control that matters, not secrecy. And this is a
+ * build-time constant Next inlines identically on both sides, so it is not the
+ * per-request value rule 6 is about; passing it would cost four prop hops
+ * through the report tree and break this component's promise that the next
+ * caller hands it pins and nothing else.
+ */
+const BASEMAPS_API_KEY = process.env.NEXT_PUBLIC_BASEMAPS_API_KEY;
+
+/** Appends the key, if the deployment has one. `{s}` and friends survive: they are path, not query. */
+function tileUrl(theme: string | undefined): string {
+    const base = theme === "dark" ? TILES.dark : TILES.light;
+
+    if (BASEMAPS_API_KEY === undefined || BASEMAPS_API_KEY === "") {
+        return base;
+    }
+
+    return `${base}?key=${encodeURIComponent(BASEMAPS_API_KEY)}`;
+}
+
 const ATTRIBUTION =
     '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> · <a href="https://carto.com/attributions" target="_blank" rel="noreferrer">CARTO</a>';
 
@@ -306,7 +334,7 @@ export function WorldMap({
                 // theirs, and those are what the tile layer contributes.
                 L.control.attribution({ prefix: false, position: "bottomright" }).addTo(map);
 
-                L.tileLayer(resolvedTheme === "dark" ? TILES.dark : TILES.light, {
+                L.tileLayer(tileUrl(resolvedTheme), {
                     subdomains: "abcd",
                     maxZoom: MAX_ZOOM,
                     noWrap: true,

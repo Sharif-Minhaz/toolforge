@@ -1,4 +1,10 @@
-import { IconChevronRight, IconPhotoEdit, IconShieldLock, IconSparkles } from "@tabler/icons-react";
+import {
+    IconChevronRight,
+    IconPhotoEdit,
+    IconShieldLock,
+    IconSparkles,
+    IconVideo,
+} from "@tabler/icons-react";
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import Link from "next/link";
@@ -46,6 +52,7 @@ export default async function WatermarkRemoverToolPage() {
 
     const badges = [
         { label: t("badgeModel"), Icon: IconSparkles },
+        { label: t("badgeVideo"), Icon: IconVideo },
         { label: t("badgeChallenge"), Icon: IconShieldLock },
         { label: t("badgeResolution"), Icon: IconPhotoEdit },
     ];

@@ -5356,19 +5356,24 @@
     "watermarkRemover": {
         "meta": {
             "title": "Watermark Remover",
-            "description": "Paint over a watermark, logo or unwanted object and have that area repainted out. Takes JPEG, PNG and WebP up to 10 MB, keeps the picture at its original size, and changes nothing outside what you marked. For images you own or have the right to edit."
+            "description": "Two ways to lose a watermark. Brush over one in a picture and have that area repainted out, or drop in a Gemini or Veo clip and have the sparkle in its corner rebuilt frame by frame — the clip never leaves your browser. For work you own or have the right to edit."
         },
         "hero": {
             "eyebrow": "Watermark Remover",
             "title": "Watermark Remover",
-            "subtitle": "Brush over a watermark and an inpainting model repaints what should have been underneath. Only the marked area changes — the rest of the picture keeps its own pixels and its original size. For images you own or hold the rights to.",
-            "badgeModel": "Stable Diffusion inpainting on Cloudflare",
-            "badgeChallenge": "Bot-checked",
-            "badgeResolution": "Original size kept"
+            "subtitle": "Brush over a watermark in a picture and an inpainting model repaints what should have been underneath. Or hand over a Gemini or Veo clip: the sparkle in its corner is found, rebuilt from the footage around it and written back, without the video ever leaving your browser. For work you own or hold the rights to.",
+            "badgeModel": "Pictures: Stable Diffusion inpainting",
+            "badgeChallenge": "Bot-checked uploads",
+            "badgeResolution": "Original size kept",
+            "badgeVideo": "Video: never leaves your browser"
         },
         "workbench": {
-            "title": "Remove a watermark",
-            "description": "JPEG, PNG or WebP. Only the square you mark is uploaded for repainting; the rest of the picture never leaves your device.",
+            "tabImage": "Image",
+            "tabVideo": "Video",
+            "imageTitle": "Remove a watermark from a picture",
+            "imageDescription": "JPEG, PNG or WebP. Only the square you mark is uploaded for repainting; the rest of the picture never leaves your device.",
+            "videoTitle": "Remove the Gemini sparkle from a clip",
+            "videoDescription": "MP4, MOV, WebM or MKV. The clip is decoded, repainted frame by frame and written back here in your browser — nothing is uploaded and no model is involved.",
             "dropTitle": "Drop an image here, or click to choose one",
             "dropHint": "JPEG, PNG or WebP — up to {limit}.",
             "pickPrompt": "Choose an image to clean up — up to {limit}.",
@@ -5389,6 +5394,35 @@
             "rightsNote": "Use this only on pictures you own or have permission to edit. Removing a watermark grants you no rights to the work underneath, and taking a credit or provenance mark off an image you then pass on as your own is not what this tool is for.",
             "privacyNote": "Unlike most of ToolForge, this tool is not offline: the square you mark is uploaded to a Cloudflare Worker and passed to an image model. Do not upload anything confidential."
         },
+        "video": {
+            "dropTitle": "Drop a video here, or click to choose one",
+            "dropHint": "MP4, MOV, WebM or MKV — up to {limit} and {seconds} seconds.",
+            "pickPrompt": "Choose a clip to clean up — up to {limit} and {seconds} seconds.",
+            "previewAlt": "Preview of {name}, with the search area drawn on it",
+            "sourceFacts": "{name} · {size} · {width} × {height} · {seconds} s · {fps} fps",
+            "boxLabel": "Watermark search area",
+            "boxHint": "Drag the box over the watermark, or drag the handle at its top-left corner to resize it. Without a pointer: focus the box, move it with the arrow keys — hold Shift for larger jumps — and press + or − to change its size.",
+            "boxReadout": "Search area: {width} × {height} px at {x}, {y}",
+            "scrubLabel": "Move through the clip",
+            "fillWholeBox": "Repaint the whole box",
+            "fillWholeBoxHint": "Off by default: the tool finds the mark inside the box and repaints only that, so the rest of the corner stays as it was shot. Turn it on when nothing is found, or when the mark sits on something the detector will not separate — the whole box is then rebuilt from its edges, which shows over detailed footage.",
+            "resetBox": "Back to the corner",
+            "remove": "Remove watermark",
+            "working": "Cleaning…",
+            "cancel": "Cancel",
+            "clear": "Clear",
+            "reading": "Reading the clip…",
+            "readyToRemove": "Ready to clean this clip.",
+            "resultStale": "The clip or the search area changed after this result. Run it again to refresh it.",
+            "percent": "{percent}%",
+            "progressLabel": "Cleaning progress",
+            "stage_reading": "Reading the clip…",
+            "stage_detecting": "Finding the watermark…",
+            "stage_cleaning": "Repainting every frame…",
+            "stage_finalizing": "Writing the file…",
+            "rightsNote": "Use this only on footage you own or have permission to edit. Removing a watermark grants you no rights to the work underneath, and taking a provenance mark off a generated clip you then pass on as filmed footage is not what this tool is for.",
+            "privacyNote": "The clip never leaves your device. Your own browser decodes it, repaints it and writes it back, which is also why the work costs a minute of your machine rather than a second of ours."
+        },
         "result": {
             "label": "Before and after",
             "beforeAlt": "{name} before the watermark was removed",
@@ -5398,6 +5432,22 @@
             "size": "Download size",
             "download": "Download PNG",
             "note": "The result is a PNG at the original pixel dimensions. Every pixel outside the area you painted is the one you started with — the model's output only ever reaches inside the mask."
+        },
+        "videoResult": {
+            "label": "Before and after",
+            "before": "Before",
+            "after": "After",
+            "beforeAlt": "{name} before the watermark was removed",
+            "afterAlt": "{name} after the watermark was removed",
+            "dimensions": "Dimensions",
+            "pixels": "{width} × {height} px",
+            "duration": "Length",
+            "seconds": "{value} s",
+            "repainted": "Repainted area",
+            "size": "Download size",
+            "download": "Download MP4",
+            "note": "The result is an MP4 at the original size and length. Every pixel outside the repainted rectangle came out of the decoder exactly as it went in, and the audio track was copied across without being re-encoded. The video track is re-encoded, because no codec can be asked to change one corner of a frame without it.",
+            "audioDropped": "The original's audio uses a codec an MP4 cannot carry, so the result has no sound."
         },
         "errors": {
             "missing_image": "Choose an image first.",
@@ -5417,9 +5467,29 @@
             "oversized_result": "The repainted square came back far larger than an image of that size should be, so it was discarded.",
             "compose_failed": "This browser would not give the page a drawing canvas, so the result could not be assembled."
         },
+        "videoErrors": {
+            "missing_video": "Choose a clip first.",
+            "empty_file": "That file is empty. Choose a clip with something in it.",
+            "unsupported_type": "That container cannot be opened. Use MP4, MOV, WebM or MKV.",
+            "too_large": "Too large — the remover accepts clips up to {limit}.",
+            "too_long": "Too long — the remover accepts clips up to {limit} seconds.",
+            "unsupported_browser": "This browser cannot decode and re-encode video on its own. A recent Chrome, Edge, Firefox or Safari can.",
+            "unreadable_container": "That file could not be read as a video. It may be truncated, or use a container this tool does not open.",
+            "no_video_track": "That file has no video track in it.",
+            "undecodable": "This browser cannot decode that clip's video codec.",
+            "no_encoder": "This browser has no video encoder this tool can write with.",
+            "mark_not_found": "No watermark was found inside the box. Move it over the sparkle, make it a little larger, or turn on “Repaint the whole box”.",
+            "clean_failed": "The clip could not be cleaned. Its video track may use a feature this browser's decoder refuses part-way through.",
+            "canceled": "The run was stopped. Nothing was changed."
+        },
         "toast": {
             "removed": "Marked area repainted.",
             "downloaded": "Saved {filename}.",
+            "downloadFailed": "The download could not be started."
+        },
+        "videoToast": {
+            "removed": "The clip is clean.",
+            "downloaded": "{filename} saved.",
             "downloadFailed": "The download could not be started."
         },
         "toc": {
@@ -5494,6 +5564,48 @@
                 "dependencyNote": "Undo and Clear mask stay disabled until something has been painted, and Remove needs all four of a valid file, a painted mask, a solved bot check, and no attempt already running. The status line under the drop zone always names whichever one is missing, so a disabled button is never unexplained.",
                 "challengeNote": "A token can be spent only once, so the Remove button greys out for a moment after each attempt while a fresh one is issued. If the bot check reports an error, reload the page — the widget cannot recover on its own."
             },
+            "video": {
+                "title": "Cleaning a Gemini or Veo clip",
+                "intro": "The video tab is a different machine from the picture tab, and it is worth knowing which one you are using. Nothing is uploaded: your browser opens the container, decodes the frames through its own codecs, repaints one fixed rectangle in each of them, and writes a new MP4. There is no model, no server and no queue — which is why it costs a minute of your laptop rather than a second of somebody's GPU.",
+                "finding": "Gemini and Veo sign in the same place every time: a small white sparkle in the bottom-right corner, at a size that scales with the frame. The tool averages that corner across two dozen moments spread through the clip. Footage that moves washes out of an average; a mark that never moves does not, so what is left standing brighter than its own surroundings is the watermark. It is found twice over: once roughly, against a blurred copy of the corner, and then again against a proper estimate of the footage underneath — reconstructed by interpolating the averaged corner across the rough mark. The second pass is what catches the glow. Measured against a blur, a sparkle's halo is wide enough to have been averaged into the blur itself, so it reads as background and survives; measured against the reconstruction, it stands at its true height.",
+                "filling": "What the tool then knows is not where a hole is but how strongly the mark covers each pixel. A watermark is not a hole: it is white laid over the footage at a strength that falls from the core to nothing, so the observed pixel is (1 − a) × footage + a × white. With the opacity a known per pixel and the white known, that equation has one unknown left, and rearranging it hands back the footage exactly — grain, texture, gradient and all. Only the few pixels at the very centre, where the mark is effectively solid and the division stops being stable, have nothing left to recover; those are rebuilt from the pixels around them by a harmonic fill, after the rest has already been cleaned, so what they read from is real footage rather than leftover glow.",
+                "tableCaption": "Every control on the video tab, what it does, and when to reach for it",
+                "colControl": "Control",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "uploadName": "Choose a video",
+                "uploadDoes": "Reads the container and reports the clip's size, length and frame rate without decoding a frame.",
+                "uploadWhen": "Always first. A clip past the size or length ceiling is refused here rather than after a minute of work.",
+                "boxName": "Search box",
+                "boxDoes": "Drag it anywhere on the frame. Only what is inside it is ever looked at or changed.",
+                "boxWhen": "The default corner covers Gemini and Veo. Move it for a mark somewhere else.",
+                "resizeName": "Corner handle",
+                "resizeDoes": "Drags the box's top-left corner, growing or shrinking the square while its bottom-right corner stays put.",
+                "resizeWhen": "The mark is clipped by the box, or the box is large enough to be picking up something else.",
+                "scrubName": "Frame slider",
+                "scrubDoes": "Moves the preview through the clip so the box can be checked against more than the first frame.",
+                "scrubWhen": "The first frame is a fade, or the corner is dark enough that the mark is hard to see.",
+                "fillName": "Repaint the whole box",
+                "fillDoes": "Skips the search and rebuilds every pixel inside the box from its edges.",
+                "fillWhen": "Nothing is found, or the mark sits on something the detector will not separate. Expect a visible smudge over detailed footage.",
+                "resetName": "Back to the corner",
+                "resetDoes": "Puts the box back where it started, flush into the bottom-right corner at its default size.",
+                "resetWhen": "After moving the box around and wanting the Gemini default again.",
+                "removeName": "Remove watermark",
+                "removeDoes": "Runs the four stages — read, find, repaint, write — and hands back a new MP4.",
+                "removeWhen": "Once the box sits over the mark.",
+                "cancelName": "Cancel",
+                "cancelDoes": "Stops the run and releases the decoder, the encoder and the muxer. Nothing is written.",
+                "cancelWhen": "The box was wrong and there is no point waiting for the answer.",
+                "compareName": "Before and after",
+                "compareDoes": "Two players, each with its own controls, so both can be put on the same moment.",
+                "compareWhen": "Checking the corner at the moment the footage behind it is busiest.",
+                "downloadName": "Download MP4",
+                "downloadDoes": "Saves the finished clip under the original's name plus a timestamp.",
+                "downloadWhen": "The result holds up.",
+                "encodeNote": "The video track is re-encoded. There is no way around it: a compressed frame is not a grid of pixels you can edit in place, so changing one corner of it means decoding, painting and encoding again. The encoder is asked for high quality and the original dimensions, frame rate and length are all kept — but a second pass through a lossy codec is a second pass, and a clip that was already heavily compressed will show it. The audio track is not re-encoded; its packets are copied across untouched.",
+                "limitNote": "Two things it cannot do. Where the mark is effectively solid there is nothing left underneath to recover, so that core is rebuilt from its own edges rather than reconstructed — over strong texture a large solid mark will read as a smudge, which is why the search is deliberately narrow and why a sparkle, whose solid part is a dozen pixels, comes out clean. And a mark that moves, fades or changes shape between frames is not what this is: the whole premise is that the corner holds one thing that never moves and covers each pixel by the same amount every time."
+            },
             "quality": {
                 "title": "What a good result looks like, and what it costs",
                 "p1": "The repaint is generated, so it will not match the original at the pixel level. Over sky, water, foliage, carpet, a plain wall or any soft blur, that is invisible. Over brickwork, printed text, a regular pattern or a face it is obvious, because those are what a diffusion model reproduces worst.",
@@ -5533,7 +5645,11 @@
                 "q5": "Can it remove an invisible or SynthID watermark?",
                 "a5": "No. This masks and repaints a region you can see. Invisible watermarks are statistical patterns spread across an entire image, and nothing here detects, reads or removes them.",
                 "q6": "Is it legal to remove a watermark?",
-                "a6": "That depends entirely on whose image it is, and this tool cannot tell. On your own work, or on an image licensed in a way that permits it, this is ordinary editing. On someone else's work it usually is not: the watermark does not hold the rights, but removing it does not grant them either, and stripping rights-management information is separately unlawful in many jurisdictions. When you are unsure, ask whoever made the image."
+                "a6": "That depends entirely on whose image it is, and this tool cannot tell. On your own work, or on an image licensed in a way that permits it, this is ordinary editing. On someone else's work it usually is not: the watermark does not hold the rights, but removing it does not grant them either, and stripping rights-management information is separately unlawful in many jurisdictions. When you are unsure, ask whoever made the image.",
+                "q7": "Does the video tab upload my clip anywhere?",
+                "a7": "No. The video half runs entirely in your browser, through the same WebCodecs API a video call uses. The file is read from disk, decoded, repainted and muxed locally, and the result is handed straight back to you. That is the opposite of the picture half, which does send the square you mark to a Cloudflare Worker — the two tabs make different promises, and each one says so above its own controls.",
+                "q8": "Is the video quality the same afterwards?",
+                "a8": "The dimensions, frame rate, length and audio are. The video track is re-encoded at high quality, because a codec cannot change one corner of a compressed frame without decoding and encoding it again, so a clip that was already heavily compressed will pick up a little more loss. The audio track is copied packet for packet and is bit-for-bit identical."
             }
         }
     },
@@ -11250,7 +11366,7 @@
                 },
                 "ai": {
                     "title": "The AI tools",
-                    "body": "The text and image detectors and the watermark remover spend a third-party API budget on every call. That is a decision about money rather than about capability, and it belongs to whoever is paying."
+                    "body": "The text and image detectors, and the watermark remover's picture tab, spend a third-party API budget on every call. That is a decision about money rather than about capability, and it belongs to whoever is paying. The watermark remover's video tab is absent for the images' reason instead: it demuxes, decodes, repaints and re-encodes a clip through the browser's own codecs, none of which exists in a request handler."
                 },
                 "scanner": {
                     "title": "The port scanner",

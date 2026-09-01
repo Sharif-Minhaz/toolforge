@@ -56,14 +56,21 @@ import { uuidGenerateTool } from "./uuid";
  *   posted to it, against an ownership model built on browser cookies. An MCP
  *   caller has no cookie jar and no way to prove it owns what it created, so
  *   exposing creation here would mint unreclaimable resources.
- * - **The AI tools** — text and image detectors, watermark remover, and the
- *   Equation converter's *image* half. They spend a third-party API budget per
- *   call. That is a decision about money rather than about capability, and it
- *   belongs to whoever is paying rather than to this file. Note the seam: the
+ * - **The AI tools** — text and image detectors, the Watermark Remover's *image*
+ *   half, and the Equation converter's *image* half. They spend a third-party
+ *   API budget per call. That is a decision about money rather than about
+ *   capability, and it belongs to whoever is paying rather than to this file.
+ *   Note the seam: the
  *   Equation tool's text half is `toolforge_equation_convert` below and runs
  *   here like any other offline tool, because turning `x2 + y2 = r2` into LaTeX
  *   costs nothing. Only reading a picture is withheld — a model that wants an
  *   equation transcribed already has eyes of its own.
+ *
+ *   The Watermark Remover's *video* half is absent for the first group's reason
+ *   rather than this one: it demuxes, decodes, repaints and muxes a clip through
+ *   the browser's own WebCodecs and a canvas, none of which exists in a request
+ *   handler, and the clip it works on never leaves the reader's device in the
+ *   first place.
  *
  * The Port Scanner is absent for a different reason again: it is the one tool
  * here whose whole function is to touch somebody else's host on ports they did
