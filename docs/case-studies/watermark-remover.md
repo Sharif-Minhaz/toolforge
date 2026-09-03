@@ -1051,23 +1051,52 @@ The Gemini tab is not a third algorithm. It is `detectWatermark` and
 with exactly one frame in it. Everything below is about what that costs and what
 had to move to make it honest.
 
-### The corner is a fact about the generator, not about the tool
+### The corner is a fact about the generator, so do not ask and do not assume
 
-`planDefaultBox` had the bottom-right corner written into it, because the clips it
-was built for sign there. A Gemini **still** signs bottom-left. Pointed at a
-generated image, a bottom-right box opened on empty picture, found nothing, and
-reported `mark_not_found` — a refusal that is perfectly true about the box and
-useless about the file.
+`planDefaultBox` had the bottom-right corner written into it, because the clips
+it was built for sign there. The first version of this tab changed that constant
+to bottom-left, added a corner control, and shipped. Both halves of that were
+wrong.
 
-So the corner became a parameter (`planCornerBox`), a control on the tab, and the
-pin that `resizeNormalizedBox` grows away from. **Anything a vendor chose is a
-parameter, not a constant** — one generator moving its mark should cost the
-reader a click rather than cost the codebase a release.
+**The constant was wrong** because there is no right value for it. Gemini has
+signed in more than one corner across its versions, Veo signs bottom-right, and
+an image cropped or rotated since is signed wherever it ended up. Whichever
+corner is written down, somebody gets `mark_not_found` on a picture that plainly
+has a mark in it — a refusal that is perfectly true about the box and useless
+about the file.
+
+**The control was wrong** because it asked the reader for something the tool can
+measure. All four corners are now searched on the pick — `scanGeminiCorners` —
+and the strongest wins. The control stays, for the run that got it wrong, and it
+re-runs on change rather than waiting to be told twice.
+
+Measured on the module's own fixture: a planted mark peaks between 105 and 142
+against the same picture's loudest empty corner at 52. **The winner is the
+strongest corner rather than the first one over a threshold**, because a floor
+tuned to that margin would sit on top of a real mark — the clip half measured the
+real thing at about a third opacity, not the fixture's nine tenths. What that
+buys is a search that cannot pick the wrong corner when there is a mark, and the
+price, stated in the article rather than hidden, is that a picture with no mark
+gets its brightest corner named.
 
 The knock-on is worth noting: the resize handle sits on the corner *opposite* the
-pinned one, and which way a drag means "grow" follows from the same fact. A handle
-hard-coded to the top-left shrank the box when it was dragged outward on three of
-the four corners.
+pinned one, and which way a drag means "grow" follows from the same fact. A
+handle hard-coded to the top-left shrank the box when it was dragged outward on
+three of the four corners.
+
+### A tool that knows where to look should not have a Remove button as step one
+
+The first version was a five-step interaction: pick, look at the box, drag it,
+press Remove, wait. Four of those five steps existed because the tool declined to
+use what it already knew. It has the pixels the moment the file is chosen and it
+can find the mark in them, so the run starts on the pick and the answer says
+which corner it landed in.
+
+Every control below the picture is now a *correction* rather than a step, and
+each one re-runs immediately — moving the box, naming the corner, flipping the
+whole-box switch. **A control that requires a second press to take effect is a
+step the reader has to remember; a control that re-runs is a control.** The
+Remove button stays for the case where none of them changed anything.
 
 ### What averaging was buying
 
@@ -1110,6 +1139,24 @@ rectangle is the one the reader handed over, and only a lossless container can
 keep that promise. The test asserts it directly: after a run, every byte outside
 the reported rectangle is compared against the input and the count of differences
 must be zero.
+
+### A complete catalogue is not a delivered catalogue
+
+The Gemini tab shipped with all 60-odd of its strings in `en.json` and `bn.json`,
+key-for-key, ICU-valid, with `tsc` green — `global.d.ts` types `Messages` from
+`en.json`, so every literal key was checked — and `bun test` green. It then threw
+`MISSING_MESSAGE: Could not resolve watermarkRemover.gemini` the first time a
+browser rendered the panel.
+
+`src/app/layout.tsx` hands the client provider a **hand-picked slice** of the
+catalogue, and three namespaces were not in it. Every check the project runs is
+blind to that: the slice is a plain object literal, so the type checker sees an
+object, and the catalogue is complete, so parity passes.
+
+**A namespace exists for a client component only once it is in the layout's
+slice.** The module now asserts it —
+`tests/client-messages.test.ts`, over the scan lifted into
+`tools/tests/client-message-slice.ts` when this became the second occurrence.
 
 ### The box editor was a video editor, and only by accident
 

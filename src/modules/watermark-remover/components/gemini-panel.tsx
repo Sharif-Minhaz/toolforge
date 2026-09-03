@@ -30,7 +30,7 @@ import { saveBlob } from "@/modules/tools/domain/file-saver";
 import { buildCleanImageFilename } from "../domain/export";
 import {
     GEMINI_ACCEPT_ATTRIBUTE,
-    GEMINI_DEFAULT_CORNER,
+    GEMINI_FALLBACK_CORNER,
     MAX_GEMINI_IMAGE_BYTES,
 } from "../domain/gemini-constants";
 import { cleanGeminiImage, probeGeminiImage } from "../domain/gemini-pipeline";
@@ -65,6 +65,8 @@ type Cleaned = {
     readonly image: CleanedImage;
     readonly facts: SourceImageFacts;
     readonly box: NormalizedBox;
+    /** Carried so flipping the switch marks the answer stale, as moving the box does. */
+    readonly fillWholeBox: boolean;
 };
 
 function isBoxCorner(value: string): value is BoxCorner {
@@ -80,6 +82,14 @@ function isBoxCorner(value: string): value is BoxCorner {
  * where the watermark was. This one recovers what was actually there, because a
  * generator's mark is white composited over the picture at a known strength and
  * that operation has an inverse. No network, no bot check, no queue.
+ *
+ * **Choosing a file is the whole interaction.** The run starts on the pick, and
+ * the corner is searched for rather than asked about — a reader who drops a
+ * generated image should get a clean one back without being quizzed about where
+ * the sparkle is, which they can see perfectly well and the tool can measure.
+ * Every control below the picture exists for the run that got it wrong: move the
+ * box, name the corner, or rebuild the whole square. Each of them re-runs
+ * immediately, so a correction is one action rather than two.
  */
 export function GeminiPanel() {
     const t = useTranslations("watermarkRemover.gemini");
@@ -95,8 +105,10 @@ export function GeminiPanel() {
     const cornerId = useId();
 
     const [picked, setPicked] = useState<Picked | null>(null);
+    // `null` while the first run is still deciding, and never again after it.
     const [box, setBox] = useState<NormalizedBox | null>(null);
-    const [corner, setCorner] = useState<BoxCorner>(GEMINI_DEFAULT_CORNER);
+    const [corner, setCorner] = useState<BoxCorner>(GEMINI_FALLBACK_CORNER);
+    const [scanning, setScanning] = useState(false);
     const [fillWholeBox, setFillWholeBox] = useState(false);
     const [dragging, setDragging] = useState(false);
     const [probing, setProbing] = useState(false);
@@ -129,8 +141,12 @@ export function GeminiPanel() {
     }, [result]);
 
     const busy = probing || working;
-    const canRemove = picked !== null && box !== null && !busy;
-    const stale = result !== null && (result.facts !== picked?.facts || result.box !== box);
+    const canRemove = picked !== null && !busy;
+    const stale =
+        result !== null &&
+        (result.facts !== picked?.facts ||
+            result.box !== box ||
+            result.fillWholeBox !== fillWholeBox);
 
     function describeFailure(reason: GeminiFailureReason): string {
         switch (reason) {
@@ -159,7 +175,7 @@ export function GeminiPanel() {
         }
 
         if (working) {
-            return { tone: "pending", message: t("working") };
+            return { tone: "pending", message: scanning ? t("scanning") : t("working") };
         }
 
         if (failure !== null) {
@@ -192,6 +208,8 @@ export function GeminiPanel() {
         setProbing(true);
         setFailure(null);
 
+        let chosen: Picked;
+
         try {
             const probe = await probeGeminiImage(file);
 
@@ -207,8 +225,10 @@ export function GeminiPanel() {
                 return;
             }
 
-            setPicked({ file, url: URL.createObjectURL(file), facts: probe.facts });
-            setBox(planCornerBox({ width: probe.facts.width, height: probe.facts.height }, corner));
+            chosen = { file, url: URL.createObjectURL(file), facts: probe.facts };
+
+            setPicked(chosen);
+            setBox(null);
             setResult(null);
         } catch (caught) {
             logEvent("error", "watermark_remover.gemini_probe_threw", {
@@ -217,9 +237,15 @@ export function GeminiPanel() {
             setPicked(null);
             setBox(null);
             fail("undecodable");
+
+            return;
         } finally {
             setProbing(false);
         }
+
+        // Straight into the run, with no box: the tool measures all four corners
+        // and the reader is told where it landed rather than asked in advance.
+        await runClean(chosen, null, fillWholeBox);
     }
 
     function handleDrop(event: DragEvent<HTMLLabelElement>) {
@@ -228,24 +254,25 @@ export function GeminiPanel() {
         void handlePick(event.dataTransfer.files[0]);
     }
 
-    function handleCornerChange(next: BoxCorner) {
-        setCorner(next);
-
-        if (picked !== null) {
-            setBox(planCornerBox({ width: picked.facts.width, height: picked.facts.height }, next));
-        }
-    }
-
-    async function handleRemove() {
-        if (picked === null || box === null || !canRemove) {
-            return;
-        }
-
+    /**
+     * One run, against an explicit box or against none at all.
+     *
+     * Every argument is passed rather than read from state, because each caller
+     * is acting on something it has only just decided — the file a pick
+     * returned, the corner a select changed to — and state set in the same tick
+     * is not readable yet.
+     */
+    async function runClean(source: Picked, next: NormalizedBox | null, fill: boolean) {
         setWorking(true);
+        setScanning(next === null);
         setFailure(null);
 
         try {
-            const outcome = await cleanGeminiImage({ file: picked.file, box, fillWholeBox });
+            const outcome = await cleanGeminiImage({
+                file: source.file,
+                box: next,
+                fillWholeBox: fill,
+            });
 
             if (!outcome.ok) {
                 // `detail` is the decoder's own words. Logged, never rendered:
@@ -254,17 +281,35 @@ export function GeminiPanel() {
                     reason: outcome.reason,
                     detail: outcome.detail ?? null,
                 });
+
+                // A failed search still has to leave a box on the picture, or
+                // there is nothing for the reader to correct.
+                if (next === null) {
+                    setCorner(GEMINI_FALLBACK_CORNER);
+                    setBox(
+                        planCornerBox(
+                            { width: source.facts.width, height: source.facts.height },
+                            GEMINI_FALLBACK_CORNER,
+                        ),
+                    );
+                }
+
                 fail(outcome.reason);
 
                 return;
             }
 
+            // Where the work actually happened, which on the first run is
+            // something the tool found rather than something anybody chose.
+            setBox(outcome.image.box);
+            setCorner(outcome.image.corner);
             setResult({
                 url: URL.createObjectURL(outcome.image.blob),
-                beforeUrl: URL.createObjectURL(picked.file),
+                beforeUrl: URL.createObjectURL(source.file),
                 image: outcome.image,
-                facts: picked.facts,
-                box,
+                facts: source.facts,
+                box: outcome.image.box,
+                fillWholeBox: fill,
             });
             scrollToResult();
             toast.success(tToast("removed"));
@@ -275,7 +320,39 @@ export function GeminiPanel() {
             fail("clean_failed");
         } finally {
             setWorking(false);
+            setScanning(false);
         }
+    }
+
+    function handleCornerChange(next: BoxCorner) {
+        if (picked === null || busy) {
+            return;
+        }
+
+        const planned = planCornerBox(
+            { width: picked.facts.width, height: picked.facts.height },
+            next,
+        );
+
+        setCorner(next);
+        setBox(planned);
+        void runClean(picked, planned, fillWholeBox);
+    }
+
+    function handleFillChange(next: boolean) {
+        setFillWholeBox(next);
+
+        if (picked !== null && box !== null && !busy) {
+            void runClean(picked, box, next);
+        }
+    }
+
+    async function handleRemove() {
+        if (picked === null || !canRemove) {
+            return;
+        }
+
+        await runClean(picked, box, fillWholeBox);
     }
 
     function handleClear() {
@@ -366,6 +443,10 @@ export function GeminiPanel() {
                 )}
 
                 <StatusStrip id={hintId} tone={status.tone} message={status.message} />
+
+                <p className="text-muted-foreground max-w-[68ch] text-[0.6875rem] leading-normal">
+                    {t("autoHint")}
+                </p>
             </div>
 
             {picked !== null && box !== null && (
@@ -392,6 +473,12 @@ export function GeminiPanel() {
                             className="block h-auto w-full"
                         />
                     </WatermarkBoxEditor>
+
+                    {result !== null && (
+                        <p className="text-muted-foreground text-[0.6875rem] leading-normal">
+                            {t("foundIn", { corner: t(`corners.${result.image.corner}`) })}
+                        </p>
+                    )}
 
                     <p
                         id={boxHintId}
@@ -457,7 +544,7 @@ export function GeminiPanel() {
                         <Switch
                             checked={fillWholeBox}
                             disabled={working}
-                            onCheckedChange={setFillWholeBox}
+                            onCheckedChange={handleFillChange}
                             aria-labelledby={fillId}
                             aria-describedby={`${fillId}-hint`}
                         />

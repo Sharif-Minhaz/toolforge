@@ -31,13 +31,15 @@ export const GEMINI_IMAGE_FILE_LIMITS: ImageFileLimits<GeminiImageType> = {
 };
 
 /**
- * Where the search starts on a still.
+ * Where the box sits while the search is still running, and where it falls back
+ * to when nothing was found anywhere.
  *
- * Not the clip half's corner. Gemini signs a generated image with its sparkle in
- * the **bottom-left**, where Veo puts the mark on a clip in the bottom-right, and
- * a box planned against the wrong one opens on empty picture and finds nothing.
- * It is a starting point rather than a rule: the corner is a control, because
- * one generator moving its mark should cost the reader a click rather than cost
- * this file a release.
+ * Not a claim about where a generator signs. The tool measures all four corners
+ * on the first run — `scanGeminiCorners` in `gemini-image.ts` — precisely
+ * because that is a fact about the generator's version rather than about the
+ * file, and a wrong default meant `mark_not_found` on a picture that plainly had
+ * a mark in it. This is only the placeholder the preview needs before the answer
+ * exists, and the corner a reader starts correcting from when there is no
+ * answer at all.
  */
-export const GEMINI_DEFAULT_CORNER: BoxCorner = "bottom-left";
+export const GEMINI_FALLBACK_CORNER: BoxCorner = "bottom-right";

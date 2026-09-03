@@ -321,6 +321,16 @@ export type CleanedImage = {
     readonly repainted: PixelBox;
     /** Share of the search box the mark turned out to occupy. */
     readonly coverage: number;
+    /**
+     * The square the mark was found in, and the corner it was planned against.
+     *
+     * Reported rather than assumed, because on the first run the reader did not
+     * choose it — the tool searched all four corners and this is where it
+     * landed. The panel puts the box there so what is drawn on the picture is
+     * where the work actually happened.
+     */
+    readonly box: NormalizedBox;
+    readonly corner: BoxCorner;
 };
 
 export type GeminiCleanResult = { readonly ok: true; readonly image: CleanedImage } | GeminiFailure;

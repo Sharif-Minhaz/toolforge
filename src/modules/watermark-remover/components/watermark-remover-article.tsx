@@ -212,6 +212,7 @@ export async function WatermarkRemoverArticle() {
                 <ArticleSection id="gemini" title={t("gemini.title")}>
                     <div className={PROSE}>
                         <p>{t("gemini.intro")}</p>
+                        <p>{t("gemini.automatic")}</p>
                         <p>{t("gemini.math")}</p>
                         <p>{t("gemini.finding")}</p>
                     </div>

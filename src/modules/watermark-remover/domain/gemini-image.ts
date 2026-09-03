@@ -1,4 +1,4 @@
-import type { NormalizedBox, PixelBox, PixelSize, WatermarkProfile } from "../types";
+import type { BoxCorner, NormalizedBox, PixelBox, PixelSize, WatermarkProfile } from "../types";
 import {
     addFrameSample,
     createFrameAccumulator,
@@ -6,7 +6,7 @@ import {
     filledProfile,
 } from "./glyph-mask";
 import { applyRepaint, planRepaint } from "./repaint-plan";
-import { toPixelBox } from "./watermark-box";
+import { planCornerBox, toPixelBox } from "./watermark-box";
 
 /** What was done to the picture, once it has been done. */
 export type GeminiPixelReport = {
@@ -101,24 +101,62 @@ export function cleanGeminiPixels(
     box: NormalizedBox,
     fillWholeBox: boolean,
 ): GeminiPixelResult {
+    const found = findGeminiMark(pixels, size, box, fillWholeBox);
+
+    if (found === null) {
+        return { ok: false, reason: "mark_not_found" };
+    }
+
+    const report = applyGeminiMark(pixels, size, found);
+
+    return report === null ? { ok: false, reason: "mark_not_found" } : { ok: true, report };
+}
+
+/** A mark that has been found, and everything needed to take it back out. */
+export type GeminiMark = {
+    /** The square it was found in, in the picture's own pixels. */
+    readonly searchBox: PixelBox;
+    readonly profile: WatermarkProfile;
+};
+
+/**
+ * Looks for a mark inside one box. `null` when there is nothing there.
+ *
+ * Split out from the removal so the corner search can ask the same question four
+ * times without repainting anything, and so a caller that already knows where
+ * the mark is does not pay for a second detection.
+ */
+export function findGeminiMark(
+    pixels: Uint8ClampedArray,
+    size: PixelSize,
+    box: NormalizedBox,
+    fillWholeBox = false,
+): GeminiMark | null {
     const searchBox = toPixelBox(box, size);
 
     if (searchBox.width < 3 || searchBox.height < 3) {
-        return { ok: false, reason: "mark_not_found" };
+        return null;
     }
 
-    const profile = fillWholeBox
-        ? filledProfile(searchBox.width, searchBox.height)
-        : measureCorner(cropRgba(pixels, size, searchBox), searchBox);
-
-    if (profile === null) {
-        return { ok: false, reason: "mark_not_found" };
+    if (fillWholeBox) {
+        return { searchBox, profile: filledProfile(searchBox.width, searchBox.height) };
     }
 
-    const plan = planRepaint(profile, searchBox, size);
+    const profile = measureCorner(cropRgba(pixels, size, searchBox), searchBox);
+
+    return profile === null ? null : { searchBox, profile };
+}
+
+/** Takes a found mark back out of the picture, in place. `null` if it reaches nothing. */
+export function applyGeminiMark(
+    pixels: Uint8ClampedArray,
+    size: PixelSize,
+    mark: GeminiMark,
+): GeminiPixelReport | null {
+    const plan = planRepaint(mark.profile, mark.searchBox, size);
 
     if (plan === null) {
-        return { ok: false, reason: "mark_not_found" };
+        return null;
     }
 
     const patch = cropRgba(pixels, size, plan.work);
@@ -126,5 +164,56 @@ export function cleanGeminiPixels(
     applyRepaint(patch, plan);
     blitRgba(pixels, size, plan.work, patch);
 
-    return { ok: true, report: { repainted: plan.work, coverage: profile.coverage } };
+    return { repainted: plan.work, coverage: mark.profile.coverage };
+}
+
+/**
+ * The corner search, and the reason this tab does not ask the reader where to
+ * look.
+ *
+ * A generator's mark sits in a corner, but *which* corner is a fact about the
+ * generator and its version rather than about the file — Gemini has signed
+ * bottom-left and bottom-right at different times, Veo signs bottom-right, and
+ * an image that has been cropped or rotated since is signed wherever it ended
+ * up. A default corner is therefore wrong for somebody, and the somebody it is
+ * wrong for gets `mark_not_found` on a picture that plainly has a mark in it.
+ *
+ * So all four are measured and the strongest wins. `peak` is the score — how far
+ * the brightest found pixel stood above its own surroundings — because that is
+ * the quantity a white mark maximises and a gradient does not: `detectWatermark`
+ * has already refused anything below its own floor or outside its coverage
+ * bounds, so every candidate reaching the comparison is at least mark-shaped.
+ *
+ * Bottom corners are tried first, and a tie goes to the earlier one. Ties are
+ * not the interesting case; the order is what makes the answer deterministic.
+ */
+export const GEMINI_CORNER_ORDER: readonly BoxCorner[] = [
+    "bottom-right",
+    "bottom-left",
+    "top-right",
+    "top-left",
+];
+
+export type GeminiScan = GeminiMark & {
+    readonly corner: BoxCorner;
+    readonly box: NormalizedBox;
+};
+
+export function scanGeminiCorners(pixels: Uint8ClampedArray, size: PixelSize): GeminiScan | null {
+    let best: GeminiScan | null = null;
+
+    for (const corner of GEMINI_CORNER_ORDER) {
+        const box = planCornerBox(size, corner);
+        const found = findGeminiMark(pixels, size, box);
+
+        if (found === null) {
+            continue;
+        }
+
+        if (best === null || found.profile.peak > best.profile.peak) {
+            best = { ...found, corner, box };
+        }
+    }
+
+    return best;
 }

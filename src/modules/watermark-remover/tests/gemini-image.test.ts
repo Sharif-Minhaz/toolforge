@@ -1,11 +1,25 @@
 import { describe, expect, test } from "bun:test";
 
-import { cleanGeminiPixels } from "@/modules/watermark-remover/domain/gemini-image";
-import { GEMINI_DEFAULT_CORNER } from "@/modules/watermark-remover/domain/gemini-constants";
+import {
+    cleanGeminiPixels,
+    GEMINI_CORNER_ORDER,
+    scanGeminiCorners,
+} from "@/modules/watermark-remover/domain/gemini-image";
 import { planCornerBox, toPixelBox } from "@/modules/watermark-remover/domain/watermark-box";
-import type { NormalizedBox, PixelBox, PixelSize } from "@/modules/watermark-remover/types";
+import {
+    BOX_CORNERS,
+    type BoxCorner,
+    type NormalizedBox,
+    type PixelBox,
+    type PixelSize,
+} from "@/modules/watermark-remover/types";
 
 const SIZE: PixelSize = { width: 640, height: 640 };
+
+/** The corner the single-mark cases plant in, and the box that covers it. */
+const CORNER: BoxCorner = "bottom-left";
+const BOX: NormalizedBox = planCornerBox(SIZE, CORNER);
+const SEARCH: PixelBox = toPixelBox(BOX, SIZE);
 
 /** The glyph, at the scale a generator actually signs a still of this size at. */
 const ARM = 15;
@@ -16,10 +30,11 @@ const GLOW_SIGMA = 17;
 /** How rough the picture is. A generated still is not smooth, and that matters. */
 const GRAIN = 1.5;
 
-const BOX: NormalizedBox = planCornerBox(SIZE, GEMINI_DEFAULT_CORNER);
-const SEARCH: PixelBox = toPixelBox(BOX, SIZE);
-const CENTRE_X = SEARCH.x + SEARCH.width / 2;
-const CENTRE_Y = SEARCH.y + SEARCH.height / 2;
+function centreOf(corner: BoxCorner): { x: number; y: number } {
+    const box = toPixelBox(planCornerBox(SIZE, corner), SIZE);
+
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+}
 
 /**
  * A four-pointed star with the glow it actually has, matching the fixture the
@@ -29,9 +44,10 @@ const CENTRE_Y = SEARCH.y + SEARCH.height / 2;
  * two or three times the core's radius, and a mark with a hard edge and nothing
  * around it passes tests a real one fails.
  */
-function markAlpha(x: number, y: number): number {
-    const dx = Math.abs(x - CENTRE_X);
-    const dy = Math.abs(y - CENTRE_Y);
+function markAlpha(x: number, y: number, corner: BoxCorner): number {
+    const centre = centreOf(corner);
+    const dx = Math.abs(x - centre.x);
+    const dy = Math.abs(y - centre.y);
 
     const solid = dx + dy <= ARM && Math.min(dx, dy) <= ARM / 2 - (dx + dy) / 4 ? CORE_ALPHA : 0;
     const glow = GLOW_ALPHA * Math.exp(-(dx * dx + dy * dy) / (2 * GLOW_SIGMA * GLOW_SIGMA));
@@ -56,12 +72,13 @@ function backgroundAt(x: number, y: number, channel: number): number {
     );
 }
 
-function render(marked: boolean): Uint8ClampedArray {
+/** `null` renders the picture with no mark laid over it at all. */
+function render(marked: BoxCorner | null): Uint8ClampedArray {
     const data = new Uint8ClampedArray(SIZE.width * SIZE.height * 4);
 
     for (let y = 0; y < SIZE.height; y += 1) {
         for (let x = 0; x < SIZE.width; x += 1) {
-            const alpha = marked ? markAlpha(x, y) : 0;
+            const alpha = marked === null ? 0 : markAlpha(x, y, marked);
             const offset = (y * SIZE.width + x) * 4;
 
             for (let channel = 0; channel < 3; channel += 1) {
@@ -82,7 +99,7 @@ function errorOverMark(pixels: Uint8ClampedArray, truth: Uint8ClampedArray): num
 
     for (let y = SEARCH.y; y < SEARCH.y + SEARCH.height; y += 1) {
         for (let x = SEARCH.x; x < SEARCH.x + SEARCH.width; x += 1) {
-            if (markAlpha(x, y) < 0.02) {
+            if (markAlpha(x, y, CORNER) < 0.02) {
                 continue;
             }
 
@@ -104,8 +121,8 @@ function isInside(box: PixelBox, x: number, y: number): boolean {
 
 describe("cleanGeminiPixels", () => {
     test("recovers the picture the mark was laid over", () => {
-        const truth = render(false);
-        const marked = render(true);
+        const truth = render(null);
+        const marked = render(CORNER);
         const before = errorOverMark(marked, truth);
 
         const pixels = Uint8ClampedArray.from(marked);
@@ -126,7 +143,7 @@ describe("cleanGeminiPixels", () => {
     });
 
     test("writes nothing outside the rectangle it reports", () => {
-        const marked = render(true);
+        const marked = render(CORNER);
         const pixels = Uint8ClampedArray.from(marked);
         const outcome = cleanGeminiPixels(pixels, SIZE, BOX, false);
 
@@ -163,14 +180,14 @@ describe("cleanGeminiPixels", () => {
     });
 
     test("refuses rather than repainting a corner with no mark in it", () => {
-        const pixels = render(false);
+        const pixels = render(null);
         const outcome = cleanGeminiPixels(pixels, SIZE, BOX, false);
 
         expect(outcome).toEqual({ ok: false, reason: "mark_not_found" });
     });
 
     test("repaints the whole box when asked to, mark or no mark", () => {
-        const clean = render(false);
+        const clean = render(null);
         const pixels = Uint8ClampedArray.from(clean);
         const outcome = cleanGeminiPixels(pixels, SIZE, BOX, true);
 
@@ -185,9 +202,62 @@ describe("cleanGeminiPixels", () => {
     });
 
     test("refuses a box too small to hold anything", () => {
-        const pixels = render(true);
+        const pixels = render(CORNER);
         const outcome = cleanGeminiPixels(pixels, { width: 2, height: 2 }, BOX, false);
 
         expect(outcome).toEqual({ ok: false, reason: "mark_not_found" });
+    });
+});
+
+/**
+ * The reason the tab asks nobody where to look.
+ *
+ * A default corner is wrong for whichever generator does not use it, and the
+ * reader it is wrong for gets `mark_not_found` on a picture that plainly has a
+ * mark in it. These are the four cases that has to stop being possible in.
+ */
+describe("scanGeminiCorners", () => {
+    test("tries every corner there is", () => {
+        expect([...GEMINI_CORNER_ORDER].sort()).toEqual([...BOX_CORNERS].sort());
+    });
+
+    for (const corner of BOX_CORNERS) {
+        test(`finds a mark planted in the ${corner}`, () => {
+            const found = scanGeminiCorners(render(corner), SIZE);
+
+            expect(found?.corner).toBe(corner);
+        });
+    }
+
+    /**
+     * What the search is, and what it is not.
+     *
+     * It is a comparison, not a verdict. `detectWatermark` answers "is there
+     * something standing above its surroundings in this box", and on this
+     * fixture — whose background is a strong low-frequency swell — three of the
+     * four corners answer yes with peaks of 25, 33 and 52 on a picture with no
+     * mark in it at all. That is not a bug in the detector; it is what a bright
+     * smooth bump in a corner looks like to a band-pass, and a real picture has
+     * lamps, skies and highlights in it.
+     *
+     * What separates a mark from a bump is **margin**, and the margin is large:
+     * a planted mark peaks between 105 and 142 here, more than twice the loudest
+     * thing the clean picture has to offer. That is why the winner is the
+     * strongest corner rather than the first one over a threshold — a floor
+     * tuned to this fixture would sit right on top of a real mark, which the
+     * clip half measured at about a third opacity rather than this one's nine
+     * tenths.
+     *
+     * The consequence is stated rather than hidden: handed a picture with no
+     * mark, the search will name its brightest corner and repaint a little of
+     * it. That is what the before-and-after slider, the corner control and
+     * `Clear` are for.
+     */
+    test("puts a real mark far clear of the loudest thing a clean picture has", () => {
+        const clean = scanGeminiCorners(render(null), SIZE);
+        const marked = scanGeminiCorners(render("bottom-left"), SIZE);
+
+        expect(marked?.corner).toBe("bottom-left");
+        expect(marked?.profile.peak).toBeGreaterThan(2 * (clean?.profile.peak ?? 0));
     });
 });

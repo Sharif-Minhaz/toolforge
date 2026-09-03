@@ -49,6 +49,16 @@ contain a dot**, because a dot is `next-intl`'s namespace separator. See
 `NextIntlClientProvider`. Long-form article copy stays on the server. When a new
 client component needs a namespace, add it to that slice explicitly.
 
+**Nothing else in the pipeline enforces that**, and it has now bitten twice —
+`mockServer.export`, then `watermarkRemover.gemini`. `tsc` sees a plain object
+literal, ESLint sees nothing, and the catalogue itself is complete so locale
+parity passes; what you get is `MISSING_MESSAGE` at runtime, on the one page
+nobody opened before shipping. A module guards itself in four lines with
+`namespacesUsedByClientComponents` and `namespacesInSlice` from
+`src/modules/tools/tests/client-message-slice.ts` —
+`watermark-remover/tests/client-messages.test.ts` is the shape to copy. **Add
+that test in the same change as the first client component a tool grows.**
+
 Server components localise data before it crosses the boundary — see
 `src/modules/tools/presenters/localize-tools.ts`. Client components receive
 `LocalizedTool[]`, not raw catalog entries plus a translator.

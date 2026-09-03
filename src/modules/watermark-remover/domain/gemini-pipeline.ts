@@ -2,22 +2,37 @@ import { decodeToPixels } from "@/modules/tools/domain/image-codec";
 import { readImagePixelSize } from "@/modules/tools/domain/image-element";
 import { checkImageFile } from "@/modules/tools/domain/image-file";
 import type {
+    BoxCorner,
     GeminiCleanResult,
     GeminiFailure,
     GeminiFailureReason,
     GeminiProbeResult,
     NormalizedBox,
+    PixelSize,
 } from "../types";
 import { browserCanvasFactory, toPngBlob, type CanvasFactory } from "./canvas";
 import { describeEngineError } from "./failure-detail";
 import { GEMINI_IMAGE_FILE_LIMITS } from "./gemini-constants";
-import { cleanGeminiPixels } from "./gemini-image";
+import { toPixelBox } from "./watermark-box";
+import {
+    applyGeminiMark,
+    findGeminiMark,
+    scanGeminiCorners,
+    type GeminiMark,
+    type GeminiScan,
+} from "./gemini-image";
 import { MAX_FAILURE_DETAIL_LENGTH } from "./video-constants";
 
 export type CleanGeminiOptions = {
     readonly file: File;
-    /** The square the watermark is looked for in. */
-    readonly box: NormalizedBox;
+    /**
+     * The square the watermark is looked for in, or `null` to search for it.
+     *
+     * `null` is the first run and the common case: the reader dropped a file and
+     * has not told the tool anything. A box is what comes back after they have
+     * moved one, and running against it again is how a correction is applied.
+     */
+    readonly box: NormalizedBox | null;
     /** Repaint the whole search box rather than only the mark found inside it. */
     readonly fillWholeBox: boolean;
     /** Injected so the pipeline can be driven without a document. */
@@ -28,6 +43,29 @@ function failure(reason: GeminiFailureReason, detail?: string): GeminiFailure {
     return detail === undefined
         ? { ok: false, reason }
         : { ok: false, reason, detail: detail.slice(0, MAX_FAILURE_DETAIL_LENGTH) };
+}
+
+/**
+ * Dresses a fixed-box find as a scan result, so both paths hand back the same
+ * shape. The corner is derived rather than stored: a box the reader dragged
+ * belongs to whichever corner it is nearest, and that is the corner the resize
+ * handle and the reset button then answer to.
+ */
+function withBox(mark: GeminiMark | null, box: NormalizedBox, size: PixelSize): GeminiScan | null {
+    if (mark === null) {
+        return null;
+    }
+
+    // Measured in pixels rather than in the normalized numbers: `x` and `y` are
+    // shares of each axis while `side` is a share of the shorter one, so adding
+    // them would put the centre of a box on a portrait picture in the wrong
+    // half.
+    const pixels = toPixelBox(box, size);
+    const half = pixels.x + pixels.width / 2 < size.width / 2 ? "left" : "right";
+    const level = pixels.y + pixels.height / 2 < size.height / 2 ? "top" : "bottom";
+    const corner: BoxCorner = `${level}-${half}`;
+
+    return { ...mark, box, corner };
 }
 
 /**
@@ -106,10 +144,26 @@ export async function cleanGeminiImage(options: CleanGeminiOptions): Promise<Gem
         stage = "clean";
 
         const size = { width: pixels.width, height: pixels.height };
-        const outcome = cleanGeminiPixels(pixels.data, size, box, fillWholeBox);
 
-        if (!outcome.ok) {
-            return failure(outcome.reason);
+        // The detection is a second or two of synchronous arithmetic on a large
+        // picture, and four corners of it when nobody has said where to look.
+        // Yielding once here is what lets the button's spinner reach the screen
+        // before the main thread stops answering.
+        await Promise.resolve();
+
+        const found =
+            box === null
+                ? scanGeminiCorners(pixels.data, size)
+                : withBox(findGeminiMark(pixels.data, size, box, fillWholeBox), box, size);
+
+        if (found === null) {
+            return failure("mark_not_found");
+        }
+
+        const report = applyGeminiMark(pixels.data, size, found);
+
+        if (report === null) {
+            return failure("mark_not_found");
         }
 
         stage = "encode";
@@ -141,8 +195,10 @@ export async function cleanGeminiImage(options: CleanGeminiOptions): Promise<Gem
                 bytes: blob.size,
                 width: size.width,
                 height: size.height,
-                repainted: outcome.report.repainted,
-                coverage: outcome.report.coverage,
+                repainted: report.repainted,
+                coverage: report.coverage,
+                box: found.box,
+                corner: found.corner,
             },
         };
     } catch (caught) {

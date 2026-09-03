@@ -12,12 +12,14 @@ import {
  * layout's slice — see `tools/tests/client-message-slice.ts` for why that is a
  * rule nothing else in the pipeline enforces.
  *
- * This is the check that would have caught `mockServer.export`, which is the
- * defect it was written for.
+ * This is the check that would have caught `watermarkRemover.gemini`: the whole
+ * Gemini tab shipped with its catalogue entries present in both locales, `tsc`
+ * green and `bun test` green, and threw `MISSING_MESSAGE` the moment a browser
+ * rendered the panel.
  */
 
 const COMPONENTS_DIR = join(import.meta.dir, "..", "components");
-const MODULE = "mockServer";
+const MODULE = "watermarkRemover";
 
 describe("the client message slice", () => {
     const used = namespacesUsedByClientComponents(COMPONENTS_DIR, MODULE);
@@ -25,8 +27,8 @@ describe("the client message slice", () => {
     test("the scan finds something, or it is asserting nothing", () => {
         // A regex that silently stops matching would make every test below
         // pass for the wrong reason.
-        expect(used.length).toBeGreaterThan(10);
-        expect(namespacesInSlice(MODULE).length).toBeGreaterThan(10);
+        expect(used.length).toBeGreaterThan(6);
+        expect(namespacesInSlice(MODULE).length).toBeGreaterThan(6);
     });
 
     test("carries every namespace a client component asks for", () => {
@@ -37,7 +39,7 @@ describe("the client message slice", () => {
 
     /** A namespace in the slice that no longer exists sends `undefined` across. */
     test("names only namespaces the catalogue actually has", () => {
-        const catalogue = Object.keys(en.mockServer);
+        const catalogue = Object.keys(en.watermarkRemover);
         const unknown = namespacesInSlice(MODULE).filter(
             (namespace) => !catalogue.includes(namespace),
         );

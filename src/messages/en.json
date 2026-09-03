@@ -5401,11 +5401,11 @@
         "gemini": {
             "dropTitle": "Drop a Gemini image here, or click to choose one",
             "dropHint": "JPEG, PNG, WebP or AVIF — up to {limit}.",
-            "pickPrompt": "Choose a generated image to clean up — up to {limit}.",
+            "pickPrompt": "Choose a generated image — the watermark is found and removed straight away. Up to {limit}.",
             "previewAlt": "Preview of {name}, with the search area drawn on it",
             "sourceFacts": "{name} · {size} · {width} × {height}",
             "boxLabel": "Watermark search area",
-            "boxHint": "Drag the box over the sparkle, or drag the handle at its outer corner to resize it. Without a pointer: focus the box, move it with the arrow keys — hold Shift for larger jumps — and press + or − to change its size.",
+            "boxHint": "Drag the box over the sparkle, or drag the handle at its outer corner to resize it. Without a pointer: focus the box, move it with the arrow keys — hold Shift for larger jumps — and press + or − to change its size. Moving it runs the removal again.",
             "boxReadout": "Search area: {width} × {height} px at {x}, {y}",
             "cornerLabel": "Signed corner",
             "corners": {
@@ -5425,7 +5425,10 @@
             "resultStale": "The image or the search area changed after this result. Run it again to refresh it.",
             "resultNote": "The result is a PNG at the original size. Every pixel outside the repainted rectangle is byte-for-byte what you handed over — PNG rather than JPEG precisely so that stays true. Nothing was uploaded and no model was asked anything.",
             "rightsNote": "Use this only on images you own or have permission to edit. A generator's mark is a provenance signal, and taking it off a picture you then pass on as photographed or hand-made is not what this tool is for.",
-            "privacyNote": "The image never leaves your device. Your own browser decodes it, works out what the mark was covering and writes the file back — there is no upload, no bot check and no queue on this tab."
+            "privacyNote": "The image never leaves your device. Your own browser decodes it, works out what the mark was covering and writes the file back — there is no upload, no bot check and no queue on this tab.",
+            "scanning": "Looking for the mark in every corner…",
+            "foundIn": "Found in the {corner} corner. Move the box or pick another corner if that is not where the mark is.",
+            "autoHint": "The run starts as soon as you choose a file, and the corner is searched for rather than assumed. Everything below is for correcting a run that got it wrong — moving the box, naming the corner or rebuilding the whole square each runs it again straight away."
         },
         "video": {
             "dropTitle": "Drop a video here, or click to choose one",
@@ -5616,6 +5619,7 @@
             "gemini": {
                 "title": "The Gemini tab: undoing a blend instead of guessing at one",
                 "intro": "The picture tab sends a square to an inpainting model and gets back something plausible. The Gemini tab sends nothing anywhere, and gets back what was actually there — because a generator does not paint over its output, it blends into it, and blending is an operation with an inverse.",
+                "automatic": "None of that asks the reader where to look. Choosing a file starts the run, and all four corners are measured before one is chosen — the strongest peak wins, where “peak” is how far the brightest found pixel stood above its own surroundings. Which corner a generator signs in is a fact about the generator and its version rather than about the file: Gemini has used more than one, Veo signs bottom-right, and an image cropped since is signed wherever it ended up. A default corner is therefore wrong for somebody, and the somebody it is wrong for gets “no watermark found” on a picture that plainly has one.",
                 "math": "A mark is laid on as o = (1 − a)·b + a·W: the picture b still present underneath, white W applied at strength a. Rearranged, b = (o − a·W) / (1 − a). Every value on the right is knowable, so the pixels underneath come back with their own grain and texture rather than being invented in the shape of the mark.",
                 "finding": "The one unknown is a, and this is where the tab differs from the clip tab rather than from the picture tab. A clip offers two dozen moments and everything that moves averages away, leaving the fixed mark standing. A still offers one moment, so the picture under the mark is estimated by fitting a smooth surface across the corner from the ring of untouched pixels around it; what stands above that surface is the mark, and how far above it stands is a. On sky, a wall or a gradient that estimate is near exact. On foliage, a crowd or text it has real error in it, and the division by 1 − a magnifies that error — which is why the tool cross-fades to a rebuilt fill wherever the mark is thick, and why the whole-box switch is within reach.",
                 "tableCaption": "Controls on the Gemini tab and what each one is for",
@@ -5624,10 +5628,10 @@
                 "colWhen": "When to reach for it",
                 "uploadName": "Choose image",
                 "uploadDoes": "Reads a JPEG, PNG, WebP or AVIF from your device. Nothing is uploaded.",
-                "uploadWhen": "First step. The file is decoded in your browser and never sent anywhere.",
+                "uploadWhen": "First and usually only step. The file is decoded in your browser, the mark is searched for and removed, and nothing is sent anywhere.",
                 "cornerName": "Signed corner",
-                "cornerDoes": "Moves the search box to a corner and plans a fresh box there.",
-                "cornerWhen": "Gemini signs bottom-left, so that is the default. Switch it when a generator has signed somewhere else.",
+                "cornerDoes": "Moves the search box to a corner, plans a fresh box there and runs again.",
+                "cornerWhen": "Only when the automatic search picked the wrong corner. It measures all four on the first run and tells you which one it used.",
                 "boxName": "Search area",
                 "boxDoes": "Drag the box so the mark sits inside it with clean picture all the way around.",
                 "boxWhen": "Whenever the default box does not land on the sparkle. Only what is found inside the box is ever written to.",
@@ -5641,8 +5645,8 @@
                 "resetDoes": "Puts the box back where it started for the chosen corner.",
                 "resetWhen": "After a drag that went somewhere unhelpful.",
                 "removeName": "Remove watermark",
-                "removeDoes": "Runs the detection and the un-blend, and produces a PNG.",
-                "removeWhen": "Once the box is over the mark. It runs on your machine, so a very large image takes a moment.",
+                "removeDoes": "Runs the detection and the un-blend again, against whatever the box is now.",
+                "removeWhen": "The first run happens on its own. This is for running it again after a correction that did not already re-run it.",
                 "compareName": "Before and after",
                 "compareDoes": "Slides a divider across one picture rather than putting two side by side.",
                 "compareWhen": "To judge the seam. Drag it, or use the arrow keys.",
@@ -5650,7 +5654,7 @@
                 "downloadDoes": "Saves the cleaned PNG at the original size.",
                 "downloadWhen": "When the corner reads as unmarked.",
                 "formatNote": "The download is a PNG whatever went in, and that is not a preference. Re-encoding a JPEG to change one corner of it would put the whole picture through a second lossy pass; a lossless container is the only way to promise that every pixel outside the repainted rectangle is exactly the one you handed over.",
-                "limitNote": "It will not help with a tiled watermark across the whole frame, a stock-library bar, or a mark that is not white — those are blends this tab cannot invert, and the picture tab's model is the better answer for them."
+                "limitNote": "It will not help with a tiled watermark across the whole frame, a stock-library bar, or a mark that is not white — those are blends this tab cannot invert, and the picture tab's model is the better answer for them. And the corner search is a comparison rather than a verdict: handed a picture with no mark at all it will name its brightest corner and repaint a little of it, which the before-and-after view shows you and Clear undoes."
             },
             "video": {
                 "title": "Cleaning a Gemini or Veo clip",

@@ -107,6 +107,11 @@ mark; what stands above that surface is the mark, and how far above it stands is
 result is a PNG at the original size, and every pixel outside the repainted rectangle is the one that
 was handed over.
 
+Choosing a file is the whole interaction: the run starts on the pick and all four corners are
+searched before one is chosen, because which corner a generator signs in is a fact about the
+generator's version rather than about the file. The box, the corner and the whole-box switch are
+there for the run that got it wrong, and each of them re-runs immediately.
+
 No model, no worker, no environment variable for either: leaving `WATERMARK_REMOVER_API_KEY` blank
 darkens the Image tab and the other two do not notice.
 
