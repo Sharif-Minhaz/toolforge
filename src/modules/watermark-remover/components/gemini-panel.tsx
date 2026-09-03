@@ -3,99 +3,106 @@
 import {
     IconEraser,
     IconLoader2,
+    IconPhotoPlus,
     IconRefresh,
     IconTrash,
-    IconVideoPlus,
-    IconX,
 } from "@tabler/icons-react";
 import { useFormatter, useTranslations } from "next-intl";
-import { useEffect, useId, useRef, useState, type DragEvent } from "react";
+import { useEffect, useId, useState, type DragEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { useIsHydrated } from "@/hooks/use-is-hydrated";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
-import { buildCleanVideoFilename } from "../domain/export";
+import { buildCleanImageFilename } from "../domain/export";
 import {
-    MAX_VIDEO_BYTES,
-    MAX_VIDEO_SECONDS,
-    VIDEO_ACCEPT_ATTRIBUTE,
-} from "../domain/video-constants";
-import { checkVideoFile } from "../domain/video-file";
-import { cleanVideo, probeVideo } from "../domain/video-pipeline";
-import { hasVideoCodecs } from "../domain/webcodecs";
-import { planDefaultBox, toPixelBox } from "../domain/watermark-box";
-import type {
-    CleanedVideo,
-    NormalizedBox,
-    SourceVideoFacts,
-    VideoCleanProgress,
-    VideoFailureReason,
+    GEMINI_ACCEPT_ATTRIBUTE,
+    GEMINI_DEFAULT_CORNER,
+    MAX_GEMINI_IMAGE_BYTES,
+} from "../domain/gemini-constants";
+import { cleanGeminiImage, probeGeminiImage } from "../domain/gemini-pipeline";
+import { planCornerBox, toPixelBox } from "../domain/watermark-box";
+import {
+    BOX_CORNERS,
+    type BoxCorner,
+    type CleanedImage,
+    type GeminiFailureReason,
+    type NormalizedBox,
+    type SourceImageFacts,
 } from "../types";
-import { CleanedVideoResult } from "./cleaned-video-result";
-import { VideoBoxEditor } from "./video-box-editor";
+import { CleanedResult } from "./cleaned-result";
+import { WatermarkBoxEditor } from "./watermark-box-editor";
 
-/** The picked clip, its preview URL, and everything the container said about it. */
+/** The picked picture, its preview URL, and what the browser said about it. */
 type Picked = {
     readonly file: File;
     readonly url: string;
-    readonly facts: SourceVideoFacts;
+    readonly facts: SourceImageFacts;
 };
 
 /**
  * Everything one answer is about, so a later pick or a moved box cannot rewrite
  * the context the result was produced in. `beforeUrl` is the result's own handle
- * on the original: the preview's URL is revoked the moment a new clip is chosen,
- * and the comparison has to survive that.
+ * on the original: the preview's URL is revoked the moment a new picture is
+ * chosen, and the comparison has to survive that.
  */
 type Cleaned = {
     readonly url: string;
     readonly beforeUrl: string;
-    readonly video: CleanedVideo;
-    readonly facts: SourceVideoFacts;
+    readonly image: CleanedImage;
+    readonly facts: SourceImageFacts;
     readonly box: NormalizedBox;
 };
 
+function isBoxCorner(value: string): value is BoxCorner {
+    return (BOX_CORNERS as readonly string[]).includes(value);
+}
+
 /**
- * The video half: find the sparkle in one corner, rebuild what it was covering,
- * and write the clip back out.
+ * The Gemini half: undo the blend that put a sparkle in one corner of a still.
  *
- * Nothing here is uploaded and nothing here is a model. The clip is demuxed,
- * decoded, painted and muxed by the browser's own codecs, and what replaces the
- * watermark is arithmetic over the pixels around it. That is why this half has no
- * bot check and no rate limit: there is no service on the other end of it to
- * protect.
+ * Nothing here is uploaded and nothing here is a model — which is the whole
+ * point of it sitting beside the picture tab rather than inside it. The picture
+ * tab sends a square to an inpainting service and gets back something *plausible*
+ * where the watermark was. This one recovers what was actually there, because a
+ * generator's mark is white composited over the picture at a known strength and
+ * that operation has an inverse. No network, no bot check, no queue.
  */
-export function VideoPanel() {
-    const t = useTranslations("watermarkRemover.video");
-    const tErrors = useTranslations("watermarkRemover.videoErrors");
-    const tToast = useTranslations("watermarkRemover.videoToast");
+export function GeminiPanel() {
+    const t = useTranslations("watermarkRemover.gemini");
+    const tErrors = useTranslations("watermarkRemover.geminiErrors");
+    const tToast = useTranslations("watermarkRemover.geminiToast");
     const byteLabel = useByteLabel();
     const formatter = useFormatter();
-    const hydrated = useIsHydrated();
 
     const inputId = useId();
     const hintId = useId();
     const boxHintId = useId();
     const fillId = useId();
-
-    const abortRef = useRef<AbortController | null>(null);
+    const cornerId = useId();
 
     const [picked, setPicked] = useState<Picked | null>(null);
     const [box, setBox] = useState<NormalizedBox | null>(null);
+    const [corner, setCorner] = useState<BoxCorner>(GEMINI_DEFAULT_CORNER);
     const [fillWholeBox, setFillWholeBox] = useState(false);
     const [dragging, setDragging] = useState(false);
     const [probing, setProbing] = useState(false);
     const [working, setWorking] = useState(false);
-    const [progress, setProgress] = useState<VideoCleanProgress | null>(null);
     const [result, setResult] = useState<Cleaned | null>(null);
-    const [failure, setFailure] = useState<VideoFailureReason | null>(null);
+    const [failure, setFailure] = useState<GeminiFailureReason | null>(null);
     const { ref: resultRef, scrollToResult } = useResultScroll();
 
     // Revoking on the way out rather than in the picker: the cleanup fires both
@@ -121,67 +128,38 @@ export function VideoPanel() {
         };
     }, [result]);
 
-    // A run holds a decoder, an encoder and a muxer. Leaving the page mid-run
-    // should stop all three rather than leave them working on a result nobody
-    // will ever see.
-    useEffect(() => () => abortRef.current?.abort(), []);
-
-    // The server has no `VideoEncoder`, so this cannot be read during the first
-    // pass without the two renders disagreeing. Until hydration the panel
-    // renders as though the browser can do the work, which is the right guess
-    // for every browser that will actually run it.
-    const supported = !hydrated || hasVideoCodecs();
     const busy = probing || working;
-    const canRemove = supported && picked !== null && box !== null && !busy;
+    const canRemove = picked !== null && box !== null && !busy;
     const stale = result !== null && (result.facts !== picked?.facts || result.box !== box);
 
-    function describeFailure(reason: VideoFailureReason): string {
+    function describeFailure(reason: GeminiFailureReason): string {
         switch (reason) {
-            case "missing_video":
-                return tErrors("missing_video");
+            case "missing_image":
+                return tErrors("missing_image");
             case "empty_file":
                 return tErrors("empty_file");
             case "unsupported_type":
                 return tErrors("unsupported_type");
             case "too_large":
-                return tErrors("too_large", { limit: byteLabel(MAX_VIDEO_BYTES) });
-            case "too_long":
-                return tErrors("too_long", {
-                    limit: formatter.number(MAX_VIDEO_SECONDS),
-                });
-            case "unsupported_browser":
-                return tErrors("unsupported_browser");
-            case "unreadable_container":
-                return tErrors("unreadable_container");
-            case "no_video_track":
-                return tErrors("no_video_track");
+                return tErrors("too_large", { limit: byteLabel(MAX_GEMINI_IMAGE_BYTES) });
             case "undecodable":
                 return tErrors("undecodable");
-            case "no_encoder":
-                return tErrors("no_encoder");
+            case "no_canvas":
+                return tErrors("no_canvas");
             case "mark_not_found":
                 return tErrors("mark_not_found");
             case "clean_failed":
                 return tErrors("clean_failed");
-            case "canceled":
-                return tErrors("canceled");
         }
     }
 
     function describeStatus(): { tone: StatusTone; message: string } {
-        if (!supported) {
-            return { tone: "error", message: describeFailure("unsupported_browser") };
-        }
-
         if (probing) {
             return { tone: "pending", message: t("reading") };
         }
 
         if (working) {
-            return {
-                tone: "pending",
-                message: t(`stage_${progress?.stage ?? "reading"}`),
-            };
+            return { tone: "pending", message: t("working") };
         }
 
         if (failure !== null) {
@@ -191,10 +169,7 @@ export function VideoPanel() {
         if (picked === null) {
             return {
                 tone: "idle",
-                message: t("pickPrompt", {
-                    limit: byteLabel(MAX_VIDEO_BYTES),
-                    seconds: formatter.number(MAX_VIDEO_SECONDS),
-                }),
+                message: t("pickPrompt", { limit: byteLabel(MAX_GEMINI_IMAGE_BYTES) }),
             };
         }
 
@@ -203,7 +178,7 @@ export function VideoPanel() {
             : { tone: "success", message: t("readyToRemove") };
     }
 
-    function fail(reason: VideoFailureReason) {
+    function fail(reason: GeminiFailureReason) {
         setResult(null);
         setFailure(reason);
         toast.error(describeFailure(reason));
@@ -214,24 +189,14 @@ export function VideoPanel() {
             return;
         }
 
-        const checked = checkVideoFile(file);
-
-        if (!checked.ok) {
-            setPicked(null);
-            setBox(null);
-            fail(checked.reason);
-
-            return;
-        }
-
         setProbing(true);
         setFailure(null);
 
         try {
-            const probe = await probeVideo(file);
+            const probe = await probeGeminiImage(file);
 
             if (!probe.ok) {
-                logEvent("warn", "watermark_remover.video_probe_failed", {
+                logEvent("warn", "watermark_remover.gemini_probe_failed", {
                     reason: probe.reason,
                     detail: probe.detail ?? null,
                 });
@@ -243,15 +208,15 @@ export function VideoPanel() {
             }
 
             setPicked({ file, url: URL.createObjectURL(file), facts: probe.facts });
-            setBox(planDefaultBox({ width: probe.facts.width, height: probe.facts.height }));
+            setBox(planCornerBox({ width: probe.facts.width, height: probe.facts.height }, corner));
             setResult(null);
         } catch (caught) {
-            logEvent("error", "watermark_remover.video_probe_threw", {
+            logEvent("error", "watermark_remover.gemini_probe_threw", {
                 error: describeError(caught),
             });
             setPicked(null);
             setBox(null);
-            fail("unreadable_container");
+            fail("undecodable");
         } finally {
             setProbing(false);
         }
@@ -263,65 +228,57 @@ export function VideoPanel() {
         void handlePick(event.dataTransfer.files[0]);
     }
 
+    function handleCornerChange(next: BoxCorner) {
+        setCorner(next);
+
+        if (picked !== null) {
+            setBox(planCornerBox({ width: picked.facts.width, height: picked.facts.height }, next));
+        }
+    }
+
     async function handleRemove() {
         if (picked === null || box === null || !canRemove) {
             return;
         }
 
-        const controller = new AbortController();
-
-        abortRef.current = controller;
         setWorking(true);
         setFailure(null);
-        setProgress({ stage: "reading", ratio: 0 });
 
         try {
-            const outcome = await cleanVideo({
-                file: picked.file,
-                box,
-                fillWholeBox,
-                signal: controller.signal,
-                onProgress: setProgress,
-            });
+            const outcome = await cleanGeminiImage({ file: picked.file, box, fillWholeBox });
 
             if (!outcome.ok) {
-                if (outcome.reason !== "canceled") {
-                    // `detail` is the codec's own words. Logged, never rendered:
-                    // the reader gets the localised sentence for the reason.
-                    logEvent("warn", "watermark_remover.video_clean_failed", {
-                        reason: outcome.reason,
-                        detail: outcome.detail ?? null,
-                    });
-                }
-
+                // `detail` is the decoder's own words. Logged, never rendered:
+                // the reader gets the localised sentence for the reason.
+                logEvent("warn", "watermark_remover.gemini_clean_failed", {
+                    reason: outcome.reason,
+                    detail: outcome.detail ?? null,
+                });
                 fail(outcome.reason);
 
                 return;
             }
 
             setResult({
-                url: URL.createObjectURL(outcome.video.blob),
+                url: URL.createObjectURL(outcome.image.blob),
                 beforeUrl: URL.createObjectURL(picked.file),
-                video: outcome.video,
+                image: outcome.image,
                 facts: picked.facts,
                 box,
             });
             scrollToResult();
             toast.success(tToast("removed"));
         } catch (caught) {
-            logEvent("error", "watermark_remover.video_clean_threw", {
+            logEvent("error", "watermark_remover.gemini_clean_threw", {
                 error: describeError(caught),
             });
             fail("clean_failed");
         } finally {
-            abortRef.current = null;
             setWorking(false);
-            setProgress(null);
         }
     }
 
     function handleClear() {
-        abortRef.current?.abort();
         setPicked(null);
         setBox(null);
         setResult(null);
@@ -330,15 +287,15 @@ export function VideoPanel() {
 
     function handleDownload(current: Cleaned) {
         const download = {
-            filename: buildCleanVideoFilename(current.facts.name, new Date()),
-            blob: current.video.blob,
+            filename: buildCleanImageFilename(current.facts.name, new Date()),
+            blob: current.image.blob,
         };
 
         try {
             saveBlob(download);
             toast.success(tToast("downloaded", { filename: download.filename }));
         } catch (caught) {
-            logEvent("error", "watermark_remover.video_download_failed", {
+            logEvent("error", "watermark_remover.gemini_download_failed", {
                 error: describeError(caught),
             });
             toast.error(tToast("downloadFailed"));
@@ -346,11 +303,14 @@ export function VideoPanel() {
     }
 
     const status = describeStatus();
-    const percent = progress === null ? 0 : Math.round(progress.ratio * 100);
     const searchBox =
         picked === null || box === null
             ? null
             : toPixelBox(box, { width: picked.facts.width, height: picked.facts.height });
+
+    const cornerItems: Record<string, ReactNode> = Object.fromEntries(
+        BOX_CORNERS.map((item) => [item, t(`corners.${item}`)]),
+    );
 
     return (
         <div className="flex min-w-0 flex-col gap-5">
@@ -358,8 +318,8 @@ export function VideoPanel() {
                 <input
                     id={inputId}
                     type="file"
-                    accept={VIDEO_ACCEPT_ATTRIBUTE}
-                    disabled={busy || !supported}
+                    accept={GEMINI_ACCEPT_ATTRIBUTE}
+                    disabled={busy}
                     aria-describedby={hintId}
                     onChange={(event) => void handlePick(event.target.files?.[0])}
                     // Focusable but not laid out, so the label below can be the
@@ -381,7 +341,7 @@ export function VideoPanel() {
                             "border-primary/70 bg-[color-mix(in_oklch,var(--primary)_6%,transparent)]",
                     )}
                 >
-                    <IconVideoPlus
+                    <IconPhotoPlus
                         className="text-muted-foreground size-7"
                         stroke={1.6}
                         aria-hidden="true"
@@ -390,10 +350,7 @@ export function VideoPanel() {
                         {t("dropTitle")}
                     </span>
                     <span className="text-muted-foreground text-[0.8125rem] leading-normal">
-                        {t("dropHint", {
-                            limit: byteLabel(MAX_VIDEO_BYTES),
-                            seconds: formatter.number(MAX_VIDEO_SECONDS),
-                        })}
+                        {t("dropHint", { limit: byteLabel(MAX_GEMINI_IMAGE_BYTES) })}
                     </span>
                 </label>
 
@@ -404,12 +361,6 @@ export function VideoPanel() {
                             size: byteLabel(picked.facts.bytes),
                             width: formatter.number(picked.facts.width),
                             height: formatter.number(picked.facts.height),
-                            seconds: formatter.number(picked.facts.durationSeconds, {
-                                maximumFractionDigits: 1,
-                            }),
-                            fps: formatter.number(picked.facts.frameRate, {
-                                maximumFractionDigits: 2,
-                            }),
                         })}
                     </p>
                 )}
@@ -419,20 +370,28 @@ export function VideoPanel() {
 
             {picked !== null && box !== null && (
                 <div className="flex min-w-0 flex-col gap-3">
-                    <VideoBoxEditor
-                        // Keyed on the file, so a new pick starts the frame
-                        // slider on the new clip rather than wherever it was.
-                        key={picked.url}
-                        url={picked.url}
-                        facts={picked.facts}
+                    <WatermarkBoxEditor
+                        size={{ width: picked.facts.width, height: picked.facts.height }}
                         box={box}
                         disabled={working}
                         label={t("boxLabel")}
-                        scrubLabel={t("scrubLabel")}
-                        previewLabel={t("previewAlt", { name: picked.facts.name })}
                         describedById={boxHintId}
+                        corner={corner}
                         onBoxChange={setBox}
-                    />
+                    >
+                        {/*
+                            A plain `<img>`, deliberately: the source is an
+                            object URL for a file the reader just chose, so
+                            there is no remote loader to configure and nothing
+                            for `next/image` to optimise.
+                        */}
+                        <img
+                            src={picked.url}
+                            alt={t("previewAlt", { name: picked.facts.name })}
+                            decoding="async"
+                            className="block h-auto w-full"
+                        />
+                    </WatermarkBoxEditor>
 
                     <p
                         id={boxHintId}
@@ -452,39 +411,59 @@ export function VideoPanel() {
                         </p>
                     )}
 
-                    <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 flex-wrap items-center gap-3">
                         <div className="flex min-w-0 items-center gap-2">
-                            <Switch
-                                checked={fillWholeBox}
-                                disabled={working}
-                                onCheckedChange={setFillWholeBox}
-                                aria-labelledby={fillId}
-                                aria-describedby={`${fillId}-hint`}
-                            />
-                            <span
-                                id={fillId}
-                                className="text-[0.8125rem] leading-[1.3] font-medium"
+                            <Label id={cornerId} className="text-[0.8125rem] font-medium">
+                                {t("cornerLabel")}
+                            </Label>
+                            <Select
+                                items={cornerItems}
+                                value={corner}
+                                onValueChange={(next) => {
+                                    if (typeof next === "string" && isBoxCorner(next)) {
+                                        handleCornerChange(next);
+                                    }
+                                }}
                             >
-                                {t("fillWholeBox")}
-                            </span>
+                                <SelectTrigger
+                                    aria-labelledby={cornerId}
+                                    disabled={working}
+                                    className="h-8 w-auto gap-1.5 px-2.5 text-[0.8125rem]"
+                                >
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {BOX_CORNERS.map((item) => (
+                                        <SelectItem key={item} value={item}>
+                                            {t(`corners.${item}`)}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
 
                         <Button
                             variant="outline"
                             disabled={working}
-                            onClick={() =>
-                                setBox(
-                                    planDefaultBox({
-                                        width: picked.facts.width,
-                                        height: picked.facts.height,
-                                    }),
-                                )
-                            }
+                            onClick={() => handleCornerChange(corner)}
                             className="h-8 shrink-0 px-3 text-[0.8125rem]"
                         >
                             <IconRefresh className="size-4" stroke={1.8} aria-hidden="true" />
                             {t("resetBox")}
                         </Button>
+                    </div>
+
+                    <div className="flex min-w-0 items-center gap-2">
+                        <Switch
+                            checked={fillWholeBox}
+                            disabled={working}
+                            onCheckedChange={setFillWholeBox}
+                            aria-labelledby={fillId}
+                            aria-describedby={`${fillId}-hint`}
+                        />
+                        <span id={fillId} className="text-[0.8125rem] leading-[1.3] font-medium">
+                            {t("fillWholeBox")}
+                        </span>
                     </div>
 
                     <p
@@ -493,38 +472,6 @@ export function VideoPanel() {
                     >
                         {t("fillWholeBoxHint")}
                     </p>
-                </div>
-            )}
-
-            {working && (
-                <div className="flex min-w-0 flex-col gap-1.5">
-                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                        <p className="text-muted-foreground text-[0.6875rem] leading-[1.3]">
-                            {t(`stage_${progress?.stage ?? "reading"}`)}
-                        </p>
-                        <p className="text-muted-foreground text-[0.6875rem] leading-[1.3] tabular-nums">
-                            {t("percent", { percent: formatter.number(percent) })}
-                        </p>
-                    </div>
-
-                    {/*
-                        A real progressbar, not a decorated div: a minute-long
-                        wait is exactly when somebody needs to know how far in
-                        they are, and a coloured rectangle says nothing.
-                    */}
-                    <div
-                        role="progressbar"
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-valuenow={percent}
-                        aria-label={t("progressLabel")}
-                        className="bg-muted h-1.5 w-full overflow-hidden rounded-full"
-                    >
-                        <div
-                            className="bg-primary h-full rounded-full transition-[width] duration-300"
-                            style={{ width: `${Math.max(percent, 2)}%` }}
-                        />
-                    </div>
                 </div>
             )}
 
@@ -542,26 +489,15 @@ export function VideoPanel() {
                     {working ? t("working") : t("remove")}
                 </Button>
 
-                {working ? (
-                    <Button
-                        variant="outline"
-                        onClick={() => abortRef.current?.abort()}
-                        className="h-9 px-3.5"
-                    >
-                        <IconX className="size-4" stroke={1.8} aria-hidden="true" />
-                        {t("cancel")}
-                    </Button>
-                ) : (
-                    <Button
-                        variant="outline"
-                        onClick={handleClear}
-                        disabled={picked === null || busy}
-                        className="h-9 px-3.5"
-                    >
-                        <IconTrash className="size-4" stroke={1.8} aria-hidden="true" />
-                        {t("clear")}
-                    </Button>
-                )}
+                <Button
+                    variant="outline"
+                    onClick={handleClear}
+                    disabled={picked === null || busy}
+                    className="h-9 px-3.5"
+                >
+                    <IconTrash className="size-4" stroke={1.8} aria-hidden="true" />
+                    {t("clear")}
+                </Button>
             </div>
 
             {result !== null && (
@@ -569,11 +505,12 @@ export function VideoPanel() {
                     ref={resultRef}
                     className={cn("min-w-0 transition-opacity duration-200", stale && "opacity-55")}
                 >
-                    <CleanedVideoResult
+                    <CleanedResult
                         beforeUrl={result.beforeUrl}
                         afterUrl={result.url}
                         facts={result.facts}
-                        video={result.video}
+                        resultBytes={result.image.bytes}
+                        note={t("resultNote")}
                         onDownload={() => handleDownload(result)}
                     />
                 </div>
@@ -581,7 +518,7 @@ export function VideoPanel() {
 
             {/*
              * Stated in the tool, not only in the article underneath: this
-             * rebuilds one corner of somebody's footage, and the reader is the
+             * rebuilds one corner of somebody's picture, and the reader is the
              * only one who can know whether they hold the rights to it.
              */}
             <p className="text-muted-foreground max-w-[68ch] text-[0.6875rem] leading-normal">

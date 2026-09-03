@@ -1,5 +1,10 @@
-import { DEFAULT_BOX_SIDE_RATIO, MAX_BOX_SIDE_RATIO, MIN_BOX_SIDE_RATIO } from "./video-constants";
-import type { NormalizedBox, PixelBox } from "../types";
+import {
+    DEFAULT_BOX_SIDE_RATIO,
+    MAX_BOX_SIDE_RATIO,
+    MIN_BOX_SIDE_RATIO,
+    WATERMARK_INSET_RATIO,
+} from "./video-constants";
+import type { BoxCorner, NormalizedBox, PixelBox } from "../types";
 import type { PixelSize } from "../types";
 
 /** Nothing smaller than this can hold a logo and the border the fill reads from. */
@@ -67,22 +72,52 @@ export function clampNormalizedBox(box: NormalizedBox, size: PixelSize): Normali
     return toNormalizedBox(toPixelBox(box, size), size);
 }
 
+/** True for the two corners whose x is measured from the right-hand edge. */
+export function isRightCorner(corner: BoxCorner): boolean {
+    return corner === "bottom-right" || corner === "top-right";
+}
+
+/** True for the two corners whose y is measured from the bottom edge. */
+export function isBottomCorner(corner: BoxCorner): boolean {
+    return corner === "bottom-left" || corner === "bottom-right";
+}
+
 /**
- * Where the search starts before anybody has touched anything: a square flush
- * into the bottom-right corner. Gemini and Veo both sign there, so the common
- * case is that the reader never has to move it.
+ * Where the search starts before anybody has touched anything: a square centred
+ * on where a generator actually puts its mark, which is a fixed proportional
+ * inset from one corner rather than flush against it.
+ *
+ * Centring matters as much as the size. A box flush into the corner puts the
+ * mark hard against its inner wall — the glow is clipped on two sides, the
+ * background estimate reads its values from inside that glow, and the box drags
+ * in a strip of whatever else lives along the frame's edge. Centred, the mark has
+ * clean picture all the way around it, which is what every later step assumes.
+ *
+ * The corner is a parameter because the two halves that use this disagree about
+ * it: a Veo clip signs bottom-right, a Gemini still signs bottom-left, and a
+ * single hard-coded corner would put one of them's box on empty picture.
  */
-export function planDefaultBox(size: PixelSize): NormalizedBox {
-    const side = Math.round(DEFAULT_BOX_SIDE_RATIO * referenceSide(size));
+export function planCornerBox(size: PixelSize, corner: BoxCorner): NormalizedBox {
+    const reference = referenceSide(size);
+    const inset = WATERMARK_INSET_RATIO * reference;
+    const side = DEFAULT_BOX_SIDE_RATIO * reference;
+
+    const centreX = isRightCorner(corner) ? size.width - inset : inset;
+    const centreY = isBottomCorner(corner) ? size.height - inset : inset;
 
     return clampNormalizedBox(
         {
-            x: (size.width - side) / size.width,
-            y: (size.height - side) / size.height,
+            x: (centreX - side / 2) / size.width,
+            y: (centreY - side / 2) / size.height,
             side: DEFAULT_BOX_SIDE_RATIO,
         },
         size,
     );
+}
+
+/** The clip half's corner, which is the one this file was written for. */
+export function planDefaultBox(size: PixelSize): NormalizedBox {
+    return planCornerBox(size, "bottom-right");
 }
 
 /** Moves the box by a share of each axis, clamped back inside the frame. */
@@ -96,17 +131,20 @@ export function nudgeNormalizedBox(
 }
 
 /**
- * Grows or shrinks the box with its **bottom-right** corner pinned.
+ * Grows or shrinks the box with the corner it was planned against pinned.
  *
  * The conventional anchor is the top-left, but the thing inside this box sits in
- * the bottom-right of the frame: pinning that corner means enlarging the box
- * reaches further into the picture instead of sliding off the edge and being
- * clamped back.
+ * a corner of the frame: pinning *that* corner means enlarging the box reaches
+ * further into the picture instead of sliding off the edge and being clamped
+ * back. Which corner that is depends on where the generator signs, so it is a
+ * parameter — defaulted to the clip half's bottom-right, which is where this
+ * behaviour was worked out.
  */
 export function resizeNormalizedBox(
     box: NormalizedBox,
     delta: number,
     size: PixelSize,
+    corner: BoxCorner = "bottom-right",
 ): NormalizedBox {
     const reference = referenceSide(size);
     const current = toPixelBox(box, size);
@@ -121,8 +159,8 @@ export function resizeNormalizedBox(
 
     return clampNormalizedBox(
         {
-            x: (right - side) / size.width,
-            y: (bottom - side) / size.height,
+            x: (isRightCorner(corner) ? right - side : current.x) / size.width,
+            y: (isBottomCorner(corner) ? bottom - side : current.y) / size.height,
             side: side / reference,
         },
         size,

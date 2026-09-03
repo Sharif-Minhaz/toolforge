@@ -4,17 +4,20 @@ import {
     DEFAULT_BOX_SIDE_RATIO,
     MAX_BOX_SIDE_RATIO,
     MIN_BOX_SIDE_RATIO,
+    WATERMARK_INSET_RATIO,
 } from "@/modules/watermark-remover/domain/video-constants";
 import {
     clampNormalizedBox,
     expandPixelBox,
     nudgeNormalizedBox,
+    planCornerBox,
     planDefaultBox,
     referenceSide,
     resizeNormalizedBox,
     toNormalizedBox,
     toPixelBox,
 } from "@/modules/watermark-remover/domain/watermark-box";
+import { BOX_CORNERS, type BoxCorner } from "@/modules/watermark-remover/types";
 
 const LANDSCAPE = { width: 1920, height: 1080 };
 const PORTRAIT = { width: 1080, height: 1920 };
@@ -32,11 +35,24 @@ describe("planDefaultBox", () => {
     const sizes = [LANDSCAPE, PORTRAIT, SQUARE, { width: 1280, height: 720 }];
 
     for (const size of sizes) {
-        test(`sits flush in the bottom-right corner of ${size.width}x${size.height}`, () => {
+        test(`centres on where the mark sits in ${size.width}x${size.height}`, () => {
+            const box = toPixelBox(planDefaultBox(size), size);
+            const inset = WATERMARK_INSET_RATIO * referenceSide(size);
+
+            // Centred on the mark rather than flush into the corner, which is
+            // what stops the box clipping the mark against its own inner wall
+            // and reading its background estimate out of the mark's own edge.
+            expect(box.x + box.width / 2).toBeCloseTo(size.width - inset, 0);
+            expect(box.y + box.height / 2).toBeCloseTo(size.height - inset, 0);
+        });
+
+        test(`leaves clean picture on every side of the mark in ${size.width}x${size.height}`, () => {
             const box = toPixelBox(planDefaultBox(size), size);
 
-            expect(box.x + box.width).toBe(size.width);
-            expect(box.y + box.height).toBe(size.height);
+            expect(box.x).toBeGreaterThan(0);
+            expect(box.y).toBeGreaterThan(0);
+            expect(box.x + box.width).toBeLessThanOrEqual(size.width);
+            expect(box.y + box.height).toBeLessThanOrEqual(size.height);
         });
 
         test(`is square and scaled to the shorter side of ${size.width}x${size.height}`, () => {
@@ -176,4 +192,72 @@ describe("expandPixelBox", () => {
             height: 28,
         });
     });
+});
+
+describe("planCornerBox", () => {
+    const sizes = [LANDSCAPE, PORTRAIT, SQUARE];
+
+    /** Where the centre of the box should land, per corner, for a given frame. */
+    function expectedCentre(size: typeof LANDSCAPE, corner: BoxCorner) {
+        const inset = WATERMARK_INSET_RATIO * referenceSide(size);
+
+        return {
+            x: corner === "bottom-right" || corner === "top-right" ? size.width - inset : inset,
+            y: corner === "bottom-left" || corner === "bottom-right" ? size.height - inset : inset,
+        };
+    }
+
+    for (const size of sizes) {
+        for (const corner of BOX_CORNERS) {
+            test(`centres on the ${corner} inset of ${size.width}x${size.height}`, () => {
+                const box = toPixelBox(planCornerBox(size, corner), size);
+                const centre = expectedCentre(size, corner);
+
+                expect(box.x + box.width / 2).toBeCloseTo(centre.x, 0);
+                expect(box.y + box.height / 2).toBeCloseTo(centre.y, 0);
+            });
+
+            test(`leaves clean picture around the ${corner} box of ${size.width}x${size.height}`, () => {
+                const box = toPixelBox(planCornerBox(size, corner), size);
+
+                expect(box.x).toBeGreaterThan(0);
+                expect(box.y).toBeGreaterThan(0);
+                expect(box.x + box.width).toBeLessThan(size.width);
+                expect(box.y + box.height).toBeLessThan(size.height);
+            });
+        }
+    }
+
+    test("is the clip half's own plan when asked for the bottom-right", () => {
+        expect(planCornerBox(LANDSCAPE, "bottom-right")).toEqual(planDefaultBox(LANDSCAPE));
+    });
+});
+
+describe("resizeNormalizedBox anchoring", () => {
+    for (const corner of BOX_CORNERS) {
+        test(`keeps the ${corner} corner still while the square grows`, () => {
+            const before = toPixelBox(planCornerBox(LANDSCAPE, corner), LANDSCAPE);
+            const after = toPixelBox(
+                resizeNormalizedBox(planCornerBox(LANDSCAPE, corner), 0.05, LANDSCAPE, corner),
+                LANDSCAPE,
+            );
+
+            expect(after.width).toBeGreaterThan(before.width);
+
+            // The pinned corner is the one the mark sits in. Growing the box
+            // has to reach further into the picture from there rather than
+            // slide off the frame's edge and be clamped back.
+            const pinnedX =
+                corner === "bottom-right" || corner === "top-right"
+                    ? [before.x + before.width, after.x + after.width]
+                    : [before.x, after.x];
+            const pinnedY =
+                corner === "bottom-left" || corner === "bottom-right"
+                    ? [before.y + before.height, after.y + after.height]
+                    : [before.y, after.y];
+
+            expect(pinnedX[1]).toBeCloseTo(pinnedX[0] ?? 0, 0);
+            expect(pinnedY[1]).toBeCloseTo(pinnedY[0] ?? 0, 0);
+        });
+    }
 });

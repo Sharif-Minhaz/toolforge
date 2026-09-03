@@ -14,6 +14,7 @@ export const WATERMARK_REMOVER_ARTICLE_SECTIONS = [
     { id: "howItWorks", titleKey: "howItWorks.title" },
     { id: "painting", titleKey: "painting.title" },
     { id: "controls", titleKey: "controls.title" },
+    { id: "gemini", titleKey: "gemini.title" },
     { id: "video", titleKey: "video.title" },
     { id: "quality", titleKey: "quality.title" },
     { id: "rights", titleKey: "rights.title" },
@@ -34,6 +35,19 @@ const CONTROL_ROWS = [
     "download",
     "clear",
     "challenge",
+] as const;
+
+/** Mirrors the controls on the Gemini tab, which are neither of the other two's. */
+const GEMINI_CONTROL_ROWS = [
+    "upload",
+    "corner",
+    "box",
+    "resize",
+    "fill",
+    "reset",
+    "remove",
+    "compare",
+    "download",
 ] as const;
 
 /** Mirrors the controls on the video tab, which are not the picture tab's. */
@@ -66,6 +80,7 @@ export async function getWatermarkRemoverFaqEntries(): Promise<FaqEntry[]> {
         { question: t("faq.q6"), answer: t("faq.a6") },
         { question: t("faq.q7"), answer: t("faq.a7") },
         { question: t("faq.q8"), answer: t("faq.a8") },
+        { question: t("faq.q9"), answer: t("faq.a9") },
     ];
 }
 
@@ -191,6 +206,56 @@ export async function WatermarkRemoverArticle() {
                     <div className={`mt-5 ${PROSE}`}>
                         <p>{t("controls.dependencyNote")}</p>
                         <p>{t("controls.challengeNote")}</p>
+                    </div>
+                </ArticleSection>
+
+                <ArticleSection id="gemini" title={t("gemini.title")}>
+                    <div className={PROSE}>
+                        <p>{t("gemini.intro")}</p>
+                        <p>{t("gemini.math")}</p>
+                        <p>{t("gemini.finding")}</p>
+                    </div>
+
+                    <div className="ring-border/80 mt-5 overflow-x-auto rounded-xl ring-1 ring-inset">
+                        <table className="w-full min-w-160 border-collapse text-left text-sm">
+                            <caption className="sr-only">{t("gemini.tableCaption")}</caption>
+                            <thead>
+                                <tr className="bg-muted/60">
+                                    <th scope="col" className="px-4 py-2.5 font-medium">
+                                        {t("gemini.colControl")}
+                                    </th>
+                                    <th scope="col" className="px-4 py-2.5 font-medium">
+                                        {t("gemini.colDoes")}
+                                    </th>
+                                    <th scope="col" className="px-4 py-2.5 font-medium">
+                                        {t("gemini.colWhen")}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-border/70 divide-y">
+                                {GEMINI_CONTROL_ROWS.map((row) => (
+                                    <tr key={row} className="align-top">
+                                        <th
+                                            scope="row"
+                                            className="text-primary px-4 py-3 text-[0.8125rem] font-medium whitespace-nowrap"
+                                        >
+                                            {t(`gemini.${row}Name`)}
+                                        </th>
+                                        <td className="text-muted-foreground px-4 py-3">
+                                            {t(`gemini.${row}Does`)}
+                                        </td>
+                                        <td className="text-muted-foreground px-4 py-3">
+                                            {t(`gemini.${row}When`)}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className={`mt-5 ${PROSE}`}>
+                        <p>{t("gemini.formatNote")}</p>
+                        <p>{t("gemini.limitNote")}</p>
                     </div>
                 </ArticleSection>
 

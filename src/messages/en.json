@@ -278,7 +278,7 @@
         },
         "watermark-remover": {
             "name": "Watermark Remover",
-            "description": "Brush over a watermark, logo or unwanted object and have that area repainted — on images you own or have the right to edit."
+            "description": "Brush over a watermark, logo or unwanted object and have that area repainted — or drop in a Gemini image or clip and have its sparkle subtracted in your browser. For work you own or have the right to edit."
         },
         "related": {
             "title": "Popular tools",
@@ -5356,16 +5356,17 @@
     "watermarkRemover": {
         "meta": {
             "title": "Watermark Remover",
-            "description": "Two ways to lose a watermark. Brush over one in a picture and have that area repainted out, or drop in a Gemini or Veo clip and have the sparkle in its corner rebuilt frame by frame — the clip never leaves your browser. For work you own or have the right to edit."
+            "description": "Three ways to lose a watermark. Brush over one in a picture and have that area repainted out, drop in a Gemini image and have its sparkle subtracted by the arithmetic that put it there, or hand over a Gemini or Veo clip and have the corner rebuilt frame by frame. Only the brush tab uploads anything. For work you own or have the right to edit."
         },
         "hero": {
             "eyebrow": "Watermark Remover",
             "title": "Watermark Remover",
-            "subtitle": "Brush over a watermark in a picture and an inpainting model repaints what should have been underneath. Or hand over a Gemini or Veo clip: the sparkle in its corner is found, rebuilt from the footage around it and written back, without the video ever leaving your browser. For work you own or hold the rights to.",
+            "subtitle": "Brush over a watermark in a picture and an inpainting model repaints what should have been underneath. Hand over a Gemini image and its sparkle is subtracted rather than guessed at, in your own browser. Or hand over a Gemini or Veo clip: the sparkle in its corner is found, rebuilt from the footage around it and written back, without the video ever leaving your browser. For work you own or hold the rights to.",
             "badgeModel": "Pictures: Stable Diffusion inpainting",
             "badgeChallenge": "Bot-checked uploads",
             "badgeResolution": "Original size kept",
-            "badgeVideo": "Video: never leaves your browser"
+            "badgeVideo": "Video: never leaves your browser",
+            "badgeGemini": "Gemini: no model, no upload"
         },
         "workbench": {
             "tabImage": "Image",
@@ -5392,7 +5393,39 @@
             "challengeFailed": "The bot check could not finish. Reload the page and try again.",
             "resultStale": "The picture or the mask changed after this result. Run it again to refresh it.",
             "rightsNote": "Use this only on pictures you own or have permission to edit. Removing a watermark grants you no rights to the work underneath, and taking a credit or provenance mark off an image you then pass on as your own is not what this tool is for.",
-            "privacyNote": "Unlike most of ToolForge, this tool is not offline: the square you mark is uploaded to a Cloudflare Worker and passed to an image model. Do not upload anything confidential."
+            "privacyNote": "Unlike most of ToolForge, this tool is not offline: the square you mark is uploaded to a Cloudflare Worker and passed to an image model. Do not upload anything confidential.",
+            "tabGemini": "Gemini image",
+            "geminiTitle": "Remove the Gemini sparkle from an image",
+            "geminiDescription": "JPEG, PNG, WebP or AVIF. The mark is a known blend, so it is subtracted rather than guessed at — here in your browser, with nothing uploaded and no model involved."
+        },
+        "gemini": {
+            "dropTitle": "Drop a Gemini image here, or click to choose one",
+            "dropHint": "JPEG, PNG, WebP or AVIF — up to {limit}.",
+            "pickPrompt": "Choose a generated image to clean up — up to {limit}.",
+            "previewAlt": "Preview of {name}, with the search area drawn on it",
+            "sourceFacts": "{name} · {size} · {width} × {height}",
+            "boxLabel": "Watermark search area",
+            "boxHint": "Drag the box over the sparkle, or drag the handle at its outer corner to resize it. Without a pointer: focus the box, move it with the arrow keys — hold Shift for larger jumps — and press + or − to change its size.",
+            "boxReadout": "Search area: {width} × {height} px at {x}, {y}",
+            "cornerLabel": "Signed corner",
+            "corners": {
+                "bottom-left": "Bottom left",
+                "bottom-right": "Bottom right",
+                "top-left": "Top left",
+                "top-right": "Top right"
+            },
+            "resetBox": "Back to the corner",
+            "fillWholeBox": "Repaint the whole box",
+            "fillWholeBoxHint": "Off by default: the tool finds the mark inside the box and repaints only that, so the rest of the corner stays exactly as it was generated. Turn it on when nothing is found, or when the sparkle sits on detail the detector will not separate — the whole box is then rebuilt from its edges, which shows over a busy picture.",
+            "remove": "Remove watermark",
+            "working": "Un-blending the corner…",
+            "clear": "Clear",
+            "reading": "Reading the image…",
+            "readyToRemove": "Ready to clean this image.",
+            "resultStale": "The image or the search area changed after this result. Run it again to refresh it.",
+            "resultNote": "The result is a PNG at the original size. Every pixel outside the repainted rectangle is byte-for-byte what you handed over — PNG rather than JPEG precisely so that stays true. Nothing was uploaded and no model was asked anything.",
+            "rightsNote": "Use this only on images you own or have permission to edit. A generator's mark is a provenance signal, and taking it off a picture you then pass on as photographed or hand-made is not what this tool is for.",
+            "privacyNote": "The image never leaves your device. Your own browser decodes it, works out what the mark was covering and writes the file back — there is no upload, no bot check and no queue on this tab."
         },
         "video": {
             "dropTitle": "Drop a video here, or click to choose one",
@@ -5446,8 +5479,9 @@
             "repainted": "Repainted area",
             "size": "Download size",
             "download": "Download MP4",
-            "note": "The result is an MP4 at the original size and length. Every pixel outside the repainted rectangle came out of the decoder exactly as it went in, and the audio track was copied across without being re-encoded. The video track is re-encoded, because no codec can be asked to change one corner of a frame without it.",
-            "audioDropped": "The original's audio uses a codec an MP4 cannot carry, so the result has no sound."
+            "note": "The result is an MP4 at the original size, length and frame rate. Every pixel outside the repainted rectangle came out of the decoder as it went in. The video track is re-encoded at high quality, because no codec can change one corner of a frame without it.",
+            "audioDropped": "The original's audio uses a codec an MP4 cannot carry, so the result has no sound.",
+            "audioNote": "The sound was re-encoded as {codec} rather than AAC, because this browser has no AAC encoder. An MP4 carrying {codec} audio plays in Chrome, Edge and Firefox, but QuickTime and Safari will show the picture without sound. Chrome or Edge on Windows or macOS will produce AAC from the same clip."
         },
         "errors": {
             "missing_image": "Choose an image first.",
@@ -5482,6 +5516,16 @@
             "clean_failed": "The clip could not be cleaned. Its video track may use a feature this browser's decoder refuses part-way through.",
             "canceled": "The run was stopped. Nothing was changed."
         },
+        "geminiErrors": {
+            "missing_image": "Choose an image first.",
+            "empty_file": "That file is empty. Choose a picture with something in it.",
+            "unsupported_type": "That format cannot be decoded here. Use JPEG, PNG, WebP or AVIF.",
+            "too_large": "Too large — this tab accepts images up to {limit}.",
+            "undecodable": "This browser could not decode that image. It may be truncated, or use a format this browser does not read.",
+            "no_canvas": "This browser would not give the page a drawing canvas, so the result could not be written.",
+            "mark_not_found": "No watermark was found inside the box. Try another corner, move the box over the sparkle, make it a little larger, or turn on “Repaint the whole box”.",
+            "clean_failed": "The image could not be cleaned. It may be larger than this browser can hold in one piece."
+        },
         "toast": {
             "removed": "Marked area repainted.",
             "downloaded": "Saved {filename}.",
@@ -5489,6 +5533,11 @@
         },
         "videoToast": {
             "removed": "The clip is clean.",
+            "downloaded": "{filename} saved.",
+            "downloadFailed": "The download could not be started."
+        },
+        "geminiToast": {
+            "removed": "The image is clean.",
             "downloaded": "{filename} saved.",
             "downloadFailed": "The download could not be started."
         },
@@ -5564,6 +5613,45 @@
                 "dependencyNote": "Undo and Clear mask stay disabled until something has been painted, and Remove needs all four of a valid file, a painted mask, a solved bot check, and no attempt already running. The status line under the drop zone always names whichever one is missing, so a disabled button is never unexplained.",
                 "challengeNote": "A token can be spent only once, so the Remove button greys out for a moment after each attempt while a fresh one is issued. If the bot check reports an error, reload the page — the widget cannot recover on its own."
             },
+            "gemini": {
+                "title": "The Gemini tab: undoing a blend instead of guessing at one",
+                "intro": "The picture tab sends a square to an inpainting model and gets back something plausible. The Gemini tab sends nothing anywhere, and gets back what was actually there — because a generator does not paint over its output, it blends into it, and blending is an operation with an inverse.",
+                "math": "A mark is laid on as o = (1 − a)·b + a·W: the picture b still present underneath, white W applied at strength a. Rearranged, b = (o − a·W) / (1 − a). Every value on the right is knowable, so the pixels underneath come back with their own grain and texture rather than being invented in the shape of the mark.",
+                "finding": "The one unknown is a, and this is where the tab differs from the clip tab rather than from the picture tab. A clip offers two dozen moments and everything that moves averages away, leaving the fixed mark standing. A still offers one moment, so the picture under the mark is estimated by fitting a smooth surface across the corner from the ring of untouched pixels around it; what stands above that surface is the mark, and how far above it stands is a. On sky, a wall or a gradient that estimate is near exact. On foliage, a crowd or text it has real error in it, and the division by 1 − a magnifies that error — which is why the tool cross-fades to a rebuilt fill wherever the mark is thick, and why the whole-box switch is within reach.",
+                "tableCaption": "Controls on the Gemini tab and what each one is for",
+                "colControl": "Control",
+                "colDoes": "What it does",
+                "colWhen": "When to reach for it",
+                "uploadName": "Choose image",
+                "uploadDoes": "Reads a JPEG, PNG, WebP or AVIF from your device. Nothing is uploaded.",
+                "uploadWhen": "First step. The file is decoded in your browser and never sent anywhere.",
+                "cornerName": "Signed corner",
+                "cornerDoes": "Moves the search box to a corner and plans a fresh box there.",
+                "cornerWhen": "Gemini signs bottom-left, so that is the default. Switch it when a generator has signed somewhere else.",
+                "boxName": "Search area",
+                "boxDoes": "Drag the box so the mark sits inside it with clean picture all the way around.",
+                "boxWhen": "Whenever the default box does not land on the sparkle. Only what is found inside the box is ever written to.",
+                "resizeName": "Resize handle",
+                "resizeDoes": "Grows or shrinks the square from its outer corner. Arrow keys move it; + and − resize it.",
+                "resizeWhen": "Make it bigger when the mark is clipped by the box's edge, smaller when the box drags in a caption or a subject.",
+                "fillName": "Repaint the whole box",
+                "fillDoes": "Skips detection and rebuilds every pixel of the box from its edges.",
+                "fillWhen": "Only when nothing is found, or the mark sits on detail the detector will not separate. It shows over a busy picture.",
+                "resetName": "Back to the corner",
+                "resetDoes": "Puts the box back where it started for the chosen corner.",
+                "resetWhen": "After a drag that went somewhere unhelpful.",
+                "removeName": "Remove watermark",
+                "removeDoes": "Runs the detection and the un-blend, and produces a PNG.",
+                "removeWhen": "Once the box is over the mark. It runs on your machine, so a very large image takes a moment.",
+                "compareName": "Before and after",
+                "compareDoes": "Slides a divider across one picture rather than putting two side by side.",
+                "compareWhen": "To judge the seam. Drag it, or use the arrow keys.",
+                "downloadName": "Download",
+                "downloadDoes": "Saves the cleaned PNG at the original size.",
+                "downloadWhen": "When the corner reads as unmarked.",
+                "formatNote": "The download is a PNG whatever went in, and that is not a preference. Re-encoding a JPEG to change one corner of it would put the whole picture through a second lossy pass; a lossless container is the only way to promise that every pixel outside the repainted rectangle is exactly the one you handed over.",
+                "limitNote": "It will not help with a tiled watermark across the whole frame, a stock-library bar, or a mark that is not white — those are blends this tab cannot invert, and the picture tab's model is the better answer for them."
+            },
             "video": {
                 "title": "Cleaning a Gemini or Veo clip",
                 "intro": "The video tab is a different machine from the picture tab, and it is worth knowing which one you are using. Nothing is uploaded: your browser opens the container, decodes the frames through its own codecs, repaints one fixed rectangle in each of them, and writes a new MP4. There is no model, no server and no queue — which is why it costs a minute of your laptop rather than a second of somebody's GPU.",
@@ -5603,7 +5691,7 @@
                 "downloadName": "Download MP4",
                 "downloadDoes": "Saves the finished clip under the original's name plus a timestamp.",
                 "downloadWhen": "The result holds up.",
-                "encodeNote": "The video track is re-encoded. There is no way around it: a compressed frame is not a grid of pixels you can edit in place, so changing one corner of it means decoding, painting and encoding again. The encoder is asked for high quality and the original dimensions, frame rate and length are all kept — but a second pass through a lossy codec is a second pass, and a clip that was already heavily compressed will show it. The audio track is not re-encoded; its packets are copied across untouched.",
+                "encodeNote": "Both tracks are re-encoded, and it is worth knowing why neither can simply be copied. A compressed video frame is not a grid of pixels you can edit in place, so changing one corner of it means decoding, painting and encoding again. The audio is a subtler case: AAC inside an MP4 carries a few hundred samples of encoder priming, which puts its first sample fractionally before zero, and a file that has to start at zero has to be trimmed — which cannot be done to encoded packets. AAC is asked for on the way out, so on a browser that can encode it the result is AAC again; where one cannot, the tool falls back to Opus and says so above the download. The picture keeps its original dimensions, frame rate and length either way.",
                 "limitNote": "Two things it cannot do. Where the mark is effectively solid there is nothing left underneath to recover, so that core is rebuilt from its own edges rather than reconstructed — over strong texture a large solid mark will read as a smudge, which is why the search is deliberately narrow and why a sparkle, whose solid part is a dozen pixels, comes out clean. And a mark that moves, fades or changes shape between frames is not what this is: the whole premise is that the corner holds one thing that never moves and covers each pixel by the same amount every time."
             },
             "quality": {
@@ -5649,7 +5737,9 @@
                 "q7": "Does the video tab upload my clip anywhere?",
                 "a7": "No. The video half runs entirely in your browser, through the same WebCodecs API a video call uses. The file is read from disk, decoded, repainted and muxed locally, and the result is handed straight back to you. That is the opposite of the picture half, which does send the square you mark to a Cloudflare Worker — the two tabs make different promises, and each one says so above its own controls.",
                 "q8": "Is the video quality the same afterwards?",
-                "a8": "The dimensions, frame rate, length and audio are. The video track is re-encoded at high quality, because a codec cannot change one corner of a compressed frame without decoding and encoding it again, so a clip that was already heavily compressed will pick up a little more loss. The audio track is copied packet for packet and is bit-for-bit identical."
+                "a8": "The dimensions, frame rate and length are. Both tracks are re-encoded: the video because no codec can change one corner of a compressed frame without decoding and encoding it, and the audio because AAC in an MP4 starts fractionally before zero and trimming that away cannot be done to encoded packets. The video is encoded at high quality, so a clip that was already heavily compressed will pick up a little more loss. The result asks for AAC audio and falls back to Opus on a browser that cannot encode AAC — and tells you when it did.",
+                "q9": "Does the Gemini tab upload my image?",
+                "a9": "No. That tab has no server side at all: your browser decodes the file, works out how strongly the mark covers each pixel, subtracts it and writes a PNG back. There is no bot check and no rate limit on it because there is no service behind it to protect. The picture tab is the only one that uploads anything, and it uploads only the square you brushed."
             }
         }
     },

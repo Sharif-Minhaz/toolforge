@@ -17,7 +17,8 @@ export const browserCanvasFactory: CanvasFactory = (width, height) => {
     return canvas;
 };
 
-function toPngBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
+/** `null` rather than a throw: every caller here already has a named refusal for it. */
+export function toPngBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
     return new Promise((resolve) => {
         canvas.toBlob((blob) => resolve(blob), "image/png");
     });

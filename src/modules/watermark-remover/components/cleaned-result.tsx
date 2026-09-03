@@ -14,6 +14,14 @@ type CleanedResultProps = {
     facts: SourceImageFacts;
     /** Size of the composed PNG, which is not the size of the upload. */
     resultBytes: number;
+    /**
+     * What to say under the pair, when the default sentence would be untrue.
+     *
+     * The picture tab's answer came back from a model over the network and the
+     * Gemini tab's never left the device; one note cannot describe both, and a
+     * note that describes the wrong one is worse than none.
+     */
+    note?: string;
     onDownload: () => void;
 };
 
@@ -37,6 +45,7 @@ export function CleanedResult({
     afterUrl,
     facts,
     resultBytes,
+    note,
     onDownload,
 }: CleanedResultProps) {
     const t = useTranslations("watermarkRemover.result");
@@ -89,7 +98,7 @@ export function CleanedResult({
             </div>
 
             <p className="text-muted-foreground max-w-[68ch] text-[0.8125rem] leading-6">
-                {t("note")}
+                {note ?? t("note")}
             </p>
         </section>
     );

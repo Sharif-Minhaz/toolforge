@@ -41,11 +41,28 @@ export const MAX_VIDEO_SECONDS = 60;
  *
  * Gemini and Veo put their sparkle there at a size that scales with the frame,
  * so one ratio covers 720p and 4K alike. Deliberately generous: what actually
- * gets repainted is the glyph found inside this square, not the square, so a
- * box that is too big costs a little search time and a box that is too small
- * loses half the logo.
+ * gets repainted is the mark found inside this square, not the square, so a box
+ * that is too big costs a little search time, while a box that is too small
+ * clips the mark and leaves the clipped part in the finished clip — which looks
+ * like the tool half worked, and is the more expensive mistake by far.
  */
-export const DEFAULT_BOX_SIDE_RATIO = 0.2;
+export const DEFAULT_BOX_SIDE_RATIO = 0.3;
+
+/**
+ * Where the mark's centre actually sits, as a share of the frame's shorter side
+ * in from each edge.
+ *
+ * Measured, not assumed. On a 720x1280 Gemini clip the sparkle centres on
+ * (600, 1157) — 120 px from the right edge and 123 px from the bottom, both
+ * 0.17 of the 720-pixel short side. On a 1024x576 one it centres on (929, 476):
+ * 95 px and 100 px, against a 576-pixel short side. The same ratio twice, which
+ * is what a mark laid on by a renderer at a fixed proportional inset looks like.
+ *
+ * The first version anchored the box flush into the corner instead, which put
+ * the mark against the box's inner wall with its glow clipped and dragged in a
+ * strip of whatever else lives along the frame's edge.
+ */
+export const WATERMARK_INSET_RATIO = 0.17;
 
 /** Below this the box is too small to hold both a logo and the context to rebuild from. */
 export const MIN_BOX_SIDE_RATIO = 0.04;
@@ -109,21 +126,38 @@ export const DETECT_PEAK_RATIO = 0.32;
 export const DETECT_MIN_DELTA = 3;
 
 /**
- * How far the first pass grows its rough mask before the background under the
- * mark is rebuilt, as a share of the box's shorter side.
+ * How far a mark can reach past its own core, as a multiple of the core's
+ * radius — the single number the second pass is bounded by.
  *
- * Deliberately far more than the final dilation. This mask is not what gets
- * repainted — it is the hole the background estimate is interpolated across, and
- * its *border* is where that estimate reads its values from. A border still
- * standing inside the glow would put the glow into the background, which is the
- * error the second pass exists to avoid.
+ * This replaced a dilation measured in shares of the *box*, and the difference
+ * is the whole defect. A glow belongs to the glyph casting it and scales with
+ * it, so a fixed share of a box the reader can resize is measuring the wrong
+ * thing twice over: too small, and the background estimate is interpolated
+ * across a hole whose border still sits inside the halo — the halo measures as
+ * background, the opacity comes out low, the mask stops early, and the ring left
+ * behind is exactly what a reader calls "the watermark is still there". Too
+ * large, and the disc swallows scenery the mark never touched.
+ *
+ * Measured on a synthetic sparkle whose glow is known by construction: at 0.14
+ * of the box the estimate missed 1,925 pixels of real mark and left 20 levels of
+ * residue over the glow; bounded by the core at this multiple instead, it misses
+ * none and leaves 2.6.
  */
-export const DETECT_ROUGH_DILATION_RATIO = 0.14;
+export const MARK_REACH_RATIO = 2.4;
 
 /** The first pass only has to find the core reliably; the second finds the rest. */
 export const DETECT_ROUGH_GLOW_RATIO = 0.04;
 
-/** How faint a connected pixel may be and still count as the mark's own glow. */
+/**
+ * How faint a connected pixel may be and still count as the mark's own glow.
+ *
+ * Low on purpose, and safe to be low only because the growth is bounded twice
+ * over — to the reach disc, and to what is connected to the core the first pass
+ * committed to. Raising it to 0.06 to hold scenery back was treating the symptom
+ * at the cost of the thing being measured: it cut the mask off at four fifths of
+ * the mark's radius and left a visible ring. Measured, moving it back down here
+ * takes the residue over the glow from 6.2 levels to 2.6.
+ */
 export const DETECT_GLOW_RATIO = 0.015;
 
 /** The noise floor the glow threshold never drops under, in 0–255 luma. */
@@ -146,6 +180,137 @@ export const MIN_DILATION_PX = 2;
  */
 export const MIN_MARK_COVERAGE = 0.0004;
 export const MAX_MARK_COVERAGE = 0.5;
+
+/**
+ * The most of the search box the mark's **core** is allowed to span, per axis.
+ *
+ * A watermark is a compact object inside the area it is looked for. Something
+ * reaching most of the way across the box is a caption, a card edge, or a
+ * pattern in the artwork — and repainting one of those is worse than admitting
+ * the mark was not found.
+ *
+ * Applied to the core the first pass finds, never to the glow the second pass
+ * grows. Applied to the grown mask it punished the detector for working: a
+ * sparkle whose halo genuinely reaches most of the way across a snug box was
+ * refused outright with `mark_not_found`, which is the one failure a reader
+ * cannot do anything about.
+ */
+export const MAX_COMPONENT_SPAN_RATIO = 0.75;
+
+/**
+ * The most of the search box that may be cut out of the background estimate
+ * before the estimate has nothing left to read from.
+ *
+ * Past this the box is mostly bright standing content, which is a corner this
+ * tool cannot say anything useful about; it falls back to interpolating across
+ * the mark's reach alone and takes its chances on the rim.
+ */
+export const MAX_BACKGROUND_HOLE_COVERAGE = 0.6;
+
+/**
+ * How thin a bright structure has to be before it is discounted, as a share of
+ * the box's shorter side.
+ *
+ * Picking the blob nearest the middle is not enough on its own, because the
+ * scenery *touches* the mark. A honeycomb pattern laid over the artwork runs a
+ * lit edge straight through the sparkle; a caption's underline reaches it. Once
+ * they are connected they are one blob, and the flood escapes along them — on a
+ * real clip the mark came back 55x68 inside a 108-pixel box, most of which was
+ * hexagon edge, and every pixel of it got white subtracted from it.
+ *
+ * What separates them is thickness, not brightness. A mark is a solid glyph tens
+ * of pixels across; the things that touch it are lines a few pixels wide. Eroding
+ * by this much parts every join, and dilating back afterwards returns the mark to
+ * its own size with the lines gone.
+ */
+export const DETECT_EROSION_RATIO = 0.04;
+
+/** Below two pixels an erosion cannot part anything a decoder's edges would join. */
+export const MIN_EROSION_PX = 2;
+
+/**
+ * Where the escalating erosion gives up, as a share of the box's shorter side.
+ *
+ * Past this the structuring element is a fair fraction of the mark itself, so a
+ * box that still holds nothing compact in the middle holds no mark — and saying
+ * so is better than opening until something, anything, survives.
+ */
+export const DETECT_MAX_EROSION_RATIO = 0.12;
+
+/**
+ * How thin a structure has to be to be parted from the mark in the second pass,
+ * as a share of the mark's reach rather than of the box.
+ *
+ * Same correction as `MARK_REACH_RATIO`, for the same reason. The things that
+ * touch a mark — a caption's bar, a card's lit edge, a seam in the artwork — are
+ * thin *relative to the mark*, which is what makes thickness a usable test at
+ * all. Measured against a box the reader can resize, the same clip is opened by
+ * a different amount depending on how big a square was drawn around it, and on a
+ * corner with a caption running under the sparkle that difference is between
+ * repainting the caption and not.
+ */
+export const MARK_OPENING_RATIO = 0.15;
+
+/** No mark is smaller than this, so no first guess at its reach is either. */
+export const MIN_REACH_PX = 12;
+
+/**
+ * How much the reach grows each time the mark turns out to fill it, and how many
+ * times that is allowed to happen.
+ *
+ * Half again per step, four steps: enough to get from a core badly
+ * under-measured by a bright neighbour to five times that radius, and few enough
+ * that the whole search is five harmonic fills over one averaged corner, once,
+ * before the per-frame loop starts.
+ */
+export const REACH_GROWTH = 1.5;
+export const MAX_REACH_STEPS = 4;
+
+/** How wide a band counts as the disc's rim when asking whether the mark ran into it. */
+export const REACH_RIM_PX = 2;
+
+/** How wide a band outside the disc is probed for the mark still reaching past it. */
+export const REACH_PROBE_PX = 8;
+
+/**
+ * How far below the fitted surface that band has to sit, in 0–255 levels, to
+ * count as the mark's dark half rather than as the surface being imperfect.
+ *
+ * Above the background model's own error, which on a structured corner is about
+ * four levels at the ninetieth percentile and under one on a smooth one. Set
+ * lower, the disc grows on the model's noise until the fit has no picture left
+ * to read and the mark is lost outright — measured, at 1.0 one of the two real
+ * clips stopped being detected at all.
+ *
+ * The reason a couple of levels is worth chasing at all is the divisor
+ * everything here passes through: `Δa = ΔB / (255 − B)`. Over a dark corner ten
+ * levels of background error is a hundredth of opacity and invisible; over a
+ * corner going white it is a tenth, and a tenth of white subtracted from a pixel
+ * that never had it is a patch a reader can point at. A rim left sitting inside
+ * the mark biases `B` for the whole disc.
+ */
+export const REACH_PROBE_DEFICIT = 2.5;
+
+/**
+ * The offset the background residual is carried at while it goes through the
+ * fill, which works in bytes.
+ *
+ * A residual is signed and small; a byte is neither. Mid-grey is subtracted
+ * again on the way out, so the only cost is a level of rounding on a quantity
+ * that is already a correction.
+ */
+export const RESIDUAL_BIAS = 128;
+
+/**
+ * Where the reach stops growing, as a share of the box's shorter side.
+ *
+ * The disc has to leave a border of picture inside the box, because that border
+ * is what the background estimate is read from. A mark that still fills a disc
+ * this size is either not a mark or is not going to be removed cleanly, and
+ * either way growing further would only mean interpolating the whole box out of
+ * its own edges.
+ */
+export const MAX_REACH_RATIO = 0.42;
 
 /**
  * The colour Gemini and Veo sign in.
@@ -171,18 +336,152 @@ export const WATERMARK_COLOR = 255;
 export const ALPHA_FLOOR = 0.006;
 
 /**
- * At or above this the mark is treated as solid: `(o − aW)/(1 − a)` divides by
- * almost nothing there, so a hundredth of an error in `a` becomes a wild colour.
- * Those pixels are rebuilt from their surroundings instead.
+ * How deep a dark ring around the mark may be taken to be the mark's own, in
+ * 0–255 levels, and how shallow before it is left alone.
+ *
+ * The ceiling is a guard rather than a threshold: the halo measures four to
+ * seven levels on real clips, so anything far past that is a background
+ * estimate having gone wrong rather than a watermark, and subtracting it would
+ * paint a bright ring into the picture. The floor is where a ring stops being
+ * visible, and is deliberately below where it stops being certain — the same
+ * argument as `ALPHA_FLOOR`, for the same reason.
  */
-export const ALPHA_OPAQUE_LIMIT = 0.9;
+export const HALO_MAX_LEVELS = 20;
 
 /**
- * How much headroom a channel needs between the background and white before its
- * opacity estimate is worth anything. Over a blown-out sky the denominator goes
- * to zero and the channel says nothing; the others still do.
+ * How finely the dark ring's radial profile is sampled, and how many pixels a
+ * ring needs before its average is worth anything.
  */
-export const MIN_ALPHA_HEADROOM = 8;
+/**
+ * How far the smooth background surface may sit from the picture, in 0–255
+ * levels RMS, before the mark's dark half stops being measurable at all.
+ *
+ * Swept on both real clips: one has a smooth corner the surface tracks closely
+ * and gains from the correction, the other a patterned one it does not, where
+ * the same correction subtracts the surface's own error and makes things worse.
+ */
+export const HALO_MAX_MODEL_MISS = 6;
+
+export const HALO_RINGS = 48;
+export const HALO_MIN_RING_PIXELS = 40;
+
+/**
+ * How far the dark-half correction is faded out at the two edges it can run
+ * into: the outermost rings of its own disc, and the wall of the search box.
+ *
+ * The second is the one that bites. The box is square and the correction is not,
+ * so a disc large enough to be clipped by it ends in a straight line — and a
+ * hard rectangle painted across the frame is far more visible than the ring the
+ * correction was removing.
+ */
+export const HALO_TAPER_RINGS = 6;
+export const HALO_TAPER_PX = 10;
+export const HALO_FLOOR_LEVELS = 0.6;
+
+/**
+ * Where un-blending stops being worth doing, and why it is nowhere near 1.
+ *
+ * `b = (o − a·255) / (1 − a)` divides by `1 − a`, so every error in the observed
+ * pixel — and a compressed frame is *made* of small errors — comes out
+ * multiplied by `1/(1 − a)`. At `a = 0.9` that is ten times. The opacity can be
+ * perfect and the arithmetic exact, and the result is still ten times grainier
+ * than the picture around it, in precisely the shape of the mark: not a stain,
+ * but a patch of visible noise where a sparkle used to be.
+ *
+ * So the strongly covered part is rebuilt from its surroundings instead, where
+ * "strongly" starts at half. Recovering real texture is better than inventing
+ * smooth texture right up until the recovery is mostly amplified noise, and past
+ * a half the amplification is already doubling.
+ */
+export const ALPHA_INPAINT_START = 0.5;
+
+/**
+ * …and where it is rebuilt outright. Between the two the two answers are
+ * cross-faded, because a hard line between recovered and invented pixels is
+ * itself an edge, drawn along a contour of the mark — which is the artefact all
+ * over again in a different colour.
+ */
+export const ALPHA_INPAINT_FULL = 0.75;
+
+/**
+ * How wide a band along the mark's own outline is rebuilt outright, as a share
+ * of the box's shorter side.
+ *
+ * A mark has a hard edge, and a codec cannot encode a hard edge exactly — it
+ * rings. Measured on a real clip, the two pixels along the sparkle's rim carried
+ * seven to ten levels that the averaged frames simply do not contain, because
+ * the ringing belongs to *this* frame's encoding rather than to the mark. No
+ * per-pixel opacity, however well estimated, can subtract something that is not
+ * in the model, so an un-blend leaves the outline standing while the middle
+ * comes out clean — a dark tracing of the mark, which is what a reader sees and
+ * calls a defect.
+ *
+ * The band is one or two pixels wide, which is exactly the size of hole a fill
+ * from the surrounding picture closes invisibly.
+ */
+export const REBUILD_RIM_RATIO = 0.02;
+
+/** Below two pixels a rim is narrower than the ringing it exists to cover. */
+export const MIN_RIM_PX = 2;
+
+/**
+ * How much the opacity has to change between neighbouring pixels for one of them
+ * to count as sitting on the mark's own outline.
+ *
+ * A glow drifts by a hundredth of a point per pixel; a glyph's edge goes from
+ * covered to clear inside two. Only the second is a place where the frame
+ * carries something the averaged frames do not — the codec's ringing, and a
+ * chroma sample averaged across a boundary that is half mark and half footage.
+ */
+export const ALPHA_EDGE_STEP = 0.15;
+
+/** How wide a band around that outline is rebuilt, as a share of the box's shorter side. */
+export const REBUILD_EDGE_RATIO = 0.015;
+
+/**
+ * How far the rebuild weight is feathered **in space**, as a share of the box's
+ * shorter side.
+ *
+ * The cross-fade between recovered and invented pixels is written in opacity,
+ * and on a mark with a hard edge the opacity crosses the whole ramp inside one
+ * pixel — so the fade degenerates into a switch and draws a line along the
+ * mark's contour, which is the artefact the ramp existed to prevent. Feathering
+ * the weight map itself makes the transition a fixed number of pixels wide
+ * however fast the opacity moves.
+ */
+export const REBUILD_FEATHER_RATIO = 0.02;
+
+/** Below this share the rebuild contributes nothing a byte can hold, so it is dropped. */
+export const REBUILD_WEIGHT_FLOOR = 0.02;
+
+/**
+ * The ceiling on the opacity the division is ever handed, whatever was
+ * estimated. Ten-times amplification is out of the question; four is the most a
+ * pixel that is going to be cross-faded away anyway needs to contribute.
+ */
+export const ALPHA_UNBLEND_MAX = 0.75;
+
+/**
+ * Where the rebuild's hole ends — not where the rebuild does.
+ *
+ * The two are different questions and were the same number for one round too
+ * many. How much of a pixel to invent is a question about noise gain, and the
+ * answer is a ramp around half covered. Where the fill may *read from* is a
+ * question about how trustworthy the un-blend is at the border, and `1 / (1 − a)`
+ * says that is only true where `a` is small. See `rebuildHoles`.
+ */
+export const FILL_BORDER_ALPHA = 0.1;
+
+/**
+ * How much headroom a channel needs between the background and white before it
+ * is allowed into the opacity estimate at all.
+ *
+ * A backstop rather than the main defence. The estimate is a headroom-weighted
+ * fit across the three channels, so a channel with almost none is already worth
+ * almost nothing to it; this only keeps a channel whose headroom is pure noise
+ * out of the arithmetic entirely.
+ */
+export const MIN_ALPHA_HEADROOM = 12;
 
 /**
  * How much untouched picture is kept around the mark when the per-frame work
@@ -197,6 +496,34 @@ export const INPAINT_MARGIN_PX = 8;
  * it into the smooth surface a missing patch of sky or skin actually has.
  */
 export const INPAINT_RELAX_ITERATIONS = 48;
+
+/**
+ * Over-relaxation factor for the smoothing sweeps.
+ *
+ * Plain neighbour averaging converges on a hole's true surface in about the
+ * square of its width — a hundred-pixel hole wants ten thousand sweeps, and
+ * anything less leaves the middle sagging toward the average of its rim. On a
+ * corner with a gradient across it that sag is a background estimate that is too
+ * dark, an opacity that is therefore too high, and a mark-shaped patch subtracted
+ * out of a frame that never had that much white in it.
+ *
+ * Overshooting each correction — moving past the neighbour average rather than
+ * onto it — converges in about the width instead of its square. Anything at or
+ * above 2 diverges.
+ */
+export const INPAINT_OVER_RELAXATION = 1.9;
+
+/**
+ * How little a sweep has to move the patch before the sweeps stop, in 0–255
+ * levels.
+ *
+ * A quarter of a level cannot be seen and cannot survive the rounding to a byte,
+ * so a sweep that moves nothing by more than this has finished — whatever the
+ * iteration budget still says. The budget is sized for the worst hole this tool
+ * can be handed; most frames are nowhere near it, and the difference is paid on
+ * every frame of the clip.
+ */
+export const INPAINT_SETTLED = 0.25;
 
 /**
  * Sweeps per pixel of the hole's longer side, when the caller sizes the
@@ -221,6 +548,20 @@ export const MAX_INPAINT_RELAX_ITERATIONS = 1200;
  * there for a browser that cannot encode H.264 at all.
  */
 export const VIDEO_ENCODE_CODECS = ["avc", "vp9", "av1"] as const;
+
+/**
+ * Audio codecs the result is written with, best first.
+ *
+ * AAC leads because an MP4 holding it plays everywhere a phone, a desktop player
+ * or a social upload will take it. Opus in an MP4 is legal and smaller, and
+ * QuickTime and Safari will not play it — which for a tool whose whole promise is
+ * a clip you can post is the wrong trade at any bitrate.
+ *
+ * The choice is needed at all because the audio usually cannot simply be copied:
+ * AAC in an MP4 carries encoder priming, so its first sample sits fractionally
+ * before zero, and a muxer that must trim to zero has to re-encode to do it.
+ */
+export const AUDIO_ENCODE_CODECS = ["aac", "opus"] as const;
 
 /** Seconds between key frames in the result. Two is the muxer's own default. */
 export const OUTPUT_KEY_FRAME_INTERVAL = 2;

@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { useRef, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
 
-import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+import { previewFrameMaxWidth } from "@/modules/tools/domain/preview-frame";
 import {
     BOX_FILL_COLOR,
     BOX_HANDLE_COLOR,
@@ -13,12 +13,14 @@ import {
     BOX_OUTLINE_COLOR,
 } from "../domain/video-constants";
 import {
+    isBottomCorner,
+    isRightCorner,
     nudgeNormalizedBox,
     referenceSide,
     resizeNormalizedBox,
     toPixelBox,
 } from "../domain/watermark-box";
-import type { NormalizedBox, SourceVideoFacts } from "../types";
+import type { BoxCorner, NormalizedBox, PixelSize } from "../types";
 
 type DragOrigin = {
     readonly pointerX: number;
@@ -28,47 +30,53 @@ type DragOrigin = {
 };
 
 type WatermarkBoxEditorProps = {
-    /** Object URL of the picked clip. */
-    url: string;
-    facts: SourceVideoFacts;
+    /** Pixel size of whatever is laid under the box, in the orientation shown. */
+    size: PixelSize;
     box: NormalizedBox;
     disabled: boolean;
     /** Accessible name for the box itself. */
     label: string;
-    /** Accessible name for the frame slider. */
-    scrubLabel: string;
-    previewLabel: string;
     describedById: string;
+    /** The corner the box is pinned to while it is resized. */
+    corner: BoxCorner;
     onBoxChange: (box: NormalizedBox) => void;
+    /** The media the box is drawn over — a clip, a still, anything with a size. */
+    children: ReactNode;
+    /** Anything that belongs under the frame, such as the clip half's scrubber. */
+    footer?: ReactNode;
 };
 
 /**
- * The clip with the search box drawn on it, and the two ways to move that box.
+ * A picture or a clip with the search box drawn on it, and the two ways to move
+ * that box.
  *
- * The video carries no native controls on purpose. A browser draws its control
- * bar across the bottom of the frame, which is exactly where a Gemini or Veo
- * watermark sits, so the controls and the thing they exist to help you see would
- * be fighting over the same forty pixels. A slider below the frame does the same
- * job with none of the overlap, and leaves the whole picture free for the box.
+ * Deliberately knows nothing about what is under it. It was a video editor when
+ * there was one thing to search; the still half needs the same box, the same
+ * drag, the same keyboard and the same frame maths, and the only part that
+ * differs is the element in the middle. So the media is a child and the sizing
+ * is a `PixelSize` — everything else here is about a rectangle.
  */
 export function WatermarkBoxEditor({
-    url,
-    facts,
+    size,
     box,
     disabled,
     label,
-    scrubLabel,
-    previewLabel,
     describedById,
+    corner,
     onBoxChange,
+    children,
+    footer,
 }: WatermarkBoxEditorProps) {
-    const videoRef = useRef<HTMLVideoElement>(null);
     const frameRef = useRef<HTMLDivElement>(null);
     const dragRef = useRef<DragOrigin | null>(null);
-    const [time, setTime] = useState(0);
 
-    const size = { width: facts.width, height: facts.height };
     const pixels = toPixelBox(box, size);
+
+    // The handle sits on the corner opposite the pinned one, because that is the
+    // only corner that moves when the square grows. Which way a drag *means*
+    // grow follows from the same fact: away from the pin on both axes.
+    const handleOnRight = !isRightCorner(corner);
+    const handleOnBottom = !isBottomCorner(corner);
 
     function beginDrag(event: PointerEvent<HTMLElement>, mode: DragOrigin["mode"]) {
         if (disabled) {
@@ -105,13 +113,14 @@ export function WatermarkBoxEditor({
             return;
         }
 
-        // Dragging the top-left handle away from the pinned bottom-right corner
-        // grows the square; the two axes are averaged so a diagonal drag does
-        // not count twice.
+        // Dragging the handle away from the pinned corner grows the square; the
+        // two axes are averaged so a diagonal drag does not count twice.
         const reference = referenceSide(size);
-        const delta = -((dx * size.width + dy * size.height) / 2) / reference;
+        const along =
+            (handleOnRight ? dx * size.width : -dx * size.width) +
+            (handleOnBottom ? dy * size.height : -dy * size.height);
 
-        onBoxChange(resizeNormalizedBox(drag.box, delta, size));
+        onBoxChange(resizeNormalizedBox(drag.box, along / 2 / reference, size, corner));
     }
 
     function endDrag(event: PointerEvent<HTMLElement>) {
@@ -147,14 +156,14 @@ export function WatermarkBoxEditor({
 
         if (event.key === "+" || event.key === "=") {
             event.preventDefault();
-            onBoxChange(resizeNormalizedBox(box, step, size));
+            onBoxChange(resizeNormalizedBox(box, step, size, corner));
 
             return;
         }
 
         if (event.key === "-" || event.key === "_") {
             event.preventDefault();
-            onBoxChange(resizeNormalizedBox(box, -step, size));
+            onBoxChange(resizeNormalizedBox(box, -step, size, corner));
         }
     }
 
@@ -162,18 +171,16 @@ export function WatermarkBoxEditor({
         <div className="flex min-w-0 flex-col gap-2">
             <div
                 ref={frameRef}
-                className="border-border/80 relative min-w-0 overflow-hidden rounded-xl border bg-black"
+                // Capped by width rather than by height, so the frame stays laid
+                // exactly over the media. A portrait clip at `width: 100%`
+                // renders two viewports tall and pushes every control off the
+                // bottom; `max-height` plus `object-contain` would fix that and
+                // break the box, which is positioned in percentages of *this*
+                // element. See `tools/domain/preview-frame.ts`.
+                style={{ maxWidth: previewFrameMaxWidth(size) }}
+                className="border-border/80 relative mx-auto min-w-0 overflow-hidden rounded-xl border bg-black"
             >
-                <video
-                    ref={videoRef}
-                    src={url}
-                    muted
-                    playsInline
-                    preload="auto"
-                    aria-label={previewLabel}
-                    className="block h-auto w-full"
-                    onLoadedMetadata={() => setTime(0)}
-                />
+                {children}
 
                 <div
                     // The same shape the mask canvas uses: `application` tells a
@@ -195,10 +202,10 @@ export function WatermarkBoxEditor({
                         disabled ? "cursor-default" : "cursor-move",
                     )}
                     style={{
-                        left: `${(pixels.x / facts.width) * 100}%`,
-                        top: `${(pixels.y / facts.height) * 100}%`,
-                        width: `${(pixels.width / facts.width) * 100}%`,
-                        height: `${(pixels.height / facts.height) * 100}%`,
+                        left: `${(pixels.x / size.width) * 100}%`,
+                        top: `${(pixels.y / size.height) * 100}%`,
+                        width: `${(pixels.width / size.width) * 100}%`,
+                        height: `${(pixels.height / size.height) * 100}%`,
                         outline: `2px solid ${BOX_OUTLINE_COLOR}`,
                         backgroundColor: BOX_FILL_COLOR,
                     }}
@@ -213,8 +220,14 @@ export function WatermarkBoxEditor({
                         onPointerUp={endDrag}
                         onPointerCancel={endDrag}
                         className={cn(
-                            "absolute -top-1 -left-1 block size-3 touch-none rounded-[2px]",
-                            disabled ? "cursor-default" : "cursor-nwse-resize",
+                            "absolute block size-3 touch-none rounded-[2px]",
+                            handleOnBottom ? "-bottom-1" : "-top-1",
+                            handleOnRight ? "-right-1" : "-left-1",
+                            disabled
+                                ? "cursor-default"
+                                : handleOnRight === handleOnBottom
+                                  ? "cursor-nwse-resize"
+                                  : "cursor-nesw-resize",
                         )}
                         style={{
                             backgroundColor: BOX_HANDLE_COLOR,
@@ -224,24 +237,7 @@ export function WatermarkBoxEditor({
                 </div>
             </div>
 
-            <Slider
-                aria-label={scrubLabel}
-                value={time}
-                min={0}
-                max={Math.max(facts.durationSeconds, 0.1)}
-                step={0.05}
-                disabled={disabled}
-                onValueChange={(next) => {
-                    const seconds = Array.isArray(next) ? (next[0] ?? 0) : next;
-
-                    setTime(seconds);
-
-                    if (videoRef.current !== null) {
-                        videoRef.current.currentTime = seconds;
-                    }
-                }}
-                className="min-w-0"
-            />
+            {footer}
         </div>
     );
 }

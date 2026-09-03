@@ -4,6 +4,7 @@ import {
     CanvasSink,
     Conversion,
     ConversionCanceledError,
+    getFirstEncodableAudioCodec,
     Input,
     MATROSKA,
     MP4,
@@ -28,25 +29,23 @@ import type {
     WatermarkProfile,
 } from "../types";
 import { browserCanvasFactory, type CanvasFactory } from "./canvas";
+import { describeEngineError } from "./failure-detail";
 import {
     addFrameSample,
     createFrameAccumulator,
-    cropAlpha,
-    cropMask,
     detectWatermark,
     filledProfile,
-    maskBounds,
 } from "./glyph-mask";
-import { removeOverlay } from "./inpaint";
+import { applyRepaint, planRepaint } from "./repaint-plan";
 import {
+    AUDIO_ENCODE_CODECS,
     DETECT_SAMPLE_COUNT,
-    INPAINT_MARGIN_PX,
     MAX_FAILURE_DETAIL_LENGTH,
     MAX_VIDEO_SECONDS,
     OUTPUT_KEY_FRAME_INTERVAL,
     OUTPUT_VIDEO_TYPE,
 } from "./video-constants";
-import { expandPixelBox, toPixelBox } from "./watermark-box";
+import { toPixelBox } from "./watermark-box";
 
 /**
  * Containers the reader is allowed to hand over. Named one by one rather than
@@ -73,11 +72,6 @@ function failure(reason: VideoFailureReason, detail?: string): VideoFailure {
     return detail === undefined
         ? { ok: false, reason }
         : { ok: false, reason, detail: detail.slice(0, MAX_FAILURE_DETAIL_LENGTH) };
-}
-
-/** The engine's own words, for the log and never for the page. */
-function describe(error: unknown): string {
-    return error instanceof Error ? `${error.name}: ${error.message}` : String(error);
 }
 
 /** What the detector hands back: the mark's profile, or the name of why there is none. */
@@ -171,7 +165,7 @@ export async function probeVideo(file: File): Promise<VideoProbeResult> {
         // Every throw a corrupt or half-written container can produce ends here.
         // The reader gets one sentence about the file rather than a demuxer's —
         // but the demuxer's own words ride along in `detail` for the log.
-        return failure("unreadable_container", describe(caught));
+        return failure("unreadable_container", describeEngineError(caught));
     } finally {
         input.dispose();
     }
@@ -317,41 +311,11 @@ export async function cleanVideo(options: CleanVideoOptions): Promise<VideoClean
             return found;
         }
 
-        const bounds = maskBounds(found.profile.touched, searchBox.width, searchBox.height);
+        const plan = planRepaint(found.profile, searchBox, { width, height });
 
-        if (bounds === null) {
+        if (plan === null) {
             return failure("mark_not_found");
         }
-
-        // The per-frame work shrinks from the search box to the mark inside it,
-        // plus a border of untouched picture for the fill to read from. On a
-        // 1080p clip that is the difference between reading back 46,000 pixels a
-        // frame and 12,000.
-        const workBox = expandPixelBox(
-            {
-                x: searchBox.x + bounds.x,
-                y: searchBox.y + bounds.y,
-                width: bounds.width,
-                height: bounds.height,
-            },
-            INPAINT_MARGIN_PX,
-            { width, height },
-        );
-
-        const window = {
-            x: workBox.x - searchBox.x,
-            y: workBox.y - searchBox.y,
-            width: workBox.width,
-            height: workBox.height,
-        };
-
-        const workAlpha = cropAlpha(found.profile.alpha, searchBox.width, searchBox.height, window);
-        const workOpaque = cropMask(
-            found.profile.opaque,
-            searchBox.width,
-            searchBox.height,
-            window,
-        );
 
         stage = "setup";
 
@@ -368,10 +332,37 @@ export async function cleanVideo(options: CleanVideoOptions): Promise<VideoClean
             target,
         });
 
+        // Named rather than left to the muxer's own preference, which reached
+        // for Opus — legal in an MP4 and unplayable in QuickTime and Safari.
+        const audioTrack = await input.getPrimaryAudioTrack();
+        const audioCodec =
+            audioTrack === null
+                ? null
+                : await getFirstEncodableAudioCodec([...AUDIO_ENCODE_CODECS], {
+                      numberOfChannels: await audioTrack.getNumberOfChannels(),
+                      sampleRate: await audioTrack.getSampleRate(),
+                  });
+
         const conversion = await Conversion.init({
             input,
             output,
+            audio: audioCodec === null ? {} : { codec: audioCodec },
             video: {
+                // Pinned to the canvas the frames are painted on, rather than
+                // left to default.
+                //
+                // Without these the encoder takes its box from the input and the
+                // painting takes its size from the track's display dimensions,
+                // and the two agree right up until they do not — a clip carrying
+                // rotation metadata, a pixel aspect ratio that is not 1:1, or a
+                // resolution that changes part-way through. When they disagree
+                // the frame is fitted into a box of the wrong shape, and a fit
+                // that preserves aspect ratio pays for it in bars of black
+                // baked into the picture. Stating both, with `fill`, means there
+                // is one size in this pipeline and nothing left to letterbox.
+                width,
+                height,
+                fit: "fill",
                 // Painting a frame is a transcode by definition; saying so keeps
                 // Mediabunny from trying to copy the encoded samples across.
                 forceTranscode: true,
@@ -395,14 +386,14 @@ export async function cleanVideo(options: CleanVideoOptions): Promise<VideoClean
                     sample.draw(frameContext, 0, 0, width, height);
 
                     const patch = frameContext.getImageData(
-                        workBox.x,
-                        workBox.y,
-                        workBox.width,
-                        workBox.height,
+                        plan.work.x,
+                        plan.work.y,
+                        plan.work.width,
+                        plan.work.height,
                     );
 
-                    removeOverlay(patch.data, workBox.width, workBox.height, workAlpha, workOpaque);
-                    frameContext.putImageData(patch, workBox.x, workBox.y);
+                    applyRepaint(patch.data, plan);
+                    frameContext.putImageData(patch, plan.work.x, plan.work.y);
 
                     // The canvas, not a copy of it: Mediabunny reads it into a
                     // frame before this function is called again, so one canvas
@@ -469,9 +460,10 @@ export async function cleanVideo(options: CleanVideoOptions): Promise<VideoClean
                 width,
                 height,
                 durationSeconds: duration,
-                repainted: workBox,
+                repainted: plan.work,
                 coverage: found.profile.coverage,
                 audioKept,
+                audioCodec,
             },
         };
     } catch (caught) {
@@ -479,7 +471,7 @@ export async function cleanVideo(options: CleanVideoOptions): Promise<VideoClean
             return failure("canceled");
         }
 
-        return failure("clean_failed", `${stage}: ${describe(caught)}`);
+        return failure("clean_failed", `${stage}: ${describeEngineError(caught)}`);
     } finally {
         input.dispose();
     }

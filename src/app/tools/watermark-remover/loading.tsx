@@ -12,7 +12,7 @@ export default function WatermarkRemoverLoading() {
                     <Skeleton className="h-4 w-3/5 max-w-md" />
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                    {Array.from({ length: 4 }, (_, index) => (
+                    {Array.from({ length: 5 }, (_, index) => (
                         <Skeleton key={index} className="h-6 w-28 rounded-full" />
                     ))}
                 </div>

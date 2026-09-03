@@ -1,8 +1,11 @@
 import {
     ALPHA_FLOOR,
-    ALPHA_OPAQUE_LIMIT,
+    ALPHA_UNBLEND_MAX,
+    FILL_BORDER_ALPHA,
+    INPAINT_OVER_RELAXATION,
     INPAINT_RELAX_ITERATIONS,
     INPAINT_RELAX_PER_PIXEL,
+    INPAINT_SETTLED,
     MAX_INPAINT_RELAX_ITERATIONS,
     WATERMARK_COLOR,
 } from "./video-constants";
@@ -202,6 +205,16 @@ function growInward(
     }
 }
 
+/**
+ * Sweeps until the patch stops moving, or until the budget runs out.
+ *
+ * The iteration count is sized for the worst case — a hole as wide as the mark,
+ * over-relaxed, needs about its own width in sweeps — and the worst case is not
+ * the common one. A small hole over a flat corner is finished in a tenth of
+ * that, and the remaining sweeps are pure cost repeated on every frame of the
+ * clip. Stopping when no pixel has moved by a quarter of a level is the same
+ * answer for a fraction of the work.
+ */
 function relax(
     work: Float32Array,
     width: number,
@@ -210,6 +223,8 @@ function relax(
     iterations: number,
 ): void {
     for (let pass = 0; pass < iterations; pass += 1) {
+        let movement = 0;
+
         // Alternating direction, so a sweep does not always push the freshly
         // averaged values the same way down the patch.
         const forward = pass % 2 === 0;
@@ -245,26 +260,82 @@ function relax(
 
             const offset = index * 3;
 
-            work[offset] = red / count;
-            work[offset + 1] = green / count;
-            work[offset + 2] = blue / count;
+            // Over-relaxed: each channel is moved *past* the neighbour average
+            // rather than onto it. Landing on the average converges on the true
+            // surface in about the square of the hole's width; overshooting does
+            // it in about the width. On a hole a hundred pixels across that is
+            // the difference between an answer and a sag.
+            const stepRed = INPAINT_OVER_RELAXATION * (red / count - (work[offset] ?? 0));
+            const stepGreen = INPAINT_OVER_RELAXATION * (green / count - (work[offset + 1] ?? 0));
+            const stepBlue = INPAINT_OVER_RELAXATION * (blue / count - (work[offset + 2] ?? 0));
+
+            work[offset] += stepRed;
+            work[offset + 1] += stepGreen;
+            work[offset + 2] += stepBlue;
+
+            movement = Math.max(
+                movement,
+                Math.abs(stepRed),
+                Math.abs(stepGreen),
+                Math.abs(stepBlue),
+            );
+        }
+
+        if (movement < INPAINT_SETTLED) {
+            return;
         }
     }
 }
 
 /**
- * Takes a known overlay back out of a frame, then rebuilds only what is left.
+ * The region the rebuild is interpolated across — which is deliberately larger
+ * than the region it is allowed to change.
+ *
+ * A fill takes its answer from the pixels bordering its hole, so those pixels
+ * decide the result. Bordering the hole on the un-blended footage sounds right
+ * and is not, because the un-blend divides by `1 − a`: at the half-covered
+ * contour where the rebuild used to start, every error in the opacity comes back
+ * doubled. Measured on a corner whose footage is saturated brown, an opacity
+ * three per cent low there desaturated the border by fifteen levels — and the
+ * fill then carried that faithfully into the middle, which is the grey patch in
+ * the shape of the mark that a reader sees and calls a defect.
+ *
+ * Note what that means: the fill was never the problem. A perfect fill of the
+ * true footage over the same hole is within one level of the truth on a smooth
+ * corner and ten on a honeycomb; the tool was at fifteen and twenty-two. **The
+ * fill was accurate. What it was accurate about was wrong.**
+ *
+ * So the hole runs out to where the mark is faint enough that the un-blend is
+ * trustworthy, and the *weight* — how much of the fill is actually used — stays
+ * the narrow ramp it was. The extra ring is interpolated and then almost
+ * entirely thrown away; what it buys is a border made of footage.
+ */
+export function rebuildHoles(alpha: Float32Array, rebuild: Float32Array): Uint8Array {
+    return Uint8Array.from(alpha, (value, index) =>
+        value > FILL_BORDER_ALPHA || (rebuild[index] ?? 0) > 0 ? 1 : 0,
+    );
+}
+
+/**
+ * Takes a known overlay back out of a frame, then rebuilds the part that is left.
  *
  * A watermark is not a hole. It is `o = (1 − a)·b + a·W` — the footage `b`, still
- * there, with white `W` laid over it at strength `a`. Where `a` is known and not
- * too near 1, `b = (o − a·W) / (1 − a)` gives the footage back exactly, texture,
+ * there, with white `W` laid over it at strength `a`. Where `a` is known and
+ * modest, `b = (o − a·W) / (1 − a)` gives the footage back exactly: texture,
  * grain and all. That is the difference between a corner that looks unmarked and
- * a corner that looks wiped: an inpaint invents a smooth surface, while this
- * recovers what was actually filmed.
+ * a corner that looks wiped.
  *
- * Only the small solid core, where the division stops being stable, is inpainted
- * — and it is inpainted *after* the un-blend, so the border it reads its answer
- * off is already clean footage rather than glow.
+ * But that division has a cost that grows with `a`. It multiplies every error in
+ * the observed pixel by `1/(1 − a)`, and a compressed frame is made of small
+ * errors — so the opacity can be perfect and the result still comes back
+ * visibly grainier than the picture around it, in exactly the shape of the mark.
+ * Past about half covered, what is being recovered is mostly amplified noise.
+ *
+ * So there are two answers and the pixel's own opacity chooses between them:
+ * recover it where the mark is thin, rebuild it from its surroundings where the
+ * mark is thick, and **cross-fade across the middle**. A hard line between the
+ * two would be an edge drawn along a contour of the mark, which is the artefact
+ * again in a different colour.
  *
  * Mutates `pixels` in place. Alpha is never touched.
  */
@@ -273,28 +344,111 @@ export function removeOverlay(
     width: number,
     height: number,
     alpha: Float32Array,
-    opaque: Uint8Array,
+    rebuild: Float32Array,
+    passes: number = INPAINT_RELAX_ITERATIONS,
+    halo: Float32Array = EMPTY_HALO,
 ): void {
+    const original = Uint8ClampedArray.from(pixels);
+
     for (let index = 0; index < alpha.length; index += 1) {
         const strength = alpha[index] ?? 0;
 
-        if (strength <= ALPHA_FLOOR || opaque[index] === 1) {
+        if (strength <= ALPHA_FLOOR) {
             continue;
         }
 
-        const covered = Math.min(strength, ALPHA_OPAQUE_LIMIT);
-        const remaining = 1 - covered;
         const offset = index * 4;
+
+        // What is physically possible, before what was estimated.
+        //
+        // White was *added* to this pixel, so the footage under it was darker
+        // than what is here now — never negative. That bounds the opacity from
+        // below the pixel itself: `a` can be at most `observed / 255` in every
+        // channel, or the arithmetic is claiming light was removed that was
+        // never there. An estimate over that line is the difference between a
+        // repaired corner and a dark, faintly coloured blotch.
+        let possible = 1;
+
+        for (let channel = 0; channel < 3; channel += 1) {
+            possible = Math.min(possible, (pixels[offset + channel] ?? 0) / WATERMARK_COLOR);
+        }
+
+        const covered = Math.min(strength, ALPHA_UNBLEND_MAX, possible);
+
+        if (covered <= ALPHA_FLOOR) {
+            continue;
+        }
+
+        const remaining = 1 - covered;
 
         for (let channel = 0; channel < 3; channel += 1) {
             const observed = pixels[offset + channel] ?? 0;
 
-            // `Uint8ClampedArray` rounds and clamps on assignment, which is
-            // exactly the right behaviour here: an estimate a shade too high
-            // would otherwise wrap to black.
+            // `Uint8ClampedArray` rounds and clamps on assignment, which is the
+            // right behaviour for the rounding left over after the bound above.
             pixels[offset + channel] = (observed - covered * WATERMARK_COLOR) / remaining;
         }
     }
 
-    inpaintRegion(pixels, width, height, opaque);
+    // The rebuild happens on a copy so both answers exist at once and can be
+    // faded together. Its boundary is the un-blended footage above, not the
+    // mark — so what it reads from is clean.
+    const rebuilt = Uint8ClampedArray.from(pixels);
+
+    inpaintRegion(rebuilt, width, height, rebuildHoles(alpha, rebuild), passes);
+
+    for (let index = 0; index < rebuild.length; index += 1) {
+        const weight = Math.min(1, Math.max(0, rebuild[index] ?? 0));
+
+        if (weight <= 0) {
+            continue;
+        }
+
+        const offset = index * 4;
+
+        for (let channel = 0; channel < 3; channel += 1) {
+            const recovered = pixels[offset + channel] ?? 0;
+            const invented = rebuilt[offset + channel] ?? 0;
+            const blended = recovered + weight * (invented - recovered);
+
+            // Taking white back out of a pixel can only make it darker. Never
+            // brighter — there is no arrangement of footage and overlay for
+            // which removing the overlay adds light.
+            //
+            // The un-blend obeys that on its own: `(o − aW)/(1 − a) ≤ o` for
+            // every `o ≤ W`. The rebuild does not, because a fill answers to its
+            // neighbours rather than to the pixel it is replacing, and on a
+            // frame where a flare crosses the mark it invented a patch **42
+            // levels brighter** than what was there — a bright blob, on the one
+            // frame in the clip where the eye is already looking.
+            //
+            // An estimator can be improved. An invariant cannot be violated, and
+            // costs one comparison to enforce.
+            pixels[offset + channel] = Math.min(blended, original[offset + channel] ?? 0);
+        }
+    }
+
+    // The mark's dark half, last and on its own terms.
+    //
+    // Deliberately after the invariant above rather than inside it. That rule —
+    // taking white out can only darken — is a statement about the un-blend, and
+    // it is exactly true there. This is the opposite correction on a disjoint
+    // set of pixels: a measured dark ring, added back. Folding the two together
+    // would let each one's guard forbid the other's job.
+    for (let index = 0; index < alpha.length; index += 1) {
+        const offset = index * 4;
+
+        for (let channel = 0; channel < 3; channel += 1) {
+            const lift = halo[index * 3 + channel] ?? 0;
+
+            if (lift === 0) {
+                continue;
+            }
+
+            pixels[offset + channel] = (pixels[offset + channel] ?? 0) - lift;
+        }
+    }
 }
+
+/** No dark half measured, for callers that do not have one. */
+const EMPTY_HALO = new Float32Array(0);

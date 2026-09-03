@@ -66,11 +66,16 @@ import { uuidGenerateTool } from "./uuid";
  *   costs nothing. Only reading a picture is withheld — a model that wants an
  *   equation transcribed already has eyes of its own.
  *
- *   The Watermark Remover's *video* half is absent for the first group's reason
- *   rather than this one: it demuxes, decodes, repaints and muxes a clip through
- *   the browser's own WebCodecs and a canvas, none of which exists in a request
- *   handler, and the clip it works on never leaves the reader's device in the
- *   first place.
+ *   The Watermark Remover's *video* and *Gemini image* halves are absent for the
+ *   first group's reason rather than this one. The video half demuxes, decodes,
+ *   repaints and muxes a clip through the browser's own WebCodecs and a canvas;
+ *   the Gemini half decodes a still to pixels in a canvas and encodes a PNG back
+ *   out of one. Neither exists in a request handler, and neither file leaves the
+ *   reader's device in the first place. The arithmetic between those two ends —
+ *   `watermark-remover/domain/gemini-image.ts` — is pure and would run here
+ *   happily; it is the decode and the encode either side of it that cannot, and
+ *   an adapter that took raw RGBA and a pixel box would be a tool nobody could
+ *   call.
  *
  * The Port Scanner is absent for a different reason again: it is the one tool
  * here whose whole function is to touch somebody else's host on ports they did

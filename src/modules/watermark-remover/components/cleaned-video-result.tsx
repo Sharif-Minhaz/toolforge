@@ -5,7 +5,12 @@ import { useFormatter, useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
+import { previewFrameMaxWidth } from "@/modules/tools/domain/preview-frame";
 import type { CleanedVideo, SourceVideoFacts } from "../types";
+
+/** Shorter than a single preview's ceiling: these two share a row. */
+const PLAYER_MAX_HEIGHT_PX = 460;
+const PLAYER_MAX_HEIGHT_SVH = 56;
 
 type CleanedVideoResultProps = {
     beforeUrl: string;
@@ -41,14 +46,40 @@ export function CleanedVideoResult({
         { key: "after" as const, url: afterUrl, caption: t("after") },
     ];
 
+    // The ceiling that keeps a tall clip on one screen, applied to the figure
+    // rather than the video: the caption has to travel with it, and a figure
+    // wider than its own player would put the label off to one side.
+    const playerMaxWidth = previewFrameMaxWidth(
+        { width: video.width, height: video.height },
+        PLAYER_MAX_HEIGHT_PX,
+        PLAYER_MAX_HEIGHT_SVH,
+    );
+
     return (
         <section
             aria-label={t("label")}
             className="ring-border/70 bg-card/60 flex min-w-0 flex-col gap-4 rounded-xl p-4 ring-1 ring-inset sm:p-5"
         >
-            <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+            {/*
+                A centred row rather than two equal halves.
+
+                A grid of two columns gives each player half the card whatever
+                shape it is, and a portrait clip capped to fit the page then
+                floats in the middle of a column three times its width — two
+                narrow strips with a canyon between them and empty card either
+                side. Letting each figure grow to the cap and centring the pair
+                keeps them side by side and touching, so the two corners being
+                compared are as close together as the page allows. A landscape
+                clip hits the cap far past half the card, so it still splits the
+                row evenly and nothing changes for it.
+            */}
+            <div className="flex min-w-0 flex-col items-center gap-3 sm:flex-row sm:items-start sm:justify-center">
                 {players.map((player) => (
-                    <figure key={player.key} className="flex min-w-0 flex-col gap-1.5">
+                    <figure
+                        key={player.key}
+                        style={{ maxWidth: playerMaxWidth }}
+                        className="flex w-full min-w-0 flex-1 flex-col gap-1.5"
+                    >
                         <video
                             src={player.url}
                             controls
@@ -128,6 +159,19 @@ export function CleanedVideoResult({
             {!video.audioKept && (
                 <p className="text-brand-amber max-w-[68ch] text-[0.8125rem] leading-6">
                     {t("audioDropped")}
+                </p>
+            )}
+
+            {/*
+                Said where the download is, not in the article underneath. An
+                MP4 carrying Opus is legal and plays in Chrome, Edge and Firefox;
+                QuickTime and Safari show the picture in silence. Somebody about
+                to post the file is the person who needs to know that, at the
+                moment they are about to post it.
+            */}
+            {video.audioKept && video.audioCodec !== null && video.audioCodec !== "aac" && (
+                <p className="text-brand-amber max-w-[68ch] text-[0.8125rem] leading-6">
+                    {t("audioNote", { codec: video.audioCodec.toUpperCase() })}
                 </p>
             )}
         </section>

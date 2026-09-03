@@ -97,10 +97,21 @@ export type SourceImageFacts = {
     readonly height: number;
 };
 
-/** The two halves of the tool, as a literal union so the tab labels type-check. */
-export const WATERMARK_MODES = ["image", "video"] as const;
+/** The three halves of the tool, as a literal union so the tab labels type-check. */
+export const WATERMARK_MODES = ["image", "gemini", "video"] as const;
 
 export type WatermarkMode = (typeof WATERMARK_MODES)[number];
+
+/**
+ * The corner a generator signs in.
+ *
+ * A literal union rather than a pair of booleans, so a caller cannot ask for a
+ * corner that is half top and half bottom, and so the label for each one is a
+ * message key the catalogue check can see.
+ */
+export const BOX_CORNERS = ["bottom-left", "bottom-right", "top-left", "top-right"] as const;
+
+export type BoxCorner = (typeof BOX_CORNERS)[number];
 
 /**
  * The search box, stored against the frame rather than against a screen.
@@ -133,16 +144,38 @@ export type PixelBox = {
  * that strength per pixel means the footage underneath can be recovered rather
  * than invented — `o = (1 − a)·b + a·W` has one unknown left once `a` is known.
  *
- * `opaque` is the small remainder where `a` is so near 1 that the division stops
- * being stable; only those pixels are rebuilt from their surroundings.
+ * `rebuild` is the remainder that opacity cannot answer for — the solid middle,
+ * where the division stops being stable, and the ringing along the mark's own
+ * outline, which belongs to one frame's encoding rather than to the mark. Those
+ * pixels are rebuilt from their surroundings instead, and the weight is a ramp
+ * rather than a flag so the two answers can be faded together.
  */
 export type WatermarkProfile = {
     /** Per-pixel opacity of the mark, 0–1, in the search box's own coordinates. */
     readonly alpha: Float32Array;
-    /** `1` where the mark is effectively solid and has to be repainted instead. */
-    readonly opaque: Uint8Array;
+    /** How much of each pixel comes from the rebuild rather than the un-blend, 0–1. */
+    readonly rebuild: Float32Array;
     /** `1` wherever the mark reaches at all, which is what the work rect is cut from. */
     readonly touched: Uint8Array;
+    /**
+     * The mark's *dark* half, as three interleaved signed channels of the
+     * averaged corner minus the background under it — negative everywhere it is
+     * set, zero elsewhere.
+     *
+     * Measured on both real clips and not predicted by anything in the model
+     * above: outside the bright glyph there is a shallow dark ring, four to
+     * seven levels deep, reaching about two and a half times the mark's radius.
+     * `o = (1 − a)·b + a·W` cannot produce it — that equation only ever adds
+     * light — so a tool built entirely on it removes the sparkle and leaves a
+     * grey halo exactly where the sparkle was, which is what a reader points at.
+     *
+     * It is carried as a measured field rather than as an opacity because its
+     * colour does not fit a composite of any single colour: it takes *most* from
+     * the channel whose background is *darkest*, and alpha compositing does the
+     * opposite. Something in how the mark is rendered or encoded produces it;
+     * this records what it is worth rather than claiming to know why.
+     */
+    readonly halo: Float32Array;
     /** Share of the search box the mark reaches. */
     readonly coverage: number;
     /** How far the brightest found pixel stood above its surroundings, in luma. */
@@ -237,6 +270,57 @@ export type CleanedVideo = {
     readonly coverage: number;
     /** False when the source had audio that this container could not carry. */
     readonly audioKept: boolean;
+    /**
+     * The codec the sound was actually written with, or `null` when there was
+     * none. Reported because it is rarely the one it arrived as: AAC in an MP4
+     * carries encoder priming, so its first sample sits fractionally before
+     * zero, and a muxer that has to trim to zero has to re-encode to do it.
+     */
+    readonly audioCodec: string | null;
 };
 
 export type VideoCleanResult = { readonly ok: true; readonly video: CleanedVideo } | VideoFailure;
+
+/**
+ * Every way the Gemini half can refuse, from the reader's point of view.
+ *
+ * Its own vocabulary again, for the reason the video list gives: this half has
+ * no worker to be rate-limited by and no muxer to fail in, so sharing either of
+ * the other two lists would mean carrying entries that cannot happen here.
+ */
+export const GEMINI_FAILURE_REASONS = [
+    "missing_image",
+    "empty_file",
+    "unsupported_type",
+    "too_large",
+    "undecodable",
+    "no_canvas",
+    "mark_not_found",
+    "clean_failed",
+] as const;
+
+export type GeminiFailureReason = (typeof GEMINI_FAILURE_REASONS)[number];
+
+export type GeminiFailure = {
+    readonly ok: false;
+    readonly reason: GeminiFailureReason;
+    /** What the decoder or the canvas actually said, truncated, for the log. Never rendered. */
+    readonly detail?: string;
+};
+
+export type GeminiProbeResult =
+    { readonly ok: true; readonly facts: SourceImageFacts } | GeminiFailure;
+
+/** The finished picture, and what was actually done to it. */
+export type CleanedImage = {
+    readonly blob: Blob;
+    readonly bytes: number;
+    readonly width: number;
+    readonly height: number;
+    /** The rectangle that was repainted, in source pixels. */
+    readonly repainted: PixelBox;
+    /** Share of the search box the mark turned out to occupy. */
+    readonly coverage: number;
+};
+
+export type GeminiCleanResult = { readonly ok: true; readonly image: CleanedImage } | GeminiFailure;
