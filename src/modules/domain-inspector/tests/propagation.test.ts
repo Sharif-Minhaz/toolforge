@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { countryLocation } from "@/modules/domain-inspector/domain/countries";
+import { countryLocation } from "@/modules/tools/domain/countries";
 import {
     clusterByCountry,
     PROPAGATION_NODES,

@@ -4,7 +4,7 @@ import {
     countryFlagEmoji,
     countryLocation,
     knownCountryCodes,
-} from "@/modules/domain-inspector/domain/countries";
+} from "@/modules/tools/domain/countries";
 
 describe("countryFlagEmoji", () => {
     const FLAGS: readonly (readonly [string, string])[] = [

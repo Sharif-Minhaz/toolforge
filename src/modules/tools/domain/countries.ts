@@ -1,12 +1,12 @@
 /**
  * Where a country is, and how to draw its flag.
  *
- * Two things the map and the panels both need, and neither is worth a
+ * Two things every map and panel here needs, and neither is worth a
  * dependency. The coordinates are country *centroids*, which is the honest
- * resolution for the data around them: every country code in this tool comes
- * from a registry — the RDAP allocation for a network, or the operator record
- * for a resolver — and a registry knows which country a block was assigned to,
- * never which building it is plugged into. A street-level pin over
+ * resolution for the data around them: every country code in this repository
+ * comes from a registry — the RDAP allocation for a network, or the operator
+ * record for a resolver — and a registry knows which country a block was
+ * assigned to, never which building it is plugged into. A street-level pin over
  * country-level data would promise a precision nothing here has.
  *
  * The flag is built from the two regional-indicator code points rather than

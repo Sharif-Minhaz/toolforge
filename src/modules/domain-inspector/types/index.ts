@@ -6,12 +6,17 @@
  * holds a socket, a response, or a function.
  */
 
-import type { IpVersion } from "@/modules/tools/types";
+import { DNS_RESOLVERS } from "@/modules/tools/types/network";
+import type { DnsFailureReason, DnsResolver, HostAddress } from "@/modules/tools/types/network";
 
-/** Public resolvers the reader can choose between, all of which speak DoH JSON. */
-export const DNS_RESOLVERS = ["cloudflare", "google", "dnssb"] as const;
-
-export type DnsResolver = (typeof DNS_RESOLVERS)[number];
+/**
+ * The resolver list, the address record and the transport's failure reasons are
+ * shared with every other tool that asks a name server something. They are
+ * re-exported rather than re-declared so this file stays the one place a panel
+ * looks for the shapes it renders.
+ */
+export { DNS_RESOLVERS };
+export type { DnsResolver, HostAddress };
 
 /**
  * The record types worth asking for on an apex name. `SRV` is deliberately
@@ -100,20 +105,6 @@ export type DomainRegistration = {
     readonly registrarUrl: string | null;
     /** Host of the RDAP server that answered, so the reader can check it. */
     readonly source: string | null;
-};
-
-export type HostAddress = {
-    readonly ip: string;
-    readonly version: IpVersion;
-    readonly reverse: string | null;
-    readonly asn: number | null;
-    readonly asName: string | null;
-    readonly prefix: string | null;
-    /** ISO 3166-1 alpha-2, from the routing registry rather than a geo-IP guess. */
-    readonly country: string | null;
-    readonly registry: string | null;
-    readonly network: string | null;
-    readonly org: string | null;
 };
 
 /**
@@ -269,16 +260,10 @@ export type TechnologyMatch = {
 
 /** Where a single panel's lookup can stop short without failing the report. */
 export type PanelFailureReason =
+    /** Everything the shared DoH and RDAP transport can report. */
+    | DnsFailureReason
     /** The reader turned the site fetch off — nothing was attempted. */
     | "skipped"
-    | "timeout"
-    | "network_error"
-    | "nxdomain"
-    | "no_records"
-    | "unsupported_tld"
-    | "unreadable_response"
-    | "no_address"
-    | "blocked_address"
     | "tls_failed"
     | "http_failed";
 

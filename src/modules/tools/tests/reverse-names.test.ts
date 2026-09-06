@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { cymruOriginName, reverseArpaName } from "@/modules/domain-inspector/domain/reverse-names";
+import { cymruOriginName, reverseArpaName } from "@/modules/tools/domain/reverse-names";
 
 // Moved here with the code when the address arithmetic underneath was
 // lifted to `tools/domain/ip.ts` for the Port Scanner. The assertions are

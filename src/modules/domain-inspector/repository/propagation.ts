@@ -1,13 +1,14 @@
 import "server-only";
 
-import { DNS_TYPE_CODES, PROPAGATION_TIMEOUT_MS } from "../domain/constants";
+import { DNS_TYPE_CODES } from "@/modules/tools/domain/network-constants";
+import { PROPAGATION_TIMEOUT_MS } from "../domain/constants";
 import {
     PROPAGATION_NODES,
     summarizePropagation,
     type PropagationAnswer,
     type PropagationNode,
 } from "../domain/propagation";
-import { queryDnsAt } from "./doh";
+import { queryDnsAt } from "@/modules/tools/repository/doh";
 import type { PanelResult, PropagationReport } from "../types";
 
 /**

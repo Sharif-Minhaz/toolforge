@@ -19,7 +19,7 @@ import {
     type HeaderMap,
 } from "../domain/headers";
 import { readDeclaredLicense, readGenerator, readPageTitle } from "../domain/markup";
-import { resolvePublicAddresses } from "./address-guard";
+import { resolvePublicAddresses } from "@/modules/tools/repository/address-guard";
 import type { DnsResolver, HttpHop, HttpReport, PanelResult } from "../types";
 
 /**

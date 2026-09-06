@@ -1,13 +1,14 @@
 import "server-only";
 
-import { DNS_TYPE_CODES, MAX_INSPECTED_ADDRESSES } from "../domain/constants";
+import { DNS_TYPE_CODES } from "@/modules/tools/domain/network-constants";
+import { MAX_INSPECTED_ADDRESSES } from "../domain/constants";
 import { buildMailPosture, toDnsRecords } from "../domain/dns";
 import { detectTechnologies } from "../domain/detect";
 import { isIpAddress } from "@/modules/tools/domain/ip";
 import { guardAddresses } from "@/modules/tools/repository/address-guard";
-import { queryDns } from "./doh";
+import { queryDns } from "@/modules/tools/repository/doh";
 import { probeSite, type SiteProbe } from "./http-probe";
-import { describeAddress } from "./hosting";
+import { describeAddress } from "@/modules/tools/repository/host-address";
 import { checkPropagation } from "./propagation";
 import { fetchDomainRegistration } from "./rdap";
 import { fetchCertificate } from "./tls";

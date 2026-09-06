@@ -1,4 +1,4 @@
-import { countryLocation } from "./countries";
+import { countryLocation } from "@/modules/tools/domain/countries";
 import type { PropagationNodeResult, PropagationReport, PropagationState } from "../types";
 
 /**

@@ -1,13 +1,12 @@
-import { expandIpv6, ipv6Nibbles, parseIpv4 } from "@/modules/tools/domain/ip";
-import { CYMRU_ORIGIN6_ZONE, CYMRU_ORIGIN_ZONE } from "./constants";
+import { expandIpv6, ipv6Nibbles, parseIpv4 } from "./ip";
+import { CYMRU_ORIGIN6_ZONE, CYMRU_ORIGIN_ZONE } from "./network-constants";
 
 /**
- * The two reversed-nibble names this tool asks a resolver for.
+ * The two reversed-nibble names a caller asks a resolver for: the PTR name for
+ * an address, and Team Cymru's origin zone for the ASN that announces it.
  *
- * They stayed behind when the address arithmetic moved to `tools/domain/ip.ts`,
- * because only this tool queries either of them — and `cymruOriginName` is the
- * one that made the split obvious, since it needs a zone name that is this
- * module's constant, not a shared one.
+ * Both are the same arithmetic in different zones, which is why they sit
+ * together rather than beside the address maths in `ip.ts`.
  */
 
 /** `1.2.3.4` → `4.3.2.1.in-addr.arpa`, and the nibble form for IPv6. */

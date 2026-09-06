@@ -1,12 +1,12 @@
 import "server-only";
 
-import { CYMRU_AS_ZONE } from "../domain/constants";
 import { parseCymruAsName, parseCymruOrigin, stripRootDot } from "../domain/dns";
-import { detectIpVersion } from "@/modules/tools/domain/ip";
+import { detectIpVersion } from "../domain/ip";
+import { CYMRU_AS_ZONE } from "../domain/network-constants";
 import { cymruOriginName, reverseArpaName } from "../domain/reverse-names";
 import { queryDns, queryTxtValue } from "./doh";
 import { fetchNetworkInfo } from "./rdap";
-import type { DnsResolver, HostAddress } from "../types";
+import type { DnsResolver, HostAddress } from "../types/network";
 
 /**
  * Who runs the machine behind an address.
@@ -18,7 +18,7 @@ import type { DnsResolver, HostAddress } from "../types";
  * be checked, unlike a geo-IP database's guess at a city.
  *
  * Every source is optional. A missing PTR or a registry that declines to answer
- * leaves a `null` field, never a failed panel.
+ * leaves a `null` field, never a failed lookup.
  */
 export async function describeAddress(ip: string, resolver: DnsResolver): Promise<HostAddress> {
     const arpa = reverseArpaName(ip);

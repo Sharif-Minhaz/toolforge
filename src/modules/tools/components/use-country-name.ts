@@ -2,7 +2,7 @@
 
 import { useLocale } from "next-intl";
 
-import { countryFlagEmoji, countryLocation } from "../domain/countries";
+import { countryFlagEmoji, countryLocation } from "@/modules/tools/domain/countries";
 
 /**
  * A country code turned into a flag and a localised name.

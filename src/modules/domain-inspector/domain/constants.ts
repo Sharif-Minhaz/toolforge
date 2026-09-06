@@ -1,4 +1,5 @@
-import type { DnsResolver, InspectionOptions } from "../types";
+import { DEFAULT_RESOLVER } from "@/modules/tools/domain/network-constants";
+import type { InspectionOptions } from "../types";
 
 /** RFC 1035: the wire form of a name is capped at 255 octets, 253 as text. */
 export const MAX_HOSTNAME_LENGTH = 253;
@@ -12,9 +13,11 @@ export const MAX_LABEL_LENGTH = 63;
  */
 export const MAX_INPUT_LENGTH = 2_048;
 
-/** Each panel gets its own budget, so one slow upstream cannot stall the rest. */
-export const DNS_TIMEOUT_MS = 6_000;
-export const RDAP_TIMEOUT_MS = 8_000;
+/**
+ * Each panel gets its own budget, so one slow upstream cannot stall the rest.
+ * The DNS and RDAP budgets belong to the shared transport and live with it in
+ * `tools/domain/network-constants.ts`.
+ */
 export const TLS_TIMEOUT_MS = 8_000;
 export const HTTP_TIMEOUT_MS = 10_000;
 
@@ -52,55 +55,7 @@ export const TURNSTILE_ACTION = "domain-inspector";
 
 export const TOKEN_FIELD = "token";
 
-export const DEFAULT_RESOLVER: DnsResolver = "cloudflare";
-
 export const DEFAULT_INSPECTION_OPTIONS: InspectionOptions = {
     resolver: DEFAULT_RESOLVER,
     probeSite: true,
 };
-
-/**
- * DoH JSON endpoints. All three answer `application/dns-json` on GET, and all
- * three are on 443 — which is the reason Quad9 is not among them despite being
- * the obvious third choice. Its JSON API is served only on port 5053, and a
- * non-standard outbound port is blocked by enough egress firewalls that the
- * control would time out rather than answer. Its wire-format endpoint on 443
- * rejects a `?name=` query outright ("DoH unable to decode BASE64-URL"), so
- * there is nothing to fall back to. Verify any replacement on 443 before
- * adding it.
- */
-export const RESOLVER_ENDPOINTS: Record<DnsResolver, string> = {
-    cloudflare: "https://cloudflare-dns.com/dns-query",
-    google: "https://dns.google/resolve",
-    dnssb: "https://doh.sb/dns-query",
-};
-
-/**
- * IANA's bootstrap redirector. One request finds the registry that is
- * authoritative for a TLD instead of shipping a copy of the bootstrap file
- * that goes stale the week a new TLD delegates its RDAP service.
- */
-export const RDAP_BOOTSTRAP_URL = "https://rdap.org";
-
-/**
- * Team Cymru answer origin and AS-name queries over plain DNS TXT, which means
- * they can ride the same DoH transport as everything else here — no whois
- * socket, no key, no account.
- */
-export const CYMRU_ORIGIN_ZONE = "origin.asn.cymru.com";
-export const CYMRU_ORIGIN6_ZONE = "origin6.asn.cymru.com";
-export const CYMRU_AS_ZONE = "asn.cymru.com";
-
-/** DNS numeric type codes, for the `type=` parameter of a DoH query. */
-export const DNS_TYPE_CODES = {
-    A: 1,
-    NS: 2,
-    CNAME: 5,
-    SOA: 6,
-    PTR: 12,
-    MX: 15,
-    TXT: 16,
-    AAAA: 28,
-    DS: 43,
-    CAA: 257,
-} as const;
