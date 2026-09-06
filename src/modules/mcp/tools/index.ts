@@ -42,9 +42,10 @@ import { uuidGenerateTool } from "./uuid";
  * **What is deliberately absent, and why.** Three groups, each for a reason
  * that is a fact about the tool rather than a gap in this file:
  *
- * - **The image tools** — compressor, converter, resizer, blur placeholder, and
- *   the Background Remover. They decode pixels in a canvas and re-encode them
- *   through WebAssembly codecs built for the browser. There is no canvas in a
+ * - **The image tools** — compressor, converter, resizer, blur placeholder, the
+ *   Image to 3D Model Converter, and the Background Remover. They decode pixels
+ *   in a canvas and re-encode them through WebAssembly codecs built for the
+ *   browser. There is no canvas in a
  *   request handler, and a server-side reimplementation would be a second
  *   encoder to keep in step with the one on the page. The Background Remover
  *   adds a second reason on top of the first: its segmentation weights are
@@ -72,7 +73,18 @@ import { uuidGenerateTool } from "./uuid";
  *   first group's reason rather than this one. The video half demuxes, decodes,
  *   repaints and muxes a clip through the browser's own WebCodecs and a canvas;
  *   the Gemini half decodes a still to pixels in a canvas and encodes a PNG back
- *   out of one. Neither exists in a request handler, and neither file leaves the
+ *   out of one.
+ *
+ *   The Image to 3D Model Converter is the sharpest case of the same seam. Its
+ *   mesh builder and its four format writers are the purest code in this
+ *   repository — no canvas, no worker, no network, and already driven by
+ *   three.js's own loaders in the tests — but they take a heightfield, and the
+ *   only way to get one is to decode a picture in a canvas. An adapter that took
+ *   a grid of floats instead would be a tool nobody could call, and one that
+ *   took a picture would need a decoder this process does not have. Its default
+ *   shape adds the Background Remover's second reason on top of the first: the
+ *   outline it inflates comes from the same segmentation weights, fetched into
+ *   the *reader's* browser and cached there. Neither exists in a request handler, and neither file leaves the
  *   reader's device in the first place. The arithmetic between those two ends —
  *   `watermark-remover/domain/gemini-image.ts` — is pure and would run here
  *   happily; it is the decode and the encode either side of it that cannot, and

@@ -71,6 +71,7 @@ docs/
 | `image-compressor`, `image-converter`       | [`docs/case-studies/image-codecs.md`](docs/case-studies/image-codecs.md)                                           |
 | `ip-globe`                                  | [`docs/case-studies/ip-globe.md`](docs/case-studies/ip-globe.md)                                                   |
 | `image-resizer`, any image tool's intake    | [`docs/case-studies/image-resizer.md`](docs/case-studies/image-resizer.md)                                         |
+| `image-to-3d`                               | [`docs/case-studies/image-to-3d.md`](docs/case-studies/image-to-3d.md)                                             |
 | `json-server`                               | [`docs/case-studies/json-server.md`](docs/case-studies/json-server.md)                                             |
 | `mcp`, or any tool's MCP adapter            | [`docs/case-studies/mcp.md`](docs/case-studies/mcp.md)                                                             |
 | `mock-server`                               | [`docs/case-studies/mock-server.md`](docs/case-studies/mock-server.md)                                             |

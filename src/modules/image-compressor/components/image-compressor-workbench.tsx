@@ -1,14 +1,8 @@
 "use client";
 
-import {
-    IconArrowsMinimize,
-    IconFileZip,
-    IconLoader2,
-    IconPhotoPlus,
-    IconTrash,
-} from "@tabler/icons-react";
+import { IconArrowsMinimize, IconFileZip, IconLoader2, IconTrash } from "@tabler/icons-react";
 import { useFormatter, useTranslations } from "next-intl";
-import { useEffect, useId, useRef, useState, type DragEvent } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -17,6 +11,7 @@ import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
+import { ImageDropzone } from "@/modules/tools/components/image-dropzone";
 import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
@@ -104,7 +99,6 @@ export function ImageCompressorWorkbench({
 
     const [items, setItems] = useState<readonly QueueItem[]>([]);
     const [options, setOptions] = useState<CompressionOptions>(initialOptions);
-    const [dragging, setDragging] = useState(false);
     const [working, setWorking] = useState(false);
     const [progress, setProgress] = useState({ done: 0, total: 0 });
     const [packing, setPacking] = useState(false);
@@ -341,12 +335,6 @@ export function ImageCompressorWorkbench({
         setItems([...items, ...added]);
     }
 
-    function handleDrop(event: DragEvent<HTMLLabelElement>) {
-        event.preventDefault();
-        setDragging(false);
-        handlePick([...event.dataTransfer.files]);
-    }
-
     function releasePreview(url: string) {
         URL.revokeObjectURL(url);
         previewUrls.current.delete(url);
@@ -444,50 +432,19 @@ export function ImageCompressorWorkbench({
 
             <CardContent className="flex min-w-0 flex-col gap-5">
                 <div className="flex min-w-0 flex-col gap-2">
-                    <input
-                        id={inputId}
-                        type="file"
+                    <ImageDropzone
+                        inputId={inputId}
+                        describedById={hintId}
                         multiple
                         accept={IMAGE_ACCEPT_ATTRIBUTE}
                         disabled={working}
-                        aria-describedby={hintId}
-                        onChange={(event) => {
-                            handlePick([...(event.target.files ?? [])]);
-                            // Cleared so picking the same file twice still fires.
-                            event.target.value = "";
-                        }}
-                        className="peer sr-only"
+                        title={t("dropTitle")}
+                        hint={t("dropHint", {
+                            limit: byteLabel(MAX_IMAGE_BYTES),
+                            count: format.number(MAX_FILES),
+                        })}
+                        onFiles={handlePick}
                     />
-
-                    <label
-                        htmlFor={inputId}
-                        onDragOver={(event) => {
-                            event.preventDefault();
-                            setDragging(true);
-                        }}
-                        onDragLeave={() => setDragging(false)}
-                        onDrop={handleDrop}
-                        className={cn(
-                            "border-border/80 bg-card/40 hover:border-primary/50 peer-focus-visible:ring-ring flex min-w-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-8 text-center transition-colors duration-200 peer-focus-visible:ring-2 peer-disabled:cursor-not-allowed peer-disabled:opacity-60",
-                            dragging &&
-                                "border-primary/70 bg-[color-mix(in_oklch,var(--primary)_6%,transparent)]",
-                        )}
-                    >
-                        <IconPhotoPlus
-                            className="text-muted-foreground size-7"
-                            stroke={1.6}
-                            aria-hidden="true"
-                        />
-                        <span className="text-[0.9375rem] leading-[1.4] font-medium">
-                            {t("dropTitle")}
-                        </span>
-                        <span className="text-muted-foreground text-[0.8125rem] leading-normal">
-                            {t("dropHint", {
-                                limit: byteLabel(MAX_IMAGE_BYTES),
-                                count: format.number(MAX_FILES),
-                            })}
-                        </span>
-                    </label>
 
                     <ImageSourceControls
                         onFiles={handlePick}

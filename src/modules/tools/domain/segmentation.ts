@@ -1,8 +1,21 @@
-import type { CutoutFailureReason, CutoutQuality } from "../types";
-import { CUTOUT_MODELS } from "./constants";
+import type {
+    CutoutQuality,
+    SegmentationFailureReason,
+    SegmentationPhase,
+    SegmentationProgress,
+} from "../types/segmentation";
+import type { PixelSize } from "../types";
+import { createCanvas, context2d, releaseCanvas } from "./canvas";
+import { fitWithinEdge } from "./pixels";
 
 /**
- * Driving the segmentation model.
+ * Driving the subject-segmentation model.
+ *
+ * Shared by the Background Remover, which uses the mask to cut a photograph out,
+ * and the Image to 3D Model Converter, which uses it to decide what to inflate
+ * into a solid. Lifted here the moment the second one needed it — `CLAUDE.md`
+ * rule 31 — rather than copied, because the byte counts, the error vocabulary
+ * and the `ImageData` trap below are all things there should be one of.
  *
  * Browser glue, kept beside the arithmetic rather than in the island for the
  * reason `docs/case-studies/watermark-remover.md` gives: what the reader sees is
@@ -13,13 +26,41 @@ import { CUTOUT_MODELS } from "./constants";
  * genuinely needs a browser.
  */
 
-export type ProgressPhase = "download" | "compute";
-
-export type CutoutProgress = {
-    readonly phase: ProgressPhase;
-    /** 0–1. Never `NaN`, whatever the library reports. */
-    readonly ratio: number;
+/**
+ * IMG.LY's own name for each weight set, and what it costs to fetch.
+ *
+ * They live on IMG.LY's CDN rather than in this deployment's `public/`, because
+ * the smallest is 42 MB and the largest is 168 MB. Exact byte counts read from
+ * their manifest rather than estimated, because they are shown to the reader
+ * **before** they commit to the download — a number that is merely plausible is
+ * worse here than no number at all. `MODEL_ASSET_VERSION` in
+ * `background-remover/domain/constants.ts` records which manifest, beside the
+ * `curl` that re-reads it.
+ */
+export const CUTOUT_MODELS: Record<
+    CutoutQuality,
+    { readonly model: "isnet_quint8" | "isnet_fp16" | "isnet"; readonly bytes: number }
+> = {
+    fast: { model: "isnet_quint8", bytes: 44_348_940 },
+    balanced: { model: "isnet_fp16", bytes: 88_152_708 },
+    best: { model: "isnet", bytes: 176_149_806 },
 };
+
+/**
+ * The WebAssembly build of the runtime, which is fetched alongside whichever
+ * model is chosen. Two of them, because reaching for the GPU pulls the JSEP build
+ * instead of the plain one — and the reader is told the total, not the half of it
+ * that happens to be the model.
+ */
+export const RUNTIME_WASM_BYTES = { cpu: 11_819_815 + 25_539, gpu: 23_013_109 + 49_241 } as const;
+
+/**
+ * The longest edge the model is ever handed.
+ *
+ * The mask is computed at the model's own fixed input size whatever it is given,
+ * so anything past this is decoded, scaled and thrown away.
+ */
+export const MAX_SEGMENTATION_SIDE = 1024;
 
 /** How many steps `removeBackground` reports while it is computing. */
 const COMPUTE_STEPS = 4;
@@ -46,7 +87,11 @@ const MAX_ERROR_DETAIL_LENGTH = 300;
  * Anything else is ignored rather than guessed at: a future version adding a
  * fifth key must not make the bar jump backwards.
  */
-export function readProgress(key: string, current: number, total: number): CutoutProgress | null {
+export function readProgress(
+    key: string,
+    current: number,
+    total: number,
+): SegmentationProgress | null {
     const ratio = total > 0 && Number.isFinite(current / total) ? clampRatio(current / total) : 0;
 
     if (key.startsWith("fetch:")) {
@@ -88,10 +133,10 @@ export const DOWNLOAD_LABEL_DELAY_MS = 700;
  * Computing is always reported as computing — only the download label waits.
  */
 export function resolveProgressPhase(
-    reported: ProgressPhase,
+    reported: SegmentationPhase,
     elapsedMs: number,
     thresholdMs = DOWNLOAD_LABEL_DELAY_MS,
-): ProgressPhase {
+): SegmentationPhase {
     if (reported === "compute") {
         return "compute";
     }
@@ -116,7 +161,7 @@ export type MaskResult =
     | { readonly ok: true; readonly mask: Blob }
     | {
           readonly ok: false;
-          readonly reason: CutoutFailureReason;
+          readonly reason: SegmentationFailureReason;
           /**
            * The library's own message, carried through for the log and never for
            * the page — an engine's error string in rendered output is the
@@ -148,7 +193,7 @@ export type MaskResult =
  * Every string here is IMG.LY's, so `tests/removal.test.ts` checks them against
  * the shipped bundle rather than trusting this comment.
  */
-export function classifyRemovalError(message: string): CutoutFailureReason {
+export function classifyRemovalError(message: string): SegmentationFailureReason {
     const text = message.toLowerCase();
 
     // Checked first: this message *also* contains "publicPath", and it means the
@@ -198,7 +243,7 @@ export async function computeAlphaMask(
      */
     image: Blob,
     quality: CutoutQuality,
-    onProgress: (progress: CutoutProgress) => void,
+    onProgress: (progress: SegmentationProgress) => void,
 ): Promise<MaskResult> {
     try {
         // Imported here rather than at the top of the file so a reader who opens
@@ -235,4 +280,51 @@ export async function computeAlphaMask(
             detail: message.slice(0, MAX_ERROR_DETAIL_LENGTH),
         };
     }
+}
+
+/**
+ * The picture, scaled down to what the model is handed, **as a PNG blob**.
+ *
+ * A blob rather than the `ImageData` that is right there on the canvas, and the
+ * reason is a trap in the library rather than a preference.
+ *
+ * `ImageSource` is declared as `ImageData | ArrayBuffer | Uint8Array | Blob |
+ * URL | string`, but `imageSourceToImageData` only ever *converts* the last
+ * four: a string becomes a URL, a URL is fetched into a blob, a buffer is
+ * wrapped in a blob, and a blob is decoded. An `ImageData` matches none of those
+ * branches, falls through the whole function and is returned unchanged with a
+ * cast — after which `runInference` destructures `imageTensor.shape`, which an
+ * `ImageData` does not have, and throws on `undefined`. The type says it is
+ * supported; the code has no path for it.
+ *
+ * So the encode is not waste, it is the supported contract. It costs one PNG of
+ * an image already capped at `MAX_SEGMENTATION_SIDE` — noise beside an inference
+ * that runs single-threaded whenever the page is not cross-origin isolated.
+ *
+ * See `computeAlphaMask` above for why this is scaled down at all.
+ */
+export function toSegmentationInput(
+    source: CanvasImageSource,
+    size: PixelSize,
+    maxSide = MAX_SEGMENTATION_SIDE,
+): Promise<Blob | null> {
+    const target = fitWithinEdge(size, maxSide);
+    const canvas = createCanvas(target);
+    const ctx = canvas === null ? null : context2d(canvas);
+
+    if (canvas === null || ctx === null) {
+        return Promise.resolve(null);
+    }
+
+    ctx.drawImage(source, 0, 0, target.width, target.height);
+
+    return new Promise((resolve) => {
+        // PNG, and lossless on purpose: this is what the segmentation reads, so
+        // JPEG ringing around the subject would be baked into the mask edge —
+        // the one part of the output anybody inspects.
+        canvas.toBlob((blob) => {
+            releaseCanvas(canvas);
+            resolve(blob);
+        }, "image/png");
+    });
 }

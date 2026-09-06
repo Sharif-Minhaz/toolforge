@@ -2,7 +2,9 @@ import { z } from "zod";
 
 import { BACKDROP_TOPICS } from "../domain/backdrop-topics";
 import { MAX_PHOTO_PAGE, MAX_PHOTO_QUERY_LENGTH, PHOTO_FETCH_SIZE } from "../domain/constants";
-import { BACKGROUND_TABS, CUTOUT_QUALITIES } from "../types";
+import { CUTOUT_QUALITIES } from "@/modules/tools/types/segmentation";
+
+import { BACKGROUND_TABS } from "../types";
 
 /**
  * What the browser may ask the search action for.

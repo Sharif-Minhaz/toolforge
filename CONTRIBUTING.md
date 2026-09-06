@@ -435,6 +435,9 @@ Reuse what exists rather than rebuilding it:
 | File download, text or blob           | `@/modules/tools/domain/file-saver`                 |
 | Upload type and size gate             | `@/modules/tools/domain/image-file`                 |
 | Decode an image, read its size        | `@/modules/tools/domain/image-element`              |
+| Drop zone and hidden file input       | `@/modules/tools/components/image-dropzone`         |
+| Subject mask from a picture           | `@/modules/tools/domain/segmentation`               |
+| Canvas creation and prompt release    | `@/modules/tools/domain/canvas`                     |
 | Worker URL from a variable            | `@/modules/tools/domain/endpoint`                   |
 | Turnstile widget, verification        | `@/modules/tools/components/turnstile-widget`       |
 | Wall clock ↔ instant, offsets         | `@/modules/tools/domain/zone`                       |

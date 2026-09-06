@@ -391,6 +391,14 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         // same namespace slice is six places to forget one.
         imageIntake: messages.imageIntake,
         compareSlider: messages.compareSlider,
+        imageTo3d: {
+            workbench: messages.imageTo3d.workbench,
+            sources: messages.imageTo3d.sources,
+            shapes: messages.imageTo3d.shapes,
+            formats: messages.imageTo3d.formats,
+            errors: messages.imageTo3d.errors,
+            toast: messages.imageTo3d.toast,
+        },
         blurPlaceholder: {
             workbench: messages.blurPlaceholder.workbench,
             modes: messages.blurPlaceholder.modes,

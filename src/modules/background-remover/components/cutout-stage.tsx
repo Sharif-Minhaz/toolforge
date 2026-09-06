@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { CompareSlider } from "@/modules/tools/components/compare-slider";
 import { previewFrameMaxWidth } from "@/modules/tools/domain/preview-frame";
 
-import type { CutoutProgress } from "../domain/removal";
+import type { SegmentationProgress } from "@/modules/tools/types/segmentation";
 import type { PhotoCredit, SourceImageFacts } from "../types";
 
 type CutoutStageProps = {
@@ -17,7 +17,7 @@ type CutoutStageProps = {
     readonly compositeUrl: string | null;
     /** True when the composite carries an alpha channel worth showing through. */
     readonly checkered: boolean;
-    readonly progress: CutoutProgress | null;
+    readonly progress: SegmentationProgress | null;
     /** Dimmed while the composite on screen no longer matches the controls. */
     readonly stale: boolean;
     /**

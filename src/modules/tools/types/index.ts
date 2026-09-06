@@ -61,6 +61,7 @@ export const TOOL_IDS = [
     "json-server",
     "graphql-server",
     "hex-editor",
+    "image-to-3d",
 ] as const;
 
 export type ToolId = (typeof TOOL_IDS)[number];
@@ -134,7 +135,8 @@ export type ToolIconName =
     | "sitemap"
     | "sort"
     | "globe"
-    | "hex";
+    | "hex"
+    | "cube";
 
 export type Tool = {
     readonly id: ToolId;

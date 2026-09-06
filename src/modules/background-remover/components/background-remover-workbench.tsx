@@ -2,14 +2,14 @@
 
 import { IconLoader2, IconPhotoUp, IconScissors, IconTrash } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useId, useRef, useState, type DragEvent } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
+import { ImageDropzone } from "@/modules/tools/components/image-dropzone";
 import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
@@ -25,30 +25,33 @@ import {
     tabForBackground,
     TRANSPARENT_BACKGROUND,
 } from "../domain/background";
-import { composeResult, compositeSize, loadCorsImage, toSegmentationInput } from "../domain/canvas";
 import {
+    computeAlphaMask,
     CUTOUT_MODELS,
+    firstRunBytes,
+    resolveProgressPhase,
+    RUNTIME_WASM_BYTES,
+    toSegmentationInput,
+} from "@/modules/tools/domain/segmentation";
+import {
+    CUTOUT_QUALITIES,
+    type CutoutQuality,
+    type SegmentationProgress,
+} from "@/modules/tools/types/segmentation";
+import { composeResult, compositeSize, loadCorsImage } from "../domain/canvas";
+import {
     IMAGE_ACCEPT_ATTRIBUTE,
     IMAGE_FILE_LIMITS,
     MAX_IMAGE_BYTES,
     MAX_SHEETS,
-    RUNTIME_WASM_BYTES,
 } from "../domain/constants";
 import { buildCompositeFilename, defaultCompositeFormat, keepsAlpha } from "../domain/filenames";
-import {
-    computeAlphaMask,
-    firstRunBytes,
-    resolveProgressPhase,
-    type CutoutProgress,
-} from "../domain/removal";
 import { nextSelectionAfterRemoval, planIntake, sheetId } from "../domain/sheets";
 import {
-    CUTOUT_QUALITIES,
     type BackgroundChoice,
     type BackgroundTab,
     type CompositeFormat,
     type CutoutFailureReason,
-    type CutoutQuality,
     type SourceImageFacts,
 } from "../types";
 import { BackgroundPanel } from "./background-panel";
@@ -85,7 +88,7 @@ type Sheet = {
      */
     readonly composing: boolean;
     readonly failure: CutoutFailureReason | null;
-    readonly progress: CutoutProgress | null;
+    readonly progress: SegmentationProgress | null;
     /** The model's alpha channel, decoded. `null` until the cut-out has run. */
     readonly mask: HTMLImageElement | null;
     readonly background: BackgroundChoice;
@@ -137,7 +140,6 @@ export function BackgroundRemoverWorkbench({
     const [sheets, setSheets] = useState<readonly Sheet[]>([]);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [quality, setQuality] = useState<CutoutQuality>(initialQuality);
-    const [dragging, setDragging] = useState(false);
     const { ref: resultRef, scrollToResult } = useResultScroll();
 
     /**
@@ -300,12 +302,6 @@ export function BackgroundRemoverWorkbench({
             ]);
             setSelectedId(id);
         }
-    }
-
-    function handleDrop(event: DragEvent<HTMLLabelElement>) {
-        event.preventDefault();
-        setDragging(false);
-        void handleFiles([...event.dataTransfer.files]);
     }
 
     function handleRemoveSheet(id: string) {
@@ -676,48 +672,20 @@ export function BackgroundRemoverWorkbench({
                 <div className="flex min-w-0 flex-col gap-2">
                     {sheets.length === 0 && (
                         <>
-                            <input
-                                id={inputId}
-                                type="file"
+                            <ImageDropzone
+                                inputId={inputId}
+                                describedById={hintId}
                                 accept={IMAGE_ACCEPT_ATTRIBUTE}
                                 multiple
-                                aria-describedby={hintId}
-                                onChange={(event) => {
-                                    void handleFiles([...(event.target.files ?? [])]);
-                                    event.target.value = "";
-                                }}
-                                className="peer sr-only"
+                                icon={IconPhotoUp}
+                                title={t("dropTitle")}
+                                hint={t("dropHint", {
+                                    limit: byteLabel(MAX_IMAGE_BYTES),
+                                    max: MAX_SHEETS,
+                                })}
+                                onFiles={(files) => void handleFiles(files)}
+                                className="py-10"
                             />
-
-                            <label
-                                htmlFor={inputId}
-                                onDragOver={(event) => {
-                                    event.preventDefault();
-                                    setDragging(true);
-                                }}
-                                onDragLeave={() => setDragging(false)}
-                                onDrop={handleDrop}
-                                className={cn(
-                                    "border-border/80 bg-card/40 hover:border-primary/50 peer-focus-visible:ring-ring flex min-w-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-10 text-center transition-colors duration-200 peer-focus-visible:ring-2",
-                                    dragging &&
-                                        "border-primary/70 bg-[color-mix(in_oklch,var(--primary)_6%,transparent)]",
-                                )}
-                            >
-                                <IconPhotoUp
-                                    className="text-muted-foreground size-7"
-                                    stroke={1.6}
-                                    aria-hidden="true"
-                                />
-                                <span className="text-[0.9375rem] leading-[1.4] font-medium">
-                                    {t("dropTitle")}
-                                </span>
-                                <span className="text-muted-foreground text-[0.8125rem] leading-normal">
-                                    {t("dropHint", {
-                                        limit: byteLabel(MAX_IMAGE_BYTES),
-                                        max: MAX_SHEETS,
-                                    })}
-                                </span>
-                            </label>
                         </>
                     )}
 

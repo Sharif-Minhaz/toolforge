@@ -1,6 +1,6 @@
 import type { ImageFileLimits } from "@/modules/tools/domain/image-file";
 
-import type { CutoutQuality } from "../types";
+import type { CutoutQuality } from "@/modules/tools/types/segmentation";
 
 /**
  * How many pictures the workbench holds at once.
@@ -53,39 +53,14 @@ export const IMAGE_FILE_LIMITS: ImageFileLimits<AllowedImageType> = {
  * not something to put in a git repository or to serve from a function's
  * bandwidth. This is not passed to the library either, since it derives its own
  * asset path from its package version; it is recorded so the next person can
- * tell at a glance whether the numbers below still describe what a reader
- * downloads. Bumping `@imgly/background-removal` means re-reading the manifest:
+ * tell at a glance whether the byte counts in `CUTOUT_MODELS` — which moved to
+ * `tools/domain/segmentation.ts` when a second tool started asking the same
+ * model the same question — still describe what a reader downloads. Bumping
+ * `@imgly/background-removal` means re-reading the manifest:
  *
  *     curl -s https://staticimgly.com/@imgly/background-removal-data/<version>/dist/resources.json
  */
 export const MODEL_ASSET_VERSION = "1.7.0";
-
-/**
- * IMG.LY's own name for each weight set, and what it costs to fetch.
- *
- * Exact byte counts read from that manifest rather than estimated, because they
- * are shown to the reader **before** they commit to the download — a number that
- * is merely plausible is worse here than no number at all. `tests/constants.test.ts`
- * checks the internal rules (each tier heavier than the last, every size
- * positive); it deliberately does not fetch the manifest, because a unit test
- * that needs a CDN fails on an aeroplane rather than when something is wrong.
- */
-export const CUTOUT_MODELS: Record<
-    CutoutQuality,
-    { readonly model: "isnet_quint8" | "isnet_fp16" | "isnet"; readonly bytes: number }
-> = {
-    fast: { model: "isnet_quint8", bytes: 44_348_940 },
-    balanced: { model: "isnet_fp16", bytes: 88_152_708 },
-    best: { model: "isnet", bytes: 176_149_806 },
-};
-
-/**
- * The WebAssembly build of the runtime, which is fetched alongside whichever
- * model is chosen. Two of them, because reaching for the GPU pulls the JSEP build
- * instead of the plain one — and the reader is told the total, not the half of it
- * that happens to be the model.
- */
-export const RUNTIME_WASM_BYTES = { cpu: 11_819_815 + 25_539, gpu: 23_013_109 + 49_241 } as const;
 
 /**
  * Which weights to reach for first.
@@ -144,7 +119,6 @@ export const DEFAULT_BACKGROUND_COLOR = "#ffffff";
  * The downsample to 1024 now happens once, on the GPU, in `toSegmentationInput`.
  * That is both faster and a better filter than the loop it replaces.
  */
-export const MAX_SEGMENTATION_SIDE = 1024;
 
 /**
  * Ceiling on the longer side of the finished picture.

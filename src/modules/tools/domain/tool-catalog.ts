@@ -1387,6 +1387,53 @@ const TOOLS: readonly Tool[] = [
             "hex to ascii",
         ],
     },
+    {
+        id: "image-to-3d",
+        href: "/tools/image-to-3d",
+        category: "media",
+        status: "available",
+        // The silhouette, the mesh and every exported byte are built in the
+        // reader's own tab. Two things reach the network and neither carries a
+        // picture or a model: the cut-out's segmentation weights come from a
+        // CDN on first use — its size is on the control that spends it — and
+        // pulling a source picture in by its public address goes through this
+        // server, disclosed exactly as the other image tools disclose it.
+        runsOn: "hybrid",
+        accent: "cyan",
+        icon: "cube",
+        addedOn: "2026-09-06",
+        featured: true,
+        popularity: 74,
+        keywords: [
+            "image to 3d",
+            "image to 3d model",
+            "photo to 3d",
+            "picture to stl",
+            "png to stl",
+            "jpg to stl",
+            "image to obj",
+            "image to glb",
+            "image to gltf",
+            "image to ply",
+            "heightmap",
+            "height map to mesh",
+            "displacement map",
+            "depth map to mesh",
+            "bump map",
+            "lithophane",
+            "lithophane generator",
+            "relief model",
+            "bas relief",
+            "3d printable",
+            "3d printing",
+            "stl generator",
+            "mesh generator",
+            "blender import",
+            "logo to 3d",
+            "svg to 3d alternative",
+            "2d to 3d converter",
+        ],
+    },
 ];
 
 export function getTools(): readonly Tool[] {

@@ -6,9 +6,6 @@
  * `isnet_quint8` means nothing to anyone who has not read IMG.LY's manifest —
  * but the mapping is one table in `domain/constants.ts` so the two never drift.
  */
-export const CUTOUT_QUALITIES = ["fast", "balanced", "best"] as const;
-
-export type CutoutQuality = (typeof CUTOUT_QUALITIES)[number];
 
 /**
  * What goes behind the cut-out. Four members, three tabs: `transparent` and
