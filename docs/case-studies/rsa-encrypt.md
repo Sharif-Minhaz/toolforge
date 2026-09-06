@@ -32,7 +32,7 @@ browser. That is a reason not to ship the feature, not a reason to write one.
 
 What the page does instead is keep the picker. A select with a single option
 looks odd for about a second and then answers the question a reader actually has
-— *which padding is this?* — where a hard-coded label would not. The hint under
+— _which padding is this?_ — where a hard-coded label would not. The hint under
 it names the absent scheme, and the article gives it a section. This is the same
 shape as the AES tool's missing ECB mode: an absence that is documented in place
 is a decision, and one that is silent is a gap.
@@ -52,7 +52,7 @@ territory.
 
 Two things that are easy to get wrong and are pinned by tests:
 
-- **The BIT STRING's leading `0x00`** counts unused bits and is *content*, not
+- **The BIT STRING's leading `0x00`** counts unused bits and is _content_, not
   framing. Omit it and the block parses and then decodes to nonsense.
 - **DER requires the shortest length encoding.** 127 must be `7f`, never `81 7f`.
   A reader that tolerated both would still fail to round-trip, because the bytes
@@ -77,17 +77,17 @@ one rejected import.
 The single commonest mistake on this page is the right key under the wrong
 toggle, and it needs its own answer rather than a generic one:
 
-| Reason | What actually happened |
-| --- | --- |
-| `unreadable_key` | Not a key in the declared format at all |
-| `wrong_key_kind` | A perfectly good key of the *other* sort — and the message says which |
-| `key_rejected` | Parsed, said what it was, and Web Crypto still refused it |
+| Reason           | What actually happened                                                |
+| ---------------- | --------------------------------------------------------------------- |
+| `unreadable_key` | Not a key in the declared format at all                               |
+| `wrong_key_kind` | A perfectly good key of the _other_ sort — and the message says which |
+| `key_rejected`   | Parsed, said what it was, and Web Crypto still refused it             |
 
 `wrong_key_kind` carries `foundKind`, so the message can say "that is a private
 key and the picker says Public" instead of "invalid key".
 
-The same discipline splits the two size failures. `message_too_long` means *this*
-message does not fit and quotes both numbers. `hash_too_large_for_key` means *no*
+The same discipline splits the two size failures. `message_too_long` means _this_
+message does not fit and quotes both numbers. `hash_too_large_for_key` means _no_
 message fits, because the digest is wider than the modulus can carry — telling
 that reader to shorten something would be advice they cannot act on.
 

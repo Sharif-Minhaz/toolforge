@@ -51,11 +51,11 @@ request's cost from the server's route table to the caller's query, and derived
 relations are **cyclic by construction** — a `Post` has `comments` and every
 `Comment` has a `post`.
 
-| Bound | Stops |
-| --- | --- |
-| Depth | the cycle |
-| Estimated node count, multiplied down the tree from each list field's page size | breadth |
-| Root-field count | `a: posts b: posts c: posts …`, which adds no depth and no estimated cost |
+| Bound                                                                           | Stops                                                                     |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Depth                                                                           | the cycle                                                                 |
+| Estimated node count, multiplied down the tree from each list field's page size | breadth                                                                   |
+| Root-field count                                                                | `a: posts b: posts c: posts …`, which adds no depth and no estimated cost |
 
 All three run **before a single resolver**, because the point is to refuse the
 work rather than measure it. Three rules make them actually hold:

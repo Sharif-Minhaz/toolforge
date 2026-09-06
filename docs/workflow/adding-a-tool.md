@@ -14,7 +14,7 @@ ships.
 - Pick an `accent` from the five brand hues and an `icon` from `ToolIconName`;
   add a new icon key to both the union and the map in `tool-icon.tsx` if none
   fits.
-- A new **category** needs `TOOL_CATEGORIES` widened *and*
+- A new **category** needs `TOOL_CATEGORIES` widened _and_
   `categories.<id>.name`/`.description` in both locales, or the sidebar renders a
   heading with no words in it.
 

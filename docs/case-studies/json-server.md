@@ -51,11 +51,11 @@ which behaviour it caught.
 A well-formed query behaves exactly as the reference does. The three deliberate
 differences are all about input no working client sends:
 
-| Case | Reference | Here |
-| --- | --- | --- |
-| `_where` that is not JSON | silently drops the filter, returns the whole collection | **400** |
-| Unknown `:operator` | silently drops the filter | **400** |
-| Bare `{"views": 100}` clause | matches nothing | honoured |
+| Case                         | Reference                                               | Here     |
+| ---------------------------- | ------------------------------------------------------- | -------- |
+| `_where` that is not JSON    | silently drops the filter, returns the whole collection | **400**  |
+| Unknown `:operator`          | silently drops the filter                               | **400**  |
+| Bare `{"views": 100}` clause | matches nothing                                         | honoured |
 
 The first two are refusals, the third is strictly additive. **None of them can
 change what a correct client sees.**

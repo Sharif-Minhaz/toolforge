@@ -122,7 +122,7 @@ to the first.
 
 It is one frame now, and it is in one of two modes:
 
-- **Preview** (the default). The frame shows the *composed output* — the size,
+- **Preview** (the default). The frame shows the _composed output_ — the size,
   the padding, the background — redrawn as the controls move.
 - **Crop**, which is opt-in. The frame shows the picture itself with a box over
   it, because a box dragged over a letterboxed thumbnail would be selecting a
@@ -276,9 +276,9 @@ Two changes, and both were needed:
 2. **Derive every switch from an anchor.** Area alone still leaks whenever a
    shape meets the edge and cannot keep it: 1:1 → 16:9 → 1:1 settled 800 → 750
    and stayed there. Converging beats ratcheting, but it is still visible. So the
-   island holds `cropAnchor` — the box the reader last placed *by hand* — and
+   island holds `cropAnchor` — the box the reader last placed _by hand_ — and
    every ratio is computed from that. The two 1:1 boxes are computed from the
-   same rectangle, so they *are* the same rectangle.
+   same rectangle, so they _are_ the same rectangle.
 
 The anchor follows a drag, Select all, Centre, an applied crop and an undo —
 every gesture that is the reader saying where the box goes. It deliberately does
@@ -314,7 +314,7 @@ image, the `<img>` is scaled to `source / crop` and pulled left and up by
 no canvas.
 
 Every number comes from the same `RenderPlan` the exporter reads. That is the
-point: the preview cannot drift from the file, because it is a second *reading*
+point: the preview cannot drift from the file, because it is a second _reading_
 of one geometry rather than a second copy of it.
 
 A compact copy of it lived under the crop box for one revision, so that settings
@@ -337,7 +337,7 @@ Two things fall out of it:
 - **The report became a prediction.** With no result panel there is nothing to
   say what happened, so the line under the buttons says what the next press will
   do — the output size, the format, and whether anything will be resampled.
-  Better anyway: "the pixels will be copied" is worth reading *before* the press
+  Better anyway: "the pixels will be copied" is worth reading _before_ the press
   it describes.
 
 `Export` is one press, not two. What is in the frame is what is being exported,
@@ -364,7 +364,7 @@ The obvious fix is wrong for **every preview on this site**. `max-height` plus
 `object-contain` letterboxes the image inside a container that is now wider than
 it — and all four of these previews have something laid over the picture: a crop
 box, a paint canvas, a compare slider, an aspect-ratio frame. Those are
-positioned against the *container*, so the overlay drifts off the picture and
+positioned against the _container_, so the overlay drifts off the picture and
 every pointer coordinate is measured against the wrong box.
 
 `previewFrameMaxWidth` in `tools/domain/preview-frame.ts` caps the **width**

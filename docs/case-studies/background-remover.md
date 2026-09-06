@@ -37,8 +37,8 @@ source (6000 px) ──┬── scaled to 1024 ── model ── mask (1024)
 
 **Segment at exactly the model's input size, not above it.** This started at
 2048 and that was waste, because both of IMG.LY's resizes — down to 1024 × 1024
-before inference, and back up afterwards — are bilinear loops *in JavaScript on
-the main thread*, four `ndarray.get()` calls per pixel per channel. A 2048-wide
+before inference, and back up afterwards — are bilinear loops _in JavaScript on
+the main thread_, four `ndarray.get()` calls per pixel per channel. A 2048-wide
 copy bought nothing at the boundary and cost roughly six times the main-thread
 work to produce a mask this page immediately rescales again. The downsample now
 happens once on the GPU, which is both faster and a better filter.
@@ -64,10 +64,10 @@ Three compounding causes, all memory:
   with its alpha, and the frame it is drawn onto — on top of the decoded
   original, on top of a WebAssembly heap holding an 84 MB model, times up to five
   open slots. `MAX_COMPOSITE_SIDE` is the fix, and it costs almost nothing real:
-  the alpha channel is computed at 1024 whatever happens, so the cut-out *edge*
+  the alpha channel is computed at 1024 whatever happens, so the cut-out _edge_
   has no more detail at 6000 px than at 2560.
 - **Dropping the last reference to a canvas does not free it.** It makes it
-  *collectable*. One canvas is allocated per redraw — which is one per step of a
+  _collectable_. One canvas is allocated per redraw — which is one per step of a
   slider drag — so a dozen can be queued for a collector that has not run.
   `releaseCanvas` sets `width = height = 0`, which hands the backing store back
   immediately, and every canvas in this module now goes through it.
@@ -80,7 +80,7 @@ not learn that from the file's properties afterwards.
 
 ## Blur small, scale up
 
-A blur *is* the destruction of fine detail. There is nothing in the result that a
+A blur _is_ the destruction of fine detail. There is nothing in the result that a
 quarter-size canvas could not carry — so blurring at `MAX_BLUR_RENDER_SIDE` and
 letting `drawImage` scale it back is visually the same picture for a fraction of
 the work, and it is the difference between an unnoticed redraw and a frozen tab.
@@ -119,7 +119,7 @@ curl -s https://staticimgly.com/@imgly/background-removal-data/<version>/dist/re
 ```
 
 `MODEL_ASSET_VERSION` records which version they came from. The unit test checks
-the *internal* rules — each tier heavier than the last, none zero — and
+the _internal_ rules — each tier heavier than the last, none zero — and
 deliberately does not fetch the manifest, because a test that needs a CDN fails
 on an aeroplane rather than when something is wrong.
 
@@ -146,7 +146,7 @@ applied to an error message.
 
 A Pexels photograph drawn onto a canvas makes `toBlob` throw `SecurityError`
 unless the `<img>` asked for CORS **before it loaded**. The damage is done at
-*download* time — long after the reader picked the photograph and watched it
+_download_ time — long after the reader picked the photograph and watched it
 composite on screen.
 
 `loadCorsImage` sets `crossOrigin` through the shared `loadImage` factory, which
@@ -166,7 +166,7 @@ the channel is dropped — and a JPEG of somebody's cut-out portrait comes back 
 a black rectangle.
 
 `composeResult` paints white first whenever the chosen format cannot carry alpha,
-*before* the background rather than instead of it, so a partially transparent
+_before_ the background rather than instead of it, so a partially transparent
 background lands on white too.
 
 The picker stays enabled for the combination that loses transparency, with a
@@ -177,13 +177,13 @@ are left to guess about is worse than one you were warned about.
 ## A stock library's front page is portraits
 
 `/v1/curated` is whatever Pexels' editors are featuring, and that is people more
-often than not — which is the one subject that is never a useful *background* for
+often than not — which is the one subject that is never a useful _background_ for
 a photograph of somebody. The obvious default endpoint was the wrong one.
 
 There is no `-people` operator in the Pexels API, so the fix is two blunt
 instruments and an honest sentence in the copy:
 
-- **Seed the search with places.** Fourteen chips, each searching *several* place
+- **Seed the search with places.** Fourteen chips, each searching _several_ place
   words — `forest trees woodland path`, not `forest`. A bare noun returns a great
   deal of somebody walking through the thing rather than the thing. The terms
   live in `domain/backdrop-topics.ts` and are sent as a **key**, not as their
@@ -193,7 +193,7 @@ instruments and an honest sentence in the copy:
 - **Drop what describes a person.** `hidesPeople` reads Pexels' `alt` against a
   word list. Word-bounded, not substring: `man` is inside **man**or, hu**man** and
   Ro**man**ia, and `kid` is inside s**kid**. It reads the raw `alt` rather than
-  `describePhoto`, which falls back to the *photographer's name* — and a
+  `describePhoto`, which falls back to the _photographer's name_ — and a
   photographer called "Man Ray" is not a picture of a man.
 
 **An empty `alt` is kept, not dropped.** Nothing is known about that photograph,
@@ -201,7 +201,7 @@ and discarding every undescribed picture would empty most pages. A stray tile
 costs less than a good background nobody ever sees. Say that in the article
 rather than claiming a filter.
 
-**Over-fetch so the filter is invisible.** Pexels meters *requests*, not
+**Over-fetch so the filter is invisible.** Pexels meters _requests_, not
 photographs, so asking for 48 and keeping 24 costs exactly what asking for 24
 would. Without the headroom a page thins to a half-empty grid and the reader
 reads that as a bad search rather than as the filter working. `hasMore` still
@@ -256,7 +256,7 @@ connection is not worth rendering.
 
 Each slot holds a decoded bitmap — four bytes a pixel, so a twelve-megapixel
 photograph is 48 MB before anything is drawn. Five open at once is comfortable;
-five *running* at once is how a tab is killed halfway through.
+five _running_ at once is how a tab is killed halfway through.
 
 So there is no batch button and no apply-to-all. The button belongs to the open
 slot, and `domain/sheets.ts` holds the whole of the strip's behaviour as

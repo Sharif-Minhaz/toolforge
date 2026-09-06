@@ -25,11 +25,11 @@ can be neither a flag nor an address.**
 
 "Copy as cURL" is three languages. `{"a":1}` arrives as:
 
-| Shell | Spelling |
-| --- | --- |
-| bash | `'{"a":1}'` |
-| cmd | `^"{\^"a\^":1}^"` |
-| PowerShell | ``"{`"a`":1}"`` |
+| Shell      | Spelling          |
+| ---------- | ----------------- |
+| bash       | `'{"a":1}'`       |
+| cmd        | `^"{\^"a\^":1}^"` |
+| PowerShell | ``"{`"a`":1}"``   |
 
 One forgiving pass that tries to satisfy all three reads two of them wrong and
 produces a request nobody made.
@@ -71,9 +71,9 @@ The spelling that means "send this, empty" is `Name;`.
 
 ## Defaults that differ
 
-| Behaviour | curl | `fetch` |
-| --- | --- | --- |
-| Redirects | not followed without `-L` | followed unless told not to |
+| Behaviour                   | curl                                | `fetch`                                                            |
+| --------------------------- | ----------------------------------- | ------------------------------------------------------------------ |
+| Redirects                   | not followed without `-L`           | followed unless told not to                                        |
 | Body content type with `-d` | `application/x-www-form-urlencoded` | `text/plain` for any string body, `JSON.stringify` output included |
 
 Neither is visible until a server refuses the request. Both are written out

@@ -155,7 +155,7 @@ They are separate problems and only one of them is exact.
 **An SVG referenced as an image is rendered in secure static mode.** No script
 runs, no external file is fetched, nothing is interactive — a guarantee from the
 platform, and the reason there is no hand-written sanitiser here. That holds for
-`<img>`, a CSS background and anything else that consumes the file *as an image*;
+`<img>`, a CSS background and anything else that consumes the file _as an image_;
 it does **not** hold for `<object>`, `<embed>`, an `<iframe>`, or markup parsed
 into this page's DOM. So the file only ever becomes a blob URL handed to an
 `<img>`, and a change that parses it into the document instead throws that
@@ -169,7 +169,7 @@ throws and the file is reported undecodable rather than half-converted.
 **Rewrite the root tag before making the blob — three attributes, for three
 different reasons.**
 
-- `width`/`height` are *replaced*, because the image's own intrinsic size is what
+- `width`/`height` are _replaced_, because the image's own intrinsic size is what
   a canvas draw reads. Setting them on the element does nothing.
 - `viewBox` is synthesised when the file has none. Without one, a larger `width`
   only makes a larger canvas: the drawing stays the size it was, in the corner.
@@ -207,9 +207,9 @@ testable at all.
   footgun:
 
     - **A speck must not adopt another speck.** Tallying a region's neighbours by
-      *colour* lets two touching specks take each other's value, stranding the one
+      _colour_ lets two touching specks take each other's value, stranding the one
       merged first once the second merges away. The symptom is unmistakable once
-      you look for it: raising the threshold produced *more* regions than lowering
+      you look for it: raising the threshold produced _more_ regions than lowering
       it — 237 000 at a floor of two against 265 000 at a floor of four. Counting
       by neighbouring **region**, and preferring regions that are themselves
       staying, fixed it (237 000 → 102 000 at the same floor).

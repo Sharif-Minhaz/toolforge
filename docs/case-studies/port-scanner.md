@@ -83,11 +83,11 @@ people's compromised machines.
 
 ## A third state is not a detail
 
-| State | Means |
-| --- | --- |
-| open | the handshake completed |
-| closed | a reset came back — which took a reachable machine to send |
-| filtered | nothing came back at all |
+| State    | Means                                                      |
+| -------- | ---------------------------------------------------------- |
+| open     | the handshake completed                                    |
+| closed   | a reset came back — which took a reachable machine to send |
+| filtered | nothing came back at all                                   |
 
 Most hosted checkers fold the last two together, and that is a false statement
 about the network — one of the tools this was specified against prints `CLOSED`

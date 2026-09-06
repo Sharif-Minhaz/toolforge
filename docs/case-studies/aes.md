@@ -107,7 +107,7 @@ rather than letting it pass unremarked.
 
 ## GCM's nonce width is a parameter, not a constant
 
-The first real interop test failed, and the error came from the *other* tool:
+The first real interop test failed, and the error came from the _other_ tool:
 
 ```
 Invalid IV length. Expected 16 bytes, but got 12 bytes.
@@ -122,14 +122,14 @@ that hard-codes twelve simply cannot read what they wrote.
 
 Three things fell out of fixing it:
 
-- **The width is variable only for GCM.** For CBC and CTR the IV *is* a block —
+- **The width is variable only for GCM.** For CBC and CTR the IV _is_ a block —
   sixteen bytes is arithmetic, not convention — so `acceptsVariableIv` gates it
   and `readIvBytes` enforces one rule per mode.
 - **Runtimes disagree at the short end.** Node refuses any nonce under twelve
   bytes; Bun accepts a single byte. Same shape as the AES-192 problem, so it
   gets the same answer: the accepted range is a static rule, and the engine's
   opinion is absorbed by a **cached capability probe** (`isIvLengthSupported`)
-  that asks *before* the operation. Asking after would surface as a failed tag
+  that asks _before_ the operation. Asking after would surface as a failed tag
   check, which is what a wrong key looks like — sending a reader hunting for
   the wrong problem entirely.
 - **Regenerate has to keep the width.** Drawing a fresh nonce at the mode's
@@ -184,7 +184,7 @@ Three consequences that had to be handled rather than hidden:
   would be a round trip the tool declined to finish.
 - **Decrypting a file usually refuses first.** Its plaintext is not valid UTF-8,
   so the output box says `undecodable_text` until the plaintext encoding is
-  switched to Hex. That is the *same* refusal that reports a wrong key, and it
+  switched to Hex. That is the _same_ refusal that reports a wrong key, and it
   keeps its name rather than being softened into an empty box. The message names
   Hex as the way out, and a test pins the behaviour so nobody later "fixes" it
   into silence.

@@ -100,7 +100,7 @@ the whole thing first, which is the cost being defended against.
 
 ## Related
 
-- A ceiling on something a stranger can *grow* over time needs a second number
+- A ceiling on something a stranger can _grow_ over time needs a second number
   and a way back down: [`growth-ceilings.md`](growth-ceilings.md).
 - Highlighting has its own ceiling for a different reason:
   [`syntax-highlighting.md`](syntax-highlighting.md).

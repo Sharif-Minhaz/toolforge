@@ -112,7 +112,7 @@ Two mistakes, and they compound:
 
 The fix is a second pass. Cut the rough mark out of the averaged corner,
 interpolate across it, and you have a real estimate of the footage rather than a
-smeared copy of the mark. Measured against *that*, the glow stands at its true
+smeared copy of the mark. Measured against _that_, the glow stands at its true
 height, and hysteresis — seed at a third of the peak, then grow through every
 connected pixel still above a noise floor — follows it to its edge.
 
@@ -138,7 +138,7 @@ synthetic sparkle that estimate lands within 0.008 of the truth.
 
 Only the dozen pixels at the very centre, where `a` is near 1 and the division
 stops being stable, have nothing left to recover — and those are inpainted
-*after* the un-blend, so the border they read from is clean footage rather than
+_after_ the un-blend, so the border they read from is clean footage rather than
 leftover glow.
 
 **Ask what the artefact physically is before deciding what to do about it.**
@@ -163,7 +163,7 @@ A channel with no room to say anything contributes almost nothing to either sum.
 
 ### Bound the correction by what is physically possible, not by what was estimated
 
-White was *added* to the pixel, so the footage underneath was darker than what is
+White was _added_ to the pixel, so the footage underneath was darker than what is
 there now — and never negative. That bounds the opacity from below the pixel
 itself: `a ≤ observed / 255` in **every** channel, or the arithmetic is claiming
 light was removed that was never there.
@@ -282,7 +282,7 @@ video: {
 ```
 
 The video track is re-encoded — no codec will change one corner of a compressed
-frame without it. The audio was *supposed* to be copied, and driving the real
+frame without it. The audio was _supposed_ to be copied, and driving the real
 tool in a browser is what showed it was not: the output came back carrying Opus
 where the source had AAC.
 
@@ -300,7 +300,7 @@ about behaviour has to be run.** This one was wrong for two rounds because it
 was only ever reasoned about.
 
 **Rule 45 in its second form.** "Depend or implement" is usually asked about
-output somebody else reads. Ask it about *input* handling too: a container's
+output somebody else reads. Ask it about _input_ handling too: a container's
 edge cases — edit lists, priming, negative timestamps — are somebody else's
 twenty years of bug reports, and a pump written in an afternoon has none of them.
 
@@ -332,7 +332,7 @@ Three fixes, in the order they matter:
    contract: the reader put it over the mark, so the mark is the thing in the
    centre and everything else is scenery.
 3. **Part the joins before choosing.** Brightness cannot separate a sparkle from
-   a caption's underline; *thickness* can. An erosion before the choice and a
+   a caption's underline; _thickness_ can. An erosion before the choice and a
    dilation after it — a morphological opening — drops every structure a few
    pixels wide and leaves a glyph tens of pixels across untouched.
 
@@ -344,7 +344,7 @@ found the actual cause immediately.
 
 ### …and the loop needs an answer key, or it only tells you what changed
 
-That loop measured the residue against *nothing*. It said how much lift was left
+That loop measured the residue against _nothing_. It said how much lift was left
 where the mark had been, which falls as the estimate improves and also falls when
 the detector quietly stops finding the mark — and the second is what happened
 next. Three fixes later the corner was measurably flatter and the sparkle was
@@ -396,11 +396,11 @@ lifts that blur: on the corner with the caption, a 50-pixel sparkle came back as
 the mark runs into the rim of the disc it was measured in, the disc was too small.
 Widen and measure again.
 
-| corner | glow residue, before → after | worst opacity error |
-| --- | --- | --- |
-| dark, mark alone | 21.9 → 5.6 | 0.025 |
-| bright, mark alone | 11.5 → 3.2 | 0.027 |
-| dark, caption under the mark | 21.6 → 10.4 (edge band) | mark found at all |
+| corner                       | glow residue, before → after | worst opacity error |
+| ---------------------------- | ---------------------------- | ------------------- |
+| dark, mark alone             | 21.9 → 5.6                   | 0.025               |
+| bright, mark alone           | 11.5 → 3.2                   | 0.027               |
+| dark, caption under the mark | 21.6 → 10.4 (edge band)      | mark found at all   |
 
 **When a measurement is circular — the mark's extent decides where the background
 is read from, and the background decides the mark's extent — iterate it instead
@@ -411,7 +411,7 @@ loop starts.
 
 `MAX_COMPONENT_SPAN_RATIO` refuses a blob spanning most of the search box, on the
 sound reasoning that a watermark is compact and a caption is not. It was applied
-to the *grown* mask — the one that includes the glow. So the better the detector
+to the _grown_ mask — the one that includes the glow. So the better the detector
 got at following the halo, the more likely it was to be refused: with the glow
 finally captured, the mark spanned three quarters of a snug box and the tool
 answered `mark_not_found`, which is the one failure a reader can do nothing
@@ -447,7 +447,7 @@ to do with the box — so the opening **escalates** until what is in the middle 
 compact enough to be a mark, and stops at the first radius that manages it. A
 glyph that is already compact is answered on the first try and never eroded.
 
-Where the caption genuinely lies *underneath* the glow, no thickness test can
+Where the caption genuinely lies _underneath_ the glow, no thickness test can
 help: there it is not a thin thing joined to a thick one, it is part of the same
 blob. That overlap is repainted. Measured on the caption corner, that is 8 levels
 of mean damage across the pixels that should not have been touched, against 174
@@ -465,11 +465,11 @@ The measurement says otherwise, and it takes ten lines. Run the same fill over
 the same holes on the **true** footage — the clip encoded without the mark — and
 see what a perfect answer would have scored:
 
-| corner | tool | a perfect fill of the true footage |
-| --- | --- | --- |
-| dark, smooth | 14.9 | **0.8** |
-| bright, smooth | 16.1 | **0.9** |
-| honeycomb | 21.9 | **10.5** |
+| corner         | tool | a perfect fill of the true footage |
+| -------------- | ---- | ---------------------------------- |
+| dark, smooth   | 14.9 | **0.8**                            |
+| bright, smooth | 16.1 | **0.9**                            |
+| honeycomb      | 21.9 | **10.5**                           |
 
 Diffusion was leaving one level on the table where the tool was leaving fifteen.
 The fill was not inventing badly; it was **faithfully propagating a bad border**.
@@ -504,10 +504,10 @@ tenth — while the weight stays the narrow ramp it was. The extra ring is
 interpolated and then almost entirely discarded; what it buys is a border made of
 footage.
 
-| corner | core residue, before → after |
-| --- | --- | 
-| dark | 14.9 → **6.0** |
-| bright | 16.1 → **4.5** |
+| corner    | core residue, before → after             |
+| --------- | ---------------------------------------- |
+| dark      | 14.9 → **6.0**                           |
+| bright    | 16.1 → **4.5**                           |
 | honeycomb | 21.9 → **14.5**, against a floor of 12.9 |
 
 ### A cross-fade written in opacity is not a cross-fade on a hard edge
@@ -533,18 +533,18 @@ control and has no truth to lose.
 Along that same contour the frame holds two things no opacity can subtract,
 because neither is in the average it was estimated from: the codec's ringing at a
 hard edge, and — worse — a chroma sample taken from a 2x2 block that is half mark
-and half footage. 4:2:0 means the colour of the mark's edge is *mixed into* the
+and half footage. 4:2:0 means the colour of the mark's edge is _mixed into_ the
 colour of the picture beside it before the tool ever sees the frame.
 
 Both want the same answer, which is to rebuild that band outright rather than
 un-blend it. It is one or two pixels wide, and a fill closes a hole that size
 invisibly. What it is worth, measured by taking it out again:
 
-| corner | core residue with the band | without it |
-| --- | --- | --- |
-| dark | 5.0 (worst 8) | 26.7 (worst 157) |
-| bright | 3.2 (worst 5) | 13.1 (worst 67) |
-| honeycomb | 14.3 (worst 66) | 25.4 (worst 107) |
+| corner    | core residue with the band | without it       |
+| --------- | -------------------------- | ---------------- |
+| dark      | 5.0 (worst 8)              | 26.7 (worst 157) |
+| bright    | 3.2 (worst 5)              | 13.1 (worst 67)  |
+| honeycomb | 14.3 (worst 66)            | 25.4 (worst 107) |
 
 **When a model cannot represent something, find where that thing lives and take
 those pixels out of the model's hands.** Do not widen the model until it covers
@@ -588,12 +588,12 @@ the divisor is small and the cause lives somewhere else entirely.**
 Measured on a clip rendered to do precisely this — black to blown out over two
 seconds, with a near-saturated streak crossing the mark half way — the opacity
 came back a flat four hundredths low across the whole glow. Not a scale error, an
-*offset*, which is the signature of a background that is uniformly too bright.
+_offset_, which is the signature of a background that is uniformly too bright.
 
 ### Two things were wrong with it, and the second one is not obvious
 
 The first is the familiar one, one layer further out. The reach disc stopped
-growing when the *thresholded* mask no longer touched its rim — but the threshold
+growing when the _thresholded_ mask no longer touched its rim — but the threshold
 is where the glow stops being worth repainting, not where it stops. Past it the
 glow runs on for another third of its radius at a hundredth of an opacity:
 invisible in the output, and sitting squarely in the rim the background is read
@@ -614,7 +614,7 @@ pixels across. It sags toward whatever surface that rim implies.
 The premise the module already rests on says what to do instead. Averaging a
 moving corner over two dozen moments leaves a gradient rather than detail — so
 the background is not merely smooth, it is **low order**, and a low-order surface
-can be *fitted* to every pixel outside the mark and then evaluated inside it.
+can be _fitted_ to every pixel outside the mark and then evaluated inside it.
 That is extrapolation from hundreds of pixels instead of interpolation from a
 ring. The residual is still filled in harmonically on top, so anything the
 surface misses near the rim is still carried inward: model for the shape, fill
@@ -623,12 +623,12 @@ for the rest.
 A quadratic. A cubic was tried and is worse — on a bright corner it scored 3.6
 against the quadratic's 1.3, which is a fit spending its extra freedom on noise.
 
-| corner | before this round | rim test | + fitted background |
-| --- | --- | --- | --- |
-| black → white, streak crossing the mark | 11.8 | 7.1 | **3.6** |
-| dark | 5.0 | 1.8 | 1.9 |
-| bright | 3.2 | 3.2 | **1.3** |
-| honeycomb | 14.3 | 14.3 | 14.8 |
+| corner                                  | before this round | rim test | + fitted background |
+| --------------------------------------- | ----------------- | -------- | ------------------- |
+| black → white, streak crossing the mark | 11.8              | 7.1      | **3.6**             |
+| dark                                    | 5.0               | 1.8      | 1.9                 |
+| bright                                  | 3.2               | 3.2      | **1.3**             |
+| honeycomb                               | 14.3              | 14.3     | 14.8                |
 
 **Interpolating across a hole uses one ring of pixels. Fitting a model uses all
 of them. When the thing being estimated is known to be smooth, that is not a
@@ -640,7 +640,7 @@ The fitted background is covered by a unit test: revert it and two assertions
 fail. The rim-flatness rule is not, and it cannot easily be.
 
 To catch it, the fixture's averaged corner has to carry structure a low-order fit
-*cannot* follow, so that the rim actually matters — and a static, high-frequency
+_cannot_ follow, so that the rim actually matters — and a static, high-frequency
 ripple strong enough to do that is, by construction, indistinguishable from a
 watermark on a corner with no watermark in it. Adding one turned "refuses a
 corner with nothing standing in it" red, which is a true statement about the
@@ -680,7 +680,7 @@ hundredth of an opacity — dilated it, eroded it, and rebuilt the difference, o
 the reasoning that this is a thin ring around the mark's outer edge where the
 codec rings.
 
-Around a smooth synthetic mark it *is* a thin ring, and it measured as costing
+Around a smooth synthetic mark it _is_ a thin ring, and it measured as costing
 nothing and buying about two tenths of a level. On a real clip an opacity map is
 made from two dozen compressed frames and a hundredth of an opacity is far below
 its noise, so the region is not a disc at all — it is speckle. And
@@ -691,7 +691,7 @@ real frame side by side — before, opacity, rebuild weight, un-blend only, fina
 showed it in one look, after several rounds of reasoning about finished output
 had not.
 
-Ringing lives where the mark has an *edge*, so ask for the edge. The outline band
+Ringing lives where the mark has an _edge_, so ask for the edge. The outline band
 that `steepAlpha` finds does that already and is measured; the outer ring is
 gone.
 
@@ -722,14 +722,14 @@ the estimator looked fine on synthetic input.
 
 The mark's standing lift above its own neighbourhood, averaged over the clip:
 
-| clip | before | after |
-| --- | --- | --- |
-| `gem.mp4`, 720x1280 | +58.5 | **+3.8** |
-| `trash.mp4`, 1024x576 | +55.8 | **+14.1** |
+| clip                  | before | after     |
+| --------------------- | ------ | --------- |
+| `gem.mp4`, 720x1280   | +58.5  | **+3.8**  |
+| `trash.mp4`, 1024x576 | +55.8  | **+14.1** |
 
 A ghost outline is still visible on some frames of `trash.mp4`, and the honest
 reading of +14.1 is that it is not finished. What is finished is the part that
-made it *worse than doing nothing*.
+made it _worse than doing nothing_.
 
 **A residue metric averaged over frames hid this for a whole round.** The error
 from a mis-estimated overlay is proportional to how far a given frame's footage
@@ -767,20 +767,20 @@ not let the cheap one stand in for the expensive one at the end.
 picture too: a hexagon seam inside the mark's bounding box scores as residue. It
 put `trash.mp4` at +13.9 and made the tool look far worse than it was.
 
-The question is whether the mark's area is *anomalous*, so compare it with a ring
+The question is whether the mark's area is _anomalous_, so compare it with a ring
 around it, at two scales — a small high-pass for texture and a large one for
 mark-sized offsets — and take the ratio. One is indistinguishable.
 
 Measured on the files the browser actually wrote:
 
-| clip | scale | input | output |
-| --- | --- | --- | --- |
-| `gem.mp4` | fine | 17.8 | **1.29** |
-| `gem.mp4` | broad | 6.4 | **0.86** |
-| `trash.mp4` | fine | 3.4 | 1.86 |
-| `trash.mp4` | broad | 2.8 | 1.56 |
+| clip        | scale | input | output   |
+| ----------- | ----- | ----- | -------- |
+| `gem.mp4`   | fine  | 17.8  | **1.29** |
+| `gem.mp4`   | broad | 6.4   | **0.86** |
+| `trash.mp4` | fine  | 3.4   | 1.86     |
+| `trash.mp4` | broad | 2.8   | 1.56     |
 
-`gem.mp4` comes back under 1 at the broad scale — the mark's area is *smoother*
+`gem.mp4` comes back under 1 at the broad scale — the mark's area is _smoother_
 than the picture around it, which is what gone looks like. `trash.mp4` is halved
 and still visible.
 
@@ -795,7 +795,7 @@ a − â   =  ΔB(1 − a) / (255 − B)
 error_t ≈  ΔB · (255 − bₜ) / (255 − B)
 ```
 
-The per-frame error is the background error scaled by how far *this* frame's
+The per-frame error is the background error scaled by how far _this_ frame's
 brightness sits from the clip's average. Over a clip that swings from dark brown
 to bright orange that factor runs from about 0.6 to 1.6 — so the error changes
 sign across the clip and averages to nearly nothing, while every individual frame
@@ -806,7 +806,7 @@ every frame.** And this is the second time in this file that averaging over
 frames hid a defect; a per-frame worst case is the only honest form of this
 metric.
 
-Note also what the arithmetic does *not* say: the error is not amplified by the
+Note also what the arithmetic does _not_ say: the error is not amplified by the
 headroom. It is about `ΔB` itself, one for one. The whole remaining budget is the
 background estimate, whose error on this clip's own footage is 4 levels median
 and 16 at the ninetieth percentile.
@@ -833,7 +833,7 @@ Worth recording so they are not tried again:
   remove.
 
 **Motion compensation was ruled out before building it.** If the footage
-translated, the picture under a fixed mark would be *observable* in another frame
+translated, the picture under a fixed mark would be _observable_ in another frame
 and the opacity could be measured rather than inferred. It does not: a global
 translation search returns shifts pinned at the search limit with residuals up to
 108 levels, so the motion is not a translation. Ten minutes to find out, against
@@ -851,12 +851,12 @@ the watermark still being there.
 Proving it took a control, because "the corner is darker than the background
 estimate says" is equally consistent with the estimate being wrong. Cut the same
 hole into patches of the same clip that contain **no mark** and the estimator
-reads systematically *high* in the middle of its hole. So the ring is not that —
+reads systematically _high_ in the middle of its hole. So the ring is not that —
 correcting for the known bias makes it deeper, not shallower. And on the clip
 whose control bias is essentially zero, the ring is there at full size.
 
 Its colour rules out the obvious explanation as well: it takes most from the
-channel whose background is *darkest*, and an alpha composite of any single
+channel whose background is _darkest_, and an alpha composite of any single
 colour does the opposite. So the halo is carried as **what it measures**, a
 signed field, rather than as an opacity of an invented colour. Recording the
 number honestly beats a model that fits the story and not the data.
@@ -867,7 +867,7 @@ the bright half beautifully and has no term at all for the other half.
 ### Two defects can hide each other, and then neither is visible
 
 The dark ring sat outside the reach disc, so nothing measured it. The disc
-stopped there because the growth test asked whether the rim's lift was *above* a
+stopped there because the growth test asked whether the rim's lift was _above_ a
 floor — and the ring's lift is below it. Each defect made the other unobservable:
 fix the sign and the ring is still outside the disc, fix the disc and there is no
 code that looks for a ring.
@@ -876,7 +876,7 @@ Then a third, in the same place. The obvious growth test — is the residual fla
 at the rim — cannot work at all, and only a fixture with a ring of known depth
 showed it: the background is fitted to everything outside the hole, so outside
 the hole the residual is zero **by construction**. The test was asking a question
-whose answer was built in. The signal has to be read against the *smooth model*,
+whose answer was built in. The signal has to be read against the _smooth model_,
 which cannot follow a ring, in a band beyond the disc.
 
 ### Subtract only what is arranged around the mark
@@ -900,12 +900,12 @@ symmetry the first one has and the second one does not.**
 
 ### Where it stands, on the two clips, from the files the browser wrote
 
-| clip | scale | input | output |
-| --- | --- | --- | --- |
-| `gem.mp4` | fine | 17.5 | **1.11** |
-| `gem.mp4` | broad | 6.7 | **0.83** |
-| `trash.mp4` | fine | 3.4 | 1.91 |
-| `trash.mp4` | broad | 2.8 | 1.62 |
+| clip        | scale | input | output   |
+| ----------- | ----- | ----- | -------- |
+| `gem.mp4`   | fine  | 17.5  | **1.11** |
+| `gem.mp4`   | broad | 6.7   | **0.83** |
+| `trash.mp4` | fine  | 3.4   | 1.91     |
+| `trash.mp4` | broad | 2.8   | 1.62     |
 
 `gem.mp4` is done: the mark's area is statistically indistinguishable from the
 picture around it at both scales, and looks it.
@@ -932,12 +932,12 @@ the answer still there to check against.
 
 It immediately settled a question that three proxies had answered differently:
 
-| outline band | opacity | core error |
-| --- | --- | --- |
-| on | estimated | 10.6 |
-| on | true | 8.7 |
-| off | estimated | 4.9 |
-| off | **true** | **0.7** |
+| outline band | opacity   | core error |
+| ------------ | --------- | ---------- |
+| on           | estimated | 10.6       |
+| on           | true      | 8.7        |
+| off          | estimated | 4.9        |
+| off          | **true**  | **0.7**    |
 
 Two things fall out. The un-blend on a correctly measured mark is **exact** — 0.7
 levels, which is rounding. And the rebuild's outline band, justified on a
@@ -954,7 +954,7 @@ smooth-but-invented ones, so it wins on the first and loses on the second.
 Gating the band off for weak marks is what that table says to do, and end to end
 on the real clips it made the output **worse**, not better: a visible rectangle
 and a half-removed sparkle. The band had not been causing that error — it had
-been *covering* one. On `trash.mp4` the reach disc grows to 153 px inside a
+been _covering_ one. On `trash.mp4` the reach disc grows to 153 px inside a
 173 px box, so the opacity is estimated across an area far larger than the mark,
 and a smooth fill over the top was hiding how wrong it was over that whole area.
 
@@ -972,10 +972,10 @@ The remaining idea for the background estimate was patch-based synthesis —
 continue the honeycomb across the hole instead of smoothing over it. Prototyped
 against the same control patches:
 
-| estimator | median | p90 | p99 |
-| --- | --- | --- | --- |
-| diffusion | 4.0 | 15.8 | 28.6 |
-| patch synthesis | 4.1 | 15.9 | 29.0 |
+| estimator       | median | p90  | p99  |
+| --------------- | ------ | ---- | ---- |
+| diffusion       | 4.0    | 15.8 | 28.6 |
+| patch synthesis | 4.1    | 15.9 | 29.0 |
 
 Identical, and the reason is worth keeping. Exemplar synthesis produces
 **plausible** texture, not **correct** texture. For painting a hole that is the
@@ -1010,7 +1010,7 @@ one is already at its floor.**
 
 `catch { return failure("clean_failed") }` type-checks, satisfies "no swallowed
 exceptions" if you read it quickly, and is useless. A reader gets a localised
-sentence they can act on; whoever has to *fix* it gets nothing.
+sentence they can act on; whoever has to _fix_ it gets nothing.
 
 `VideoFailure` now carries an optional `detail` alongside `reason`, and the run
 tracks which of six stages it is in. The reason is rendered; the detail is
@@ -1018,8 +1018,11 @@ logged and never rendered, which keeps rule 6 intact — an engine's error messa
 must not reach the page — while making the log line worth reading:
 
 ```json
-{ "event": "watermark_remover.video_clean_failed", "reason": "clean_failed",
-  "detail": "convert: EncodingError: Encoding error" }
+{
+    "event": "watermark_remover.video_clean_failed",
+    "reason": "clean_failed",
+    "detail": "convert: EncodingError: Encoding error"
+}
 ```
 
 **A named refusal is for the reader. A detail is for whoever gets the bug
@@ -1079,7 +1082,7 @@ buys is a search that cannot pick the wrong corner when there is a mark, and the
 price, stated in the article rather than hidden, is that a picture with no mark
 gets its brightest corner named.
 
-The knock-on is worth noting: the resize handle sits on the corner *opposite* the
+The knock-on is worth noting: the resize handle sits on the corner _opposite_ the
 pinned one, and which way a drag means "grow" follows from the same fact. A
 handle hard-coded to the top-left shrank the box when it was dragged outward on
 three of the four corners.
@@ -1092,7 +1095,7 @@ use what it already knew. It has the pixels the moment the file is chosen and it
 can find the mark in them, so the run starts on the pick and the answer says
 which corner it landed in.
 
-Every control below the picture is now a *correction* rather than a step, and
+Every control below the picture is now a _correction_ rather than a step, and
 each one re-runs immediately — moving the box, naming the corner, flipping the
 whole-box switch. **A control that requires a second press to take effect is a
 step the reader has to remember; a control that re-runs is a control.** The
@@ -1104,7 +1107,7 @@ Part two's detector works because footage moves and a mark does not: average two
 dozen moments and everything except the mark washes out. A still has one moment,
 so that estimate has to come from somewhere else — and the somewhere else was
 already there. `fitSmoothBackground` recovers the picture under the mark from the
-ring of untouched pixels around it, and the clip half runs it *on the average*.
+ring of untouched pixels around it, and the clip half runs it _on the average_.
 The still half runs the identical fit on the only sample there is.
 
 Measured on a synthetic still — a four-pointed star with its glow, at 0.88 core
@@ -1133,7 +1136,7 @@ clip half calls it once per clip while the still half calls it once per picture.
 
 ### A still comes back as PNG, whatever it arrived as
 
-Re-encoding a JPEG to change one corner of it puts the *whole* picture through a
+Re-encoding a JPEG to change one corner of it puts the _whole_ picture through a
 second lossy pass. The tab promises that every pixel outside the repainted
 rectangle is the one the reader handed over, and only a lossless container can
 keep that promise. The test asserts it directly: after a run, every byte outside

@@ -63,9 +63,9 @@ one small object.
 
 ### Two gates, in opposite directions
 
-| Gate | Applies to | Fails |
-| --- | --- | --- |
-| Rate limit | every call | closed |
+| Gate         | Applies to                   | Fails                  |
+| ------------ | ---------------------------- | ---------------------- |
+| Rate limit   | every call                   | closed                 |
 | Bearer token | `kind: "network"` tools only | closed, in both senses |
 
 The rate limit fails closed for the reason `docs/security.md` gives: an
@@ -79,7 +79,7 @@ reason it is open — or leaving the networked one exposed. Per tool is the only
 arrangement where "encode this base64" needs nothing and "inspect this domain"
 needs the token.
 
-It also refuses when *no token is configured*, not just when the wrong one is
+It also refuses when _no token is configured_, not just when the wrong one is
 sent. A gate that opens because an environment variable is blank is not a gate.
 
 ### The Turnstile substitution
@@ -126,7 +126,7 @@ fields now carry the same object.
 The test that was supposed to catch this is the reason it shipped:
 
 ```ts
-expect(block?.text).toBe("hello-world");   // asserted the bug, and passed
+expect(block?.text).toBe("hello-world"); // asserted the bug, and passed
 ```
 
 It asserted what the code did rather than what a client needs. Its replacement
@@ -148,7 +148,7 @@ Rebuilt centrally rather than authored strict, so no adapter can forget it.
 **`server-only` in the import graph makes the registry untestable.** The Domain
 Inspector's `runInspection` is marked `server-only`, and importing it statically
 put that marker in the graph of `tools/index.ts` — which the tests load outside
-a server runtime. Fixed by importing it *at the point of use* inside the
+a server runtime. Fixed by importing it _at the point of use_ inside the
 handler, which keeps one array in `tools/index.ts` and keeps that array
 testable.
 

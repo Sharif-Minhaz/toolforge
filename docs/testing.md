@@ -49,14 +49,14 @@ you got back what you put in.**
 
 It does not have to be a big lift. In rough order of cheapness:
 
-| Kind | Example | Where |
-| --- | --- | --- |
-| A program already on the machine | `file(1)`, ImageMagick's `identify`, Pillow, `patch(1)` | [image-codecs](case-studies/image-codecs.md), [diff](case-studies/diff.md) |
-| A library the tool already depends on for the other direction | `jsqr` decodes what the QR encoder wrote | [qr](case-studies/qr.md) |
-| The reference parser for a printer you hand-wrote | `graphql-js` parses the SDL `renderSdl` printed | [graphql-server](case-studies/graphql-server.md) |
-| The library you are cloning, driven without its server | `json-server`'s own `Service` class in a scratch directory | [json-server](case-studies/json-server.md) |
-| The reference implementation of the format | `blurhash@2`, byte-for-byte | [blurhash](case-studies/blurhash.md) |
-| A throwaway script that calls the real package | every `@faker-js/faker` id in the registry | [tree-editors](patterns/tree-editors.md) |
+| Kind                                                          | Example                                                    | Where                                                                      |
+| ------------------------------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------- |
+| A program already on the machine                              | `file(1)`, ImageMagick's `identify`, Pillow, `patch(1)`    | [image-codecs](case-studies/image-codecs.md), [diff](case-studies/diff.md) |
+| A library the tool already depends on for the other direction | `jsqr` decodes what the QR encoder wrote                   | [qr](case-studies/qr.md)                                                   |
+| The reference parser for a printer you hand-wrote             | `graphql-js` parses the SDL `renderSdl` printed            | [graphql-server](case-studies/graphql-server.md)                           |
+| The library you are cloning, driven without its server        | `json-server`'s own `Service` class in a scratch directory | [json-server](case-studies/json-server.md)                                 |
+| The reference implementation of the format                    | `blurhash@2`, byte-for-byte                                | [blurhash](case-studies/blurhash.md)                                       |
+| A throwaway script that calls the real package                | every `@faker-js/faker` id in the registry                 | [tree-editors](patterns/tree-editors.md)                                   |
 
 A scratch dependency installed in a temporary directory, used once and deleted,
 is not a dependency of this project. What stays in the repository is the

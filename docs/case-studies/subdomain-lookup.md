@@ -69,8 +69,8 @@ scanner. This tool reads a public index anybody may read without a token, from a
 fixed address, and hands back names the caller could have fetched themselves.
 
 A challenge would cost every reader a puzzle to save the one abuser a
-rate-limited hour. What is actually at risk is *throughput against a shared
-allowance*, and a quota is the gate shaped like that. The same reasoning is
+rate-limited hour. What is actually at risk is _throughput against a shared
+allowance_, and a quota is the gate shaped like that. The same reasoning is
 written down for the image tools' URL importer in
 `src/modules/tools/actions/import-remote-image.ts`.
 
@@ -81,11 +81,11 @@ written down for the image tools' URL importer in
 "The response can be big" is the tool's central problem, and it has three
 distinct answers because it is three distinct problems:
 
-| Where | Cap | What it protects |
-| --- | --- | --- |
-| `repository/crt-name.ts` | 4 MB, **while the body streams** | The server's memory |
-| `domain/parse.ts` | 20,000 records | What crosses the Server Action boundary |
-| `domain/list.ts` | 100 rows a page | The reader's browser |
+| Where                    | Cap                              | What it protects                        |
+| ------------------------ | -------------------------------- | --------------------------------------- |
+| `repository/crt-name.ts` | 4 MB, **while the body streams** | The server's memory                     |
+| `domain/parse.ts`        | 20,000 records                   | What crosses the Server Action boundary |
+| `domain/list.ts`         | 100 rows a page                  | The reader's browser                    |
 
 The first is enforced during the stream and cancels the reader at the cut, not
 after the whole reply has landed — measuring afterwards is how a reply nobody
@@ -98,8 +98,8 @@ and every download all work over the whole result. A download that stopped at th
 visible page would be the one place this tool quietly lost data.
 
 When the second cap bites, `returned` reports what the index held and `total`
-what was kept, so the UI can say *"the index holds 41,203 names and this list is
-the first 20,000"* rather than showing a prefix of the truth. **A truncation
+what was kept, so the UI can say _"the index holds 41,203 names and this list is
+the first 20,000"_ rather than showing a prefix of the truth. **A truncation
 nobody is told about is worse than a refusal.** The largest domains are refused
 upstream anyway — `google.com` answers `413 apex too large` — which is worth
 knowing before deciding the caps are hypothetical.

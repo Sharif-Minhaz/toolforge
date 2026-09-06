@@ -78,11 +78,11 @@ the time; ten find it essentially always.
 [`aes.md`](aes.md) records a value that works in Bun and Node and fails in
 Chrome. This module has the same shape with the roles reversed:
 
-| Public exponent | Bun | Node | Chrome, Firefox |
-| --- | --- | --- | --- |
-| 3 | ✅ | ✅ | ✅ |
-| 65537 | ✅ | ✅ | ✅ |
-| 17, 65539, any other odd integer | ✅ | ✅ | ❌ |
+| Public exponent                  | Bun | Node | Chrome, Firefox |
+| -------------------------------- | --- | ---- | --------------- |
+| 3                                | ✅  | ✅   | ✅              |
+| 65537                            | ✅  | ✅   | ✅              |
+| 17, 65539, any other odd integer | ✅  | ✅   | ❌              |
 
 So `bun test` **cannot** observe the refusal this tool's most interesting
 error path exists for. `generate.test.ts` says so out loud rather than pretending

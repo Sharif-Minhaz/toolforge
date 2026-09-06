@@ -109,7 +109,7 @@ Two traps it cost are recorded in
 
 ## Related
 
-- [`syntax-highlighting.md`](syntax-highlighting.md) — the *other* tokenizer,
+- [`syntax-highlighting.md`](syntax-highlighting.md) — the _other_ tokenizer,
   and why a converter needs two.
 - [`../testing.md`](../testing.md#verifying-against-something-that-is-not-you) —
   how to prove the writer is readable by somebody else.

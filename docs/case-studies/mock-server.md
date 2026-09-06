@@ -113,7 +113,7 @@ route. That is a real trade and it is why the switch in the import panel exists.
 
 The second importer is Postman, and everything hard about it is that a
 collection is **not a specification**. An OpenAPI operation says what a caller
-*must* send; a Postman request shows what one *did* send. Every mapping in
+_must_ send; a Postman request shows what one _did_ send. Every mapping in
 `domain/postman.ts` is therefore a reading of a sample, and three of them are
 worth stating:
 
