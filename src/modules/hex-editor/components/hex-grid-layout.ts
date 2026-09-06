@@ -19,3 +19,13 @@ export const HEX_GRID_STYLE = Object.freeze({
  * a hex dump.
  */
 export const HEX_GRID_MIN_WIDTH = "48.5rem";
+
+/**
+ * The grid's element id.
+ *
+ * Only one grid is ever mounted — full screen moves the editor rather than
+ * copying it — so an id is enough for the find bar to hand focus back to the
+ * bytes when it closes, without threading a ref through a dialog that remounts
+ * everything under it.
+ */
+export const HEX_GRID_ID = "hex-editor-grid";

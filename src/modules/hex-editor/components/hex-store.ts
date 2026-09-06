@@ -102,6 +102,13 @@ export type HexState = {
      * that does it free of a state write.
      */
     scrollTarget: { offset: number; nonce: number } | null;
+    /**
+     * Counts scroll requests, and nothing else. It used to be `revision + 1`,
+     * which collided the moment two requests were made without a byte changing
+     * between them — a fullscreen toggle followed by an arrow key — and a
+     * repeated nonce is a scroll the grid never performs.
+     */
+    scrollNonce: number;
 
     openFile: (bytes: Uint8Array, name: string) => void;
     closeFile: () => void;
@@ -128,6 +135,12 @@ export type HexState = {
     clearSearch: () => void;
     goToAdjacentMatch: (direction: "next" | "previous") => void;
     goToOffset: (offset: number) => void;
+    /**
+     * Bring an offset back into view without touching the selection. Full
+     * screen moves the grid into a dialog, which mounts a fresh scroller at the
+     * top of the file; this is what puts the caret's row back on screen.
+     */
+    requestScroll: (offset: number) => void;
 
     setRowsPerPage: (rows: number) => void;
 };
@@ -154,6 +167,7 @@ export const useHexStore = create<HexState>()((set, get) => ({
 
     rowsPerPage: 20,
     scrollTarget: null,
+    scrollNonce: 0,
 
     openFile: (bytes, name) =>
         set((state) => ({
@@ -167,7 +181,7 @@ export const useHexStore = create<HexState>()((set, get) => ({
             matches: [],
             matchLength: 0,
             matchesTruncated: false,
-            scrollTarget: { offset: 0, nonce: state.revision + 1 },
+            ...scrollRequest(state, 0),
         })),
 
     closeFile: () =>
@@ -232,8 +246,7 @@ export const useHexStore = create<HexState>()((set, get) => ({
             return {
                 selection,
                 pendingNibble: null,
-                scrollTarget: { offset: selection.focus, nonce: state.revision + 1 },
-                revision: state.revision + 1,
+                ...scrollRequest(state, selection.focus),
             };
         }),
 
@@ -330,7 +343,7 @@ export const useHexStore = create<HexState>()((set, get) => ({
         writeBytes(set, get, [{ offset, value: 0 }]);
         set((current) => ({
             selection: collapseAt(offset, current.document?.length ?? 0),
-            scrollTarget: { offset, nonce: current.revision + 1 },
+            ...scrollRequest(current, offset),
         }));
     },
 
@@ -349,7 +362,7 @@ export const useHexStore = create<HexState>()((set, get) => ({
             revision: current.revision + 1,
             pendingNibble: null,
             selection: collapseAt(stepped.step[0].offset, current.document?.length ?? 0),
-            scrollTarget: { offset: stepped.step[0].offset, nonce: current.revision + 1 },
+            ...scrollRequest(current, stepped.step[0].offset),
         }));
     },
 
@@ -368,7 +381,7 @@ export const useHexStore = create<HexState>()((set, get) => ({
             revision: current.revision + 1,
             pendingNibble: null,
             selection: collapseAt(stepped.step[0].offset, current.document?.length ?? 0),
-            scrollTarget: { offset: stepped.step[0].offset, nonce: current.revision + 1 },
+            ...scrollRequest(current, stepped.step[0].offset),
         }));
     },
 
@@ -446,13 +459,31 @@ export const useHexStore = create<HexState>()((set, get) => ({
             return {
                 selection: collapseAt(clamped, state.document?.length ?? 0),
                 pendingNibble: null,
-                scrollTarget: { offset: clamped, nonce: state.revision + 1 },
+                ...scrollRequest(state, clamped),
                 revision: state.revision + 1,
             };
         }),
 
+    requestScroll: (offset) =>
+        set((state) => scrollRequest(state, clampOffset(offset, state.document?.length ?? 0))),
+
     setRowsPerPage: (rows) => set({ rowsPerPage: Math.max(1, rows) }),
 }));
+
+/**
+ * A scroll request and the counter that makes asking twice ask twice.
+ *
+ * Spread into whatever partial the caller is already returning, so the nonce
+ * and the target can never be written apart from one another.
+ */
+function scrollRequest(
+    state: HexState,
+    offset: number,
+): Pick<HexState, "scrollTarget" | "scrollNonce"> {
+    const nonce = state.scrollNonce + 1;
+
+    return { scrollTarget: { offset, nonce }, scrollNonce: nonce };
+}
 
 type Write = { readonly offset: number; readonly value: number };
 
@@ -505,7 +536,7 @@ function advanceCaret(
 
     set((state) => ({
         selection: collapseAt(offset, length),
-        scrollTarget: { offset, nonce: state.revision + 1 },
+        ...scrollRequest(state, offset),
         revision: state.revision + 1,
     }));
 }

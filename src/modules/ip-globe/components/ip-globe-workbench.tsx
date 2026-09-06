@@ -14,6 +14,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { InputLimitMeter, useInputLimitStatus } from "@/modules/tools/components/input-limit-meter";
 import { OptionSelect, OptionSwitch } from "@/modules/tools/components/option-controls";
+import { ScanRadar } from "@/modules/tools/components/scan-radar";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
@@ -47,6 +48,21 @@ const INPUT_FAILURES: readonly RouteFailureReason[] = [
     "unsupported_trace_format",
     "invalid_hostname",
 ];
+
+/**
+ * What the sweep is captioned with while a route is in flight.
+ *
+ * The last hop is the destination — the thing the route was typed to reach — so
+ * that is what the radar names. A box this parser cannot read is still allowed
+ * to run, since the refusal comes back from the server, so the first line stands
+ * in when there are no hops to name.
+ */
+function describeRun(text: string, mode: RouteMode): string {
+    const parsed = parseRouteInput(text, mode);
+    const destination = parsed.ok ? parsed.hops.at(-1)?.label : undefined;
+
+    return destination ?? text.trim().split("\n")[0]?.trim() ?? "";
+}
 
 type IpGlobeWorkbenchProps = {
     /** From `?host=`, so a shared link opens on the host it names — filled, never run. */
@@ -82,6 +98,10 @@ export function IpGlobeWorkbench({
     const [groupByCountry, setGroupByCountry] = useState(DEFAULT_ROUTE_OPTIONS.groupByCountry);
 
     const [running, setRunning] = useState(false);
+    // Read off the box at the press, not off the debounced preview: a route
+    // mapped 300 ms after the last keystroke would otherwise be captioned with
+    // the destination of the text that came before it.
+    const [runningLabel, setRunningLabel] = useState("");
     const [report, setReport] = useState<RouteReport | null>(null);
     const [failure, setFailure] = useState<RouteFailureReason | null>(null);
 
@@ -155,6 +175,7 @@ export function IpGlobeWorkbench({
         // the box.
         setReport(null);
         setFailure(null);
+        setRunningLabel(describeRun(text, mode));
         setRunning(true);
         scrollToResult();
 
@@ -304,8 +325,27 @@ export function IpGlobeWorkbench({
                 </CardContent>
             </Card>
 
-            <div ref={resultRef}>
-                {report !== null && (
+            <div ref={resultRef} className="scroll-mt-6">
+                {/*
+                 * The radar occupies the slot the result will take, so the swap
+                 * reads as one instrument settling rather than two components
+                 * trading places — the same sweep the other three network tools
+                 * run.
+                 *
+                 * One caption, not a cycle. Every hop is looked up in parallel
+                 * rather than in named phases, so the stages a cycle would name
+                 * are all in flight at once; putting them on a 1.4-second timer
+                 * would be a sequence invented for the animation.
+                 */}
+                {running && (
+                    <ScanRadar
+                        label={runningLabel}
+                        captions={[t("statusMapping")]}
+                        restingCaption={t("statusMapping")}
+                    />
+                )}
+
+                {!running && report !== null && (
                     <Card>
                         <CardHeader>
                             <CardTitle>{t("resultTitle")}</CardTitle>

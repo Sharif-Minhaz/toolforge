@@ -20,6 +20,7 @@ export const HEX_EDITOR_ARTICLE_SECTIONS = [
     { id: "editing", titleKey: "editing.title" },
     { id: "inspector", titleKey: "inspector.title" },
     { id: "searching", titleKey: "searching.title" },
+    { id: "viewport", titleKey: "viewport.title" },
     { id: "shortcuts", titleKey: "shortcuts.title" },
     { id: "saving", titleKey: "saving.title" },
     { id: "useCases", titleKey: "useCases.title" },
@@ -185,6 +186,14 @@ export async function HexEditorArticle() {
                             })}
                         </p>
                         <p>{t.rich("searching.p3", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("searching.p4", ARTICLE_TAGS)}</p>
+                    </div>
+                </ArticleSection>
+
+                <ArticleSection id="viewport" title={t("viewport.title")}>
+                    <div className={PROSE}>
+                        <p>{t.rich("viewport.p1", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("viewport.p2", ARTICLE_TAGS)}</p>
                     </div>
                 </ArticleSection>
 

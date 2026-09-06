@@ -142,6 +142,14 @@ had the quota in `actions/map-route.ts` and would have shipped exactly that hole
   `update()` draws synchronously. So the spin is our own frame loop — and,
   crucially, a drag or an arrow key has to call `update()` itself, or moving the
   globe with rotation switched off changes `phi` and nothing on screen.
+- **Both axes come off the one gesture, and theta is passed every frame.** A
+  drag moves `phi` east–west and `theta` north–south, clamped just short of a
+  quarter turn — past a pole COBE keeps going and the globe reads as upside down
+  with no way back but more dragging. The idle spin has to hand `theta` back on
+  every `update()` too: sending only `phi` snaps the camera to the angle the
+  globe was built with the instant a drag lets go. On touch the canvas keeps
+  `touch-pan-y`, because it is as wide as the column on a phone and taking
+  vertical gestures for the globe would take away the only way to scroll past it.
 - **Array props rebuild the context.** `markers` and `arcs` are fresh arrays on
   every render of the island, so depending on them directly tore down and rebuilt
   a WebGL context several times a keystroke. The effect depends on a serialised
@@ -160,6 +168,25 @@ had the quota in `actions/map-route.ts` and would have shipped exactly that hole
   the browser's own colour parser. The arithmetic half lives in `domain/palette.ts`
   and is tested; a non-hex result returns `null` rather than `NaN`, because WebGL
   renders a `NaN` uniform as black without complaining.
+
+---
+
+## The wait is the shared radar, with one caption
+
+A route is several round trips against three registries and takes seconds, so
+the slot the result will take holds `tools/components/scan-radar.tsx` while it
+runs — the same sweep the Domain Inspector, the Port Scanner and the Subdomain
+Lookup show, themed by `--tool-accent` alone.
+
+It cycles **one** caption, not the Domain Inspector's five. That tool really does
+run named phases in order; this one fans every hop out at once under
+`LOOKUP_CONCURRENCY`, so resolution, the registry and reverse DNS are all in
+flight together. Naming them on a 1.4-second timer would be a sequence invented
+for the animation.
+
+The label is read off the box at the press rather than from the debounced
+preview, or a route mapped inside 300 ms of the last keystroke would be captioned
+with the destination of the text that came before it.
 
 ---
 

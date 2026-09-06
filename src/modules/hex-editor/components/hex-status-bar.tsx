@@ -31,7 +31,7 @@ export function HexStatusBar() {
 
     if (document === null) {
         return (
-            <div className="text-muted-foreground border-border/70 flex h-8 items-center border-t px-3 text-[0.6875rem]">
+            <div className="text-muted-foreground border-border/70 flex h-8 shrink-0 items-center border-t px-3 text-[0.6875rem]">
                 {t("noFile")}
             </div>
         );
@@ -54,7 +54,7 @@ export function HexStatusBar() {
     return (
         <div
             className={cn(
-                "border-border/70 text-muted-foreground flex h-8 items-center gap-x-4 gap-y-1",
+                "border-border/70 text-muted-foreground flex h-8 shrink-0 items-center gap-x-4 gap-y-1",
                 "overflow-x-auto border-t px-3 font-mono text-[0.6875rem] whitespace-nowrap",
             )}
         >

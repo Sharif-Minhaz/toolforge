@@ -10951,6 +10951,9 @@
             "emptyDescription": "Choose a file or drop one here. It is read into this tab and never sent anywhere.",
             "openFile": "Open file",
             "resizeLabel": "Resize the data inspector",
+            "fullscreenTitle": "Hex editor, full screen",
+            "fullscreenDescription": "The editor at the full size of the window, with the rest of the page hidden. Press Escape to leave.",
+            "fullscreenActive": "The editor is open full screen.",
             "openedFile": "Editing {name}"
         },
         "toolbar": {
@@ -10967,6 +10970,10 @@
             "copyText": "Copy selection as text",
             "copyDump": "Copy selection as a hex dump",
             "columnGroup": "Which column typing goes to",
+            "showInspector": "Show the data inspector",
+            "hideInspector": "Hide the data inspector",
+            "fullscreen": "Full screen",
+            "exitFullscreen": "Exit full screen",
             "close": "Close file"
         },
         "columns": {
@@ -10987,7 +10994,8 @@
             "caretAt": "Reading from 0x{offset}",
             "endianLabel": "Byte order",
             "unavailable": "—",
-            "copyRow": "Copy the {label} reading"
+            "copyRow": "Copy the {label} reading",
+            "close": "Close the data inspector"
         },
         "status": {
             "noFile": "No file open",
@@ -11005,7 +11013,7 @@
         },
         "search": {
             "title": "Find bytes",
-            "description": "Search the open file as text or as a run of hexadecimal bytes. Every match is highlighted in both columns.",
+            "description": "Search the open file as text or as a run of hexadecimal bytes. The bar stays above the grid, so every match it highlights is still on screen.",
             "modeGroup": "How the search is written",
             "queryLabel": "Search for",
             "placeholderAscii": "Hello",
@@ -11016,6 +11024,8 @@
             "previous": "Previous",
             "next": "Next",
             "clear": "Clear",
+            "close": "Close the find bar",
+            "counter": "{index} / {count}",
             "found": "{count} matches highlighted.",
             "foundTruncated": "Showing the first {count} matches; the file holds more than the {max} this stops at.",
             "noMatches": "Nothing in this file matches."
@@ -11074,7 +11084,7 @@
             },
             "inspector": {
                 "title": "The data inspector, and why byte order matters",
-                "p1": "The panel on the left reads the bytes starting at the caret as every type they could be. It updates as the caret moves, and a reading the file has run out of bytes for shows a dash rather than disappearing — so four bytes from the end you can see that an Int64 did not fit.",
+                "p1": "The panel on the left reads the bytes starting at the caret as every type they could be. It updates as the caret moves, and a reading the file has run out of bytes for shows a dash rather than disappearing — so four bytes from the end you can see that an Int64 did not fit. It closes when the grid needs the width — from the cross in its own heading, or from the toolbar — and every reading comes back exactly as it was.",
                 "integersName": "Integers",
                 "floatsName": "Floats",
                 "textName": "Text",
@@ -11092,7 +11102,13 @@
                 "p1": "Search takes either form. Text mode encodes one byte per character, which is what you want for a string embedded in a binary. Hex mode takes the bytes directly, which is what you want for a file signature or a struct field you already know the shape of.",
                 "or": "or",
                 "p2": "A needle is at most {maxBytes} bytes, and a search collects at most {maxMatches} matches before it stops looking and says so — ten million highlighted matches is not an answer anybody asked for. Every match is highlighted in both columns, and Next and Previous wrap around the ends of the file.",
-                "p3": "The search runs when you press Find rather than as you type. That is deliberate: a scan is linear in the size of the file, and on a file of a few hundred megabytes running one per keystroke would make the box unusable."
+                "p3": "The search runs when you press Find rather than as you type. That is deliberate: a scan is linear in the size of the file, and on a file of a few hundred megabytes running one per keystroke would make the box unusable.",
+                "p4": "The bar sits above the grid rather than over it, which is the whole point of it being a bar: the matches it highlights stay on screen while you step through them. Enter moves to the next match and Shift+Enter to the previous one, the counter between the arrows says which of them the caret is on, and Escape closes the bar and hands the keyboard back to the bytes."
+            },
+            "viewport": {
+                "title": "Making room for the bytes",
+                "p1": "A sixteen-byte row wants width, and the data inspector wants the same width. The two view controls at the end of the toolbar decide which of them gets it: one closes the inspector and gives the grid the whole card, the other takes the editor full screen, where it fills the window rather than the strip of page it normally has. Both are toggles, so the button shows which state you are in rather than what pressing it would do.",
+                "p2": "Full screen moves the editor into a dialog rather than opening a second one. Escape leaves it and so does the toolbar button, the caret's row is scrolled back into view on the way in and on the way out, and the selection, the undo stack and the search results are all still there — including on a file of a few hundred megabytes, which is never re-read."
             },
             "shortcuts": {
                 "title": "Every keyboard shortcut",
@@ -11102,7 +11118,7 @@
                 "open": "Open a file",
                 "save": "Save over the opened file, or download an edited copy where the browser cannot",
                 "saveAs": "Save to a new file",
-                "find": "Open the search dialog",
+                "find": "Open the find bar, or put the caret back in it",
                 "goTo": "Jump to an offset",
                 "undo": "Undo the last edit",
                 "redo": "Redo the edit that was undone",

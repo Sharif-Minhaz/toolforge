@@ -127,10 +127,23 @@ export function useHexKeyboard(): (event: KeyboardEvent<HTMLElement>) => void {
             return;
         }
 
-        // Abandons a half-typed byte without writing anything.
+        // Abandons a half-typed byte without writing anything, or drops a
+        // selection back to a caret.
+        //
+        // With neither of those to do, Escape is left alone rather than
+        // swallowed: in full screen it is the key that leaves, and a grid that
+        // ate every press would trap the reader in a dialog they cannot see the
+        // way out of.
         if (key === "Escape") {
+            const { selection, pendingNibble } = useHexStore.getState();
+
+            if (pendingNibble === null && selection.anchor === selection.focus) {
+                return;
+            }
+
             event.preventDefault();
-            setCaret(useHexStore.getState().selection.focus, false);
+            event.stopPropagation();
+            setCaret(selection.focus, false);
 
             return;
         }

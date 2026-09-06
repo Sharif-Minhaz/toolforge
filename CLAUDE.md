@@ -235,7 +235,10 @@ Rules below are graded. Treat them differently:
 28. **Every refusal keeps its own name.** `missing`, `pending` and `expired` are
     three states, not one error.
 29. **A complaint about the input belongs beside the input; a complaint about the
-    operation belongs where the answer would have been.**
+    operation belongs where the answer would have been.** By the same rule, a
+    control whose answer is a change in what is already on screen — a find bar
+    over a grid it highlights — docks beside that view rather than covering it. →
+    [`docs/case-studies/hex-editor.md`](docs/case-studies/hex-editor.md)
 30. **Bring a result produced by a press into view** with `useResultScroll` — and
     never scroll to a destination that can turn out empty.
 31. **Add to `tools/` the moment a second tool needs it**, whole, in the same

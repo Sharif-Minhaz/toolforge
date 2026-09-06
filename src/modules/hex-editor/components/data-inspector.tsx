@@ -1,5 +1,6 @@
 "use client";
 
+import { IconX } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
@@ -19,6 +20,7 @@ import { INSPECTOR_WINDOW_BYTES } from "../domain/constants";
 import { formatOffset } from "../domain/format";
 import { readInspector } from "../domain/inspector";
 import { ENDIANNESS, type Endianness, type InspectorKey } from "../types";
+import { HexIconButton } from "./hex-icon-button";
 import { useHexStore } from "./hex-store";
 
 /**
@@ -32,8 +34,12 @@ import { useHexStore } from "./hex-store";
  * The labels are not translated — `UInt24` and `GUID` are proper names, and
  * `domain/inspector.ts` owns them. Only the heading and the endianness control
  * are copy.
+ *
+ * The panel closes, because on a laptop it is competing with the grid for the
+ * width a sixteen-byte row needs. Closing it is the same state the toolbar's
+ * toggle writes, so there is a way back from the keyboard as well as from here.
  */
-export function DataInspector() {
+export function DataInspector({ onClose }: { onClose: () => void }) {
     const t = useTranslations("hexEditor.inspector");
     const tEndian = useTranslations("hexEditor.endianness");
 
@@ -72,15 +78,20 @@ export function DataInspector() {
 
     return (
         <div className="flex h-full min-w-0 flex-col gap-3 overflow-y-auto p-3">
-            <div className="flex flex-col gap-1.5">
-                <p className="text-muted-foreground/85 text-[0.6875rem] font-semibold tracking-[0.09em] uppercase">
-                    {t("title")}
-                </p>
-                <p className="text-muted-foreground font-mono text-[0.6875rem] tabular-nums">
-                    {document === null
-                        ? t("noFile")
-                        : t("caretAt", { offset: formatOffset(focus) })}
-                </p>
+            <div className="flex items-start justify-between gap-2">
+                <div className="flex min-w-0 flex-col gap-1.5">
+                    <p className="text-muted-foreground/85 text-[0.6875rem] font-semibold tracking-[0.09em] uppercase">
+                        {t("title")}
+                    </p>
+                    <p className="text-muted-foreground font-mono text-[0.6875rem] tabular-nums">
+                        {document === null
+                            ? t("noFile")
+                            : t("caretAt", { offset: formatOffset(focus) })}
+                    </p>
+                </div>
+                <div className="-mt-1 -mr-1 shrink-0">
+                    <HexIconButton label={t("close")} Icon={IconX} onClick={onClose} />
+                </div>
             </div>
 
             <div className="flex flex-col gap-1.5">

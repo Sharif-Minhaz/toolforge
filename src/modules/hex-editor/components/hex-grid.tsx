@@ -10,7 +10,7 @@ import { rowMatchMask } from "../domain/search";
 import { selectionRange } from "../domain/selection";
 import { computeRowWindow, scrollTopForRow } from "../domain/window";
 import type { HexColumn } from "../types";
-import { HEX_GRID_MIN_WIDTH, HEX_GRID_STYLE } from "./hex-grid-layout";
+import { HEX_GRID_ID, HEX_GRID_MIN_WIDTH, HEX_GRID_STYLE } from "./hex-grid-layout";
 import { useHexStore } from "./hex-store";
 import { HexRow } from "./hex-row";
 import { useHexKeyboard } from "./use-hex-keyboard";
@@ -31,6 +31,15 @@ import { useHexKeyboard } from "./use-hex-keyboard";
  */
 
 const HEADER_HEIGHT = ROW_HEIGHT + 4;
+
+/**
+ * Put the caret back in the bytes. Closing the find bar leaves focus on a
+ * control that is about to be unmounted, and focus on nothing is a keyboard
+ * whose arrow keys scroll the page instead of moving the caret.
+ */
+export function focusHexGrid(): void {
+    document.getElementById(HEX_GRID_ID)?.focus({ preventScroll: true });
+}
 
 type Target = { readonly offset: number; readonly column: HexColumn };
 
@@ -191,6 +200,7 @@ export function HexGrid() {
 
     return (
         <div
+            id={HEX_GRID_ID}
             ref={scrollRef}
             tabIndex={0}
             role="grid"

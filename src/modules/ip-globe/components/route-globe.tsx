@@ -52,9 +52,25 @@ const KEY_STEP = 0.05;
 /** Drag sensitivity: a full drag across the canvas is a bit over half a turn. */
 const DRAG_SCALE = 0.006;
 
+/** Where the camera starts: a little north of the equator, so land dominates. */
+const INITIAL_THETA = 0.25;
+
+/**
+ * How far the camera may tilt, in radians.
+ *
+ * A quarter turn puts a pole dead centre; past it COBE keeps going and the globe
+ * reads as upside down with no way back but more dragging. Stopping just short
+ * of the pole is the whole of the useful range.
+ */
+const THETA_LIMIT = 1.4;
+
+function clampTheta(theta: number): number {
+    return Math.min(THETA_LIMIT, Math.max(-THETA_LIMIT, theta));
+}
+
 /** What `createGlobe` hands back, narrowed to what this component calls. */
 type GlobeHandle = {
-    update: (state: { phi?: number }) => void;
+    update: (state: { phi?: number; theta?: number }) => void;
     destroy: () => void;
 };
 
@@ -138,6 +154,8 @@ export function RouteGlobe({
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const containerRef = useRef<HTMLDivElement | null>(null);
     const phiRef = useRef(0);
+    /** The camera's latitude. Moved by a vertical drag or the up and down keys. */
+    const thetaRef = useRef(INITIAL_THETA);
     /** Held so a drag or an arrow key can repaint when nothing is spinning. */
     const globeRef = useRef<GlobeHandle | null>(null);
     /** Read inside the effect, so the arrays are not themselves dependencies. */
@@ -229,7 +247,7 @@ export function RouteGlobe({
                     width: size,
                     height: size,
                     phi: phiRef.current,
-                    theta: 0.25,
+                    theta: thetaRef.current,
                     dark: resolvedTheme === "dark" ? 1 : 0,
                     diffuse: 1.2,
                     mapSamples: 16_000,
@@ -255,7 +273,7 @@ export function RouteGlobe({
                 // COBE v2 has no render loop of its own — `update` draws
                 // synchronously — so one call is what paints a still globe when
                 // the reader has asked for reduced motion.
-                globe.update({ phi: phiRef.current });
+                globe.update({ phi: phiRef.current, theta: thetaRef.current });
 
                 if (!spinning) {
                     return;
@@ -263,7 +281,10 @@ export function RouteGlobe({
 
                 const tick = () => {
                     phiRef.current += IDLE_SPIN;
-                    globe.update({ phi: phiRef.current });
+                    // Theta is passed every frame, not only when it changes: the
+                    // idle spin would otherwise reset the camera to the angle it
+                    // was built with the moment a drag let go.
+                    globe.update({ phi: phiRef.current, theta: thetaRef.current });
                     frame = requestAnimationFrame(tick);
                 };
 
@@ -292,19 +313,27 @@ export function RouteGlobe({
      * Necessary rather than tidy: with rotation off there is no frame loop, so
      * a drag would move `phi` and change nothing on screen.
      */
-    function turnTo(phi: number) {
+    function turnTo(phi: number, theta: number) {
         phiRef.current = phi;
-        globeRef.current?.update({ phi });
+        thetaRef.current = clampTheta(theta);
+        globeRef.current?.update({ phi, theta: thetaRef.current });
     }
 
     function handlePointerDown(event: React.PointerEvent<HTMLCanvasElement>) {
-        const start = event.clientX;
-        const from = phiRef.current;
+        const startX = event.clientX;
+        const startY = event.clientY;
+        const fromPhi = phiRef.current;
+        const fromTheta = thetaRef.current;
 
         event.currentTarget.setPointerCapture(event.pointerId);
 
         const move = (moved: PointerEvent) => {
-            turnTo(from + (moved.clientX - start) * DRAG_SCALE);
+            // Both axes off the one gesture: dragging down pushes the top of the
+            // globe away, which is what brings the north pole into view.
+            turnTo(
+                fromPhi + (moved.clientX - startX) * DRAG_SCALE,
+                fromTheta + (moved.clientY - startY) * DRAG_SCALE,
+            );
         };
 
         const end = () => {
@@ -338,18 +367,35 @@ export function RouteGlobe({
                 tabIndex={0}
                 onPointerDown={handlePointerDown}
                 onKeyDown={(event) => {
+                    // Each key matches the drag that moves the globe the same
+                    // way, so the two controls cannot disagree about direction.
                     if (event.key === "ArrowLeft") {
                         event.preventDefault();
-                        turnTo(phiRef.current - KEY_STEP);
+                        turnTo(phiRef.current - KEY_STEP, thetaRef.current);
                     }
 
                     if (event.key === "ArrowRight") {
                         event.preventDefault();
-                        turnTo(phiRef.current + KEY_STEP);
+                        turnTo(phiRef.current + KEY_STEP, thetaRef.current);
+                    }
+
+                    if (event.key === "ArrowUp") {
+                        event.preventDefault();
+                        turnTo(phiRef.current, thetaRef.current - KEY_STEP);
+                    }
+
+                    if (event.key === "ArrowDown") {
+                        event.preventDefault();
+                        turnTo(phiRef.current, thetaRef.current + KEY_STEP);
                     }
                 }}
                 // Sized in CSS as a square; the backing store is set by COBE
                 // from the width and the device pixel ratio above.
+                //
+                // `touch-pan-y` stays: the canvas is as wide as the column on a
+                // phone, so taking vertical gestures for the globe would take
+                // away the only way to scroll past it. Touch tilts through the
+                // keys and the pointer; a finger still turns it east and west.
                 className="focus-visible:ring-ring aspect-square w-full cursor-grab touch-pan-y rounded-full outline-none focus-visible:ring-2 active:cursor-grabbing"
             />
         </div>

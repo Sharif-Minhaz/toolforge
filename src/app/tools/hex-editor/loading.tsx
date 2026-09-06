@@ -19,9 +19,10 @@ export default function HexEditorLoading() {
             </div>
 
             <div className="bg-card ring-border/70 flex flex-col overflow-hidden rounded-xl ring-1 ring-inset">
-                {/* The toolbar: ten icon buttons, a copy menu and the column pair. */}
+                {/* The toolbar: twelve icon buttons, a copy menu, the column
+                    pair and the two view toggles. */}
                 <div className="border-border/70 flex items-center gap-1 border-b px-2 py-1.5">
-                    {Array.from({ length: 10 }, (_, index) => (
+                    {Array.from({ length: 12 }, (_, index) => (
                         <Skeleton key={index} className="size-8 rounded-lg" />
                     ))}
                     <Skeleton className="ml-auto h-6 w-32 rounded-lg" />

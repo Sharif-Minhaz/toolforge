@@ -1,12 +1,13 @@
 "use client";
 
-import { IconFolderOpen, IconUpload } from "@tabler/icons-react";
+import { IconArrowsMinimize, IconFolderOpen, IconUpload } from "@tabler/icons-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { useIsHydrated } from "@/hooks/use-is-hydrated";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
@@ -27,10 +28,10 @@ import {
 } from "./file-access";
 import { DataInspector } from "./data-inspector";
 import { GoToDialog } from "./goto-dialog";
-import { HexGrid } from "./hex-grid";
+import { focusHexGrid, HexGrid } from "./hex-grid";
 import { HexStatusBar } from "./hex-status-bar";
 import { HexToolbar } from "./hex-toolbar";
-import { SearchDialog } from "./search-dialog";
+import { SearchDock } from "./search-dock";
 import { useHexStore } from "./hex-store";
 
 /**
@@ -40,8 +41,10 @@ import { useHexStore } from "./hex-store";
  * reads the store, which is what keeps the grid ignorant of whether the bytes
  * arrived through a picker, a drop, or a fallback `<input type="file">`.
  *
- * The panel width is held here rather than in the store because it is chrome:
- * dragging the divider is not something the undo stack should know about.
+ * The panel width, whether the inspector is open at all, and whether the editor
+ * is full screen are all held here rather than in the store, because they are
+ * chrome: dragging the divider is not something the undo stack should know
+ * about, and neither is opening the find bar.
  */
 
 const MIN_INSPECTOR_WIDTH = 200;
@@ -60,6 +63,7 @@ export function HexEditorWorkbench({
     initialSearchMode,
 }: HexEditorWorkbenchProps) {
     const t = useTranslations("hexEditor.workbench");
+    const tToolbar = useTranslations("hexEditor.toolbar");
     const tToast = useTranslations("hexEditor.toast");
     const tErrors = useTranslations("hexEditor.errors");
     const formatter = useFormatter();
@@ -71,16 +75,20 @@ export function HexEditorWorkbench({
     const closeFile = useHexStore((state) => state.closeFile);
     const reloadFile = useHexStore((state) => state.reloadFile);
     const markSaved = useHexStore((state) => state.markSaved);
+    const requestScroll = useHexStore((state) => state.requestScroll);
 
     const inputRef = useRef<HTMLInputElement>(null);
     const handleRef = useRef<FileSystemFileHandle | null>(null);
     const dragOriginRef = useRef({ x: 0, width: DEFAULT_INSPECTOR_WIDTH });
 
     const [inspectorWidth, setInspectorWidth] = useState(DEFAULT_INSPECTOR_WIDTH);
+    const [inspectorOpen, setInspectorOpen] = useState(true);
     const [dragging, setDragging] = useState(false);
     const [dropping, setDropping] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
+    const [searchFocus, setSearchFocus] = useState(0);
     const [gotoOpen, setGotoOpen] = useState(false);
+    const [fullscreen, setFullscreen] = useState(false);
 
     const hydrated = useIsHydrated();
 
@@ -276,7 +284,7 @@ export function HexEditorWorkbench({
                 void (event.shiftKey ? handleSaveAs() : handleSave());
             } else if (key === "f" && useHexStore.getState().document !== null) {
                 event.preventDefault();
-                setSearchOpen(true);
+                openSearch();
             } else if (key === "g" && useHexStore.getState().document !== null) {
                 event.preventDefault();
                 setGotoOpen(true);
@@ -287,6 +295,30 @@ export function HexEditorWorkbench({
 
         return () => window.removeEventListener("keydown", onKeyDown);
     });
+
+    /**
+     * Full screen moves the whole editor into a dialog, which mounts a fresh
+     * scroller at the top of the file. Asking for the caret's row on the way in
+     * and on the way out is what stops the reader landing back at offset zero;
+     * the selection itself is untouched.
+     */
+    function handleFullscreenChange(next: boolean) {
+        requestScroll(useHexStore.getState().selection.focus);
+        setFullscreen(next);
+    }
+
+    function openSearch() {
+        setSearchOpen(true);
+        // A counter rather than a flag: Ctrl+F pressed while the bar is already
+        // open has to put the caret back in the field, and `searchOpen` has not
+        // changed for an effect to notice.
+        setSearchFocus((nonce) => nonce + 1);
+    }
+
+    function closeSearch() {
+        setSearchOpen(false);
+        focusHexGrid();
+    }
 
     function handleDividerPointerDown(event: PointerEvent<HTMLDivElement>) {
         event.currentTarget.setPointerCapture(event.pointerId);
@@ -306,25 +338,12 @@ export function HexEditorWorkbench({
 
     const showDownloadNotice = hydrated && !supportsFileSystemAccess();
 
-    return (
-        <Card className="gap-0 overflow-hidden p-0">
-            <input
-                ref={inputRef}
-                type="file"
-                hidden
-                onChange={(event) => {
-                    const file = event.target.files?.[0];
-
-                    if (file !== undefined) {
-                        void readFile(file).then((opened) =>
-                            accept(opened.bytes, opened.name, null),
-                        );
-                    }
-
-                    event.target.value = "";
-                }}
-            />
-
+    /**
+     * Everything the editor is, in one fragment, so full screen can render it in
+     * a dialog without a second copy of the layout drifting from this one.
+     */
+    const body = (
+        <>
             <HexToolbar
                 onOpen={() => void handleOpen()}
                 onSave={() => void handleSave()}
@@ -334,22 +353,29 @@ export function HexEditorWorkbench({
                     handleRef.current = null;
                     closeFile();
                 }}
-                onFind={() => setSearchOpen(true)}
+                onFind={() => (searchOpen ? closeSearch() : openSearch())}
                 onGoTo={() => setGotoOpen(true)}
                 onCopyHex={() => void copyAs((bytes) => [...bytes].map(byteToHex).join(" "))}
                 onCopyText={() => void copyAs((bytes) => [...bytes].map(byteToAscii).join(""))}
                 onCopyDump={() =>
                     void copyAs((bytes) => formatHexDump(bytes, selectionRange(selection).start))
                 }
+                onToggleInspector={() => setInspectorOpen((current) => !current)}
+                onToggleFullscreen={() => handleFullscreenChange(!fullscreen)}
+                searchOpen={searchOpen}
+                inspectorOpen={inspectorOpen}
+                fullscreen={fullscreen}
             />
 
             {/* The one thing this tool cannot promise, said where the controls
                 are rather than only in the article. */}
             {showDownloadNotice && (
-                <p className="text-muted-foreground border-border/70 border-b px-3 py-1.5 text-[0.6875rem] leading-normal">
+                <p className="text-muted-foreground border-border/70 shrink-0 border-b px-3 py-1.5 text-[0.6875rem] leading-normal">
                     {t("downloadNotice")}
                 </p>
             )}
+
+            <SearchDock open={searchOpen} focusNonce={searchFocus} onClose={closeSearch} />
 
             <div
                 onDragOver={(event) => {
@@ -370,51 +396,62 @@ export function HexEditorWorkbench({
                     }
                 }}
                 className={cn(
-                    "relative flex h-[26rem] flex-col lg:grid lg:h-[34rem]",
+                    "relative flex flex-col lg:grid",
+                    // Full screen gives the grid whatever the window has left
+                    // after the toolbar, the find bar and the status line; the
+                    // page keeps a fixed height, so the article below it does
+                    // not move when a file is opened.
+                    fullscreen ? "min-h-0 flex-1" : "h-[26rem] lg:h-[34rem]",
                     dropping && "ring-primary/60 ring-2 ring-inset",
                 )}
                 style={{
-                    gridTemplateColumns: `${inspectorWidth}px 0.375rem minmax(0, 1fr)`,
+                    gridTemplateColumns: inspectorOpen
+                        ? `${inspectorWidth}px 0.375rem minmax(0, 1fr)`
+                        : "minmax(0, 1fr)",
                 }}
             >
-                <aside className="border-border/70 order-2 max-h-56 min-w-0 overflow-hidden border-t lg:order-1 lg:max-h-none lg:border-t-0 lg:border-r">
-                    <DataInspector />
-                </aside>
+                {inspectorOpen && (
+                    <aside className="border-border/70 order-2 max-h-56 min-w-0 overflow-hidden border-t lg:order-1 lg:max-h-none lg:border-t-0 lg:border-r">
+                        <DataInspector onClose={() => setInspectorOpen(false)} />
+                    </aside>
+                )}
 
                 {/* Keyboard-operable as well as draggable: a resize handle that
                     only answers a pointer is a control some readers cannot use. */}
-                <div
-                    role="separator"
-                    aria-orientation="vertical"
-                    aria-label={t("resizeLabel")}
-                    aria-valuenow={inspectorWidth}
-                    aria-valuemin={MIN_INSPECTOR_WIDTH}
-                    aria-valuemax={MAX_INSPECTOR_WIDTH}
-                    tabIndex={0}
-                    onPointerDown={handleDividerPointerDown}
-                    onPointerMove={handleDividerPointerMove}
-                    onPointerUp={() => setDragging(false)}
-                    onKeyDown={(event) => {
-                        const step = event.shiftKey ? 32 : 8;
+                {inspectorOpen && (
+                    <div
+                        role="separator"
+                        aria-orientation="vertical"
+                        aria-label={t("resizeLabel")}
+                        aria-valuenow={inspectorWidth}
+                        aria-valuemin={MIN_INSPECTOR_WIDTH}
+                        aria-valuemax={MAX_INSPECTOR_WIDTH}
+                        tabIndex={0}
+                        onPointerDown={handleDividerPointerDown}
+                        onPointerMove={handleDividerPointerMove}
+                        onPointerUp={() => setDragging(false)}
+                        onKeyDown={(event) => {
+                            const step = event.shiftKey ? 32 : 8;
 
-                        if (event.key === "ArrowLeft") {
-                            event.preventDefault();
-                            setInspectorWidth((width) =>
-                                Math.max(MIN_INSPECTOR_WIDTH, width - step),
-                            );
-                        } else if (event.key === "ArrowRight") {
-                            event.preventDefault();
-                            setInspectorWidth((width) =>
-                                Math.min(MAX_INSPECTOR_WIDTH, width + step),
-                            );
-                        }
-                    }}
-                    className={cn(
-                        "bg-border/40 hover:bg-primary/40 order-1 hidden cursor-col-resize transition-colors duration-150 lg:order-2 lg:block",
-                        "focus-visible:bg-primary/60 focus-visible:outline-none",
-                        dragging && "bg-primary/60",
-                    )}
-                />
+                            if (event.key === "ArrowLeft") {
+                                event.preventDefault();
+                                setInspectorWidth((width) =>
+                                    Math.max(MIN_INSPECTOR_WIDTH, width - step),
+                                );
+                            } else if (event.key === "ArrowRight") {
+                                event.preventDefault();
+                                setInspectorWidth((width) =>
+                                    Math.min(MAX_INSPECTOR_WIDTH, width + step),
+                                );
+                            }
+                        }}
+                        className={cn(
+                            "bg-border/40 hover:bg-primary/40 order-1 hidden cursor-col-resize transition-colors duration-150 lg:order-2 lg:block",
+                            "focus-visible:bg-primary/60 focus-visible:outline-none",
+                            dragging && "bg-primary/60",
+                        )}
+                    />
+                )}
 
                 <div className="order-1 min-h-0 min-w-0 flex-1 lg:order-3">
                     {document === null ? (
@@ -448,13 +485,83 @@ export function HexEditorWorkbench({
             </div>
 
             <HexStatusBar />
+        </>
+    );
 
-            <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
+    return (
+        <>
+            <input
+                ref={inputRef}
+                type="file"
+                hidden
+                onChange={(event) => {
+                    const file = event.target.files?.[0];
+
+                    if (file !== undefined) {
+                        void readFile(file).then((opened) =>
+                            accept(opened.bytes, opened.name, null),
+                        );
+                    }
+
+                    event.target.value = "";
+                }}
+            />
+
+            <Card className="gap-0 overflow-hidden p-0">
+                {fullscreen ? (
+                    <div className="flex flex-col items-start gap-3 p-5">
+                        <p className="text-muted-foreground text-[0.8125rem] leading-6">
+                            {t("fullscreenActive")}
+                        </p>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleFullscreenChange(false)}
+                        >
+                            <IconArrowsMinimize
+                                className="size-3.5"
+                                stroke={1.8}
+                                aria-hidden="true"
+                            />
+                            {tToolbar("exitFullscreen")}
+                        </Button>
+                    </div>
+                ) : (
+                    body
+                )}
+            </Card>
+
+            {/* A dialog rather than a positioned div: it is portalled to the
+                document body, so no ancestor's transform, overflow or padding
+                can reach it, and it brings the focus trap and the Escape key
+                that a bare overlay would have to reinvent.
+
+                Its heading is for screen readers only. The editor's own toolbar
+                is already the top of this dialog, carries the file name, and
+                holds the control that leaves — a second title bar would spend
+                the vertical space full screen exists to give back. */}
+            <Sheet open={fullscreen} onOpenChange={handleFullscreenChange}>
+                <SheetContent
+                    side="bottom"
+                    showCloseButton={false}
+                    className="bg-background text-foreground w-full max-w-none gap-0 rounded-none p-0 data-[side=bottom]:inset-0 data-[side=bottom]:h-full data-[side=bottom]:border-t-0 sm:max-w-none"
+                >
+                    <SheetTitle className="sr-only">{t("fullscreenTitle")}</SheetTitle>
+                    <SheetDescription className="sr-only">
+                        {t("fullscreenDescription")}
+                    </SheetDescription>
+
+                    <div className="flex h-full min-h-0 flex-1 flex-col">
+                        {fullscreen ? body : null}
+                    </div>
+                </SheetContent>
+            </Sheet>
+
             <GoToDialog open={gotoOpen} onOpenChange={setGotoOpen} />
 
             {fileName !== null && (
                 <span className="sr-only">{t("openedFile", { name: fileName })}</span>
             )}
-        </Card>
+        </>
     );
 }
