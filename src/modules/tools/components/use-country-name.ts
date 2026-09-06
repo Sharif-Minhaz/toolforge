@@ -13,11 +13,12 @@ import { countryFlagEmoji, countryLocation } from "@/modules/tools/domain/countr
  * usual rule would be to keep it away from anything that renders on both sides
  * of a hydration boundary — see **Platform APIs That Read the Host**.
  *
- * It is safe here for one specific reason: every caller lives under the report
- * view, which is mounted only after the server action returns. Nothing in this
- * subtree is ever server-rendered, so there is no server render for a client
- * render to disagree with. Move one of these callers above that boundary and
- * the rule applies again.
+ * It is safe **only** below a server-action boundary, and every caller so far is
+ * there: the Domain Inspector's report view and the IP & Route Globe's hop
+ * table are both mounted after their action returns, so nothing in either
+ * subtree is ever server-rendered and there is no server render for a client
+ * render to disagree with. Call this from anything that renders on the server
+ * and the rule applies again.
  *
  * The English name from the coordinate table is the fallback, so a locale whose
  * ICU build lacks a region name still gets words rather than a bare code.

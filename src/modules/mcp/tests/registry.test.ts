@@ -89,6 +89,7 @@ describe("the MCP registry", () => {
         // the change this assertion exists to stop.
         expect(networked).toEqual([
             "toolforge_domain_inspector_inspect",
+            "toolforge_ip_globe_map",
             "toolforge_subdomain_lookup_lookup",
         ]);
     });

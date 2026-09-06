@@ -56,9 +56,11 @@ export const TOOL_IDS = [
     "bson",
     "port-scanner",
     "subdomain-lookup",
+    "ip-globe",
     "mock-server",
     "json-server",
     "graphql-server",
+    "hex-editor",
 ] as const;
 
 export type ToolId = (typeof TOOL_IDS)[number];
@@ -130,7 +132,9 @@ export type ToolIconName =
     | "dice"
     | "file-pdf"
     | "sitemap"
-    | "sort";
+    | "sort"
+    | "globe"
+    | "hex";
 
 export type Tool = {
     readonly id: ToolId;

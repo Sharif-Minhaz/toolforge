@@ -421,6 +421,18 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.subdomainLookup.errors,
             toast: messages.subdomainLookup.toast,
         },
+        // The article and the hero stay on the server; only what the workbench,
+        // the globe and the hop table render crosses.
+        ipGlobe: {
+            workbench: messages.ipGlobe.workbench,
+            modes: messages.ipGlobe.modes,
+            modeHints: messages.ipGlobe.modeHints,
+            resolvers: messages.ipGlobe.resolvers,
+            options: messages.ipGlobe.options,
+            errors: messages.ipGlobe.errors,
+            hopStatus: messages.ipGlobe.hopStatus,
+            table: messages.ipGlobe.table,
+        },
         // The studio's own hero and disclosure copy stays on the server; only
         // the launcher island's strings cross.
         mockServer: {
@@ -514,6 +526,23 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             errors: messages.domainInspector.errors,
             panelErrors: messages.domainInspector.panelErrors,
             toast: messages.domainInspector.toast,
+        },
+        // The Hex Editor is one island all the way down — the toolbar, the grid,
+        // the inspector, both dialogs and the status line are all client
+        // components, so every namespace but `meta`, `hero`, `toc` and the
+        // article crosses.
+        hexEditor: {
+            workbench: messages.hexEditor.workbench,
+            toolbar: messages.hexEditor.toolbar,
+            columns: messages.hexEditor.columns,
+            endianness: messages.hexEditor.endianness,
+            inspector: messages.hexEditor.inspector,
+            status: messages.hexEditor.status,
+            search: messages.hexEditor.search,
+            searchModes: messages.hexEditor.searchModes,
+            goto: messages.hexEditor.goto,
+            errors: messages.hexEditor.errors,
+            toast: messages.hexEditor.toast,
         },
     };
 

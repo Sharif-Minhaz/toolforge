@@ -87,6 +87,7 @@ docs/
 │   ├── diff.md
 │   ├── domain-inspector.md
 │   ├── graphql-server.md
+│   ├── hex-editor.md
 │   ├── html-markdown.md
 │   ├── image-codecs.md
 │   ├── image-resizer.md
@@ -137,9 +138,11 @@ records a defect that was expensive to find and is easy to reintroduce.
 | `diff` | [`case-studies/diff.md`](case-studies/diff.md) |
 | `domain-inspector` | [`case-studies/domain-inspector.md`](case-studies/domain-inspector.md), [`patterns/maps.md`](patterns/maps.md) |
 | `graphql-server` | [`case-studies/graphql-server.md`](case-studies/graphql-server.md) |
+| `hex-editor` | [`case-studies/hex-editor.md`](case-studies/hex-editor.md) |
 | `html-markdown` | [`case-studies/html-markdown.md`](case-studies/html-markdown.md), [`patterns/format-conversion.md`](patterns/format-conversion.md) |
 | `image-compressor`, `image-converter` | [`case-studies/image-codecs.md`](case-studies/image-codecs.md) |
 | `image-resizer`, any image tool's intake | [`case-studies/image-resizer.md`](case-studies/image-resizer.md) |
+| `ip-globe` | [`case-studies/ip-globe.md`](case-studies/ip-globe.md) |
 | `json-server` | [`case-studies/json-server.md`](case-studies/json-server.md), [`patterns/growth-ceilings.md`](patterns/growth-ceilings.md) |
 | `mcp`, or any tool's MCP adapter | [`case-studies/mcp.md`](case-studies/mcp.md) |
 | `mock-server` | [`case-studies/mock-server.md`](case-studies/mock-server.md), [`mock-server-studio.md`](mock-server-studio.md) |

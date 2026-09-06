@@ -47,41 +47,43 @@ docs/
 
 **Read the matching document before you edit these:**
 
-| Touching… | Read first |
-| --- | --- |
-| A new tool, start to finish | [`docs/workflow/adding-a-tool.md`](docs/workflow/adding-a-tool.md) |
-| Anything with `useState` in a client island | [`docs/hydration-and-platform-pitfalls.md`](docs/hydration-and-platform-pitfalls.md) |
-| Prisma, Supabase, a Server Action | [`docs/server-and-data.md`](docs/server-and-data.md) |
-| User-facing text or numbers | [`docs/internationalization.md`](docs/internationalization.md) |
-| The opening section of a tool article | [`docs/patterns/article-openings.md`](docs/patterns/article-openings.md) |
-| Colours, motion, scroll behaviour | [`docs/design-system.md`](docs/design-system.md) |
-| A format somebody else has to read | [`docs/testing.md`](docs/testing.md) |
-| An outbound request from the server | [`docs/patterns/outbound-requests.md`](docs/patterns/outbound-requests.md), [`docs/security.md`](docs/security.md) |
-| A free-text field | [`docs/patterns/input-limits.md`](docs/patterns/input-limits.md) |
-| `aes` | [`docs/case-studies/aes.md`](docs/case-studies/aes.md) |
-| `background-remover` | [`docs/case-studies/background-remover.md`](docs/case-studies/background-remover.md) |
-| `blur-placeholder` | [`docs/case-studies/blurhash.md`](docs/case-studies/blurhash.md) |
-| `bson` | [`docs/case-studies/bson.md`](docs/case-studies/bson.md) |
-| `curl` | [`docs/case-studies/curl.md`](docs/case-studies/curl.md) |
-| `diff` | [`docs/case-studies/diff.md`](docs/case-studies/diff.md) |
-| `domain-inspector` | [`docs/case-studies/domain-inspector.md`](docs/case-studies/domain-inspector.md) |
-| `graphql-server` | [`docs/case-studies/graphql-server.md`](docs/case-studies/graphql-server.md) |
-| `html-markdown` | [`docs/case-studies/html-markdown.md`](docs/case-studies/html-markdown.md) |
-| `image-compressor`, `image-converter` | [`docs/case-studies/image-codecs.md`](docs/case-studies/image-codecs.md) |
-| `image-resizer`, any image tool's intake | [`docs/case-studies/image-resizer.md`](docs/case-studies/image-resizer.md) |
-| `json-server` | [`docs/case-studies/json-server.md`](docs/case-studies/json-server.md) |
-| `mcp`, or any tool's MCP adapter | [`docs/case-studies/mcp.md`](docs/case-studies/mcp.md) |
-| `mock-server` | [`docs/case-studies/mock-server.md`](docs/case-studies/mock-server.md) |
-| `pdf-converter` | [`docs/case-studies/pdf-converter.md`](docs/case-studies/pdf-converter.md) |
-| `port-scanner` | [`docs/case-studies/port-scanner.md`](docs/case-studies/port-scanner.md) |
-| `qr` | [`docs/case-studies/qr.md`](docs/case-studies/qr.md) |
-| `rsa` | [`docs/case-studies/rsa.md`](docs/case-studies/rsa.md) |
-| `rsa-encrypt` | [`docs/case-studies/rsa-encrypt.md`](docs/case-studies/rsa-encrypt.md) |
-| `short-links`, `shortener` | [`docs/case-studies/short-links.md`](docs/case-studies/short-links.md) |
-| `sort` | [`docs/case-studies/sort.md`](docs/case-studies/sort.md) |
-| `subdomain-lookup` | [`docs/case-studies/subdomain-lookup.md`](docs/case-studies/subdomain-lookup.md) |
-| `url-parser` | [`docs/patterns/derived-state-editors.md`](docs/patterns/derived-state-editors.md) |
-| `watermark-remover`, `ai-*` | [`docs/case-studies/watermark-remover.md`](docs/case-studies/watermark-remover.md) |
+| Touching…                                   | Read first                                                                                                         |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| A new tool, start to finish                 | [`docs/workflow/adding-a-tool.md`](docs/workflow/adding-a-tool.md)                                                 |
+| Anything with `useState` in a client island | [`docs/hydration-and-platform-pitfalls.md`](docs/hydration-and-platform-pitfalls.md)                               |
+| Prisma, Supabase, a Server Action           | [`docs/server-and-data.md`](docs/server-and-data.md)                                                               |
+| User-facing text or numbers                 | [`docs/internationalization.md`](docs/internationalization.md)                                                     |
+| The opening section of a tool article       | [`docs/patterns/article-openings.md`](docs/patterns/article-openings.md)                                           |
+| Colours, motion, scroll behaviour           | [`docs/design-system.md`](docs/design-system.md)                                                                   |
+| A format somebody else has to read          | [`docs/testing.md`](docs/testing.md)                                                                               |
+| An outbound request from the server         | [`docs/patterns/outbound-requests.md`](docs/patterns/outbound-requests.md), [`docs/security.md`](docs/security.md) |
+| A free-text field                           | [`docs/patterns/input-limits.md`](docs/patterns/input-limits.md)                                                   |
+| `aes`                                       | [`docs/case-studies/aes.md`](docs/case-studies/aes.md)                                                             |
+| `background-remover`                        | [`docs/case-studies/background-remover.md`](docs/case-studies/background-remover.md)                               |
+| `blur-placeholder`                          | [`docs/case-studies/blurhash.md`](docs/case-studies/blurhash.md)                                                   |
+| `bson`                                      | [`docs/case-studies/bson.md`](docs/case-studies/bson.md)                                                           |
+| `curl`                                      | [`docs/case-studies/curl.md`](docs/case-studies/curl.md)                                                           |
+| `diff`                                      | [`docs/case-studies/diff.md`](docs/case-studies/diff.md)                                                           |
+| `domain-inspector`                          | [`docs/case-studies/domain-inspector.md`](docs/case-studies/domain-inspector.md)                                   |
+| `graphql-server`                            | [`docs/case-studies/graphql-server.md`](docs/case-studies/graphql-server.md)                                       |
+| `hex-editor`                                | [`docs/case-studies/hex-editor.md`](docs/case-studies/hex-editor.md)                                               |
+| `html-markdown`                             | [`docs/case-studies/html-markdown.md`](docs/case-studies/html-markdown.md)                                         |
+| `image-compressor`, `image-converter`       | [`docs/case-studies/image-codecs.md`](docs/case-studies/image-codecs.md)                                           |
+| `ip-globe`                                  | [`docs/case-studies/ip-globe.md`](docs/case-studies/ip-globe.md)                                                   |
+| `image-resizer`, any image tool's intake    | [`docs/case-studies/image-resizer.md`](docs/case-studies/image-resizer.md)                                         |
+| `json-server`                               | [`docs/case-studies/json-server.md`](docs/case-studies/json-server.md)                                             |
+| `mcp`, or any tool's MCP adapter            | [`docs/case-studies/mcp.md`](docs/case-studies/mcp.md)                                                             |
+| `mock-server`                               | [`docs/case-studies/mock-server.md`](docs/case-studies/mock-server.md)                                             |
+| `pdf-converter`                             | [`docs/case-studies/pdf-converter.md`](docs/case-studies/pdf-converter.md)                                         |
+| `port-scanner`                              | [`docs/case-studies/port-scanner.md`](docs/case-studies/port-scanner.md)                                           |
+| `qr`                                        | [`docs/case-studies/qr.md`](docs/case-studies/qr.md)                                                               |
+| `rsa`                                       | [`docs/case-studies/rsa.md`](docs/case-studies/rsa.md)                                                             |
+| `rsa-encrypt`                               | [`docs/case-studies/rsa-encrypt.md`](docs/case-studies/rsa-encrypt.md)                                             |
+| `short-links`, `shortener`                  | [`docs/case-studies/short-links.md`](docs/case-studies/short-links.md)                                             |
+| `sort`                                      | [`docs/case-studies/sort.md`](docs/case-studies/sort.md)                                                           |
+| `subdomain-lookup`                          | [`docs/case-studies/subdomain-lookup.md`](docs/case-studies/subdomain-lookup.md)                                   |
+| `url-parser`                                | [`docs/patterns/derived-state-editors.md`](docs/patterns/derived-state-editors.md)                                 |
+| `watermark-remover`, `ai-*`                 | [`docs/case-studies/watermark-remover.md`](docs/case-studies/watermark-remover.md)                                 |
 
 ---
 
@@ -268,6 +270,7 @@ Rules below are graded. Treat them differently:
 3. A second feature needs it?         Lift it to tools/ — whole, same change.
 4. Lifting needs 3+ injected params?  Leave the duplication. It costs less.
 ```
+
 → [`docs/architecture.md`](docs/architecture.md#when-to-lift-something-into-the-shared-layer)
 
 ### 41. Server component, client island, or action?
@@ -280,6 +283,7 @@ Does it need browser APIs, state, animation or an event handler?
          ├─ Our own UI calling it   → Server Action.
          └─ Somebody else's client  → Route Handler, and only then.
 ```
+
 → [`docs/server-and-data.md`](docs/server-and-data.md)
 
 ### 42. Cap the field, or warn?
@@ -294,6 +298,7 @@ Content box (db.json, curl command, JWT, Markdown, OpenAPI)?
    that means something else.
    Show the meter → render the failure under the box → disable the submit.
 ```
+
 → [`docs/patterns/input-limits.md`](docs/patterns/input-limits.md)
 
 ### 43. Debounce this input?
@@ -304,6 +309,7 @@ Input controlled by the derived value?         → never. It would revert keystr
 Filter over data already in memory?            → never. A lagging list reads broken.
 Sits behind a caret (highlighting)?            → never. Use a length ceiling.
 ```
+
 Where a debounce is deliberately absent, say so in a comment.
 → [`docs/engineering-principles.md`](docs/engineering-principles.md#match-the-mechanism-to-the-cost)
 
@@ -316,6 +322,7 @@ If the gate is bypassed, what does the service become?
    shipped (unmetered scanning,
    unbounded writes, an open relay) → fail closed. Refuse.
 ```
+
 → [`docs/security.md`](docs/security.md#decide-which-way-a-gate-fails)
 
 ### 45. Implement it, or depend on it?
@@ -327,6 +334,7 @@ Who reads the output?
                            Check transitive deps and who maintains it first.
                            Then read what its defaults do to your data.
 ```
+
 → [`docs/engineering-principles.md`](docs/engineering-principles.md#depend-or-implement)
 
 ### 46. The reference implementation has a bug. Match it?
@@ -341,6 +349,7 @@ Does it change bytes or responses other people read?
    input no working client sends      → diverging is allowed. Prefer a refusal
                                         to a guess, and document it.
 ```
+
 → [`docs/engineering-principles.md`](docs/engineering-principles.md#cloning-behaviour-match-diverge-or-refuse)
 
 ### 47. Where does this new knowledge go?
@@ -351,6 +360,7 @@ A shape a second tool would copy?       → docs/patterns/.
 A defect specific to one subsystem?     → docs/case-studies/<module>.md.
 Neither?                                → a comment at the line.
 ```
+
 Never state the same reasoning twice. The second place gets a link.
 → [`docs/workflow/documentation.md`](docs/workflow/documentation.md)
 

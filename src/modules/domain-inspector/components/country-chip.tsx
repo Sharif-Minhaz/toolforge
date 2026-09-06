@@ -2,7 +2,7 @@
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Chip } from "./panel-card";
-import { useCountryName } from "./use-country-name";
+import { useCountryName } from "@/modules/tools/components/use-country-name";
 
 /**
  * A country code as a flag and its code, naming itself in full on hover.

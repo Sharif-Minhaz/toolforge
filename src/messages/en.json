@@ -301,6 +301,10 @@
             "name": "Subdomain Lookup",
             "description": "Find every subdomain a public certificate transparency index holds for a domain, with the date each name was first seen. Filter, order and download the whole list as text, CSV or JSON — long answers are paged, not truncated."
         },
+        "ip-globe": {
+            "name": "IP & Route Globe",
+            "description": "Map an IP address, a hostname, or pasted traceroute output onto a spinning globe. Every hop is placed by the country its block was allocated to — registry data, not a geo-IP guess — with the ASN, the network operator and the reverse name in a table beside it."
+        },
         "mock-server": {
             "name": "Mock Server Studio",
             "description": "Build mock REST APIs visually and call them from a real URL. No account — a recovery key moves a workspace between browsers."
@@ -316,6 +320,10 @@
         "image-resizer": {
             "name": "Image Resizer & Cropper",
             "description": "Crop to any ratio by dragging, then resize in pixels, percent, inches or millimetres — passport, print and social presets included."
+        },
+        "hex-editor": {
+            "name": "Hex Editor",
+            "description": "Open a file and read or edit it byte by byte — hex and ASCII columns side by side, a data inspector that decodes every integer, float and GUID at the caret, search by text or hex, and undo."
         }
     },
     "overview": {
@@ -10020,6 +10028,204 @@
             }
         }
     },
+    "ipGlobe": {
+        "meta": {
+            "title": "IP & Route Globe — Map Any Address or Traceroute",
+            "description": "See where a network route goes on a spinning 3D globe. Paste an IP address, a list of hostnames, or the output of traceroute, tracert or mtr, and every hop is placed by the country its address block was allocated to, with the ASN, the network operator and the reverse name in a table beside it. The coordinates come from the routing registry's allocation record — RDAP and Team Cymru — never from a geo-IP database's guess at a city. Nothing is probed: no packet reaches the hosts on the map."
+        },
+        "hero": {
+            "eyebrow": "Network",
+            "title": "IP & Route Globe",
+            "subtitle": "Paste an address, a list of hosts, or a traceroute you already ran, and watch the route appear on a globe — with the network behind every hop named beside it.",
+            "badgeRegistry": "Registry data, not geo-IP",
+            "badgeTrace": "Reads traceroute, tracert and mtr",
+            "badgePassive": "Never contacts the hosts"
+        },
+        "workbench": {
+            "title": "Map a route",
+            "description": "Hosts are resolved and every address is looked up against the routing registry, Team Cymru's ASN zones and the reverse DNS tree. Nothing is probed — no packet reaches the machines on the map.",
+            "modeLabel": "Input",
+            "resolverLabel": "DNS resolver",
+            "resolverHint": "Which public resolver turns the names in your input into addresses.",
+            "resolverInert": "Nothing to resolve — every hop in your input is already an address.",
+            "inputLabel": "Hosts or traceroute output",
+            "placeholderHosts": "example.com\n1.1.1.1\nhttps://example.org/path",
+            "placeholderTrace": "traceroute to example.com (93.184.216.34), 30 hops max\n 1  _gateway (192.168.1.1)  0.4 ms\n 2  * * *\n 3  93.184.216.34 (93.184.216.34)  12.3 ms",
+            "hopsFound": "{count, plural, =0 {No hops read yet} one {# hop read} other {# hops read}}",
+            "run": "Map the route",
+            "statusIdle": "Paste an address, a list of hosts, or traceroute output.",
+            "statusMapping": "Looking up the registry for each hop…",
+            "statusDone": "{located, plural, =0 {No hops located} one {# hop located} other {# hops located}} of {total}, across {countries, plural, =0 {no countries} one {# country} other {# countries}}.",
+            "quotaUnavailable": "Route mapping is not configured on this deployment.",
+            "resultTitle": "The route",
+            "resultDescription": "{countries, plural, =0 {No countries} one {# country} other {# countries}} and {networks, plural, =0 {no networks} one {# network} other {# networks}} on this path.",
+            "globeLabel": "A globe showing {located, plural, one {# located hop} other {# located hops}} across {countries, plural, one {# country} other {# countries}}. The same route is listed in the table below.",
+            "globeUnsupported": "This browser cannot draw the globe — it needs WebGL. The table below holds everything the globe would have shown.",
+            "centroidNote": "Each dot sits at the centre of the country an address block was allocated to, not at the machine itself.",
+            "summaryHops": "Hops",
+            "summaryCountries": "Countries",
+            "summaryNetworks": "Networks",
+            "downloadCsv": "Download CSV",
+            "downloadJson": "Download JSON"
+        },
+        "modes": {
+            "hosts": "Hosts, one per line",
+            "traceroute": "Pasted traceroute output"
+        },
+        "modeHints": {
+            "hosts": "A name, an address or a URL on each line. Blank lines and # comments are ignored.",
+            "traceroute": "Output from traceroute, tracert or mtr --report. Paste it exactly as printed."
+        },
+        "resolvers": {
+            "cloudflare": "Cloudflare (1.1.1.1)",
+            "google": "Google (8.8.8.8)",
+            "dnssb": "DNS.SB"
+        },
+        "options": {
+            "autoRotateLabel": "Spin the globe",
+            "autoRotateHint": "Turns on its own. Drag it, or use the arrow keys, either way.",
+            "showArcsLabel": "Draw the legs",
+            "showArcsHint": "Curves joining each place to the next, in route order.",
+            "showArcsInert": "Nothing to join — this route reaches fewer than two distinct places.",
+            "groupLabel": "Group by country",
+            "groupHint": "Hops allocated to one country share a dot, since they share a coordinate.",
+            "groupInert": "Every located hop is already in a country of its own."
+        },
+        "errors": {
+            "empty_input": "Type or paste something first.",
+            "input_too_long": "That is longer than this box accepts. Trim it and try again — nothing is truncated for you.",
+            "too_many_hops": "That is more hops than one route may map. Shorten it and try again.",
+            "no_hops_found": "Nothing readable in there. In Hosts mode, put one name or address on each line.",
+            "unsupported_trace_format": "Those lines are numbered but nothing else was readable. Paste the output of traceroute, tracert or mtr --report exactly as printed.",
+            "invalid_hostname": "That request could not be read.",
+            "rate_limited": "The hourly limit for route mapping has been reached. Try again later.",
+            "lookup_failed": "The registry lookups could not be completed. Try again in a moment."
+        },
+        "hopStatus": {
+            "located": "Located",
+            "no_country": "No country on file",
+            "private_range": "Private address",
+            "timed_out": "No reply",
+            "unresolvable": "Not resolved",
+            "blocked_address": "Refused"
+        },
+        "table": {
+            "caption": "Every hop on the route, with the network and country behind each one.",
+            "hop": "Hop",
+            "host": "Host",
+            "network": "Network",
+            "country": "Country",
+            "rtt": "RTT",
+            "status": "Status",
+            "none": "—",
+            "unknownHost": "Unread hop",
+            "milliseconds": "{value} ms"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "What this tool actually shows you",
+                "p1": "Give it an address, a list of hosts, or the output of a traceroute you already ran, and it looks up who was allocated each address and where that allocation was registered. The globe is the answer drawn; the table beside it is the same answer written down, and it always holds more than the globe can.",
+                "p2": "It cannot run a traceroute for you. Tracing a path needs raw sockets and sends packets to every machine along it, and a web page that did that on demand would be a free, anonymous probing service pointed at whoever you named. So run <code>traceroute</code>, <code>tracert</code> or <code>mtr</code> on your own machine, paste what it printed, and this maps it.",
+                "example": "traceroute example.com | pbcopy — then paste it here.",
+                "p3": "Everything it queries is public and readable by anyone: DNS over HTTPS, Team Cymru's ASN zones, and the RDAP bootstrap. No packet from this tool reaches the hosts on your map."
+            },
+            "resolution": {
+                "title": "Country centroids, not city pins",
+                "p1": "Every dot sits at the geographic centre of a country. It is not where the machine is, and this tool will not pretend otherwise. The country comes from the routing registry's allocation record for the address block — the same record that says <code>AS15169</code> holds <code>8.8.8.0/24</code> — and a registry knows which country a block was assigned to, never which building it is plugged into.",
+                "p2": "That is a deliberate choice against the alternative. Geo-IP databases will happily give you a latitude and longitude to four decimal places for any address; those numbers are inferred, frequently wrong by a continent for anycast and carrier-grade NAT addresses, and they are the reason a default US centroid has repeatedly sent police to an unlucky farm in Kansas.",
+                "p3": "So the resolution here matches the evidence. A block allocated to a registrant in Germany puts its hop in Germany, and that claim can be checked against the registry by anybody who doubts it.",
+                "p4": "The practical consequence is that hops routinely share a dot. A route crossing one country five times is five hops at one coordinate — which is exactly why the globe groups them by default and the table lists every one."
+            },
+            "input": {
+                "title": "What you can paste",
+                "p1": "In Hosts mode, one name, address or URL per line. Blank lines and lines beginning with <code>#</code> are ignored, and a repeated host is looked up once.",
+                "p2": "In traceroute mode it reads all three common dialects — GNU and BSD traceroute, Windows tracert, and mtr --report — line by line rather than by detecting a format first, because a detector has to be right about the whole document before it reads any of it.",
+                "p3": "Hops that went unanswered are kept as gaps rather than dropped, so the hop numbers you see here match the ones your terminal printed. A line reading <code>* * *</code>, <code>???</code> or \"Request timed out\" becomes a hop with no reply, not a missing row."
+            },
+            "statuses": {
+                "title": "What each hop's status means",
+                "intro": "Six outcomes, kept apart because they are six different findings — and only some of them are worth trying again.",
+                "tableCaption": "Every hop status and what it means.",
+                "colStatus": "Status",
+                "colMeans": "What it means",
+                "located": "The registry named a country for this address, and the hop is on the globe.",
+                "no_country": "The address was looked up and the network was named, but no registry said which country the block was allocated to. The hop is real and has nowhere to be drawn.",
+                "private_range": "An address from a private or reserved range — your own router, or a carrier's internal network. No registry holds these, so there is nothing to look up.",
+                "timed_out": "Your traceroute printed no reply for this hop. Common and usually harmless: plenty of routers decline to answer.",
+                "unresolvable": "A name that resolved to nothing, or a line this parser could not read an address out of.",
+                "blocked_address": "The name resolved only to addresses this server refuses to reach — private ranges, link-local, or cloud metadata addresses. That guard is what stops the tool being used to look inside our own network."
+            },
+            "options": {
+                "title": "Every control, and when to reach for it",
+                "tableCaption": "Every control on this tool, what it does, and when it helps.",
+                "colOption": "Control",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "modeName": "Input",
+                "modeDoes": "Chooses whether the box is read as one host per line or as printed traceroute output.",
+                "modeWhen": "Always — it is chosen rather than guessed, so pasting a trace into Hosts mode reads nothing rather than reading it wrongly.",
+                "resolverName": "DNS resolver",
+                "resolverDoes": "Picks which public DoH resolver turns names into addresses.",
+                "resolverWhen": "You want a lookup you can reproduce with dig against the same resolver, or one resolver is answering differently from another.",
+                "rotateName": "Spin the globe",
+                "rotateDoes": "Turns the globe continuously. Dragging and the arrow keys work whether it is on or off.",
+                "rotateWhen": "Turn it off to hold one face still while you read it.",
+                "arcsName": "Draw the legs",
+                "arcsDoes": "Draws a curve from each place to the next, in route order.",
+                "arcsWhen": "You are following a path. Turn it off when you only want to see where the hops are.",
+                "groupName": "Group by country",
+                "groupDoes": "Collapses hops sharing an allocation country onto one dot, drawn larger the more hops it carries.",
+                "groupWhen": "Leave it on. It is off only if you want one dot per hop and accept that same-country hops stack invisibly.",
+                "caveat1": "The resolver control switches itself off when there is nothing to resolve. A traceroute that printed an address for every hop never needs a name looked up, so the setting would change nothing — and a live control that changes nothing is worse than one that says why.",
+                "caveat2": "Drawing the legs switches itself off when a route reaches fewer than two distinct places. An arc from a point to itself renders as a spike out of the globe that means nothing at all.",
+                "caveat3": "Grouping switches itself off when every located hop is already in a country of its own, because there is nothing left to collapse."
+            },
+            "limits": {
+                "title": "The ceilings, and why each one is there",
+                "intro": "Nothing here is truncated on your behalf. A route past a ceiling is refused with the reason, so you never receive a shorter path that still looks complete.",
+                "tableCaption": "Every limit this tool enforces and the reason for it.",
+                "colLimit": "Limit",
+                "colValue": "Value",
+                "colWhy": "Why",
+                "perVisitor": "Routes per visitor",
+                "perVisitorWhy": "One route is up to forty hops, and every located hop costs a reverse lookup, two Team Cymru queries and an RDAP request.",
+                "perSite": "Routes per deployment",
+                "perSiteWhy": "The registries are free and meter by address — and the address they see is ours, shared by everyone here. Without this, one caller in a loop spends the hour for everybody.",
+                "hops": "Hops per trace",
+                "hopsWhy": "Past every default: traceroute and tracert stop at thirty. A longer paste is refused rather than cut short.",
+                "hosts": "Hosts per list",
+                "hostsWhy": "A generous list, and still a bounded number of round trips per press.",
+                "input": "Characters in the box",
+                "inputWhy": "The box is never capped as you type. Silently truncating a pasted trace would make a shorter route that still looked complete."
+            },
+            "useCases": {
+                "title": "What people use it for",
+                "p1": "Explaining a slow connection. A traceroute full of numbers becomes a picture of a path that crosses an ocean twice, which is a far easier thing to show somebody than a column of round-trip times.",
+                "p2": "Checking who actually serves a name. Paste a list of your own hostnames and the table names the operator behind each one — which is how a CDN migration that half-finished, or a staging host still pointing at an old provider, becomes obvious.",
+                "p3": "Reading somebody else's traceroute. Support tickets arrive with terminal output pasted in; this turns it into hop-by-hop network ownership without asking the reporter to run anything else."
+            },
+            "faq": {
+                "title": "Questions people ask",
+                "q1": "Does this run a traceroute for me?",
+                "a1": "No, and it will not. Tracing a path sends packets to every machine along it, and a web page doing that on demand for anonymous visitors is a probing service. Run the trace yourself and paste what it printed.",
+                "q2": "Why is the dot in the middle of the country instead of on the city?",
+                "a2": "Because that is the resolution of the evidence. The country comes from the routing registry's record of who was allocated the block, and a registry records a country, not a street. A city-level pin would be a geo-IP guess dressed up as a fact.",
+                "q3": "Why do several hops share one dot?",
+                "a3": "They were allocated to the same country, so they have the same coordinate. The globe groups them into one larger dot by default rather than stacking them invisibly, and the table lists every hop separately.",
+                "q4": "Why does a hop say it has no country?",
+                "a4": "The address was found and the network was named, but no registry stated which country the block was allocated to. It happens with older allocations and with some transit networks. The hop is real — there is simply nowhere honest to draw it.",
+                "q5": "Does my traceroute output leave my browser?",
+                "a5": "The addresses and names in it do. They are sent to our server, which queries public DNS, Team Cymru and the RDAP registries on your behalf. Those upstreams see our address, not yours. Nothing about the route is stored; the only record kept is a count against a hash of your address, so the hourly limit can be enforced.",
+                "q6": "Why is my first hop a private address?",
+                "a6": "Because it is your own router. Addresses in the private ranges belong to no registry and are the same numbers on millions of networks, so there is nothing to look up and nowhere to put them on a globe.",
+                "q7": "Can I use this from a script or an assistant?",
+                "a7": "Yes. The same lookup is exposed over MCP as a tool that returns every hop as data, coordinates included, with the same hourly limit applied."
+            }
+        }
+    },
     "mockServer": {
         "meta": {
             "title": "Visual Mock Server Studio — Build Mock APIs Without Writing JSON",
@@ -10719,6 +10925,223 @@
             "reportGuarded": "{count, plural, one {# of them refuses a request missing a required field} other {# of them refuse a request missing a required field}}, with a 400 naming it.",
             "reportSkipped": "{count, plural, one {# operation could not be taken} other {# operations could not be taken}}:",
             "openServer": "Open the server"
+        }
+    },
+    "hexEditor": {
+        "meta": {
+            "title": "Hex Editor — read and edit any file byte by byte",
+            "description": "Open a file in the browser and edit it byte by byte. Hex and ASCII columns, a data inspector for every integer, float and GUID at the caret, search by text or hex, Go To offset, and undo. Nothing is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Hex Editor",
+            "title": "Hex Editor",
+            "subtitle": "Open a file and read it the way a machine does. Sixteen bytes to a row, hex beside ASCII, a data inspector that decodes every integer, float, string and GUID sitting under the caret — and an editor that overwrites a byte without ever leaving the tab.",
+            "badgeLocal": "Never uploaded",
+            "badgeInspector": "19 readings",
+            "badgeSearch": "Text and hex search"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "workbench": {
+            "gridLabel": "File contents in hexadecimal and ASCII",
+            "offsetHeader": "Offset",
+            "downloadNotice": "This browser cannot write back to the file you opened, so Save downloads an edited copy instead. Nothing is uploaded either way.",
+            "emptyTitle": "No file open",
+            "emptyDescription": "Choose a file or drop one here. It is read into this tab and never sent anywhere.",
+            "openFile": "Open file",
+            "resizeLabel": "Resize the data inspector",
+            "openedFile": "Editing {name}"
+        },
+        "toolbar": {
+            "open": "Open",
+            "save": "Save",
+            "saveAs": "Save as",
+            "reload": "Reload from the opened file",
+            "undo": "Undo",
+            "redo": "Redo",
+            "find": "Find",
+            "goTo": "Go to offset",
+            "copy": "Copy",
+            "copyHex": "Copy selection as hex",
+            "copyText": "Copy selection as text",
+            "copyDump": "Copy selection as a hex dump",
+            "columnGroup": "Which column typing goes to",
+            "close": "Close file"
+        },
+        "columns": {
+            "hex": "Hex",
+            "ascii": "ASCII"
+        },
+        "endianness": {
+            "little": "Little-endian",
+            "big": "Big-endian"
+        },
+        "searchModes": {
+            "ascii": "Text",
+            "hex": "Hex"
+        },
+        "inspector": {
+            "title": "Data inspector",
+            "noFile": "Open a file to read the bytes under the caret.",
+            "caretAt": "Reading from 0x{offset}",
+            "endianLabel": "Byte order",
+            "unavailable": "—",
+            "copyRow": "Copy the {label} reading"
+        },
+        "status": {
+            "noFile": "No file open",
+            "offset": "Offset",
+            "decimal": "Dec",
+            "selected": "Selected",
+            "size": "Size",
+            "endian": "Order",
+            "encoding": "Encoding",
+            "column": "Typing",
+            "bytes": "{count, number} bytes",
+            "matches": "{count} matches",
+            "modified": "Modified",
+            "saved": "Unmodified"
+        },
+        "search": {
+            "title": "Find bytes",
+            "description": "Search the open file as text or as a run of hexadecimal bytes. Every match is highlighted in both columns.",
+            "modeGroup": "How the search is written",
+            "queryLabel": "Search for",
+            "placeholderAscii": "Hello",
+            "placeholderHex": "48 65 6C 6C 6F",
+            "hintAscii": "One byte per character. A character with no single-byte reading — an emoji, most CJK — is refused rather than encoded as several.",
+            "hintHex": "Spaces and commas between bytes are ignored, so a pasted dump works as it stands.",
+            "run": "Find",
+            "previous": "Previous",
+            "next": "Next",
+            "clear": "Clear",
+            "found": "{count} matches highlighted.",
+            "foundTruncated": "Showing the first {count} matches; the file holds more than the {max} this stops at.",
+            "noMatches": "Nothing in this file matches."
+        },
+        "goto": {
+            "title": "Go to offset",
+            "description": "Jump the caret to a byte and bring its row into view.",
+            "label": "Offset",
+            "placeholder": "0x200",
+            "hint": "A plain number is decimal. Write 0x200 or 200h for hexadecimal.",
+            "cancel": "Cancel",
+            "jump": "Go"
+        },
+        "errors": {
+            "searchEmpty": "Type something to search for.",
+            "searchInvalidHex": "Hex search takes 0-9 and A-F only, with spaces or commas between bytes.",
+            "searchOddHex": "That is half a byte — hex needs an even number of digits.",
+            "searchNotSingleByte": "One of those characters has no single-byte reading. Search for it in hex instead.",
+            "searchTooLong": "A search is at most {max} bytes long.",
+            "gotoEmpty": "Type an offset to jump to.",
+            "gotoNotANumber": "That is not an offset. Try 512, 0x200 or 200h.",
+            "gotoOutOfRange": "This file ends at 0x{last}.",
+            "emptyFile": "That file holds no bytes.",
+            "tooLarge": "This editor opens files up to {max} MB.",
+            "openFailed": "That file could not be read.",
+            "saveFailed": "Those bytes could not be written.",
+            "copyTooLarge": "Copy takes at most {max} KB at a time. Select less of the file."
+        },
+        "toast": {
+            "opened": "Opened {name}",
+            "saved": "Saved {name}",
+            "downloaded": "Downloaded an edited copy of {name}",
+            "copied": "Copied {count, number} bytes",
+            "copyDenied": "The browser refused access to the clipboard.",
+            "copyUnsupported": "This browser has no clipboard to write to."
+        },
+        "article": {
+            "understanding": {
+                "title": "What a hex editor actually shows you",
+                "p1": "Every file is a run of bytes. A text editor guesses which encoding those bytes are in and shows you characters; a hex editor does not guess. It shows you the bytes themselves, sixteen to a row, written as two hexadecimal digits each — and beside them, the same bytes read as ASCII so the parts that happen to be text are still readable.",
+                "p2": "That is why a hex editor is what you reach for when a file will not open. A PNG that a viewer rejects starts with <code>89 50 4E 47</code> when it is intact; a JSON file that a parser refuses often begins with <code>EF BB BF</code>, a byte order mark nothing told you about. Neither is visible in an editor that is busy rendering characters."
+            },
+            "grid": {
+                "title": "Reading the grid",
+                "p1": "The left column is the offset — how far into the file the row starts — written as eight hexadecimal digits. The middle is sixteen bytes, uppercase, with a wider gap after the eighth so you can find byte eleven without counting to it. The right is the same sixteen bytes as ASCII, where every printable character shows as itself and everything else as a dot.",
+                "p2": "The two columns are one selection. Clicking a byte in either one moves the caret in both, and dragging across the ASCII column selects exactly the bytes it covers — because there is only one selection underneath, held as byte offsets rather than as characters.",
+                "p3": "A byte of <code>00</code> is dimmed, which is the fastest way to see structure: padding, alignment and empty records show up as pale blocks without your having to read a single number."
+            },
+            "editing": {
+                "title": "Editing a byte, one nibble at a time",
+                "p1": "Typing in the hex column replaces a byte rather than inserting one, and it takes two keystrokes because a byte is two hexadecimal digits. The first digit is shown with an underscore after it, so you can always see that the byte is half-typed and has not been written yet. The second digit completes it and the caret steps on.",
+                "exampleTypeA": "type A",
+                "exampleTypeF": "type F",
+                "p2": "Press Escape and the half-typed byte is abandoned with nothing written. Press Tab and the caret moves to the ASCII column, where typing a character writes that character's byte directly — which is the quicker way to fix a filename embedded in a header.",
+                "p3": "Delete writes zeroes over everything selected, in one undoable step. Backspace zeroes the byte behind the caret and steps back onto it. Neither removes a byte, because a file's length is fixed here: this editor overwrites, and every edit is one Ctrl+Z away from being gone."
+            },
+            "inspector": {
+                "title": "The data inspector, and why byte order matters",
+                "p1": "The panel on the left reads the bytes starting at the caret as every type they could be. It updates as the caret moves, and a reading the file has run out of bytes for shows a dash rather than disappearing — so four bytes from the end you can see that an Int64 did not fit.",
+                "integersName": "Integers",
+                "floatsName": "Floats",
+                "textName": "Text",
+                "guidName": "GUID",
+                "integersBody": "Signed and unsigned, at 8, 16, 24, 32 and 64 bits, plus the raw byte in binary and octal. The 64-bit rows are exact — they are read as big integers, not as floating-point approximations of them.",
+                "floatsBody": "Half, single and double precision. Half precision is what a great deal of machine-learning data and some graphics formats store, and it is the reading that is hardest to work out by hand.",
+                "textBody": "The byte as ASCII, the first code point as UTF-8, and the code unit — or the surrogate pair — as UTF-16. A malformed or truncated sequence reads as a dash rather than as a replacement character, because a replacement character looks like something that is really in the file.",
+                "guidBody": "Sixteen bytes as a GUID, in whichever of its two layouts the byte order asks for.",
+                "p2": "Byte order is not decoration. The same four bytes are 67305985 read little-endian and 16909060 read big-endian, and the same sixteen bytes name two entirely different GUIDs depending on whether whoever wrote them followed RFC 4122 or Microsoft's mixed layout. Network protocols are usually big-endian; almost everything written by an x86 or ARM machine is little-endian.",
+                "orBig": "or",
+                "rows": "{count, number} readings in all, recomputed the instant the caret or the byte order changes."
+            },
+            "searching": {
+                "title": "Searching by text or by bytes",
+                "p1": "Search takes either form. Text mode encodes one byte per character, which is what you want for a string embedded in a binary. Hex mode takes the bytes directly, which is what you want for a file signature or a struct field you already know the shape of.",
+                "or": "or",
+                "p2": "A needle is at most {maxBytes} bytes, and a search collects at most {maxMatches} matches before it stops looking and says so — ten million highlighted matches is not an answer anybody asked for. Every match is highlighted in both columns, and Next and Previous wrap around the ends of the file.",
+                "p3": "The search runs when you press Find rather than as you type. That is deliberate: a scan is linear in the size of the file, and on a file of a few hundred megabytes running one per keystroke would make the box unusable."
+            },
+            "shortcuts": {
+                "title": "Every keyboard shortcut",
+                "intro": "The grid is fully keyboard-operable. Everything below works while the grid has focus, except the file and dialog shortcuts, which work anywhere on the page.",
+                "columnKey": "Keys",
+                "columnDoes": "What it does",
+                "open": "Open a file",
+                "save": "Save over the opened file, or download an edited copy where the browser cannot",
+                "saveAs": "Save to a new file",
+                "find": "Open the search dialog",
+                "goTo": "Jump to an offset",
+                "undo": "Undo the last edit",
+                "redo": "Redo the edit that was undone",
+                "column": "Switch typing between the hex and ASCII columns",
+                "move": "Move the caret one byte or one row",
+                "extend": "Grow or shrink the selection from where it was anchored",
+                "selectAll": "Select the whole file",
+                "rowEnds": "Jump to the start or the end of the current row",
+                "documentEnds": "Jump to the first or last byte of the file",
+                "page": "Move by as many rows as the grid is showing",
+                "zero": "Write zeroes over the selection",
+                "back": "Abandon a half-typed byte, or zero the byte behind the caret"
+            },
+            "saving": {
+                "title": "Opening, saving, and what leaves your machine",
+                "p1": "Nothing does. The file is read into this tab with the browser's own file APIs and edited in memory; there is no request that carries a byte of it anywhere, which you can confirm with the network panel open.",
+                "p2": "Where the browser supports the File System Access API — Chrome, Edge and Opera today — a file opened through the Open button comes with a handle, and Save writes back over the original. Everywhere else, and for any file that arrived by drag and drop, Save hands you an edited copy through the download flow instead. The editor says which of the two you are getting above the grid, rather than leaving you to find out from your downloads folder.",
+                "p3": "Files are accepted up to {max} MB. The ceiling is memory rather than addressing: the bytes are held whole so that reading one stays a single array lookup, and a tab holding much more than that is a tab the browser is about to close. Only the rows on screen are ever built into elements, so scrolling a large file costs the same as scrolling a small one."
+            },
+            "useCases": {
+                "title": "When you need one",
+                "p1": "Identifying a file whose extension is lying: the first few bytes of almost every format are a signature, and reading them is faster than guessing. Checking that a binary patch landed where you meant it to. Finding a hard-coded string in a firmware image. Reading a struct out of a saved game or a packet capture, which is what the inspector's endianness selector exists for.",
+                "p2": "It is also the fastest way to settle an argument about an encoding. Paste a file in, look at the first three bytes, and a byte order mark either is there or is not — no library, no guessing, and nothing uploaded to find out."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Is my file uploaded anywhere?",
+                "a1": "No. The file is read into your browser tab and every edit happens in memory. There is no server involved and no request that carries the contents anywhere, which is why the tool works with the network disconnected.",
+                "q2": "Can I insert or delete bytes rather than overwriting them?",
+                "a2": "Not in this editor. Every edit overwrites, so the file's length never changes — <code>Delete</code> writes zeroes rather than removing bytes, and <code>Backspace</code> zeroes the byte behind the caret. Insertion changes every offset after it, which for most of what a hex editor is used for is a way to break a file rather than to fix one.",
+                "q3": "Why does the scrollbar move in jumps on a very large file?",
+                "a3": "Browsers stop rendering an element past roughly 33.5 million pixels, which a file over about 24 MB would need. Past that size the scroll position is mapped onto the file by ratio, so one notch of the wheel covers more than one row. The keyboard and Go To still land on an exact byte, and the status bar always says which one the caret is on.",
+                "q4": "How large a file can it open?",
+                "a4": "Up to {max} MB. Larger files are refused by name rather than being half-read: the bytes are held whole so that reading one stays instant, and a tab holding much more than that is one the browser will kill.",
+                "q5": "Why does Save sometimes download a copy instead of saving the file?",
+                "a5": "Because the browser has no way to write back. Only browsers with the File System Access API can hand a page a writable handle to a file you picked, and a file dropped onto the page never comes with one. Where there is no handle, an edited copy through the download flow is the honest outcome, and the editor says so above the grid before you press anything.",
+                "q6": "What is the difference between the two byte orders in the inspector?",
+                "a6": "Which end of a multi-byte value comes first. Little-endian puts the least significant byte first, which is what x86 and ARM machines write; big-endian puts the most significant byte first, which is what most network protocols use. The bytes <code>01 02 03 04</code> are 67305985 one way and 16909060 the other — same bytes, different number."
+            }
         }
     },
     "hostedServer": {

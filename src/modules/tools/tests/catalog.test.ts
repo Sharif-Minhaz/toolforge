@@ -191,6 +191,7 @@ describe("tool catalog", () => {
             "equation",
             "port-scanner",
             "subdomain-lookup",
+            "ip-globe",
             "mock-server",
             "json-server",
             "graphql-server",

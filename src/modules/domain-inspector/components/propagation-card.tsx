@@ -5,7 +5,7 @@ import { useFormatter, useTranslations } from "next-intl";
 
 import { cn } from "@/lib/utils";
 import { Chip, PanelUnavailable, type ChipTone } from "./panel-card";
-import { useCountryName } from "./use-country-name";
+import { useCountryName } from "@/modules/tools/components/use-country-name";
 import { WorldMap, type MapPin } from "./world-map";
 import { clusterByCountry, propagationTone } from "../domain/propagation";
 import type { DomainReport, PropagationNodeResult, PropagationState } from "../types";
