@@ -1,5 +1,7 @@
 import type { PixelSize } from "@/modules/tools/types";
 
+import { smoothHeights } from "./heightfield";
+
 /**
  * Turning a cut-out into a shape that has a front and a back.
  *
@@ -18,20 +20,18 @@ import type { PixelSize } from "@/modules/tools/types";
 /** Alpha above this counts as subject. Half-transparent edges land outside. */
 export const SILHOUETTE_ALPHA = 0.5;
 
-/**
- * Chamfer weights for the distance transform below.
- *
- * 3 and 4 rather than 1 and √2. The classic integer approximation: two passes
- * over the grid with these weights are within about 8% of true Euclidean
- * distance, which is far finer than the grid the distance is measured on — and
- * an exact transform would be several times the code for a difference no
- * geometry here can express.
- */
-const STEP_ORTHOGONAL = 3;
-const STEP_DIAGONAL = 4;
+/** Blur passes over the bulge before the outline is put back to zero. */
+export const SILHOUETTE_SMOOTHING_PASSES = 3;
 
-/** Larger than any path across a grid this size, and safe to add to. */
-const UNREACHABLE = 1 << 28;
+/**
+ * How many relaxation sweeps the inflation runs, per grid edge.
+ *
+ * Successive over-relaxation on an N-wide grid needs on the order of N sweeps
+ * to settle at its optimal factor, and two per edge leaves a comfortable margin
+ * on the shapes here. At the largest grid this is a few hundred million cell
+ * updates — a fraction of a second, once per picture.
+ */
+const SWEEPS_PER_EDGE = 2;
 
 export type Silhouette = {
     /** 1 where the subject is, 0 elsewhere. */
@@ -43,79 +43,78 @@ export type Silhouette = {
 };
 
 /**
- * Distance from every inside point to the nearest outside point.
+ * The inflation field: how much every inside point stands proud of the outline.
  *
- * Two raster passes, forward then backward, which is the whole algorithm: after
- * the forward pass each cell knows the shortest path that arrives from above or
- * the left, and after the backward pass it knows the shortest overall. Points
- * outside stay at zero, which is what makes the inflation vanish exactly at the
- * outline rather than a cell short of it.
+ * Solves Poisson's equation ∇²h = −1 inside the outline with h = 0 on it, by
+ * successive over-relaxation. That particular equation is the one whose answer
+ * is the right shape: on a disc it is a paraboloid, on a strip a parabolic
+ * arch, and the square root of either is an exact hemisphere or half-cylinder.
+ * Narrow parts come out low and wide parts high — an ear thinner than a head,
+ * a leg thinner than a body — which is what an inflated outline should do and
+ * what a distance transform cannot: distance rises at the same rate everywhere
+ * and so peaks in a sharp ridge down the middle of anything long.
  *
- * The border of the grid counts as outside whether or not the subject reaches
- * it. A subject cropped by the frame would otherwise inflate to full height
- * against a straight edge and leave the front and back halves unable to meet.
+ * Beyond the grid is *not* outside. A subject that runs off the edge of the
+ * frame — a portrait cropped at the chest — continues past it, so the edge is
+ * a mirror (zero gradient) rather than a zero. The body keeps its thickness up
+ * to the frame and the mesh builder caps the open edge with a flat wall — the
+ * cut a bust has, rather than a taper to nothing.
+ *
+ * Returned normalised to 0..1 against the highest point.
  */
-export function distanceTransform(inside: Uint8Array, grid: PixelSize): Int32Array {
+export function inflationField(inside: Uint8Array, grid: PixelSize): Float32Array {
     const { width, height } = grid;
-    const distance = new Int32Array(width * height);
+    const field = new Float32Array(width * height);
+    const sweeps = Math.ceil(SWEEPS_PER_EDGE * Math.max(width, height));
+    // The optimal over-relaxation factor for Poisson on a grid of this size.
+    const omega = 2 / (1 + Math.sin(Math.PI / (Math.max(width, height) + 1)));
 
-    for (let index = 0; index < distance.length; index += 1) {
-        distance[index] = inside[index] === 1 ? UNREACHABLE : 0;
-    }
-
-    const at = (column: number, row: number) =>
+    const at = (column: number, row: number, self: number) =>
         column < 0 || row < 0 || column >= width || row >= height
-            ? 0
-            : distance[row * width + column];
+            ? self
+            : field[row * width + column];
 
-    for (let row = 0; row < height; row += 1) {
-        for (let column = 0; column < width; column += 1) {
-            const index = row * width + column;
+    for (let sweep = 0; sweep < sweeps; sweep += 1) {
+        for (let row = 0; row < height; row += 1) {
+            for (let column = 0; column < width; column += 1) {
+                const index = row * width + column;
 
-            if (distance[index] === 0) {
-                continue;
+                if (inside[index] === 0) {
+                    continue;
+                }
+
+                const self = field[index];
+                const neighbours =
+                    at(column - 1, row, self) +
+                    at(column + 1, row, self) +
+                    at(column, row - 1, self) +
+                    at(column, row + 1, self);
+
+                field[index] = self + omega * ((neighbours + 1) / 4 - self);
             }
-
-            distance[index] = Math.min(
-                distance[index],
-                at(column - 1, row) + STEP_ORTHOGONAL,
-                at(column, row - 1) + STEP_ORTHOGONAL,
-                at(column - 1, row - 1) + STEP_DIAGONAL,
-                at(column + 1, row - 1) + STEP_DIAGONAL,
-            );
         }
     }
 
-    for (let row = height - 1; row >= 0; row -= 1) {
-        for (let column = width - 1; column >= 0; column -= 1) {
-            const index = row * width + column;
+    let highest = 0;
 
-            if (distance[index] === 0) {
-                continue;
-            }
+    for (const value of field) {
+        highest = Math.max(highest, value);
+    }
 
-            distance[index] = Math.min(
-                distance[index],
-                at(column + 1, row) + STEP_ORTHOGONAL,
-                at(column, row + 1) + STEP_ORTHOGONAL,
-                at(column + 1, row + 1) + STEP_DIAGONAL,
-                at(column - 1, row + 1) + STEP_DIAGONAL,
-            );
+    if (highest > 0) {
+        for (let index = 0; index < field.length; index += 1) {
+            field[index] /= highest;
         }
     }
 
-    return distance;
+    return field;
 }
 
 /**
- * The silhouette, and how deep inside it every point sits.
+ * The silhouette, and how far every point of it stands proud.
  *
- * The profile is a circular cross-section rather than the raw distance:
- * `sqrt(u(2 − u))` is the height of a half-circle of radius 1 at a distance `u`
- * in from its edge. Using the distance itself would give a tent — flat-sided,
- * with a ridge down the middle — which reads as a folded card rather than as an
- * object. This rises steeply at the outline and flattens over the middle, which
- * is what a rounded body does.
+ * The square root of the inflation field, which turns its parabolic sections
+ * into circular ones — the profile of a body rather than of a tent.
  */
 export function buildSilhouette(alpha: Float32Array, grid: PixelSize): Silhouette {
     const inside = new Uint8Array(alpha.length);
@@ -128,49 +127,47 @@ export function buildSilhouette(alpha: Float32Array, grid: PixelSize): Silhouett
         any = any || solid === 1;
     }
 
-    // The frame itself counts as outside, whatever the picture says.
-    //
-    // Not a detail: closure depends on the outermost ring being at exactly zero
-    // so the front and back halves land on the same points there. A subject
-    // that reaches the edge — or a picture with no transparency at all, where
-    // every pixel is "inside" — would otherwise stand a full bulge high against
-    // a straight wall, and the two halves would never meet along it. Clipping
-    // the ring is also what a subject cropped by the frame should do: it ends at
-    // the frame rather than being inflated past it.
-    for (let column = 0; column < grid.width; column += 1) {
-        inside[column] = 0;
-        inside[(grid.height - 1) * grid.width + column] = 0;
-    }
-
-    for (let row = 0; row < grid.height; row += 1) {
-        inside[row * grid.width] = 0;
-        inside[row * grid.width + grid.width - 1] = 0;
-    }
-
     const depth = new Float32Array(alpha.length);
 
     if (!any) {
         return { inside, depth, present: false };
     }
 
-    const distance = distanceTransform(inside, grid);
-    let deepest = 0;
+    const field = inflationField(inside, grid);
 
-    for (const value of distance) {
-        deepest = Math.max(deepest, value);
+    for (let index = 0; index < field.length; index += 1) {
+        depth[index] = Math.sqrt(field[index]);
     }
 
-    if (deepest === 0) {
-        return { inside, depth, present: true };
+    // The circular profile is right for a body and wrong for a grid: on a
+    // 100 mm model it climbs two millimetres inside the first half-millimetre
+    // cell, which turns the outline's staircase into a cliff with teeth. Two
+    // things bring it down to something a surface would do, in this order. The
+    // box-averaged alpha, which is fractional where a cell straddles the
+    // outline, scales the first ring so a cell a third inside stands a third as
+    // high — and *then* the bulge is blurred, which rounds that ring against the
+    // zeros beside it and, because the blur runs after the ramp, smooths the
+    // ramp's own cell-to-cell alternation rather than leaving a beaded equator.
+    // The outline is then put back to exactly zero, because closure depends on
+    // it.
+    for (let index = 0; index < depth.length; index += 1) {
+        const coverage = Math.min(
+            1,
+            Math.max(0, (alpha[index] - SILHOUETTE_ALPHA) / SILHOUETTE_ALPHA),
+        );
+
+        depth[index] *= coverage;
     }
 
-    for (let index = 0; index < distance.length; index += 1) {
-        const ratio = Math.min(1, distance[index] / deepest);
+    const softened = smoothHeights(depth, grid, SILHOUETTE_SMOOTHING_PASSES);
 
-        depth[index] = Math.sqrt(ratio * (2 - ratio));
+    for (let index = 0; index < softened.length; index += 1) {
+        if (inside[index] === 0) {
+            softened[index] = 0;
+        }
     }
 
-    return { inside, depth, present: true };
+    return { inside, depth: softened, present: true };
 }
 
 /**

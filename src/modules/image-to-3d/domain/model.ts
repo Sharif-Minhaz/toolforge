@@ -1,4 +1,5 @@
 import type { Heightfield, MeshOptions, MeshStats, ModelRefusal } from "../types";
+import type { DepthMap } from "./depth";
 import { buildHeightfield, gridSizeFor, type SourcePixels } from "./heightfield";
 import { buildMesh } from "./mesh";
 import { estimateMesh } from "./stats";
@@ -25,12 +26,16 @@ export type ModelResult =
  * grid, and a plate measured from that grid would come out 0.5 mm taller than
  * the picture it is of.
  */
-export function buildModel(pixels: SourcePixels, options: MeshOptions): ModelResult {
+export function buildModel(
+    pixels: SourcePixels,
+    options: MeshOptions,
+    depth: DepthMap | null = null,
+): ModelResult {
     if (pixels.width <= 0 || pixels.height <= 0) {
         return { ok: false, reason: "empty_image" };
     }
 
-    const field = buildHeightfield(pixels, options);
+    const field = buildHeightfield(pixels, options, depth);
     const result = buildMesh(field, options, pixels.height / pixels.width);
 
     if (!result.ok) {

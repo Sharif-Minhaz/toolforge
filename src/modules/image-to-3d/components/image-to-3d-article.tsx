@@ -32,6 +32,7 @@ export async function getImageTo3dFaqEntries(): Promise<FaqEntry[]> {
         { question: t("faq.q7"), answer: t("faq.a7") },
         { question: t("faq.q8"), answer: t("faq.a8") },
         { question: t("faq.q9"), answer: t("faq.a9") },
+        { question: t("faq.q10"), answer: t("faq.a10") },
     ];
 }
 
@@ -88,6 +89,7 @@ export async function ImageTo3dArticle() {
                         <p>{t("howItWorks.p5")}</p>
                         <p>{t("howItWorks.p6")}</p>
                         <p>{t("howItWorks.p7")}</p>
+                        <p>{t("howItWorks.p8")}</p>
                     </div>
                 </ArticleSection>
 

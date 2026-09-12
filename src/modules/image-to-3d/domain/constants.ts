@@ -50,7 +50,10 @@ export const MAX_TRIANGLES = 1_200_000;
 export const MAX_SOURCE_BYTES = 25 * 1024 * 1024;
 
 export const DEFAULT_OPTIONS: ModelOptions = {
-    source: "luminance",
+    // Estimated depth, not brightness. Brightness is not depth — a dark object
+    // in bright light comes out the wrong way round — and the model that reads
+    // the picture as a scene is what turns a smiley pillow into a face.
+    source: "depth",
     invert: false,
     // One pass, not zero. A photograph carries sensor and JPEG noise that a
     // displacement turns into visible pimples, and one binomial pass removes
@@ -67,9 +70,10 @@ export const DEFAULT_OPTIONS: ModelOptions = {
     depth: 30,
     solid: true,
     baseThickness: 1.5,
-    // A quarter. Enough that a face or a logo still reads on the surface of the
-    // body, little enough that the body is still the shape the outline gave it.
-    detail: 0.25,
+    // Half. With real depth under it, the surface is telling the truth about
+    // the object's form and deserves an equal say with the outline's bulge;
+    // with brightness in its place the same setting is merely tolerable.
+    detail: 0.5,
     format: "glb",
 };
 

@@ -18,6 +18,7 @@ import type {
 import { DECODABLE_IMAGE_TYPES, type DecodableImageType } from "@/modules/tools/types";
 
 import type { ModelTexture } from "../types";
+import { estimateDepth, type DepthFailureReason, type DepthMap } from "./depth";
 import {
     MAX_EMBEDDED_TEXTURE_BYTES,
     MAX_PIXELS,
@@ -59,6 +60,15 @@ export type ModelSource = {
     readonly hadAlpha: boolean;
     /** Set when a cut-out was asked for and the model could not deliver one. */
     readonly cutFailure: SegmentationFailureReason | null;
+    /**
+     * Relative depth over the picture, at the estimator's own resolution.
+     *
+     * Read from the original rather than the cut-out — the model has never
+     * seen a transparent background — and `null` until asked for or when the
+     * estimator could not run, in which case the heightfield reads brightness.
+     */
+    readonly depth: DepthMap | null;
+    readonly depthFailure: DepthFailureReason | null;
     /** The picture's real size, kept for the line that reports it. */
     readonly width: number;
     readonly height: number;
@@ -68,11 +78,21 @@ export type ReadSourceResult =
     | { readonly ok: true; readonly source: ModelSource }
     | { readonly ok: false; readonly reason: SourceFailureReason };
 
+/** Which model is at work, for the line that says so. */
+export type SourceStage = "cutout" | "depth";
+
+export type SourceProgress = {
+    readonly stage: SourceStage;
+    readonly progress: SegmentationProgress;
+};
+
 export type ReadSourceOptions = {
     /** Whether to ask the segmentation model for a subject mask. */
     readonly cutout: boolean;
+    /** Whether to ask the depth estimator for a relief. */
+    readonly depth: boolean;
     readonly quality: CutoutQuality;
-    readonly onProgress: (progress: SegmentationProgress | null) => void;
+    readonly onProgress: (progress: SourceProgress | null) => void;
 };
 
 /**
@@ -167,7 +187,7 @@ function applyMask(pixels: ImageData, mask: CanvasImageSource): ImageData | null
 
 async function cutSubjectOut(
     pixels: ImageData,
-    options: ReadSourceOptions,
+    options: Pick<ReadSourceOptions, "quality" | "onProgress">,
 ): Promise<{ pixels: ImageData | null; failure: SegmentationFailureReason | null }> {
     const canvas = toCanvas(pixels);
 
@@ -185,7 +205,9 @@ async function cutSubjectOut(
             return { pixels: null, failure: "removal_failed" };
         }
 
-        const mask = await computeAlphaMask(input, options.quality, options.onProgress);
+        const mask = await computeAlphaMask(input, options.quality, (progress) =>
+            options.onProgress({ stage: "cutout", progress }),
+        );
 
         if (!mask.ok) {
             return { pixels: null, failure: mask.reason };
@@ -210,13 +232,61 @@ async function cutSubjectOut(
 }
 
 /**
- * Decodes a picked file once and keeps the working copy, so nudging a stepper
- * costs a resample rather than a decode.
+ * The source with a cut-out added, when one would change something.
  *
- * A cut-out is attempted only when it would change something. A picture that
- * already carries an alpha channel is its own silhouette, and running a
- * hundred-megabyte model to rediscover an outline the file states outright is
- * a download charged to the reader for nothing.
+ * A picture that already carries an alpha channel is its own silhouette, and
+ * running a hundred-megabyte model to rediscover an outline the file states
+ * outright is a download charged to the reader for nothing.
+ */
+export async function withCutout(
+    source: ModelSource,
+    options: Pick<ReadSourceOptions, "quality" | "onProgress">,
+): Promise<ModelSource> {
+    if (source.hadAlpha || source.cut !== null) {
+        return source;
+    }
+
+    const { pixels, failure } = await cutSubjectOut(source.original.pixels, options);
+
+    options.onProgress(null);
+
+    if (pixels === null) {
+        return { ...source, cutFailure: failure };
+    }
+
+    return {
+        ...source,
+        cut: { pixels, texture: await buildTexture(pixels, null) },
+        cutFailure: null,
+    };
+}
+
+/** The source with a depth estimate added, read from the original picture. */
+export async function withDepth(
+    source: ModelSource,
+    options: Pick<ReadSourceOptions, "onProgress">,
+): Promise<ModelSource> {
+    if (source.depth !== null) {
+        return source;
+    }
+
+    const result = await estimateDepth(source.original.pixels, (progress) =>
+        options.onProgress({ stage: "depth", progress }),
+    );
+
+    options.onProgress(null);
+
+    if (!result.ok) {
+        return { ...source, depthFailure: result.reason };
+    }
+
+    return { ...source, depth: result.depth, depthFailure: null };
+}
+
+/**
+ * Decodes a picked file once and keeps the working copy, so nudging a stepper
+ * costs a resample rather than a decode. The two models run after it, each
+ * only when asked for.
  */
 export async function readModelSource(
     file: File,
@@ -245,41 +315,31 @@ export async function readModelSource(
             ? decoded
             : await resizePixels(decoded, working);
 
-    const hadAlpha = !isOpaque(pixels);
-    const original: SourceLayer = {
-        pixels,
-        // The reader's own file is embedded whole only when the working copy is
-        // still the whole picture; a downscaled copy has to be re-encoded or the
-        // texture would not match the mesh's proportions.
-        texture: await buildTexture(pixels, pixels === decoded ? file : null),
-    };
-
-    const base = {
+    let source: ModelSource = {
         name: file.name,
-        original,
-        hadAlpha,
+        original: {
+            pixels,
+            // The reader's own file is embedded whole only when the working
+            // copy is still the whole picture; a downscaled copy has to be
+            // re-encoded or the texture would not match the mesh's proportions.
+            texture: await buildTexture(pixels, pixels === decoded ? file : null),
+        },
+        cut: null,
+        hadAlpha: !isOpaque(pixels),
+        cutFailure: null,
+        depth: null,
+        depthFailure: null,
         width: decoded.width,
         height: decoded.height,
-    } as const;
-
-    if (!options.cutout || hadAlpha) {
-        return { ok: true, source: { ...base, cut: null, cutFailure: null } };
-    }
-
-    const { pixels: cutPixels, failure } = await cutSubjectOut(pixels, options);
-
-    options.onProgress(null);
-
-    if (cutPixels === null) {
-        return { ok: true, source: { ...base, cut: null, cutFailure: failure } };
-    }
-
-    return {
-        ok: true,
-        source: {
-            ...base,
-            cut: { pixels: cutPixels, texture: await buildTexture(cutPixels, null) },
-            cutFailure: null,
-        },
     };
+
+    if (options.cutout) {
+        source = await withCutout(source, options);
+    }
+
+    if (options.depth) {
+        source = await withDepth(source, options);
+    }
+
+    return { ok: true, source };
 }

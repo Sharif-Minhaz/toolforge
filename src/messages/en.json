@@ -9128,14 +9128,18 @@
             "detailName": "Surface detail",
             "detailHint": "How much of the bulge is handed to the picture's own shading.",
             "detailDisabledHint": "For inflated bodies only — a plate and a cylinder are relief the whole way through.",
-            "baseDisabledInflateHint": "An inflated body has no flat back; its thickness is the relief depth."
+            "baseDisabledInflateHint": "An inflated body has no flat back; its thickness is the relief depth.",
+            "sourceDepthHint": "A depth estimator reads the picture as a scene — a snout nearer than the ears — and runs in this tab. {size} the first time, then cached. Nothing is uploaded.",
+            "fetchingDepthModel": "Fetching the depth model — {size}, once. Your browser keeps it after this.",
+            "estimatingDepth": "Estimating depth…"
         },
         "sources": {
             "luminanceName": "Brightness",
             "alphaName": "Transparency",
             "redName": "Red channel",
             "greenName": "Green channel",
-            "blueName": "Blue channel"
+            "blueName": "Blue channel",
+            "depthName": "Estimated depth"
         },
         "shapes": {
             "planeName": "Flat plate",
@@ -9162,7 +9166,9 @@
             "too_many_triangles": "That would be {count, number} triangles, which is more than a browser tab can build. Lower the resolution, or switch the solid backing off.",
             "export_failed": "The file could not be written. The mesh may be too large for this browser to hold in one buffer.",
             "model_unavailable": "The cut-out model could not be downloaded. Check your connection and try again, or switch the cut-out off to use the whole frame.",
-            "removal_failed": "The cut-out model would not run in this browser. Switch the cut-out off to use the whole frame."
+            "removal_failed": "The cut-out model would not run in this browser. Switch the cut-out off to use the whole frame.",
+            "depth_unavailable": "The depth model could not be downloaded, so the relief is read from brightness instead. Check your connection and pick the picture again, or choose another height source.",
+            "depth_failed": "The depth model would not run in this browser, so the relief is read from brightness instead. Choose another height source to silence this."
         },
         "toast": {
             "downloaded": "Saved {filename}",
@@ -9186,7 +9192,8 @@
                 "p4": "The heights are placed in space by the shape: a flat plate puts them along one axis, and a cylinder wraps them around an axis instead. Everything after that is identical for both — the same grid, the same triangulation, the same walls — which is the whole reason a second shape costs almost nothing.",
                 "p5": "With the solid backing on, a second surface is built directly behind the first, and the two are joined by a ring of walls. The walls are walked so the relief is always on the left as seen from outside, which is what makes every one of them face outward without a table of special cases. A cylinder has no left or right wall at all, because the picture's two edges are the same place on the model; its first and last columns are given the same height so the wrap closes rather than cracking open.",
                 "p6": "An inflated body's outline comes from transparency. A picture that already has a transparent background is its own outline and nothing else runs; a photograph does not, so a subject-segmentation model runs in this tab to find one. Its weights are fetched once from a CDN and cached by your browser afterwards — the size is on the control itself — and the picture is never sent anywhere: the model comes to it.",
-                "p7": "Depth inside the outline is measured with a two-pass chamfer distance transform, and the height at each point is a circular cross-section of that distance rather than the distance itself. Using the raw distance would give a tent — flat-sided, with a ridge down the middle — which reads as a folded card. The frame counts as outside whatever the picture says, so a subject cropped by the edge ends at the edge rather than standing a full bulge high against a straight wall with nothing to close it."
+                "p7": "Depth inside the outline is measured with a two-pass chamfer distance transform, and the height at each point is a circular cross-section of that distance rather than the distance itself. Using the raw distance would give a tent — flat-sided, with a ridge down the middle — which reads as a folded card. The frame counts as outside whatever the picture says, so a subject cropped by the edge ends at the edge rather than standing a full bulge high against a straight wall with nothing to close it.",
+                "p8": "The relief on the surface comes, by default, from a depth estimate rather than from brightness. Brightness is not depth — a dark object in bright light and a bright object in shade come out the wrong way round, and a shadow becomes a valley — so a monocular depth model reads the picture as a scene and says which parts are nearer. It is Depth Anything V2 in its small size, running on ONNX Runtime in this tab; the model and the runtime are fetched once and kept by your browser. What it returns is relative depth over the front of the subject, which is exactly what a surface can carry and none of what the back would need."
             },
             "controls": {
                 "title": "Every control, and when to reach for it",
@@ -9196,8 +9203,8 @@
                 "colDoes": "What it does",
                 "colWhen": "Reach for it when",
                 "sourceName": "Height from",
-                "sourceDoes": "Chooses the channel a height is read from — brightness, transparency, or one of red, green and blue on their own.",
-                "sourceWhen": "Brightness for photographs and greyscale depth maps. Transparency for a logo or a cut-out on a transparent background. A single channel when a render pipeline packed depth into one.",
+                "sourceDoes": "Chooses where a height is read from — a depth estimate made in this tab, brightness, transparency, or one of red, green and blue on their own.",
+                "sourceWhen": "Estimated depth for a photograph of a thing, which is what it is for. Brightness for a greyscale depth map you already have, or when the estimator cannot run. Transparency for a logo or a cut-out. A single channel when a render pipeline packed depth into one.",
                 "invertName": "Invert",
                 "invertDoes": "Reads dark as high instead of low.",
                 "invertWhen": "Lithophanes, where thick material blocks light and the print has to be the negative. Also depth maps written near-is-black, which is the opposite convention to the usual one.",
@@ -9275,7 +9282,7 @@
             "privacy": {
                 "title": "Where the work happens",
                 "p1": "Your picture is decoded, sampled, meshed and written to a file in this tab. Nothing is uploaded, no model is called, and no request carries any of it anywhere — you can watch the network panel stay empty, or turn the network off entirely and use the tool exactly as it is.",
-                "p2": "Two things can reach the network and neither of them carries your picture. The cut-out model's weights are fetched once from a CDN and cached by your browser afterwards — the size is on the control that uses them, not buried here — and the segmentation itself then runs on your own machine. The other is the field that fetches a picture by its address, which is the same field the other image tools carry. That request happens on the server, because a browser cannot fetch a cross-origin picture into a canvas without tainting it. Everything else is local."
+                "p2": "Three things can reach the network and none of them carries your picture. The cut-out model and the depth model are each fetched once from a CDN and cached by your browser — the size is on the control that uses each — and both then run on your own machine. The third is the field that fetches a picture by its address, which is the same field the other image tools carry; that request happens on the server, because a browser cannot fetch a cross-origin picture into a canvas without tainting it. Everything else is local."
             },
             "faq": {
                 "title": "Frequently asked questions",
@@ -9296,7 +9303,9 @@
                 "q8": "Does the cut-out send my picture anywhere?",
                 "a8": "No. The model runs in your browser — what travels is the model coming to your machine, not your picture leaving it. Its weights are fetched once from a CDN, the size is written on the control, and your browser caches them: the second picture costs nothing, and so does the Background Remover, which uses the same file. If you have already fetched a heavier tier there, this tool starts on it rather than downloading a lighter one.",
                 "q9": "Part of my model is paper-thin. Why?",
-                "a9": "The outline is carried on the same grid as the mesh, so anything narrower than one sample has no inside for the inflation to find, and the front and back meet there instead of enclosing anything. Raise the resolution — a thin neck that pinches at 96 samples is usually solid by 192. It is sealed either way, so it will still slice."
+                "a9": "The outline is carried on the same grid as the mesh, so anything narrower than one sample has no inside for the inflation to find, and the front and back meet there instead of enclosing anything. Raise the resolution — a thin neck that pinches at 96 samples is usually solid by 192. It is sealed either way, so it will still slice.",
+                "q10": "How does it know what is near and what is far?",
+                "a10": "It estimates. A monocular depth model — Depth Anything V2, small — runs in your browser and reads the picture as a scene, the way you do: a nose is in front of a face, a chest in front of shoulders. That estimate becomes the relief on the surface. It is a guess about relative depth over the front of the subject, good enough for a face to read as a face, and it says nothing about the back — no picture does."
             }
         }
     },

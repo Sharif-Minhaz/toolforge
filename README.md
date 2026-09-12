@@ -300,8 +300,11 @@ picture. Its default shape makes a _body_ rather than a plate: the subject is cu
 own tab exactly as it does there — and the outline that leaves is inflated. Every point is pushed out
 by how far inside the outline it sits, along a circular cross-section rather than the raw distance,
 and mirrored behind itself, so the two halves meet exactly on the outline and the body seals itself
-with no walls at all. The picture's own shading is then multiplied into the bulge as surface detail,
-which is the one way to add it that cannot lift the outline off zero and open the model.
+with no walls at all. What is multiplied into the bulge as surface detail is, by default, not the picture's shading but a
+depth estimate: Depth Anything V2 (small) reads the picture as a scene — a snout nearer than the
+ears — on ONNX Runtime Web in the reader's tab, with the model and the runtime fetched once and kept
+by the browser. Multiplied rather than added, because that is the one way to add relief that cannot
+lift the outline off zero and open the model.
 
 It is a relief tool too — a flat plate and a cylinder, for lithophanes, plaques and lamp shades — and
 those close the older way, with a flat backing and a ring of walls. Whichever shape, closure is

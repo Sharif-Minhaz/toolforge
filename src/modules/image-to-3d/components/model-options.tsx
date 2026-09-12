@@ -39,8 +39,9 @@ type ModelOptionsPanelProps = {
     readonly options: ModelOptions;
     /** Whether the subject is being cut away from its background. */
     readonly cutout: boolean;
-    /** What the one-time model download costs, for the control's own hint. */
+    /** What each one-time model download costs, for the controls' own hints. */
     readonly cutoutDownloadLabel: string;
+    readonly depthDownloadLabel: string;
     /** True when the picture arrived with its own alpha, so no model will run. */
     readonly cutoutAlreadyTransparent: boolean;
     readonly disabled: boolean;
@@ -52,6 +53,7 @@ export function ModelOptionsPanel({
     options,
     cutout,
     cutoutDownloadLabel,
+    depthDownloadLabel,
     cutoutAlreadyTransparent,
     disabled,
     onPatch,
@@ -82,7 +84,13 @@ export function ModelOptionsPanel({
         <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
             <OptionSelect<HeightSource>
                 label={t("sourceName")}
-                hint={t("sourceHint")}
+                // The one source that fetches a model says what it costs, on
+                // the control rather than in the article — `CLAUDE.md` rule 32.
+                hint={
+                    options.source === "depth"
+                        ? t("sourceDepthHint", { size: depthDownloadLabel })
+                        : t("sourceHint")
+                }
                 value={options.source}
                 items={sourceItems}
                 values={HEIGHT_SOURCES}

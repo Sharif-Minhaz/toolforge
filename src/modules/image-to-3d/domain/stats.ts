@@ -11,16 +11,12 @@ type ShapeOptions = Pick<ModelOptions, "shape" | "solid">;
  * How many wall quads join the relief to its backing.
  *
  * A plane is walled all the way round, so the count is its perimeter of grid
- * cells. A cylinder has no left or right wall — the picture's two edges are the
+ * cells — and that is also the most an inflated body can need, when its subject
+ * reaches every edge of the frame. A cylinder has no left or right wall — the picture's two edges are the
  * same place on the model — so only the two rims are closed, and each of those
  * is one column short of the grid because its last vertex is its first.
  */
 function wallEdges(grid: GridSize, shape: ModelOptions["shape"]): number {
-    if (shape === "inflate") {
-        // Its two halves meet along the outline, so there is no rim to wall in.
-        return 0;
-    }
-
     if (shape === "cylinder") {
         return 2 * (grid.columns - 1);
     }

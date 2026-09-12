@@ -25,16 +25,19 @@ import {
     DOWNLOAD_LABEL_DELAY_MS,
     RUNTIME_WASM_BYTES,
 } from "@/modules/tools/domain/segmentation";
-import type { SegmentationProgress } from "@/modules/tools/types/segmentation";
 
 import { MAX_SOURCE_BYTES } from "../domain/constants";
+import { DEPTH_FIRST_RUN_BYTES } from "../domain/depth";
 import { buildModelDownload } from "../domain/export";
 import { buildModel } from "../domain/model";
 import {
     IMAGE_ACCEPT_ATTRIBUTE,
     readModelSource,
+    withCutout,
+    withDepth,
     type ModelSource,
     type SourceFailureReason,
+    type SourceProgress,
 } from "../domain/source";
 import { estimateBytes } from "../domain/stats";
 import type { MeshOptions, ModelFormat, ModelOptions, ModelRefusal } from "../types";
@@ -104,7 +107,7 @@ export function ImageTo3dWorkbench({
 
     const [picked, setPicked] = useState<PickedSource | null>(null);
     const [reading, setReading] = useState(false);
-    const [progress, setProgress] = useState<SegmentationProgress | null>(null);
+    const [progress, setProgress] = useState<SourceProgress | null>(null);
     /**
      * Whether the model's assets have been arriving long enough to be worth
      * naming.
@@ -164,9 +167,10 @@ export function ImageTo3dWorkbench({
               ? picked.cutTextureUrl
               : picked.originalTextureUrl;
 
+    const depth = picked?.source.depth ?? null;
     const model = useMemo(
-        () => (layer === null ? null : buildModel(layer.pixels, settled)),
-        [layer, settled],
+        () => (layer === null ? null : buildModel(layer.pixels, settled, depth)),
+        [layer, settled, depth],
     );
 
     const refusal: ModelRefusal | null = model !== null && !model.ok ? model.reason : null;
@@ -204,11 +208,8 @@ export function ImageTo3dWorkbench({
         );
     }
 
-    async function read(file: File, wantsCutout: boolean) {
-        if (reading) {
-            return;
-        }
-
+    /** Shared by a fresh read and a later single-model run. */
+    function startWork() {
         setReading(true);
         setPickFailure(null);
         setProgress(null);
@@ -225,10 +226,64 @@ export function ImageTo3dWorkbench({
             () => setSlowDownload(true),
             DOWNLOAD_LABEL_DELAY_MS,
         );
+    }
+
+    function finishWork() {
+        if (downloadLabelTimer.current !== null) {
+            window.clearTimeout(downloadLabelTimer.current);
+            downloadLabelTimer.current = null;
+        }
+
+        setReading(false);
+        setProgress(null);
+        setSlowDownload(false);
+    }
+
+    /**
+     * One model on a picture that is already read. Turning the cut-out on, or
+     * choosing estimated depth, for a picture that has not been through that
+     * model must not decode the file and run the *other* model again.
+     */
+    async function extend(step: (source: ModelSource) => Promise<ModelSource>) {
+        if (picked === null || reading) {
+            return;
+        }
+
+        const current = picked;
+
+        startWork();
+
+        try {
+            const source = await step(current.source);
+
+            setPicked((previous) =>
+                previous === null || previous.id !== current.id
+                    ? previous
+                    : {
+                          ...previous,
+                          source,
+                          cutTextureUrl:
+                              previous.cutTextureUrl ?? textureUrlFor(source.cut?.texture ?? null),
+                      },
+            );
+        } catch (error) {
+            logEvent("error", "image-to-3d.extend", { detail: describeError(error) });
+        } finally {
+            finishWork();
+        }
+    }
+
+    async function read(file: File, wants: { cutout: boolean; depth: boolean }) {
+        if (reading) {
+            return;
+        }
+
+        startWork();
 
         try {
             const result = await readModelSource(file, {
-                cutout: wantsCutout,
+                cutout: wants.cutout,
+                depth: wants.depth,
                 quality,
                 onProgress: setProgress,
             });
@@ -261,14 +316,7 @@ export function ImageTo3dWorkbench({
             logEvent("error", "image-to-3d.read", { detail: describeError(error) });
             setPickFailure("undecodable");
         } finally {
-            if (downloadLabelTimer.current !== null) {
-                window.clearTimeout(downloadLabelTimer.current);
-                downloadLabelTimer.current = null;
-            }
-
-            setReading(false);
-            setProgress(null);
-            setSlowDownload(false);
+            finishWork();
         }
     }
 
@@ -276,25 +324,15 @@ export function ImageTo3dWorkbench({
         const file = files[0];
 
         if (file !== undefined) {
-            void read(file, cutout);
+            void read(file, { cutout, depth: geometry.source === "depth" });
         }
     }
 
-    /**
-     * Turning the cut-out on for a picture that has never been through the model
-     * is the one option change that has to go back to the file.
-     */
     function toggleCutout(next: boolean) {
         setCutout(next);
 
-        if (
-            next &&
-            picked !== null &&
-            picked.source.cut === null &&
-            !picked.source.hadAlpha &&
-            !reading
-        ) {
-            void read(picked.file, true);
+        if (next && picked !== null && picked.source.cut === null && !picked.source.hadAlpha) {
+            void extend((source) => withCutout(source, { quality, onProgress: setProgress }));
         }
     }
 
@@ -307,6 +345,12 @@ export function ImageTo3dWorkbench({
 
         if (Object.keys(rest).length > 0) {
             setGeometry((current) => ({ ...current, ...rest }));
+        }
+
+        // Choosing estimated depth for a picture that has not been through the
+        // estimator runs it now, and only it.
+        if (rest.source === "depth" && picked !== null && picked.source.depth === null) {
+            void extend((source) => withDepth(source, { onProgress: setProgress }));
         }
     }
 
@@ -357,12 +401,22 @@ export function ImageTo3dWorkbench({
                 return { tone: "pending", message: t("reading") };
             }
 
+            const downloading = progress.progress.phase === "download" && slowDownload;
+
+            if (progress.stage === "depth") {
+                return {
+                    tone: "pending",
+                    message: downloading
+                        ? t("fetchingDepthModel", { size: byteLabel(DEPTH_FIRST_RUN_BYTES) })
+                        : t("estimatingDepth"),
+                };
+            }
+
             return {
                 tone: "pending",
-                message:
-                    progress.phase === "download" && slowDownload
-                        ? t("fetchingModel", { size: byteLabel(cutoutBytes) })
-                        : t("cuttingOut"),
+                message: downloading
+                    ? t("fetchingModel", { size: byteLabel(cutoutBytes) })
+                    : t("cuttingOut"),
             };
         }
 
@@ -385,6 +439,12 @@ export function ImageTo3dWorkbench({
 
         if (picked.source.cutFailure !== null) {
             return { tone: "warning", message: tErrors(picked.source.cutFailure) };
+        }
+
+        // Asked for depth and did not get it: the model still built, from
+        // brightness, and that is worth a warning rather than silence.
+        if (geometry.source === "depth" && picked.source.depthFailure !== null) {
+            return { tone: "warning", message: tErrors(picked.source.depthFailure) };
         }
 
         if (picked.source.hadAlpha) {
@@ -429,6 +489,7 @@ export function ImageTo3dWorkbench({
                     options={{ ...geometry, format }}
                     cutout={cutout}
                     cutoutDownloadLabel={byteLabel(cutoutBytes)}
+                    depthDownloadLabel={byteLabel(DEPTH_FIRST_RUN_BYTES)}
                     cutoutAlreadyTransparent={picked?.source.hadAlpha ?? false}
                     disabled={picked === null || reading}
                     onPatch={patchOptions}

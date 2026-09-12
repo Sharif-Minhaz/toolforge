@@ -252,3 +252,65 @@ of zero. The outline ring of the mesh sits exactly on those texels. Anything tha
 draws the picture — the preview's material, the GLB's material, the OBJ's MTL —
 has to honour the alpha: `alphaTest` in three, `alphaMode: "MASK"` in glTF,
 `map_d` in MTL. A JPEG has no alpha and gets none of the three.
+
+## Inflate with Poisson, not with distance
+
+The first inflated body pushed each point out by its distance from the outline,
+normalised by the _global_ deepest point, through a circular profile. It looked
+right from the front and wrong from the side: a sharp crease ran down the middle
+of anything narrower than the widest part, because a distance field peaks in a
+ridge and only the widest part ever reached the rounded top of the profile. The
+scratch renderer in this session's notes is what caught it — the front view
+hides a ridge completely.
+
+`inflationField` now solves ∇²h = −1 inside the outline with h = 0 on it, by
+successive over-relaxation, and takes the square root. On a disc that is an
+exact hemisphere; on a strip an exact half-cylinder; and a part half as wide
+comes out half as thick, which is what an ear beside a head should do. Two
+consequences worth keeping:
+
+- **The frame is a mirror, not an outline.** A subject cropped by the edge of the
+  picture used to wedge to nothing along that edge. Now it keeps its thickness to
+  the frame and the mesh builder caps the open edge with a flat wall — the cut a
+  bust has. The wall segments are only the steps along the frame with a raised
+  end; a step between two outline points already has front and back on the same
+  two points.
+- **The first ring is a cliff unless it is softened.** √ has a vertical tangent at
+  zero, so on a 100 mm model the profile climbs two millimetres inside the first
+  half-millimetre cell, and the mask's staircase becomes teeth. The fractional
+  alpha scales the ring first, _then_ the bulge is blurred, _then_ the outline is
+  put back to exactly zero — that order, because a blur before the ramp leaves
+  the ramp's own cell-to-cell alternation as a beaded equator. What is left is a
+  faint bead along edges at shallow angles; sub-cell placement of the outline
+  vertices was tried and reverted — it introduced non-manifold edges and moved
+  the wrong ring.
+
+## Depth: verify the export on the runtime before believing its name
+
+`model_int8.onnx` is the obvious choice from the model card — smallest, and
+"quantised" — and it does not load: its convolutions are exported as
+`ConvInteger`, which ONNX Runtime Web's WebAssembly build has no kernel for.
+The session refuses to open, and it would have refused in every reader's browser
+too. The q4 export is the same size, keeps its convolutions in full precision
+and packs only the matrix multiplies with `MatMulNBits`, which both backends
+run.
+
+`bun test` cannot reach any of this, so it was verified on Node with the
+installed runtime's own WebAssembly: three exports opened and run, the output
+names and dimensions read back, and the depth map rendered to a PNG and looked
+at. The pinned runtime version is the one thing a unit test _can_ check — the
+WebAssembly is fetched from a CDN by version and the JavaScript that talks to it
+is bundled from `node_modules`, so `tests/depth.test.ts` reads the installed
+version and fails at upgrade time rather than at runtime.
+
+Two more facts about the plumbing that cost a probe each:
+
+- **Hugging Face's canonical URL is `no-store`**, redirecting to a signed address
+  that differs every time. The browser's HTTP cache can never match the second
+  request to the first, so the model is kept in the Cache API under the URL
+  asked for. That is also the only honest answer to "is it already here".
+- **`onnxruntime-web` ships types and hides them.** Its `exports` map has no
+  `types` condition, and `onnxruntime-common`'s has no subpaths. A `paths` entry
+  in `tsconfig.json` reaches them — and is also honoured by Next's bundler, which
+  then tries to bundle a `.d.ts`. `src/onnxruntime-web.d.ts` names the common
+  package's declaration root by relative path instead, which neither map governs.

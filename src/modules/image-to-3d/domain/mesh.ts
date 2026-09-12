@@ -216,8 +216,9 @@ export function buildMesh(field: Heightfield, options: MeshOptions, aspect: numb
         return { ok: false, reason: "empty_image" };
     }
 
-    const walled = placement.walled && options.solid;
-    const wallEdges = walled ? countWallEdges(columns, rows, placement.seamless) : 0;
+    const walls = options.solid ? wallSegments(columns, rows, placement, region) : [];
+    const wallQuads = walls.filter((segment) => segment.kind === "quad").length;
+    const wallTriangles = walls.length - wallQuads;
 
     const stats: MeshStats = {
         vertices:
@@ -225,8 +226,9 @@ export function buildMesh(field: Heightfield, options: MeshOptions, aspect: numb
             // Wall corners are not shared with the surfaces they join, so each
             // quad carries its own four vertices. That is what keeps a wall
             // flat-shaded instead of smoothing the fold at the edge.
-            wallEdges * 4,
-        triangles: region.cellCount * (options.solid ? 4 : 2) + wallEdges * 2,
+            wallQuads * 4 +
+            wallTriangles * 3,
+        triangles: region.cellCount * (options.solid ? 4 : 2) + wallQuads * 2 + wallTriangles,
     };
 
     if (stats.triangles > MAX_TRIANGLES) {
@@ -282,12 +284,10 @@ export function buildMesh(field: Heightfield, options: MeshOptions, aspect: numb
                     continue;
                 }
 
-                addVertex(
-                    place(uAt(column), vAt(row), region.heights[sample]),
-                    uAt(column),
-                    vAt(row),
-                    sample,
-                );
+                const u = uAt(column);
+                const v = vAt(row);
+
+                addVertex(place(u, v, region.heights[sample]), u, v, sample);
             }
         }
 
@@ -361,9 +361,7 @@ export function buildMesh(field: Heightfield, options: MeshOptions, aspect: numb
 
         addCells(backBase, false);
 
-        if (walled) {
-            addWalls();
-        }
+        addWalls();
 
         if (placement.seamless) {
             for (let row = 0; row < rows; row += 1) {
@@ -373,35 +371,41 @@ export function buildMesh(field: Heightfield, options: MeshOptions, aspect: numb
                 ]);
             }
         }
+
+        // An inflated body's outline is one place held twice — a front copy
+        // and a back copy on the same point. Each accumulates a normal from its
+        // own half only, so left alone the equator lights up as a seam all the
+        // way round. Welded, the two agree and the join reads as the smooth
+        // turn it geometrically is.
+        if (!placement.walled) {
+            for (let sample = 0; sample < region.slots.length; sample += 1) {
+                if (region.slots[sample] !== -1 && region.heights[sample] === 0) {
+                    seams.push([frontBase + region.slots[sample], backBase + region.slots[sample]]);
+                }
+            }
+        }
     }
 
     function addWalls() {
-        for (const loop of boundaryLoops(columns, rows, placement.seamless)) {
-            const steps = loop.closed ? loop.points.length : loop.points.length - 1;
+        for (const { from, to, kind } of walls) {
+            const fromSample = from.row * columns + from.column;
+            const toSample = to.row * columns + to.column;
+            const fromU = uAt(from.column);
+            const fromV = vAt(from.row);
+            const toU = uAt(to.column);
+            const toV = vAt(to.row);
 
-            for (let step = 0; step < steps; step += 1) {
-                const from = loop.points[step];
-                const to = loop.points[(step + 1) % loop.points.length];
+            const fromTop = addVertex(
+                placement.outer(fromU, fromV, region.heights[fromSample]),
+                fromU,
+                fromV,
+                fromSample,
+            );
 
-                const fromSample = from.row * columns + from.column;
-                const toSample = to.row * columns + to.column;
-                const fromU = uAt(from.column);
-                const fromV = vAt(from.row);
-                const toU = uAt(to.column);
-                const toV = vAt(to.row);
-
-                const fromTop = addVertex(
-                    placement.outer(fromU, fromV, region.heights[fromSample]),
-                    fromU,
-                    fromV,
-                    fromSample,
-                );
-                const fromBack = addVertex(
-                    placement.inner(fromU, fromV, region.heights[fromSample]),
-                    fromU,
-                    fromV,
-                    fromSample,
-                );
+            // A step whose near end is on the outline has its front and back
+            // on one point there, so the quad is a triangle — and emitting the
+            // fourth vertex anyway would leave a stray point in the file.
+            if (kind === "fromZero") {
                 const toBack = addVertex(
                     placement.inner(toU, toV, region.heights[toSample]),
                     toU,
@@ -415,9 +419,38 @@ export function buildMesh(field: Heightfield, options: MeshOptions, aspect: numb
                     toSample,
                 );
 
-                addTriangle(fromTop, fromBack, toBack);
                 addTriangle(fromTop, toBack, toTop);
+
+                continue;
             }
+
+            const fromBack = addVertex(
+                placement.inner(fromU, fromV, region.heights[fromSample]),
+                fromU,
+                fromV,
+                fromSample,
+            );
+            const toBack = addVertex(
+                placement.inner(toU, toV, region.heights[toSample]),
+                toU,
+                toV,
+                toSample,
+            );
+
+            addTriangle(fromTop, fromBack, toBack);
+
+            if (kind === "toZero") {
+                continue;
+            }
+
+            const toTop = addVertex(
+                placement.outer(toU, toV, region.heights[toSample]),
+                toU,
+                toV,
+                toSample,
+            );
+
+            addTriangle(fromTop, toBack, toTop);
         }
     }
 
@@ -439,18 +472,69 @@ export function buildMesh(field: Heightfield, options: MeshOptions, aspect: numb
     return { ok: true, mesh, stats };
 }
 
+type WallSegment = {
+    readonly from: LoopPoint;
+    readonly to: LoopPoint;
+    /**
+     * `quad` when both ends stand off the outline. On an inflated body a step
+     * can start or end exactly on the outline, where front and back are one
+     * point, and the wall there is a triangle rather than a degenerate quad.
+     */
+    readonly kind: "quad" | "fromZero" | "toZero";
+};
+
 /**
- * How many wall quads join the front to the back.
+ * The steps along the grid's edge that need a wall between front and back.
  *
- * A plate is walled all the way round, so the count is its perimeter of grid
- * cells. A cylinder has no left or right wall — the picture's two edges are the
- * same place on the model — so only the two rims are closed, and each of those
- * is one column short of the grid because its last vertex is its first.
+ * A plate is walled all the way round and a cylinder along its two rims. An
+ * inflated body needs no wall where its outline lies inside the frame — the
+ * halves already meet there — but a subject that runs off the edge of the
+ * picture is open along that edge, and this is where it is capped: the flat cut
+ * a bust has, in place of the taper to nothing that treating the frame as
+ * outline used to produce. Only steps with a raised end are walls; a step
+ * between two outline points has front and back on the same two points already.
  */
-function countWallEdges(columns: number, rows: number, seamless: boolean): number {
-    if (seamless) {
-        return 2 * (columns - 1);
+function wallSegments(
+    columns: number,
+    rows: number,
+    placement: Placement,
+    region: Region,
+): readonly WallSegment[] {
+    const segments: WallSegment[] = [];
+    const capsOnly = !placement.walled;
+
+    for (const loop of boundaryLoops(columns, rows, placement.seamless)) {
+        const steps = loop.closed ? loop.points.length : loop.points.length - 1;
+
+        for (let step = 0; step < steps; step += 1) {
+            const from = loop.points[step];
+            const to = loop.points[(step + 1) % loop.points.length];
+
+            if (!capsOnly) {
+                segments.push({ from, to, kind: "quad" });
+
+                continue;
+            }
+
+            const fromSample = from.row * columns + from.column;
+            const toSample = to.row * columns + to.column;
+
+            if (region.slots[fromSample] === -1 || region.slots[toSample] === -1) {
+                continue;
+            }
+
+            const fromRaised = region.heights[fromSample] > 0;
+            const toRaised = region.heights[toSample] > 0;
+
+            if (fromRaised && toRaised) {
+                segments.push({ from, to, kind: "quad" });
+            } else if (fromRaised) {
+                segments.push({ from, to, kind: "toZero" });
+            } else if (toRaised) {
+                segments.push({ from, to, kind: "fromZero" });
+            }
+        }
     }
 
-    return 2 * (columns - 1) + 2 * (rows - 1);
+    return segments;
 }

@@ -2,6 +2,7 @@ import type { PixelSize } from "@/modules/tools/types";
 
 import type { Heightfield, HeightSource, ModelOptions } from "../types";
 import { MAX_RESOLUTION, MIN_RESOLUTION } from "./constants";
+import type { DepthMap } from "./depth";
 
 /**
  * The part of `ImageData` this layer reads, as a plain shape so the whole
@@ -124,6 +125,40 @@ export function resampleToGrid(pixels: SourcePixels, grid: PixelSize): Float32Ar
     return samples;
 }
 
+/**
+ * A single-channel map box-averaged onto the grid, with the same edge-centred
+ * windows as the picture, so a depth map and the pixels it was read from land
+ * on the same points.
+ */
+export function resampleChannelToGrid(
+    values: Float32Array,
+    size: PixelSize,
+    grid: PixelSize,
+): Float32Array {
+    const output = new Float32Array(grid.width * grid.height);
+
+    for (let row = 0; row < grid.height; row += 1) {
+        const [top, bottom] = sampleWindow(row, grid.height, size.height);
+
+        for (let column = 0; column < grid.width; column += 1) {
+            const [left, right] = sampleWindow(column, grid.width, size.width);
+            let total = 0;
+            let counted = 0;
+
+            for (let y = top; y < bottom; y += 1) {
+                for (let x = left; x < right; x += 1) {
+                    total += values[y * size.width + x];
+                    counted += 1;
+                }
+            }
+
+            output[row * grid.width + column] = total / counted;
+        }
+    }
+
+    return output;
+}
+
 /** One sample's height in 0..1, before smoothing. */
 function heightOf(samples: Float32Array, offset: number, source: HeightSource): number {
     switch (source) {
@@ -135,6 +170,10 @@ function heightOf(samples: Float32Array, offset: number, source: HeightSource): 
             return samples[offset + 1] / 255;
         case "blue":
             return samples[offset + 2] / 255;
+        // Depth is read from its own map by `buildHeightfield`; asked of the
+        // pixels, it is brightness — the fallback the page names when the
+        // estimate is not to be had.
+        case "depth":
         case "luminance":
             return (
                 (LUMA_RED * samples[offset] +
@@ -172,6 +211,19 @@ export function alphaFromSamples(samples: Float32Array): Float32Array {
     }
 
     return alpha;
+}
+
+/** The estimated depth on the grid, nearest at 1 — or, inverted, farthest at 1. */
+export function heightsFromDepth(depth: DepthMap, grid: PixelSize, invert: boolean): Float32Array {
+    const heights = resampleChannelToGrid(depth.values, depth, grid);
+
+    if (invert) {
+        for (let index = 0; index < heights.length; index += 1) {
+            heights[index] = 1 - heights[index];
+        }
+    }
+
+    return heights;
 }
 
 export function colorsFromSamples(samples: Float32Array): Uint8Array {
@@ -234,10 +286,14 @@ function blurAxis(heights: Float32Array, grid: PixelSize, horizontal: boolean): 
 export function buildHeightfield(
     pixels: SourcePixels,
     options: Pick<ModelOptions, "resolution" | "source" | "invert" | "smoothing">,
+    depth: DepthMap | null = null,
 ): Heightfield {
     const grid = gridSizeFor({ width: pixels.width, height: pixels.height }, options.resolution);
     const samples = resampleToGrid(pixels, grid);
-    const raw = heightsFromSamples(samples, options.source, options.invert);
+    const raw =
+        options.source === "depth" && depth !== null
+            ? heightsFromDepth(depth, grid, options.invert)
+            : heightsFromSamples(samples, options.source, options.invert);
 
     return {
         columns: grid.width,

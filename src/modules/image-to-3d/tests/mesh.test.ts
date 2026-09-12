@@ -371,8 +371,10 @@ describe("the inflated body", () => {
         }
 
         // Half in front and half behind, so `depth` reads as the measurement
-        // somebody holding the printed object would take.
-        expect(front - back).toBeCloseTo(depth, 4);
+        // somebody holding the printed object would take. Within a tenth of a
+        // millimetre rather than exact: the bulge is blurred before the outline
+        // is put back to zero, which takes a hair off a single-point peak.
+        expect(Math.abs(front - back - depth)).toBeLessThan(0.1);
     });
 
     test("has no zero-area triangle anywhere along the outline", () => {
@@ -398,6 +400,34 @@ describe("the inflated body", () => {
 
             expect(area).toBeGreaterThan(0);
         }
+    });
+
+    test("caps a subject that runs off the frame with a flat wall", () => {
+        const { mesh } = build(
+            { shape: "inflate", solid: true, resolution: 64, detail: 0 },
+            croppedImage(120, 90),
+        );
+
+        // The subject reaches the left edge. There, the front and back are a
+        // full thickness apart — a bust's cut, not a taper to nothing — and the
+        // mesh is still closed, so something is walling that gap.
+        let leftmost = Infinity;
+        let front = -Infinity;
+        let back = Infinity;
+
+        for (let vertex = 0; vertex < mesh.positions.length / 3; vertex += 1) {
+            leftmost = Math.min(leftmost, mesh.positions[vertex * 3]);
+        }
+
+        for (let vertex = 0; vertex < mesh.positions.length / 3; vertex += 1) {
+            if (Math.abs(mesh.positions[vertex * 3] - leftmost) < 1e-6) {
+                front = Math.max(front, mesh.positions[vertex * 3 + 2]);
+                back = Math.min(back, mesh.positions[vertex * 3 + 2]);
+            }
+        }
+
+        expect(front - back).toBeGreaterThan(DEFAULT_OPTIONS.depth * 0.5);
+        expect(unmatchedEdges(mesh)).toEqual([]);
     });
 
     test("refuses a picture whose cut-out found nothing", () => {

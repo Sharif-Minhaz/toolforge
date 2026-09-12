@@ -1,10 +1,15 @@
 /**
  * Which channel of the picture decides how high a point on the surface sits.
  *
+ * `depth` is not a channel the file has: it is estimated by a model that reads
+ * the picture as a scene, and it is the one that makes a snout stand nearer
+ * than the ears. When the estimate is not to be had the heightfield falls back
+ * to brightness and the page says so.
+ *
  * A literal union rather than a string so `t(`sources.${source}Name`)` stays
  * type-checked, and so the search-param schema has one place to read from.
  */
-export const HEIGHT_SOURCES = ["luminance", "alpha", "red", "green", "blue"] as const;
+export const HEIGHT_SOURCES = ["depth", "luminance", "alpha", "red", "green", "blue"] as const;
 
 export type HeightSource = (typeof HEIGHT_SOURCES)[number];
 
