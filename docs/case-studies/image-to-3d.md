@@ -213,3 +213,42 @@ rule 31:
   dashed panel and hidden input, and the fourth drifted. An intake that does not
   look like the intake on the tool a reader used yesterday is the first thing
   they notice, and it was the first thing reported.
+
+## The model is shared between tools only if both ask for the same file
+
+The library fetches each weight file by URL and leans on the browser's HTTP
+cache, which every page of this site shares. That makes the cut-out free on the
+second tool — **provided it asks for the same tier**. The first version here
+defaulted to `fast` on a perfectly good argument (an outline resampled onto a few
+hundred points does not need the fringe fidelity `balanced` buys), and that
+argument would have cost a reader who already had `balanced` from the Background
+Remover a second 44 MB download.
+
+Two things follow, both in `tools/`:
+
+- **One default**, `DEFAULT_CUTOUT_QUALITY`, read by both tools. A per-tool
+  opinion about the right tier is a per-tool download.
+- **A memory of what was fetched**, `cutout-memory.ts`, written when a cut-out
+  succeeds and read through `useCutoutQuality` to start either tool on the
+  heaviest tier already on the machine. The cache itself cannot be asked — the
+  CDN is cross-origin and `only-if-cached` is same-origin only — so the fact is
+  written down at the one moment it is known to be true. A link that names a
+  tier still wins, because it is explicit.
+
+## The preview flips textures; the file must not
+
+three's `TextureLoader` sets `flipY = true` on every texture, because three's
+own convention puts v = 0 at the bottom of the picture. This module's texture
+coordinates follow glTF, with v = 0 at the top, because that is what the exported
+GLB has to carry — and `GLTFLoader` reads a file's UVs verbatim and does _not_
+flip. So the first preview drew the dog upside down on a file that was the right
+way up, and looked exactly like a bug in the mesh. `flipY = false` in the
+preview; the reference test pins which row v = 0 belongs to.
+
+The saturated patchwork at the ears in the same screenshot was a second bug
+wearing the first one's clothes: a cut-out's PNG texture is transparent outside
+the subject, and PNG encoders store whatever RGB compresses best under an alpha
+of zero. The outline ring of the mesh sits exactly on those texels. Anything that
+draws the picture — the preview's material, the GLB's material, the OBJ's MTL —
+has to honour the alpha: `alphaTest` in three, `alphaMode: "MASK"` in glTF,
+`map_d` in MTL. A JPEG has no alpha and gets none of the three.

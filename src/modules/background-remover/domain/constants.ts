@@ -1,7 +1,5 @@
 import type { ImageFileLimits } from "@/modules/tools/domain/image-file";
 
-import type { CutoutQuality } from "@/modules/tools/types/segmentation";
-
 /**
  * How many pictures the workbench holds at once.
  *
@@ -61,18 +59,6 @@ export const IMAGE_FILE_LIMITS: ImageFileLimits<AllowedImageType> = {
  *     curl -s https://staticimgly.com/@imgly/background-removal-data/<version>/dist/resources.json
  */
 export const MODEL_ASSET_VERSION = "1.7.0";
-
-/**
- * Which weights to reach for first.
- *
- * `balanced` rather than `fast`, because the question a background remover is
- * opened to answer is whether the edge of the hair looks right, and the quantised
- * model is visibly worse at exactly that. The reader who cares more about the
- * first download than about the fringe can say so; the reverse — shipping the
- * cheap answer by default and hoping nobody looks closely — is the trade this
- * site does not make.
- */
-export const DEFAULT_QUALITY: CutoutQuality = "balanced";
 
 /**
  * How strong the blurred-background effect can get, as a share of the picture's

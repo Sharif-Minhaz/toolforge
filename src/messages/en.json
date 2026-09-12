@@ -9294,7 +9294,7 @@
                 "q7": "Does my picture get uploaded?",
                 "a7": "No. Decoding, sampling, meshing and writing the file all happen in this tab. The only thing that ever leaves is the optional field that fetches a picture from a URL for you, which has to go through the server because of how browsers handle cross-origin images — and that is a picture going in, never a model coming out.",
                 "q8": "Does the cut-out send my picture anywhere?",
-                "a8": "No. The model runs in your browser — what travels is the model coming to your machine, not your picture leaving it. Its weights are fetched once from a CDN, the size is written on the control, and your browser caches them so the second picture costs nothing. Switch the cut-out off and nothing is fetched at all.",
+                "a8": "No. The model runs in your browser — what travels is the model coming to your machine, not your picture leaving it. Its weights are fetched once from a CDN, the size is written on the control, and your browser caches them: the second picture costs nothing, and so does the Background Remover, which uses the same file. If you have already fetched a heavier tier there, this tool starts on it rather than downloading a lighter one.",
                 "q9": "Part of my model is paper-thin. Why?",
                 "a9": "The outline is carried on the same grid as the mesh, so anything narrower than one sample has no inside for the inflation to find, and the front and back meet there instead of enclosing anything. Raise the resolution — a thin neck that pinches at 96 samples is usually solid by 192. It is sealed either way, so it will still slice."
             }

@@ -184,6 +184,15 @@ export function encodeGlb(
                     // model exists to carry.
                     roughnessFactor: 0.85,
                 },
+                // A PNG texture is a cut-out, and a cut-out's transparent
+                // background hides whatever RGB the encoder found cheapest to
+                // store. glTF defaults to OPAQUE, which would paint that
+                // patchwork onto the outline ring in Blender exactly as an
+                // unmasked preview did. MASK at half opacity discards it and
+                // keeps the material a solid rather than a blended one.
+                ...(texture?.mimeType === "image/png"
+                    ? { alphaMode: "MASK", alphaCutoff: 0.5 }
+                    : {}),
             },
         ],
         accessors,

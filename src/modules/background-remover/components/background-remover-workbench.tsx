@@ -13,6 +13,7 @@ import { ImageDropzone } from "@/modules/tools/components/image-dropzone";
 import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import { useCutoutQuality } from "@/modules/tools/components/use-cutout-quality";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
 import { loadImageElement } from "@/modules/tools/domain/image-element";
@@ -116,7 +117,12 @@ type BackgroundRemoverWorkbenchProps = {
     /** Whether this deployment can search Pexels at all. Resolved on the server. */
     readonly searchEnabled: boolean;
     readonly urlImportEnabled: boolean;
-    readonly initialQuality: CutoutQuality;
+    /**
+     * The tier a link asked for, or `null` for none. The island then starts on
+     * the heaviest tier this browser has already fetched, falling back to the
+     * shared default — see `useCutoutQuality`.
+     */
+    readonly namedQuality: CutoutQuality | null;
     readonly initialTab: BackgroundTab;
     readonly initialQuery: string;
 };
@@ -124,7 +130,7 @@ type BackgroundRemoverWorkbenchProps = {
 export function BackgroundRemoverWorkbench({
     searchEnabled,
     urlImportEnabled,
-    initialQuality,
+    namedQuality,
     initialTab,
     initialQuery,
 }: BackgroundRemoverWorkbenchProps) {
@@ -139,7 +145,7 @@ export function BackgroundRemoverWorkbench({
 
     const [sheets, setSheets] = useState<readonly Sheet[]>([]);
     const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [quality, setQuality] = useState<CutoutQuality>(initialQuality);
+    const [quality, setQuality] = useCutoutQuality(namedQuality);
     const { ref: resultRef, scrollToResult } = useResultScroll();
 
     /**

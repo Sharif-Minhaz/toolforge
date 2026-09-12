@@ -117,11 +117,26 @@ export default function ModelPreview({ mesh, textureUrl, className }: ModelPrevi
             texture.colorSpace = THREE.SRGBColorSpace;
             texture.wrapS = THREE.ClampToEdgeWrapping;
             texture.wrapT = THREE.ClampToEdgeWrapping;
+            // three flips every loaded texture by default, because its own
+            // convention puts v = 0 at the *bottom* of the picture. The mesh's
+            // texture coordinates follow glTF, with v = 0 at the top — that is
+            // what the exported GLB has to carry — so the flip has to be
+            // switched off here or the preview shows the picture upside down
+            // on a model whose file is the right way up.
+            texture.flipY = false;
         }
 
         const material = new THREE.MeshStandardMaterial({
             map: texture,
             vertexColors: texture === null,
+            // A cut-out's texture is a PNG whose transparent background hides
+            // whatever RGB the encoder found cheapest to store — usually a
+            // patchwork of saturated blocks. The outline ring of the mesh sits
+            // exactly on those texels, so anything below half opacity is
+            // discarded rather than drawn. A cutoff instead of blending keeps
+            // the material opaque, which is what a solid is and what avoids
+            // sort-order artefacts on an orbit.
+            alphaTest: texture === null ? 0 : 0.5,
             metalness: 0,
             roughness: 0.85,
             // The backing and the walls are wound outward, so back faces are

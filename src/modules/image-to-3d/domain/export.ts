@@ -62,7 +62,15 @@ export function objArchiveEntries(input: ModelExportInput): readonly ArchiveEntr
 
     if (input.texture !== null) {
         entries.push(
-            { name: names.mtl, bytes: encoder.encode(encodeMtl({ textureName: names.texture })) },
+            {
+                name: names.mtl,
+                bytes: encoder.encode(
+                    encodeMtl({
+                        textureName: names.texture,
+                        hasAlpha: input.texture.mimeType === "image/png",
+                    }),
+                ),
+            },
             { name: names.texture, bytes: input.texture.bytes },
         );
     }

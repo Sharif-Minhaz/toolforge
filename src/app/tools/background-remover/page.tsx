@@ -9,7 +9,6 @@ import {
     getBackgroundRemoverFaqEntries,
 } from "@/modules/background-remover/components/background-remover-article";
 import { BackgroundRemoverWorkbench } from "@/modules/background-remover/components/background-remover-workbench";
-import { DEFAULT_QUALITY } from "@/modules/background-remover/domain/constants";
 import { isPhotoSearchConfigured } from "@/modules/background-remover/repository/photo-quota";
 import { backgroundRemoverSearchParamsSchema } from "@/modules/background-remover/validation/photo-search";
 import { JsonLd } from "@/modules/seo/components/json-ld";
@@ -122,7 +121,7 @@ export default async function BackgroundRemoverToolPage({
                     <BackgroundRemoverWorkbench
                         searchEnabled={isPhotoSearchConfigured()}
                         urlImportEnabled={isRemoteImageImportConfigured()}
-                        initialQuality={named?.quality ?? DEFAULT_QUALITY}
+                        namedQuality={named?.quality ?? null}
                         initialTab={named?.tab ?? "color"}
                         initialQuery={named?.q ?? ""}
                     />

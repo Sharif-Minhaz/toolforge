@@ -63,7 +63,7 @@ export function encodeObj(mesh: Mesh, options: { mtlName: string; comment: strin
  * takes the specular highlight off: a relief lit with a default shininess
  * reads as wet plastic rather than as the picture it came from.
  */
-export function encodeMtl(options: { textureName: string }): string {
+export function encodeMtl(options: { textureName: string; hasAlpha: boolean }): string {
     return [
         `newmtl ${OBJ_MATERIAL_NAME}`,
         "Ka 1.000 1.000 1.000",
@@ -72,6 +72,11 @@ export function encodeMtl(options: { textureName: string }): string {
         "d 1.0",
         "illum 2",
         `map_Kd ${options.textureName}`,
+        // `map_d` is the dissolve map: the same picture's alpha channel, so a
+        // cut-out's transparent background is not painted onto the outline
+        // ring as whatever the encoder stored underneath it. Only for a PNG —
+        // a JPEG has no alpha to read.
+        ...(options.hasAlpha ? [`map_d ${options.textureName}`] : []),
         "",
     ].join("\n");
 }

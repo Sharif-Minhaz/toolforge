@@ -19,12 +19,13 @@ import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
 import { toFilenameStem } from "@/modules/tools/domain/filenames";
+import { useCutoutQuality } from "@/modules/tools/components/use-cutout-quality";
 import {
     CUTOUT_MODELS,
     DOWNLOAD_LABEL_DELAY_MS,
     RUNTIME_WASM_BYTES,
 } from "@/modules/tools/domain/segmentation";
-import type { CutoutQuality, SegmentationProgress } from "@/modules/tools/types/segmentation";
+import type { SegmentationProgress } from "@/modules/tools/types/segmentation";
 
 import { MAX_SOURCE_BYTES } from "../domain/constants";
 import { buildModelDownload } from "../domain/export";
@@ -69,18 +70,6 @@ type ImageTo3dWorkbenchProps = {
     readonly urlImportEnabled: boolean;
 };
 
-/**
- * `fast` rather than the Background Remover's `balanced`.
- *
- * That tool is opened to find out whether the edge of somebody's hair looks
- * right, and the quantised model is visibly worse at exactly that. Here the
- * mask decides an *outline* that is then resampled onto a grid of at most a few
- * hundred points and inflated into a solid — a difference the geometry cannot
- * express — so the honest default is the one that costs the reader 44 MB rather
- * than 88 MB.
- */
-const DEFAULT_QUALITY: CutoutQuality = "fast";
-
 export function ImageTo3dWorkbench({
     initialOptions,
     initialCutout,
@@ -105,7 +94,13 @@ export function ImageTo3dWorkbench({
     const [geometry, setGeometry] = useState<MeshOptions>(initialOptions);
     const [format, setFormat] = useState<ModelFormat>(initialOptions.format);
     const [cutout, setCutout] = useState(initialCutout);
-    const [quality] = useState<CutoutQuality>(DEFAULT_QUALITY);
+    // Starts on the heaviest tier this browser has already fetched — a reader
+    // who cut a photograph out on the Background Remover has that file, and
+    // asking for a lighter one here would download a second model — and on the
+    // shared default otherwise. No picker on this page: the outline is
+    // resampled onto a few hundred points, and the tiers do not differ at that
+    // scale.
+    const [quality] = useCutoutQuality(null);
 
     const [picked, setPicked] = useState<PickedSource | null>(null);
     const [reading, setReading] = useState(false);

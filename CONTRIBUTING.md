@@ -437,6 +437,8 @@ Reuse what exists rather than rebuilding it:
 | Decode an image, read its size        | `@/modules/tools/domain/image-element`              |
 | Drop zone and hidden file input       | `@/modules/tools/components/image-dropzone`         |
 | Subject mask from a picture           | `@/modules/tools/domain/segmentation`               |
+| Which mask tier this browser has      | `@/modules/tools/domain/cutout-memory`              |
+| Starting mask tier, hydration-safe    | `@/modules/tools/components/use-cutout-quality`     |
 | Canvas creation and prompt release    | `@/modules/tools/domain/canvas`                     |
 | Worker URL from a variable            | `@/modules/tools/domain/endpoint`                   |
 | Turnstile widget, verification        | `@/modules/tools/components/turnstile-widget`       |

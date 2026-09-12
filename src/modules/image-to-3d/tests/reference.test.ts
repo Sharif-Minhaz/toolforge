@@ -167,6 +167,20 @@ describe("OBJ, through three's OBJLoader", () => {
         const mtl = new TextDecoder().decode(entries[1].bytes);
 
         expect(mtl).toContain(`map_Kd ${names[2]}`);
+        // A PNG texture is a cut-out, so its alpha is the dissolve map too.
+        expect(mtl).toContain(`map_d ${names[2]}`);
+    });
+
+    test("does not name a dissolve map for a JPEG, which has no alpha", () => {
+        const photo = objArchiveEntries({
+            ...common(mesh),
+            texture: { bytes: PNG_TEXTURE.bytes, mimeType: "image/jpeg" },
+            format: "obj",
+        });
+        const mtl = new TextDecoder().decode(photo[1].bytes);
+
+        expect(mtl).toContain("map_Kd texture.jpg");
+        expect(mtl).not.toContain("map_d");
     });
 
     test("comes back with the same geometry, one vertex per face corner", () => {
@@ -226,6 +240,24 @@ describe("GLB, through three's GLTFLoader", () => {
         expect(worstDifference(mesh.uvs, geometry.getAttribute("uv").array)).toBe(0);
     });
 
+    test("puts v = 0 on the picture's top row, which is what glTF means by it", () => {
+        // The first grid row is the top of the picture and the highest Y in
+        // space; its v is 0. three's own loaders honour this by *not* flipping
+        // a GLB's textures — so a preview that flips its texture the default
+        // way shows the picture upside down on a file that is correct.
+        let topY = -Infinity;
+        let topV = Infinity;
+
+        for (let vertex = 0; vertex < mesh.positions.length / 3; vertex += 1) {
+            if (mesh.positions[vertex * 3 + 1] > topY) {
+                topY = mesh.positions[vertex * 3 + 1];
+                topV = mesh.uvs[vertex * 2 + 1];
+            }
+        }
+
+        expect(topV).toBe(0);
+    });
+
     test("falls back to per-vertex colour when there is no picture to embed", async () => {
         const geometry = firstGeometry(await load(null));
 
@@ -263,6 +295,39 @@ describe("GLB, through three's GLTFLoader", () => {
         );
 
         expect([...embedded]).toEqual([...PNG_TEXTURE.bytes]);
+    });
+
+    test("masks a cut-out's transparent background rather than painting it", () => {
+        // A PNG texture is a cut-out, and its transparent background hides
+        // whatever RGB the encoder found cheapest to store. OPAQUE — glTF's
+        // default — paints that patchwork onto the outline ring in Blender.
+        const cut = buildModelBytes({ ...common(mesh), texture: PNG_TEXTURE, format: "glb" });
+        const cutJson = JSON.parse(
+            new TextDecoder().decode(
+                cut.subarray(20, 20 + new DataView(cut.buffer, cut.byteOffset).getUint32(12, true)),
+            ),
+        );
+
+        expect(cutJson.materials[0].alphaMode).toBe("MASK");
+        expect(cutJson.materials[0].alphaCutoff).toBe(0.5);
+
+        // A JPEG has no alpha to read, and MASK on it would be a lie to the
+        // renderer about a channel that is not there.
+        const photo = buildModelBytes({
+            ...common(mesh),
+            texture: { bytes: PNG_TEXTURE.bytes, mimeType: "image/jpeg" },
+            format: "glb",
+        });
+        const photoJson = JSON.parse(
+            new TextDecoder().decode(
+                photo.subarray(
+                    20,
+                    20 + new DataView(photo.buffer, photo.byteOffset).getUint32(12, true),
+                ),
+            ),
+        );
+
+        expect(photoJson.materials[0].alphaMode).toBeUndefined();
     });
 
     test("aligns every chunk and every buffer view to four bytes", () => {

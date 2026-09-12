@@ -6,6 +6,7 @@ import type {
 } from "../types/segmentation";
 import type { PixelSize } from "../types";
 import { createCanvas, context2d, releaseCanvas } from "./canvas";
+import { rememberFetchedQuality } from "./cutout-memory";
 import { fitWithinEdge } from "./pixels";
 
 /**
@@ -45,6 +46,23 @@ export const CUTOUT_MODELS: Record<
     balanced: { model: "isnet_fp16", bytes: 88_152_708 },
     best: { model: "isnet", bytes: 176_149_806 },
 };
+
+/**
+ * Which weights every tool reaches for first.
+ *
+ * One default, shared, and the sharing is the point rather than tidiness. The
+ * library fetches each weight file by a plain URL and leans on the browser's
+ * HTTP cache, so a reader who cut a photograph out on one tool already has
+ * *this* file and no other. A second tool defaulting to a different tier —
+ * however well argued on its own terms — would cost that reader a second
+ * download of a model they effectively already have.
+ *
+ * `balanced` rather than `fast`, because the question a background remover is
+ * opened to answer is whether the edge of the hair looks right, and the
+ * quantised model is visibly worse at exactly that. The reader who cares more
+ * about the first download than about the fringe can say so.
+ */
+export const DEFAULT_CUTOUT_QUALITY: CutoutQuality = "balanced";
 
 /**
  * The WebAssembly build of the runtime, which is fetched alongside whichever
@@ -269,6 +287,11 @@ export async function computeAlphaMask(
                 }
             },
         });
+
+        // Written after success, so an abandoned download is not remembered as
+        // a file the browser has. Every tool that runs the model reads this
+        // back to start on the heaviest tier already on the machine.
+        rememberFetchedQuality(quality);
 
         return { ok: true, mask };
     } catch (caught) {
