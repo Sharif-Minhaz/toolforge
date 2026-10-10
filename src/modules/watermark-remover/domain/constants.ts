@@ -8,9 +8,9 @@ import type { ImageFileLimits } from "@/modules/tools/domain/image-file";
 export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
 /**
- * What the worker's image pipeline will decode. Narrower than the detector's
- * list on purpose: an animated GIF cannot survive being repainted as a single
- * still, so accepting one would promise something the model cannot deliver.
+ * What the worker's image pipeline will decode. No GIF on purpose: an animated
+ * GIF cannot survive being repainted as a single still, so accepting one would
+ * promise something the model cannot deliver.
  */
 export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 

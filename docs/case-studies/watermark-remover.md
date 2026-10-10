@@ -5,8 +5,8 @@ nothing else, and most of what is worth recording here is about the seams betwee
 them.
 
 **Part one** — the picture tab — is about calling a Workers AI model, and applies
-equally to every other tool that fronts one (`ai-image-detector`,
-`ai-text-detector`, and the image half of `equation`).
+equally to every other tool that fronts one (today, the image half of
+`equation`).
 
 **Part two** — the video tab — is about doing the same job with no service at all.
 

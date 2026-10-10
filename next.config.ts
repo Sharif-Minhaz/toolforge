@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
     reactCompiler: true,
     experimental: {
         serverActions: {
-            // The AI Image Detector forwards the original file to its worker,
+            // The Watermark Remover forwards the original file to its worker,
             // which accepts up to 10 MB. The default 1 MB would reject most
             // phone photographs before the action ever ran; the extra megabyte
             // covers the multipart boundaries and part headers on top of the

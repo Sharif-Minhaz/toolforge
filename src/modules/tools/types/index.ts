@@ -49,8 +49,6 @@ export const TOOL_IDS = [
     "image-resizer",
     "background-remover",
     "blur-placeholder",
-    "ai-image-detector",
-    "ai-text-detector",
     "watermark-remover",
     "domain-inspector",
     "bson",

@@ -133,7 +133,7 @@ export const MAX_OPENAPI_DOCUMENT_BYTES = 4 * 1_024 * 1_024;
  * `validation/index.ts` for why their *shape* is checked by `validateGraph`
  * rather than by Zod. That leaves their *size* to be bounded here, and it has
  * to be bounded somewhere: `serverActions.bodySizeLimit` is 11 MB for the whole
- * app because the AI Image Detector forwards photographs, so without these two
+ * app because the Watermark Remover forwards photographs, so without these two
  * numbers a graph save inherits a ceiling eleven times what any real canvas
  * needs.
  *

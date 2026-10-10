@@ -184,8 +184,6 @@ describe("tool catalog", () => {
             // stock-background search goes through this server — so it is
             // hybrid for two reasons rather than the paste field's one.
             "background-remover",
-            "ai-image-detector",
-            "ai-text-detector",
             "watermark-remover",
             "domain-inspector",
             // Typing an equation never leaves the tab; reading one out of a

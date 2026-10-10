@@ -59,8 +59,8 @@ import { uuidGenerateTool } from "./uuid";
  *   posted to it, against an ownership model built on browser cookies. An MCP
  *   caller has no cookie jar and no way to prove it owns what it created, so
  *   exposing creation here would mint unreclaimable resources.
- * - **The AI tools** — text and image detectors, the Watermark Remover's *image*
- *   half, and the Equation converter's *image* half. They spend a third-party
+ * - **The AI tools** — the Watermark Remover's *image* half and the Equation
+ *   converter's *image* half. They spend a third-party
  *   API budget per call. That is a decision about money rather than about
  *   capability, and it belongs to whoever is paying rather than to this file.
  *   Note the seam: the

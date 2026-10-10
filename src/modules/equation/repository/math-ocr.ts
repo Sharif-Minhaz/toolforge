@@ -15,9 +15,8 @@ export type RecognizerRequestResult =
  * The browser never calls it directly, so the unprefixed name is preferred and
  * the old one still resolves — an existing `.env` keeps working either way.
  *
- * No `defaultPath`: this worker answers POST at whatever route it is mounted
- * at, so the variable has to carry the full URL. The watermark remover's worker
- * is the same shape; the detectors' are not, which is why they pass one.
+ * This worker answers POST at whatever route it is mounted at, so the variable
+ * has to carry the full URL. The watermark remover's worker is the same shape.
  */
 function readConfiguredEndpoint(): string | null {
     const configured = process.env.MATH_KATEX_API ?? process.env.NEXT_PUBLIC_MATH_KATEX_API;
