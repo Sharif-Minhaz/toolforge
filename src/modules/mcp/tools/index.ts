@@ -43,7 +43,7 @@ import { uuidGenerateTool } from "./uuid";
  * that is a fact about the tool rather than a gap in this file:
  *
  * - **The image tools** — compressor, converter, resizer, blur placeholder, the
- *   Image to 3D Model Converter, and the Background Remover. They decode pixels
+ *   Image to 3D Model, and the Background Remover. They decode pixels
  *   in a canvas and re-encode them through WebAssembly codecs built for the
  *   browser. There is no canvas in a
  *   request handler, and a server-side reimplementation would be a second
@@ -75,7 +75,7 @@ import { uuidGenerateTool } from "./uuid";
  *   the Gemini half decodes a still to pixels in a canvas and encodes a PNG back
  *   out of one.
  *
- *   The Image to 3D Model Converter is the sharpest case of the same seam. Its
+ *   The Image to 3D Model is the sharpest case of the same seam. Its
  *   mesh builder and its four format writers are the purest code in this
  *   repository — no canvas, no worker, no network, and already driven by
  *   three.js's own loaders in the tests — but they take a heightfield, and the

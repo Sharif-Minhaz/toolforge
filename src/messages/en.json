@@ -318,7 +318,7 @@
             "description": "Open a file and read or edit it byte by byte — hex and ASCII columns side by side, a data inspector that decodes every integer, float and GUID at the caret, search by text or hex, and undo."
         },
         "image-to-3d": {
-            "name": "Image to 3D Model Converter",
+            "name": "Image to 3D Model",
             "description": "Turn a picture into a real 3D model in your browser — brightness, transparency or a depth map becomes height, the relief gets a solid back, and it downloads as GLB, OBJ, STL or PLY for Blender or a 3D printer."
         }
     },
@@ -8671,12 +8671,12 @@
     },
     "imageTo3d": {
         "meta": {
-            "title": "Image to 3D Model Converter — PNG or JPG to GLB, OBJ, STL and PLY",
+            "title": "Image to 3D Model — PNG or JPG to GLB, OBJ, STL and PLY",
             "description": "Turn a picture into a real 3D model in your browser. The subject is cut out, its outline inflated into a rounded solid you can orbit, and downloaded as GLB, OBJ, STL or PLY for Blender, Godot, three.js or a 3D printer. Nothing is uploaded."
         },
         "hero": {
             "eyebrow": "Image to 3D Model",
-            "title": "Image to 3D Model Converter",
+            "title": "Image to 3D Model",
             "subtitle": "Drop in a picture and get back a mesh you can actually open. The subject is cut away from its background, its outline is inflated into a rounded solid with a front and a back, and the picture's own shading is laid over the surface. Download it as GLB, OBJ, STL or PLY — ready for Blender, Godot, three.js or a slicer. The whole thing runs in this tab.",
             "badgeFormats": "GLB · OBJ · STL · PLY",
             "badgeOffline": "Runs offline",
@@ -8809,7 +8809,7 @@
             "controls": {
                 "title": "Every control, and when to reach for it",
                 "intro": "Twelve controls, and most pictures need two of them: the shape, and how thick you want the result. The defaults cut the subject out, inflate it to 100 mm across and 30 mm through, and hand a quarter of the bulge to the picture's own shading.",
-                "tableCaption": "Every control on the Image to 3D Model Converter and what it does",
+                "tableCaption": "Every control on the Image to 3D Model and what it does",
                 "colControl": "Control",
                 "colDoes": "What it does",
                 "colWhen": "Reach for it when",

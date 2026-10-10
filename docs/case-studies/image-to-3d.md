@@ -1,4 +1,4 @@
-# Image to 3D — A Mesh Is Only As Good As What Reads It
+# Image to 3D Model — A Mesh Is Only As Good As What Reads It
 
 `src/modules/image-to-3d/`. Read before touching the mesh builder, any of the
 four writers, or the tests that check them.

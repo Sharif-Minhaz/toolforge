@@ -13,7 +13,7 @@ import { fitWithinEdge } from "./pixels";
  * Driving the subject-segmentation model.
  *
  * Shared by the Background Remover, which uses the mask to cut a photograph out,
- * and the Image to 3D Model Converter, which uses it to decide what to inflate
+ * and the Image to 3D Model, which uses it to decide what to inflate
  * into a solid. Lifted here the moment the second one needed it — `CLAUDE.md`
  * rule 31 — rather than copied, because the byte counts, the error vocabulary
  * and the `ImageData` trap below are all things there should be one of.

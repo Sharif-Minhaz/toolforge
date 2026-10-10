@@ -9,7 +9,7 @@ import { FORMAT_EXTENSIONS } from "./constants";
  * same in both locales — the same rule that keeps `UTF-8` and `RFC 4648` out of
  * the catalogue.
  */
-export const MODEL_GENERATOR = "ToolForge Image to 3D Model Converter";
+export const MODEL_GENERATOR = "ToolForge Image to 3D Model";
 
 /** The name of the mesh inside a GLB, and of the object inside an OBJ. */
 export const MODEL_OBJECT_NAME = "relief";

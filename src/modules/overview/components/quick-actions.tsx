@@ -65,7 +65,7 @@ export async function QuickActions() {
         // before that, the passport-photo preset before that, RSA before that,
         // AES before that, and the Domain Inspector before that.
         //
-        // The Image to 3D Model Converter shipped without taking a slot, which
+        // The Image to 3D Model shipped without taking a slot, which
         // is the same rule reaching the opposite answer rather than an
         // oversight: at popularity 74 it is the lowest of the seven candidates,
         // so adding it and then dropping the lowest leaves this list where it
