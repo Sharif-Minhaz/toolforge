@@ -1,13 +1,13 @@
+import { readPackage } from "@/modules/tools/domain/xml-package";
 import { describe, expect, test } from "bun:test";
 
 import { runsToText } from "@/modules/pdf-converter/domain/blocks";
-import { readPackage } from "@/modules/pdf-converter/domain/package";
 import { readDocx } from "@/modules/pdf-converter/domain/read-docx";
 import { readPptx } from "@/modules/pdf-converter/domain/read-pptx";
 import { parseCellReference, readXlsx } from "@/modules/pdf-converter/domain/read-xlsx";
 import type { DocBlock, SlideShape } from "@/modules/pdf-converter/types";
 
-import { buildDocx, buildPptx, buildXlsx } from "./fixtures";
+import { buildDocx, buildPptx, buildXlsx } from "@/modules/tools/tests/office-fixtures";
 
 function open(bytes: Uint8Array) {
     const pkg = readPackage(bytes);

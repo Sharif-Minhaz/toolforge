@@ -1,8 +1,10 @@
+import { looksLikeLegacyOffice, looksLikeZip } from "@/modules/tools/domain/file-signature";
+import { readPackage } from "@/modules/tools/domain/xml-package";
+
 import type { PdfConversionResult, PdfConverterOptions, SourceDocument } from "../types";
 import { documentText } from "./blocks";
 import { MAX_PDF_SOURCE_BYTES } from "./constants";
 import { convertText, finishFlow } from "./convert";
-import { readPackage } from "./package";
 import { readDocx } from "./read-docx";
 import { readPptx } from "./read-pptx";
 import { readXlsx } from "./read-xlsx";
@@ -11,8 +13,6 @@ import {
     formatFromFilename,
     isLegacyOfficeExtension,
     isPackagedFormat,
-    looksLikeLegacyOffice,
-    looksLikeZip,
     packageFormatOf,
 } from "./source-format";
 

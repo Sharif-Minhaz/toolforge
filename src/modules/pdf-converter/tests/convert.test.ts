@@ -21,7 +21,12 @@ import type {
 } from "@/modules/pdf-converter/types";
 import { PDF_SOURCE_FORMATS } from "@/modules/pdf-converter/types";
 
-import { buildDocx, buildPptx, buildStrangerPackage, buildXlsx } from "./fixtures";
+import {
+    buildDocx,
+    buildPptx,
+    buildStrangerPackage,
+    buildXlsx,
+} from "@/modules/tools/tests/office-fixtures";
 
 function options(overrides: Partial<PdfConverterOptions> = {}): PdfConverterOptions {
     return { ...DEFAULT_PDF_OPTIONS, ...overrides };

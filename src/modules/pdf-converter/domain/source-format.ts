@@ -1,3 +1,5 @@
+import { fileExtensionOf } from "@/modules/tools/domain/file-signature";
+
 import type { PdfSourceFormat } from "../types";
 
 /**
@@ -38,12 +40,6 @@ const EXTENSIONS: Readonly<Record<string, PdfSourceFormat>> = {
  */
 const LEGACY_EXTENSIONS = new Set(["doc", "ppt", "xls", "rtf", "odt", "odp", "ods"]);
 
-export function fileExtensionOf(filename: string): string {
-    const dot = filename.lastIndexOf(".");
-
-    return dot < 0 ? "" : filename.slice(dot + 1).toLowerCase();
-}
-
 export function isLegacyOfficeExtension(filename: string): boolean {
     return LEGACY_EXTENSIONS.has(fileExtensionOf(filename));
 }
@@ -55,31 +51,6 @@ export function formatFromFilename(filename: string): PdfSourceFormat | null {
 
 export function isPackagedFormat(format: PdfSourceFormat): format is "docx" | "pptx" | "xlsx" {
     return format === "docx" || format === "pptx" || format === "xlsx";
-}
-
-/** `PK\x03\x04` — the local file header every ZIP, and so every OOXML file, starts with. */
-export function looksLikeZip(bytes: Uint8Array): boolean {
-    return (
-        bytes.length >= 4 &&
-        bytes[0] === 0x50 &&
-        bytes[1] === 0x4b &&
-        bytes[2] === 0x03 &&
-        bytes[3] === 0x04
-    );
-}
-
-/**
- * `D0 CF 11 E0 A1 B1 1A E1` — the OLE2 compound-file header shared by every
- * pre-2007 Office document. Recognised so a `.doc` renamed to `.docx` is still
- * refused by name.
- */
-const OLE_SIGNATURE = [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1];
-
-export function looksLikeLegacyOffice(bytes: Uint8Array): boolean {
-    return (
-        bytes.length >= OLE_SIGNATURE.length &&
-        OLE_SIGNATURE.every((byte, index) => bytes[index] === byte)
-    );
 }
 
 /**

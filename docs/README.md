@@ -155,6 +155,7 @@ records a defect that was expensive to find and is easy to reintroduce.
 | `short-links`, `shortener`               | [`case-studies/short-links.md`](case-studies/short-links.md)                                                                       |
 | `sort`                                   | [`case-studies/sort.md`](case-studies/sort.md)                                                                                     |
 | `subdomain-lookup`                       | [`case-studies/subdomain-lookup.md`](case-studies/subdomain-lookup.md)                                                             |
+| `text-to-speech`                         | [`case-studies/text-to-speech.md`](case-studies/text-to-speech.md)                                                                 |
 | `url-parser`                             | [`patterns/derived-state-editors.md`](patterns/derived-state-editors.md)                                                           |
 | `watermark-remover`, `ai-*`              | [`case-studies/watermark-remover.md`](case-studies/watermark-remover.md)                                                           |
 | `timestamp`                              | [`hydration-and-platform-pitfalls.md`](hydration-and-platform-pitfalls.md)                                                         |

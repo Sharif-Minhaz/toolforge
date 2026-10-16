@@ -71,7 +71,8 @@ export async function QuickActions() {
         // so adding it and then dropping the lowest leaves this list where it
         // was. It reaches the front page through the featured and recent grids
         // instead. Raise its popularity when the traffic says so, and it takes
-        // pdf-converter's place here.
+        // pdf-converter's place here. Text to Speech arrived at 70 and stayed
+        // out for the same reason.
         {
             key: "wordToPdf",
             href: "/tools/pdf-converter",

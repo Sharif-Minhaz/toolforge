@@ -83,6 +83,7 @@ docs/
 | `short-links`, `shortener`                  | [`docs/case-studies/short-links.md`](docs/case-studies/short-links.md)                                             |
 | `sort`                                      | [`docs/case-studies/sort.md`](docs/case-studies/sort.md)                                                           |
 | `subdomain-lookup`                          | [`docs/case-studies/subdomain-lookup.md`](docs/case-studies/subdomain-lookup.md)                                   |
+| `text-to-speech`                            | [`docs/case-studies/text-to-speech.md`](docs/case-studies/text-to-speech.md)                                       |
 | `url-parser`                                | [`docs/patterns/derived-state-editors.md`](docs/patterns/derived-state-editors.md)                                 |
 | `watermark-remover`, `ai-*`                 | [`docs/case-studies/watermark-remover.md`](docs/case-studies/watermark-remover.md)                                 |
 

@@ -7,6 +7,11 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
     reactCompiler: true,
+    // Text to Speech's client opens a WebSocket through `ws`, whose optional
+    // native add-ons (`bufferutil`, `utf-8-validate`) are resolved with a
+    // runtime `require` a bundler cannot follow. Left external, Node loads the
+    // package from `node_modules` as its authors expect.
+    serverExternalPackages: ["msedge-tts"],
     experimental: {
         serverActions: {
             // The Watermark Remover forwards the original file to its worker,

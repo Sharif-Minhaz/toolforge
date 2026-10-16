@@ -11,6 +11,10 @@ import { zipSync, type Zippable } from "fflate";
  * is really a workbook — which is the half of this module's behaviour that no
  * real file exercises.
  *
+ * Shared by the PDF Converter and Text to Speech, which read the same formats
+ * for different ends; moved here from `pdf-converter/tests/` when the second
+ * one needed them.
+ *
  * What it cannot do is prove the readers cope with what Word really writes.
  * That is `docs/case-studies/pdf-converter.md`'s note about verification, and
  * it is why the readers are built on top of Mammoth rather than under it.
@@ -182,7 +186,19 @@ export function buildXlsx(sheets: readonly XlsxSheet[], date1904 = false): Uint8
         return `<sheet name="${escapeXml(sheet.name)}" sheetId="${sheetIndex + 1}" r:id="rId${sheetIndex + 1}"${sheet.hidden === true ? ' state="hidden"' : ""}/>`;
     });
 
+    // Every real workbook carries this, and SheetJS refuses a ZIP without
+    // one; the PDF Converter's own reader never looks at it.
+    const contentTypes = `${XML_HEADER}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${sheets
+        .map(
+            (_, sheetIndex) =>
+                `<Override PartName="/xl/worksheets/sheet${sheetIndex + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`,
+        )
+        .join(
+            "",
+        )}<Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`;
+
     return pack({
+        "[Content_Types].xml": contentTypes,
         ...files,
         "_rels/.rels": relationships([
             {

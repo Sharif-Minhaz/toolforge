@@ -185,6 +185,9 @@ describe("tool catalog", () => {
             // hybrid for two reasons rather than the paste field's one.
             "background-remover",
             "watermark-remover",
+            // Documents are read in the tab, but every word spoken goes to
+            // Microsoft's speech service through this server.
+            "text-to-speech",
             "domain-inspector",
             // Typing an equation never leaves the tab; reading one out of a
             // picture goes to a recognition model, which is what makes it

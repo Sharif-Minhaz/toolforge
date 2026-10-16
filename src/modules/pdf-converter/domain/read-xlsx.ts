@@ -1,7 +1,3 @@
-import type { DocBlock, PdfTruncation, TableCell } from "../types";
-import { plainRun } from "./blocks";
-import { formatCellNumber, isDateFormat, isPercentFormat, serialToDateParts } from "./cell-format";
-import { MAX_PDF_SHEET_COLUMNS, MAX_PDF_SHEET_ROWS, MAX_PDF_SHEETS } from "./constants";
 import {
     attribute,
     childPath,
@@ -9,10 +5,13 @@ import {
     descendantsNamed,
     numericAttribute,
     readEntryXml,
-    readRelationships,
-    resolvePackagePath,
-    type OoxmlPackage,
-} from "./package";
+    type XmlPackage,
+} from "@/modules/tools/domain/xml-package";
+import type { DocBlock, PdfTruncation, TableCell } from "../types";
+import { plainRun } from "./blocks";
+import { formatCellNumber, isDateFormat, isPercentFormat, serialToDateParts } from "./cell-format";
+import { MAX_PDF_SHEET_COLUMNS, MAX_PDF_SHEET_ROWS, MAX_PDF_SHEETS } from "./constants";
+import { readRelationships, resolvePackagePath } from "./package";
 
 /**
  * A workbook read straight out of its package.
@@ -84,7 +83,7 @@ export function parseCellReference(
  * are formatting this tool does not carry into a table cell — a bold word in
  * the middle of a spreadsheet label is not what makes the cell readable.
  */
-function readSharedStrings(pkg: OoxmlPackage): readonly string[] {
+function readSharedStrings(pkg: XmlPackage): readonly string[] {
     const root = readEntryXml(pkg, "xl/sharedStrings.xml");
 
     if (root === null) {
@@ -104,7 +103,7 @@ type StyleTable = {
     readonly customCodes: ReadonlyMap<number, string>;
 };
 
-function readStyles(pkg: OoxmlPackage): StyleTable {
+function readStyles(pkg: XmlPackage): StyleTable {
     const root = readEntryXml(pkg, "xl/styles.xml");
 
     if (root === null) {
@@ -133,7 +132,7 @@ function readStyles(pkg: OoxmlPackage): StyleTable {
     return { formatIds, customCodes };
 }
 
-function readSheetList(pkg: OoxmlPackage): readonly SheetEntry[] {
+function readSheetList(pkg: XmlPackage): readonly SheetEntry[] {
     const workbook = readEntryXml(pkg, "xl/workbook.xml");
 
     if (workbook === null) {
@@ -168,7 +167,7 @@ function readSheetList(pkg: OoxmlPackage): readonly SheetEntry[] {
     return sheets;
 }
 
-function readsDate1904(pkg: OoxmlPackage): boolean {
+function readsDate1904(pkg: XmlPackage): boolean {
     const workbook = readEntryXml(pkg, "xl/workbook.xml");
     const properties = workbook === null ? null : childPath(workbook, "workbookPr");
     const value = attribute(properties, "date1904");
@@ -436,7 +435,7 @@ function looksNumeric(text: string): boolean {
 
 /* -------------------------------------------------------------- the whole --- */
 
-export function readXlsx(pkg: OoxmlPackage, options: XlsxReadOptions): XlsxReadResult | null {
+export function readXlsx(pkg: XmlPackage, options: XlsxReadOptions): XlsxReadResult | null {
     const sheets = readSheetList(pkg);
 
     if (sheets.length === 0) {

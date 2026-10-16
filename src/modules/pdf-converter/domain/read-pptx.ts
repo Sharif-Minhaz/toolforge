@@ -1,3 +1,12 @@
+import {
+    attribute,
+    childPath,
+    childrenNamed,
+    descendantsNamed,
+    numericAttribute,
+    readEntryXml,
+    type XmlPackage,
+} from "@/modules/tools/domain/xml-package";
 import type {
     DocBlock,
     EmbeddedImage,
@@ -13,16 +22,9 @@ import type {
 import { normalizeRuns, plainRun, trimRuns } from "./blocks";
 import { DEFAULT_SLIDE_HEIGHT_EMU, DEFAULT_SLIDE_WIDTH_EMU, MAX_PDF_SLIDES } from "./constants";
 import {
-    attribute,
-    childPath,
-    childrenNamed,
-    descendantsNamed,
     embedPackageImage,
-    numericAttribute,
-    readEntryXml,
     readRelationships,
     resolvePackagePath,
-    type OoxmlPackage,
     type Relationships,
 } from "./package";
 
@@ -194,7 +196,7 @@ function placeholderKindOf(shape: Element): SlidePlaceholder {
  * table every such shape would land at the top-left corner, stacked on top of
  * one another.
  */
-function readLayoutFrames(pkg: OoxmlPackage, layoutPath: string): ReadonlyMap<string, SlideFrame> {
+function readLayoutFrames(pkg: XmlPackage, layoutPath: string): ReadonlyMap<string, SlideFrame> {
     const root = readEntryXml(pkg, layoutPath);
     const frames = new Map<string, SlideFrame>();
 
@@ -318,7 +320,7 @@ function collectShapes(
     tree: Element,
     transform: GroupTransform,
     context: {
-        readonly pkg: OoxmlPackage;
+        readonly pkg: XmlPackage;
         readonly slidePath: string;
         readonly relationships: Relationships;
         readonly layoutFrames: ReadonlyMap<string, SlideFrame>;
@@ -507,7 +509,7 @@ function collectGraphicFrame(
 
 /* ------------------------------------------------------------------ notes --- */
 
-function readNotes(pkg: OoxmlPackage, notesPath: string): readonly DocBlock[] {
+function readNotes(pkg: XmlPackage, notesPath: string): readonly DocBlock[] {
     const root = readEntryXml(pkg, notesPath);
 
     if (root === null) {
@@ -545,7 +547,7 @@ function readNotes(pkg: OoxmlPackage, notesPath: string): readonly DocBlock[] {
 
 /* -------------------------------------------------------------- the whole --- */
 
-function readSlidePaths(pkg: OoxmlPackage): readonly string[] {
+function readSlidePaths(pkg: XmlPackage): readonly string[] {
     const presentation = readEntryXml(pkg, "ppt/presentation.xml");
 
     if (presentation === null) {
@@ -570,7 +572,7 @@ function readSlidePaths(pkg: OoxmlPackage): readonly string[] {
     return paths;
 }
 
-function readSlideSize(pkg: OoxmlPackage): { width: number; height: number } {
+function readSlideSize(pkg: XmlPackage): { width: number; height: number } {
     const presentation = readEntryXml(pkg, "ppt/presentation.xml");
     const size = presentation === null ? null : childPath(presentation, "p:sldSz");
     const width = numericAttribute(size, "cx");
@@ -604,7 +606,7 @@ function readDeckTitle(slides: readonly Slide[]): string | null {
     return null;
 }
 
-export function readPptx(pkg: OoxmlPackage, options: PptxReadOptions): PptxReadResult | null {
+export function readPptx(pkg: XmlPackage, options: PptxReadOptions): PptxReadResult | null {
     const paths = readSlidePaths(pkg);
 
     if (paths.length === 0) {

@@ -69,6 +69,13 @@ import { uuidGenerateTool } from "./uuid";
  *   costs nothing. Only reading a picture is withheld — a model that wants an
  *   equation transcribed already has eyes of its own.
  *
+ *   Text to Speech belongs here too, for the nearest thing it has to a budget:
+ *   the patience of Microsoft's Read Aloud service, which sees every caller of
+ *   this deployment as one address. The page meters it per reader behind a
+ *   Turnstile challenge and a deployment-wide hourly ceiling; an MCP token is
+ *   one caller with a loop, and a model asked to narrate a book would spend the
+ *   whole hour for everybody. Its document reader is browser-side as well.
+ *
  *   The Watermark Remover's *video* and *Gemini image* halves are absent for the
  *   first group's reason rather than this one. The video half demuxes, decodes,
  *   repaints and muxes a clip through the browser's own WebCodecs and a canvas;

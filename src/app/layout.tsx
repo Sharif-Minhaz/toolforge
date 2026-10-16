@@ -272,6 +272,18 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             videoErrors: messages.watermarkRemover.videoErrors,
             videoToast: messages.watermarkRemover.videoToast,
         },
+        // The article and the hero stay on the server; only what the
+        // workbench, the file tab, the settings dialog and the player render
+        // crosses.
+        textToSpeech: {
+            workbench: messages.textToSpeech.workbench,
+            scriptErrors: messages.textToSpeech.scriptErrors,
+            errors: messages.textToSpeech.errors,
+            settings: messages.textToSpeech.settings,
+            file: messages.textToSpeech.file,
+            fileErrors: messages.textToSpeech.fileErrors,
+            result: messages.textToSpeech.result,
+        },
         password: {
             workbench: messages.password.workbench,
             strengths: messages.password.strengths,
@@ -383,6 +395,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         // same namespace slice is six places to forget one.
         imageIntake: messages.imageIntake,
         compareSlider: messages.compareSlider,
+        // The JSON viewer's fold controls, shared by every tool that prints
+        // JSON — the same reasoning as the image intake above.
+        codeViewer: messages.codeViewer,
         imageTo3d: {
             workbench: messages.imageTo3d.workbench,
             sources: messages.imageTo3d.sources,

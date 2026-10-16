@@ -272,6 +272,10 @@
             "name": "Watermark Remover",
             "description": "Brush over a watermark, logo or unwanted object and have that area repainted — or drop in a Gemini image or clip and have its sparkle subtracted in your browser. For work you own or have the right to edit."
         },
+        "text-to-speech": {
+            "name": "Text to Speech",
+            "description": "Turn text — typed, pasted, or pulled out of a PDF, Word or spreadsheet file — into natural speech in 322 voices across 75 languages, with pauses and voice controls, and download it as an MP3."
+        },
         "related": {
             "title": "Popular tools",
             "description": "Other utilities from the toolbox, ready when you need them.",
@@ -5367,6 +5371,283 @@
                 "a8": "The dimensions, frame rate and length are. Both tracks are re-encoded: the video because no codec can change one corner of a compressed frame without decoding and encoding it, and the audio because AAC in an MP4 starts fractionally before zero and trimming that away cannot be done to encoded packets. The video is encoded at high quality, so a clip that was already heavily compressed will pick up a little more loss. The result asks for AAC audio and falls back to Opus on a browser that cannot encode AAC — and tells you when it did.",
                 "q9": "Does the Gemini tab upload my image?",
                 "a9": "No. That tab has no server side at all: your browser decodes the file, works out how strongly the mark covers each pixel, subtracts it and writes a PNG back. There is no bot check and no rate limit on it because there is no service behind it to protect. The picture tab is the only one that uploads anything, and it uploads only the square you brushed."
+            }
+        }
+    },
+    "textToSpeech": {
+        "meta": {
+            "title": "Text to Speech — 322 Free Neural Voices, MP3 Download",
+            "description": "Free text to speech in 322 neural voices across 75 languages, Bangla included. Add pauses, adjust rate, volume and pitch, take text out of PDF, Word and spreadsheet files, and download the result as an MP3. Your text is sent to Microsoft's speech service to be spoken; this site stores nothing."
+        },
+        "hero": {
+            "eyebrow": "Text to Speech",
+            "title": "Text to Speech",
+            "subtitle": "Type or paste up to 5,000 characters — or pull them out of a document — pick one of 322 neural voices in 75 languages, and get back an MP3 to play here or download. The text is spoken by Microsoft's Read Aloud service through this site's server; the audio is assembled in your browser and never stored.",
+            "badgeVoices": "322 voices · 75 languages",
+            "badgePauses": "Pauses where you want them",
+            "badgeFiles": "PDF, Word and spreadsheets",
+            "badgeMp3": "MP3 download",
+            "badgeChallenge": "Bot-checked requests"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "workbench": {
+            "tabText": "Text to Speech",
+            "tabFile": "File to Speech",
+            "disclosure": "To be spoken, your text is sent through this site's server to Microsoft's Read Aloud service — the voices behind Microsoft Edge. This site never stores or logs it, and the audio is assembled in your browser. Files on the other tab are read in your browser; only the text you generate from is sent.",
+            "textLabel": "Text to speak",
+            "textPlaceholder": "Type or paste the text to read aloud. Add a pause anywhere with the Pauses menu — it inserts a marker like [pause 1s].",
+            "pauses": "Pauses",
+            "pausesLabel": "Insert a pause",
+            "pauseItem": "{seconds} s",
+            "clear": "Clear text",
+            "keepFirst": "Keep the first {limit} characters",
+            "language": "Language",
+            "voice": "Voice",
+            "gender": {
+                "female": "Female",
+                "male": "Male"
+            },
+            "multilingual": "Multilingual",
+            "emptyHint": "Type or paste some text, or take it from a file on the other tab.",
+            "ready": "{characters, plural, one {# character} other {# characters}} to read{pauses, plural, =0 {} one { and # pause} other { and # pauses}}.",
+            "noticeExtracted": "Text taken from your {format} file — read it over before generating.",
+            "noticePdf": "Text taken from a PDF. A PDF stores shapes, not always letters: in scripts like Bangla, Hindi or Arabic the words can come out scrambled. Read it over before generating.",
+            "noticeTruncated": "That document is longer than {limit} characters, so only its start is in the box. One generation reads up to {max} — trim it to the part you want.",
+            "unavailable": "Generating speech isn't available on this deployment right now. The File to Speech tab still works.",
+            "challengePending": "Finish the check above to turn Generate on.",
+            "challengeFailed": "The check could not load. Reload the page to try again — Generate stays off until it passes.",
+            "generate": "Generate",
+            "generating": "Generating…",
+            "cancel": "Stop",
+            "connecting": "Connecting to the voice service…",
+            "progress": "Speaking part {step} of {steps} · {duration} of audio so far",
+            "progressLabel": "Generation progress",
+            "resultStale": "The text, voice or settings have changed since this was made — generate again to hear the change."
+        },
+        "scriptErrors": {
+            "empty": "There is nothing to read yet — add some text.",
+            "too_long": "Over the {limit}-character limit for one generation — shorten it to continue.",
+            "pause_out_of_range": "The pause at character {position} is outside 0.1 to 10 seconds.",
+            "too_many_pauses": "More than {max} pauses — remove some to continue."
+        },
+        "errors": {
+            "invalid_request": "The server could not read that request. Reload the page and try again.",
+            "not_configured": "Generating speech isn't set up on this deployment.",
+            "challenge_failed": "The bot check did not pass. It has reset — wait for it to finish and press Generate again.",
+            "challenge_unavailable": "The bot check could not be confirmed just now. Try again in a moment.",
+            "rate_limited": "You have reached this hour's limit for generating speech. Try again in about {minutes, plural, one {# minute} other {# minutes}}.",
+            "voice_unavailable": "The service returned no audio for this voice. Microsoft may have withdrawn it — try another voice.",
+            "upstream_refused": "Microsoft's voice service refused the request. It changes without notice, so this usually means the tool needs an update — try again later.",
+            "upstream_unavailable": "Microsoft's voice service could not be reached. Try again in a moment.",
+            "timed_out": "The voice service stopped responding partway through. Try again, or split the text into shorter parts.",
+            "interrupted": "The connection dropped before the audio was finished, so nothing was kept. Try again."
+        },
+        "settings": {
+            "open": "Voice settings",
+            "openChanged": "Voice settings (changed from default)",
+            "title": "Voice settings",
+            "description": "Adjust how the chosen voice speaks. Each slider is relative to the voice's own default.",
+            "rate": "Rate",
+            "volume": "Volume",
+            "pitch": "Pitch",
+            "percent": "{value}%",
+            "hertz": "{value} Hz",
+            "keep": "Keep these settings",
+            "keepHint": "Remembers rate, volume and pitch in this browser for your next visit.",
+            "reset": "Reset to default"
+        },
+        "file": {
+            "dropTitle": "Click to choose a file, or drop one here (max {limit})",
+            "dropHint": "Supported formats: {formats}",
+            "extract": "Extract text",
+            "extracting": "Reading the file…",
+            "picked": "{name} · {size} — press Extract text to read it.",
+            "privacy": "The file is read in your browser and never uploaded."
+        },
+        "fileErrors": {
+            "unsupported_format": "This isn't a format the tool reads — see the list above.",
+            "too_large": "That file is over the {limit} limit.",
+            "unreadable": "The file could not be read. It may be damaged, or not what its name says.",
+            "encrypted": "The file is password-protected. Open it, remove the password, save it, and try again.",
+            "empty": "No text was found in that file. A scanned PDF holds pictures of words rather than words, and needs OCR first."
+        },
+        "result": {
+            "label": "Generated speech",
+            "player": "Generated speech",
+            "unsupported": "Your browser cannot play MP3 audio here — use Download MP3 instead.",
+            "summary": "{voice} · {duration}",
+            "download": "Download MP3"
+        },
+        "article": {
+            "howItWorks": {
+                "title": "How text to speech works here",
+                "p1": "Type or paste text, pick a voice, and press Generate: the text is spoken by the same neural voices Microsoft Edge uses for Read Aloud and comes back as an MP3 you can play or save. There are 322 voices across 75 languages and 142 regional variants, Bangla among them.",
+                "example": "<code>Hello there. [pause 2s] This is after two seconds. [pause 0.5s] And a short one.</code> → an 8.7-second, 51 KB MP3 in the Jenny voice, with the silences where the markers were",
+                "p2": "The one thing to know before you start: the text leaves your browser. It goes through this site's server to Microsoft's service, which does the speaking, and this site keeps no copy of it or of the audio. Documents opened on the File to Speech tab are read in your browser, and only the text you then generate from is sent."
+            },
+            "voices": {
+                "title": "Choosing a voice",
+                "p1": "Pick a language first, then a voice in it. The language list is grouped — English, then which English — because one language sounds different in each region: English (India) and English (United Kingdom) differ in accent, rhythm and how they read numbers and dates. When you switch region the tool keeps the same gender where the new region has one, so comparing accents is one click.",
+                "p2": "Each voice is trained on its own language and reads others poorly, if at all. The voices marked Multilingual — such as <code>en-US-AndrewMultilingualNeural</code> — are the exception: they follow the text from one language into another, which makes them the choice for a script that mixes languages."
+            },
+            "pauses": {
+                "title": "Adding pauses",
+                "p1": "The Pauses menu inserts a marker at the cursor — <code>[pause 1s]</code> — and you can type one yourself: any value from <code>0.1</code> to <code>10</code> seconds, as in <code>[pause 2.5s]</code>, up to 50 per generation. A marker outside that range is pointed out under the box rather than quietly changed.",
+                "p2": "A pause is added on top of the voice's own breath at the end of a phrase, which runs to about a second. A 2-second marker after a full stop therefore leaves a gap of roughly three seconds; for a tighter gap, use a smaller value.",
+                "p3": "Markers are plain text, so they survive copying and pasting, and they are never read aloud. Something that only looks like one — <code>[pause]</code> with no number — is read out as written."
+            },
+            "controls": {
+                "title": "Every control",
+                "intro": "Each control on the page, what it does, and when it is worth reaching for.",
+                "tableCaption": "The Text to Speech controls",
+                "colControl": "Control",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "rows": {
+                    "text": {
+                        "name": "Text box",
+                        "does": "Holds up to 5,000 characters, markers included. The counter above it shows how many are used; past the limit, Generate turns off and the box says by how much.",
+                        "when": "Always — it is what gets spoken."
+                    },
+                    "pauses": {
+                        "name": "Pauses",
+                        "does": "Inserts <code>[pause 0.5s]</code> to <code>[pause 5s]</code> at the cursor.",
+                        "when": "A heading needs a beat after it, or a list needs room between items."
+                    },
+                    "clear": {
+                        "name": "Clear text",
+                        "does": "Empties the box and the file notice under it.",
+                        "when": "Starting over."
+                    },
+                    "language": {
+                        "name": "Language",
+                        "does": "Chooses the region, grouped by language.",
+                        "when": "You want a particular accent — Indian rather than British English, Bangladeshi rather than Indian Bangla."
+                    },
+                    "voice": {
+                        "name": "Voice",
+                        "does": "Chooses a voice in that region. Each is listed with its gender; multilingual ones are marked.",
+                        "when": "Trying a different sound for the same text."
+                    },
+                    "rate": {
+                        "name": "Rate",
+                        "does": "Speeds the voice up or slows it down, from −50% to +50% of its normal pace.",
+                        "when": "Narration for learners, slower, or a quick review, faster."
+                    },
+                    "volume": {
+                        "name": "Volume",
+                        "does": "Raises or lowers loudness, from −50% to +50%.",
+                        "when": "The file will sit beside other audio and has to match it."
+                    },
+                    "pitch": {
+                        "name": "Pitch",
+                        "does": "Moves the voice up or down, from −50 Hz to +50 Hz.",
+                        "when": "A voice sounds a little too high or too low for the material."
+                    },
+                    "keep": {
+                        "name": "Keep these settings",
+                        "does": "Remembers rate, volume and pitch in this browser.",
+                        "when": "You always use the same settings and want them back next visit."
+                    },
+                    "reset": {
+                        "name": "Reset to default",
+                        "does": "Puts all three sliders back to zero.",
+                        "when": "The voice sounds odd and you want its natural delivery."
+                    },
+                    "generate": {
+                        "name": "Generate",
+                        "does": "Sends the text to be spoken and shows progress as each part arrives.",
+                        "when": "The text and the voice are ready and the bot check has passed."
+                    },
+                    "cancel": {
+                        "name": "Stop",
+                        "does": "Abandons a generation in progress; nothing is kept.",
+                        "when": "You spot a typo halfway through a long script."
+                    },
+                    "download": {
+                        "name": "Download MP3",
+                        "does": "Saves the result as an MP3 named after the voice and the time.",
+                        "when": "You want the audio outside this page."
+                    },
+                    "file": {
+                        "name": "Extract text",
+                        "does": "Reads a document in your browser and puts its text in the box on the other tab.",
+                        "when": "The words are already in a PDF, Word or spreadsheet file."
+                    }
+                },
+                "caveat": "Changing the text, the voice or a setting after a generation dims the result rather than removing it, so you can still play or save it — generate again to hear the change. Each press of Generate uses up the bot check, which then runs again by itself in a second or two."
+            },
+            "files": {
+                "title": "Reading text out of files",
+                "intro": "The File to Speech tab opens a document in your browser, takes the words out, and puts them in the text box; the file itself is never uploaded. Up to 100,000 characters are taken from a document, and one generation reads up to 5,000, so you choose which part to send.",
+                "tableCaption": "Formats the File to Speech tab reads",
+                "colFormat": "Format",
+                "colRead": "How it is read",
+                "colWatch": "Watch for",
+                "rows": {
+                    "txt": {
+                        "name": "<code>.txt</code>",
+                        "read": "As UTF-8, or as UTF-16 when the file starts with a byte-order mark.",
+                        "watch": "Text saved in an older code page, such as Windows-1252, shows stray characters."
+                    },
+                    "pdf": {
+                        "name": "<code>.pdf</code>",
+                        "read": "Page by page, with PDF.js — the engine behind Firefox's PDF viewer.",
+                        "watch": "A PDF stores glyphs, and in Bangla, Hindi or Arabic they often come out in the wrong order. A scanned PDF holds pictures of text and gives nothing."
+                    },
+                    "doc": {
+                        "name": "<code>.doc</code>",
+                        "read": "The Word 97–2003 format, read from its own index of text pieces; the main body only.",
+                        "watch": "Footnotes, headers and comments are left out. Files from Word 95 and older are not read."
+                    },
+                    "docx": {
+                        "name": "<code>.docx</code>",
+                        "read": "With Mammoth, paragraph by paragraph; tables cell by cell.",
+                        "watch": "Pictures and charts are skipped, along with any text drawn inside them."
+                    },
+                    "odt": {
+                        "name": "<code>.odt</code>",
+                        "read": "From the document's own XML, paragraph by paragraph.",
+                        "watch": "Notes and comments are left out."
+                    },
+                    "sheets": {
+                        "name": "<code>.xlsx</code>, <code>.xls</code>, <code>.ods</code>",
+                        "read": "With SheetJS: every sheet, a line per row, cells joined by commas, values as the cell displays them.",
+                        "watch": "A workbook of figures reads as a long list of figures — it is usually better to copy the cells you want."
+                    }
+                }
+            },
+            "limits": {
+                "title": "Limits",
+                "p1": "One generation reads up to 5,000 characters. Five thousand characters of Bangla took 72 seconds to generate and came back as almost seven minutes of audio, so a long text is best split into chapters.",
+                "p2": "Each address can start 30 generations an hour and the whole site 1,200. Every reader goes through this site's server, so Microsoft sees them all as one caller, and the second limit keeps one busy hour from spending that for everybody.",
+                "p3": "The voice service is not offered by Microsoft for other sites to build on. It is the service behind Edge's Read Aloud, reached the way Edge reaches it, and Microsoft changes it without notice. When it changes, this tool stops working until its client library catches up — and the error says so rather than failing quietly."
+            },
+            "privacy": {
+                "title": "Where your text goes",
+                "p1": "Your text leaves the browser once, when you press Generate: it travels to this site's server, which passes it to Microsoft's speech service and streams the audio back. This site does not store the text or the audio and does not write either to its logs. The only record kept is a count for the hourly limit, under a salted hash of your address.",
+                "p2": "What Microsoft does with text sent to its service is governed by Microsoft's terms, not this site's, so do not generate speech from anything you would not paste into a website. Documents opened on the File to Speech tab never leave your browser, and settings you choose to keep stay in your browser's storage."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Is it free?",
+                "a1": "Yes. There is no account and no charge. The hourly limits are there so one heavy user cannot spend everybody's share.",
+                "q2": "Can I use the audio commercially?",
+                "a2": "This site makes no claim on the audio, but the voices are Microsoft's, and whether a recording may be used commercially is a question for Microsoft's terms rather than this page. For anything you will publish or sell, check those terms, or use a licensed speech service.",
+                "q3": "Why does the text from my PDF come out as nonsense?",
+                "a3": "A PDF records which shapes to draw where, not always which letters they are. For Latin text the two usually line up; for Bangla, Hindi, Arabic and other scripts that join or reorder characters, the extracted text is often scrambled. Copy the text from the original document instead, or save it as <code>.docx</code> or <code>.odt</code> and open that.",
+                "q4": "Why is there a pause I did not add?",
+                "a4": "Long text is sent in parts of about 4 KB, cut at a line break or a full stop where possible, and each part ends with the voice's own short silence. At the end of a sentence it is the same breath the voice would take anyway.",
+                "q5": "Can it read Bangla?",
+                "a5": "Yes, with four voices: Nabanita and Pradeep for Bangladesh, Tanishaa and Bashkar for India. With the site in Bangla, the page opens on Nabanita.",
+                "q6": "Why do I have to pass a bot check?",
+                "a6": "Because every generation is a request to a shared service from this site's address. The check stops scripts from using the page as a free speech API, which would get that address throttled for everyone.",
+                "q7": "How long can the text be?",
+                "a7": "Up to 5,000 characters per generation, markers included, and 30 generations an hour from one address. For a long document, generate it a chapter at a time.",
+                "q8": "Can I write SSML?",
+                "a8": "No. The service accepts only the plain text Edge itself sends — markup such as <code>'<'break></code> is refused outright, which is why pauses are markers in the text instead."
             }
         }
     },
@@ -11772,7 +12053,7 @@
                 },
                 "ai": {
                     "title": "The AI tools",
-                    "body": "The watermark remover's picture tab spends a third-party API budget on every call. That is a decision about money rather than about capability, and it belongs to whoever is paying. The watermark remover's video tab is absent for the images' reason instead: it demuxes, decodes, repaints and re-encodes a clip through the browser's own codecs, none of which exists in a request handler."
+                    "body": "The watermark remover's picture tab spends a third-party API budget on every call. That is a decision about money rather than about capability, and it belongs to whoever is paying. The watermark remover's video tab is absent for the images' reason instead: it demuxes, decodes, repaints and re-encodes a clip through the browser's own codecs, none of which exists in a request handler. Text to Speech is absent for a neighbouring reason: every generation is a request to Microsoft's speech service from this site's one address, and the page shares that service's patience between readers with a bot check and an hourly ceiling that a single token-holding caller would exhaust."
                 },
                 "scanner": {
                     "title": "The port scanner",

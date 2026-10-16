@@ -60,6 +60,7 @@ export const TOOL_IDS = [
     "graphql-server",
     "hex-editor",
     "image-to-3d",
+    "text-to-speech",
 ] as const;
 
 export type ToolId = (typeof TOOL_IDS)[number];
@@ -134,7 +135,8 @@ export type ToolIconName =
     | "sort"
     | "globe"
     | "hex"
-    | "cube";
+    | "cube"
+    | "speech";
 
 export type Tool = {
     readonly id: ToolId;

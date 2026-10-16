@@ -9,7 +9,7 @@ import { renderPdfBytes } from "@/modules/pdf-converter/domain/engine";
 import { preparePdf } from "@/modules/pdf-converter/domain/prepare";
 import type { PdfConversionResult, SourceDocument } from "@/modules/pdf-converter/types";
 
-import { buildPptx, buildXlsx } from "./fixtures";
+import { buildPptx, buildXlsx } from "@/modules/tools/tests/office-fixtures";
 
 /**
  * The end of the pipeline, driven for real.

@@ -219,7 +219,7 @@ left to be discovered:
 
 - **The browser's font loader**, which fetches the same files by the same names
   over HTTP rather than reading them off disk.
-- **What Word, PowerPoint and Excel actually write.** `tests/fixtures.ts` builds
+- **What Word, PowerPoint and Excel actually write.** `tools/tests/office-fixtures.ts` builds
   minimal Open XML packages with `fflate`, which is what lets a test be _about_
   one element and lets a package be malformed on purpose. It is not a substitute
   for a real file, and it is the reason `.docx` sits on Mammoth rather than on a
