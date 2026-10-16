@@ -274,7 +274,7 @@
         },
         "text-to-speech": {
             "name": "Text to Speech",
-            "description": "Turn text — typed, pasted, or pulled out of a PDF, Word or spreadsheet file — into natural speech in 322 voices across 75 languages, with pauses and voice controls, and download it as an MP3."
+            "description": "Turn text — typed, pasted, or pulled out of a PDF, Word or spreadsheet file, and optionally translated first — into natural speech in 322 voices across 75 languages, with pauses and voice controls, and download it as an MP3."
         },
         "related": {
             "title": "Popular tools",
@@ -5377,12 +5377,12 @@
     "textToSpeech": {
         "meta": {
             "title": "Text to Speech — 322 Free Neural Voices, MP3 Download",
-            "description": "Free text to speech in 322 neural voices across 75 languages, Bangla included. Add pauses, adjust rate, volume and pitch, take text out of PDF, Word and spreadsheet files, and download the result as an MP3. Your text is sent to Microsoft's speech service to be spoken; this site stores nothing."
+            "description": "Free text to speech in 322 neural voices across 75 languages, Bangla included. Add pauses, adjust rate, volume and pitch, take text out of PDF, Word and spreadsheet files, translate it in one press, and download the result as an MP3. Your text is sent to Microsoft's speech service to be spoken; this site stores nothing."
         },
         "hero": {
             "eyebrow": "Text to Speech",
             "title": "Text to Speech",
-            "subtitle": "Type or paste up to 5,000 characters — or pull them out of a document — pick one of 322 neural voices in 75 languages, and get back an MP3 to play here or download. The text is spoken by Microsoft's Read Aloud service through this site's server; the audio is assembled in your browser and never stored.",
+            "subtitle": "Type or paste up to 10,000 characters — or pull them out of a document, and translate them first if you like — pick one of 322 neural voices in 75 languages, and get back an MP3 to play here or download. The text is spoken by Microsoft's Read Aloud service through this site's server; the audio is assembled in your browser and never stored.",
             "badgeVoices": "322 voices · 75 languages",
             "badgePauses": "Pauses where you want them",
             "badgeFiles": "PDF, Word and spreadsheets",
@@ -5395,7 +5395,7 @@
         "workbench": {
             "tabText": "Text to Speech",
             "tabFile": "File to Speech",
-            "disclosure": "To be spoken, your text is sent through this site's server to Microsoft's Read Aloud service — the voices behind Microsoft Edge. This site never stores or logs it, and the audio is assembled in your browser. Files on the other tab are read in your browser; only the text you generate from is sent.",
+            "disclosure": "To be spoken, your text is sent through this site's server to Microsoft's Read Aloud service — the voices behind Microsoft Edge. Pressing Translate sends it from your browser to Google Translate. This site never stores or logs it, and the audio is assembled in your browser. Files on the other tab are read in your browser; only the text you generate from is sent.",
             "textLabel": "Text to speak",
             "textPlaceholder": "Type or paste the text to read aloud. Add a pause anywhere with the Pauses menu — it inserts a marker like [pause 1s].",
             "pauses": "Pauses",
@@ -5419,18 +5419,32 @@
             "challengePending": "Finish the check above to turn Generate on.",
             "challengeFailed": "The check could not load. Reload the page to try again — Generate stays off until it passes.",
             "generate": "Generate",
-            "generating": "Generating…",
             "cancel": "Stop",
             "connecting": "Connecting to the voice service…",
             "progress": "Speaking part {step} of {steps} · {duration} of audio so far",
             "progressLabel": "Generation progress",
-            "resultStale": "The text, voice or settings have changed since this was made — generate again to hear the change."
+            "resultStale": "The text, voice or settings have changed since this was made — generate again to hear the change.",
+            "translate": "Translate",
+            "translateLabel": "Translate the text into {language} with Google Translate",
+            "translating": "Translating part {done} of {total}…",
+            "undoTranslation": "Undo translation",
+            "translatedFrom": "Translated from {source} into {target} by Google Translate — read it over before generating.",
+            "translatedInto": "Translated into {target} by Google Translate — read it over before generating.",
+            "alreadyIn": "The text is already in {target}, so Google Translate left it as it was."
         },
         "scriptErrors": {
             "empty": "There is nothing to read yet — add some text.",
             "too_long": "Over the {limit}-character limit for one generation — shorten it to continue.",
             "pause_out_of_range": "The pause at character {position} is outside 0.1 to 10 seconds.",
             "too_many_pauses": "More than {max} pauses — remove some to continue."
+        },
+        "translationErrors": {
+            "empty": "There is nothing to translate yet — add some text.",
+            "too_long": "Over the {limit}-character limit — shorten the text before translating it.",
+            "unsupported_language": "Google Translate does not offer {language}. Pick a voice in another language, or translate the text somewhere else and paste it in.",
+            "blocked": "Google Translate is refusing requests from your network right now. It does this to shared connections that send a lot of traffic — try again later, or on another network.",
+            "unreachable": "Google Translate could not be reached. Check your connection — some networks block it — and try again.",
+            "unreadable": "Google Translate sent back something this page could not read. Try again in a moment."
         },
         "errors": {
             "invalid_request": "The server could not read that request. Reload the page and try again.",
@@ -5477,8 +5491,9 @@
             "label": "Generated speech",
             "player": "Generated speech",
             "unsupported": "Your browser cannot play MP3 audio here — use Download MP3 instead.",
-            "summary": "{voice} · {duration}",
-            "download": "Download MP3"
+            "download": "Download MP3",
+            "stale": "Out of date",
+            "meta": "{duration} · {size} · MP3"
         },
         "article": {
             "howItWorks": {
@@ -5498,6 +5513,12 @@
                 "p2": "A pause is added on top of the voice's own breath at the end of a phrase, which runs to about a second. A 2-second marker after a full stop therefore leaves a gap of roughly three seconds; for a tighter gap, use a smaller value.",
                 "p3": "Markers are plain text, so they survive copying and pasting, and they are never read aloud. Something that only looks like one — <code>[pause]</code> with no number — is read out as written."
             },
+            "translate": {
+                "title": "Translating before speaking",
+                "p1": "Translate turns the whole box into the language of the voice you picked: choose an Arabic voice, press Translate, and English text becomes Arabic, ready to be spoken. The source language is detected for you, and nothing is translated until you press the button.",
+                "p2": "Pause markers are kept exactly as they were — Google Translate would otherwise translate <code>[pause 2s]</code> into words — and so are blank lines. Undo translation puts your original back until you edit the text. Machine translation is a draft, not a finished script: read it over before generating, especially names, numbers and anything formal.",
+                "p3": "The request goes from your browser to Google Translate's free web endpoint, not through this site. Google limits how much one network may send, and shared connections are sometimes refused outright; when that happens the tool says so and nothing in the box changes."
+            },
             "controls": {
                 "title": "Every control",
                 "intro": "Each control on the page, what it does, and when it is worth reaching for.",
@@ -5508,7 +5529,7 @@
                 "rows": {
                     "text": {
                         "name": "Text box",
-                        "does": "Holds up to 5,000 characters, markers included. The counter above it shows how many are used; past the limit, Generate turns off and the box says by how much.",
+                        "does": "Holds up to 10,000 characters, markers included. The counter above it shows how many are used; past the limit, Generate turns off and the box says by how much.",
                         "when": "Always — it is what gets spoken."
                     },
                     "pauses": {
@@ -5520,6 +5541,11 @@
                         "name": "Clear text",
                         "does": "Empties the box and the file notice under it.",
                         "when": "Starting over."
+                    },
+                    "translate": {
+                        "name": "Translate",
+                        "does": "Translates the box into the selected voice's language with Google Translate, keeping pause markers and line breaks.",
+                        "when": "Your text is in one language and the voice you want speaks another."
                     },
                     "language": {
                         "name": "Language",
@@ -5581,7 +5607,7 @@
             },
             "files": {
                 "title": "Reading text out of files",
-                "intro": "The File to Speech tab opens a document in your browser, takes the words out, and puts them in the text box; the file itself is never uploaded. Up to 100,000 characters are taken from a document, and one generation reads up to 5,000, so you choose which part to send.",
+                "intro": "The File to Speech tab opens a document in your browser, takes the words out, and puts them in the text box; the file itself is never uploaded. Up to 100,000 characters are taken from a document, and one generation reads up to 10,000, so you choose which part to send.",
                 "tableCaption": "Formats the File to Speech tab reads",
                 "colFormat": "Format",
                 "colRead": "How it is read",
@@ -5621,14 +5647,14 @@
             },
             "limits": {
                 "title": "Limits",
-                "p1": "One generation reads up to 5,000 characters. Five thousand characters of Bangla took 72 seconds to generate and came back as almost seven minutes of audio, so a long text is best split into chapters.",
+                "p1": "One generation reads up to 10,000 characters. Ten thousand characters of Bangla took about two minutes to generate and came back as fifteen minutes of audio, a 5.2 MB file, so a long text is best split into chapters.",
                 "p2": "Each address can start 30 generations an hour and the whole site 1,200. Every reader goes through this site's server, so Microsoft sees them all as one caller, and the second limit keeps one busy hour from spending that for everybody.",
                 "p3": "The voice service is not offered by Microsoft for other sites to build on. It is the service behind Edge's Read Aloud, reached the way Edge reaches it, and Microsoft changes it without notice. When it changes, this tool stops working until its client library catches up — and the error says so rather than failing quietly."
             },
             "privacy": {
                 "title": "Where your text goes",
                 "p1": "Your text leaves the browser once, when you press Generate: it travels to this site's server, which passes it to Microsoft's speech service and streams the audio back. This site does not store the text or the audio and does not write either to its logs. The only record kept is a count for the hourly limit, under a salted hash of your address.",
-                "p2": "What Microsoft does with text sent to its service is governed by Microsoft's terms, not this site's, so do not generate speech from anything you would not paste into a website. Documents opened on the File to Speech tab never leave your browser, and settings you choose to keep stay in your browser's storage."
+                "p2": "What Microsoft and Google do with text sent to them is governed by their terms, not this site's, so do not generate or translate speech from anything you would not paste into a website. Translate sends the text from your browser straight to Google Translate; documents opened on the File to Speech tab never leave your browser, and settings you choose to keep stay in your browser's storage."
             },
             "faq": {
                 "title": "Frequently asked questions",
@@ -5645,9 +5671,11 @@
                 "q6": "Why do I have to pass a bot check?",
                 "a6": "Because every generation is a request to a shared service from this site's address. The check stops scripts from using the page as a free speech API, which would get that address throttled for everyone.",
                 "q7": "How long can the text be?",
-                "a7": "Up to 5,000 characters per generation, markers included, and 30 generations an hour from one address. For a long document, generate it a chapter at a time.",
+                "a7": "Up to 10,000 characters per generation, markers included, and 30 generations an hour from one address. For a long document, generate it a chapter at a time.",
                 "q8": "Can I write SSML?",
-                "a8": "No. The service accepts only the plain text Edge itself sends — markup such as <code>'<'break></code> is refused outright, which is why pauses are markers in the text instead."
+                "a8": "No. The service accepts only the plain text Edge itself sends — markup such as <code>'<'break></code> is refused outright, which is why pauses are markers in the text instead.",
+                "q9": "Can it translate my text before reading it?",
+                "a9": "Yes. Pick a voice in the language you want, then press Translate: the box is translated into that language by Google Translate, with pause markers untouched, and Undo translation brings your original back. It only happens when you press the button."
             }
         }
     },

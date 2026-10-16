@@ -278,6 +278,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         textToSpeech: {
             workbench: messages.textToSpeech.workbench,
             scriptErrors: messages.textToSpeech.scriptErrors,
+            translationErrors: messages.textToSpeech.translationErrors,
             errors: messages.textToSpeech.errors,
             settings: messages.textToSpeech.settings,
             file: messages.textToSpeech.file,

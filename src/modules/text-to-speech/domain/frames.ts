@@ -5,7 +5,7 @@ import { SPEECH_FAILURE_REASONS, type SpeechFailureReason } from "../types";
  * ending in either `done` or the reason it stopped.
  *
  * Not a bare `audio/mpeg` stream, because a stream has to send its status code
- * before its first byte. Five thousand characters take over a minute to speak,
+ * before its first byte. Ten thousand characters take two minutes to speak,
  * and the service can refuse the fourth of five pieces after three have already
  * gone out under a `200`. A bare stream would end there looking finished, and
  * the reader would download a file that stops mid-sentence. Framing gives the

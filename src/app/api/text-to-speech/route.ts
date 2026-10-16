@@ -10,9 +10,12 @@ import { handleSpeechRequest } from "@/modules/text-to-speech/repository/handle-
 export const dynamic = "force-dynamic";
 
 /**
- * Five thousand Bangla characters took seventy-two seconds to speak when this
- * was measured, so the platform's default limit would cut the longest scripts
- * off mid-sentence. Five minutes leaves room for a slow day at the service.
+ * Ten thousand Bangla characters took 122 seconds when this was measured, and
+ * single pieces varied from 11 to 32 seconds, so the slowest plausible run is
+ * about 224. The platform's default limit would cut long scripts off
+ * mid-sentence; five minutes covers the slow case. A run that still overruns
+ * ends without its `done` frame and the page reports it as interrupted, never
+ * as a finished file.
  */
 export const maxDuration = 300;
 

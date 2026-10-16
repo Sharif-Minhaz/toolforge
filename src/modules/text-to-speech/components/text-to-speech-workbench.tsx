@@ -1,15 +1,17 @@
 "use client";
 
 import {
+    IconArrowBackUp,
     IconFileText,
+    IconLanguage,
     IconLoader2,
     IconPlayerStop,
     IconPlayerPause,
     IconTextSize,
     IconWand,
 } from "@tabler/icons-react";
-import { useFormatter, useTranslations } from "next-intl";
-import { useId, useRef, useState } from "react";
+import { useFormatter, useLocale, useTranslations } from "next-intl";
+import { useId, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,7 +25,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import {
     InputLimitMeter,
     useInputLimit,
@@ -46,7 +47,8 @@ import {
 } from "../domain/constants";
 import { planSpeech } from "../domain/plan";
 import { insertPauseMarker } from "../domain/script";
-import { getSpeechVoice, voiceAfterLocaleChange } from "../domain/voices";
+import { translationTargetFor } from "../domain/translation";
+import { getSpeechVoice, languageOfLocale, voiceAfterLocaleChange } from "../domain/voices";
 import type { VoiceLanguageGroup } from "../presenters/voice-options";
 import type {
     ExtractionResult,
@@ -61,6 +63,7 @@ import { SpeechResult } from "./speech-result";
 import { useClock } from "./use-clock";
 import { useSpeechGeneration, type GenerationFailure } from "./use-speech-generation";
 import { useStoredSettings } from "./use-stored-settings";
+import { useTextTranslation } from "./use-text-translation";
 import { VoicePicker } from "./voice-picker";
 import { VoiceSettingsDialog } from "./voice-settings-dialog";
 
@@ -75,6 +78,32 @@ type TextToSpeechWorkbenchProps = {
 };
 
 type Notice = { readonly format: SourceFormat; readonly truncated: boolean };
+
+/** What the box held before Translate, and what the translation was — for Undo and the notice. */
+type Translated = {
+    readonly original: string;
+    /** Google's code for the language it detected, when it said. */
+    readonly source: string | null;
+    /** The voice's language subtag the text was translated into. */
+    readonly language: string;
+};
+
+/**
+ * A language code as a name in the reader's interface language. Called only
+ * after a press — never during the server render — so the browser's ICU cannot
+ * make the two passes disagree.
+ */
+function languageName(code: string, interfaceLocale: string): string {
+    try {
+        return (
+            new Intl.DisplayNames([interfaceLocale], { type: "language", fallback: "none" }).of(
+                code === "iw" ? "he" : code === "jw" ? "jv" : code,
+            ) ?? code
+        );
+    } catch {
+        return code;
+    }
+}
 
 function sameSettings(a: SpeechSettings, b: SpeechSettings): boolean {
     return a.rate === b.rate && a.volume === b.volume && a.pitch === b.pitch;
@@ -93,7 +122,9 @@ export function TextToSpeechWorkbench({
     const t = useTranslations("textToSpeech.workbench");
     const tScript = useTranslations("textToSpeech.scriptErrors");
     const tErrors = useTranslations("textToSpeech.errors");
+    const tTranslate = useTranslations("textToSpeech.translationErrors");
     const formatter = useFormatter();
+    const interfaceLocale = useLocale();
     const clock = useClock();
     const textId = useId();
     const statusId = useId();
@@ -104,12 +135,14 @@ export function TextToSpeechWorkbench({
     const [voice, setVoice] = useState<SpeechVoiceId>(initialVoice);
     const [draft, setDraft] = useState<SpeechSettings | null>(null);
     const [notice, setNotice] = useState<Notice | null>(null);
+    const [translated, setTranslated] = useState<Translated | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [challengeFailed, setChallengeFailed] = useState(false);
     const [resetSignal, setResetSignal] = useState(0);
 
     const { stored, keep, forget } = useStoredSettings();
     const generation = useSpeechGeneration();
+    const translation = useTextTranslation();
     const { ref: resultRef, scrollToResult } = useResultScroll();
 
     const settings = draft ?? stored ?? DEFAULT_SPEECH_SETTINGS;
@@ -123,9 +156,19 @@ export function TextToSpeechWorkbench({
     const plan = planSpeech(text);
 
     const { state, audio } = generation;
-    const working = state.phase === "working";
+    const translating = translation.state.phase === "working";
+    // Either job owns the box while it runs: typing into text that is being
+    // translated, or spoken, would be lost the moment the answer lands.
+    const working = state.phase === "working" || translating;
     const available = configured && siteKey !== null;
     const canGenerate = available && token !== null && plan.ok && !working;
+
+    const voiceLanguage = languageOfLocale(getSpeechVoice(voice).locale);
+    const languageLabels = useMemo(
+        () => new Map(groups.map((group) => [group.language, group.label])),
+        [groups],
+    );
+    const targetLabel = languageLabels.get(voiceLanguage) ?? voiceLanguage;
     const stale =
         audio !== null &&
         (audio.text !== text || audio.voice !== voice || !sameSettings(audio.settings, settings));
@@ -174,14 +217,61 @@ export function TextToSpeechWorkbench({
             : t("noticeExtracted", { format: `.${current.format}` });
     }
 
-    // A complaint about the text, under the text.
+    function describeTranslated(current: Translated): string {
+        const target = languageLabels.get(current.language) ?? current.language;
+        const source = current.source;
+
+        if (source === null) {
+            return t("translatedInto", { target });
+        }
+
+        if (
+            source.split("-")[0] ===
+            translationTargetFor(getSpeechVoice(voice).locale).split("-")[0]
+        ) {
+            return t("alreadyIn", { target });
+        }
+
+        return t("translatedFrom", { source: languageName(source, interfaceLocale), target });
+    }
+
+    // A complaint about the text, under the text — and Translate's answer is a
+    // change to the text, so its progress and its failures sit here too.
     const inputStatus = ((): { tone: StatusTone; message: string } => {
         if (limitStatus !== null) {
             return limitStatus;
         }
 
+        if (translation.state.phase === "working") {
+            return {
+                tone: "pending",
+                message: t("translating", {
+                    done: formatter.number(translation.state.done),
+                    total: formatter.number(translation.state.total),
+                }),
+            };
+        }
+
+        if (translation.state.phase === "failed") {
+            const reason = translation.state.reason;
+
+            return {
+                tone: "error",
+                message:
+                    reason === "too_long"
+                        ? tTranslate("too_long", { limit: formatter.number(MAX_SPEECH_CHARACTERS) })
+                        : reason === "unsupported_language"
+                          ? tTranslate("unsupported_language", { language: targetLabel })
+                          : tTranslate(reason),
+            };
+        }
+
         if (!plan.ok && plan.reason !== "empty") {
             return { tone: "error", message: describeScript(plan) };
+        }
+
+        if (translated !== null) {
+            return { tone: "warning", message: describeTranslated(translated) };
         }
 
         if (notice !== null) {
@@ -245,16 +335,53 @@ export function TextToSpeechWorkbench({
         window.requestAnimationFrame(() => box?.setSelectionRange(inserted.caret, inserted.caret));
     }
 
+    function editText(next: string) {
+        setText(next);
+        // An edit makes Undo unsafe — it would throw the edit away — and makes
+        // a translation failure about text that is no longer there.
+        setTranslated(null);
+
+        if (translation.state.phase === "failed") {
+            translation.reset();
+        }
+    }
+
     function clearText() {
-        setText("");
+        editText("");
         setNotice(null);
         textareaRef.current?.focus();
     }
 
     function handleExtracted(result: Extract<ExtractionResult, { ok: true }>) {
-        setText(result.text);
+        editText(result.text);
         setNotice({ format: result.format, truncated: result.truncated });
         setMode("text");
+    }
+
+    async function handleTranslate() {
+        const original = text;
+        const result = await translation.translate(
+            original,
+            translationTargetFor(getSpeechVoice(voice).locale),
+        );
+
+        if (result === null) {
+            return;
+        }
+
+        setText(result.text);
+        setNotice(null);
+        setTranslated({ original, source: result.source, language: voiceLanguage });
+    }
+
+    function undoTranslation() {
+        if (translated === null) {
+            return;
+        }
+
+        setText(translated.original);
+        setTranslated(null);
+        textareaRef.current?.focus();
     }
 
     async function handleGenerate() {
@@ -301,7 +428,7 @@ export function TextToSpeechWorkbench({
                 : { tone: "pending", message: t("challengePending") };
         }
 
-        return stale ? { tone: "warning", message: t("resultStale") } : null;
+        return null;
     })();
 
     const percent =
@@ -347,7 +474,46 @@ export function TextToSpeechWorkbench({
                                 />
                             </span>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center justify-end gap-2">
+                                {translated !== null ? (
+                                    <Button
+                                        variant="outline"
+                                        onClick={undoTranslation}
+                                        disabled={working}
+                                        className="h-8 rounded-full px-3 text-[0.8125rem]"
+                                    >
+                                        <IconArrowBackUp
+                                            className="size-4"
+                                            stroke={1.8}
+                                            aria-hidden="true"
+                                        />
+                                        {t("undoTranslation")}
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => void handleTranslate()}
+                                        disabled={text.trim().length === 0 || working}
+                                        aria-label={t("translateLabel", { language: targetLabel })}
+                                        title={t("translateLabel", { language: targetLabel })}
+                                        className="h-8 rounded-full px-3 text-[0.8125rem]"
+                                    >
+                                        {translating ? (
+                                            <IconLoader2
+                                                className="size-4 animate-spin"
+                                                aria-hidden="true"
+                                            />
+                                        ) : (
+                                            <IconLanguage
+                                                className="size-4"
+                                                stroke={1.8}
+                                                aria-hidden="true"
+                                            />
+                                        )}
+                                        {t("translate")}
+                                    </Button>
+                                )}
+
                                 <DropdownMenu>
                                     <DropdownMenuTrigger
                                         render={
@@ -409,7 +575,7 @@ export function TextToSpeechWorkbench({
                                 id={textId}
                                 ref={textareaRef}
                                 value={text}
-                                onChange={(event) => setText(event.target.value)}
+                                onChange={(event) => editText(event.target.value)}
                                 placeholder={t("textPlaceholder")}
                                 aria-describedby={statusId}
                                 aria-invalid={
@@ -431,7 +597,7 @@ export function TextToSpeechWorkbench({
                                     <Button
                                         variant="outline"
                                         onClick={() =>
-                                            setText(clampToLimit(text, MAX_SPEECH_CHARACTERS))
+                                            editText(clampToLimit(text, MAX_SPEECH_CHARACTERS))
                                         }
                                         className="h-7 px-2.5 text-xs"
                                     >
@@ -462,104 +628,119 @@ export function TextToSpeechWorkbench({
                             />
                         </div>
 
-                        {siteKey !== null && configured && (
-                            // Reserves the widget's height so the button below
-                            // does not jump once Cloudflare's script loads.
-                            <div className="min-h-16 w-full max-w-82 min-w-0">
-                                <TurnstileWidget
-                                    siteKey={siteKey}
-                                    action={TURNSTILE_ACTION}
-                                    resetSignal={resetSignal}
-                                    onVerify={(next) => {
-                                        setToken(next);
-                                        setChallengeFailed(false);
-                                    }}
-                                    onExpire={renewChallenge}
-                                    onError={() => {
-                                        setToken(null);
-                                        setChallengeFailed(true);
-                                    }}
-                                />
-                            </div>
-                        )}
+                        {/*
+                         * One panel for the act of generating: the check, the
+                         * button, then whatever is happening — side by side on
+                         * a wide screen so neither floats alone.
+                         */}
+                        <div className="bg-muted/35 ring-border/70 flex min-w-0 flex-col gap-3 rounded-2xl p-3 ring-1 ring-inset sm:p-4">
+                            <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
+                                {siteKey !== null && configured && (
+                                    // Reserves the widget's height so the row
+                                    // does not jump once Cloudflare's script loads.
+                                    <div className="min-h-[65px] w-full min-w-0 sm:w-75 sm:shrink-0">
+                                        <TurnstileWidget
+                                            siteKey={siteKey}
+                                            action={TURNSTILE_ACTION}
+                                            resetSignal={resetSignal}
+                                            onVerify={(next) => {
+                                                setToken(next);
+                                                setChallengeFailed(false);
+                                            }}
+                                            onExpire={renewChallenge}
+                                            onError={() => {
+                                                setToken(null);
+                                                setChallengeFailed(true);
+                                            }}
+                                        />
+                                    </div>
+                                )}
 
-                        <Button
-                            onClick={() => void handleGenerate()}
-                            disabled={!canGenerate}
-                            className="h-12 w-full rounded-full text-[0.9375rem]"
-                        >
-                            {working ? (
-                                <IconLoader2 className="size-4.5 animate-spin" aria-hidden="true" />
-                            ) : (
-                                <IconWand className="size-4.5" stroke={1.8} aria-hidden="true" />
-                            )}
-                            {working ? t("generating") : t("generate")}
-                        </Button>
-
-                        {state.phase === "working" && (
-                            <div className="flex min-w-0 flex-col gap-2">
-                                <div className="flex min-w-0 items-center justify-between gap-3">
-                                    <p
-                                        role="status"
-                                        className="text-muted-foreground text-[0.8125rem] leading-[1.4]"
-                                    >
-                                        {state.steps === 0
-                                            ? t("connecting")
-                                            : t("progress", {
-                                                  step: formatter.number(
-                                                      Math.min(state.step + 1, state.steps),
-                                                  ),
-                                                  steps: formatter.number(state.steps),
-                                                  duration: clock(state.seconds),
-                                              })}
-                                    </p>
+                                {state.phase === "working" ? (
                                     <Button
                                         variant="outline"
                                         onClick={generation.cancel}
-                                        className="h-8 shrink-0 px-3 text-[0.8125rem]"
+                                        className="h-12 min-w-0 flex-1 rounded-xl text-[0.9375rem]"
                                     >
                                         <IconPlayerStop
-                                            className="size-4"
+                                            className="size-4.5"
                                             stroke={1.8}
                                             aria-hidden="true"
                                         />
                                         {t("cancel")}
                                     </Button>
-                                </div>
-                                {/* A real progressbar: a minute-long wait is exactly
-                                    when somebody needs to know how far in they are. */}
-                                <div
-                                    role="progressbar"
-                                    aria-valuemin={0}
-                                    aria-valuemax={100}
-                                    aria-valuenow={percent}
-                                    aria-label={t("progressLabel")}
-                                    className="bg-muted h-1.5 w-full overflow-hidden rounded-full"
-                                >
-                                    <div
-                                        className="bg-primary h-full rounded-full transition-[width] duration-300"
-                                        style={{ width: `${Math.max(percent, 2)}%` }}
-                                    />
-                                </div>
+                                ) : (
+                                    <Button
+                                        onClick={() => void handleGenerate()}
+                                        disabled={!canGenerate}
+                                        className="h-12 min-w-0 flex-1 rounded-xl text-[0.9375rem] font-medium"
+                                    >
+                                        <IconWand
+                                            className="size-4.5"
+                                            stroke={1.8}
+                                            aria-hidden="true"
+                                        />
+                                        {t("generate")}
+                                    </Button>
+                                )}
                             </div>
-                        )}
 
-                        {operationStatus !== null && (
-                            <StatusStrip
-                                tone={operationStatus.tone}
-                                message={operationStatus.message}
-                            />
-                        )}
+                            {state.phase === "working" && (
+                                <div className="flex min-w-0 flex-col gap-2 px-0.5">
+                                    <div className="flex min-w-0 items-center gap-2">
+                                        <IconLoader2
+                                            className="text-primary size-3.5 shrink-0 animate-spin"
+                                            aria-hidden="true"
+                                        />
+                                        <p
+                                            role="status"
+                                            className="text-muted-foreground min-w-0 text-[0.8125rem] leading-[1.4] tabular-nums"
+                                        >
+                                            {state.steps === 0
+                                                ? t("connecting")
+                                                : t("progress", {
+                                                      step: formatter.number(
+                                                          Math.min(state.step + 1, state.steps),
+                                                      ),
+                                                      steps: formatter.number(state.steps),
+                                                      duration: clock(state.seconds),
+                                                  })}
+                                        </p>
+                                    </div>
+                                    {/* A real progressbar: a minute-long wait is exactly
+                                        when somebody needs to know how far in they are. */}
+                                    <div
+                                        role="progressbar"
+                                        aria-valuemin={0}
+                                        aria-valuemax={100}
+                                        aria-valuenow={percent}
+                                        aria-label={t("progressLabel")}
+                                        className="bg-background/70 h-1.5 w-full overflow-hidden rounded-full"
+                                    >
+                                        <div
+                                            className="bg-primary h-full rounded-full transition-[width] duration-300"
+                                            style={{ width: `${Math.max(percent, 2)}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {operationStatus !== null && (
+                                <StatusStrip
+                                    tone={operationStatus.tone}
+                                    message={operationStatus.message}
+                                    className="px-0.5"
+                                />
+                            )}
+                        </div>
 
                         {audio !== null && (
-                            <div
-                                ref={resultRef}
-                                className={cn(
-                                    "min-w-0 transition-opacity duration-200",
-                                    stale && "opacity-55",
-                                )}
-                            >
-                                <SpeechResult audio={audio} onDownload={handleDownload} />
+                            <div ref={resultRef} className="min-w-0">
+                                <SpeechResult
+                                    audio={audio}
+                                    stale={stale}
+                                    onDownload={handleDownload}
+                                />
                             </div>
                         )}
                     </TabsContent>

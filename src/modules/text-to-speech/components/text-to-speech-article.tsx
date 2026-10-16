@@ -14,6 +14,7 @@ export const TEXT_TO_SPEECH_ARTICLE_SECTIONS = [
     { id: "howItWorks", titleKey: "howItWorks.title" },
     { id: "voices", titleKey: "voices.title" },
     { id: "pauses", titleKey: "pauses.title" },
+    { id: "translate", titleKey: "translate.title" },
     { id: "controls", titleKey: "controls.title" },
     { id: "files", titleKey: "files.title" },
     { id: "limits", titleKey: "limits.title" },
@@ -26,6 +27,7 @@ const CONTROL_ROWS = [
     "text",
     "pauses",
     "clear",
+    "translate",
     "language",
     "voice",
     "rate",
@@ -42,7 +44,7 @@ const CONTROL_ROWS = [
 /** One row per format the file tab reads, in the order the hint lists them. */
 const FILE_ROWS = ["txt", "pdf", "doc", "docx", "odt", "sheets"] as const;
 
-const FAQ_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8"] as const;
+const FAQ_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"] as const;
 
 /** Question/answer pairs, shared by the FAQ section and its structured data. */
 export async function getTextToSpeechFaqEntries(): Promise<FaqEntry[]> {
@@ -96,6 +98,14 @@ export async function TextToSpeechArticle() {
                         <p>{t.rich("pauses.p1", ARTICLE_TAGS)}</p>
                         <p>{t("pauses.p2")}</p>
                         <p>{t.rich("pauses.p3", ARTICLE_TAGS)}</p>
+                    </div>
+                </ArticleSection>
+
+                <ArticleSection id="translate" title={t("translate.title")}>
+                    <div className={PROSE}>
+                        <p>{t("translate.p1")}</p>
+                        <p>{t.rich("translate.p2", ARTICLE_TAGS)}</p>
+                        <p>{t("translate.p3")}</p>
                     </div>
                 </ArticleSection>
 

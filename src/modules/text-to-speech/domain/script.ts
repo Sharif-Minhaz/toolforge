@@ -35,6 +35,36 @@ export function formatPauseMarker(seconds: number): string {
     return `[pause ${seconds}s]`;
 }
 
+export type MarkerSplit = { readonly kind: "text" | "marker"; readonly text: string };
+
+/**
+ * The box as runs of text and the markers between them, every character kept.
+ *
+ * For translation, where a marker has to come back untouched: Google Translate
+ * reads `[pause 2s]` as words and returns `[বিরাম 2s]`, which is no longer a
+ * marker. No range check here — a marker that `parseScript` would refuse is
+ * still not something to translate.
+ */
+export function splitAtPauseMarkers(text: string): readonly MarkerSplit[] {
+    const parts: MarkerSplit[] = [];
+    let cursor = 0;
+
+    for (const match of text.matchAll(PAUSE_MARKER)) {
+        if (match.index > cursor) {
+            parts.push({ kind: "text", text: text.slice(cursor, match.index) });
+        }
+
+        parts.push({ kind: "marker", text: match[0] });
+        cursor = match.index + match[0].length;
+    }
+
+    if (cursor < text.length) {
+        parts.push({ kind: "text", text: text.slice(cursor) });
+    }
+
+    return parts;
+}
+
 /** 1-based position in characters, not UTF-16 units, so an emoji earlier on does not skew it. */
 function characterPosition(text: string, index: number): number {
     return [...text.slice(0, index)].length + 1;

@@ -98,43 +98,51 @@ function bestCut(graphemes: readonly string[]): number {
 }
 
 /**
- * The text as pieces no larger than `maxBytes` once escaped, trimmed, blank
- * pieces dropped. A single grapheme larger than the budget — only possible with
- * hundreds of stacked combining marks — becomes a piece of its own rather than
- * an infinite loop; the text box's own ceiling bounds how large that can be.
+ * Cuts `text` into pieces whose `measure` stays within `max`, at the best
+ * boundary each time, **without losing a character**: the pieces joined back
+ * together are the text exactly, whitespace and all. Speech trims what it gets;
+ * translation has to put every line break back where it was.
+ *
+ * A single grapheme larger than the budget — only possible with hundreds of
+ * stacked combining marks — becomes a piece of its own rather than an infinite
+ * loop; the text box's own ceiling bounds how large that can be.
  */
-export function chunkSpeechText(text: string, maxBytes: number = MAX_CHUNK_BYTES): string[] {
+export function splitAtBoundaries(
+    text: string,
+    measure: (grapheme: string) => number,
+    max: number,
+): string[] {
     const pieces: string[] = [];
     let current: string[] = [];
-    let currentBytes = 0;
-
-    const emit = (graphemes: readonly string[]) => {
-        const piece = graphemes.join("").trim();
-
-        if (piece.length > 0) {
-            pieces.push(piece);
-        }
-    };
+    let currentSize = 0;
 
     for (const { segment } of GRAPHEMES.segment(text)) {
-        const size = getByteLength(escapeSpeechText(segment));
+        const size = measure(segment);
 
-        if (currentBytes + size > maxBytes && current.length > 0) {
+        if (currentSize + size > max && current.length > 0) {
             const cut = bestCut(current);
 
-            emit(current.slice(0, cut));
+            pieces.push(current.slice(0, cut).join(""));
             current = current.slice(cut);
-            currentBytes = current.reduce(
-                (total, grapheme) => total + getByteLength(escapeSpeechText(grapheme)),
-                0,
-            );
+            currentSize = current.reduce((total, grapheme) => total + measure(grapheme), 0);
         }
 
         current.push(segment);
-        currentBytes += size;
+        currentSize += size;
     }
 
-    emit(current);
+    if (current.length > 0) {
+        pieces.push(current.join(""));
+    }
 
     return pieces;
+}
+
+const escapedBytes = (grapheme: string) => getByteLength(escapeSpeechText(grapheme));
+
+/** The text as pieces no larger than `maxBytes` once escaped, trimmed, blank pieces dropped. */
+export function chunkSpeechText(text: string, maxBytes: number = MAX_CHUNK_BYTES): string[] {
+    return splitAtBoundaries(text, escapedBytes, maxBytes)
+        .map((piece) => piece.trim())
+        .filter((piece) => piece.length > 0);
 }

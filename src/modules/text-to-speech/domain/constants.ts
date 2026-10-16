@@ -13,11 +13,14 @@ import type { SpeechSettings, SpeechVoiceId } from "../types";
  * The longest text one press may send, in UTF-16 units — what the box's meter
  * counts and what Zod checks, so the two cannot disagree.
  *
- * Five thousand Bangla characters came back as six and three-quarter minutes of
- * audio in seventy-two seconds; that is the longest wait this tool will ask of a
- * reader, and it sits well inside the route's five-minute ceiling.
+ * Ten thousand Bangla characters of non-repeating text came back as fifteen
+ * minutes of audio, 5.2 MB, in 122 seconds; single pieces took anywhere from 11
+ * to 32 seconds, so the slowest plausible run is about 224 seconds. That is the
+ * longest wait this tool will ask of a reader, and it is the number that has to
+ * stay under the route's five-minute ceiling — raise this and that has to move
+ * with it.
  */
-export const MAX_SPEECH_CHARACTERS = 5_000;
+export const MAX_SPEECH_CHARACTERS = 10_000;
 
 /**
  * The most text sent in one request to the service, measured in UTF-8 bytes
@@ -74,11 +77,12 @@ export const SPEECH_OUTPUT_FORMAT = "audio-24khz-48kbitrate-mono-mp3";
 export const SPEECH_ENDPOINT = "/api/text-to-speech";
 
 /**
- * The largest request body the route reads. Five thousand characters is at
- * most thirty kilobytes as JSON even if every one is `\uXXXX`-escaped, plus a
- * two-kilobyte Turnstile token and the settings.
+ * The largest request body the route reads. Ten thousand characters is at most
+ * sixty kilobytes as JSON even if every one is `\uXXXX`-escaped, plus a
+ * two-kilobyte Turnstile token and the settings; double that leaves headroom
+ * without letting a body grow unbounded.
  */
-export const MAX_SPEECH_REQUEST_BYTES = 64 * 1_024;
+export const MAX_SPEECH_REQUEST_BYTES = 128 * 1_024;
 
 export const TURNSTILE_ACTION = "text-to-speech";
 

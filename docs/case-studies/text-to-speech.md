@@ -65,15 +65,22 @@ streams: five thousand characters take over a minute to speak.
 
 ### Measured on 2026-10-16
 
-| Input                    | SSML bytes | Audio | Synthesis time |
-| ------------------------ | ---------: | ----: | -------------: |
-| 1,300 Bangla characters  |      3,406 |  1:45 |            8 s |
-| 2,600 Bangla characters  |      6,810 |  3:30 |           21 s |
-| 5,000 Bangla characters  |     13,096 |  6:44 |           72 s |
-| A short English sentence |          — | 1.9 s |    about 1–2 s |
+| Input                                               | SSML bytes | Audio |          Synthesis time |
+| --------------------------------------------------- | ---------: | ----: | ----------------------: |
+| 1,300 Bangla characters                             |      3,406 |  1:45 |                     8 s |
+| 2,600 Bangla characters                             |      6,810 |  3:30 |                    21 s |
+| 5,000 Bangla characters                             |     13,096 |  6:44 |                    72 s |
+| 10,000 Bangla characters, in 7 pieces of up to 4 KB |          — | 15:00 | 122 s (11–32 s a piece) |
+| A short English sentence                            |          — | 1.9 s |             about 1–2 s |
 
-Those numbers set `MAX_SPEECH_CHARACTERS` at 5,000 and the route's `maxDuration`
-at 300 seconds.
+Those numbers set `MAX_SPEECH_CHARACTERS` at 10,000 and the route's `maxDuration`
+at 300 seconds. The slowest piece times the number of pieces is about 224 s, so
+the two have to move together.
+
+**Measure with text that does not repeat.** A first 10,000-character run built
+from one repeated sentence finished in 54 s, with some 1,500-character pieces
+back in 1.4 s. The service evidently caches identical input, so a repeated
+fixture measures the cache rather than the voice.
 
 - **The service accepted 13 KB in one request.** `MAX_CHUNK_BYTES` is still
   4,096, the reference client's figure, measured on the _escaped_ text.
@@ -189,6 +196,64 @@ Under Node, PDF.js also leaked `\u0002`, `\u0004` and `\u0006` glyph markers int
 the text. `tidyExtractedText` strips control characters for that reason.
 
 ---
+
+## Translate, from the reader's browser
+
+The Translate button sends the box to Google Translate's free web endpoint,
+`translate.googleapis.com/translate_a/single?client=gtx`. That endpoint is
+undocumented and limited per caller address. Everything below was learned
+against the live service.
+
+### The development network was blocked before the first request
+
+From the development machine, every `gtx` call answered **429** with Google's
+"unusual traffic" page, while `translate.google.com` itself answered 200. The
+block was already in place, which is common on networks where many customers
+share one public address. The three verifying calls were made from a phone on
+mobile data. Their answers are now the fixtures in `tests/translation.test.ts`,
+verbatim.
+
+That is also why the call is **browser-direct**. Through this server, every
+reader would share one datacenter address, the kind Google blocks first, and a
+block would end translation for everybody. From the browser, each reader spends
+their own allowance, and a block affects only them. The refusal is named:
+`blocked` for a 429 or 403, and `unreachable` for a `fetch` that throws.
+
+### What the live answers showed
+
+- `[0]` is a list of segments, each `[translated, original, …]`; `[2]` is the
+  detected language.
+- Line breaks survive, inside the segment they end.
+- **Markers do not.** `[pause 2s]` came back as `[বিরাম 2s]`, which is no longer a
+  marker. `planTranslation` cuts at every marker with `splitAtPauseMarkers` and
+  sends only the runs between, holding back each run's leading and trailing
+  whitespace and putting it back afterwards.
+
+### Request size
+
+The calls were verified over `GET`, so each request is bounded by its
+URL-encoded `q`: `MAX_TRANSLATE_QUERY` is 6,000, which keeps the URL under 8 KB.
+A Bangla letter is nine encoded characters, so 10,000 Bangla characters take
+about 15 sequential requests. They are deliberately not parallel, because a burst
+is the traffic shape the limiter watches for.
+
+### Not yet verified
+
+Whether `gtx` answers a cross-origin `fetch` with CORS headers could not be
+tested: a phone browser opening a URL is not a cross-origin request. If it does
+not, every press reports `unreachable`, and the fallback is a server action with
+its own fail-closed quota.
+
+### `google-translate-api` (npm) was rejected
+
+It was evaluated on 2026-10-17 and is not a working alternative:
+
+- The last release was June 2017.
+- It scrapes a `TKK=` value from translate.google.com, which the page no longer
+  contains; the `client=t` endpoint then answers 403.
+- It `eval`s the scraped text and parses every response with `safe-eval`, which
+  carries six advisories, five critical.
+- It depends on `google-translate-token` pinned to `latest`.
 
 ## Smaller traps
 
