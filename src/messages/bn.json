@@ -11635,6 +11635,13 @@
             "not_configured": "এই ডিপ্লয়মেন্টে ঠিকানা দিয়ে ছবি আনা চালু নেই। বেছে নেওয়া, টেনে ফেলা আর পেস্ট করা আগের মতোই কাজ করে।"
         }
     },
+    "codeViewer": {
+        "lineCount": "{count, plural, other {# লাইন}}",
+        "collapseAll": "সব গুটিয়ে নিন",
+        "expandAll": "সব খুলুন",
+        "collapse": "{start}–{end} নম্বর লাইন গুটিয়ে নিন",
+        "expand": "{start}–{end} নম্বর লাইন খুলুন"
+    },
     "compareSlider": {
         "before": "আসল",
         "after": "ফলাফল",

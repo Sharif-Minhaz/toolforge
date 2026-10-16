@@ -232,6 +232,7 @@ export function ResponseBuilder({ value, onChange }: ResponseBuilderProps) {
                         }}
                         language="json"
                         placeholder='{ "message": "hello" }'
+                        lineNumbers
                         className="min-h-56"
                     />
 

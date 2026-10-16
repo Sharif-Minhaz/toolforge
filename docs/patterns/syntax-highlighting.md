@@ -26,6 +26,23 @@ Four things hold the two in register, and each is a bug if it drifts:
 - **A trailing `"\n"` in the backdrop**, or a value ending in a newline leaves the
   caret on a line the backdrop does not have.
 
+### Line numbers go in the backdrop, never in the text
+
+`lineNumbers` on `CodeEditor` widens a left padding that both elements share
+(computed in `ch`, so it fits the widest number), and the backdrop switches to
+one block per line with its number hung in that padding as generated content
+(`content: attr(data-line)`). A wrapped line keeps one number because each block
+wraps exactly as the textarea's own line does. The numbers can never reach the
+clipboard: the selection belongs to the textarea, which never held them. In this
+mode the trailing `"\n"` is not appended — a value ending in a newline already
+splits into a last, empty row.
+
+JSON rows are highlighted **one line at a time**. JSON has no token that crosses
+a newline, so the colour is identical, but a row whose line did not change is not
+rescanned — which is why a numbered JSON editor keeps its colour past
+`MAX_HIGHLIGHT_LENGTH`. A language whose tokens can span lines is scanned whole
+and cut with `splitTokenLines`.
+
 ---
 
 ## The highlighter is a different tokenizer from the parser
@@ -51,6 +68,25 @@ the colour beats losing the typing.
 Nor can the _language_ be debounced: it follows the live value, or a reader
 switching notation watches the backdrop stay a language behind the glyphs for
 300 ms.
+
+---
+
+## Read-only JSON: `JsonViewer`
+
+Every JSON _output_ — the formatter, a GraphQL response, the BSON converter's
+Extended JSON, a decoded JWT — renders through `tools/components/json-viewer.tsx`,
+not `CodeBlock`. It adds three things a long document needs:
+
+- **Virtualized rows.** Rows are a fixed `24px` and never wrap, so the visible
+  slice is arithmetic on `scrollTop`; only that slice is in the DOM, and each row
+  highlights its own line. This replaced a whole-document ceiling that turned a
+  700 KB result monochrome. The cost: find-in-page and select-all see only the
+  rendered rows, so a viewer always sits next to a Copy button.
+- **Folding.** `findJsonFolds` in `domain/json-outline.ts` pairs brackets on the
+  text (string-aware, never throws) and keeps one fold per line — the outer one
+  when `[{` share a line. A collapsed fold renders as one row, `"key": {…},`.
+- **Line numbers in a sticky gutter**, as generated content in a column of their
+  own, so dragging across the code copies only the code.
 
 ---
 

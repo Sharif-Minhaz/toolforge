@@ -331,6 +331,7 @@ export function ImportPanel({ workspaceId }: ImportPanelProps) {
                     value={text}
                     onChange={setText}
                     language="json"
+                    lineNumbers
                     // Both shapes, because a box that only shows one reads as a
                     // box that only takes one.
                     placeholder='{ "openapi": "3.1.0", ... }   or   { "info": { ... }, "item": [ ... ] }'

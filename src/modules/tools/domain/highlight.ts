@@ -844,12 +844,21 @@ function highlightLatex(input: string): Token[] {
  */
 export const MAX_HIGHLIGHT_LENGTH = 20_000;
 
-export function highlight(input: string, language: HighlightLanguage): readonly Token[] {
+/**
+ * `limit` is for a caller with no caret to keep up with — a read-only viewer
+ * that highlights one line at a time can afford a far longer one than an editor
+ * repainting on every keystroke.
+ */
+export function highlight(
+    input: string,
+    language: HighlightLanguage,
+    limit: number = MAX_HIGHLIGHT_LENGTH,
+): readonly Token[] {
     if (input.length === 0) {
         return [];
     }
 
-    if (input.length > MAX_HIGHLIGHT_LENGTH || language === "plain") {
+    if (input.length > limit || language === "plain") {
         return [{ kind: "plain", text: input }];
     }
 
@@ -869,4 +878,32 @@ export function highlight(input: string, language: HighlightLanguage): readonly 
         case "latex":
             return highlightLatex(input);
     }
+}
+
+/**
+ * The same tokens, cut at every newline, for a view that draws one row per
+ * line. A token that spans lines — a block comment, a GraphQL description — is
+ * split into one piece per line with its kind kept, and the newlines themselves
+ * are dropped, because the row boundary is where they went.
+ *
+ * Always at least one line, as an empty text still has a first line to number.
+ */
+export function splitTokenLines(tokens: readonly Token[]): Token[][] {
+    const lines: Token[][] = [[]];
+
+    for (const token of tokens) {
+        const pieces = token.text.split("\n");
+
+        for (const [index, piece] of pieces.entries()) {
+            if (index > 0) {
+                lines.push([]);
+            }
+
+            if (piece.length > 0) {
+                lines[lines.length - 1].push({ kind: token.kind, text: piece });
+            }
+        }
+    }
+
+    return lines;
 }

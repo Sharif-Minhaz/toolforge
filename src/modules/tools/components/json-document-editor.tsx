@@ -191,6 +191,7 @@ export function JsonDocumentEditor({
                 value={value}
                 language="json"
                 placeholder={t("placeholder")}
+                lineNumbers
                 ariaDescribedBy={status === null ? undefined : statusId}
                 onChange={(next) => {
                     onChange(next);

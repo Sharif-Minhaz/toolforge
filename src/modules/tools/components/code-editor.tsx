@@ -1,10 +1,15 @@
 "use client";
 
-import { useRef, type ChangeEvent, type UIEvent } from "react";
+import { useRef, type ChangeEvent, type CSSProperties, type UIEvent } from "react";
 
 import { cn } from "@/lib/utils";
-import type { HighlightLanguage } from "../domain/highlight";
-import { CODE_PADDING, CODE_TEXT, HighlightedCode } from "./code-block";
+import {
+    highlight,
+    splitTokenLines,
+    type HighlightLanguage,
+    type Token,
+} from "../domain/highlight";
+import { CODE_PADDING, CODE_TEXT, HighlightedCode, TokenSpans } from "./code-block";
 
 /**
  * A textarea that looks highlighted.
@@ -46,7 +51,17 @@ import { CODE_PADDING, CODE_TEXT, HighlightedCode } from "./code-block";
  * below it. One grid item stretches to the wrapper's content box, so the
  * textarea is exactly as tall as the frame around it whatever floor a caller
  * sets, and dragging the grip grows the row and the backdrop with it.
+ *
+ * **Line numbers live in the backdrop**, inside a left padding both elements
+ * share. The backdrop then draws one block per line with its number hung in that
+ * padding, so a wrapped line keeps one number and the rows below it still line
+ * up — each block wraps exactly as the textarea's own line does, because they
+ * have the same width. Being part of the backdrop is also what keeps them out of
+ * a copy: the selection is the textarea's, and the textarea never held them.
  */
+
+/** The gap between a line's number and its text. */
+const GUTTER_GAP = "0.75rem";
 
 type CodeEditorProps = {
     id: string;
@@ -55,6 +70,8 @@ type CodeEditorProps = {
     placeholder?: string;
     ariaDescribedBy?: string;
     onChange: (value: string) => void;
+    /** A number beside every line, for documents long enough to navigate. */
+    lineNumbers?: boolean;
     className?: string;
 };
 
@@ -65,9 +82,16 @@ export function CodeEditor({
     placeholder,
     ariaDescribedBy,
     onChange,
+    lineNumbers = false,
     className,
 }: CodeEditorProps) {
     const backdropRef = useRef<HTMLPreElement>(null);
+    const lineCount = lineNumbers ? countLines(value) : 0;
+    // Identical on both elements, or the text starts at two different columns.
+    // `ch` resolves against the code font, so the gutter fits the widest number.
+    const gutterStyle: CSSProperties | undefined = lineNumbers
+        ? { paddingLeft: `calc(0.875rem + ${String(lineCount).length}ch + ${GUTTER_GAP})` }
+        : undefined;
 
     function handleScroll(event: UIEvent<HTMLTextAreaElement>) {
         const backdrop = backdropRef.current;
@@ -97,14 +121,23 @@ export function CodeEditor({
                     "pointer-events-none absolute inset-0 overflow-hidden rounded-xl",
                     "scrollbar-gutter-stable",
                 )}
+                style={gutterStyle}
             >
-                <code>
-                    <HighlightedCode code={value} language={language} />
-                    {/* A value ending in a newline puts the caret on a line the
-                        backdrop would otherwise not have, and the box would
-                        scroll one line short of it. */}
-                    {"\n"}
-                </code>
+                {lineNumbers ? (
+                    // No trailing newline here: a value ending in one already
+                    // splits into a last, empty line, and that row is drawn.
+                    <code>
+                        <NumberedLines value={value} language={language} />
+                    </code>
+                ) : (
+                    <code>
+                        <HighlightedCode code={value} language={language} />
+                        {/* A value ending in a newline puts the caret on a line the
+                            backdrop would otherwise not have, and the box would
+                            scroll one line short of it. */}
+                        {"\n"}
+                    </code>
+                )}
             </pre>
 
             <textarea
@@ -135,7 +168,63 @@ export function CodeEditor({
                     "placeholder:text-muted-foreground/70",
                     "focus:ring-0 focus:outline-none",
                 )}
+                style={gutterStyle}
             />
         </div>
+    );
+}
+
+function countLines(value: string): number {
+    let count = 1;
+
+    for (let index = value.indexOf("\n"); index !== -1; index = value.indexOf("\n", index + 1)) {
+        count += 1;
+    }
+
+    return count;
+}
+
+/**
+ * One block per line of the value.
+ *
+ * JSON is highlighted a line at a time, because it has no token that crosses a
+ * newline — a string cannot hold a raw one — so cutting first changes nothing
+ * about the colour. What it changes is the cost: each row scans only its own
+ * line and is skipped while that line is unchanged, so a long document keeps its
+ * colour past the whole-text ceiling and a keystroke rescans one line, not all.
+ * A language whose tokens can span lines (a block comment, a GraphQL
+ * description) is scanned whole and cut afterwards.
+ */
+function NumberedLines({ value, language }: { value: string; language: HighlightLanguage }) {
+    if (language === "json") {
+        return value
+            .split("\n")
+            .map((line, index) => <JsonLine key={index} number={index + 1} text={line} />);
+    }
+
+    return splitTokenLines(highlight(value, language)).map((tokens, index) => (
+        <NumberedLine key={index} number={index + 1} tokens={tokens} />
+    ));
+}
+
+function JsonLine({ number, text }: { number: number; text: string }) {
+    return <NumberedLine number={number} tokens={highlight(text, "json")} />;
+}
+
+function NumberedLine({ number, tokens }: { number: number; tokens: readonly Token[] }) {
+    return (
+        // `min-h-6` is one `leading-6` line, so an empty line still takes the
+        // height the textarea gives it.
+        <span className="relative block min-h-6">
+            {/* The number is generated content, so even a selection that
+                somehow reached the backdrop would carry no digits. */}
+            <span
+                aria-hidden="true"
+                data-line={number}
+                className="text-muted-foreground/55 absolute right-full tabular-nums select-none before:content-[attr(data-line)]"
+                style={{ paddingRight: GUTTER_GAP }}
+            />
+            <TokenSpans tokens={tokens} />
+        </span>
     );
 }

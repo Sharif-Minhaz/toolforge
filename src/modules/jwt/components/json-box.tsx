@@ -4,11 +4,11 @@ import { IconChevronRight } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
-
+import { CodeEditor } from "@/modules/tools/components/code-editor";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
+import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
+import { JsonViewer } from "@/modules/tools/components/json-viewer";
 import type { JwtSegmentName } from "../types";
 
 const CARET_COLOR: Record<JwtSegmentName, string> = {
@@ -38,13 +38,15 @@ type JsonBoxProps = {
     /** The `StatusStrip` that reports whether the contents parse. */
     status?: ReactNode;
     className?: string;
-    textareaClassName?: string;
 };
 
 /**
  * One editable or read-only JSON panel. Shared by both directions so the
  * decoder's read-only header and the encoder's editable one stay the same
  * shape, and only the `readOnly` flag differs.
+ *
+ * The read-only side is the folding viewer rather than a read-only textarea:
+ * a decoded claim set is output, and output gets colour, numbers and folds.
  */
 export function JsonBox({
     id,
@@ -60,8 +62,8 @@ export function JsonBox({
     limit,
     status,
     className,
-    textareaClassName,
 }: JsonBoxProps) {
+    const labelId = `${id}-label`;
     // Zero when read-only, which `readInputLimit` reports as "over" — the
     // meter is not rendered in that case, so the reading is never read.
     const reading = useInputLimit(value.length, limit ?? 0);
@@ -74,7 +76,13 @@ export function JsonBox({
             )}
         >
             <div className="flex items-center justify-between gap-2">
-                <Label htmlFor={id} className="text-muted-foreground min-w-0 gap-1 text-xs">
+                {/* `htmlFor` only while there is a textarea to point at; the
+                    viewer is named by the label's id instead. */}
+                <Label
+                    id={labelId}
+                    htmlFor={readOnly ? undefined : id}
+                    className="text-muted-foreground min-w-0 gap-1 text-xs"
+                >
                     <IconChevronRight
                         className={cn("size-3.5 shrink-0", CARET_COLOR[part])}
                         stroke={2.2}
@@ -88,22 +96,24 @@ export function JsonBox({
                 </div>
             </div>
 
-            <Textarea
-                id={id}
-                value={value}
-                readOnly={readOnly}
-                placeholder={placeholder}
-                spellCheck={false}
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                onChange={(event) => onChange?.(event.target.value)}
-                className={cn(
-                    "max-h-72 min-h-28 resize-y rounded-lg font-mono text-[0.8125rem] leading-6 break-all",
-                    readOnly ? "bg-muted/40" : "bg-background/60",
-                    textareaClassName,
-                )}
-            />
+            {readOnly ? (
+                <JsonViewer
+                    code={value}
+                    labelledBy={labelId}
+                    placeholder={placeholder}
+                    className="max-h-72 min-h-28"
+                />
+            ) : (
+                <CodeEditor
+                    id={id}
+                    value={value}
+                    language="json"
+                    placeholder={placeholder}
+                    onChange={(next) => onChange?.(next)}
+                    lineNumbers
+                    className="min-h-28 [&_textarea]:min-h-28"
+                />
+            )}
 
             {status}
         </div>

@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ByteSize } from "@/modules/tools/components/byte-size";
-import { JsonCode } from "./json-code";
+import { JsonViewer } from "@/modules/tools/components/json-viewer";
 
 type OutputPanelProps = {
     outputId: string;
@@ -63,13 +63,17 @@ export function OutputPanel({
             </div>
 
             {error === null ? (
-                <JsonCode
+                <JsonViewer
                     code={output}
                     labelledBy={outputId}
                     placeholder={t("outputPlaceholder")}
                     // Dimmed rather than emptied while the debounce settles, so
                     // the panel never flashes between two valid results.
-                    className={cn("transition-opacity duration-200", pending && "opacity-55")}
+                    pending={pending}
+                    // `h-*`, never `max-h-*`: a maximum still clamps the height
+                    // the browser writes while dragging, so the handle would
+                    // stop halfway down a long document.
+                    className="h-72 min-h-40 resize-y"
                 />
             ) : (
                 <p

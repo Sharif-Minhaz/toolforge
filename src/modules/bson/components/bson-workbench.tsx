@@ -25,6 +25,7 @@ import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { CodeBlock } from "@/modules/tools/components/code-block";
 import { CodeEditor } from "@/modules/tools/components/code-editor";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
+import { JsonViewer } from "@/modules/tools/components/json-viewer";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveBlob, saveFile } from "@/modules/tools/domain/file-saver";
@@ -64,6 +65,7 @@ export function BsonWorkbench({
 
     const inputId = useId();
     const statusId = useId();
+    const outputId = useId();
     const fileInput = useRef<HTMLInputElement>(null);
 
     const [source, setSource] = useState<DataFormat>(initialSource);
@@ -341,6 +343,8 @@ export function BsonWorkbench({
                         placeholder={INPUT_PLACEHOLDERS[source]}
                         ariaDescribedBy={statusId}
                         onChange={setInput}
+                        // Hex and base64 are one long run with no lines to count.
+                        lineNumbers={inputLanguage === "json"}
                         className="[&_textarea]:min-h-40"
                     />
 
@@ -385,9 +389,9 @@ export function BsonWorkbench({
 
                 <div className="flex flex-col gap-2">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                        {/* A plain span, not a Label: the output is a `<pre>`,
-                            which `htmlFor` cannot address. */}
-                        <span className="text-muted-foreground text-xs leading-[1.3]">
+                        {/* A plain span, not a Label: the output is not a form
+                            control, so `htmlFor` has nothing to address. */}
+                        <span id={outputId} className="text-muted-foreground text-xs leading-[1.3]">
                             {t("outputLabel")}
                         </span>
                         <div className="flex items-center gap-1.5">
@@ -433,13 +437,23 @@ export function BsonWorkbench({
                     {failure === null ? (
                         // Dimmed rather than emptied while the debounce settles,
                         // so the panel never flashes between two valid results.
-                        <CodeBlock
-                            code={output}
-                            language={outputLanguage}
-                            placeholder={t("outputPlaceholder")}
-                            pending={pending}
-                            className="max-h-96 min-h-40"
-                        />
+                        outputLanguage === "json" ? (
+                            <JsonViewer
+                                code={output}
+                                labelledBy={outputId}
+                                placeholder={t("outputPlaceholder")}
+                                pending={pending}
+                                className="max-h-96 min-h-40"
+                            />
+                        ) : (
+                            <CodeBlock
+                                code={output}
+                                language={outputLanguage}
+                                placeholder={t("outputPlaceholder")}
+                                pending={pending}
+                                className="max-h-96 min-h-40"
+                            />
+                        )
                     ) : (
                         <p
                             role="alert"

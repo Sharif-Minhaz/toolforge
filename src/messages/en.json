@@ -11635,6 +11635,13 @@
             "not_configured": "Fetching by address is not configured on this deployment. Picking, dropping and pasting all still work."
         }
     },
+    "codeViewer": {
+        "lineCount": "{count, plural, one {# line} other {# lines}}",
+        "collapseAll": "Collapse all",
+        "expandAll": "Expand all",
+        "collapse": "Collapse lines {start}–{end}",
+        "expand": "Expand lines {start}–{end}"
+    },
     "compareSlider": {
         "before": "Original",
         "after": "Result",

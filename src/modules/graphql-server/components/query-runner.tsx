@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
-import { CodeBlock } from "@/modules/tools/components/code-block";
 import { CodeEditor } from "@/modules/tools/components/code-editor";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
+import { JsonViewer } from "@/modules/tools/components/json-viewer";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 
@@ -53,6 +53,7 @@ export function QueryRunner({ serverKey, starterQuery, isPaused }: QueryRunnerPr
     const queryId = useId();
     const variablesId = useId();
     const statusId = useId();
+    const responseId = useId();
 
     const [query, setQuery] = useState(starterQuery);
     const [variables, setVariables] = useState("");
@@ -185,6 +186,7 @@ export function QueryRunner({ serverKey, starterQuery, isPaused }: QueryRunnerPr
                         language="json"
                         placeholder={t("variablesPlaceholder")}
                         onChange={setVariables}
+                        lineNumbers
                         className="min-h-64"
                     />
                 </div>
@@ -222,7 +224,10 @@ export function QueryRunner({ serverKey, starterQuery, isPaused }: QueryRunnerPr
 
             <div ref={resultRef} className="flex min-w-0 scroll-mt-6 flex-col gap-1.5">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <p className="text-muted-foreground text-[0.6875rem] font-semibold tracking-[0.09em] uppercase">
+                    <p
+                        id={responseId}
+                        className="text-muted-foreground text-[0.6875rem] font-semibold tracking-[0.09em] uppercase"
+                    >
                         {t("responseLabel")}
                     </p>
                     {answer !== null ? (
@@ -243,9 +248,9 @@ export function QueryRunner({ serverKey, starterQuery, isPaused }: QueryRunnerPr
                     ) : null}
                 </div>
 
-                <CodeBlock
+                <JsonViewer
                     code={answer?.body ?? ""}
-                    language="json"
+                    labelledBy={responseId}
                     placeholder={t("responseEmpty")}
                     className="max-h-112"
                 />

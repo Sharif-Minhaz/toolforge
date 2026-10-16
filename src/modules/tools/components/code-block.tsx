@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { highlight, type HighlightLanguage, type TokenKind } from "../domain/highlight";
+import { highlight, type HighlightLanguage, type Token, type TokenKind } from "../domain/highlight";
 
 /**
  * Every property that decides where a glyph lands. The editor paints its
@@ -44,9 +44,18 @@ type HighlightedCodeProps = {
  * editor's backdrop render identical markup from identical input.
  */
 export function HighlightedCode({ code, language }: HighlightedCodeProps) {
+    return <TokenSpans tokens={highlight(code, language)} />;
+}
+
+/**
+ * Already-scanned tokens, for a view that cuts the text into rows first — the
+ * numbered editor and the folding viewer — and must colour them exactly as the
+ * unnumbered block would.
+ */
+export function TokenSpans({ tokens }: { tokens: readonly Token[] }) {
     return (
         <>
-            {highlight(code, language).map((token, index) => (
+            {tokens.map((token, index) => (
                 <span key={index} className={TOKEN_CLASS[token.kind]}>
                     {token.text}
                 </span>

@@ -6,9 +6,9 @@ import type { ChangeEvent } from "react";
 
 import { buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
+import { CodeEditor } from "@/modules/tools/components/code-editor";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { MAX_JSON_INPUT_BYTES } from "../domain/constants";
 import type { JsonMode } from "../types";
@@ -112,14 +112,14 @@ export function InputPanel({
                 </div>
             </div>
 
-            <Textarea
+            <CodeEditor
                 id={inputId}
                 value={text}
-                onChange={(event) => onTextChange(event.target.value)}
+                language="json"
+                onChange={onTextChange}
                 placeholder={t(`placeholders.${mode}`)}
-                spellCheck={false}
-                autoComplete="off"
-                className="bg-card/70 h-72 min-h-40 resize-y rounded-xl font-mono text-[0.8125rem] leading-6"
+                lineNumbers
+                className="[&_textarea]:h-72 [&_textarea]:min-h-40"
             />
         </div>
     );

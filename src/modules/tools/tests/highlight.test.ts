@@ -11,6 +11,7 @@ import {
     highlight,
     HIGHLIGHT_LANGUAGES,
     MAX_HIGHLIGHT_LENGTH,
+    splitTokenLines,
     type HighlightLanguage,
     type TokenKind,
 } from "@/modules/tools/domain/highlight";
@@ -486,5 +487,40 @@ describe("highlight — latex", () => {
             { kind: "plain", text: "x " },
             { kind: "command", text: "\\" },
         ]);
+    });
+});
+
+describe("splitTokenLines", () => {
+    const INPUTS = ["", "\n", '{\n  "a": [1,\n    2]\n}\n', '"""multi\nline"""\ntype A', "a\n\nb"];
+
+    for (const input of INPUTS) {
+        test(`rejoins to the input for ${JSON.stringify(input)}`, () => {
+            for (const language of HIGHLIGHT_LANGUAGES) {
+                const lines = splitTokenLines(highlight(input, language));
+
+                expect(lines).toHaveLength(input.split("\n").length);
+                expect(
+                    lines.map((line) => line.map((token) => token.text).join("")).join("\n"),
+                ).toBe(input);
+            }
+        });
+    }
+
+    test("keeps the kind of a token cut across lines", () => {
+        const lines = splitTokenLines(highlight('"""a\nb"""', "graphql"));
+
+        expect(lines).toEqual([
+            [{ kind: "string", text: '"""a' }],
+            [{ kind: "string", text: 'b"""' }],
+        ]);
+    });
+});
+
+describe("highlight — caller ceiling", () => {
+    test("a raised limit colours what the default leaves plain", () => {
+        const long = `[${"1,".repeat(MAX_HIGHLIGHT_LENGTH)}1]`;
+
+        expect(highlight(long, "json")).toHaveLength(1);
+        expect(highlight(long, "json", long.length).length).toBeGreaterThan(1);
     });
 });
