@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 /**
  * Mirrors the Mouse Tester layout: header, then the card — the capture area
  * with its action and hold strips beside the tiles, gauge and slider — then
- * the DPI test, then the diagnosis and the log, then the article.
+ * the diagnosis and the log, then the article.
  */
 export default function MouseTesterLoading() {
     return (
@@ -47,25 +47,6 @@ export default function MouseTesterLoading() {
                             <Skeleton className="h-1.5 w-full rounded-full" />
                             <Skeleton className="h-3 w-4/5" />
                         </div>
-                    </div>
-                </div>
-
-                <div className="border-border/70 flex flex-col gap-3 border-t p-4 sm:p-5">
-                    <Skeleton className="h-4 w-40" />
-                    <Skeleton className="h-4 w-full max-w-[68ch]" />
-                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-                        <div className="flex flex-col gap-3">
-                            <div className="grid grid-cols-2 gap-2">
-                                <Skeleton className="h-14 rounded-lg" />
-                                <Skeleton className="h-14 rounded-lg" />
-                            </div>
-                            <Skeleton className="h-32 w-full rounded-xl" />
-                            <div className="flex gap-1.5">
-                                <Skeleton className="h-7 w-32 rounded-lg" />
-                                <Skeleton className="h-7 w-32 rounded-lg" />
-                            </div>
-                        </div>
-                        <Skeleton className="h-32 w-full rounded-xl" />
                     </div>
                 </div>
 

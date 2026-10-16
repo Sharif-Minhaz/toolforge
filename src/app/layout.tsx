@@ -399,6 +399,17 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         // The JSON viewer's fold controls, shared by every tool that prints
         // JSON — the same reasoning as the image intake above.
         codeViewer: messages.codeViewer,
+        keyboardTester: {
+            workbench: messages.keyboardTester.workbench,
+            sizes: messages.keyboardTester.sizes,
+            standards: messages.keyboardTester.standards,
+            systems: messages.keyboardTester.systems,
+            families: messages.keyboardTester.families,
+            combos: messages.keyboardTester.combos,
+            rollover: messages.keyboardTester.rollover,
+            report: messages.keyboardTester.report,
+            toast: messages.keyboardTester.toast,
+        },
         mouseTester: {
             workbench: messages.mouseTester.workbench,
             buttons: messages.mouseTester.buttons,
@@ -408,7 +419,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             log: messages.mouseTester.log,
             report: messages.mouseTester.report,
             toast: messages.mouseTester.toast,
-            dpi: messages.mouseTester.dpi,
         },
         imageTo3d: {
             workbench: messages.imageTo3d.workbench,

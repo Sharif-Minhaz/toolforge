@@ -49,7 +49,7 @@ export type MouseInput =
     | { readonly type: "cancel"; readonly time: number }
     /**
      * A keystroke while the pointer was over the area. Mouse software that
-     * remaps a DPI or macro button usually makes it type a key, and this is
+     * remaps an extra or macro button usually makes it type a key, and this is
      * the only trace such a button leaves.
      */
     | { readonly type: "key"; readonly code: string; readonly time: number };

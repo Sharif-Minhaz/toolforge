@@ -196,9 +196,9 @@ Not gaps. Each one is a fact about the tool.
 - **The port scanner** — its function is to touch somebody else's host on ports
   they did not offer. Behind a model that can be talked into things, a token is
   not the protection it looks like.
-- **The mouse tester** — it measures a physical mouse in a browser. There is
-  no mouse on the other end of an MCP call, and an adapter over a list of
-  timestamps would be a tool nobody had a reason to call.
+- **The mouse and keyboard testers** — they measure a physical device in a
+  browser. There is no mouse or keyboard on the other end of an MCP call, and an
+  adapter over a list of timestamps would be a tool nobody had a reason to call.
 
 `toolforge_catalog_list` returns the web address of every one of them, so an
 assistant asked to compress a photograph sends the reader to the page rather

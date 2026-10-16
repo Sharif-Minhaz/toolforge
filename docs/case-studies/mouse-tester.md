@@ -66,29 +66,6 @@ and every switch over it narrows on `kind` first. A flat type with
 `control: MouseButton | WheelDirection` type-checks and renders "Left press"
 for a tilt.
 
-## A DPI button cannot be heard, only measured
-
-The button changes the sensor's setting inside the mouse and sends the
-computer nothing, so the DPI test measures its effect: a ruler swipe with the
-pointer locked, counts over inches. Three things in `components/dpi-panel.tsx`
-are deliberate:
-
-- **Displacement, not path.** `Math.hypot` of the summed `movementX` and
-  `movementY`. A hand that wobbles along a ruler adds path but no displacement.
-- **Raw counts are credited only to Chromium.** `requestPointerLock({
-unadjustedMovement: true })` rejects where the option is unsupported, and the
-  panel retries without it — but Firefox returns nothing instead of a promise,
-  and a browser that resolves while ignoring the option would otherwise be
-  reported as raw. The panel claims raw only when the promise resolved _and_
-  `navigator.userAgentData` exists.
-- **The pad is not the capture area.** The lock target is a separate element,
-  so the clicks that start and end a swipe never count as presses.
-
-A stage within `DPI_SAME_STAGE_TOLERANCE` of the one before is reported as a
-button that did nothing. The reader says when they pressed it (Next DPI stage);
-inferring stage changes from the readings would turn a dead button into "one
-stage, four swipes".
-
 ## A tap arrives as a left click
 
 Touch screens fire compatibility `mousedown`/`mouseup` after every tap, with

@@ -75,26 +75,5 @@ export function useReportText(): (context: ReportContext) => ReportText {
                 gap: ms(fault.gap),
             }),
         truncated: context.truncated ? t("truncated") : null,
-        dpiHeading: t("dpiHeading"),
-        dpiNone: t("dpiNone"),
-        dpiStage: (stage) =>
-            [
-                t("dpiStage", {
-                    stage: formatter.number(stage.stage),
-                    dpi: formatter.number(Math.round(stage.dpi)),
-                    swipes: stage.swipes,
-                }),
-                ...(stage.ratio === null
-                    ? []
-                    : [
-                          t("dpiRatio", {
-                              ratio: formatter.number(stage.ratio, {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                              }),
-                          }),
-                      ]),
-                ...(stage.unchanged ? [t("dpiUnchanged")] : []),
-            ].join(", "),
     });
 }

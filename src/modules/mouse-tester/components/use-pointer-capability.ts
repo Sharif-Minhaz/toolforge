@@ -27,16 +27,3 @@ export function useHasFinePointer(): boolean {
         () => true,
     );
 }
-
-function subscribeToNothing() {
-    return () => {};
-}
-
-/** iOS Safari has no Pointer Lock, and without it there is no DPI test. */
-export function useSupportsPointerLock(): boolean {
-    return useSyncExternalStore(
-        subscribeToNothing,
-        () => typeof HTMLElement.prototype.requestPointerLock === "function",
-        () => true,
-    );
-}

@@ -126,7 +126,7 @@ a result anybody asked for.
 
 Find shipped as a `Dialog`, which is the repository's habit and was wrong for
 this tool. What a search produces here is not a value to read off a panel — it is
-*highlighted bytes in the grid*, plus a caret that moved and a row that scrolled.
+_highlighted bytes in the grid_, plus a caret that moved and a row that scrolled.
 A centred dialog covers exactly that, so the reader pressed Next, saw nothing
 change, and had to drag the dialog's own backdrop out of the way to find out
 whether anything had.
@@ -164,7 +164,7 @@ top of the file.
 grid to bring the caret's row back into view without touching the selection.
 
 Which exposed the older bug underneath it. Every scroll request was nonced with
-`revision + 1`, and `revision` counts *byte writes* — so two scroll requests with
+`revision + 1`, and `revision` counts _byte writes_ — so two scroll requests with
 no edit between them could carry the same nonce, and the grid's effect, keyed on
 that nonce, would skip the second one. A fullscreen toggle followed by an arrow
 key is exactly that pair. `scrollNonce` now counts scroll requests and nothing

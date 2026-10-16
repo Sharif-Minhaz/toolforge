@@ -1,5 +1,4 @@
 import type { SessionDiagnosis } from "./diagnosis";
-import type { DpiStage } from "./dpi";
 import {
     MOUSE_BUTTONS,
     type FaultRecord,
@@ -40,24 +39,17 @@ export type ReportText = {
     readonly noFaults: string;
     readonly fault: (fault: FaultRecord) => string;
     readonly truncated: string | null;
-    readonly dpiHeading: string;
-    readonly dpiNone: string;
-    readonly dpiStage: (stage: DpiStage) => string;
 };
 
 export type ReportInput = {
     readonly diagnosis: SessionDiagnosis;
     readonly faults: readonly FaultRecord[];
     readonly polling: PollingSummary | null;
-    readonly dpi: readonly DpiStage[];
 };
 
 const CONTROLS: readonly ReportControl[] = [...MOUSE_BUTTONS, "wheel"];
 
-export function buildReport(
-    { diagnosis, faults, polling, dpi }: ReportInput,
-    text: ReportText,
-): string {
+export function buildReport({ diagnosis, faults, polling }: ReportInput, text: ReportText): string {
     const rows = CONTROLS.map((control) => {
         const result = control === "wheel" ? diagnosis.wheel : diagnosis.buttons[control];
 
@@ -87,10 +79,6 @@ export function buildReport(
         "-".repeat(text.faultsHeading.length),
         ...(faults.length === 0 ? [text.noFaults] : faults.map((fault) => text.fault(fault))),
         ...(text.truncated === null ? [] : [text.truncated]),
-        "",
-        text.dpiHeading,
-        "-".repeat(text.dpiHeading.length),
-        ...(dpi.length === 0 ? [text.dpiNone] : dpi.map((stage) => text.dpiStage(stage))),
         "",
     ];
 

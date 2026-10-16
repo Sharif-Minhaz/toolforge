@@ -276,9 +276,13 @@
             "name": "Watermark Remover",
             "description": "Brush over a watermark, logo or unwanted object and have that area repainted — or drop in a Gemini image or clip and have its sparkle subtracted in your browser. For work you own or have the right to edit."
         },
+        "keyboard-tester": {
+            "name": "Keyboard Tester",
+            "description": "Test every key of a full-size, tenkeyless, 75%, 65% or 60% board, ANSI or ISO, in any layout — with chatter detection for doubled letters, ghosting chords, a 6KRO or NKRO reading, system-key capture and a downloadable report."
+        },
         "mouse-tester": {
             "name": "Mouse Tester",
-            "description": "Test every button, the wheel, the polling rate and the real DPI of each stage inside a capture area that blocks Back and Forward, and get a verdict on double-click chatter, drag drops, wheel jump-back and a dead DPI button you can download as evidence."
+            "description": "Test every button, the wheel and the polling rate inside a capture area that blocks Back and Forward, and get a verdict on double-click chatter, drag drops and wheel jump-back you can download as evidence."
         },
         "text-to-speech": {
             "name": "Text to Speech",
@@ -11953,15 +11957,232 @@
             "not_configured": "Fetching by address is not configured on this deployment. Picking, dropping and pasting all still work."
         }
     },
+    "keyboardTester": {
+        "meta": {
+            "title": "Keyboard Tester — every key, chatter, ghosting and rollover, in any layout",
+            "description": "Test every key on a full-size, tenkeyless, 75%, 65% or 60% board, ANSI or ISO, in any layout or language. Catch chattering switches that double letters, find the chords your matrix blocks, read 6KRO or NKRO, capture Ctrl+W and the Windows key, and download the report. Nothing is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Hardware",
+            "title": "Keyboard Tester",
+            "subtitle": "Click the board, then press every key. Keys are matched by where they sit, not what they type, so it works in any layout — Bangla included. It catches switches that double letters, shows which key a cheap matrix blocks in a chord, reads your rollover, and can capture the keys a browser normally keeps for itself.",
+            "badgeLayouts": "Any layout, any language",
+            "badgeChatter": "Chatter and ghosting checks",
+            "badgeLocal": "Runs in your browser"
+        },
+        "sizes": {
+            "full": "Full size (100%)",
+            "tkl": "Tenkeyless (80%)",
+            "75": "75%",
+            "65": "65%",
+            "60": "60%"
+        },
+        "standards": {
+            "ansi": "ANSI (US)",
+            "iso": "ISO (UK and Europe)"
+        },
+        "systems": {
+            "windows": "Windows and Linux",
+            "mac": "Mac"
+        },
+        "families": {
+            "qwerty": "QWERTY",
+            "qwertz": "QWERTZ",
+            "azerty": "AZERTY",
+            "dvorak": "Dvorak",
+            "colemak": "Colemak",
+            "other": "Another script"
+        },
+        "combos": {
+            "wasd": "W A S D — movement",
+            "runJump": "Shift + W + A + Space — run, strafe, jump",
+            "sixKeys": "Q W E A S D — six at once",
+            "homeRow": "Home row — eight at once",
+            "arrowsSpace": "Arrows + Space"
+        },
+        "rollover": {
+            "title": "Rollover",
+            "verdict": {
+                "nkro": "More than six at once: this board has n-key rollover.",
+                "six": "Stops at six? That is 6-key rollover — or the board is running in USB boot mode.",
+                "unknown": "Hold as many keys as you can at once to find the limit."
+            },
+            "hint": "Hold each chord down together. A key that stays dark while the rest light up is the one the board’s matrix blocked.",
+            "passed": "Passed",
+            "notYet": "Hold together",
+            "peakValue": "{count} at once",
+            "peakDetail": "{others} keys + {modifiers} modifiers · {held} held now",
+            "chordsTitle": "Ghosting chords",
+            "progress": "{held} of {total} held"
+        },
+        "workbench": {
+            "size": "Board size",
+            "standard": "Standard",
+            "labels": "Key labels",
+            "tested": "Tested",
+            "virtualKeyboard": "An on-screen keyboard does not say which key was pressed. Connect a physical keyboard — by USB-OTG or Bluetooth on a phone — to test it.",
+            "areaLabel": "Keyboard test area",
+            "fn": "Fn",
+            "start": "Click here, then press every key",
+            "capturing": "Capturing every key, Tab, Space and F5 included. Hold Esc for 1.5 s, or click outside, to give the keyboard back.",
+            "notCapturing": "Not capturing. Click the board, or Tab to it, to start.",
+            "lastNone": "No key yet",
+            "historyLabel": "Recent keys",
+            "interval": "+{value} ms",
+            "extraKeys": "Other keys",
+            "chatterTitle": "Chatter",
+            "faultWindow": "Fault window",
+            "ms": "{value} ms",
+            "chatterIdle": "Type normally — a key that doubles its letters turns red.",
+            "chatterNone": "No doubled keystrokes so far.",
+            "chatterKey": "{key} ×{count}",
+            "untestedTitle": "Not tested ({count})",
+            "allTested": "Every key on this board has been pressed.",
+            "andMore": "and {count} more",
+            "repeatTitle": "Auto-repeat",
+            "repeatHint": "Your operating system’s setting, not the keyboard’s.",
+            "systemKeysOn": "Capture system keys",
+            "systemKeysOff": "Stop capturing system keys",
+            "systemKeysHint": "Full screen with the browser’s Keyboard Lock, so Ctrl+W, Ctrl+T, Esc and the Windows key can be tested too. Chrome and Edge only.",
+            "systemKeysActive": "System keys are captured. Hold Esc to leave full screen.",
+            "systemKeysUnsupported": "This browser cannot capture system keys. Chrome or Edge on a desktop can.",
+            "downloadReport": "Report",
+            "reset": "Reset",
+            "detectedLayout": "Layout read from your system: {family}",
+            "percent": "{value} of this board",
+            "repeatValue": "{rate}/s",
+            "repeatIdle": "Hold any key down to measure it.",
+            "repeatDelay": "{delay} ms before the first repeat",
+            "systemKeysTitle": "System keys",
+            "locksUnknown": "Lock lights appear after the first key",
+            "locks": "Num Lock {num, select, on {on} other {off}} · Caps Lock {caps, select, on {on} other {off}} · Scroll Lock {scroll, select, on {on} other {off}}"
+        },
+        "report": {
+            "title": "ToolForge keyboard test report",
+            "generated": "Generated: {date}",
+            "browser": "Browser: {agent}",
+            "board": "Board: {board}",
+            "layout": "Layout: {family}",
+            "layoutUnknown": "not reported",
+            "window": "Fault window: {window} press to press",
+            "tested": "Keys tested: {tested} of {total}",
+            "untestedHeading": "Not tested",
+            "allTested": "Every key was pressed.",
+            "chatterHeading": "Chattering keys",
+            "noChatter": "None.",
+            "chatterKey": "{key}: {count} doubled",
+            "rollover": "Most keys at once: {others} + {modifiers} modifiers",
+            "combosHeading": "Chords",
+            "combo": "{combo}: {passed, select, yes {held together} other {not held}}",
+            "repeat": "Auto-repeat: {delay} ms delay, {rate} per second",
+            "repeatNone": "Auto-repeat: not measured",
+            "eventsHeading": "Doubled keystrokes",
+            "event": "{at} s  {key}  {interval}",
+            "extraHeading": "Other keys",
+            "ms": "{value} ms"
+        },
+        "toast": {
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The download could not start."
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "What a keyboard tester tells you",
+                "p1": "It lights each key you press and keeps it lit once it has worked, so a dead key is the one left dark. It also watches how keys arrive, which is where the faults people actually hit — doubled letters, blocked chords — show up.",
+                "example": "<code>E down 0 ms → E up 8 ms → E down 22 ms</code> → one press, two letters: chatter, caught at 22 ms press to press",
+                "p2": "Keys are matched by <code>KeyboardEvent.code</code>, the physical position, not the character it types. So the test means the same in a German, French or Bangla layout, and there is no need to switch to English first."
+            },
+            "layouts": {
+                "title": "Any board, any layout",
+                "p1": "Pick the size of the board in front of you — full, tenkeyless, 75%, 65% or 60% — and ANSI or ISO, and the drawing matches it key for key. Labels follow your own layout where the browser will read it (Chrome and Edge): a German board shows Z where a US one shows Y, and the tester names the family it read, QWERTZ, AZERTY or another script.",
+                "p2": "The Fn key is drawn but never lights: it is handled inside the keyboard and never reaches the computer. Test it through what it does — Fn with a media key shows up under Other keys, together with F13 to F24 and anything else the drawn board does not have."
+            },
+            "chatter": {
+                "title": "Chatter: one press, two letters",
+                "p1": "A worn or dirty mechanical switch can bounce, and the keyboard reports one press as two. You notice it as doubled letters in what you type. Any key whose presses arrive closer together than the fault window — 40 ms by default — is counted as chattering and turns red.",
+                "p2": "Auto-repeat is not chatter: the extra keystrokes a held key sends are marked as repeats by the browser and ignored here. A fast trill on one key is around a hundred milliseconds between presses, well outside the window."
+            },
+            "rollover": {
+                "title": "Rollover and ghosting",
+                "p1": "Rollover is how many keys a board reports at once. USB’s simplest mode reports six besides the modifiers, so a board that never gets past six is either a 6-key-rollover board or one running in that mode; anything above is n-key rollover.",
+                "p2": "Ghosting is the other limit. A cheap board wires its keys in a grid and cannot always tell which corner of a rectangle is down, so it blocks one key — usually in exactly the chords games use. The chords listed are ones people press; hold each, and the key that stays dark is the one blocked.",
+                "p3": "A key that never arrives cannot be detected by any page. What the tester can do is make its absence obvious, which is why each chord shows its keys lighting one by one."
+            },
+            "systemKeys": {
+                "title": "Testing the keys a browser keeps",
+                "p1": "While the board has focus, every key is the test’s: Tab does not move focus, Space does not scroll, F5 does not reload, Alt does not open a menu. A few keys never reach a page at all — Ctrl+W, Ctrl+T, the Windows key — because the browser or the system acts on them first.",
+                "p2": "Capture system keys puts the tester in full screen and asks for the browser’s Keyboard Lock, which hands those keys to the page too. Chrome and Edge support it; elsewhere the button says so. Hold Escape to leave full screen. Windows still sends only the release of Print Screen, and the tester counts that release as the key working."
+            },
+            "options": {
+                "title": "Every setting, and when to change it",
+                "intro": "The defaults are a full-size ANSI board with Windows labels and a 40 ms fault window. Change the board to match yours before testing, or the keys it does not have will sit in the not-tested list.",
+                "tableCaption": "What each control does and when it is worth changing",
+                "colOption": "Control",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "sizeName": "Board size",
+                "sizeDoes": "Draws a full-size, tenkeyless, 75%, 65% or 60% board.",
+                "sizeWhen": "Always: the progress count is out of the keys on the drawing.",
+                "standardName": "Standard",
+                "standardDoes": "ANSI, or ISO with the L-shaped Enter and the extra key beside left Shift.",
+                "standardWhen": "Your board was sold in the UK or most of Europe.",
+                "labelsName": "Key labels",
+                "labelsDoes": "Names the modifiers for Windows and Linux, or for a Mac.",
+                "labelsWhen": "You test a Mac keyboard and want command and option on the caps.",
+                "windowName": "Fault window",
+                "windowDoes": "How close two presses of one key must be to count as chatter. 15 to 100 ms.",
+                "windowWhen": "Raise it to catch a borderline switch; lower it if fast typing is being flagged.",
+                "systemKeysName": "Capture system keys",
+                "systemKeysDoes": "Full screen plus Keyboard Lock, so Ctrl+W, Esc and the Windows key reach the test.",
+                "systemKeysWhen": "You need to know those keys work and you are in Chrome or Edge.",
+                "reportName": "Report",
+                "reportDoes": "Downloads a plain-text summary: keys tested and not, chattering keys with every doubled press, rollover and chords.",
+                "reportWhen": "You are returning, selling or claiming a warranty on a keyboard.",
+                "linkName": "<code>?size=</code> <code>?standard=</code> <code>?os=</code> <code>?window=</code>",
+                "linkDoes": "Opens the tester on a given board, labels and fault window.",
+                "linkWhen": "You want to send somebody straight to their own board.",
+                "note": "Changing the board keeps every press made so far; keys the new drawing does not have move to Other keys. Reset clears everything."
+            },
+            "mobile": {
+                "title": "On a phone or tablet",
+                "p1": "An on-screen keyboard does not say which key was pressed — it reports the character, with no position — so there is nothing to test, and the tester says so. Connect a physical keyboard by USB-OTG or Bluetooth and it works as it does on a desktop."
+            },
+            "useCases": {
+                "title": "When to reach for it",
+                "p1": "Before buying or selling a used keyboard, to check every key in a minute. When letters start doubling, to find which switch it is before opening the board. After cleaning or swapping switches, to see whether they all came back.",
+                "p2": "And before a game: the chords tell you whether the board will drop a key while you run, strafe and jump at the same time."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Do I need to switch to the English layout?",
+                "a1": "No. Keys are matched by their physical position, so the test works the same in any layout. Where the browser can read your layout, the caps are even labelled from it.",
+                "q2": "Why does the Fn key never light up?",
+                "a2": "The keyboard handles Fn itself and never tells the computer. Press Fn with a media key instead: if the media key shows up under Other keys, Fn works.",
+                "q3": "Why can’t I test Ctrl+W or the Windows key?",
+                "a3": "The browser or the system acts on them before a page can. Use Capture system keys in Chrome or Edge, which hands them to the test while in full screen.",
+                "q4": "Is a red key definitely broken?",
+                "a4": "Red means at least one press arrived twice within the fault window. One is a hint; several are a switch that needs cleaning or replacing. Type the letter a few dozen times to be sure.",
+                "q5": "What does stopping at six keys mean?",
+                "a5": "The board reports six keys besides the modifiers at once — 6-key rollover, or USB boot mode on a board that can do more. Some boards switch to n-key rollover with a key combination; check its manual.",
+                "q6": "How do I leave the test with the keyboard?",
+                "a6": "Hold Escape for a second and a half, or click anywhere outside the board.",
+                "q7": "Is anything sent anywhere?",
+                "a7": "No. Every key is read and judged in this tab, and the report is written there too."
+            }
+        }
+    },
     "mouseTester": {
         "meta": {
             "title": "Mouse Tester — buttons, double-click chatter, drag drops, wheel and polling rate",
-            "description": "Test every mouse button, the scroll and tilt wheel, the real polling rate and the real DPI in a capture area that blocks Back, Forward and the context menu. Catch double-click chatter, held buttons that drop mid-drag, a wheel that jumps back and a DPI button that does nothing, then download the report as warranty evidence. Nothing is uploaded."
+            "description": "Test every mouse button, the scroll and tilt wheel and the real polling rate in a capture area that blocks Back, Forward and the context menu. Catch double-click chatter, held buttons that drop mid-drag and a wheel that jumps back, then download the report as warranty evidence. Nothing is uploaded."
         },
         "hero": {
             "eyebrow": "Hardware",
             "title": "Mouse Tester",
-            "subtitle": "Click, hold and scroll inside the capture area. Every button and the wheel are counted, Back and Forward cannot leave the page, and a diagnosis tells you whether the switch is chattering, a held button is dropping, or the wheel is jumping back. A ruler swipe measures the real DPI of each stage — and whether the DPI button changes it.",
+            "subtitle": "Click, hold and scroll inside the capture area. Every button and the wheel are counted, Back and Forward cannot leave the page, and a diagnosis tells you whether the switch is chattering, a held button is dropping, or the wheel is jumping back — with a report you can send.",
             "badgeCapture": "Back and Forward blocked",
             "badgeDiagnosis": "Chatter, drop and wheel diagnosis",
             "badgeLocal": "Runs in your browser"
@@ -12101,12 +12322,7 @@
             "noFaults": "None recorded.",
             "fault": "{at} s  {kind}  {control}  {gap}",
             "truncated": "The list stops at 500 faults; the counts above include every one.",
-            "ms": "{value} ms",
-            "dpiHeading": "DPI",
-            "dpiNone": "Not measured.",
-            "dpiStage": "Stage {stage}: {dpi} DPI over {swipes, plural, one {# swipe} other {# swipes}}",
-            "dpiRatio": "×{ratio} the stage before",
-            "dpiUnchanged": "same as the stage before — the DPI button did not change it"
+            "ms": "{value} ms"
         },
         "toast": {
             "downloaded": "Saved {filename}",
@@ -12155,13 +12371,6 @@
                 "p2": "The rate shown is from the median interval, not the average, so the moment your hand turns round does not drag it down. Stability is how much the intervals vary: a wired mouse sits within a few percent, a wireless one in power-saving mode wanders, and a large figure on a wired mouse usually means a busy USB hub or a driver that batches reports.",
                 "p3": "Move the mouse in quick, steady circles for a couple of seconds. A browser without coalesced events falls back to one sample per frame, and then the reading is your refresh rate, not the mouse’s."
             },
-            "dpi": {
-                "title": "Measuring DPI, and testing the DPI button",
-                "p1": "A DPI button is handled inside the mouse: it changes the sensor’s setting and sends the computer nothing, so no web page — this one included — can see it pressed. Its effect can be seen. The same hand movement produces more or fewer sensor counts, and counts over distance is DPI.",
-                "example": "<code>6,299 counts</code> over <code>10 cm</code> → 1,600 DPI, because 10 cm is 3.94 inches",
-                "p2": "So the test is a swipe of known length. The pointer is locked, so the screen edge cannot cut a swipe short; you move the mouse along a ruler and click. Swipe once per stage, pressing the DPI button between them, and a stage that reads within 5% of the one before is a button that did nothing.",
-                "p3": "Chrome and Edge can report the sensor’s raw counts, before the operating system’s acceleration curve. Other browsers report the accelerated movement, which only matches the sensor with acceleration off — the panel says which one you got. A DPI button remapped to a keystroke in the vendor software shows up instead in the event log, as the key it types."
-            },
             "options": {
                 "title": "Every setting, and when to change it",
                 "intro": "There is one setting. Everything else is a fixed threshold, listed under the table, because a diagnosis whose rules move is not evidence.",
@@ -12184,12 +12393,6 @@
                 "linkName": "<code>?window=</code>",
                 "linkDoes": "Opens the tester with that fault window set, in 5 ms steps.",
                 "linkWhen": "A support page wants every customer tested at the same threshold.",
-                "dpiDistanceName": "Ruler distance",
-                "dpiDistanceDoes": "How far you will move the mouse in a DPI swipe, in centimetres or inches. 10 cm by default.",
-                "dpiDistanceWhen": "Your ruler or mouse pad is shorter or longer; a longer swipe reads more accurately.",
-                "dpiStageName": "Next DPI stage",
-                "dpiStageDoes": "Starts a new stage, so the next swipes are compared with the stage before.",
-                "dpiStageWhen": "You have just pressed the DPI button on the mouse.",
                 "thresholdsNote": "The fixed thresholds: a release-to-press gap under 12 ms is chatter whatever the window, because no hand releases and presses that fast. A hold breaks only after 200 ms. A wheel jump-back needs same-way notches within 150 ms on both sides. A button is called healthy after 20 clean presses and the wheel after 30 clean notches; one fault makes it suspect, and three faults or a fault rate of 5% make it faulty.",
                 "defaultsNote": "Fifty milliseconds is twenty clicks a second from one finger, which nobody sustains — and it is the figure the vendor testers use, so a reading here means the same thing as a reading there."
             },
@@ -12201,7 +12404,7 @@
             "mobile": {
                 "title": "On a phone or tablet",
                 "p1": "A phone has no mouse, so there is nothing for the tester to measure, and a tap is deliberately not counted as a click. When no mouse is detected a notice says so above the test area. Plug a mouse in by USB-OTG or pair one over Bluetooth — Android and iPadOS both take one — and the area works as it does on a desktop.",
-                "p2": "Two limits are the platform’s, not the tester’s. Android may treat the Back side button as the system Back gesture, which no page can cancel. Safari on iPad may not pass side buttons to pages at all, and has no pointer lock, so the DPI test is not available there."
+                "p2": "Two limits are the platform’s, not the tester’s. Android may treat the Back side button as the system Back gesture, which no page can cancel, and Safari on iPad may not pass side buttons to pages at all."
             },
             "useCases": {
                 "title": "When to reach for it",
@@ -12222,53 +12425,9 @@
                 "a5": "A tilt is a pair of switches, not an encoder, so it cannot jump back. Its presses are counted in the tiles; the wheel verdict covers up and down only.",
                 "q6": "Is anything sent anywhere?",
                 "a6": "No. Every event is read and judged in this tab, and the report is written there too.",
-                "q7": "Why can’t it see me press the DPI button?",
-                "a7": "Because the computer never hears about it — the mouse changes its own sensor setting. The DPI test measures the result instead: swipe, press the button, swipe again, and see whether the DPI changed.",
-                "q8": "Can I test a mouse on my phone?",
-                "a8": "Yes, if a mouse is connected to it by USB-OTG or Bluetooth. Taps on the screen are not counted, and the DPI test needs a browser with pointer lock, which iPhone and iPad Safari do not have."
+                "q7": "Can I test a mouse on my phone?",
+                "a7": "Yes, if a mouse is connected to it by USB-OTG or Bluetooth. Taps on the screen are not counted."
             }
-        },
-        "dpi": {
-            "title": "DPI and the DPI button",
-            "intro": "A DPI button changes a setting inside the mouse and sends nothing to the computer, so no page can see it pressed. What can be seen is its effect: the same movement produces a different number of sensor counts. Swipe a measured distance to read the real DPI, press the DPI button, move to the next stage and swipe again.",
-            "unsupported": "This browser cannot lock the pointer, which the DPI test needs — Safari on iPhone and iPad cannot. Use a desktop browser with the mouse plugged in.",
-            "distance": "Ruler distance",
-            "unit": "Unit",
-            "units": {
-                "cm": "cm",
-                "in": "in"
-            },
-            "distanceHint": "Between {min} and {max} {unit}. Longer swipes read more accurately.",
-            "errors": {
-                "tooShort": "That swipe was too short to read. Move the full distance along the ruler before clicking.",
-                "invalidDistance": "Enter the distance you will move, within the range below.",
-                "lockFailed": "The browser refused to lock the pointer. Wait a second after pressing Escape, then try again."
-            },
-            "counts": "{value} counts",
-            "padIdle": "Lay a ruler beside the mouse, then press Start.",
-            "padArmed": "Line the mouse up with 0 on the ruler, then click — or press Space — to begin.",
-            "padMeasuring": "Move exactly {distance} {unit} along the ruler, then click or press Space.",
-            "escHint": "Escape releases the pointer.",
-            "start": "Swipe stage {stage}",
-            "nextStage": "Next DPI stage",
-            "clear": "Clear",
-            "browserHint": "Most accurate in Chrome or Edge, which can report the sensor’s raw counts.",
-            "rawYes": "Raw sensor counts — pointer acceleration does not affect this reading.",
-            "rawNo": "This browser reports movement after pointer acceleration, so the reading is only right with acceleration turned off (Windows: Enhance pointer precision; macOS: a lower tracking speed). Chrome and Edge read the raw counts.",
-            "empty": "No swipes yet. Two or three per stage give a steady reading.",
-            "caption": "Measured DPI for each stage, compared with the stage before",
-            "colStage": "Stage",
-            "colDpi": "DPI",
-            "colNearest": "Reads as",
-            "colChange": "Change",
-            "stageLabel": "Stage {stage}",
-            "swipes": "{count, plural, one {# swipe} other {# swipes}}",
-            "nearestNone": "Between common settings",
-            "nearest": "≈ {setting} ({deviation})",
-            "unchanged": "Same as the stage before — the DPI button did not change it",
-            "spread": "Swipes disagree by {percent} — keep the mouse square to the ruler",
-            "change": "×{ratio}",
-            "stageHint": "To test the DPI button: swipe, press the DPI button on the mouse, press Next DPI stage, swipe again. A stage that reads the same as the one before is a button that did nothing."
         }
     },
     "codeViewer": {
@@ -12432,8 +12591,8 @@
                     "body": "Its whole function is to touch somebody else's host on ports they did not offer. Behind a model that can be talked into things, a token is not the protection it looks like."
                 },
                 "hardware": {
-                    "title": "The mouse tester",
-                    "body": "The mouse tester measures a physical mouse in a browser: the timing between presses, the wheel and the pointer reports that arrive between frames. An MCP call has no mouse on the other end of it, and a tool that took a list of timestamps instead would be one nobody had a reason to call."
+                    "title": "The hardware testers",
+                    "body": "The mouse and keyboard testers measure a physical device in a browser: the gaps between presses, the wheel, the keys held at once. An MCP call has no mouse or keyboard on the other end of it, and a tool that took a list of timestamps instead would be one nobody had a reason to call."
                 }
             },
             "faq": {

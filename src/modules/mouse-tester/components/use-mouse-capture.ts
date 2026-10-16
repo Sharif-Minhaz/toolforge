@@ -34,7 +34,7 @@ import type { MouseButton, MouseInput, PollingSummary, WheelDirection } from "..
  * short window in which mouse events are ignored.
  *
  * Keystrokes are logged while the pointer is over the area, never blocked —
- * mouse software that remaps a DPI or macro button usually makes it type a
+ * mouse software that remaps an extra or macro button usually makes it type a
  * key, and this is the only way to see such a button work.
  */
 

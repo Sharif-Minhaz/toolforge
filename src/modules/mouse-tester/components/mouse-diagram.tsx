@@ -85,6 +85,43 @@ export function MouseDiagram({ held, flash, verdicts, labels }: MouseDiagramProp
             <path d="M92 72 L84 64 L84 80 Z" className={arrowClass(flash === "left")} />
             <path d="M128 72 L136 64 L136 80 Z" className={arrowClass(flash === "right")} />
 
+            {/* The maker's mark on the palm rest, finished the way a real
+                shell is: the mark pressed into the plastic in one muted tone,
+                the name in small spaced capitals, and a thin light strip
+                following the curve of the rear. An SVG <image> rather than
+                next/image, because it has to sit in the drawing's own
+                coordinates. */}
+            <image
+                href="/brand-mark.webp"
+                x="90"
+                y="190"
+                width="35"
+                height="35"
+                className="opacity-45 grayscale"
+            />
+            <text
+                x="110"
+                y="240"
+                textAnchor="middle"
+                className="fill-muted-foreground/70 font-heading text-[7.5px] font-semibold tracking-[0.32em] uppercase"
+            >
+                ToolForge
+            </text>
+            <path
+                d="M62 270 C74 298 146 298 158 270"
+                fill="none"
+                strokeLinecap="round"
+                className="stroke-primary/15"
+                strokeWidth={6}
+            />
+            <path
+                d="M62 270 C74 298 146 298 158 270"
+                fill="none"
+                strokeLinecap="round"
+                className="stroke-primary/70"
+                strokeWidth={1.5}
+            />
+
             {/* Side buttons on the thumb side: forward nearer the front. */}
             <rect
                 x="14"

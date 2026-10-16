@@ -5,7 +5,6 @@ import {
     MAX_FAULT_WINDOW_MS,
     MIN_FAULT_WINDOW_MS,
 } from "../domain/constants";
-import { DPI_DISTANCE_RANGE, type DpiUnit } from "../domain/dpi";
 
 /**
  * `?window=` opens the tester with a fault window already set, so a support
@@ -24,10 +23,3 @@ export const faultWindowSchema = z.coerce
 export const mouseTesterSearchParamsSchema = z.object({
     window: faultWindowSchema.optional().catch(undefined),
 });
-
-/** The ruler length typed into the DPI test, in the unit beside it. */
-export function dpiDistanceSchema(unit: DpiUnit) {
-    const { min, max } = DPI_DISTANCE_RANGE[unit];
-
-    return z.coerce.number().finite().min(min).max(max);
-}

@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
 import { diagnose } from "@/modules/mouse-tester/domain/diagnosis";
-import { summarizeStages } from "@/modules/mouse-tester/domain/dpi";
 import { buildReport, table, type ReportText } from "@/modules/mouse-tester/domain/report";
 import { createSession } from "@/modules/mouse-tester/domain/session";
 
@@ -20,10 +19,6 @@ const TEXT: ReportText = {
     noFaults: "None",
     fault: (fault) => `${fault.kind} ${fault.control} at ${fault.at} ms (${fault.gap} ms)`,
     truncated: null,
-    dpiHeading: "DPI",
-    dpiNone: "Not measured",
-    dpiStage: (stage) =>
-        `Stage ${stage.stage}: ${Math.round(stage.dpi)}${stage.unchanged ? " unchanged" : ""}`,
 };
 
 describe("buildReport", () => {
@@ -40,10 +35,6 @@ describe("buildReport", () => {
                 }),
                 faults: [{ kind: "chatter", control: "left", at: 1200, gap: 4 }],
                 polling: null,
-                dpi: summarizeStages([
-                    { stage: 1, dpi: 1600 },
-                    { stage: 2, dpi: 1610 },
-                ]),
             },
             TEXT,
         );
@@ -54,17 +45,15 @@ describe("buildReport", () => {
         expect(report).toContain("wheel    0     0       untested");
         expect(report).toContain("chatter left at 1200 ms (4 ms)");
         expect(report).not.toContain("None");
-        expect(report).toContain("DPI\n---\nStage 1: 1600\nStage 2: 1610 unchanged");
     });
 
     test("says so when nothing went wrong", () => {
         const report = buildReport(
-            { diagnosis: diagnose(createSession()), faults: [], polling: null, dpi: [] },
+            { diagnosis: diagnose(createSession()), faults: [], polling: null },
             TEXT,
         );
 
         expect(report).toContain("Faults\n------\nNone");
-        expect(report).toContain("DPI\n---\nNot measured");
     });
 });
 

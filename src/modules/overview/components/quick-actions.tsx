@@ -72,7 +72,8 @@ export async function QuickActions() {
         // was. It reaches the front page through the featured and recent grids
         // instead. Raise its popularity when the traffic says so, and it takes
         // pdf-converter's place here. Text to Speech arrived at 70 and stayed
-        // out for the same reason.
+        // out for the same reason, as did the Mouse Tester at 72 and the
+        // Keyboard Tester at 73.
         {
             key: "wordToPdf",
             href: "/tools/pdf-converter",

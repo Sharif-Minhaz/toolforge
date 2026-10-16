@@ -23,7 +23,6 @@ import {
     MIN_FAULT_WINDOW_MS,
 } from "../domain/constants";
 import { diagnose } from "../domain/diagnosis";
-import { summarizeStages, type DpiReading } from "../domain/dpi";
 import { buildReport } from "../domain/report";
 import { applyInput, createSession } from "../domain/session";
 import { MOUSE_BUTTONS, type MouseInput } from "../types";
@@ -31,7 +30,6 @@ import { DiagnosisPanel } from "./diagnosis-panel";
 import { EventLog } from "./event-log";
 import { IntervalGauge } from "./interval-gauge";
 import { MouseDiagram } from "./mouse-diagram";
-import { DpiPanel } from "./dpi-panel";
 import { StatTile } from "./stat-tile";
 import { useMouseCapture } from "./use-mouse-capture";
 import { useHasFinePointer } from "./use-pointer-capability";
@@ -53,7 +51,6 @@ export function MouseTesterWorkbench({ initialFaultWindow }: MouseTesterWorkbenc
     const zoneHintId = useId();
 
     const [session, setSession] = useState(createSession);
-    const [dpiReadings, setDpiReadings] = useState<readonly DpiReading[]>([]);
     const [faultWindowMs, setFaultWindowMs] = useState(initialFaultWindow);
     /** `performance.now()` while a button is held, for the live hold timer. */
     const [now, setNow] = useState<number | null>(null);
@@ -69,12 +66,6 @@ export function MouseTesterWorkbench({ initialFaultWindow }: MouseTesterWorkbenc
     // Either signal is enough: a mouse that has moved on this page is a mouse,
     // whatever the media query thinks of a hybrid device.
     const noMouse = !hasFinePointer && !capture.sawMouse;
-    const dpiStages = summarizeStages(dpiReadings);
-
-    const addDpiReading = useCallback(
-        (reading: DpiReading) => setDpiReadings((current) => [...current, reading]),
-        [],
-    );
     const anyHeld = capture.held.size > 0;
 
     // A frame clock that only runs while something is held, so the hold timer
@@ -152,7 +143,7 @@ export function MouseTesterWorkbench({ initialFaultWindow }: MouseTesterWorkbenc
     function handleDownload() {
         const generated = new Date();
         const content = buildReport(
-            { diagnosis, faults: session.faults, polling: capture.polling, dpi: dpiStages },
+            { diagnosis, faults: session.faults, polling: capture.polling },
             reportText({
                 generated,
                 userAgent: navigator.userAgent,
@@ -468,15 +459,6 @@ export function MouseTesterWorkbench({ initialFaultWindow }: MouseTesterWorkbenc
                 </div>
             </div>
 
-            <div className="border-border/70 border-t p-4 sm:p-5">
-                <DpiPanel
-                    readings={dpiReadings}
-                    stages={dpiStages}
-                    onReading={addDpiReading}
-                    onClear={() => setDpiReadings([])}
-                />
-            </div>
-
             <div className="border-border/70 grid gap-4 border-t p-4 sm:p-5 lg:grid-cols-2">
                 <DiagnosisPanel diagnosis={diagnosis} />
 
@@ -488,7 +470,7 @@ export function MouseTesterWorkbench({ initialFaultWindow }: MouseTesterWorkbenc
                                 variant="outline"
                                 size="sm"
                                 onClick={handleDownload}
-                                disabled={latest === undefined && dpiReadings.length === 0}
+                                disabled={latest === undefined}
                             >
                                 <IconDownload
                                     className="size-3.5"

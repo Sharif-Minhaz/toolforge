@@ -14,7 +14,6 @@ export const MOUSE_TESTER_ARTICLE_SECTIONS = [
     { id: "zone", titleKey: "zone.title" },
     { id: "faults", titleKey: "faults.title" },
     { id: "polling", titleKey: "polling.title" },
-    { id: "dpi", titleKey: "dpi.title" },
     { id: "options", titleKey: "options.title" },
     { id: "report", titleKey: "report.title" },
     { id: "mobile", titleKey: "mobile.title" },
@@ -34,7 +33,6 @@ export async function getMouseTesterFaqEntries(): Promise<FaqEntry[]> {
         { question: t("faq.q5"), answer: t("faq.a5") },
         { question: t("faq.q6"), answer: t("faq.a6") },
         { question: t("faq.q7"), answer: t("faq.a7") },
-        { question: t("faq.q8"), answer: t("faq.a8") },
     ];
 }
 
@@ -52,15 +50,7 @@ export async function MouseTesterArticle() {
 
     // Literal unions, so every message key below is checked at compile time.
     const faultRows = ["chatter", "drop", "reversal"] as const;
-    const optionRows = [
-        "window",
-        "hold",
-        "dpiDistance",
-        "dpiStage",
-        "report",
-        "reset",
-        "link",
-    ] as const;
+    const optionRows = ["window", "hold", "report", "reset", "link"] as const;
 
     return (
         <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_14rem] xl:gap-12">
@@ -144,15 +134,6 @@ export async function MouseTesterArticle() {
                         <p>{t.rich("polling.p1", ARTICLE_TAGS)}</p>
                         <p>{t("polling.p2")}</p>
                         <p>{t("polling.p3")}</p>
-                    </div>
-                </ArticleSection>
-
-                <ArticleSection id="dpi" title={t("dpi.title")}>
-                    <div className={PROSE}>
-                        <p>{t("dpi.p1")}</p>
-                        <ArticleExample>{t.rich("dpi.example", ARTICLE_TAGS)}</ArticleExample>
-                        <p>{t("dpi.p2")}</p>
-                        <p>{t("dpi.p3")}</p>
                     </div>
                 </ArticleSection>
 
