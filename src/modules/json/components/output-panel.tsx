@@ -70,6 +70,8 @@ export function OutputPanel({
                     // Dimmed rather than emptied while the debounce settles, so
                     // the panel never flashes between two valid results.
                     pending={pending}
+                    searchable
+                    fullscreenTitle={t("outputLabel")}
                     // `h-*`, never `max-h-*`: a maximum still clamps the height
                     // the browser writes while dragging, so the handle would
                     // stop halfway down a long document.

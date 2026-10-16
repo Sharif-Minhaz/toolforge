@@ -75,7 +75,8 @@ switching notation watches the backdrop stay a language behind the glyphs for
 
 Every JSON _output_ — the formatter, a GraphQL response, the BSON converter's
 Extended JSON, a decoded JWT — renders through `tools/components/json-viewer.tsx`,
-not `CodeBlock`. It adds three things a long document needs:
+not `CodeBlock`. It adds three things a long document needs, and two a caller
+opts into:
 
 - **Virtualized rows.** Rows are a fixed `24px` and never wrap, so the visible
   slice is arithmetic on `scrollTop`; only that slice is in the DOM, and each row
@@ -87,6 +88,20 @@ not `CodeBlock`. It adds three things a long document needs:
   when `[{` share a line. A collapsed fold renders as one row, `"key": {…},`.
 - **Line numbers in a sticky gutter**, as generated content in a column of their
   own, so dragging across the code copies only the code.
+- **Search** (`searchable`). The browser's find cannot see unrendered rows, so
+  the viewer has its own: `domain/line-search.ts` finds matches as line and
+  column, `markTokens` cuts the coloured tokens at match edges so a match keeps
+  its colour and only gains a background, and `revealRange` opens every fold a
+  match is hiding in before the row is scrolled to. Matching is case-insensitive
+  through a regular expression, never by lowercasing a copy — `"İ"` lowercases
+  to two code units and would shift every later column. Ctrl+F inside the viewer
+  opens it; it searches as you type, with no debounce (a filter over text already
+  in memory).
+- **Full screen** (`fullscreenTitle`). The same toolbar and rows move into a
+  bottom `Sheet` sized to the window, as the hex editor and Markdown do. All
+  state lives in `JsonViewer` above both places, and the scroller is attached by
+  a callback ref that restores the last offset, so folds, search and position
+  survive the move.
 
 ---
 

@@ -137,6 +137,10 @@
         "network": {
             "name": "Network",
             "description": "Ask what a name resolves to, and who answers when you do."
+        },
+        "hardware": {
+            "name": "Hardware",
+            "description": "Put the devices on your desk through their paces, and find out what is failing."
         }
     },
     "tools": {
@@ -271,6 +275,10 @@
         "watermark-remover": {
             "name": "Watermark Remover",
             "description": "Brush over a watermark, logo or unwanted object and have that area repainted — or drop in a Gemini image or clip and have its sparkle subtracted in your browser. For work you own or have the right to edit."
+        },
+        "mouse-tester": {
+            "name": "Mouse Tester",
+            "description": "Test every button, the wheel, the polling rate and the real DPI of each stage inside a capture area that blocks Back and Forward, and get a verdict on double-click chatter, drag drops, wheel jump-back and a dead DPI button you can download as evidence."
         },
         "text-to-speech": {
             "name": "Text to Speech",
@@ -2295,7 +2303,8 @@
                 "escapeUnicodeDoes": "Rewrites every character above ASCII as a <code>\\uXXXX</code> escape.",
                 "escapeUnicodeWhen": "The output travels through something that mangles UTF-8 — an old logging pipeline, a terminal paste, a header value.",
                 "interactionNote": "The controls constrain each other, and the interface follows suit rather than lying about it. Minifying removes every space, so the indentation control greys out. Validating reports on the document instead of rewriting it, so indentation, key sorting and Unicode escaping all go quiet — none of them would have anything to act on.",
-                "defaultsNote": "Repair deserves one caveat. It only touches things whose intent is unambiguous: a comma before a closing bracket can only be a trailing comma, and a bare word where a key belongs can only be an unquoted key. It will not guess at an unterminated string, because the closing quote could belong anywhere, and it will not invent a missing bracket. When it does change something, the report says exactly what it changed and how many times."
+                "defaultsNote": "Repair deserves one caveat. It only touches things whose intent is unambiguous: a comma before a closing bracket can only be a trailing comma, and a bare word where a key belongs can only be an unquoted key. It will not guess at an unterminated string, because the closing quote could belong anywhere, and it will not invent a missing bracket. When it does change something, the report says exactly what it changed and how many times.",
+                "outputNote": "The output panel has two controls of its own. Search, from the magnifier or Ctrl+F while the output has focus, highlights every match as you type, steps through them with Enter and Shift+Enter, and opens any folded section a match is hiding in — the browser’s own find cannot help here, because only the lines on screen are drawn. Full screen moves the same output, with its folds and search intact, over the whole window; Escape brings it back."
             },
             "reading": {
                 "title": "Reading an error",
@@ -11944,12 +11953,347 @@
             "not_configured": "Fetching by address is not configured on this deployment. Picking, dropping and pasting all still work."
         }
     },
+    "mouseTester": {
+        "meta": {
+            "title": "Mouse Tester — buttons, double-click chatter, drag drops, wheel and polling rate",
+            "description": "Test every mouse button, the scroll and tilt wheel, the real polling rate and the real DPI in a capture area that blocks Back, Forward and the context menu. Catch double-click chatter, held buttons that drop mid-drag, a wheel that jumps back and a DPI button that does nothing, then download the report as warranty evidence. Nothing is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Hardware",
+            "title": "Mouse Tester",
+            "subtitle": "Click, hold and scroll inside the capture area. Every button and the wheel are counted, Back and Forward cannot leave the page, and a diagnosis tells you whether the switch is chattering, a held button is dropping, or the wheel is jumping back. A ruler swipe measures the real DPI of each stage — and whether the DPI button changes it.",
+            "badgeCapture": "Back and Forward blocked",
+            "badgeDiagnosis": "Chatter, drop and wheel diagnosis",
+            "badgeLocal": "Runs in your browser"
+        },
+        "workbench": {
+            "zoneLabel": "Mouse test area",
+            "zoneActive": "Capturing",
+            "zoneInactive": "Pointer outside",
+            "zoneHint": "Click every button, hold one down, and scroll the wheel both ways here. If a button never lights up, the browser or the mouse’s own software is not passing it to web pages — that is not a fault in the switch.",
+            "currentAction": "Current action",
+            "idle": "Waiting for the mouse",
+            "actions": {
+                "press": "{button} pressed",
+                "release": "{button} released after {seconds} s",
+                "up": "Scroll up",
+                "down": "Scroll down",
+                "left": "Tilt left",
+                "right": "Tilt right",
+                "key": "Key {code}"
+            },
+            "holdTitle": "Hold test",
+            "holding": "{button}: {seconds} / {target} s",
+            "hold": {
+                "notRun": "Not run yet",
+                "passed": "Passed",
+                "dropped": "Dropped"
+            },
+            "holdLast": {
+                "passed": "Last hold {seconds} s — passed",
+                "short": "Let go at {seconds} of {target} s"
+            },
+            "holdHint": "Hold any button down for {seconds} s without letting go. A switch that breaks contact for a few milliseconds is what makes a drag fall out of your hand halfway — a click counter never sees it.",
+            "liveStatistics": "Live statistics",
+            "scrollUpDown": "Scroll ↑ / ↓",
+            "tilt": "Tilt ← / →",
+            "chatter": "Chatter",
+            "drops": "Drops",
+            "reversals": "Wheel jumps",
+            "peakCps": "Peak CPS",
+            "pollingRate": "Polling rate",
+            "pollingStability": "Stability",
+            "hz": "{value} Hz",
+            "jitter": "±{value}%",
+            "pollingIdle": "Move the mouse in circles inside the area.",
+            "pollingClass": "Reads as a {rate} Hz mouse",
+            "pollingUnclassed": "Between standard rates — move faster and steadier",
+            "pollingPeak": "Peak {value} Hz this session",
+            "pollingPeakIdle": "Interval spread between reports",
+            "lastInterval": "Last press-to-press",
+            "intervalReading": "{value} ms · {band, select, fault {fault} fast {fast} other {normal}}",
+            "ms": "{value} ms",
+            "faultWindow": "Fault window",
+            "faultWindowHint": "Two presses of one button closer than this are counted as a bounce. Applies to presses from now on; reset to re-test at a new window.",
+            "eventLog": "Event log",
+            "downloadReport": "Report",
+            "reset": "Reset",
+            "keys": "Keys",
+            "noMouse": {
+                "title": "No mouse detected",
+                "body": "This tester reads a mouse; a finger on a touch screen is not counted. Connect a mouse by USB-OTG or Bluetooth — Android phones and iPads both take one — and the area wakes up as soon as it moves."
+            }
+        },
+        "buttons": {
+            "left": "Left",
+            "middle": "Middle",
+            "right": "Right",
+            "back": "Back",
+            "forward": "Forward"
+        },
+        "verdicts": {
+            "untested": "Not tested",
+            "testing": "Testing",
+            "healthy": "Healthy",
+            "suspect": "Suspect",
+            "faulty": "Faulty"
+        },
+        "faults": {
+            "chatter": "Chatter",
+            "drop": "Drop",
+            "reversal": "Jump-back"
+        },
+        "diagnosis": {
+            "title": "Diagnosis",
+            "caption": "Verdict for each button, the wheel and the hold test",
+            "colControl": "Control",
+            "colUses": "Uses",
+            "colFaults": "Faults",
+            "colVerdict": "Verdict",
+            "wheel": "Wheel",
+            "usesOf": "{uses} / {needed}",
+            "holdRow": "Hold",
+            "hold": {
+                "notRun": "Not run",
+                "passed": "Passed",
+                "dropped": "Dropped"
+            },
+            "holdDetail": {
+                "notRun": "Hold any button {seconds} s",
+                "passed": "Held {seconds} s unbroken",
+                "dropped": "A hold broke"
+            },
+            "overall": {
+                "untested": "Click every button and scroll the wheel both ways to start the diagnosis.",
+                "testing": "No faults so far. Keep going: each button needs {presses} presses and the wheel {notches} notches before it is called healthy.",
+                "healthy": "No faults found. Every control you tested behaved.",
+                "suspect": "One fault seen. Repeat the test on the flagged control — a single reading can be a fluke.",
+                "faulty": "This mouse is faulting. Download the report: it lists every fault with its time and measurement."
+            }
+        },
+        "log": {
+            "label": "Mouse events, newest first",
+            "empty": "Nothing yet. Events appear here as you use the mouse inside the area.",
+            "press": "{button} press",
+            "release": "{button} release · held {seconds} s",
+            "wheel": {
+                "up": "Scroll up",
+                "down": "Scroll down",
+                "left": "Tilt left",
+                "right": "Tilt right"
+            },
+            "interval": "+{value} ms",
+            "at": "{seconds} s",
+            "key": "Key {code}"
+        },
+        "report": {
+            "title": "ToolForge mouse test report",
+            "generated": "Generated: {date}",
+            "browser": "Browser: {agent}",
+            "duration": "Session length: {seconds} s",
+            "window": "Fault window: {window} press to press",
+            "overall": "Overall verdict: {verdict}",
+            "hold": "Hold test: {result}",
+            "polling": "Polling rate: {median} Hz median, ±{jitter}% jitter, over {samples} intervals",
+            "pollingNone": "Polling rate: not measured",
+            "controlsHeading": "Controls",
+            "faultsHeading": "Faults",
+            "noFaults": "None recorded.",
+            "fault": "{at} s  {kind}  {control}  {gap}",
+            "truncated": "The list stops at 500 faults; the counts above include every one.",
+            "ms": "{value} ms",
+            "dpiHeading": "DPI",
+            "dpiNone": "Not measured.",
+            "dpiStage": "Stage {stage}: {dpi} DPI over {swipes, plural, one {# swipe} other {# swipes}}",
+            "dpiRatio": "×{ratio} the stage before",
+            "dpiUnchanged": "same as the stage before — the DPI button did not change it"
+        },
+        "toast": {
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The download could not start."
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "article": {
+            "understanding": {
+                "title": "What a mouse tester tells you",
+                "p1": "It counts what your mouse sends when you press, hold and scroll, and says whether that matches what your hand did. A healthy switch sends one press per press; a worn one sometimes sends two.",
+                "example": "<code>press 0 ms → release 6 ms → press 9 ms</code> → one finger, two clicks: chatter, caught at 9 ms press to press",
+                "p2": "The capture area is what makes the test possible. Inside it the side buttons cannot send the page back, the right button opens no menu and the wheel scrolls nothing, so you can press everything as often as you like and only the counters move."
+            },
+            "zone": {
+                "title": "The capture area",
+                "p1": "Browsers act on mouse buttons before a page sees most of them: Back and Forward navigate on release, the middle button starts autoscroll, the right button opens a menu and the wheel scrolls. Inside the area each of those is cancelled, and a press that started there is cancelled wherever you let go — so a Back press dragged off the edge still does not leave the page.",
+                "p2": "What it cannot block is anything the browser never hands to a page. Some mouse software remaps side buttons to keystrokes before the browser sees them, and some browsers keep a button for themselves. A button that never lights up is one of those, not a broken switch — test it again with the vendor software closed."
+            },
+            "faults": {
+                "title": "Three ways a mouse fails",
+                "intro": "Other testers count double clicks. This one separates the three faults a browser can actually see, because each one has a different cause and a different fix.",
+                "tableCaption": "Each fault the tester detects, what it looks like and how it is caught",
+                "colFault": "Fault",
+                "colSees": "What the browser sees",
+                "colFeels": "What you notice",
+                "colCaught": "How it is caught",
+                "chatterName": "Chatter",
+                "chatterSees": "Two presses of one button within milliseconds",
+                "chatterFeels": "Single clicks that open things, double clicks you did not make",
+                "chatterCaught": "Press to press inside the fault window, or a release-to-press gap under 12 ms",
+                "dropName": "Drop",
+                "dropSees": "A held button released for a few milliseconds, then pressed again",
+                "dropFeels": "A drag that lets go halfway, a selection that ends early",
+                "dropCaught": "A hold of at least 200 ms broken for less than the fault window",
+                "reversalName": "Jump-back",
+                "reversalSees": "One wheel notch the wrong way inside a steady scroll",
+                "reversalFeels": "A page that jerks back while you scroll down",
+                "reversalCaught": "A wrong-way notch with a same-way notch within 150 ms on each side",
+                "note": "Chatter and drops look alike on the wire — a release followed almost at once by a press — and only the hold before them tells them apart. Nobody holds a button for a fifth of a second and clicks it again inside fifty milliseconds, so a long hold followed by a short gap is a drop. A short gap after a short press is chatter."
+            },
+            "polling": {
+                "title": "Measuring the polling rate honestly",
+                "p1": "A browser delivers pointer movement once per screen refresh, so a tester that counts events measures your display — 60, 120, 144 — whatever the mouse is doing. Every report the mouse sent in between is still there, with its own timestamp, in <code>getCoalescedEvents()</code>. This tester reads those, so a 1000 Hz mouse reads as 1000 Hz on a 60 Hz screen.",
+                "p2": "The rate shown is from the median interval, not the average, so the moment your hand turns round does not drag it down. Stability is how much the intervals vary: a wired mouse sits within a few percent, a wireless one in power-saving mode wanders, and a large figure on a wired mouse usually means a busy USB hub or a driver that batches reports.",
+                "p3": "Move the mouse in quick, steady circles for a couple of seconds. A browser without coalesced events falls back to one sample per frame, and then the reading is your refresh rate, not the mouse’s."
+            },
+            "dpi": {
+                "title": "Measuring DPI, and testing the DPI button",
+                "p1": "A DPI button is handled inside the mouse: it changes the sensor’s setting and sends the computer nothing, so no web page — this one included — can see it pressed. Its effect can be seen. The same hand movement produces more or fewer sensor counts, and counts over distance is DPI.",
+                "example": "<code>6,299 counts</code> over <code>10 cm</code> → 1,600 DPI, because 10 cm is 3.94 inches",
+                "p2": "So the test is a swipe of known length. The pointer is locked, so the screen edge cannot cut a swipe short; you move the mouse along a ruler and click. Swipe once per stage, pressing the DPI button between them, and a stage that reads within 5% of the one before is a button that did nothing.",
+                "p3": "Chrome and Edge can report the sensor’s raw counts, before the operating system’s acceleration curve. Other browsers report the accelerated movement, which only matches the sensor with acceleration off — the panel says which one you got. A DPI button remapped to a keystroke in the vendor software shows up instead in the event log, as the key it types."
+            },
+            "options": {
+                "title": "Every setting, and when to change it",
+                "intro": "There is one setting. Everything else is a fixed threshold, listed under the table, because a diagnosis whose rules move is not evidence.",
+                "tableCaption": "What each control does and when it is worth changing",
+                "colOption": "Control",
+                "colDoes": "What it does",
+                "colWhen": "Reach for it when",
+                "windowName": "Fault window",
+                "windowDoes": "Sets how close, press to press, two presses of one button must be to count as chatter. 20 to 120 ms, 50 by default.",
+                "windowWhen": "Raise it to catch a borderline switch; lower it if you click very fast on purpose and the tester flags you.",
+                "holdName": "Hold test",
+                "holdDoes": "Passes once any button has been held for 3 s without a break, and fails on any drop.",
+                "holdWhen": "Drags fall out of your hand, or a selection stops short.",
+                "reportName": "Report",
+                "reportDoes": "Downloads a plain-text summary: the verdict for every control, the polling rate, and every fault with its time and measurement.",
+                "reportWhen": "You are claiming a warranty, returning a mouse, or selling one.",
+                "resetName": "Reset",
+                "resetDoes": "Clears every count, the log and the polling reading.",
+                "resetWhen": "You changed the fault window, or want to test a second mouse.",
+                "linkName": "<code>?window=</code>",
+                "linkDoes": "Opens the tester with that fault window set, in 5 ms steps.",
+                "linkWhen": "A support page wants every customer tested at the same threshold.",
+                "dpiDistanceName": "Ruler distance",
+                "dpiDistanceDoes": "How far you will move the mouse in a DPI swipe, in centimetres or inches. 10 cm by default.",
+                "dpiDistanceWhen": "Your ruler or mouse pad is shorter or longer; a longer swipe reads more accurately.",
+                "dpiStageName": "Next DPI stage",
+                "dpiStageDoes": "Starts a new stage, so the next swipes are compared with the stage before.",
+                "dpiStageWhen": "You have just pressed the DPI button on the mouse.",
+                "thresholdsNote": "The fixed thresholds: a release-to-press gap under 12 ms is chatter whatever the window, because no hand releases and presses that fast. A hold breaks only after 200 ms. A wheel jump-back needs same-way notches within 150 ms on both sides. A button is called healthy after 20 clean presses and the wheel after 30 clean notches; one fault makes it suspect, and three faults or a fault rate of 5% make it faulty.",
+                "defaultsNote": "Fifty milliseconds is twenty clicks a second from one finger, which nobody sustains — and it is the figure the vendor testers use, so a reading here means the same thing as a reading there."
+            },
+            "report": {
+                "title": "A report you can send",
+                "p1": "“It double clicks sometimes” is a claim. “Eleven presses of the left button under 50 ms, the shortest 4 ms, over two minutes” is evidence. The report says exactly that, with the browser it was measured in and the threshold it was measured at.",
+                "p2": "It is plain text, because it is the one format every returns form accepts and every mail client shows inline. Times are counted from the first event, and the date is written in UTC, so whoever reads it sees the same thing you did."
+            },
+            "mobile": {
+                "title": "On a phone or tablet",
+                "p1": "A phone has no mouse, so there is nothing for the tester to measure, and a tap is deliberately not counted as a click. When no mouse is detected a notice says so above the test area. Plug a mouse in by USB-OTG or pair one over Bluetooth — Android and iPadOS both take one — and the area works as it does on a desktop.",
+                "p2": "Two limits are the platform’s, not the tester’s. Android may treat the Back side button as the system Back gesture, which no page can cancel. Safari on iPad may not pass side buttons to pages at all, and has no pointer lock, so the DPI test is not available there."
+            },
+            "useCases": {
+                "title": "When to reach for it",
+                "p1": "Before a warranty claim, to turn a suspicion into numbers. Before buying or selling a used mouse, to check the switches in a minute. After cleaning or replacing a switch, to see whether the fix held.",
+                "p2": "And when a game feels off: the polling reading tells you whether the mouse is running at the rate you set in its software, and the stability figure whether something between it and the computer is getting in the way."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Why doesn’t the Back button take me back?",
+                "a1": "Inside the capture area it is cancelled, so you can press it as often as the test needs. Outside the area it works as usual.",
+                "q2": "Is a chatter reading proof the switch is broken?",
+                "a2": "One reading is a hint; several are a pattern. That is why one fault makes a button suspect and three make it faulty. Repeat the test on the flagged button before deciding.",
+                "q3": "Why does my polling rate read 60 or 144?",
+                "a3": "Your browser is not providing coalesced pointer events, so the tester can only sample once per frame — and the frame rate is what it measures. Try a current Chrome, Edge or Firefox.",
+                "q4": "Can this fix a double-clicking mouse?",
+                "a4": "No page can — the fault is in the switch. What it can do is tell you which switch and how often, which is what a warranty claim or a repair needs.",
+                "q5": "Why is my tilt wheel not part of the wheel verdict?",
+                "a5": "A tilt is a pair of switches, not an encoder, so it cannot jump back. Its presses are counted in the tiles; the wheel verdict covers up and down only.",
+                "q6": "Is anything sent anywhere?",
+                "a6": "No. Every event is read and judged in this tab, and the report is written there too.",
+                "q7": "Why can’t it see me press the DPI button?",
+                "a7": "Because the computer never hears about it — the mouse changes its own sensor setting. The DPI test measures the result instead: swipe, press the button, swipe again, and see whether the DPI changed.",
+                "q8": "Can I test a mouse on my phone?",
+                "a8": "Yes, if a mouse is connected to it by USB-OTG or Bluetooth. Taps on the screen are not counted, and the DPI test needs a browser with pointer lock, which iPhone and iPad Safari do not have."
+            }
+        },
+        "dpi": {
+            "title": "DPI and the DPI button",
+            "intro": "A DPI button changes a setting inside the mouse and sends nothing to the computer, so no page can see it pressed. What can be seen is its effect: the same movement produces a different number of sensor counts. Swipe a measured distance to read the real DPI, press the DPI button, move to the next stage and swipe again.",
+            "unsupported": "This browser cannot lock the pointer, which the DPI test needs — Safari on iPhone and iPad cannot. Use a desktop browser with the mouse plugged in.",
+            "distance": "Ruler distance",
+            "unit": "Unit",
+            "units": {
+                "cm": "cm",
+                "in": "in"
+            },
+            "distanceHint": "Between {min} and {max} {unit}. Longer swipes read more accurately.",
+            "errors": {
+                "tooShort": "That swipe was too short to read. Move the full distance along the ruler before clicking.",
+                "invalidDistance": "Enter the distance you will move, within the range below.",
+                "lockFailed": "The browser refused to lock the pointer. Wait a second after pressing Escape, then try again."
+            },
+            "counts": "{value} counts",
+            "padIdle": "Lay a ruler beside the mouse, then press Start.",
+            "padArmed": "Line the mouse up with 0 on the ruler, then click — or press Space — to begin.",
+            "padMeasuring": "Move exactly {distance} {unit} along the ruler, then click or press Space.",
+            "escHint": "Escape releases the pointer.",
+            "start": "Swipe stage {stage}",
+            "nextStage": "Next DPI stage",
+            "clear": "Clear",
+            "browserHint": "Most accurate in Chrome or Edge, which can report the sensor’s raw counts.",
+            "rawYes": "Raw sensor counts — pointer acceleration does not affect this reading.",
+            "rawNo": "This browser reports movement after pointer acceleration, so the reading is only right with acceleration turned off (Windows: Enhance pointer precision; macOS: a lower tracking speed). Chrome and Edge read the raw counts.",
+            "empty": "No swipes yet. Two or three per stage give a steady reading.",
+            "caption": "Measured DPI for each stage, compared with the stage before",
+            "colStage": "Stage",
+            "colDpi": "DPI",
+            "colNearest": "Reads as",
+            "colChange": "Change",
+            "stageLabel": "Stage {stage}",
+            "swipes": "{count, plural, one {# swipe} other {# swipes}}",
+            "nearestNone": "Between common settings",
+            "nearest": "≈ {setting} ({deviation})",
+            "unchanged": "Same as the stage before — the DPI button did not change it",
+            "spread": "Swipes disagree by {percent} — keep the mouse square to the ruler",
+            "change": "×{ratio}",
+            "stageHint": "To test the DPI button: swipe, press the DPI button on the mouse, press Next DPI stage, swipe again. A stage that reads the same as the one before is a button that did nothing."
+        }
+    },
     "codeViewer": {
         "lineCount": "{count, plural, one {# line} other {# lines}}",
         "collapseAll": "Collapse all",
         "expandAll": "Expand all",
         "collapse": "Collapse lines {start}–{end}",
-        "expand": "Expand lines {start}–{end}"
+        "expand": "Expand lines {start}–{end}",
+        "fullscreen": "Full screen",
+        "exitFullscreen": "Exit full screen",
+        "fullscreenActive": "The output is open in full screen. Press Escape, or the button below, to bring it back here.",
+        "fullscreenDescription": "The same output, folds and search, filling the window.",
+        "search": {
+            "open": "Search the output",
+            "title": "Search the output",
+            "queryLabel": "Text to find",
+            "placeholder": "Find in output…",
+            "matchCase": "Match case",
+            "previous": "Previous match",
+            "next": "Next match",
+            "close": "Close search",
+            "noMatches": "No matches",
+            "counter": "{index} of {count}",
+            "atLeast": "{count}+"
+        }
     },
     "compareSlider": {
         "before": "Original",
@@ -12070,7 +12414,7 @@
             },
             "absent": {
                 "title": "What is not here, and why",
-                "p1": "Four groups are missing on purpose. Each one is a fact about the tool rather than a gap in the endpoint, and <code>toolforge_catalog_list</code> returns the web address of every one of them so an assistant can send you to the page instead of reporting a dead end.",
+                "p1": "Five groups are missing on purpose. Each one is a fact about the tool rather than a gap in the endpoint, and <code>toolforge_catalog_list</code> returns the web address of every one of them so an assistant can send you to the page instead of reporting a dead end.",
                 "images": {
                     "title": "The image tools",
                     "body": "The compressor, converter, resizer, blur placeholder and background remover decode pixels in a canvas and re-encode them through WebAssembly codecs built for a browser. There is no canvas in a request handler, and a server-side reimplementation would be a second encoder to keep in step with the first. The background remover adds a second reason: its segmentation weights are fetched into the reader's own browser and cached there, so running it here would move a hundred-megabyte download and the inference behind it onto this deployment for every call."
@@ -12086,6 +12430,10 @@
                 "scanner": {
                     "title": "The port scanner",
                     "body": "Its whole function is to touch somebody else's host on ports they did not offer. Behind a model that can be talked into things, a token is not the protection it looks like."
+                },
+                "hardware": {
+                    "title": "The mouse tester",
+                    "body": "The mouse tester measures a physical mouse in a browser: the timing between presses, the wheel and the pointer reports that arrive between frames. An MCP call has no mouse on the other end of it, and a tool that took a list of timestamps instead would be one nobody had a reason to call."
                 }
             },
             "faq": {

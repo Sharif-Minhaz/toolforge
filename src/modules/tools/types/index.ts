@@ -7,6 +7,7 @@ export const TOOL_CATEGORIES = [
     "text",
     "media",
     "ai",
+    "hardware",
 ] as const;
 
 export type ToolCategory = (typeof TOOL_CATEGORIES)[number];
@@ -61,6 +62,7 @@ export const TOOL_IDS = [
     "hex-editor",
     "image-to-3d",
     "text-to-speech",
+    "mouse-tester",
 ] as const;
 
 export type ToolId = (typeof TOOL_IDS)[number];
@@ -136,7 +138,8 @@ export type ToolIconName =
     | "globe"
     | "hex"
     | "cube"
-    | "speech";
+    | "speech"
+    | "mouse";
 
 export type Tool = {
     readonly id: ToolId;

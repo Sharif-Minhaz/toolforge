@@ -4,6 +4,7 @@ import {
     collapseAllTargets,
     findJsonFolds,
     longestLineColumns,
+    revealRange,
     splitLines,
     visibleLines,
 } from "@/modules/tools/domain/json-outline";
@@ -152,5 +153,36 @@ describe("longestLineColumns", () => {
 
     test("is zero for nothing", () => {
         expect(longestLineColumns([])).toBe(0);
+    });
+});
+
+describe("revealRange", () => {
+    const folds = findJsonFolds(DOCUMENT);
+
+    test("opens every collapsed fold around a hidden line, at any depth", () => {
+        const collapsed = new Set([0, 8, 9]);
+
+        expect([...revealRange(collapsed, folds, 10, 6, 13)]).toEqual([]);
+    });
+
+    test("leaves folds that do not enclose the line alone", () => {
+        const collapsed = new Set([2, 9]);
+
+        expect([...revealRange(collapsed, folds, 6, 4, 10)]).toEqual([2, 9]);
+    });
+
+    test("keeps a fold whose collapsed row still shows the match", () => {
+        const collapsed = new Set([5]);
+
+        // `"address": {` up to the bracket, and `},` from the bracket on.
+        expect(revealRange(collapsed, folds, 5, 2, 11)).toBe(collapsed);
+        expect(revealRange(collapsed, folds, 7, 2, 4)).toBe(collapsed);
+    });
+
+    test("opens a fold when the match runs past what its collapsed row shows", () => {
+        const opening = findJsonFolds('{ "a": 1,\n  "b": 2\n}');
+
+        expect([...revealRange(new Set([0]), opening, 0, 2, 5)]).toEqual([]);
+        expect([...revealRange(new Set([0]), opening, 2, 0, 1)]).toEqual([0]);
     });
 });

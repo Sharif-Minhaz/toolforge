@@ -14,9 +14,9 @@ import {
     MAX_SEARCH_PATTERN_BYTES,
     MAX_SEARCH_QUERY_LENGTH,
 } from "../domain/constants";
+import { ToolbarIconButton } from "@/modules/tools/components/toolbar-icon-button";
 import { matchIndexAt } from "../domain/search";
 import { SEARCH_MODES, type SearchFailureReason, type SearchMode } from "../types";
-import { HexIconButton } from "./hex-icon-button";
 import { useHexStore } from "./hex-store";
 
 /**
@@ -227,7 +227,7 @@ export function SearchDock({
                     off the caret rather than off a stored index, so clicking a
                     byte or jumping with Go To moves it too. */}
                 <div className="flex shrink-0 items-center gap-0.5">
-                    <HexIconButton
+                    <ToolbarIconButton
                         label={t("previous")}
                         shortcut="Shift+Enter"
                         Icon={IconChevronUp}
@@ -242,7 +242,7 @@ export function SearchDock({
                             })}
                         </span>
                     )}
-                    <HexIconButton
+                    <ToolbarIconButton
                         label={t("next")}
                         shortcut="Enter"
                         Icon={IconChevronDown}
@@ -265,7 +265,7 @@ export function SearchDock({
                 </Button>
 
                 <div className="ml-auto shrink-0 pl-1">
-                    <HexIconButton
+                    <ToolbarIconButton
                         label={t("close")}
                         shortcut="Esc"
                         Icon={IconX}

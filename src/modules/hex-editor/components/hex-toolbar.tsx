@@ -28,15 +28,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { ToolbarIconButton } from "@/modules/tools/components/toolbar-icon-button";
 import { HEX_COLUMNS } from "../types";
-import { HexIconButton } from "./hex-icon-button";
 import { selectCanRedo, selectCanUndo, selectIsDirty, useHexStore } from "./hex-store";
 
 /**
  * The row of controls above the grid. Dumb by construction: every button calls
  * a prop, and the only state it reads is what has to grey a control out.
  *
- * Every square control is a `HexIconButton`, which carries the name and the
+ * Every square control is a `ToolbarIconButton`, which carries the name and the
  * shortcut in a tooltip rather than beside the icon — so the row still fits at
  * 390 px and nothing is announced only by a picture.
  */
@@ -93,27 +93,27 @@ export function HexToolbar({
 
     return (
         <div className="border-border/70 flex shrink-0 flex-wrap items-center gap-1 border-b px-2 py-1.5">
-            <HexIconButton
+            <ToolbarIconButton
                 label={t("open")}
                 shortcut="Ctrl+O"
                 Icon={IconFolderOpen}
                 onClick={onOpen}
             />
-            <HexIconButton
+            <ToolbarIconButton
                 label={t("save")}
                 shortcut="Ctrl+S"
                 Icon={IconDeviceFloppy}
                 onClick={onSave}
                 disabled={!open}
             />
-            <HexIconButton
+            <ToolbarIconButton
                 label={t("saveAs")}
                 shortcut="Ctrl+Shift+S"
                 Icon={IconFileExport}
                 onClick={onSaveAs}
                 disabled={!open}
             />
-            <HexIconButton
+            <ToolbarIconButton
                 label={t("reload")}
                 Icon={IconRefresh}
                 onClick={onReload}
@@ -122,14 +122,14 @@ export function HexToolbar({
 
             <Separator orientation="vertical" className="mx-1 h-5" />
 
-            <HexIconButton
+            <ToolbarIconButton
                 label={t("undo")}
                 shortcut="Ctrl+Z"
                 Icon={IconArrowBackUp}
                 onClick={undoEdit}
                 disabled={!canUndo}
             />
-            <HexIconButton
+            <ToolbarIconButton
                 label={t("redo")}
                 shortcut="Ctrl+Y"
                 Icon={IconArrowForwardUp}
@@ -139,7 +139,7 @@ export function HexToolbar({
 
             <Separator orientation="vertical" className="mx-1 h-5" />
 
-            <HexIconButton
+            <ToolbarIconButton
                 label={t("find")}
                 shortcut="Ctrl+F"
                 Icon={IconSearch}
@@ -147,7 +147,7 @@ export function HexToolbar({
                 disabled={!open}
                 pressed={searchOpen}
             />
-            <HexIconButton
+            <ToolbarIconButton
                 label={t("goTo")}
                 shortcut="Ctrl+G"
                 Icon={IconTargetArrow}
@@ -214,13 +214,13 @@ export function HexToolbar({
                 is the one thing a reader of a hex dump is always short of. They
                 are toggles rather than buttons, so they say what state they are
                 in rather than what pressing them would do. */}
-            <HexIconButton
+            <ToolbarIconButton
                 label={inspectorOpen ? t("hideInspector") : t("showInspector")}
                 Icon={inspectorOpen ? IconLayoutSidebarFilled : IconLayoutSidebar}
                 onClick={onToggleInspector}
                 pressed={inspectorOpen}
             />
-            <HexIconButton
+            <ToolbarIconButton
                 label={fullscreen ? t("exitFullscreen") : t("fullscreen")}
                 Icon={fullscreen ? IconArrowsMinimize : IconArrowsMaximize}
                 onClick={onToggleFullscreen}

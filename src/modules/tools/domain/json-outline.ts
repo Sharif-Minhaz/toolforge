@@ -176,3 +176,50 @@ export function longestLineColumns(lines: readonly string[]): number {
 
     return widest;
 }
+
+/**
+ * The collapsed set with every fold that hides `[start, end)` on `line` opened,
+ * so stepping to a search match never lands on a row that is not drawn.
+ *
+ * A collapsed fold still shows its first line up to the bracket and its last
+ * line from the bracket on, so a match inside either of those stays folded.
+ * Anything else between the two brackets is hidden, at any depth — which is why
+ * every enclosing fold is checked, not only the innermost.
+ */
+export function revealRange(
+    collapsed: ReadonlySet<number>,
+    folds: ReadonlyMap<number, JsonFold>,
+    line: number,
+    start: number,
+    end: number,
+): ReadonlySet<number> {
+    const hiding = [...collapsed].filter((startLine) => {
+        const fold = folds.get(startLine);
+
+        if (fold === undefined || line < fold.startLine || line > fold.endLine) {
+            return false;
+        }
+
+        if (line === fold.startLine) {
+            return end > fold.openEnd;
+        }
+
+        if (line === fold.endLine) {
+            return start < fold.closeStart;
+        }
+
+        return true;
+    });
+
+    if (hiding.length === 0) {
+        return collapsed;
+    }
+
+    const next = new Set(collapsed);
+
+    for (const startLine of hiding) {
+        next.delete(startLine);
+    }
+
+    return next;
+}

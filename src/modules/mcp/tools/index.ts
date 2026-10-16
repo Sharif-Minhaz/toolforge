@@ -102,6 +102,12 @@ import { uuidGenerateTool } from "./uuid";
  * here whose whole function is to touch somebody else's host on ports they did
  * not offer, and behind a model that can be talked into things, a token is not
  * the protection it looks like.
+ *
+ * The Mouse Tester is absent because there is nothing on the other end of an
+ * MCP call to test. What it measures is a physical mouse in a browser — the
+ * gaps between presses, the wheel, the pointer reports coalesced between
+ * frames — and an adapter that took a list of timestamps instead would be a
+ * tool nobody had a reason to call.
  */
 export const MCP_TOOLS: readonly McpTool[] = [
     aesCryptTool,

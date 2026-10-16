@@ -73,7 +73,7 @@ export async function McpArticle() {
     const [t, faqs] = await Promise.all([getTranslations("mcp.article"), getMcpFaqEntries()]);
 
     const exampleKeys = ["decode", "hash", "cron", "diff", "domain"] as const;
-    const absentKeys = ["images", "studios", "ai", "scanner"] as const;
+    const absentKeys = ["images", "studios", "ai", "scanner", "hardware"] as const;
 
     return (
         <>

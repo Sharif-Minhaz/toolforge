@@ -16,11 +16,11 @@ import { cn } from "@/lib/utils";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
 import { copyText } from "@/modules/tools/domain/clipboard";
+import { ToolbarIconButton } from "@/modules/tools/components/toolbar-icon-button";
 import { INSPECTOR_WINDOW_BYTES } from "../domain/constants";
 import { formatOffset } from "../domain/format";
 import { readInspector } from "../domain/inspector";
 import { ENDIANNESS, type Endianness, type InspectorKey } from "../types";
-import { HexIconButton } from "./hex-icon-button";
 import { useHexStore } from "./hex-store";
 
 /**
@@ -90,7 +90,7 @@ export function DataInspector({ onClose }: { onClose: () => void }) {
                     </p>
                 </div>
                 <div className="-mt-1 -mr-1 shrink-0">
-                    <HexIconButton label={t("close")} Icon={IconX} onClick={onClose} />
+                    <ToolbarIconButton label={t("close")} Icon={IconX} onClick={onClose} />
                 </div>
             </div>
 

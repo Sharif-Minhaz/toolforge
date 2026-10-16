@@ -269,6 +269,7 @@ export async function JsonArticle() {
                     <div className={`mt-5 ${PROSE}`}>
                         <p>{t("options.interactionNote")}</p>
                         <p>{t("options.defaultsNote")}</p>
+                        <p>{t("options.outputNote")}</p>
                     </div>
                 </ArticleSection>
 

@@ -7,14 +7,15 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils";
 
 /**
- * The square icon button the toolbar and the find bar are both built from.
+ * The square icon button a dense toolbar is built from — the hex editor's
+ * toolbar and find bar, and the JSON viewer's.
  *
- * Icon-only by design: the toolbar has to stay one row at 390 px. The name and
+ * Icon-only by design: a toolbar has to stay one row at 390 px. The name and
  * the shortcut live in the tooltip and in `aria-label`, so nothing is announced
  * only by a picture, and a shortcut is still discoverable by anyone who hovers
  * or focuses the control.
  */
-export type HexIconButtonProps = {
+export type ToolbarIconButtonProps = {
     label: string;
     shortcut?: string;
     Icon: ComponentType<IconProps>;
@@ -24,14 +25,14 @@ export type HexIconButtonProps = {
     pressed?: boolean;
 };
 
-export function HexIconButton({
+export function ToolbarIconButton({
     label,
     shortcut,
     Icon,
     onClick,
     disabled,
     pressed,
-}: HexIconButtonProps) {
+}: ToolbarIconButtonProps) {
     return (
         <Tooltip>
             <TooltipTrigger

@@ -1412,6 +1412,42 @@ const TOOLS: readonly Tool[] = [
             "2d to 3d converter",
         ],
     },
+    {
+        id: "mouse-tester",
+        href: "/tools/mouse-tester",
+        category: "hardware",
+        status: "available",
+        // Every event is read and judged in the tab; the report is written there
+        // too. Nothing about the mouse, or the person holding it, is sent.
+        runsOn: "browser",
+        accent: "cyan",
+        icon: "mouse",
+        addedOn: "2026-10-17",
+        featured: false,
+        popularity: 72,
+        keywords: [
+            "mouse test",
+            "mouse button test",
+            "click test",
+            "double click test",
+            "double click fix",
+            "mouse chatter",
+            "switch bounce",
+            "debounce",
+            "scroll wheel test",
+            "wheel jumping",
+            "polling rate",
+            "polling rate test",
+            "hz test",
+            "side buttons",
+            "mouse 4",
+            "mouse 5",
+            "drag test",
+            "cps",
+            "rma",
+            "warranty",
+        ],
+    },
 ];
 
 export function getTools(): readonly Tool[] {

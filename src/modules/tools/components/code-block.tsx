@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { highlight, type HighlightLanguage, type Token, type TokenKind } from "../domain/highlight";
+import type { MarkedToken } from "../domain/line-search";
 
 /**
  * Every property that decides where a glyph lands. The editor paints its
@@ -57,6 +58,33 @@ export function TokenSpans({ tokens }: { tokens: readonly Token[] }) {
         <>
             {tokens.map((token, index) => (
                 <span key={index} className={TOKEN_CLASS[token.kind]}>
+                    {token.text}
+                </span>
+            ))}
+        </>
+    );
+}
+
+/**
+ * The same spans with search matches painted behind them. A match keeps the
+ * colour of the token it sits in and only gains a background, so a highlighted
+ * key still reads as a key. The active one carries `data-match`, which is how
+ * the viewer finds it to bring it into view sideways.
+ */
+export function MarkedTokenSpans({ tokens }: { tokens: readonly MarkedToken[] }) {
+    return (
+        <>
+            {tokens.map((token, index) => (
+                <span
+                    key={index}
+                    data-match={token.mark ?? undefined}
+                    className={cn(
+                        TOKEN_CLASS[token.kind],
+                        token.mark === "match" && "bg-syntax-number/25 rounded-[2px]",
+                        token.mark === "active" &&
+                            "bg-syntax-number/55 ring-syntax-number rounded-[2px] ring-1",
+                    )}
+                >
                     {token.text}
                 </span>
             ))}
