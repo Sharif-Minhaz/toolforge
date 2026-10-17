@@ -379,7 +379,7 @@ export function BackgroundRemoverWorkbench({
         const startedAt = performance.now();
 
         try {
-            const input = await toSegmentationInput(sheet.element, sheet.facts);
+            const input = await toSegmentationInput(sheet.element);
 
             if (input === null) {
                 fail(sheet.id, "compose_failed");

@@ -196,10 +196,7 @@ async function cutSubjectOut(
     }
 
     try {
-        const input = await toSegmentationInput(canvas, {
-            width: pixels.width,
-            height: pixels.height,
-        });
+        const input = await toSegmentationInput(canvas);
 
         if (input === null) {
             return { pixels: null, failure: "removal_failed" };

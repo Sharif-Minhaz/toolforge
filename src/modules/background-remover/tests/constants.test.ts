@@ -1,31 +1,31 @@
 import { describe, expect, test } from "bun:test";
 
-import { MAX_SEGMENTATION_SIDE } from "@/modules/tools/domain/segmentation";
+import { SEGMENTATION_SIDE } from "@/modules/tools/domain/segmentation";
 
 import { MAX_BLUR_RENDER_SIDE, MAX_COMPOSITE_SIDE } from "../domain/constants";
 
 /**
  * The three size ceilings, and the relationships between them.
  *
- * `MAX_SEGMENTATION_SIDE` moved to the shared layer with the model it belongs
+ * `SEGMENTATION_SIDE` moved to the shared layer with the model it belongs
  * to; the other two are this tool's alone. What is asserted here is how they sit
  * against each other, which is a fact about compositing rather than about
  * segmentation — so it stayed behind when the model driver left.
  */
 describe("the size ceilings", () => {
     test("segmentation runs at the model's own input size, and no larger", () => {
-        // Anything above 1024 is scaled to 1024 × 1024 by the library before
-        // inference — in a JavaScript bilinear loop on the main thread — and the
-        // mask is scaled back the same way. Feeding it more bought nothing at
-        // the boundary and cost several times the main-thread work.
-        expect(MAX_SEGMENTATION_SIDE).toBe(1024);
+        // The library scales every input to 1024 × 1024 before inference — in a
+        // JavaScript bilinear loop on the main thread — and the mask back the
+        // same way. Feeding it more bought nothing at the boundary and cost
+        // several times the main-thread work.
+        expect(SEGMENTATION_SIDE).toBe(1024);
     });
 
     test("the composite ceiling is well above the segmentation one", () => {
         // The subject's own pixels come from the original, not from the
         // segmentation copy, so the output is allowed to be much larger than the
         // mask that shaped it.
-        expect(MAX_COMPOSITE_SIDE).toBeGreaterThan(MAX_SEGMENTATION_SIDE);
+        expect(MAX_COMPOSITE_SIDE).toBeGreaterThan(SEGMENTATION_SIDE);
     });
 
     test("the blur canvas is far smaller than the composite it is scaled onto", () => {

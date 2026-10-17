@@ -7,7 +7,6 @@ import type {
 import type { PixelSize } from "../types";
 import { createCanvas, context2d, releaseCanvas } from "./canvas";
 import { rememberFetchedQuality } from "./cutout-memory";
-import { fitWithinEdge } from "./pixels";
 
 /**
  * Driving the subject-segmentation model.
@@ -73,12 +72,19 @@ export const DEFAULT_CUTOUT_QUALITY: CutoutQuality = "balanced";
 export const RUNTIME_WASM_BYTES = { cpu: 11_819_815 + 25_539, gpu: 23_013_109 + 49_241 } as const;
 
 /**
- * The longest edge the model is ever handed.
+ * The side of the square the model is handed — **both** sides, not the longer.
  *
- * The mask is computed at the model's own fixed input size whatever it is given,
- * so anything past this is decoded, scaled and thrown away.
+ * IMG.LY stretches every input to 1024 × 1024 with `keepAspect = false` before
+ * inference and stretches the mask back afterwards. This used to cap the longer
+ * side instead, which looked equivalent and was not: a 2:3 portrait arrived as
+ * 683 × 1024, was stretched sideways to 1024, and its mask came back 683 wide —
+ * a third of the edge resolution on the short axis computed and then discarded.
+ * A square in means the library's two resizes are identities and the mask keeps
+ * every column the model produced; the callers' `drawImage` stretches it back.
+ *
+ * `tests/segmentation.test.ts` reads both numbers off the shipped bundle.
  */
-export const MAX_SEGMENTATION_SIDE = 1024;
+export const SEGMENTATION_SIDE = 1024;
 
 /** How many steps `removeBackground` reports while it is computing. */
 const COMPUTE_STEPS = 4;
@@ -245,7 +251,7 @@ export function classifyRemovalError(message: string): SegmentationFailureReason
  * picture, not a cheaper one.
  *
  * The mask does not have that problem. The model computes it at its own fixed
- * input size whatever it is given, so segmenting a 2048 px copy loses nothing —
+ * input size whatever it is given, so segmenting a 1024 px copy loses nothing —
  * and a mask is a smooth, low-frequency image, so scaling it back up over the
  * full-resolution original is what bilinear filtering is genuinely good at. The
  * subject keeps every pixel it arrived with; only the *edge* is computed at model
@@ -321,17 +327,20 @@ export async function computeAlphaMask(
  * supported; the code has no path for it.
  *
  * So the encode is not waste, it is the supported contract. It costs one PNG of
- * an image already capped at `MAX_SEGMENTATION_SIDE` — noise beside an inference
- * that runs single-threaded whenever the page is not cross-origin isolated.
+ * a `SEGMENTATION_SIDE` square — noise beside an inference that runs
+ * single-threaded whenever the page is not cross-origin isolated.
+ *
+ * **Square, whatever the source's shape** — see `SEGMENTATION_SIDE` for why
+ * keeping the aspect ratio here threw edge detail away. The mask comes back
+ * square too, and every caller already stretches it to its own size.
  *
  * See `computeAlphaMask` above for why this is scaled down at all.
  */
 export function toSegmentationInput(
     source: CanvasImageSource,
-    size: PixelSize,
-    maxSide = MAX_SEGMENTATION_SIDE,
+    side = SEGMENTATION_SIDE,
 ): Promise<Blob | null> {
-    const target = fitWithinEdge(size, maxSide);
+    const target: PixelSize = { width: side, height: side };
     const canvas = createCanvas(target);
     const ctx = canvas === null ? null : context2d(canvas);
 

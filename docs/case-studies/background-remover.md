@@ -30,7 +30,7 @@ So: segment small, composite large, and apply the mask with one `destination-in`
 draw rather than a loop over several million pixels.
 
 ```
-source (6000 px) ──┬── scaled to 1024 ── model ── mask (1024)
+source (6000 px) ──┬── stretched to 1024² ── model ── mask (1024²)
                    │                                  │
                    └───────── drawImage ──────────── destination-in ──► cut-out at 2560 px
 ```
@@ -42,6 +42,16 @@ the main thread_, four `ndarray.get()` calls per pixel per channel. A 2048-wide
 copy bought nothing at the boundary and cost roughly six times the main-thread
 work to produce a mask this page immediately rescales again. The downsample now
 happens once on the GPU, which is both faster and a better filter.
+
+**Hand it a square, not an aspect-preserving fit.** IMG.LY's resize runs with
+`keepAspect = false`: whatever arrives is stretched to 1024 × 1024 and the mask is
+stretched back to the input's shape. Capping only the longer side therefore
+handed a 2:3 portrait over at 683 × 1024 and got a 683-wide mask back — a third
+of the short axis's edge resolution computed and discarded, which reads as a
+soft, smeared outline on exactly the photographs people take on a phone.
+`toSegmentationInput` now draws straight to the square; the composite's own
+`drawImage` stretches the mask back. `tests/segmentation.test.ts` pins both
+library facts against the shipped bundle.
 
 `toSegmentationInput` and `composeResult` in `domain/canvas.ts`. The fit
 arithmetic is `fitWithinEdge` in `tools/domain/pixels.ts` — this module had its

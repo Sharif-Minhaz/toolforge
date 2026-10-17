@@ -9,6 +9,7 @@ import {
     readProgress,
     resolveProgressPhase,
     RUNTIME_WASM_BYTES,
+    SEGMENTATION_SIDE,
 } from "@/modules/tools/domain/segmentation";
 import { CUTOUT_QUALITIES } from "@/modules/tools/types/segmentation";
 
@@ -190,5 +191,17 @@ describe("the library's real input contract", () => {
 
     test("still reads image/png, the format that input is encoded as", () => {
         expect(BUNDLE).toContain("image/png");
+    });
+
+    /**
+     * Why the segmentation input is a square rather than an aspect-preserving
+     * fit. The library stretches whatever it gets to a fixed square, so a
+     * letterboxed or longest-edge-capped input loses resolution on its short
+     * axis. If either fact changes, `SEGMENTATION_SIDE` and the square in
+     * `toSegmentationInput` have to be reconsidered.
+     */
+    test("stretches every input to a fixed square of SEGMENTATION_SIDE", () => {
+        expect(BUNDLE).toContain(`const resolution = ${SEGMENTATION_SIDE};`);
+        expect(BUNDLE).toContain("const keepAspect = false;");
     });
 });

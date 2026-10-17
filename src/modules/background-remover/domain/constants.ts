@@ -92,7 +92,8 @@ export const BLUR_OVERSCAN_FACTOR = 2;
 export const DEFAULT_BACKGROUND_COLOR = "#ffffff";
 
 /**
- * Ceiling on the longer side of the picture the model is handed.
+ * The picture the model is handed is a 1024 × 1024 square, whatever the
+ * source's shape — `SEGMENTATION_SIDE` in `tools/domain/segmentation.ts`.
  *
  * **1024, because that is the model's own input size.** IMG.LY resizes whatever
  * it is given to 1024 × 1024 before inference and scales the mask back
@@ -102,8 +103,10 @@ export const DEFAULT_BACKGROUND_COLOR = "#ffffff";
  * mask is computed at 1024 either way, and cost about six times the main-thread
  * work to scale a mask back up to a size this page immediately scales again.
  *
- * The downsample to 1024 now happens once, on the GPU, in `toSegmentationInput`.
- * That is both faster and a better filter than the loop it replaces.
+ * **A square, because that resize ignores the aspect ratio.** Capping only the
+ * longer side handed a portrait over at 683 × 1024 and got a 683-wide mask back,
+ * a third of the short axis's edge detail discarded. The downsample now happens
+ * once, on the GPU, in `toSegmentationInput`, straight to the square.
  */
 
 /**
