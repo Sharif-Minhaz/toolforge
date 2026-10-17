@@ -37,6 +37,12 @@ type ImageDropzoneProps = {
     readonly accept: string;
     readonly disabled?: boolean;
     readonly multiple?: boolean;
+    /**
+     * A single short row instead of the tall panel. For a batch tool once its
+     * queue has something in it: the panel has done its job, and at full height
+     * it pushes the files the reader just picked below the fold.
+     */
+    readonly compact?: boolean;
     readonly describedById?: string;
     /** Defaults to the picture-plus glyph the other image tools use. */
     readonly icon?: ComponentType<IconProps>;
@@ -51,6 +57,7 @@ export function ImageDropzone({
     accept,
     disabled = false,
     multiple = false,
+    compact = false,
     describedById,
     icon: Icon = IconPhotoPlus,
     onFiles,
@@ -93,16 +100,37 @@ export function ImageDropzone({
                 onDragLeave={() => setDragging(false)}
                 onDrop={handleDrop}
                 className={cn(
-                    "border-border/80 bg-card/40 hover:border-primary/50 peer-focus-visible:ring-ring flex min-w-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-8 text-center transition-colors duration-200 peer-focus-visible:ring-2 peer-disabled:cursor-not-allowed peer-disabled:opacity-60",
+                    "border-border/80 bg-card/40 hover:border-primary/50 peer-focus-visible:ring-ring flex min-w-0 cursor-pointer rounded-xl border border-dashed transition-colors duration-200 peer-focus-visible:ring-2 peer-disabled:cursor-not-allowed peer-disabled:opacity-60",
+                    compact
+                        ? "items-center gap-3 px-3.5 py-3 text-left"
+                        : "flex-col items-center justify-center gap-2 px-4 py-8 text-center",
                     dragging &&
                         "border-primary/70 bg-[color-mix(in_oklch,var(--primary)_6%,transparent)]",
                     className,
                 )}
             >
-                <Icon className="text-muted-foreground size-7" stroke={1.6} aria-hidden="true" />
-                <span className="text-[0.9375rem] leading-[1.4] font-medium">{title}</span>
-                <span className="text-muted-foreground text-[0.8125rem] leading-normal">
-                    {hint}
+                <Icon
+                    className={cn("text-muted-foreground shrink-0", compact ? "size-5" : "size-7")}
+                    stroke={1.6}
+                    aria-hidden="true"
+                />
+                <span className={cn("flex min-w-0 flex-col", compact ? "gap-0.5" : "gap-2")}>
+                    <span
+                        className={cn(
+                            "leading-[1.4] font-medium",
+                            compact ? "text-[0.8125rem]" : "text-[0.9375rem]",
+                        )}
+                    >
+                        {title}
+                    </span>
+                    <span
+                        className={cn(
+                            "text-muted-foreground leading-normal",
+                            compact ? "text-[0.6875rem]" : "text-[0.8125rem]",
+                        )}
+                    >
+                        {hint}
+                    </span>
                 </span>
             </label>
         </>

@@ -12,6 +12,8 @@ import { useFormatter, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
+import { ImageSourceFacts } from "@/modules/tools/components/image-queue";
+import type { ImagePixelSize } from "@/modules/tools/domain/image-element";
 import { savingsPercent } from "../domain/savings";
 import type { CompressedImage, CompressionFailureReason } from "../types";
 
@@ -19,6 +21,9 @@ export type CompressionRowItem = {
     readonly id: string;
     readonly name: string;
     readonly bytes: number;
+    readonly type: string;
+    /** `null` until the browser has measured the source, or when it could not. */
+    readonly dimensions: ImagePixelSize | null;
     readonly previewUrl: string;
     readonly status: "queued" | "working" | "done" | "failed";
     readonly result: CompressedImage | null;
@@ -66,7 +71,7 @@ export function CompressionRow({
     return (
         <li
             className={cn(
-                "bg-card/60 ring-border/70 flex min-w-0 items-center gap-3 rounded-xl px-3 py-2.5 ring-1 ring-inset",
+                "bg-card/60 ring-border/70 flex min-w-0 items-center gap-3 rounded-xl p-2.5 ring-1 ring-inset",
                 "transition-opacity duration-200",
                 item.stale && "opacity-55",
             )}
@@ -81,11 +86,17 @@ export function CompressionRow({
                 alt={t("previewAlt", { name: item.name })}
                 loading="lazy"
                 decoding="async"
-                className="bg-muted size-11 shrink-0 rounded-lg object-cover"
+                className="bg-muted size-14 shrink-0 rounded-lg object-cover"
             />
 
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <p className="truncate text-[0.8125rem] leading-[1.4] font-medium">{item.name}</p>
+
+                <ImageSourceFacts
+                    bytes={item.bytes}
+                    type={item.type}
+                    dimensions={item.dimensions}
+                />
 
                 {item.status === "failed" && item.reason !== null ? (
                     <p className="text-destructive flex items-start gap-1 text-[0.6875rem] leading-normal">
@@ -97,47 +108,44 @@ export function CompressionRow({
                         <span>{describeFailure(item.reason)}</span>
                     </p>
                 ) : item.result === null ? (
-                    <p className="text-muted-foreground text-[0.6875rem] leading-normal">
+                    <p className="text-muted-foreground/80 text-[0.6875rem] leading-normal">
                         {item.status === "working" ? t("rowWorking") : t("rowPending")}
                     </p>
                 ) : (
-                    <p className="text-muted-foreground truncate text-[0.6875rem] leading-normal">
-                        {[
-                            `${byteLabel(item.bytes)} → ${byteLabel(item.result.bytes)}`,
-                            item.result.resized &&
-                                t("rowResized", {
-                                    width: item.result.width,
-                                    height: item.result.height,
-                                }),
-                            item.result.flattened && t("rowFlattened"),
-                        ]
-                            .filter(Boolean)
-                            .join(" · ")}
-                    </p>
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="bg-muted text-muted-foreground rounded-md px-1.5 py-0.5 text-[0.625rem] leading-[1.3] font-medium uppercase">
+                            {tFormats(item.result.format)}
+                        </span>
+                        <span
+                            className={cn(
+                                "rounded-md px-1.5 py-0.5 text-[0.6875rem] leading-[1.3] font-medium tabular-nums",
+                                percent > 0
+                                    ? "bg-[color-mix(in_oklch,var(--color-success)_14%,transparent)] text-[var(--color-success)]"
+                                    : "bg-muted text-muted-foreground",
+                            )}
+                        >
+                            {percent > 0
+                                ? t("rowSaved", { percent: format.number(percent) })
+                                : percent < 0
+                                  ? t("rowGrew", { percent: format.number(Math.abs(percent)) })
+                                  : t("rowUnchanged")}
+                        </span>
+                        <span className="text-muted-foreground min-w-0 truncate text-[0.6875rem] leading-normal tabular-nums">
+                            {[
+                                `${byteLabel(item.bytes)} → ${byteLabel(item.result.bytes)}`,
+                                item.result.resized &&
+                                    t("rowResized", {
+                                        width: item.result.width,
+                                        height: item.result.height,
+                                    }),
+                                item.result.flattened && t("rowFlattened"),
+                            ]
+                                .filter(Boolean)
+                                .join(" · ")}
+                        </span>
+                    </div>
                 )}
             </div>
-
-            {item.result !== null && (
-                <div className="flex shrink-0 items-center gap-1.5">
-                    <span className="bg-muted text-muted-foreground rounded-md px-1.5 py-0.5 text-[0.625rem] leading-[1.3] font-medium uppercase">
-                        {tFormats(item.result.format)}
-                    </span>
-                    <span
-                        className={cn(
-                            "rounded-md px-1.5 py-0.5 text-[0.6875rem] leading-[1.3] font-medium tabular-nums",
-                            percent > 0
-                                ? "bg-[color-mix(in_oklch,var(--color-success)_14%,transparent)] text-[var(--color-success)]"
-                                : "bg-muted text-muted-foreground",
-                        )}
-                    >
-                        {percent > 0
-                            ? t("rowSaved", { percent: format.number(percent) })
-                            : percent < 0
-                              ? t("rowGrew", { percent: format.number(Math.abs(percent)) })
-                              : t("rowUnchanged")}
-                    </span>
-                </div>
-            )}
 
             {item.status === "working" && (
                 <IconLoader2

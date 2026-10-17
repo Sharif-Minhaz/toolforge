@@ -1,6 +1,6 @@
 "use client";
 
-import { IconPhotoPlus, IconTrash } from "@tabler/icons-react";
+import { IconPhotoPlus, IconShieldCheck, IconTrash } from "@tabler/icons-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState, type DragEvent } from "react";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import { ToolNotes } from "@/modules/tools/components/tool-notes";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
 import { copyText } from "@/modules/tools/domain/clipboard";
 import { fitComponents, parseAspectRatio } from "../domain/aspect";
@@ -576,9 +577,17 @@ export function BlurPlaceholderWorkbench({
                     />
                 )}
 
-                <p className="text-muted-foreground max-w-[68ch] text-[0.6875rem] leading-normal">
-                    {t("privacyNote")}
-                </p>
+                <ToolNotes
+                    notes={[
+                        {
+                            key: "privacy",
+                            icon: IconShieldCheck,
+                            tone: "success",
+                            title: t("privacyTitle"),
+                            body: t("privacyNote"),
+                        },
+                    ]}
+                />
             </CardContent>
         </Card>
     );

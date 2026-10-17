@@ -112,3 +112,21 @@ export function withImageExtension(stem: string, type: string): string {
 
     return extension === null ? stem : `${stem}.${extension}`;
 }
+
+/**
+ * The short name a reader knows a picked file by — `JPG`, `PNG`, `SVG` — shown
+ * beside its size so "did that pick work" has a one-glance answer.
+ *
+ * SVG is named here although nothing decodes it to a grid: the converter takes
+ * it, and a row that says nothing about what was dropped reads as broken.
+ * `null` for anything else, so an unknown type shows nothing rather than a guess.
+ */
+export function imageFormatLabel(raw: string): string | null {
+    const type = normalizeImageType(raw);
+
+    if (type === "image/svg+xml") {
+        return "SVG";
+    }
+
+    return extensionForImageType(type)?.toUpperCase() ?? null;
+}

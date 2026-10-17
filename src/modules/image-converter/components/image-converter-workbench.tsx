@@ -2,13 +2,14 @@
 
 import {
     IconFileZip,
+    IconInfoCircle,
     IconLoader2,
-    IconPhotoPlus,
+    IconShieldCheck,
     IconTransform,
     IconTrash,
 } from "@tabler/icons-react";
 import { useFormatter, useTranslations } from "next-intl";
-import { useEffect, useId, useRef, useState, type DragEvent } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -18,13 +19,21 @@ import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
-import { OptionSelect } from "@/modules/tools/components/option-controls";
+import { ImageDropzone } from "@/modules/tools/components/image-dropzone";
+import { ImageQueueHeader } from "@/modules/tools/components/image-queue";
 import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
+import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import { ToolNotes } from "@/modules/tools/components/tool-notes";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
 import { buildZipArchive } from "@/modules/tools/domain/archive";
 import { copyText } from "@/modules/tools/domain/clipboard";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
+import {
+    knownPixelSize,
+    readImagePixelSize,
+    type ImagePixelSize,
+} from "@/modules/tools/domain/image-element";
 import { checkImageFile } from "@/modules/tools/domain/image-file";
 import {
     IMAGE_ACCEPT_ATTRIBUTE,
@@ -71,6 +80,10 @@ type QueueItem = {
     readonly id: string;
     readonly file: File;
     readonly previewUrl: string;
+    /** Corrected from the declared type, so an untyped `.svg` is still an SVG. */
+    readonly type: string;
+    /** Measured once after the pick; `null` until then, or if it would not decode. */
+    readonly dimensions: ImagePixelSize | null;
     readonly status: "queued" | "working" | "done" | "failed";
     readonly result: ConvertedImage | null;
     readonly reason: ConversionFailureReason | null;
@@ -126,10 +139,11 @@ export function ImageConverterWorkbench({
     const inputId = useId();
     const hintId = useId();
     const qualityId = useId();
+    const queueHeadingId = useId();
+    const settingsHeadingId = useId();
 
     const [items, setItems] = useState<readonly QueueItem[]>([]);
     const [options, setOptions] = useState<ConversionOptions>(initialOptions);
-    const [dragging, setDragging] = useState(false);
     const [working, setWorking] = useState(false);
     const [progress, setProgress] = useState({ done: 0, total: 0 });
     const [packing, setPacking] = useState(false);
@@ -160,6 +174,7 @@ export function ImageConverterWorkbench({
         (total, item) => total + (item.result?.files.length ?? 0),
         0,
     );
+    const totalBytes = items.reduce((total, item) => total + item.file.size, 0);
     const stale = items.some((item) => item.result !== null && item.signature !== signature);
     const failedCount = items.filter((item) => item.status === "failed").length;
     const pendingCount = items.filter((item) => needsWork(queueRow(item), signature)).length;
@@ -360,15 +375,15 @@ export function ImageConverterWorkbench({
             // The declared type is corrected first, so a `.svg` the platform
             // handed over with no type at all is not refused by the gate the
             // picker just let it through.
-            const checked = checkImageFile(
-                { type: resolveImageType(file), size: file.size },
-                IMAGE_FILE_LIMITS,
-            );
+            const type = resolveImageType(file);
+            const checked = checkImageFile({ type, size: file.size }, IMAGE_FILE_LIMITS);
 
             return {
                 id: `item-${(nextId.current += 1)}`,
                 file,
                 previewUrl: url,
+                type,
+                dimensions: null,
                 status: checked.ok ? "queued" : "failed",
                 result: null,
                 reason: checked.ok ? null : checked.reason,
@@ -385,12 +400,22 @@ export function ImageConverterWorkbench({
         // Deliberately not started here: picking files fills the queue, pressing
         // Convert is what spends the reader's battery on them.
         setItems([...items, ...added]);
+        measure(added);
     }
 
-    function handleDrop(event: DragEvent<HTMLLabelElement>) {
-        event.preventDefault();
-        setDragging(false);
-        handlePick([...event.dataTransfer.files]);
+    /**
+     * Reads each new picture's pixel size once, after it is already listed, so
+     * the row appears the moment the file is picked and its dimensions follow.
+     * A row removed in the meantime is simply not found.
+     */
+    function measure(added: readonly QueueItem[]) {
+        for (const item of added) {
+            void readImagePixelSize(item.previewUrl).then((size) => {
+                setItems((current) =>
+                    replaceItem(current, item.id, { dimensions: knownPixelSize(size) }),
+                );
+            });
+        }
     }
 
     function releasePreview(url: string) {
@@ -516,10 +541,14 @@ export function ImageConverterWorkbench({
     const status = describeStatus();
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+        // `overflow-visible` overrides the vendor Card's own `overflow-hidden`
+        // so the settings column can be sticky: an ancestor whose overflow is
+        // not `visible` becomes the sticky element's scroll container. The
+        // hairline below is inset rather than clipped for the same reason.
+        <Card className="relative overflow-visible [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
             <span
                 aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
+                className="via-primary/45 pointer-events-none absolute inset-x-4 top-0 h-px bg-linear-to-r from-transparent to-transparent"
             />
 
             <CardHeader>
@@ -528,320 +557,386 @@ export function ImageConverterWorkbench({
             </CardHeader>
 
             <CardContent className="flex min-w-0 flex-col gap-5">
-                <div className="flex min-w-0 flex-col gap-2">
-                    <input
-                        id={inputId}
-                        type="file"
-                        multiple
-                        accept={IMAGE_ACCEPT_ATTRIBUTE}
-                        disabled={working}
-                        aria-describedby={hintId}
-                        onChange={(event) => {
-                            handlePick([...(event.target.files ?? [])]);
-                            // Cleared so picking the same file twice still fires.
-                            event.target.value = "";
-                        }}
-                        className="peer sr-only"
-                    />
-
-                    <label
-                        htmlFor={inputId}
-                        onDragOver={(event) => {
-                            event.preventDefault();
-                            setDragging(true);
-                        }}
-                        onDragLeave={() => setDragging(false)}
-                        onDrop={handleDrop}
-                        className={cn(
-                            "border-border/80 bg-card/40 hover:border-primary/50 peer-focus-visible:ring-ring flex min-w-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-8 text-center transition-colors duration-200 peer-focus-visible:ring-2 peer-disabled:cursor-not-allowed peer-disabled:opacity-60",
-                            dragging &&
-                                "border-primary/70 bg-[color-mix(in_oklch,var(--primary)_6%,transparent)]",
-                        )}
-                    >
-                        <IconPhotoPlus
-                            className="text-muted-foreground size-7"
-                            stroke={1.6}
-                            aria-hidden="true"
-                        />
-                        <span className="text-[0.9375rem] leading-[1.4] font-medium">
-                            {t("dropTitle")}
-                        </span>
-                        <span className="text-muted-foreground text-[0.8125rem] leading-normal">
-                            {t("dropHint", {
-                                limit: byteLabel(MAX_IMAGE_BYTES),
-                                count: format.number(MAX_FILES),
-                            })}
-                        </span>
-                    </label>
-
-                    <ImageSourceControls
-                        onFiles={handlePick}
-                        disabled={working}
-                        urlImportEnabled={urlImportEnabled}
-                    />
-
-                    <StatusStrip id={hintId} tone={status.tone} message={status.message} />
-                </div>
-
-                <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    <OptionSelect<ConversionTarget>
-                        label={t("targetLabel")}
-                        hint={tTargets(`${options.target}Hint`)}
-                        value={options.target}
-                        values={CONVERSION_TARGETS}
-                        disabled={working}
-                        items={Object.fromEntries(
-                            CONVERSION_TARGETS.map((value) => [value, tTargets(value)]),
-                        )}
-                        onChange={(next) => patchOptions({ target: next })}
-                    />
-
-                    <div className="flex min-w-0 flex-col gap-1.5">
-                        <span
-                            id={qualityId}
-                            className="text-muted-foreground text-xs leading-[1.3]"
-                        >
-                            {t("qualityLabel")}
-                        </span>
-                        <div className="flex min-w-0 items-center gap-3">
-                            <Slider
-                                aria-labelledby={qualityId}
-                                value={options.quality}
-                                min={MIN_QUALITY}
-                                max={MAX_QUALITY}
-                                disabled={working || !qualityLive}
-                                onValueChange={(next) =>
-                                    patchOptions({
-                                        quality: clampQuality(
-                                            Array.isArray(next)
-                                                ? (next[0] ?? options.quality)
-                                                : next,
-                                            MIN_QUALITY,
-                                            MAX_QUALITY,
-                                        ),
-                                    })
-                                }
-                                className="min-w-0 flex-1"
-                            />
-                            <span className="w-8 shrink-0 text-right font-mono text-sm tabular-nums">
-                                {options.quality}
-                            </span>
-                        </div>
-                        <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                            {vector
-                                ? t("qualityHintVector", { value: options.quality })
-                                : qualityLive
-                                  ? t("qualityHint", { value: options.quality })
-                                  : options.target === "png"
-                                    ? t("qualityHintLossless")
-                                    : t("qualityHintIcon")}
-                        </p>
-                    </div>
-
-                    <OptionSelect<BackgroundChoice>
-                        label={t("backgroundLabel")}
-                        hint={
-                            options.target === "jpeg"
-                                ? t("backgroundHintJpeg")
-                                : t("backgroundHint")
-                        }
-                        value={options.background}
-                        values={backgrounds}
-                        disabled={working}
-                        items={Object.fromEntries(
-                            backgrounds.map((value) => [value, tBackgrounds(value)]),
-                        )}
-                        onChange={(next) => patchOptions({ background: next })}
-                    />
-
-                    <OptionSelect<string>
-                        label={t("resizeLabel")}
-                        hint={
-                            resizeLive
-                                ? t("resizeHint")
-                                : vector
-                                  ? t("resizeHintVector")
-                                  : t("resizeHintIcon")
-                        }
-                        value={fromMaxEdge(options.maxEdge)}
-                        values={RESIZE_VALUES}
-                        disabled={working || !resizeLive}
-                        items={Object.fromEntries(
-                            RESIZE_VALUES.map((value) => [
-                                value,
-                                value === ORIGINAL_EDGE
-                                    ? t("resizeOriginal")
-                                    : t("resizePreset", { value }),
-                            ]),
-                        )}
-                        onChange={(next) => patchOptions({ maxEdge: toMaxEdge(next) })}
-                    />
-
-                    <IconSizeMenu
-                        value={shownSizes}
-                        disabled={working || !sizesLive}
-                        hint={sizesLive ? t("sizesHint") : t("sizesHintFixed")}
-                        onToggle={toggleIconSize}
-                    />
-
-                    <OptionSelect<string>
-                        label={t("colorsLabel")}
-                        hint={colorsLive ? t("colorsHint") : t("colorsHintIdle")}
-                        value={String(options.colors)}
-                        values={COLOR_VALUES}
-                        disabled={working || !colorsLive}
-                        items={Object.fromEntries(
-                            COLOR_VALUES.map((value) => [
-                                value,
-                                t("colorsValue", { count: value }),
-                            ]),
-                        )}
-                        onChange={(next) =>
-                            patchOptions({ colors: toColorCount(next, options.colors) })
-                        }
-                    />
-                </div>
-
-                {options.target === "favicon" && (
-                    <div className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-2 rounded-xl px-3 py-2.5 ring-1 ring-inset">
-                        <div className="flex min-w-0 items-start justify-between gap-2">
-                            <span className="flex min-w-0 flex-col gap-0.5">
-                                <span className="text-[0.8125rem] leading-[1.3] font-medium">
-                                    {t("snippetTitle")}
-                                </span>
-                                <span className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                                    {t("snippetDescription")}
-                                </span>
-                            </span>
-                            <IconCopyButton
-                                copied={copied === SNIPPET_KEY}
-                                aria-label={t("snippetCopy")}
-                                onClick={() => void handleCopySnippet()}
-                            />
-                        </div>
-                        <pre className="min-w-0 overflow-x-auto font-mono text-[0.6875rem] leading-[1.6]">
-                            <code>{buildFaviconHeadHtml().trimEnd()}</code>
-                        </pre>
-                    </div>
-                )}
-
-                {working && (
-                    <div
-                        role="progressbar"
-                        aria-valuemin={0}
-                        aria-valuemax={progress.total}
-                        aria-valuenow={progress.done}
-                        aria-label={t("working", {
-                            done: format.number(progress.done + 1),
-                            total: format.number(progress.total),
-                        })}
-                        className="bg-muted h-1 w-full overflow-hidden rounded-full"
-                    >
-                        <span
-                            className="bg-primary block h-full rounded-full transition-[width] duration-300"
-                            style={{
-                                width: `${progress.total === 0 ? 0 : (progress.done / progress.total) * 100}%`,
-                            }}
-                        />
-                    </div>
-                )}
-
-                <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <Button onClick={handleConvert} disabled={!canConvert} className="h-9 px-3.5">
-                        {working ? (
-                            <IconLoader2 className="size-4 animate-spin" aria-hidden="true" />
-                        ) : (
-                            <IconTransform className="size-4" stroke={1.9} aria-hidden="true" />
-                        )}
-                        {working
-                            ? t("working", {
-                                  done: format.number(progress.done + 1),
-                                  total: format.number(progress.total),
-                              })
-                            : t("convert")}
-                    </Button>
-
-                    <Button
-                        variant="outline"
-                        onClick={() => void handleDownloadAll()}
-                        disabled={finished.length === 0 || packing || working}
-                        className="h-9 px-3.5"
-                    >
-                        {packing ? (
-                            <IconLoader2 className="size-4 animate-spin" aria-hidden="true" />
-                        ) : (
-                            <IconFileZip className="size-4" stroke={1.8} aria-hidden="true" />
-                        )}
-                        {packing ? t("packing") : t("downloadAll")}
-                    </Button>
-
-                    <Button
-                        variant="outline"
-                        onClick={handleClear}
-                        disabled={items.length === 0 || working}
-                        className="h-9 px-3.5"
-                    >
-                        <IconTrash className="size-4" stroke={1.8} aria-hidden="true" />
-                        {t("clear")}
-                    </Button>
-                </div>
-
-                {/*
-                 * Not dimmed when a row is stale, unlike the rows themselves.
-                 * Every file counted here is one the reader keeps, whatever the
-                 * panel says now.
-                 */}
-                {finished.length > 0 && (
-                    <div className="bg-card/60 ring-border/70 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 rounded-xl px-3 py-2.5 ring-1 ring-inset">
-                        <span className="text-[0.8125rem] leading-[1.3] font-medium">
-                            {t("summaryFiles", { count: finished.length })}
-                        </span>
-                        <span className="text-muted-foreground text-[0.8125rem] leading-[1.3]">
-                            {t("summaryOutputs", { count: outputCount })}
-                        </span>
-                        <span className="text-muted-foreground text-[0.8125rem] leading-[1.3] tabular-nums">
-                            {byteLabel(
-                                finished.reduce(
-                                    (total, item) => total + (item.result?.totalBytes ?? 0),
-                                    0,
-                                ),
+                <div className="grid min-w-0 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem]">
+                    {/*
+                     * The picked files sit directly under the intake, not under
+                     * the settings: "did that pick work" is the first thing a
+                     * reader wants answered, and under six controls the list
+                     * used to start below the fold.
+                     */}
+                    {/*
+                     * Stretched to the settings column's height, and with an
+                     * empty queue the dropzone grows into it — otherwise the
+                     * intake is a short strip beside a tall panel, with a hole
+                     * underneath it.
+                     */}
+                    <div className="flex min-w-0 flex-col gap-4 lg:self-stretch">
+                        <div
+                            className={cn(
+                                "flex min-w-0 flex-col gap-2",
+                                items.length === 0 && "flex-1",
                             )}
-                        </span>
-                    </div>
-                )}
-
-                {items.length > 0 && (
-                    <ul className="flex min-w-0 flex-col gap-2">
-                        {items.map((item) => (
-                            <ConversionRow
-                                key={item.id}
-                                item={{
-                                    id: item.id,
-                                    name: item.file.name,
-                                    bytes: item.file.size,
-                                    previewUrl: item.previewUrl,
-                                    status: item.status,
-                                    result: item.result,
-                                    reason: item.reason,
-                                    stale: item.result !== null && item.signature !== signature,
-                                }}
-                                busy={working}
-                                describeFailure={describeFailure}
-                                onReconvert={handleReconvert}
-                                onDownload={(id) => void handleDownload(id)}
-                                onRemove={handleRemove}
+                        >
+                            <ImageDropzone
+                                inputId={inputId}
+                                describedById={hintId}
+                                multiple
+                                compact={items.length > 0}
+                                className={items.length === 0 ? "min-h-52 flex-1" : undefined}
+                                accept={IMAGE_ACCEPT_ATTRIBUTE}
+                                disabled={working}
+                                title={items.length > 0 ? t("dropMoreTitle") : t("dropTitle")}
+                                hint={t("dropHint", {
+                                    limit: byteLabel(MAX_IMAGE_BYTES),
+                                    count: format.number(MAX_FILES),
+                                })}
+                                onFiles={handlePick}
                             />
-                        ))}
-                    </ul>
-                )}
 
-                <p className="text-muted-foreground max-w-[68ch] text-[0.6875rem] leading-normal">
-                    {t("metadataNote")}
-                </p>
+                            <ImageSourceControls
+                                onFiles={handlePick}
+                                disabled={working}
+                                urlImportEnabled={urlImportEnabled}
+                            />
 
-                <p className="text-muted-foreground text-[0.6875rem] leading-normal">
-                    {t("privacyNote")}
-                </p>
+                            <StatusStrip id={hintId} tone={status.tone} message={status.message} />
+                        </div>
+
+                        {items.length > 0 && (
+                            <section
+                                aria-labelledby={queueHeadingId}
+                                className="flex min-w-0 flex-col gap-2.5"
+                            >
+                                <ImageQueueHeader
+                                    id={queueHeadingId}
+                                    count={items.length}
+                                    totalBytes={totalBytes}
+                                    actions={
+                                        <Button
+                                            variant="ghost"
+                                            onClick={handleClear}
+                                            disabled={working}
+                                            className="h-8 px-2.5 text-[0.8125rem]"
+                                        >
+                                            <IconTrash
+                                                className="size-4"
+                                                stroke={1.8}
+                                                aria-hidden="true"
+                                            />
+                                            {t("clear")}
+                                        </Button>
+                                    }
+                                />
+
+                                {/*
+                                 * Not dimmed when a row is stale, unlike the rows
+                                 * themselves. Every file counted here is one the
+                                 * reader keeps, whatever the panel says now.
+                                 */}
+                                {finished.length > 0 && (
+                                    <div className="bg-card/60 ring-border/70 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 rounded-xl px-3 py-2.5 ring-1 ring-inset">
+                                        <span className="text-[0.8125rem] leading-[1.3] font-medium">
+                                            {t("summaryFiles", { count: finished.length })}
+                                        </span>
+                                        <span className="text-muted-foreground text-[0.8125rem] leading-[1.3]">
+                                            {t("summaryOutputs", { count: outputCount })}
+                                        </span>
+                                        <span className="text-muted-foreground text-[0.8125rem] leading-[1.3] tabular-nums">
+                                            {byteLabel(
+                                                finished.reduce(
+                                                    (total, item) =>
+                                                        total + (item.result?.totalBytes ?? 0),
+                                                    0,
+                                                ),
+                                            )}
+                                        </span>
+                                    </div>
+                                )}
+
+                                <ul className="flex min-w-0 flex-col gap-2">
+                                    {items.map((item) => (
+                                        <ConversionRow
+                                            key={item.id}
+                                            item={{
+                                                id: item.id,
+                                                name: item.file.name,
+                                                bytes: item.file.size,
+                                                type: item.type,
+                                                dimensions: item.dimensions,
+                                                previewUrl: item.previewUrl,
+                                                status: item.status,
+                                                result: item.result,
+                                                reason: item.reason,
+                                                stale:
+                                                    item.result !== null &&
+                                                    item.signature !== signature,
+                                            }}
+                                            busy={working}
+                                            describeFailure={describeFailure}
+                                            onReconvert={handleReconvert}
+                                            onDownload={(id) => void handleDownload(id)}
+                                            onRemove={handleRemove}
+                                        />
+                                    ))}
+                                </ul>
+                            </section>
+                        )}
+
+                        {options.target === "favicon" && (
+                            <div className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-2 rounded-xl px-3 py-2.5 ring-1 ring-inset">
+                                <div className="flex min-w-0 items-start justify-between gap-2">
+                                    <span className="flex min-w-0 flex-col gap-0.5">
+                                        <span className="text-[0.8125rem] leading-[1.3] font-medium">
+                                            {t("snippetTitle")}
+                                        </span>
+                                        <span className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                                            {t("snippetDescription")}
+                                        </span>
+                                    </span>
+                                    <IconCopyButton
+                                        copied={copied === SNIPPET_KEY}
+                                        aria-label={t("snippetCopy")}
+                                        onClick={() => void handleCopySnippet()}
+                                    />
+                                </div>
+                                <pre className="min-w-0 overflow-x-auto font-mono text-[0.6875rem] leading-[1.6]">
+                                    <code>{buildFaviconHeadHtml().trimEnd()}</code>
+                                </pre>
+                            </div>
+                        )}
+                    </div>
+
+                    {/*
+                     * Sticky, and `self-start` (from `items-start` on the grid)
+                     * is what makes that work: a stretched grid item leaves
+                     * nothing for `position: sticky` to slide against. With a
+                     * long queue the button that runs it stays in reach.
+                     */}
+                    <div
+                        role="group"
+                        aria-labelledby={settingsHeadingId}
+                        className="bg-muted/30 ring-border/70 flex min-w-0 flex-col gap-4 rounded-xl p-4 ring-1 ring-inset lg:sticky lg:top-6"
+                    >
+                        <h3
+                            id={settingsHeadingId}
+                            className="text-[0.875rem] leading-[1.3] font-medium"
+                        >
+                            {t("settingsTitle")}
+                        </h3>
+
+                        <OptionSelect<ConversionTarget>
+                            label={t("targetLabel")}
+                            hint={tTargets(`${options.target}Hint`)}
+                            value={options.target}
+                            values={CONVERSION_TARGETS}
+                            disabled={working}
+                            items={Object.fromEntries(
+                                CONVERSION_TARGETS.map((value) => [value, tTargets(value)]),
+                            )}
+                            onChange={(next) => patchOptions({ target: next })}
+                        />
+
+                        <div className="flex min-w-0 flex-col gap-1.5">
+                            <span
+                                id={qualityId}
+                                className="text-muted-foreground text-xs leading-[1.3]"
+                            >
+                                {t("qualityLabel")}
+                            </span>
+                            <div className="flex min-w-0 items-center gap-3">
+                                <Slider
+                                    aria-labelledby={qualityId}
+                                    value={options.quality}
+                                    min={MIN_QUALITY}
+                                    max={MAX_QUALITY}
+                                    disabled={working || !qualityLive}
+                                    onValueChange={(next) =>
+                                        patchOptions({
+                                            quality: clampQuality(
+                                                Array.isArray(next)
+                                                    ? (next[0] ?? options.quality)
+                                                    : next,
+                                                MIN_QUALITY,
+                                                MAX_QUALITY,
+                                            ),
+                                        })
+                                    }
+                                    className="min-w-0 flex-1"
+                                />
+                                <span className="w-8 shrink-0 text-right font-mono text-sm tabular-nums">
+                                    {options.quality}
+                                </span>
+                            </div>
+                            <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                                {vector
+                                    ? t("qualityHintVector")
+                                    : qualityLive
+                                      ? t("qualityHint")
+                                      : options.target === "png"
+                                        ? t("qualityHintLossless")
+                                        : t("qualityHintIcon")}
+                            </p>
+                        </div>
+
+                        {/*
+                         * Paired rows: four controls at full width pushed the
+                         * Convert button below the fold of a laptop screen.
+                         */}
+                        <div className="grid min-w-0 grid-cols-2 gap-x-3 gap-y-4">
+                            <OptionSelect<BackgroundChoice>
+                                label={t("backgroundLabel")}
+                                hint={
+                                    options.target === "jpeg"
+                                        ? t("backgroundHintJpeg")
+                                        : t("backgroundHint")
+                                }
+                                value={options.background}
+                                values={backgrounds}
+                                disabled={working}
+                                items={Object.fromEntries(
+                                    backgrounds.map((value) => [value, tBackgrounds(value)]),
+                                )}
+                                onChange={(next) => patchOptions({ background: next })}
+                            />
+
+                            <OptionSelect<string>
+                                label={t("resizeLabel")}
+                                hint={
+                                    resizeLive
+                                        ? t("resizeHint")
+                                        : vector
+                                          ? t("resizeHintVector")
+                                          : t("resizeHintIcon")
+                                }
+                                value={fromMaxEdge(options.maxEdge)}
+                                values={RESIZE_VALUES}
+                                disabled={working || !resizeLive}
+                                items={Object.fromEntries(
+                                    RESIZE_VALUES.map((value) => [
+                                        value,
+                                        value === ORIGINAL_EDGE
+                                            ? t("resizeOriginal")
+                                            : t("resizePreset", { value }),
+                                    ]),
+                                )}
+                                onChange={(next) => patchOptions({ maxEdge: toMaxEdge(next) })}
+                            />
+                        </div>
+
+                        <div className="grid min-w-0 grid-cols-2 gap-x-3 gap-y-4">
+                            <IconSizeMenu
+                                value={shownSizes}
+                                disabled={working || !sizesLive}
+                                hint={sizesLive ? t("sizesHint") : t("sizesHintFixed")}
+                                onToggle={toggleIconSize}
+                            />
+
+                            <OptionSelect<string>
+                                label={t("colorsLabel")}
+                                hint={colorsLive ? t("colorsHint") : t("colorsHintIdle")}
+                                value={String(options.colors)}
+                                values={COLOR_VALUES}
+                                disabled={working || !colorsLive}
+                                items={Object.fromEntries(
+                                    COLOR_VALUES.map((value) => [
+                                        value,
+                                        t("colorsValue", { count: value }),
+                                    ]),
+                                )}
+                                onChange={(next) =>
+                                    patchOptions({ colors: toColorCount(next, options.colors) })
+                                }
+                            />
+                        </div>
+
+                        {working && (
+                            <div
+                                role="progressbar"
+                                aria-valuemin={0}
+                                aria-valuemax={progress.total}
+                                aria-valuenow={progress.done}
+                                aria-label={t("working", {
+                                    done: format.number(progress.done + 1),
+                                    total: format.number(progress.total),
+                                })}
+                                className="bg-muted h-1 w-full overflow-hidden rounded-full"
+                            >
+                                <span
+                                    className="bg-primary block h-full rounded-full transition-[width] duration-300"
+                                    style={{
+                                        width: `${progress.total === 0 ? 0 : (progress.done / progress.total) * 100}%`,
+                                    }}
+                                />
+                            </div>
+                        )}
+
+                        <div className="flex min-w-0 flex-col gap-2">
+                            <Button
+                                onClick={handleConvert}
+                                disabled={!canConvert}
+                                className="h-10 w-full"
+                            >
+                                {working ? (
+                                    <IconLoader2
+                                        className="size-4 animate-spin"
+                                        aria-hidden="true"
+                                    />
+                                ) : (
+                                    <IconTransform
+                                        className="size-4"
+                                        stroke={1.9}
+                                        aria-hidden="true"
+                                    />
+                                )}
+                                {working
+                                    ? t("working", {
+                                          done: format.number(progress.done + 1),
+                                          total: format.number(progress.total),
+                                      })
+                                    : t("convert")}
+                            </Button>
+
+                            <Button
+                                variant="outline"
+                                onClick={() => void handleDownloadAll()}
+                                disabled={finished.length === 0 || packing || working}
+                                className="h-9 w-full"
+                            >
+                                {packing ? (
+                                    <IconLoader2
+                                        className="size-4 animate-spin"
+                                        aria-hidden="true"
+                                    />
+                                ) : (
+                                    <IconFileZip
+                                        className="size-4"
+                                        stroke={1.8}
+                                        aria-hidden="true"
+                                    />
+                                )}
+                                {packing ? t("packing") : t("downloadAll")}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+
+                <ToolNotes
+                    notes={[
+                        {
+                            key: "privacy",
+                            icon: IconShieldCheck,
+                            tone: "success",
+                            title: t("privacyTitle"),
+                            body: t("privacyNote"),
+                        },
+                        {
+                            key: "metadata",
+                            icon: IconInfoCircle,
+                            title: t("metadataTitle"),
+                            body: t("metadataNote"),
+                        },
+                    ]}
+                />
             </CardContent>
         </Card>
     );

@@ -8,6 +8,7 @@ import {
     IconFlipHorizontal,
     IconFlipVertical,
     IconFocusCentered,
+    IconInfoCircle,
     IconLink,
     IconLoader2,
     IconMaximize,
@@ -16,6 +17,7 @@ import {
     IconRefresh,
     IconRotate,
     IconRotateClockwise,
+    IconShieldCheck,
     IconTrash,
     IconUnlink,
     IconX,
@@ -36,6 +38,7 @@ import { ImageDropzone } from "@/modules/tools/components/image-dropzone";
 import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
 import { OptionSelect, OptionSwitch } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import { ToolNotes } from "@/modules/tools/components/tool-notes";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
 import { decodeToPixels } from "@/modules/tools/domain/image-codec";
 import { isOpaque } from "@/modules/tools/domain/pixels";
@@ -1879,13 +1882,23 @@ export function ImageResizerWorkbench({
                     </div>
                 )}
 
-                <p className="text-muted-foreground max-w-[68ch] text-[0.6875rem] leading-normal">
-                    {t("metadataNote")}
-                </p>
-
-                <p className="text-muted-foreground text-[0.6875rem] leading-normal">
-                    {t("privacyNote")}
-                </p>
+                <ToolNotes
+                    notes={[
+                        {
+                            key: "privacy",
+                            icon: IconShieldCheck,
+                            tone: "success",
+                            title: t("privacyTitle"),
+                            body: t("privacyNote"),
+                        },
+                        {
+                            key: "metadata",
+                            icon: IconInfoCircle,
+                            title: t("metadataTitle"),
+                            body: t("metadataNote"),
+                        },
+                    ]}
+                />
             </CardContent>
         </Card>
     );

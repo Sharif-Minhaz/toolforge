@@ -6,12 +6,11 @@ export const MIN_QUALITY = 10;
 export const MAX_QUALITY = 100;
 
 /**
- * Higher than the compressor's 75, because the jobs are different. Someone
- * compressing has asked for a smaller file; someone converting has asked for a
- * different format and expects the picture to survive the trip, including when
- * the source was already lossy and the re-encode compounds with it.
+ * The top of the scale. Someone converting has asked for a different format,
+ * not a smaller file, and expects the picture to survive the trip — including
+ * when the source was already lossy and the re-encode compounds with it.
  */
-export const DEFAULT_QUALITY = 80;
+export const DEFAULT_QUALITY = 100;
 
 export const MAX_FILES = 40;
 

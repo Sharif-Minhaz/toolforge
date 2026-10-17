@@ -7,6 +7,7 @@ import {
     type ImageFileLimits,
     extensionForImageType,
     IMAGE_TYPE_EXTENSIONS,
+    imageFormatLabel,
     withImageExtension,
 } from "@/modules/tools/domain/image-file";
 import { DECODABLE_IMAGE_TYPES } from "@/modules/tools/types";
@@ -150,5 +151,25 @@ describe("withImageExtension", () => {
 
     test("leaves the stem alone when the type says nothing", () => {
         expect(withImageExtension("cat", "application/octet-stream")).toBe("cat");
+    });
+});
+
+describe("imageFormatLabel", () => {
+    test("names a decodable type by its usual extension", () => {
+        expect(imageFormatLabel("image/jpeg")).toBe("JPG");
+        expect(imageFormatLabel("image/webp")).toBe("WEBP");
+    });
+
+    test("names an SVG, which the converter takes as a source", () => {
+        expect(imageFormatLabel("image/svg+xml")).toBe("SVG");
+    });
+
+    test("normalises casing and parameters", () => {
+        expect(imageFormatLabel("IMAGE/PNG; charset=binary")).toBe("PNG");
+    });
+
+    test("says nothing about a type it does not know", () => {
+        expect(imageFormatLabel("image/tiff")).toBeNull();
+        expect(imageFormatLabel("")).toBeNull();
     });
 });

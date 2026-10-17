@@ -1,6 +1,13 @@
 "use client";
 
-import { IconArrowsMinimize, IconFileZip, IconLoader2, IconTrash } from "@tabler/icons-react";
+import {
+    IconArrowsMinimize,
+    IconFileZip,
+    IconInfoCircle,
+    IconLoader2,
+    IconShieldCheck,
+    IconTrash,
+} from "@tabler/icons-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -12,12 +19,19 @@ import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { ImageDropzone } from "@/modules/tools/components/image-dropzone";
+import { ImageQueueHeader } from "@/modules/tools/components/image-queue";
 import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import { ToolNotes } from "@/modules/tools/components/tool-notes";
 import { buildZipArchive } from "@/modules/tools/domain/archive";
 import { uniqueFilenames } from "@/modules/tools/domain/filenames";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
+import {
+    knownPixelSize,
+    readImagePixelSize,
+    type ImagePixelSize,
+} from "@/modules/tools/domain/image-element";
 import { checkImageFile } from "@/modules/tools/domain/image-file";
 import { compressImage } from "../domain/codec";
 import {
@@ -55,6 +69,8 @@ type QueueItem = {
     readonly id: string;
     readonly file: File;
     readonly previewUrl: string;
+    /** Measured once after the pick; `null` until then, or if it would not decode. */
+    readonly dimensions: ImagePixelSize | null;
     readonly status: "queued" | "working" | "done" | "failed";
     readonly result: CompressedImage | null;
     readonly reason: CompressionFailureReason | null;
@@ -96,6 +112,8 @@ export function ImageCompressorWorkbench({
     const inputId = useId();
     const hintId = useId();
     const qualityId = useId();
+    const queueHeadingId = useId();
+    const settingsHeadingId = useId();
 
     const [items, setItems] = useState<readonly QueueItem[]>([]);
     const [options, setOptions] = useState<CompressionOptions>(initialOptions);
@@ -130,6 +148,7 @@ export function ImageCompressorWorkbench({
             : [{ originalBytes: item.file.size, outputBytes: item.result.bytes }],
     );
     const summary = summariseSavings(results);
+    const totalBytes = items.reduce((total, item) => total + item.file.size, 0);
     const stale = items.some((item) => item.result !== null && item.signature !== signature);
     const failedCount = items.filter((item) => item.status === "failed").length;
     const pendingCount = items.filter((item) => needsWork(queueRow(item), signature)).length;
@@ -317,6 +336,7 @@ export function ImageCompressorWorkbench({
                 id: `item-${(nextId.current += 1)}`,
                 file,
                 previewUrl: url,
+                dimensions: null,
                 status: checked.ok ? "queued" : "failed",
                 result: null,
                 reason: checked.ok ? null : checked.reason,
@@ -333,6 +353,22 @@ export function ImageCompressorWorkbench({
         // Deliberately not started here: picking files fills the queue, pressing
         // Compress is what spends the reader's battery on them.
         setItems([...items, ...added]);
+        measure(added);
+    }
+
+    /**
+     * Reads each new picture's pixel size once, after it is already listed, so
+     * the row appears the moment the file is picked and its dimensions follow.
+     * A row removed in the meantime is simply not found.
+     */
+    function measure(added: readonly QueueItem[]) {
+        for (const item of added) {
+            void readImagePixelSize(item.previewUrl).then((size) => {
+                setItems((current) =>
+                    replaceItem(current, item.id, { dimensions: knownPixelSize(size) }),
+                );
+            });
+        }
     }
 
     function releasePreview(url: string) {
@@ -419,10 +455,14 @@ export function ImageCompressorWorkbench({
     const status = describeStatus();
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+        // `overflow-visible` overrides the vendor Card's own `overflow-hidden`
+        // so the settings column can be sticky: an ancestor whose overflow is
+        // not `visible` becomes the sticky element's scroll container. The
+        // hairline below is inset rather than clipped for the same reason.
+        <Card className="relative overflow-visible [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
             <span
                 aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
+                className="via-primary/45 pointer-events-none absolute inset-x-4 top-0 h-px bg-linear-to-r from-transparent to-transparent"
             />
 
             <CardHeader>
@@ -431,228 +471,318 @@ export function ImageCompressorWorkbench({
             </CardHeader>
 
             <CardContent className="flex min-w-0 flex-col gap-5">
-                <div className="flex min-w-0 flex-col gap-2">
-                    <ImageDropzone
-                        inputId={inputId}
-                        describedById={hintId}
-                        multiple
-                        accept={IMAGE_ACCEPT_ATTRIBUTE}
-                        disabled={working}
-                        title={t("dropTitle")}
-                        hint={t("dropHint", {
-                            limit: byteLabel(MAX_IMAGE_BYTES),
-                            count: format.number(MAX_FILES),
-                        })}
-                        onFiles={handlePick}
-                    />
-
-                    <ImageSourceControls
-                        onFiles={handlePick}
-                        disabled={working}
-                        urlImportEnabled={urlImportEnabled}
-                    />
-
-                    <StatusStrip id={hintId} tone={status.tone} message={status.message} />
-                </div>
-
-                <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    <div className="flex min-w-0 flex-col gap-1.5">
-                        <span
-                            id={qualityId}
-                            className="text-muted-foreground text-xs leading-[1.3]"
-                        >
-                            {t("qualityLabel")}
-                        </span>
-                        <div className="flex min-w-0 items-center gap-3">
-                            <Slider
-                                aria-labelledby={qualityId}
-                                value={options.quality}
-                                min={MIN_QUALITY}
-                                max={MAX_QUALITY}
-                                disabled={working || losslessOnly}
-                                onValueChange={(next) =>
-                                    patchOptions({
-                                        quality: clampQuality(
-                                            Array.isArray(next)
-                                                ? (next[0] ?? options.quality)
-                                                : next,
-                                        ),
-                                    })
-                                }
-                                className="min-w-0 flex-1"
-                            />
-                            <span className="w-8 shrink-0 text-right font-mono text-sm tabular-nums">
-                                {options.quality}
-                            </span>
-                        </div>
-                        <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                            {losslessOnly
-                                ? t("qualityHintLossless")
-                                : mixedLossless
-                                  ? t("qualityHintMixed")
-                                  : t("qualityHint", { value: options.quality })}
-                        </p>
-                    </div>
-
-                    <OptionSelect<OutputFormat>
-                        label={t("formatLabel")}
-                        hint={tFormats(`${options.format}Hint`)}
-                        value={options.format}
-                        values={OUTPUT_FORMATS}
-                        disabled={working}
-                        items={Object.fromEntries(
-                            OUTPUT_FORMATS.map((value) => [value, tFormats(value)]),
-                        )}
-                        onChange={(next) => patchOptions({ format: next })}
-                    />
-
-                    <OptionSelect<string>
-                        label={t("resizeLabel")}
-                        hint={t("resizeHint")}
-                        value={fromMaxEdge(options.maxEdge)}
-                        values={RESIZE_VALUES}
-                        disabled={working}
-                        items={Object.fromEntries(
-                            RESIZE_VALUES.map((value) => [
-                                value,
-                                value === ORIGINAL_EDGE
-                                    ? t("resizeOriginal")
-                                    : t("resizePreset", { value }),
-                            ]),
-                        )}
-                        onChange={(next) => patchOptions({ maxEdge: toMaxEdge(next) })}
-                    />
-                </div>
-
-                {working && (
-                    <div
-                        role="progressbar"
-                        aria-valuemin={0}
-                        aria-valuemax={progress.total}
-                        aria-valuenow={progress.done}
-                        aria-label={t("working", {
-                            done: format.number(progress.done + 1),
-                            total: format.number(progress.total),
-                        })}
-                        className="bg-muted h-1 w-full overflow-hidden rounded-full"
-                    >
-                        <span
-                            className="bg-primary block h-full rounded-full transition-[width] duration-300"
-                            style={{
-                                width: `${progress.total === 0 ? 0 : (progress.done / progress.total) * 100}%`,
-                            }}
-                        />
-                    </div>
-                )}
-
-                <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <Button onClick={handleCompress} disabled={!canCompress} className="h-9 px-3.5">
-                        {working ? (
-                            <IconLoader2 className="size-4 animate-spin" aria-hidden="true" />
-                        ) : (
-                            <IconArrowsMinimize
-                                className="size-4"
-                                stroke={1.9}
-                                aria-hidden="true"
-                            />
-                        )}
-                        {working
-                            ? t("working", {
-                                  done: format.number(progress.done + 1),
-                                  total: format.number(progress.total),
-                              })
-                            : t("compress")}
-                    </Button>
-
-                    <Button
-                        variant="outline"
-                        onClick={() => void handleDownloadAll()}
-                        disabled={summary.count === 0 || packing || working}
-                        className="h-9 px-3.5"
-                    >
-                        {packing ? (
-                            <IconLoader2 className="size-4 animate-spin" aria-hidden="true" />
-                        ) : (
-                            <IconFileZip className="size-4" stroke={1.8} aria-hidden="true" />
-                        )}
-                        {packing ? t("packing") : t("downloadAll")}
-                    </Button>
-
-                    <Button
-                        variant="outline"
-                        onClick={handleClear}
-                        disabled={items.length === 0 || working}
-                        className="h-9 px-3.5"
-                    >
-                        <IconTrash className="size-4" stroke={1.8} aria-hidden="true" />
-                        {t("clear")}
-                    </Button>
-                </div>
-
-                {/*
-                 * Not dimmed when a row is stale, unlike the rows themselves.
-                 * Every result counted here is a finished file the reader keeps,
-                 * whatever the panel says now.
-                 */}
-                {summary.count > 0 && (
-                    <div className="bg-card/60 ring-border/70 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 rounded-xl px-3 py-2.5 ring-1 ring-inset">
-                        <span className="text-[0.8125rem] leading-[1.3] font-medium">
-                            {t("summaryFiles", { count: summary.count })}
-                        </span>
-                        <span className="text-muted-foreground text-[0.8125rem] leading-[1.3] tabular-nums">
-                            {byteLabel(summary.originalBytes)} → {byteLabel(summary.outputBytes)}
-                        </span>
-                        <span
+                <div className="grid min-w-0 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem]">
+                    {/*
+                     * The picked files sit directly under the intake, not under
+                     * the settings: "did that pick work" is the first thing a
+                     * reader wants answered, and on a long settings panel the
+                     * list used to start below the fold.
+                     */}
+                    {/*
+                     * Stretched to the settings column's height, and with an
+                     * empty queue the dropzone grows into it — otherwise the
+                     * intake is a short strip beside a tall panel, with a hole
+                     * underneath it.
+                     */}
+                    <div className="flex min-w-0 flex-col gap-4 lg:self-stretch">
+                        <div
                             className={cn(
-                                "rounded-md px-1.5 py-0.5 text-[0.6875rem] leading-[1.3] font-medium tabular-nums",
-                                summary.percent > 0
-                                    ? "bg-[color-mix(in_oklch,var(--color-success)_14%,transparent)] text-[var(--color-success)]"
-                                    : "bg-muted text-muted-foreground",
+                                "flex min-w-0 flex-col gap-2",
+                                items.length === 0 && "flex-1",
                             )}
                         >
-                            {summary.percent > 0
-                                ? t("summarySaved", { percent: format.number(summary.percent) })
-                                : summary.percent < 0
-                                  ? t("summaryGrew", {
-                                        percent: format.number(Math.abs(summary.percent)),
-                                    })
-                                  : t("summaryUnchanged")}
-                        </span>
-                    </div>
-                )}
-
-                {items.length > 0 && (
-                    <ul className="flex min-w-0 flex-col gap-2">
-                        {items.map((item) => (
-                            <CompressionRow
-                                key={item.id}
-                                item={{
-                                    id: item.id,
-                                    name: item.file.name,
-                                    bytes: item.file.size,
-                                    previewUrl: item.previewUrl,
-                                    status: item.status,
-                                    result: item.result,
-                                    reason: item.reason,
-                                    stale: item.result !== null && item.signature !== signature,
-                                }}
-                                busy={working}
-                                describeFailure={describeFailure}
-                                onRecompress={handleRecompress}
-                                onDownload={handleDownload}
-                                onRemove={handleRemove}
+                            <ImageDropzone
+                                inputId={inputId}
+                                describedById={hintId}
+                                multiple
+                                compact={items.length > 0}
+                                className={items.length === 0 ? "min-h-52 flex-1" : undefined}
+                                accept={IMAGE_ACCEPT_ATTRIBUTE}
+                                disabled={working}
+                                title={items.length > 0 ? t("dropMoreTitle") : t("dropTitle")}
+                                hint={t("dropHint", {
+                                    limit: byteLabel(MAX_IMAGE_BYTES),
+                                    count: format.number(MAX_FILES),
+                                })}
+                                onFiles={handlePick}
                             />
-                        ))}
-                    </ul>
-                )}
 
-                <p className="text-muted-foreground max-w-[68ch] text-[0.6875rem] leading-normal">
-                    {t("metadataNote")}
-                </p>
+                            <ImageSourceControls
+                                onFiles={handlePick}
+                                disabled={working}
+                                urlImportEnabled={urlImportEnabled}
+                            />
 
-                <p className="text-muted-foreground text-[0.6875rem] leading-normal">
-                    {t("privacyNote")}
-                </p>
+                            <StatusStrip id={hintId} tone={status.tone} message={status.message} />
+                        </div>
+
+                        {items.length > 0 && (
+                            <section
+                                aria-labelledby={queueHeadingId}
+                                className="flex min-w-0 flex-col gap-2.5"
+                            >
+                                <ImageQueueHeader
+                                    id={queueHeadingId}
+                                    count={items.length}
+                                    totalBytes={totalBytes}
+                                    actions={
+                                        <Button
+                                            variant="ghost"
+                                            onClick={handleClear}
+                                            disabled={working}
+                                            className="h-8 px-2.5 text-[0.8125rem]"
+                                        >
+                                            <IconTrash
+                                                className="size-4"
+                                                stroke={1.8}
+                                                aria-hidden="true"
+                                            />
+                                            {t("clear")}
+                                        </Button>
+                                    }
+                                />
+
+                                {/*
+                                 * Not dimmed when a row is stale, unlike the rows
+                                 * themselves. Every result counted here is a
+                                 * finished file the reader keeps, whatever the
+                                 * panel says now.
+                                 */}
+                                {summary.count > 0 && (
+                                    <div className="bg-card/60 ring-border/70 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 rounded-xl px-3 py-2.5 ring-1 ring-inset">
+                                        <span className="text-[0.8125rem] leading-[1.3] font-medium">
+                                            {t("summaryFiles", { count: summary.count })}
+                                        </span>
+                                        <span className="text-muted-foreground text-[0.8125rem] leading-[1.3] tabular-nums">
+                                            {byteLabel(summary.originalBytes)} →{" "}
+                                            {byteLabel(summary.outputBytes)}
+                                        </span>
+                                        <span
+                                            className={cn(
+                                                "rounded-md px-1.5 py-0.5 text-[0.6875rem] leading-[1.3] font-medium tabular-nums",
+                                                summary.percent > 0
+                                                    ? "bg-[color-mix(in_oklch,var(--color-success)_14%,transparent)] text-[var(--color-success)]"
+                                                    : "bg-muted text-muted-foreground",
+                                            )}
+                                        >
+                                            {summary.percent > 0
+                                                ? t("summarySaved", {
+                                                      percent: format.number(summary.percent),
+                                                  })
+                                                : summary.percent < 0
+                                                  ? t("summaryGrew", {
+                                                        percent: format.number(
+                                                            Math.abs(summary.percent),
+                                                        ),
+                                                    })
+                                                  : t("summaryUnchanged")}
+                                        </span>
+                                    </div>
+                                )}
+
+                                <ul className="flex min-w-0 flex-col gap-2">
+                                    {items.map((item) => (
+                                        <CompressionRow
+                                            key={item.id}
+                                            item={{
+                                                id: item.id,
+                                                name: item.file.name,
+                                                bytes: item.file.size,
+                                                type: item.file.type,
+                                                dimensions: item.dimensions,
+                                                previewUrl: item.previewUrl,
+                                                status: item.status,
+                                                result: item.result,
+                                                reason: item.reason,
+                                                stale:
+                                                    item.result !== null &&
+                                                    item.signature !== signature,
+                                            }}
+                                            busy={working}
+                                            describeFailure={describeFailure}
+                                            onRecompress={handleRecompress}
+                                            onDownload={handleDownload}
+                                            onRemove={handleRemove}
+                                        />
+                                    ))}
+                                </ul>
+                            </section>
+                        )}
+                    </div>
+
+                    {/*
+                     * Sticky, and `self-start` (from `items-start` on the grid)
+                     * is what makes that work: a stretched grid item leaves
+                     * nothing for `position: sticky` to slide against. With a
+                     * long queue the button that runs it stays in reach.
+                     */}
+                    <div
+                        role="group"
+                        aria-labelledby={settingsHeadingId}
+                        className="bg-muted/30 ring-border/70 flex min-w-0 flex-col gap-4 rounded-xl p-4 ring-1 ring-inset lg:sticky lg:top-6"
+                    >
+                        <h3
+                            id={settingsHeadingId}
+                            className="text-[0.875rem] leading-[1.3] font-medium"
+                        >
+                            {t("settingsTitle")}
+                        </h3>
+
+                        <div className="flex min-w-0 flex-col gap-1.5">
+                            <span
+                                id={qualityId}
+                                className="text-muted-foreground text-xs leading-[1.3]"
+                            >
+                                {t("qualityLabel")}
+                            </span>
+                            <div className="flex min-w-0 items-center gap-3">
+                                <Slider
+                                    aria-labelledby={qualityId}
+                                    value={options.quality}
+                                    min={MIN_QUALITY}
+                                    max={MAX_QUALITY}
+                                    disabled={working || losslessOnly}
+                                    onValueChange={(next) =>
+                                        patchOptions({
+                                            quality: clampQuality(
+                                                Array.isArray(next)
+                                                    ? (next[0] ?? options.quality)
+                                                    : next,
+                                            ),
+                                        })
+                                    }
+                                    className="min-w-0 flex-1"
+                                />
+                                <span className="w-8 shrink-0 text-right font-mono text-sm tabular-nums">
+                                    {options.quality}
+                                </span>
+                            </div>
+                            <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                                {losslessOnly
+                                    ? t("qualityHintLossless")
+                                    : mixedLossless
+                                      ? t("qualityHintMixed")
+                                      : t("qualityHint")}
+                            </p>
+                        </div>
+
+                        <OptionSelect<OutputFormat>
+                            label={t("formatLabel")}
+                            hint={tFormats(`${options.format}Hint`)}
+                            value={options.format}
+                            values={OUTPUT_FORMATS}
+                            disabled={working}
+                            items={Object.fromEntries(
+                                OUTPUT_FORMATS.map((value) => [value, tFormats(value)]),
+                            )}
+                            onChange={(next) => patchOptions({ format: next })}
+                        />
+
+                        <OptionSelect<string>
+                            label={t("resizeLabel")}
+                            hint={t("resizeHint")}
+                            value={fromMaxEdge(options.maxEdge)}
+                            values={RESIZE_VALUES}
+                            disabled={working}
+                            items={Object.fromEntries(
+                                RESIZE_VALUES.map((value) => [
+                                    value,
+                                    value === ORIGINAL_EDGE
+                                        ? t("resizeOriginal")
+                                        : t("resizePreset", { value }),
+                                ]),
+                            )}
+                            onChange={(next) => patchOptions({ maxEdge: toMaxEdge(next) })}
+                        />
+
+                        {working && (
+                            <div
+                                role="progressbar"
+                                aria-valuemin={0}
+                                aria-valuemax={progress.total}
+                                aria-valuenow={progress.done}
+                                aria-label={t("working", {
+                                    done: format.number(progress.done + 1),
+                                    total: format.number(progress.total),
+                                })}
+                                className="bg-muted h-1 w-full overflow-hidden rounded-full"
+                            >
+                                <span
+                                    className="bg-primary block h-full rounded-full transition-[width] duration-300"
+                                    style={{
+                                        width: `${progress.total === 0 ? 0 : (progress.done / progress.total) * 100}%`,
+                                    }}
+                                />
+                            </div>
+                        )}
+
+                        <div className="flex min-w-0 flex-col gap-2">
+                            <Button
+                                onClick={handleCompress}
+                                disabled={!canCompress}
+                                className="h-10 w-full"
+                            >
+                                {working ? (
+                                    <IconLoader2
+                                        className="size-4 animate-spin"
+                                        aria-hidden="true"
+                                    />
+                                ) : (
+                                    <IconArrowsMinimize
+                                        className="size-4"
+                                        stroke={1.9}
+                                        aria-hidden="true"
+                                    />
+                                )}
+                                {working
+                                    ? t("working", {
+                                          done: format.number(progress.done + 1),
+                                          total: format.number(progress.total),
+                                      })
+                                    : t("compress")}
+                            </Button>
+
+                            <Button
+                                variant="outline"
+                                onClick={() => void handleDownloadAll()}
+                                disabled={summary.count === 0 || packing || working}
+                                className="h-9 w-full"
+                            >
+                                {packing ? (
+                                    <IconLoader2
+                                        className="size-4 animate-spin"
+                                        aria-hidden="true"
+                                    />
+                                ) : (
+                                    <IconFileZip
+                                        className="size-4"
+                                        stroke={1.8}
+                                        aria-hidden="true"
+                                    />
+                                )}
+                                {packing ? t("packing") : t("downloadAll")}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+
+                <ToolNotes
+                    notes={[
+                        {
+                            key: "privacy",
+                            icon: IconShieldCheck,
+                            tone: "success",
+                            title: t("privacyTitle"),
+                            body: t("privacyNote"),
+                        },
+                        {
+                            key: "metadata",
+                            icon: IconInfoCircle,
+                            title: t("metadataTitle"),
+                            body: t("metadataNote"),
+                        },
+                    ]}
+                />
             </CardContent>
         </Card>
     );

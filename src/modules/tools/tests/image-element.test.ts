@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
-import { loadImage, type LoadableImage } from "@/modules/tools/domain/image-element";
+import {
+    knownPixelSize,
+    loadImage,
+    type LoadableImage,
+} from "@/modules/tools/domain/image-element";
 
 type FakeImage = LoadableImage & { readonly naturalWidth: number };
 
@@ -43,5 +47,23 @@ describe("loadImage", () => {
 
     test("never rejects, so one unreadable file cannot take the caller down with it", async () => {
         await expect(loadImage("blob:x", () => fakeImage(false))).resolves.toBeNull();
+    });
+});
+
+describe("knownPixelSize", () => {
+    test("keeps a real measurement", () => {
+        expect(knownPixelSize({ width: 1920, height: 1080 })).toEqual({
+            width: 1920,
+            height: 1080,
+        });
+    });
+
+    test("treats a zero edge as unknown rather than 0 × 0", () => {
+        expect(knownPixelSize({ width: 0, height: 0 })).toBeNull();
+        expect(knownPixelSize({ width: 300, height: 0 })).toBeNull();
+    });
+
+    test("passes a failed measurement through as unknown", () => {
+        expect(knownPixelSize(null)).toBeNull();
     });
 });

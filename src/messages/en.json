@@ -7740,9 +7740,11 @@
             "description": "Pick a quality, a format and a size cap, then press Compress. Files are compressed one after another so the tab stays usable while it works.",
             "dropTitle": "Drop your images here",
             "dropHint": "JPG, PNG, WebP, AVIF, GIF or BMP · up to {limit} each · {count} files at a time",
+            "dropMoreTitle": "Add more images",
+            "settingsTitle": "Settings",
             "selectFiles": "Select files",
             "qualityLabel": "Quality",
-            "qualityHint": "Higher keeps more detail and costs more bytes. {value} suits most photographs.",
+            "qualityHint": "Higher keeps more detail; lower makes smaller files.",
             "qualityHintLossless": "PNG is lossless here, so quality changes nothing. Choose WebP or AVIF to make a photograph smaller.",
             "qualityHintMixed": "Applies to every file except the PNGs, which stay lossless under Match the original.",
             "formatLabel": "Output format",
@@ -7777,7 +7779,9 @@
             "statusDone": "Done. {percent}% smaller than what you dropped in.",
             "statusDoneNoSaving": "Done, but nothing got smaller — your originals were already well compressed.",
             "statusFailed": "{count, plural, =1 {# file was skipped} other {# files were skipped}}. The reason is on each row.",
+            "metadataTitle": "Metadata is not kept",
             "metadataNote": "Re-encoding drops EXIF, GPS and colour profiles. Camera rotation is applied to the pixels first, so nothing comes back sideways.",
+            "privacyTitle": "Stays in this tab",
             "privacyNote": "Every file is decoded and encoded in this tab. Nothing is uploaded and nothing is stored."
         },
         "formats": {
@@ -7882,7 +7886,7 @@
             "quality": {
                 "title": "Picking a quality",
                 "p1": "Quality numbers are not comparable between codecs. MozJPEG at 75 and libwebp at 75 do not target the same distortion, and AVIF's scale is different again — libaom's own default is 50, which on most photographs looks like JPEG at somewhere in the seventies. Compare the output, never the number.",
-                "p2": "For photographs, 70 to 80 is the range where the saving is large and the artefacts are hard to find without flicking between the two at full size. Below about 60 the flat areas of sky and skin start to band, and the edges around text pick up a halo. Above 90 the file grows quickly for a difference almost nobody sees.",
+                "p2": "For photographs, 70 to 80 is the range where the saving is large and the artefacts are hard to find without flicking between the two at full size. Below about 60 the flat areas of sky and skin start to band, and the edges around text pick up a halo. Above 90 the file grows quickly for a difference almost nobody sees. The slider starts at 100 so nothing is thrown away until you choose to; bring it down into that range for the real saving.",
                 "p3": "Images with hard edges — screenshots, diagrams, anything with text in it — behave differently. A lossy codec spends its bits on the edge and leaves ringing beside it, which is far more visible than the same artefact in foliage. Those are the images to keep as PNG, or to push to 90 and up if they must be lossy.",
                 "codecNote": "<code>MozJPEG</code> runs trellis quantisation, which searches for the set of coefficients with the best size-to-distortion trade at your chosen quality instead of taking the first one the quantiser produces. <code>libwebp</code> is set to its slowest analysis mode with sharp YUV conversion, which removes the coloured fringing on saturated edges that people usually mistake for WebP looking worse than JPEG. Both are off by default in a browser because both cost encoding time, and here you are the one waiting.",
                 "downscaleNote": "Downscaling goes through a Lanczos3 filter in linear light rather than through the canvas. Drawing an image smaller with <code>drawImage</code> gives you whatever your GPU driver does, which on a large reduction is a box filter and visible aliasing. Doing the arithmetic in linear light also stops the picture darkening as it shrinks, which is the artefact you see when a bright checkerboard turns grey instead of staying bright."
@@ -7940,31 +7944,33 @@
             "description": "Pick a target format, drop your files in and press Convert. Everything is converted one file at a time, so the tab stays usable while it works.",
             "dropTitle": "Drop your images here",
             "dropHint": "JPG, PNG, WebP, AVIF, GIF, BMP or SVG · up to {limit} each · {count} files at a time",
+            "dropMoreTitle": "Add more images",
+            "settingsTitle": "Settings",
             "targetLabel": "Convert to",
             "qualityLabel": "Quality",
-            "qualityHint": "Higher keeps more detail and costs more bytes. {value} suits most pictures.",
-            "qualityHintLossless": "PNG is written losslessly, so quality changes nothing. Pick WebP, AVIF or JPG to trade detail for bytes.",
-            "qualityHintIcon": "Icons are PNG underneath and always lossless, so quality changes nothing here.",
-            "qualityHintVector": "Higher keeps smaller shapes and follows every corner more closely. {value} suits most drawings.",
+            "qualityHint": "Higher keeps more detail; lower makes smaller files.",
+            "qualityHintLossless": "PNG is lossless, so quality changes nothing.",
+            "qualityHintIcon": "Icons are lossless PNG, so quality changes nothing.",
+            "qualityHintVector": "Higher keeps finer shapes and sharper corners.",
             "resizeLabel": "Longest edge",
-            "resizeHint": "Scales down only. A picture already inside the cap is left at its own size. An SVG source is drawn at this size instead, enlarging if it has to — a vector has no pixels to lose.",
-            "resizeHintIcon": "Icon sizes decide the dimensions, so this cap does not apply.",
-            "resizeHintVector": "An SVG scales to any size on its own, so there is nothing to cap. Quality is what decides how much detail the trace keeps.",
-            "resizeOriginal": "Keep original size",
+            "resizeHint": "Scales down only. An SVG source is drawn at this size.",
+            "resizeHintIcon": "Set by the icon sizes.",
+            "resizeHintVector": "An SVG has no size to cap.",
+            "resizeOriginal": "Original size",
             "resizePreset": "{value} px",
             "backgroundLabel": "Background",
-            "backgroundHint": "What sits behind a picture that has transparency in it.",
-            "backgroundHintJpeg": "JPG has no transparency, so a see-through picture has to land on a colour.",
+            "backgroundHint": "Behind transparent areas.",
+            "backgroundHintJpeg": "JPG has no transparency.",
             "sizesLabel": "Icon sizes",
-            "sizesHint": "Which squares go inside the .ico. 16, 32 and 48 are the three anything actually reads.",
-            "sizesHintFixed": "The pack writes a fixed set — 16, 32 and 48 in the .ico, plus 96, 180, 192 and 512 as PNGs.",
+            "sizesHint": "The squares inside the .ico.",
+            "sizesHintFixed": "Fixed for the pack.",
             "sizesValue": "{size} × {size}",
             "sizesSummary": "{count, plural, =1 {# size} other {# sizes}}",
             "sizesLastHint": "At least one size has to stay selected.",
             "colorsLabel": "Colours",
             "colorsValue": "{count} colours",
-            "colorsHint": "How many flat fills the drawing may use. Fewer is smaller and cleaner; more follows the picture and costs paths.",
-            "colorsHintIdle": "Only the SVG target has a palette to size.",
+            "colorsHint": "Fewer is smaller and cleaner.",
+            "colorsHintIdle": "SVG target only.",
             "convert": "Convert",
             "working": "Converting {done} of {total}…",
             "clear": "Clear all",
@@ -7994,7 +8000,9 @@
             "snippetTitle": "Link the pack from your page",
             "snippetDescription": "Put the files at your site root, then paste this into the <head>. The pack ships the same snippet as head.html.",
             "snippetCopy": "Copy snippet",
+            "metadataTitle": "Metadata is not kept",
             "metadataNote": "Converting decodes the picture to raw pixels, so EXIF, GPS and the embedded colour profile do not survive. The orientation tag is applied rather than dropped, so a photograph taken sideways comes back the right way up.",
+            "privacyTitle": "Stays in this tab",
             "privacyNote": "Every codec runs in this tab through WebAssembly. Your pictures are never uploaded, and nothing is stored after you close the page."
         },
         "targets": {
@@ -8005,16 +8013,16 @@
             "svg": "SVG (traced)",
             "ico": "ICO (favicon)",
             "favicon": "Favicon pack",
-            "pngHint": "Lossless, keeps transparency. The safe choice when the picture has to survive exactly.",
-            "jpegHint": "The universal photograph format. No transparency at all.",
-            "webpHint": "Smaller than JPG at the same quality, with transparency. Read everywhere that matters.",
-            "avifHint": "The smallest of the four, and the slowest to encode. Good support, not universal.",
-            "svgHint": "Traces the picture into flat shapes that scale to any size. Made for logos and stencils, not for photographs.",
-            "icoHint": "One .ico holding the square sizes you pick, as PNG inside.",
-            "faviconHint": "The .ico plus every PNG size, a web app manifest and the HTML to link them."
+            "pngHint": "Lossless, keeps transparency.",
+            "jpegHint": "Universal for photographs. No transparency.",
+            "webpHint": "Smaller than JPG, with transparency.",
+            "avifHint": "Smallest of the four, slowest to encode.",
+            "svgHint": "Traced into flat shapes. For logos, not photographs.",
+            "icoHint": "One .ico holding the sizes you pick.",
+            "faviconHint": "The .ico, every PNG size, a manifest and the HTML."
         },
         "backgrounds": {
-            "transparent": "Keep transparent",
+            "transparent": "Transparent",
             "white": "White",
             "black": "Black"
         },
@@ -8149,7 +8157,7 @@
             "quality": {
                 "title": "Choosing a quality",
                 "p1": "Quality is not a percentage of anything. It is a knob on the quantiser, and the same number means different things to different encoders — MozJPEG at 80 and libaom at 80 are not the same trade.",
-                "p2": "80 is the default here, higher than the compressor's 75, because the jobs differ. Compressing is a request for a smaller file. Converting is a request for a different format, and the picture is expected to survive the trip — including when the source was already lossy and this re-encode compounds with it.",
+                "p2": "100 is the default here, because converting is a request for a different format, not a smaller file — the picture is expected to survive the trip, including when the source was already lossy and this re-encode compounds with it. Lower it when the bytes matter more than the last bit of detail.",
                 "p3": "Below about 60 the artefacts stop being subtle: blocking on flat areas in JPG, smearing on fine detail in WebP and AVIF. Above about 92 you are mostly spending bytes on noise. If a specific gradient bands, raise the quality rather than switching format — banding is a quantiser problem, and every encoder here has one."
             },
             "metadata": {
@@ -8301,7 +8309,9 @@
             "outputCopied": "The pixels will be copied, not resampled.",
             "outputResampled": "Scaled with Lanczos3.",
             "previewAlt": "The picture you loaded, with the crop area over it",
+            "metadataTitle": "Metadata is not kept",
             "metadataNote": "Decoding to pixels drops EXIF, GPS and the colour profile, and applies the orientation tag rather than dropping it — so a photograph taken sideways comes back upright. Only the resolution you asked for is written back.",
+            "privacyTitle": "Stays in this tab",
             "privacyNote": "Cropping, resizing and encoding all happen in this tab. Nothing you pick, drop or paste is uploaded.",
             "statusCropped": "Cropped — the picture is now {width} × {height} px.",
             "applyCrop": "Apply crop",
@@ -8532,6 +8542,7 @@
             "sourceAlt": "{name}, before anything was removed",
             "beforeAlt": "{name}, with its original background",
             "afterAlt": "{name}, with the background removed",
+            "privacyTitle": "Your pictures are not uploaded",
             "privacyNote": "Everything except the model download and the stock search happens in this tab. Nothing you drop in is uploaded, stored or logged."
         },
         "qualities": {
@@ -8851,6 +8862,7 @@
             "dataUriHint": "{size} inlined into your HTML, every time the page is served.",
             "copyDataUri": "Copy the data URI",
             "copySnippet": "Copy snippet",
+            "privacyTitle": "Stays in this tab",
             "privacyNote": "Your picture is decoded in this tab and never uploaded. The hash is arithmetic over the pixels, and the PNG is written here too."
         },
         "snippets": {
@@ -11956,6 +11968,11 @@
             "rate_limited": "Too many pictures fetched from this network just now. Wait a minute, or drop the file in instead.",
             "not_configured": "Fetching by address is not configured on this deployment. Picking, dropping and pasting all still work."
         }
+    },
+    "imageQueue": {
+        "heading": "Selected images",
+        "summary": "{count, plural, =1 {# image} other {# images}} · {size}",
+        "pixels": "{width} × {height} px"
     },
     "keyboardTester": {
         "meta": {

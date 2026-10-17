@@ -395,6 +395,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         // paste-and-fetch controls are one shared island, and six copies of the
         // same namespace slice is six places to forget one.
         imageIntake: messages.imageIntake,
+        // The picked-files heading and per-source facts both batch image
+        // tools list under their intake.
+        imageQueue: messages.imageQueue,
         compareSlider: messages.compareSlider,
         // The JSON viewer's fold controls, shared by every tool that prints
         // JSON — the same reasoning as the image intake above.

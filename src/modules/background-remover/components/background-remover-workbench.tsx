@@ -1,6 +1,12 @@
 "use client";
 
-import { IconLoader2, IconPhotoUp, IconScissors, IconTrash } from "@tabler/icons-react";
+import {
+    IconLoader2,
+    IconPhotoUp,
+    IconScissors,
+    IconShieldCheck,
+    IconTrash,
+} from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -13,6 +19,7 @@ import { ImageDropzone } from "@/modules/tools/components/image-dropzone";
 import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import { ToolNotes } from "@/modules/tools/components/tool-notes";
 import { useCutoutQuality } from "@/modules/tools/components/use-cutout-quality";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
@@ -869,9 +876,17 @@ export function BackgroundRemoverWorkbench({
                     />
                 )}
 
-                <p className="text-muted-foreground text-[0.6875rem] leading-normal">
-                    {t("privacyNote")}
-                </p>
+                <ToolNotes
+                    notes={[
+                        {
+                            key: "privacy",
+                            icon: IconShieldCheck,
+                            tone: "success",
+                            title: t("privacyTitle"),
+                            body: t("privacyNote"),
+                        },
+                    ]}
+                />
             </CardContent>
         </Card>
     );

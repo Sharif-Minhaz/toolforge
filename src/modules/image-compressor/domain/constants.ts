@@ -5,11 +5,11 @@ export const MIN_QUALITY = 10;
 export const MAX_QUALITY = 100;
 
 /**
- * MozJPEG's own default, and close to where libwebp stops paying for itself.
- * High enough that a photograph survives a side-by-side comparison, low enough
- * that the first result is a real saving rather than a rounding error.
+ * The top of the scale, so nothing is thrown away until the reader chooses to.
+ * The saving at 100 comes from the encoder, the format and the size cap; the
+ * article says where to take the slider for more.
  */
-export const DEFAULT_QUALITY = 75;
+export const DEFAULT_QUALITY = 100;
 
 export const MAX_FILES = 40;
 

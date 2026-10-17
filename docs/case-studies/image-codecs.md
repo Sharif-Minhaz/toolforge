@@ -134,6 +134,19 @@ Three "failures", zero defects.
   a tab dies halfway through a batch — four bytes a pixel is the real cost, not the
   file size. Sequential work is also the only way the progress count is true.
 
+- **The queue sits under the intake; the settings sit beside it.** Both
+  workbenches are two columns from `lg` up: intake and picked files on the left,
+  a sticky settings panel holding the batch button on the right. The first
+  version listed the files under every control, so on the converter's six a
+  successful pick looked like nothing happened. Once a file is in, the dropzone
+  shrinks to its `compact` row for the same reason; with an empty queue it does
+  the opposite, stretching to the settings panel's height so the left column
+  is not a short strip over a hole. Every row states the source
+  before anything runs — `1920 × 1080 px · 2.4 MB · JPG` via `ImageSourceFacts`
+  — measured once after the pick, never during render; a zero-sized SVG is
+  "unknown" (`knownPixelSize`), not `0 × 0`. The sticky column needs the card's
+  `overflow-visible`, the same trap the image resizer records.
+
 - **A row may produce more than one file, and the ZIP layout has to say so.** The
   favicon pack is seven files from one picture. `buildArchivePaths` is the whole
   rule: a row with one output stays at the archive root, a row with several gets a

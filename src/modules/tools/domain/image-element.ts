@@ -46,3 +46,12 @@ export async function readImagePixelSize(src: string): Promise<ImagePixelSize | 
 
     return image === null ? null : { width: image.naturalWidth, height: image.naturalHeight };
 }
+
+/**
+ * A measurement worth showing, or `null`. An SVG with no `width`, `height` or
+ * `viewBox` loads with a natural size of zero, which is "unknown" — printing
+ * `0 × 0` beside it would read as a broken file.
+ */
+export function knownPixelSize(size: ImagePixelSize | null): ImagePixelSize | null {
+    return size === null || size.width <= 0 || size.height <= 0 ? null : size;
+}
