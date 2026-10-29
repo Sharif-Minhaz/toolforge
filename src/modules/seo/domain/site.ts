@@ -1,10 +1,43 @@
 import type { Locale } from "@/i18n/config";
 
-/**
- * Absolute origin used for canonical URLs, Open Graph tags, and JSON-LD.
- * Falls back to localhost so builds work without deployment config.
- */
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const PRODUCTION_SITE_URL = "https://toolforge.minhaz.bond";
+
+type SiteUrlEnvironment = {
+    readonly vercelEnv?: string;
+    readonly nodeEnv?: string;
+    readonly configuredUrl?: string;
+    readonly vercelUrl?: string;
+};
+
+/** Production metadata must never inherit a preview hostname from deployment config. */
+export function resolveSiteUrl({
+    vercelEnv,
+    nodeEnv,
+    configuredUrl,
+    vercelUrl,
+}: SiteUrlEnvironment): string {
+    if (vercelEnv === "production" || (vercelEnv === undefined && nodeEnv === "production")) {
+        return PRODUCTION_SITE_URL;
+    }
+
+    if (configuredUrl?.trim()) {
+        return configuredUrl.trim();
+    }
+
+    if (vercelEnv === "preview" && vercelUrl) {
+        return `https://${vercelUrl}`;
+    }
+
+    return "http://localhost:3000";
+}
+
+/** Absolute origin used for canonical URLs, Open Graph tags, and JSON-LD. */
+export const SITE_URL = resolveSiteUrl({
+    vercelEnv: process.env.VERCEL_ENV,
+    nodeEnv: process.env.NODE_ENV,
+    configuredUrl: process.env.NEXT_PUBLIC_SITE_URL,
+    vercelUrl: process.env.VERCEL_URL,
+});
 
 export const SITE_NAME = "ToolForge";
 

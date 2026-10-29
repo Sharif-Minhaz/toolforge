@@ -2,7 +2,13 @@ import { describe, expect, test } from "bun:test";
 
 import { buildPageMetadata, SITE_ATTRIBUTION } from "@/modules/seo/domain/metadata";
 import { buildToolJsonLd } from "@/modules/seo/domain/structured-data";
-import { OG_IMAGE, SITE_KEYWORDS, SITE_NAME, SITE_URL } from "@/modules/seo/domain/site";
+import {
+    OG_IMAGE,
+    SITE_KEYWORDS,
+    SITE_NAME,
+    SITE_URL,
+    resolveSiteUrl,
+} from "@/modules/seo/domain/site";
 
 const BASE = {
     title: "Base64 Encoder and Decoder",
@@ -70,6 +76,42 @@ describe("buildPageMetadata", () => {
             expect(buildPageMetadata({ ...BASE, locale }).openGraph?.locale).toBe(expected);
         });
     }
+});
+
+describe("resolveSiteUrl", () => {
+    test("pins Vercel production to the public site even when its env value is stale", () => {
+        expect(
+            resolveSiteUrl({
+                vercelEnv: "production",
+                nodeEnv: "production",
+                configuredUrl: "https://toolforge-dev.vercel.app",
+            }),
+        ).toBe("https://toolforge.minhaz.bond");
+    });
+
+    test("uses the production domain for non-Vercel production builds", () => {
+        expect(resolveSiteUrl({ nodeEnv: "production" })).toBe("https://toolforge.minhaz.bond");
+    });
+
+    test("keeps configured preview URLs and treats blank configuration as unset", () => {
+        expect(
+            resolveSiteUrl({
+                vercelEnv: "preview",
+                nodeEnv: "production",
+                configuredUrl: "https://preview.example.test",
+            }),
+        ).toBe("https://preview.example.test");
+        expect(
+            resolveSiteUrl({
+                vercelEnv: "preview",
+                nodeEnv: "production",
+                vercelUrl: "toolforge-preview.vercel.app",
+            }),
+        ).toBe("https://toolforge-preview.vercel.app");
+        expect(resolveSiteUrl({ nodeEnv: "development", configuredUrl: " " })).toBe(
+            "http://localhost:3000",
+        );
+    });
 });
 
 describe("SITE_ATTRIBUTION", () => {
