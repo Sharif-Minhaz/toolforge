@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { CodeBlock } from "@/modules/tools/components/code-block";
 import { ConfirmRow } from "@/modules/tools/components/confirm-row";
 import { CopyIconSwap } from "@/modules/tools/components/copy-button";
 import { StatusStrip } from "@/modules/tools/components/status-strip";
@@ -195,9 +196,11 @@ export function ServerAccessPanel({
                     <p className="text-brand-amber max-w-[68ch] text-[0.6875rem] leading-normal">
                         {t("shownOnce")}
                     </p>
-                    <code className="text-muted-foreground font-mono text-[0.6875rem] break-all">
-                        {`${ACCESS_TOKEN_HEADER}: ${issued}`}
-                    </code>
+                    <CodeBlock
+                        code={`${ACCESS_TOKEN_HEADER}: ${issued}`}
+                        language="shell"
+                        className="max-w-2xl"
+                    />
                 </div>
             ) : null}
 

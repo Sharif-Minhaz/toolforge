@@ -11375,7 +11375,7 @@
             "generate": "Generate token",
             "rotate": "Rotate token",
             "rotateConfirm": "The current token stops working immediately. Issue a new one?",
-            "shownOnce": "Copy it now. Only a fingerprint of it is stored, so it cannot be shown again — if you lose it, rotate.",
+            "shownOnce": "Copy it now — it won't be shown again.",
             "copy": "Copy",
             "copied": "Copied",
             "copyFailed": "Could not copy the token.",
