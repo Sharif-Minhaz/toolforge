@@ -94,6 +94,14 @@ enum HttpMethod {
   @@map("http_method")
 }
 
+/// Whether a server's public address answers anyone or only a token holder.
+enum ServerAccess {
+  OPEN
+  PRIVATE
+
+  @@map("server_access")
+}
+
 /// Which level of the tree an environment variable is attached to.
 enum VariableScope {
   WORKSPACE
@@ -162,7 +170,7 @@ model WorkspaceSecret {
   secretHash  String @id @map("secret_hash")
   workspaceId String @map("workspace_id") @db.Uuid
 
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt  DateTime @default(now()) @map("created_at")
   /// Lets the settings page list "this device and two others", and lets a
   /// future sweep drop claims nobody has used in a year.
   lastUsedAt DateTime @default(now()) @map("last_used_at")
@@ -191,6 +199,15 @@ model MockServer {
   /// A paused server answers 503 rather than 404, so a caller can tell the
   /// difference between "switched off" and "never existed".
   isPaused Boolean @default(false) @map("is_paused")
+
+  /// Who may call the public address. PRIVATE demands the `X-ToolForge-Key`
+  /// header; see `tools/domain/access-token.ts`. The database default is
+  /// PRIVATE so a creation path that forgets it fails closed — the migration
+  /// that added the column left every server that existed before it OPEN.
+  access          ServerAccess @default(PRIVATE)
+  /// SHA-256 of the access token. Never the token. Null until one is issued,
+  /// and a PRIVATE server without one refuses every caller.
+  accessTokenHash String?      @map("access_token_hash")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -340,12 +357,12 @@ model RequestLog {
   durationMs Int    @map("duration_ms")
 
   /// `{ headers, query, bodyPreview, bodyTruncated }`, already redacted.
-  request Json
+  request  Json
   /// `{ headers, bodyPreview, bodyTruncated }`.
   response Json
   /// Which nodes ran, in order, with per-node milliseconds. Powers the trace
   /// panel; null for a request that matched nothing.
-  trace Json?
+  trace    Json?
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -403,8 +420,17 @@ model JsonServer {
   /// difference between "switched off" and "never existed".
   isPaused Boolean @default(false) @map("is_paused")
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  /// Who may call the public address. PRIVATE demands the `X-ToolForge-Key`
+  /// header; see `tools/domain/access-token.ts`. The database default is
+  /// PRIVATE so a creation path that forgets it fails closed — the migration
+  /// that added the column left every server that existed before it OPEN.
+  access          ServerAccess @default(PRIVATE)
+  /// SHA-256 of the access token. Never the token. Null until one is issued,
+  /// and a PRIVATE server without one refuses every caller.
+  accessTokenHash String?      @map("access_token_hash")
+
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
   /// Touched when the studio loads it. The only thing a dormancy sweep needs.
   lastSeenAt DateTime @default(now()) @map("last_seen_at")
 
@@ -529,6 +555,15 @@ model GraphqlServer {
   /// A paused server answers 503 rather than 404, so a caller can tell the
   /// difference between "switched off" and "never existed".
   isPaused Boolean @default(false) @map("is_paused")
+
+  /// Who may call the public address. PRIVATE demands the `X-ToolForge-Key`
+  /// header; see `tools/domain/access-token.ts`. The database default is
+  /// PRIVATE so a creation path that forgets it fails closed — the migration
+  /// that added the column left every server that existed before it OPEN.
+  access          ServerAccess @default(PRIVATE)
+  /// SHA-256 of the access token. Never the token. Null until one is issued,
+  /// and a PRIVATE server without one refuses every caller.
+  accessTokenHash String?      @map("access_token_hash")
 
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")

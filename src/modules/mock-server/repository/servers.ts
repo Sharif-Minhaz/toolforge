@@ -2,6 +2,7 @@ import "server-only";
 
 import { prisma } from "@/lib/prisma";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
+import type { ServerAccess } from "@/modules/tools/domain/access-token";
 
 import { MAX_SERVERS_PER_WORKSPACE } from "../domain/constants";
 import type { ServerDetail, ServerSummary } from "../types";
@@ -21,6 +22,8 @@ const SUMMARY_SELECT = {
     name: true,
     description: true,
     isPaused: true,
+    access: true,
+    accessTokenHash: true,
     createdAt: true,
     _count: { select: { endpoints: true } },
 } as const;
@@ -31,6 +34,8 @@ type SummaryRow = {
     name: string;
     description: string | null;
     isPaused: boolean;
+    access: ServerAccess;
+    accessTokenHash: string | null;
     createdAt: Date;
     _count: { endpoints: number };
 };
@@ -42,6 +47,9 @@ function toSummary(row: SummaryRow): ServerSummary {
         name: row.name,
         description: row.description,
         isPaused: row.isPaused,
+        access: row.access,
+        // Whether one exists, never the digest: this crosses to the browser.
+        hasAccessToken: row.accessTokenHash !== null,
         createdAt: row.createdAt.toISOString(),
         endpointCount: row._count.endpoints,
     };
@@ -134,6 +142,9 @@ export type UpdateServerRow = {
     readonly name?: string;
     readonly description?: string | null;
     readonly isPaused?: boolean;
+    readonly access?: ServerAccess;
+    /** Already a digest. The raw token never reaches this layer. */
+    readonly accessTokenHash?: string;
 };
 
 export async function updateServer(serverId: string, input: UpdateServerRow): Promise<boolean> {

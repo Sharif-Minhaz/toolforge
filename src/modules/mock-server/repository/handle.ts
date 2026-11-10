@@ -9,6 +9,7 @@ import { writeRequestLog } from "./logs";
 import { spendServeQuota, sweepQuotaRows } from "./rate-limit";
 import { serveMockRequest, type ServeOutcome } from "./serve";
 import { HTTP_METHODS, type HttpMethod } from "../types/graph";
+import { ACCESS_TOKEN_HEADER } from "@/modules/tools/domain/access-token";
 import { checkServerKey } from "@/modules/tools/domain/server-key";
 import type { RateVerdict } from "@/modules/tools/domain/rate-window";
 import { resolveRemoteIp } from "@/modules/tools/repository/turnstile";
@@ -39,8 +40,10 @@ import { resolveRemoteIp } from "@/modules/tools/repository/turnstile";
  *   hand somebody mid-debugging.
  * - **`Access-Control-Allow-Origin: *`.** The point of a mock is that a
  *   front-end running on localhost can call it. Permissive by design and safe
- *   here because there is nothing to authenticate against — no cookie of ours
- *   is readable from this path, and none is sent.
+ *   here because the only credential is a header the caller adds on purpose,
+ *   `X-ToolForge-Key`. Browsers never attach it on their own, and with `*` they
+ *   refuse to send cookies, so another site's page cannot borrow anybody's
+ *   access.
  *
  * This is also the one route on the site a stranger's program calls in a loop,
  * so it is the one that carries a throughput limit. The gates run cheapest-first
@@ -166,6 +169,20 @@ function toResponse(
             return new Response(null, { status: 204, headers });
         }
 
+        case "refused": {
+            if (method === "OPTIONS") {
+                // A preflight never carries the token, and refusing it would
+                // make a private server uncallable from any browser. Answered
+                // from the static set, so it reveals no route.
+                const headers = baseHeaders(rate);
+                headers.set("access-control-allow-methods", HTTP_METHODS.join(", "));
+
+                return new Response(null, { status: 204, headers });
+            }
+
+            return problem(401, outcome.reason, baseHeaders(rate));
+        }
+
         case "paused":
             return problem(503, "server_paused", baseHeaders(rate));
 
@@ -230,7 +247,12 @@ export async function handleMockRequest(
     const url = new URL(request.url);
 
     const query = Object.fromEntries(url.searchParams);
-    const headers = Object.fromEntries(request.headers);
+    // The platform credential is stripped here, once: a graph that echoes
+    // request headers must not bounce the token into a response body, and the
+    // request log must never hold it.
+    const headers = Object.fromEntries(
+        [...request.headers].filter(([name]) => name !== ACCESS_TOKEN_HEADER),
+    );
     const rawBody =
         method === "GET" || method === "HEAD"
             ? ""
@@ -245,6 +267,7 @@ export async function handleMockRequest(
         headers,
         cookies: readCookies(request.headers.get("cookie")),
         rawBody,
+        accessToken: request.headers.get(ACCESS_TOKEN_HEADER),
     });
 
     const response = toResponse(outcome, method as HttpMethod, limit.verdict);

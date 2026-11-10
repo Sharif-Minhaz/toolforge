@@ -1,3 +1,4 @@
+import type { ServerAccess } from "@/modules/tools/domain/access-token";
 import type {
     DocumentFailure,
     DocumentUsage,
@@ -89,6 +90,8 @@ export type JsonServerSummary = {
     readonly key: string;
     readonly name: string;
     readonly isPaused: boolean;
+    readonly access: ServerAccess;
+    readonly hasAccessToken: boolean;
     readonly usage: DocumentUsage;
     readonly resourceCount: number;
     readonly recordCount: number;
@@ -158,6 +161,14 @@ export type ImportResult =
 
 export type RotateRecoveryResult =
     | { readonly ok: true; readonly recoveryKey: string }
+    | { readonly ok: false; readonly reason: ActionProblem };
+
+export type RotateAccessResult =
+    | {
+          readonly ok: true;
+          /** Shown once, never stored unhashed, never shown again. */
+          readonly token: string;
+      }
     | { readonly ok: false; readonly reason: ActionProblem };
 
 export type ReplaceDocumentResult =

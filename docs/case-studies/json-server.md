@@ -92,3 +92,5 @@ published type name. See [`graphql-server.md`](graphql-server.md).
 - [`../architecture.md`](../architecture.md#worked-example-two-the-three-studios-which-moved-twice)
   — the document layer this shares with the GraphQL studio, and the promise that
   one `db.json` behaves identically in both.
+- [`../security.md`](../security.md#gating-a-hosted-servers-public-address) — the
+  access token that makes a server private, and why it is not the recovery key.

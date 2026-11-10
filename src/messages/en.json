@@ -10439,7 +10439,7 @@
             "badgeRecovery": "One recovery key per workspace",
             "badgeThree": "Three workspaces per browser",
             "disclosureTitle": "This part does not run in your browser",
-            "disclosureBody": "Every other tool on ToolForge works entirely on your machine. This one cannot: a mock endpoint has to answer requests from your app, so your workspaces, endpoints and their responses are stored on our servers and served from them. Anyone who has the address of a mock endpoint can call it — treat what you put in a response as public, and never put a real credential in one."
+            "disclosureBody": "Every other tool on ToolForge works entirely on your machine. This one cannot: a mock endpoint has to answer requests from your app, so your workspaces, endpoints and their responses are stored on our servers and served from them. A private server answers only callers holding its access token, an open one answers anyone with the address — either way, treat what you put in a response as public, and never put a real credential in one."
         },
         "toc": {
             "title": "On this page"
@@ -10463,7 +10463,7 @@
                 "logicBody": "A route with no flow simply returns its body. Open the flow editor to add authentication, conditions, delays, weighted branches, variables and logging between the request arriving and the reply going out.",
                 "callTitle": "Point your app at the address",
                 "callBody": "Copy the address, call it from your code or from curl, and the calls appear in the workspace's request log. It answers whether or not this page is open, so a deployed front end can reach it too.",
-                "outro": "Nothing here is private. Anybody holding the address of a mock endpoint can call it, so treat everything in a response as public and never put a real credential in one."
+                "outro": "Make a server private and only callers holding its access token reach it — but a token can leak, and the data is stored on our servers, so treat everything in a response as public and never put a real credential in one."
             },
             "ownership": {
                 "title": "Ownership without an account",
@@ -10580,7 +10580,7 @@
                 "q2": "Does a mock endpoint keep answering after I close the tab?",
                 "a2": "Yes. Endpoints are served from our servers rather than from your browser, so a deployed front end or a colleague's machine can call them whether or not this page is open.",
                 "q3": "Can anybody else call my mock endpoints?",
-                "a3": "Anybody holding the address can. There is no password on a mock endpoint, so treat everything in a response as public and never put a real credential, key or customer record in one.",
+                "a3": "Not while the server is private: a call without its access token in the X-ToolForge-Key header gets a 401, and learns nothing about the server. Open it, and anybody holding the address can. Either way, treat everything in a response as public and never put a real credential, key or customer record in one.",
                 "q4": "What happens if I lose my recovery key?",
                 "a4": "Any browser that already owns the workspace keeps working, so the fastest fix is to open it on one of those. If none is left, the workspace cannot be recovered — only a one-way digest of the key is stored, so nobody can look it up or reissue it.",
                 "q5": "Can a response return different data on every call?",
@@ -10679,7 +10679,7 @@
         },
         "workspace": {
             "eyebrow": "Workspace",
-            "subtitle": "Each server owns a set of endpoints and answers on its own address. Nothing here is private — anyone holding the address can call it.",
+            "subtitle": "Each server owns a set of endpoints and answers on its own address. A new server is private — only callers holding its access token get an answer.",
             "back": "All workspaces",
             "shortcuts": "Workspace sections",
             "notFound": "That workspace is not on this browser.",
@@ -11361,6 +11361,28 @@
         }
     },
     "hostedServer": {
+        "confirm": {
+            "cancel": "Cancel"
+        },
+        "access": {
+            "title": "Access",
+            "private": "Private",
+            "open": "Open",
+            "requireToken": "Require an access token",
+            "openDescription": "Anyone who knows this address can read and change its data — from a browser, Postman or a script. Make it private to require a token.",
+            "privateDescription": "Only requests that send the access token in the {header} header are answered. Everything else gets a 401, without learning anything about this server.",
+            "lockedNotice": "This server is private and has no token yet, so every request is refused. Generate a token to start calling it.",
+            "generate": "Generate token",
+            "rotate": "Rotate token",
+            "rotateConfirm": "The current token stops working immediately. Issue a new one?",
+            "shownOnce": "Copy it now. Only a fingerprint of it is stored, so it cannot be shown again — if you lose it, rotate.",
+            "copy": "Copy",
+            "copied": "Copied",
+            "copyFailed": "Could not copy the token.",
+            "madePrivate": "Server is now private.",
+            "madeOpen": "Server is now open to anyone.",
+            "frontEndCaveat": "Keep the token in Postman, a server-side .env or CI. Anything shipped in a public front end can be read by whoever opens it — if that happens, rotate."
+        },
         "usage": {
             "label": "Storage used",
             "used": "{used} of {limit}",
@@ -11398,7 +11420,7 @@
     "jsonServer": {
         "meta": {
             "title": "Hosted JSON Server — A Real REST API From One db.json",
-            "description": "Paste a db.json and get a public REST API with full CRUD, filtering, sorting, pagination and relations — the json-server you know, without leaving a laptop running. No account: a secret in your browser proves ownership and a recovery key brings the server back anywhere.",
+            "description": "Paste a db.json and get a hosted REST API with full CRUD, filtering, sorting, pagination and relations — the json-server you know, without leaving a laptop running. Private by default behind an access token. No account: a secret in your browser proves ownership and a recovery key brings the server back anywhere.",
             "detailTitle": "JSON server"
         },
         "hero": {
@@ -11409,7 +11431,7 @@
             "badgeRecovery": "Recovery key brings it back",
             "badgeFive": "Five servers per browser",
             "disclosureTitle": "This one does not run in your browser",
-            "disclosureBody": "Almost everything on ToolForge works entirely in your tab. This cannot: a page has no way to answer somebody else's HTTP request, so your document is stored on our servers and served from there. That means we hold your data, anyone who has the address can read and change it, and there is no password on it — treat a JSON server as a public fixture for prototyping, never as somewhere to put anything real."
+            "disclosureBody": "Almost everything on ToolForge works entirely in your tab. This cannot: a page has no way to answer somebody else's HTTP request, so your document is stored on our servers and served from there. That means we hold your data, and anyone holding the server's access token — or anyone at all, if you open it — can read and change it. Treat a JSON server as a fixture for prototyping, never as somewhere to put anything real."
         },
         "toc": {
             "title": "On this page"
@@ -11431,7 +11453,7 @@
                 "callBody": "Copy the base address and call it from fetch, curl, an HTTP client, or a front end you have deployed. Nothing has to be running on your machine.",
                 "watchTitle": "Watch it, and edit it",
                 "watchBody": "The Requests tab shows the most recent calls the server answered. The Data tab is the live document — editing it there replaces everything at once, which is the same thing a client does one record at a time — and Download db.json takes it away.",
-                "outro": "There is no password on a JSON server. Anybody with the address can read and change the document, so it is a public fixture for prototyping and never somewhere to put anything real."
+                "outro": "A new server is private: a call without its access token in the X-ToolForge-Key header gets a 401. Open it and anybody with the address can read and change the document. Either way it is a fixture for prototyping, never somewhere to put anything real."
             },
             "document": {
                 "title": "What a db.json has to look like",
@@ -11539,7 +11561,7 @@
             "differences": {
                 "title": "Where this differs from a local json-server",
                 "p1": "The routes, the query language and the shapes are json-server v1's, and they were checked by running both engines over the same document rather than by reading the documentation — which found seven behaviours a hand-written implementation had got wrong. A well-formed query behaves here exactly as it does locally.",
-                "p2": "What differs is where it runs. There is no process on your machine to keep alive, so a preview deployment, a phone on another network or a colleague can all reach the same fixture. There is also no localhost to hide behind: anybody with the address has full read and write access.",
+                "p2": "What differs is where it runs. There is no process on your machine to keep alive, so a preview deployment, a phone on another network or a colleague can all reach the same fixture. There is also no localhost to hide behind, which is why a server starts private: only callers sending its access token get read and write access, until you open it.",
                 "p3": "Malformed input is refused rather than ignored. A _where that is not valid JSON and an unknown operator both answer 400 here, where the reference silently drops the filter and returns the whole collection. A filter that is quietly ignored looks exactly like one that matched everything, which is the worse failure.",
                 "p4": "One _where clause is honoured here that the reference matches nothing for, and that is strictly additive. None of these three differences can change what a correct client sees.",
                 "p5": "Where the reference has a defect, it is matched rather than fixed — a nested _where clause against a field that is not an object passes there and passes here. Imposing a judgement about which behaviour is nicer is exactly what would make a hosted fixture disagree with a local one."
@@ -11551,7 +11573,7 @@
                 "q2": "How is this different from running json-server locally?",
                 "a2": "The behaviour is the same — same routes, same query language, same shapes. The difference is that this one keeps answering after you close the laptop, so a deployed front end, a phone on another network or a teammate can reach the same fixture.",
                 "q3": "Is my data private?",
-                "a3": "No. There is no password on a JSON server, and anybody with the address can read and change the document. Use it for prototyping fixtures and never for anything real.",
+                "a3": "From strangers, yes, while the server is private: a call without its access token in the X-ToolForge-Key header gets a 401. But the document is stored on our servers, and a token pasted into a public front end can be read by whoever opens it — so use it for prototyping fixtures and never for anything real.",
                 "q4": "What happens when the document fills up?",
                 "a4": "POST, PUT and PATCH answer 507 while GET, DELETE and OPTIONS keep working, so deleting records you no longer need is the way back. The usage bar warns you well before that point.",
                 "q5": "Can I still use my db.json locally?",
@@ -11706,7 +11728,7 @@
             "badgeRelations": "Relations both ways",
             "badgeRecovery": "Recovery key, no account",
             "disclosureTitle": "This one does not run in your browser",
-            "disclosureBody": "Almost everything on ToolForge runs on your machine and sends nothing anywhere. This tool cannot: a hosted API has to be hosted. Your document is stored on our server, the endpoint is public to anyone who has its address, and mutations change what is stored. Do not put anything private, personal or production in it. Every server can be deleted from its settings tab, and deleting removes the document and its logs."
+            "disclosureBody": "Almost everything on ToolForge runs on your machine and sends nothing anywhere. This tool cannot: a hosted API has to be hosted. Your document is stored on our server, a token holder — or anyone, if you open the server — can call the endpoint, and mutations change what is stored. Do not put anything private, personal or production in it. Every server can be deleted from its settings tab, and deleting removes the document and its logs."
         },
         "toc": {
             "title": "On this page"
@@ -11803,7 +11825,7 @@
         },
         "snippets": {
             "title": "Call it from your code",
-            "description": "The endpoint speaks GraphQL over HTTP: POST for anything, GET for a read. There is nothing to authenticate — anyone with the address can call it.",
+            "description": "The endpoint speaks GraphQL over HTTP: POST for anything, GET for a read. A private server also needs its access token in the X-ToolForge-Key header — paste yours in place of the placeholder.",
             "curl": "curl",
             "fetch": "fetch",
             "apollo": "Apollo Client",
@@ -11928,8 +11950,8 @@
             "argsCaveat": "Two things a table cannot hold. orderBy disappears entirely from a type with no sortable field, so a schema that has it is telling you something. And perPage having a default is what makes the cost bound possible at all: without one, every list would have to be assumed at its maximum and ordinary two-level queries would be refused."
         },
         "faq": {
-            "q1": "Is the endpoint public?",
-            "a1": "Yes. Anyone with the address can query it and can run its mutations. There is no key and no authentication — that is what makes it useful for a front end on localhost and what makes it wrong for anything private. Pause the server from its settings tab when you are not using it; it then answers 503 rather than serving.",
+            "q1": "Who can call the endpoint?",
+            "a1": "A new server is private: only requests carrying its access token in the X-ToolForge-Key header are answered, and everything else gets a 401. Switch it to open from the access panel if you want anyone with the address to query it and run its mutations — handy for a quick demo, wrong for anything private. Pause the server when you are not using it; it then answers 503 rather than serving.",
             "q2": "Can I use it with Apollo, urql or graphql-codegen?",
             "a2": "Yes. Introspection is on, the SDL is a normal GraphQL schema using the standard scalars plus one JSON scalar, and the studio offers both schema.graphql and the introspection JSON as downloads. Point apollo client:download-schema or graphql-codegen at the endpoint and it works like any other server.",
             "q3": "Why did my query come back as too costly?",

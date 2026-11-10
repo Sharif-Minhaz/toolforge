@@ -3,6 +3,7 @@ import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
+import type { ServerAccess } from "@/modules/tools/domain/access-token";
 import { hashCredential } from "@/modules/tools/domain/browser-secret";
 import { describeUsage } from "@/modules/tools/domain/document-usage";
 import {
@@ -33,6 +34,8 @@ const SUMMARY_SELECT = {
     key: true,
     name: true,
     isPaused: true,
+    access: true,
+    accessTokenHash: true,
     sizeBytes: true,
     createdAt: true,
     updatedAt: true,
@@ -43,6 +46,8 @@ type SummaryRow = {
     readonly key: string;
     readonly name: string;
     readonly isPaused: boolean;
+    readonly access: ServerAccess;
+    readonly accessTokenHash: string | null;
     readonly sizeBytes: number;
     readonly createdAt: Date;
     readonly updatedAt: Date;
@@ -60,6 +65,9 @@ function toSummary(row: SummaryRow, resources: readonly ResourceSummary[]): Json
         key: row.key,
         name: row.name,
         isPaused: row.isPaused,
+        access: row.access,
+        // Whether one exists, never the digest: this crosses to the browser.
+        hasAccessToken: row.accessTokenHash !== null,
         usage: describeUsage(row.sizeBytes),
         resourceCount: resources.length,
         recordCount: resources.reduce((total, resource) => total + resource.count, 0),
@@ -254,6 +262,14 @@ export async function renameServer(serverId: string, name: string): Promise<bool
 
 export async function setPaused(serverId: string, isPaused: boolean): Promise<boolean> {
     return write(() => prisma.jsonServer.update({ where: { id: serverId }, data: { isPaused } }));
+}
+
+/** Either half of the access gate; the digest only ever arrives already hashed. */
+export async function setAccess(
+    serverId: string,
+    data: { readonly access?: ServerAccess; readonly accessTokenHash?: string },
+): Promise<boolean> {
+    return write(() => prisma.jsonServer.update({ where: { id: serverId }, data }));
 }
 
 export async function deleteServer(serverId: string): Promise<boolean> {

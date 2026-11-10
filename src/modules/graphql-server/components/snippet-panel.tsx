@@ -10,6 +10,7 @@ import { useIsHydrated } from "@/hooks/use-is-hydrated";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { CodeBlock } from "@/modules/tools/components/code-block";
 import { CopyIconSwap } from "@/modules/tools/components/copy-button";
+import { ACCESS_TOKEN_HEADER } from "@/modules/tools/domain/access-token";
 import { copyText } from "@/modules/tools/domain/clipboard";
 import type { HighlightLanguage } from "@/modules/tools/domain/highlight";
 
@@ -18,7 +19,12 @@ import { GRAPHQL_EXECUTION_PREFIX } from "../domain/constants";
 type SnippetPanelProps = {
     serverKey: string;
     starterQuery: string;
+    /** Adds the access-token header, with a placeholder the reader replaces. */
+    isPrivate: boolean;
 };
+
+/** Never a real token: the studio only holds its digest. */
+const TOKEN_PLACEHOLDER = "tf_YOUR_ACCESS_TOKEN";
 
 const TARGETS = ["curl", "fetch", "apollo"] as const;
 
@@ -46,7 +52,7 @@ const LANGUAGES: Record<Target, HighlightLanguage> = {
  * until then. A relative address in a `curl` would be wrong; a mismatched one
  * would break hydration.
  */
-export function SnippetPanel({ serverKey, starterQuery }: SnippetPanelProps) {
+export function SnippetPanel({ serverKey, starterQuery, isPrivate }: SnippetPanelProps) {
     const t = useTranslations("graphqlServer.snippets");
     const tToast = useTranslations("graphqlServer.toast");
     const hydrated = useIsHydrated();
@@ -55,7 +61,7 @@ export function SnippetPanel({ serverKey, starterQuery }: SnippetPanelProps) {
 
     const path = `${GRAPHQL_EXECUTION_PREFIX}/${serverKey}`;
     const endpoint = hydrated ? `${window.location.origin}${path}` : path;
-    const snippet = buildSnippet(target, endpoint, starterQuery);
+    const snippet = buildSnippet(target, endpoint, starterQuery, isPrivate);
 
     async function copy() {
         const result = await copyText(snippet);
@@ -141,8 +147,12 @@ export function SnippetPanel({ serverKey, starterQuery }: SnippetPanelProps) {
  * a newline inside it has to be escaped. `JSON.stringify` does exactly that, so
  * these are correct by construction rather than by careful quoting.
  */
-function buildSnippet(target: Target, endpoint: string, query: string): string {
+function buildSnippet(target: Target, endpoint: string, query: string, isPrivate: boolean): string {
     const body = JSON.stringify({ query });
+    const tokenHeader = `${ACCESS_TOKEN_HEADER}: ${TOKEN_PLACEHOLDER}`;
+    const headerObject = isPrivate
+        ? `{ "content-type": "application/json", "${ACCESS_TOKEN_HEADER}": "${TOKEN_PLACEHOLDER}" }`
+        : `{ "content-type": "application/json" }`;
 
     if (target === "curl") {
         // Single-quoted, and the body is JSON so it can only contain a `'` if
@@ -152,6 +162,7 @@ function buildSnippet(target: Target, endpoint: string, query: string): string {
         return [
             `curl ${endpoint} \\`,
             `  -H 'content-type: application/json' \\`,
+            ...(isPrivate ? [`  -H '${tokenHeader}' \\`] : []),
             `  --data-raw '${body.replaceAll("'", `'\\''`)}'`,
         ].join("\n");
     }
@@ -160,7 +171,7 @@ function buildSnippet(target: Target, endpoint: string, query: string): string {
         return [
             `const response = await fetch(${JSON.stringify(endpoint)}, {`,
             `  method: "POST",`,
-            `  headers: { "content-type": "application/json" },`,
+            `  headers: ${headerObject},`,
             `  body: JSON.stringify({`,
             `    query: \`${query.trimEnd()}\`,`,
             `  }),`,
@@ -175,6 +186,7 @@ function buildSnippet(target: Target, endpoint: string, query: string): string {
         ``,
         `const client = new ApolloClient({`,
         `  uri: ${JSON.stringify(endpoint)},`,
+        ...(isPrivate ? [`  headers: { "${ACCESS_TOKEN_HEADER}": "${TOKEN_PLACEHOLDER}" },`] : []),
         `  cache: new InMemoryCache(),`,
         `});`,
         ``,

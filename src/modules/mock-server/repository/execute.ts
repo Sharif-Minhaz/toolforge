@@ -1,6 +1,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
+import type { AccessGate } from "@/modules/tools/domain/access-token";
 
 import { MAX_PATH_SEGMENTS } from "../domain/constants";
 import { splitRequestPath } from "../domain/path-pattern";
@@ -23,7 +24,7 @@ import type { EndpointRoute } from "../types/routing";
  * happens in `matchEndpoint` over that set.
  */
 
-export type ServerRow = {
+export type ServerRow = AccessGate & {
     readonly id: string;
     readonly workspaceId: string;
     readonly isPaused: boolean;
@@ -32,7 +33,13 @@ export type ServerRow = {
 export async function findServerByKey(key: string): Promise<ServerRow | null> {
     return prisma.mockServer.findUnique({
         where: { key },
-        select: { id: true, workspaceId: true, isPaused: true },
+        select: {
+            id: true,
+            workspaceId: true,
+            isPaused: true,
+            access: true,
+            accessTokenHash: true,
+        },
     });
 }
 

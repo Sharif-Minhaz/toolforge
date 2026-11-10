@@ -168,3 +168,59 @@ If a tool keeps something that grants access — an edit URL, a recovery key —
 so in the UI, cap the list, and give it a button that empties it. Do it quietly
 and the tool is a credential store that never admitted to being one. See
 [`patterns/browser-persistence.md`](patterns/browser-persistence.md).
+
+## Gating a hosted server's public address
+
+The Mock, JSON and GraphQL studios each answer strangers' programs at a public
+address — `/m/<key>`, `/j/<key>`, `/g/<key>`. The studio cookie cannot protect
+that address: the callers are Postman, `curl` and front ends on other origins,
+none of which carry it. So the address gets its own credential, an **access
+token** sent as `X-ToolForge-Key`. The shared logic is
+`src/modules/tools/domain/access-token.ts`.
+
+**Never reuse the recovery key or the cookie secret for this.** Both grant edit
+rights over the server itself. The access token is meant to be pasted into
+`.env` files and sometimes front ends, so it grants only what the public address
+already answers, and Rotate takes it back.
+
+What makes it hold:
+
+- **The check sits inside `handle*Request`, not in the route file.** Every way
+  in — the route's seven method exports, and `proxy.ts` serving `QUERY` for the
+  mock studio — has to pass through the handler to reach a row. A new entry
+  point that skips the handler skips the gate.
+- **Order: shape → rate limit → row lookup → token → pause → data.** The token
+  check comes before the pause check and before route matching, so a caller
+  without it learns neither whether the server is on nor which paths it has.
+  The rate limit comes first, so guessing tokens is metered (they carry about
+  165 random bits anyway).
+- **Fails closed.** The database default is `PRIVATE`, so a creation path that
+  forgets the column produces a locked server rather than an open one. A
+  `PRIVATE` row with no digest refuses every token. The migration that added the
+  column kept existing servers `OPEN`, so no running integration broke.
+- **Stored as a digest** (`hashCredential`), compared with `timingSafeEqual`,
+  shown once at issue. The studio never holds the token after that.
+- **Two refusals, two names**: `token_required` (no header) and
+  `token_invalid` (wrong, malformed, rotated away, or never issued). Both 401.
+- **A preflight passes without it.** Browsers never attach custom headers to an
+  `OPTIONS` preflight; refusing it would make a private server uncallable from
+  any browser. A refused preflight is answered from the static CORS set, with no
+  route information.
+- **Not a header the mock author's graph can see.** The mock handler strips
+  `X-ToolForge-Key` before building the request the graph reads, so a graph
+  that echoes headers cannot bounce the token into a response body or the
+  request log. It is a separate header from `Authorization` because mock
+  endpoints model `Authorization` themselves.
+
+**The one place a second credential is accepted:** the GraphQL endpoint takes
+the owner's studio cookie when no token header is sent. The studio's Run button
+deliberately calls the real public endpoint (see
+`graphql-server/validation/index.ts`), and the studio only holds a digest. This
+is safe because the cookie is `SameSite=Lax` — no other site's `fetch` sends
+it — and a top-level `GET` that does carry it cannot run a mutation and cannot
+be read by the page that caused it. Do not copy this to a handler whose `GET`
+has side effects.
+
+**What it cannot do:** a token shipped inside a public front end can be read by
+anyone who opens that front end. The panel says so; the remedy is a backend that
+holds the token, or Rotate.

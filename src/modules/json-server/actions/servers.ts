@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
+import { createAccessToken } from "@/modules/tools/domain/access-token";
 import { createBrowserSecret, hashCredential } from "@/modules/tools/domain/browser-secret";
 import { cryptoRandomBytes } from "@/modules/tools/domain/random";
 import {
@@ -38,6 +39,7 @@ import {
     replaceDocument as replaceDocumentRow,
     resetDocument as resetDocumentRow,
     rotateRecoveryKey as rotateRecoveryKeyRow,
+    setAccess as setAccessRow,
     setPaused as setPausedRow,
 } from "../repository/servers";
 import type {
@@ -47,6 +49,7 @@ import type {
     JsonServerDetail,
     ReplaceDocumentResult,
     RequestLogRow,
+    RotateAccessResult,
     RotateRecoveryResult,
     ServerOverview,
 } from "../types";
@@ -56,6 +59,7 @@ import {
     renameServerSchema,
     replaceDocumentSchema,
     serverRefSchema,
+    setAccessSchema,
     setPausedSchema,
 } from "../validation";
 
@@ -376,6 +380,53 @@ export async function setServerPaused(input: unknown): Promise<ActionResult> {
 
     return (await setPausedRow(parsed.data.serverId, parsed.data.isPaused))
         ? { ok: true }
+        : { ok: false, reason: "write_failed" };
+}
+
+/**
+ * Opens the public address to anyone, or closes it to token holders.
+ *
+ * Making a server private without a token on file is allowed and locks it
+ * until one is issued — the gate fails closed, and the studio says so.
+ */
+export async function setServerAccess(input: unknown): Promise<ActionResult> {
+    const parsed = setAccessSchema.safeParse(input);
+
+    if (!parsed.success) {
+        return { ok: false, reason: "not_found" };
+    }
+
+    if ((await requireOwnership(parsed.data.serverId)) === null) {
+        return { ok: false, reason: "not_owner" };
+    }
+
+    return (await setAccessRow(parsed.data.serverId, { access: parsed.data.access }))
+        ? { ok: true }
+        : { ok: false, reason: "write_failed" };
+}
+
+/**
+ * Issues a new access token and kills the old one on the next request.
+ *
+ * Returned in readable form exactly once; only its digest is stored.
+ */
+export async function rotateAccessToken(input: unknown): Promise<RotateAccessResult> {
+    const parsed = serverRefSchema.safeParse(input);
+
+    if (!parsed.success) {
+        return { ok: false, reason: "not_found" };
+    }
+
+    if ((await requireOwnership(parsed.data.serverId)) === null) {
+        return { ok: false, reason: "not_owner" };
+    }
+
+    const token = createAccessToken(cryptoRandomBytes);
+
+    return (await setAccessRow(parsed.data.serverId, {
+        accessTokenHash: await hashCredential(token),
+    }))
+        ? { ok: true, token }
         : { ok: false, reason: "write_failed" };
 }
 

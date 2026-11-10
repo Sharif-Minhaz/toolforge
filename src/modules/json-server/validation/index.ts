@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { SERVER_ACCESS_MODES } from "@/modules/tools/domain/access-token";
 import { MAX_UPLOAD_BYTES } from "@/modules/tools/domain/document-limits";
 import { RECOVERY_KEY_LENGTH } from "@/modules/tools/domain/recovery-key";
 import { SERVER_KEY_LENGTH } from "@/modules/tools/domain/server-key";
@@ -72,4 +73,8 @@ export const replaceDocumentSchema = serverRefSchema.extend({
 
 export const setPausedSchema = serverRefSchema.extend({
     isPaused: z.boolean(),
+});
+
+export const setAccessSchema = serverRefSchema.extend({
+    access: z.enum(SERVER_ACCESS_MODES),
 });

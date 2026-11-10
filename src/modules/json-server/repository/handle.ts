@@ -4,6 +4,7 @@ import { after } from "next/server";
 
 import { MAX_UPLOAD_BYTES } from "@/modules/tools/domain/document-limits";
 import type { RateVerdict } from "@/modules/tools/domain/rate-window";
+import { ACCESS_TOKEN_HEADER } from "@/modules/tools/domain/access-token";
 import { checkServerKey } from "@/modules/tools/domain/server-key";
 import { resolveRemoteIp } from "@/modules/tools/repository/turnstile";
 
@@ -38,9 +39,10 @@ import { HTTP_METHODS, type HttpMethod } from "../types";
  *   copy of the previous version is the single most confusing thing this could
  *   hand somebody mid-debugging.
  * - **`Access-Control-Allow-Origin: *`.** The point is that a front end on
- *   localhost can call it. Permissive by design and safe here because there is
- *   nothing to authenticate against — no cookie of ours is readable from this
- *   path, and none is sent.
+ *   localhost can call it. Permissive by design and safe here because the
+ *   only credential is a header the caller adds on purpose, `X-ToolForge-Key`.
+ *   Browsers never attach it on their own, and with `*` they refuse to send
+ *   cookies, so another site's page cannot borrow anybody's access.
  *
  * The gates run cheapest-first:
  *
@@ -53,7 +55,10 @@ import { HTTP_METHODS, type HttpMethod } from "../types";
  * 3. **The rate limit** — the first statement that touches Postgres, and the
  *    only gate that bounds *volume*. Everything above refuses one bad request;
  *    this refuses the ten-thousandth good one.
- * 4. **Serving** — the row read, the engine, and the row lock if it writes.
+ * 4. **Access** — a private server demands `X-ToolForge-Key` before anything
+ *    about it is revealed, its pause state included. A preflight is answered
+ *    without one, because a browser never attaches custom headers to it.
+ * 5. **Serving** — the row read, the engine, and the row lock if it writes.
  */
 
 const SECURITY_HEADERS: ReadonlyArray<readonly [string, string]> = [
@@ -172,15 +177,19 @@ export async function handleJsonRequest(
         return problem(413, "payload_too_large", baseHeaders(limit.verdict));
     }
 
-    const outcome = await serveJsonRequest(key.key, {
-        method: method as HttpMethod,
-        path,
-        // `entries()` keeps repeated keys, which `Object.fromEntries` would
-        // collapse — and `?views:gt=10&views:lt=90` is a range that depends on
-        // both surviving.
-        query: [...url.searchParams.entries()],
-        body,
-    });
+    const outcome = await serveJsonRequest(
+        key.key,
+        {
+            method: method as HttpMethod,
+            path,
+            // `entries()` keeps repeated keys, which `Object.fromEntries` would
+            // collapse — and `?views:gt=10&views:lt=90` is a range that depends
+            // on both surviving.
+            query: [...url.searchParams.entries()],
+            body,
+        },
+        { kind: "token", value: request.headers.get(ACCESS_TOKEN_HEADER) },
+    );
 
     // Only when a fresh window opened — at most once a minute per active
     // server, off the response path, and usually deleting nothing.
@@ -194,6 +203,19 @@ export async function handleJsonRequest(
 
     if (outcome.kind === "unavailable") {
         return problem(503, "unavailable", baseHeaders(limit.verdict));
+    }
+
+    if (outcome.kind === "refused") {
+        if (method === "OPTIONS") {
+            // A preflight never carries the token, and refusing it would make
+            // a private server uncallable from any browser. It reveals nothing.
+            const headers = baseHeaders(limit.verdict);
+            headers.set("access-control-allow-methods", HTTP_METHODS.join(", "));
+
+            return new Response(null, { status: 204, headers });
+        }
+
+        return problem(401, outcome.reason, baseHeaders(limit.verdict));
     }
 
     if (outcome.kind === "paused") {

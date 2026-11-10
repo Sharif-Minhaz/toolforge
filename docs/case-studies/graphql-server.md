@@ -135,3 +135,5 @@ introspection included.
 - [`json-server.md`](json-server.md) — the same document served as REST.
 - [`../patterns/growth-ceilings.md`](../patterns/growth-ceilings.md)
 - [`../testing.md`](../testing.md#verifying-against-something-that-is-not-you)
+- [`../security.md`](../security.md#gating-a-hosted-servers-public-address) — the
+  access token, and why this endpoint alone also accepts the studio cookie.

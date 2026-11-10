@@ -8,6 +8,7 @@ import { getServerDetail } from "@/modules/mock-server/actions/servers";
 import { EndpointWorkbench } from "@/modules/mock-server/components/endpoint-workbench";
 import { MockUrl } from "@/modules/mock-server/components/mock-url";
 import { ServerExport } from "@/modules/mock-server/components/server-export";
+import { ServerAccess } from "@/modules/mock-server/components/server-access";
 import { ServerPausePanel } from "@/modules/mock-server/components/server-pause-panel";
 import { SITE_URL } from "@/modules/seo/domain/site";
 
@@ -75,6 +76,14 @@ export default async function ServerPage({ params }: ServerPageProps) {
                 start reading routes for the mistake. */}
             <Reveal>
                 <ServerPausePanel serverId={server.id} isPaused={server.isPaused} />
+            </Reveal>
+
+            <Reveal>
+                <ServerAccess
+                    serverId={server.id}
+                    access={server.access}
+                    hasAccessToken={server.hasAccessToken}
+                />
             </Reveal>
 
             <Reveal>

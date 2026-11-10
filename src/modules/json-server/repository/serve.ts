@@ -3,6 +3,11 @@ import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
+import {
+    checkAccess,
+    type AccessCredential,
+    type AccessRefusal,
+} from "@/modules/tools/domain/access-token";
 import { checkServerKey } from "@/modules/tools/domain/server-key";
 import type { JsonDocument } from "@/modules/tools/types/json-document";
 
@@ -42,6 +47,7 @@ export type ServeResult =
           readonly durationMs: number;
       }
     | { readonly kind: "not_found" }
+    | { readonly kind: "refused"; readonly reason: AccessRefusal }
     | { readonly kind: "paused"; readonly serverId: string }
     | { readonly kind: "unavailable" };
 
@@ -55,6 +61,7 @@ type ServerRow = {
 export async function serveJsonRequest(
     serverKey: string,
     request: ServeRequest,
+    credential: AccessCredential,
 ): Promise<ServeResult> {
     const key = checkServerKey(serverKey);
 
@@ -67,11 +74,26 @@ export async function serveJsonRequest(
     try {
         const row = await prisma.jsonServer.findUnique({
             where: { key: key.key },
-            select: { id: true, db: true, sizeBytes: true, isPaused: true },
+            select: {
+                id: true,
+                db: true,
+                sizeBytes: true,
+                isPaused: true,
+                access: true,
+                accessTokenHash: true,
+            },
         });
 
         if (row === null) {
             return { kind: "not_found" };
+        }
+
+        // Before the pause check, so a stranger without the token cannot even
+        // learn whether the server is switched on.
+        const refusal = await checkAccess(row, credential);
+
+        if (refusal !== null) {
+            return { kind: "refused", reason: refusal };
         }
 
         if (row.isPaused) {

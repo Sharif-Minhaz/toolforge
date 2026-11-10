@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * Matches the workbench block for block: the back link, the header card with its
- * base URL and usage bar, the tab row, then the route table the Routes tab opens
+ * base URL and usage bar, the access panel, the tab row, then the route table the Routes tab opens
  * on. A skeleton that does not agree with what replaces it reads as a layout
  * shift rather than as loading.
  */
@@ -32,6 +32,15 @@ export default function GraphqlServerDetailLoading() {
                     </div>
                     <Skeleton className="h-1.5 w-full rounded-full" />
                 </div>
+            </div>
+
+            <div className="border-border/70 flex flex-col gap-3 rounded-2xl border p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-5 w-44 rounded-full" />
+                </div>
+                <Skeleton className="h-3 w-full max-w-xl" />
+                <Skeleton className="h-8 w-32 rounded-xl" />
             </div>
 
             <div className="flex flex-wrap gap-1">

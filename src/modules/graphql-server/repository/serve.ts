@@ -3,6 +3,11 @@ import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
+import {
+    checkAccess,
+    type AccessCredential,
+    type AccessRefusal,
+} from "@/modules/tools/domain/access-token";
 import { checkServerKey } from "@/modules/tools/domain/server-key";
 import type { JsonDocument } from "@/modules/tools/types/json-document";
 
@@ -46,12 +51,14 @@ export type ServeResult =
           readonly durationMs: number;
       }
     | { readonly kind: "not_found" }
+    | { readonly kind: "refused"; readonly reason: AccessRefusal }
     | { readonly kind: "paused"; readonly serverId: string }
     | { readonly kind: "unavailable" };
 
 export async function serveGraphqlRequest(
     serverKey: string,
     request: GraphqlRequest,
+    credential: AccessCredential,
 ): Promise<ServeResult> {
     const key = checkServerKey(serverKey);
 
@@ -68,16 +75,14 @@ export async function serveGraphqlRequest(
 
     if (!plan.ok) {
         const row = await findServer(key.key);
+        // A bad query against a server that does not exist is a 404, not a
+        // 400 — and against a private one it is a 401. Answering 400 would
+        // confirm the key exists, or leak a parse error, to anyone walking the
+        // keyspace with deliberately broken queries.
+        const refused = await admit(row, credential);
 
-        if (row === null) {
-            // A bad query against a server that does not exist is a 404, not a
-            // 400. Answering 400 would confirm the key exists to anyone walking
-            // the keyspace with deliberately broken queries.
-            return { kind: "not_found" };
-        }
-
-        if (row.isPaused) {
-            return { kind: "paused", serverId: row.id };
+        if (refused !== null || row === null) {
+            return refused ?? { kind: "not_found" };
         }
 
         return {
@@ -91,15 +96,10 @@ export async function serveGraphqlRequest(
 
     try {
         const row = await findServer(key.key);
+        const refused = await admit(row, credential);
 
-        if (row === null) {
-            return { kind: "not_found" };
-        }
-
-        if (row.isPaused) {
-            // 503 rather than 404, so a caller can tell "switched off" from
-            // "your address is wrong".
-            return { kind: "paused", serverId: row.id };
+        if (refused !== null || row === null) {
+            return refused ?? { kind: "not_found" };
         }
 
         const operationType = plan.isMutation ? "mutation" : "query";
@@ -137,8 +137,39 @@ export async function serveGraphqlRequest(
 async function findServer(key: string) {
     return prisma.graphqlServer.findUnique({
         where: { key },
-        select: { id: true, db: true, sizeBytes: true, isPaused: true },
+        select: {
+            id: true,
+            db: true,
+            sizeBytes: true,
+            isPaused: true,
+            access: true,
+            accessTokenHash: true,
+        },
     });
+}
+
+/**
+ * The three reasons a found-or-not row is turned away, in the order that
+ * reveals least: absent, then the token, then the pause — so a caller without
+ * the token cannot even learn whether a private server is switched on.
+ */
+async function admit(
+    row: Awaited<ReturnType<typeof findServer>>,
+    credential: AccessCredential,
+): Promise<ServeResult | null> {
+    if (row === null) {
+        return { kind: "not_found" };
+    }
+
+    const refusal = await checkAccess(row, credential);
+
+    if (refusal !== null) {
+        return { kind: "refused", reason: refusal };
+    }
+
+    // 503 rather than 404, so a caller can tell "switched off" from "your
+    // address is wrong".
+    return row.isPaused ? { kind: "paused", serverId: row.id } : null;
 }
 
 /**

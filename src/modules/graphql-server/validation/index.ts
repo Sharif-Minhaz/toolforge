@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { SERVER_ACCESS_MODES } from "@/modules/tools/domain/access-token";
 import { MAX_UPLOAD_BYTES } from "@/modules/tools/domain/document-limits";
 import { RECOVERY_KEY_LENGTH } from "@/modules/tools/domain/recovery-key";
 import { SERVER_KEY_LENGTH } from "@/modules/tools/domain/server-key";
@@ -76,6 +77,10 @@ export const setPausedSchema = serverRefSchema.extend({
     isPaused: z.boolean(),
 });
 
+export const setAccessSchema = serverRefSchema.extend({
+    access: z.enum(SERVER_ACCESS_MODES),
+});
+
 /**
  * There is deliberately **no schema for running a query**, because there is no
  * Server Action that runs one.
@@ -88,5 +93,11 @@ export const setPausedSchema = serverRefSchema.extend({
  * and skip the `GET`/`POST` split, so a query that worked on the page could fail
  * from `curl` and nobody would know why. What the reader tests here is what
  * their own code will get.
+ *
+ * A private server keeps that true. The studio holds no access token — only its
+ * digest is stored — so the endpoint accepts the owner's studio cookie in its
+ * place, and only when no `X-ToolForge-Key` header is sent. Everything else
+ * about the request is still the public path. See `resolveCredential` in
+ * `repository/handle.ts`.
  */
 export { MAX_QUERY_LENGTH };

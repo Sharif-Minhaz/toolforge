@@ -7,6 +7,7 @@ import { parseRequestBody } from "../domain/request-body";
 import { executeGraph, withoutBody } from "../domain/execute";
 import { matchEndpoint } from "../domain/match";
 import { createSeededRandom, resolveSeed } from "../domain/seeded-random";
+import { checkAccess, type AccessRefusal } from "@/modules/tools/domain/access-token";
 import { checkServerKey } from "@/modules/tools/domain/server-key";
 import { createFakerProvider, loadFaker } from "./faker";
 import { MAX_OUTBOUND_CALLS } from "../domain/outbound";
@@ -42,6 +43,7 @@ export type ServeOutcome =
           readonly serverId: string;
       }
     | { readonly kind: "not_found" }
+    | { readonly kind: "refused"; readonly reason: AccessRefusal }
     | { readonly kind: "paused" }
     | { readonly kind: "unavailable" }
     | { readonly kind: "method_not_allowed"; readonly allowed: readonly HttpMethod[] }
@@ -64,6 +66,8 @@ export type IncomingRequest = {
     readonly headers: Readonly<Record<string, string>>;
     readonly cookies: Readonly<Record<string, string>>;
     readonly rawBody: string;
+    /** `X-ToolForge-Key`, already removed from `headers` so no graph sees it. */
+    readonly accessToken: string | null;
 };
 
 // Body parsing moved wholesale to `domain/request-body.ts` when form posts
@@ -92,6 +96,15 @@ export async function serveMockRequest(incoming: IncomingRequest): Promise<Serve
 
         if (server === null) {
             return { kind: "not_found" };
+        }
+
+        // Before the pause check and before route matching, so a stranger
+        // without the token learns neither whether the server is on nor which
+        // paths it serves.
+        const refusal = await checkAccess(server, { kind: "token", value: incoming.accessToken });
+
+        if (refusal !== null) {
+            return { kind: "refused", reason: refusal };
         }
 
         if (server.isPaused) {

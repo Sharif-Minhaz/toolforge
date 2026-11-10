@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { SERVER_ACCESS_MODES } from "@/modules/tools/domain/access-token";
 import { exceedsPayloadBudget } from "@/modules/tools/domain/payload-size";
 import { RECOVERY_KEY_LENGTH } from "@/modules/tools/domain/recovery-key";
 import { SERVER_KEY_LENGTH } from "@/modules/tools/domain/server-key";
@@ -162,6 +163,11 @@ export const serverRefSchema = z.object({ serverId: serverIdSchema });
 export const pauseServerSchema = z.object({
     serverId: serverIdSchema,
     isPaused: z.boolean(),
+});
+
+export const setAccessSchema = z.object({
+    serverId: serverIdSchema,
+    access: z.enum(SERVER_ACCESS_MODES),
 });
 
 export const createCollectionSchema = z.object({

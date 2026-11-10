@@ -1,3 +1,4 @@
+import type { ServerAccess } from "@/modules/tools/domain/access-token";
 import type { LoggedRequest, LoggedResponse, LoggedTrace } from "../domain/log-record";
 import type { GraphDocument, ValueExpr } from "./graph";
 
@@ -89,6 +90,8 @@ export type ServerSummary = {
     readonly name: string;
     readonly description: string | null;
     readonly isPaused: boolean;
+    readonly access: ServerAccess;
+    readonly hasAccessToken: boolean;
     readonly createdAt: string;
     readonly endpointCount: number;
 };
@@ -173,6 +176,14 @@ export type ServerFailure = {
 };
 
 export type ServerActionResult = { readonly ok: true } | ServerFailure;
+
+export type RotateAccessResult =
+    | {
+          readonly ok: true;
+          /** Shown once, never stored unhashed, never shown again. */
+          readonly token: string;
+      }
+    | ServerFailure;
 
 export type CreateServerResult =
     { readonly ok: true; readonly server: ServerSummary } | ServerFailure;

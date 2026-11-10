@@ -3,7 +3,6 @@
 import {
     IconAlertTriangle,
     IconArrowBackUp,
-    IconCheck,
     IconDeviceFloppy,
     IconKey,
     IconLoader2,
@@ -25,6 +24,8 @@ import { CopyIconSwap } from "@/modules/tools/components/copy-button";
 import { DocumentUsageBar } from "@/modules/tools/components/document-usage-bar";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { JsonDocumentEditor } from "@/modules/tools/components/json-document-editor";
+import { ConfirmRow } from "@/modules/tools/components/confirm-row";
+import { ServerAccessPanel } from "@/modules/tools/components/server-access-panel";
 import { ServerBaseUrl } from "@/modules/tools/components/server-base-url";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { copyText } from "@/modules/tools/domain/clipboard";
@@ -41,7 +42,9 @@ import {
     renameServer,
     replaceDocument,
     resetDocument,
+    rotateAccessToken,
     rotateRecoveryKey,
+    setServerAccess,
     setServerPaused,
 } from "../actions/servers";
 import { GRAPHQL_EXECUTION_PREFIX } from "../domain/constants";
@@ -328,6 +331,33 @@ export function ServerWorkbench({ detail: initial }: ServerWorkbenchProps) {
                 ) : null}
             </section>
 
+            <ServerAccessPanel
+                access={detail.access}
+                hasAccessToken={detail.hasAccessToken}
+                onSetAccess={async (access) => {
+                    const result = await setServerAccess({ serverId, access });
+
+                    if (!result.ok) {
+                        return tErrors(result.reason);
+                    }
+
+                    setDetail((held) => ({ ...held, access }));
+
+                    return null;
+                }}
+                onRotate={async () => {
+                    const result = await rotateAccessToken({ serverId });
+
+                    if (!result.ok) {
+                        return { failure: tErrors(result.reason) };
+                    }
+
+                    setDetail((held) => ({ ...held, hasAccessToken: true }));
+
+                    return { token: result.token };
+                }}
+            />
+
             <div role="tablist" aria-label={t("tabsLabel")} className="flex flex-wrap gap-1">
                 {TABS.map((option) => (
                     <button
@@ -351,7 +381,11 @@ export function ServerWorkbench({ detail: initial }: ServerWorkbenchProps) {
             {tab === "schema" ? (
                 <div className="flex min-w-0 flex-col gap-8">
                     <SchemaPanel schema={detail.schema} sdl={detail.sdl} serverKey={detail.key} />
-                    <SnippetPanel serverKey={detail.key} starterQuery={detail.starterQuery} />
+                    <SnippetPanel
+                        serverKey={detail.key}
+                        starterQuery={detail.starterQuery}
+                        isPrivate={detail.access === "PRIVATE"}
+                    />
                 </div>
             ) : null}
 
@@ -591,54 +625,6 @@ export function ServerWorkbench({ detail: initial }: ServerWorkbenchProps) {
                     </div>
                 </section>
             ) : null}
-        </div>
-    );
-}
-
-type ConfirmRowProps = {
-    label: string;
-    confirmLabel: string;
-    onCancel: () => void;
-    onConfirm: () => void;
-    disabled: boolean;
-    destructive?: boolean;
-};
-
-/**
- * A two-press confirmation, inline rather than in a dialog.
- *
- * These are irreversible and rare, so the question has to be asked — but a modal
- * for "delete this server" traps focus and covers the very page somebody is
- * reading to decide. The row states what will happen and puts the two answers
- * side by side; cancel comes first, so the default target under a stray press is
- * the harmless one.
- */
-function ConfirmRow({
-    label,
-    confirmLabel,
-    onCancel,
-    onConfirm,
-    disabled,
-    destructive = false,
-}: ConfirmRowProps) {
-    return (
-        <div className="flex flex-wrap items-center gap-2">
-            <span className="text-foreground text-xs leading-[1.3]">{label}</span>
-            <Button type="button" size="sm" variant="ghost" onClick={onCancel} disabled={disabled}>
-                {/* Cancel first: the nearest target should be the safe one. */}
-                <IconArrowBackUp className="size-3.5" stroke={1.9} aria-hidden="true" />
-            </Button>
-            <Button
-                type="button"
-                size="sm"
-                variant={destructive ? "destructive" : "default"}
-                className="gap-1.5"
-                onClick={onConfirm}
-                disabled={disabled}
-            >
-                <IconCheck className="size-3.5" stroke={1.9} aria-hidden="true" />
-                {confirmLabel}
-            </Button>
         </div>
     );
 }

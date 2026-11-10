@@ -1319,6 +1319,16 @@ They ship only with all of the following:
 `EnvironmentVariable.isSecret` masks a value in the UI and keeps it out of logs
 and traces. The copy says plainly that a mock server is not a secret store.
 
+### Private servers
+
+A server is `PRIVATE` by default: `/m/<key>/…` answers only requests carrying
+its access token in `X-ToolForge-Key`, and `401` otherwise. The gate runs inside
+`serveMockRequest`, after the row lookup and before the pause check and route
+matching, so it covers the `QUERY` path through `proxy.ts` too. The header is
+stripped before the graph sees the request. Servers created before the change
+stayed `OPEN`. The reasoning, shared with the JSON and GraphQL studios, is in
+[`security.md`](security.md#gating-a-hosted-servers-public-address).
+
 ---
 
 ## 12. Testing strategy

@@ -2,6 +2,8 @@ import "server-only";
 
 import { after } from "next/server";
 
+import { describeError, logEvent } from "@/modules/observability/domain/logger";
+import { ACCESS_TOKEN_HEADER, type AccessCredential } from "@/modules/tools/domain/access-token";
 import { MAX_UPLOAD_BYTES } from "@/modules/tools/domain/document-limits";
 import type { RateVerdict } from "@/modules/tools/domain/rate-window";
 import { checkServerKey } from "@/modules/tools/domain/server-key";
@@ -11,6 +13,8 @@ import type { RateBucket } from "../domain/rate-limit";
 import { writeRequestLog } from "./logs";
 import { spendServeQuota, sweepQuotaRows } from "./rate-limit";
 import { serveGraphqlRequest } from "./serve";
+import { holdsSecretForKey } from "./servers";
+import { readServerSecrets } from "./session";
 import type { GraphqlRequest } from "../types";
 
 /**
@@ -52,9 +56,10 @@ import type { GraphqlRequest } from "../types";
  *   site is publishing, and its address should not accumulate search presence.
  * - **`Referrer-Policy: no-referrer`** and **`Cache-Control: no-store`.**
  * - **`Access-Control-Allow-Origin: *`.** The point is that a front end on
- *   localhost can call it. Permissive by design and safe here because there is
- *   nothing to authenticate against — no cookie of ours is readable from this
- *   path, and none is sent.
+ *   localhost can call it. Permissive by design and safe here because the
+ *   credential is a header the caller adds on purpose, `X-ToolForge-Key`. The
+ *   studio's own cookie is accepted in its place, but it is `SameSite=Lax`, so
+ *   no other site's `fetch` carries it — see `resolveCredential`.
  * - **`x-graphql-cost` and `x-graphql-depth`.** The two numbers the guard
  *   computed, on every answer rather than only on a refusal. A developer
  *   watching the network tab sees the estimate climb as they nest one more
@@ -82,7 +87,7 @@ const SECURITY_HEADERS: ReadonlyArray<readonly [string, string]> = [
     ["cache-control", "no-store"],
     ["content-security-policy", "sandbox"],
     ["access-control-allow-origin", "*"],
-    ["access-control-allow-headers", "content-type, accept"],
+    ["access-control-allow-headers", `content-type, accept, ${ACCESS_TOKEN_HEADER}`],
     ["access-control-allow-methods", "GET, POST, OPTIONS"],
     [
         "access-control-expose-headers",
@@ -202,7 +207,11 @@ export async function handleGraphqlRequest(
         return problem(400, parsed.reason, parsed.message, baseHeaders(limit.verdict));
     }
 
-    const result = await serveGraphqlRequest(key.key, parsed.request);
+    const result = await serveGraphqlRequest(
+        key.key,
+        parsed.request,
+        await resolveCredential(request, key.key),
+    );
 
     // Only when a fresh window opened — at most once a minute per active
     // server, off the response path, and usually deleting nothing.
@@ -224,6 +233,17 @@ export async function handleGraphqlRequest(
             503,
             "unavailable",
             "This endpoint is temporarily unavailable.",
+            baseHeaders(limit.verdict),
+        );
+    }
+
+    if (result.kind === "refused") {
+        return problem(
+            401,
+            result.reason,
+            result.reason === "token_required"
+                ? `This server is private. Send its access token in the ${ACCESS_TOKEN_HEADER} header.`
+                : "The access token is not valid for this server.",
             baseHeaders(limit.verdict),
         );
     }
@@ -257,6 +277,34 @@ export async function handleGraphqlRequest(
     );
 
     return new Response(result.outcome.body, { status: result.outcome.status, headers });
+}
+
+/**
+ * The token header if one was sent; otherwise the owner's studio cookie.
+ *
+ * The cookie half exists so the studio's Run button can keep calling this public
+ * endpoint like any other client while the server is private. It is safe on a
+ * public path because the cookie is `SameSite=Lax` — no other site's `fetch`
+ * carries it — and because a top-level `GET` that does carry it cannot run a
+ * mutation and cannot be read by the page that triggered it. A lookup that
+ * throws falls back to no credential, so it fails closed.
+ */
+async function resolveCredential(request: Request, serverKey: string): Promise<AccessCredential> {
+    const token = request.headers.get(ACCESS_TOKEN_HEADER);
+
+    if (token !== null) {
+        return { kind: "token", value: token };
+    }
+
+    try {
+        if (await holdsSecretForKey(await readServerSecrets(), serverKey)) {
+            return { kind: "owner" };
+        }
+    } catch (caught) {
+        logEvent("warn", "graphql_server.owner_check_failed", { error: describeError(caught) });
+    }
+
+    return { kind: "token", value: null };
 }
 
 type ParsedRequest =
