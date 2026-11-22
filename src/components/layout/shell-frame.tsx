@@ -13,7 +13,7 @@ import {
     useEffect,
     useRef,
     useState,
-    type CSSProperties,
+    useSyncExternalStore,
     type ReactNode,
     type TouchEvent,
 } from "react";
@@ -21,7 +21,7 @@ import {
 import { ToolForgeMark, ToolForgeWordmark } from "@/components/brand/toolforge-mark";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { persistSidebarState } from "@/modules/preferences/domain/sidebar";
+import { readSidebarCollapsed, writeSidebarCollapsed } from "@/modules/preferences/domain/sidebar";
 import { UNLOCK_PREFIX } from "@/modules/short-links/domain/constants";
 import { LocaleSwitcher } from "./locale-switcher";
 import type { LocalizedTool } from "@/modules/tools/types";
@@ -29,8 +29,6 @@ import { RepoLink } from "./repo-link";
 import { SidebarNav } from "./sidebar-nav";
 import { ThemeToggle } from "./theme-toggle";
 
-const EXPANDED_WIDTH = "17rem";
-const COLLAPSED_WIDTH = "4.75rem";
 /** Matches the CSS transition below so the rail and the content move as one. */
 const SHELL_EASING = "transition-[width,padding] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]";
 const SWIPE_CLOSE_THRESHOLD = 72;
@@ -51,31 +49,48 @@ function isStandalonePath(pathname: string): boolean {
     );
 }
 
+// `<html data-sidebar>` is the store: the boot script seeds it before paint and
+// `globals.css` sizes the rail from it, so only the rail's contents wait for
+// hydration. The server snapshot is "expanded" because the page is prerendered.
+const sidebarListeners = new Set<() => void>();
+
+function subscribeSidebar(listener: () => void): () => void {
+    sidebarListeners.add(listener);
+
+    return () => sidebarListeners.delete(listener);
+}
+
+function setSidebarCollapsed(next: boolean): void {
+    writeSidebarCollapsed(next);
+    sidebarListeners.forEach((listener) => listener());
+}
+
+const expandedOnServer = () => false;
+
 type ShellFrameProps = {
     tools: readonly LocalizedTool[];
-    defaultCollapsed: boolean;
     children: ReactNode;
 };
 
-export function ShellFrame({ tools, defaultCollapsed, children }: ShellFrameProps) {
+export function ShellFrame({ tools, children }: ShellFrameProps) {
     const t = useTranslations("nav");
     const tCommon = useTranslations("common");
 
-    const [collapsed, setCollapsed] = useState(defaultCollapsed);
+    const collapsed = useSyncExternalStore(
+        subscribeSidebar,
+        readSidebarCollapsed,
+        expandedOnServer,
+    );
     const [mobileOpen, setMobileOpen] = useState(false);
     const searchRef = useRef<HTMLInputElement>(null);
     const focusSearchOnExpand = useRef(false);
 
-    // The rail state lives here rather than in the chrome below, so stepping
-    // through a standalone route and back does not quietly expand a rail the
-    // reader had collapsed — this component stays mounted across navigation,
-    // and `defaultCollapsed` is only ever read on the first render.
+    // The rail state lives on `<html>` rather than in the chrome below, so
+    // stepping through a standalone route and back does not quietly expand a
+    // rail the reader had collapsed.
     const standalone = isStandalonePath(usePathname());
 
-    const setCollapsedState = useCallback((next: boolean) => {
-        setCollapsed(next);
-        persistSidebarState(next);
-    }, []);
+    const setCollapsedState = useCallback((next: boolean) => setSidebarCollapsed(next), []);
 
     const requestSearchFocus = useCallback(() => {
         if (!collapsed) {
@@ -143,15 +158,7 @@ export function ShellFrame({ tools, defaultCollapsed, children }: ShellFrameProp
     }
 
     return (
-        <div
-            className="group/shell relative isolate min-h-dvh"
-            data-collapsed={collapsed}
-            style={
-                {
-                    "--sidebar-w": collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH,
-                } as CSSProperties
-            }
-        >
+        <div className="group/shell relative isolate min-h-dvh" data-collapsed={collapsed}>
             <ShellBackdrop />
 
             <a

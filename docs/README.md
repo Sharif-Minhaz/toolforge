@@ -67,6 +67,7 @@ docs/
 │   ├── article-openings.md     a tool article's first section: two paragraphs,
 │   │                           one worked example, code words in the catalogue
 │   ├── input-limits.md         every free-text box's ceiling and countdown
+│   ├── partial-prerendering.md static shells, the locale rewrite, request-time sections
 │   ├── browser-persistence.md  remembering something in the reader's browser
 │   ├── derived-state-editors.md  two editors over one value (URL Parser)
 │   ├── format-conversion.md    N readers and N writers, never N² translators
@@ -123,6 +124,7 @@ docs/
 | Emitting a format somebody else will read        | [`testing.md`](testing.md), [`patterns/format-conversion.md`](patterns/format-conversion.md)                             |
 | Making the server call something                 | [`patterns/outbound-requests.md`](patterns/outbound-requests.md), [`security.md`](security.md)                           |
 | Adding a free-text field                         | [`patterns/input-limits.md`](patterns/input-limits.md)                                                                   |
+| Adding or changing a page, layout, or the proxy  | [`patterns/partial-prerendering.md`](patterns/partial-prerendering.md)                                                   |
 | Finishing up                                     | [`workflow/verification.md`](workflow/verification.md), [`workflow/documentation.md`](workflow/documentation.md)         |
 
 ## Where to look, by subsystem

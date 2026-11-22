@@ -15,9 +15,6 @@ import { isServiceHost } from "@/modules/tools/domain/service-hosts";
  * identically whichever address was shared.
  */
 
-/** Every visit has to reach the database, or a re-pointed link keeps its old target. */
-export const dynamic = "force-dynamic";
-
 const TOOL_PATH = "/tools/shortener";
 
 export async function GET(

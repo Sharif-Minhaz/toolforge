@@ -50,6 +50,7 @@ docs/
 | Touching…                                   | Read first                                                                                                         |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | A new tool, start to finish                 | [`docs/workflow/adding-a-tool.md`](docs/workflow/adding-a-tool.md)                                                 |
+| A page, layout, or the proxy's rewrite      | [`docs/patterns/partial-prerendering.md`](docs/patterns/partial-prerendering.md)                                   |
 | Anything with `useState` in a client island | [`docs/hydration-and-platform-pitfalls.md`](docs/hydration-and-platform-pitfalls.md)                               |
 | Prisma, Supabase, a Server Action           | [`docs/server-and-data.md`](docs/server-and-data.md)                                                               |
 | User-facing text or numbers                 | [`docs/internationalization.md`](docs/internationalization.md)                                                     |
@@ -172,7 +173,11 @@ Rules below are graded. Treat them differently:
 6. **Generate per-request values on the server and pass them as props.** Never in
    a `useState` initialiser. Never `new Date()` on a zone-less string, never an
    option list from a runtime enumeration, never an engine's error message in
-   rendered output. → [`docs/hydration-and-platform-pitfalls.md`](docs/hydration-and-platform-pitfalls.md)
+   rendered output. Pages prerender: anything per-request lives in a
+   `<Suspense>`-wrapped section, never the static shell, and every layout,
+   page and `generateMetadata` under `app/[locale]` calls `enterLocale(params)`
+   first. → [`docs/hydration-and-platform-pitfalls.md`](docs/hydration-and-platform-pitfalls.md),
+   [`docs/patterns/partial-prerendering.md`](docs/patterns/partial-prerendering.md)
 7. **Localize every user-facing string, in `en.json` and `bn.json` together.**
    Build message keys only from literal unions. →
    [`docs/internationalization.md`](docs/internationalization.md)

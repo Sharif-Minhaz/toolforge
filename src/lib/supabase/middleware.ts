@@ -4,8 +4,14 @@ import { type NextRequest, NextResponse } from "next/server";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-export const updateSession = async (request: NextRequest) => {
-    let supabaseResponse = NextResponse.next({ request });
+/**
+ * `rewriteTo` is the internal `app/[locale]` path the proxy resolved; every
+ * response this builds keeps it, so refreshing the session never undoes it.
+ */
+export const updateSession = async (request: NextRequest, rewriteTo?: URL) => {
+    const forward = () =>
+        rewriteTo ? NextResponse.rewrite(rewriteTo, { request }) : NextResponse.next({ request });
+    let supabaseResponse = forward();
 
     const supabase = createServerClient(supabaseUrl!, supabaseKey!, {
         cookies: {
@@ -14,7 +20,7 @@ export const updateSession = async (request: NextRequest) => {
             },
             setAll(cookiesToSet) {
                 cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-                supabaseResponse = NextResponse.next({ request });
+                supabaseResponse = forward();
                 cookiesToSet.forEach(({ name, value, options }) =>
                     supabaseResponse.cookies.set(name, value, options),
                 );

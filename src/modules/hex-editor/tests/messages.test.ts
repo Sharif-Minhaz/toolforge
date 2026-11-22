@@ -14,7 +14,7 @@ const COMPONENTS = join(import.meta.dir, "..", "components");
  * The Hex Editor is one island all the way down — the toolbar, the grid, the
  * inspector, both dialogs and the status line are every one of them a client
  * component. That makes it the tool most likely to lose a namespace on its way
- * into `src/app/layout.tsx`, where a missing one fails at runtime and at nothing
+ * into `src/app/[locale]/layout.tsx`, where a missing one fails at runtime and at nothing
  * else: `tsc` sees an object literal, ESLint sees nothing, and locale parity
  * passes because the catalogue itself is complete.
  */

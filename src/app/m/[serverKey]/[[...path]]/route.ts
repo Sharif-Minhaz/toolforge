@@ -14,9 +14,6 @@ import { handleMockRequest } from "@/modules/mock-server/repository/handle";
  * This file is now seven lines of plumbing on purpose.
  */
 
-/** Every request must reach the database, or a just-saved endpoint serves stale. */
-export const dynamic = "force-dynamic";
-
 type RouteContext = {
     params: Promise<{ serverKey: string; path?: string[] }>;
 };

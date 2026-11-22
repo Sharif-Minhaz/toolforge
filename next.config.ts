@@ -7,6 +7,10 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
     reactCompiler: true,
+    // Partial prerendering: every page under `app/[locale]` prerenders a static
+    // shell per language, and only what reads the request — a tool's URL
+    // options, a session cookie — streams in behind its own `<Suspense>`.
+    cacheComponents: true,
     // Text to Speech's client opens a WebSocket through `ws`, whose optional
     // native add-ons (`bufferutil`, `utf-8-validate`) are resolved with a
     // runtime `require` a bundler cannot follow. Left external, Node loads the

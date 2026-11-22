@@ -15,9 +15,6 @@ import { handleGraphqlRequest } from "@/modules/graphql-server/repository/handle
  * `/m/[serverKey]` and `/j/[serverKey]` follow the same rule.
  */
 
-/** Every request must reach the database, or a just-written record serves stale. */
-export const dynamic = "force-dynamic";
-
 type RouteContext = {
     params: Promise<{ serverKey: string }>;
 };

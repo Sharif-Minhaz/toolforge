@@ -1,26 +1,16 @@
-import { IconArrowLeft } from "@tabler/icons-react";
-import { getTranslations } from "next-intl/server";
-import Link from "next/link";
+import "./globals.css";
 
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-
-export default async function NotFound() {
-    const t = await getTranslations("notFound");
-
+/**
+ * Reached only by a path the proxy did not localize — a missing file, say — so
+ * there is no locale and no shell to render it in. Pages get the localized 404
+ * in `[locale]/not-found.tsx`.
+ */
+export default function RootNotFound() {
     return (
-        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-5 text-center">
-            <p className="text-primary font-mono text-sm font-medium tabular-nums">404</p>
-            <h1 className="max-w-md text-2xl font-semibold tracking-tight sm:text-3xl">
-                {t("title")}
-            </h1>
-            <p className="text-muted-foreground max-w-md text-[0.9375rem] leading-7">
-                {t("description")}
-            </p>
-            <Link href="/" className={cn(buttonVariants(), "h-10 px-4")}>
-                <IconArrowLeft className="size-4" stroke={1.9} aria-hidden="true" />
-                {t("cta")}
-            </Link>
-        </div>
+        <html lang="en">
+            <body className="bg-background text-foreground grid min-h-dvh place-items-center">
+                <p className="font-mono text-sm">404</p>
+            </body>
+        </html>
     );
 }

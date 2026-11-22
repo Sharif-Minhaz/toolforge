@@ -661,7 +661,9 @@ passes through as `z.unknown()`, since `serverActions.bodySizeLimit` is 11 MB ap
 Watermark Remover's sake.
 
 The locale comes from the `toolforge.locale` cookie rather than a URL segment, so tool routes stay
-canonical (`/tools/uuid`, never `/en/tools/uuid`).
+canonical (`/tools/uuid`, never `/en/tools/uuid`). The proxy rewrites each page internally onto
+`app/[locale]`, so both languages prerender as static shells — see
+[`docs/patterns/partial-prerendering.md`](docs/patterns/partial-prerendering.md).
 
 ## Verifying a change
 

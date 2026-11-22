@@ -60,7 +60,9 @@ Server component by default:
   its own suggestions — same category first, then popularity — and renders
   nothing rather than a stub heading when there is nothing to suggest.
 - Add `loading.tsx` with skeletons that match the real layout block for block,
-  including the three related-tool cards at the foot.
+  including the three related-tool cards at the foot. The workbench block is
+  its own `<tool>-workbench-skeleton.tsx`, shared with the page's `<Suspense>`
+  fallback — see [`../patterns/partial-prerendering.md`](../patterns/partial-prerendering.md).
 
 ## 6. Keep the client island small
 

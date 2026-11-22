@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { LOCALE_COOKIE } from "@/i18n/config";
+import { localizePath, resolveLocale } from "@/i18n/routing";
 import { updateSession } from "@/lib/supabase/middleware";
 import {
     GRAPHQL_EXECUTION_PREFIX,
@@ -73,7 +75,20 @@ export async function proxy(request: NextRequest) {
         return NextResponse.next();
     }
 
-    return await updateSession(request);
+    // Pages live under `app/[locale]` so each language prerenders once; the
+    // reader's cookie picks which copy answers, and the URL never changes.
+    const localized = localizePath(
+        pathname,
+        resolveLocale(request.cookies.get(LOCALE_COOKIE)?.value),
+    );
+    let rewriteTo: URL | undefined;
+
+    if (localized !== null) {
+        rewriteTo = request.nextUrl.clone();
+        rewriteTo.pathname = localized;
+    }
+
+    return await updateSession(request, rewriteTo);
 }
 
 /**

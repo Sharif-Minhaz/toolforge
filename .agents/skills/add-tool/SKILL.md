@@ -112,7 +112,7 @@ current mode cannot use should open on a default, not an error.
 
 ## Step 5 — the page
 
-Server component. Mirror `src/app/tools/base64/page.tsx`:
+Server component. Mirror `src/app/[locale]/tools/base64/page.tsx`:
 
 - `generateMetadata` returns **`buildPageMetadata`** from
   `@/modules/seo/domain/metadata` — never a hand-written object. It supplies the canonical URL, the
@@ -122,7 +122,11 @@ Server component. Mirror `src/app/tools/base64/page.tsx`:
 - `JsonLd` takes **`buildToolJsonLd`** from `@/modules/seo/domain/structured-data`, which emits
   `SoftwareApplication`, `FAQPage`, and `BreadcrumbList` as one graph. Hand-building the graph
   drifts; the helper does not.
-- Parse search params, compute initial state, pass it to the island **as props**.
+- `await enterLocale(params)` first, in the page and in `generateMetadata`.
+- Parse search params, compute initial state, pass it to the island **as props** — inside a
+  `<Tool>WorkbenchSection` wrapped in `<Suspense fallback={<<Tool>WorkbenchSkeleton />}>`, never in
+  the prerendered shell. Copy `src/app/[locale]/tools/uuid/page.tsx`; see
+  `docs/patterns/partial-prerendering.md`.
 - `loading.tsx` with skeletons matching the real layout block for block.
 
 Next **shallow-merges** metadata: a page that declares `openGraph` replaces the layout's entirely,

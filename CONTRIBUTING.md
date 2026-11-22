@@ -310,7 +310,7 @@ degrades to a default instead of a 500.
   machine input — form fields, presets, row indices.
 - Proper names — `UTF-8`, `RFC 4648`, `LF (Unix)` — are data, not copy. Keep them out of the
   catalogue.
-- Client components get a hand-picked slice of the catalogue in `src/app/layout.tsx`. A namespace
+- Client components get a hand-picked slice of the catalogue in `src/app/[locale]/layout.tsx`. A namespace
   missing there fails at runtime, not at build — check it deliberately.
 - Bengali ascenders are taller than Latin. Never put `leading-none` on a localised string.
 
@@ -401,7 +401,7 @@ Work in this order. Each step has a rule that is easy to skip.
    Close the page with `<RelatedTools toolId="<id>" />` after the article, and give `loading.tsx` a
    matching three-card block — every tool page ends the same way.
 8. **Wire the overview.** Flip the catalog entry to `status: "available"`, extend the client message
-   slice in `src/app/layout.tsx`, and add a Quick Action in
+   slice in `src/app/[locale]/layout.tsx`, and add a Quick Action in
    `src/modules/overview/components/quick-actions.tsx` with copy in both locales.
 9. **Update the docs in the same pull request.** Add the tool to the table in
    [README.md](README.md#tools) and take it out of the planned list. If it needs configuration of

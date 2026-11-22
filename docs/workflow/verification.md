@@ -82,7 +82,7 @@ Expensive bundling pegs CPU. Read `/proc/<pid>/io` twice a few seconds apart: if
 `read_bytes` and `write_bytes` have not moved and nothing new has landed in
 `.next`, it is deadlocked, and no amount of waiting or tuning will finish it.
 
-Bisect by moving the suspect route out of `src/app/tools/` and building — that is
+Bisect by moving the suspect route out of `src/app/[locale]/tools/` and building — that is
 a one-minute answer. The instance this was learned on is in
 [`../case-studies/image-codecs.md`](../case-studies/image-codecs.md).
 

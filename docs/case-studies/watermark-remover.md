@@ -1151,7 +1151,7 @@ key-for-key, ICU-valid, with `tsc` green — `global.d.ts` types `Messages` from
 `MISSING_MESSAGE: Could not resolve watermarkRemover.gemini` the first time a
 browser rendered the panel.
 
-`src/app/layout.tsx` hands the client provider a **hand-picked slice** of the
+`src/app/[locale]/layout.tsx` hands the client provider a **hand-picked slice** of the
 catalogue, and three namespaces were not in it. Every check the project runs is
 blind to that: the slice is a plain object literal, so the type checker sees an
 object, and the catalogue is complete, so parity passes.

@@ -8,9 +8,6 @@ import { handleMcpRequest } from "@/modules/mcp/repository/handle";
  * plumbing on purpose. The same split the JSON Server Studio's route uses.
  */
 
-/** Every call is metered and most mint fresh randomness. Nothing here caches. */
-export const dynamic = "force-dynamic";
-
 export async function POST(request: Request): Promise<Response> {
     return handleMcpRequest(request);
 }

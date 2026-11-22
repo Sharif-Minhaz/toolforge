@@ -126,6 +126,11 @@
 :root {
     --radius: 0.7rem;
 
+    /* The desktop rail. Driven by `<html data-sidebar>` — set before paint by
+       `SIDEBAR_BOOT_SCRIPT` — rather than by React, because the page is
+       prerendered and must not shift once the rail state is known. */
+    --sidebar-w: 17rem;
+
     --background: oklch(0.988 0.002 264);
     --foreground: oklch(0.205 0.015 265);
     --card: oklch(1 0 0);
@@ -188,6 +193,10 @@
        ragged when it is not. */
     --checker-a: oklch(0.955 0.002 264);
     --checker-b: oklch(0.885 0.004 264);
+}
+
+:root[data-sidebar="collapsed"] {
+    --sidebar-w: 4.75rem;
 }
 
 .dark {

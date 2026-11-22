@@ -6,9 +6,6 @@ import { handleSpeechRequest } from "@/modules/text-to-speech/repository/handle-
  * uses.
  */
 
-/** Every response is one reader's audio. Nothing here caches. */
-export const dynamic = "force-dynamic";
-
 /**
  * Ten thousand Bangla characters took 122 seconds when this was measured, and
  * single pieces varied from 11 to 32 seconds, so the slowest plausible run is

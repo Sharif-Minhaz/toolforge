@@ -352,8 +352,10 @@ export async function proxy(request: NextRequest) {
 }
 ```
 
-`export const dynamic = "force-dynamic"` on the route, for the same reason
-`/q/[slug]` carries it: a graph saved a second ago must be the one that answers.
+Nothing on the route is cached (no `"use cache"`), for the same reason as
+`/q/[slug]`: a graph saved a second ago must be the one that answers. Under
+Cache Components that is the default, so the route needs no
+`export const dynamic`.
 
 ### 4.2 Route matching
 
@@ -996,7 +998,7 @@ response. Confirmed available in Route Handlers in the bundled Next 16 docs.
 - No execution cache in v1 — two indexed queries is roughly 2 ms and correctness
   beats it. A later milestone can add `unstable_cache` keyed on `serverId` with
   `revalidateTag(\`mock:server:${id}\`)`on every save. The trap is stale graphs
-after a save, which is why the route carries`force-dynamic` until then.
+after a save, which is why the route stays uncached until then.
 - React Flow: `onlyRenderVisibleElements` above ~150 nodes.
 - Canvas is `next/dynamic` with `ssr: false` and a skeleton matching its layout.
   React Flow is client-only and must never enter the shared bundle the other 28

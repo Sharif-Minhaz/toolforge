@@ -15,8 +15,12 @@ Feature-first. This is the real layout — mirror it.
 ```
 src/
   app/                        routes only: page, layout, loading, not-found
-    tools/<tool>/page.tsx
-    tools/<tool>/loading.tsx
+    [locale]/                 every page; the proxy rewrites onto it — see
+                              patterns/partial-prerendering.md
+      layout.tsx              the real root layout: <html lang>, providers, shell
+      tools/<tool>/page.tsx
+      tools/<tool>/loading.tsx
+    api/ m/ j/ g/ q/ s/       route handlers: no locale, never rewritten
   components/
     brand/                    logo mark and wordmark
     layout/                   app shell, sidebar, drawer, theme, locale

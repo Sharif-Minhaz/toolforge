@@ -1,0 +1,608 @@
+import type { Metadata, Viewport } from "next";
+import { Inter, JetBrains_Mono, Noto_Sans_Bengali } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages, getTranslations } from "next-intl/server";
+import { Suspense, type ReactNode } from "react";
+
+import { AppShell } from "@/components/layout/app-shell";
+import { Providers } from "@/components/layout/providers";
+import { enterLocale, generateLocaleParams, type LocaleParams } from "@/i18n/route-locale";
+import { AnalyticsGate } from "@/modules/analytics/components/analytics-gate";
+import { SIDEBAR_BOOT_SCRIPT } from "@/modules/preferences/domain/sidebar";
+import { buildPageMetadata, SITE_ATTRIBUTION } from "@/modules/seo/domain/metadata";
+import { SITE_REPOSITORY, SITE_URL } from "@/modules/seo/domain/site";
+import { getToolKeywords } from "@/modules/tools/domain/tool-catalog";
+import "../globals.css";
+
+const inter = Inter({
+    subsets: ["latin"],
+    variable: "--font-inter",
+    display: "swap",
+});
+
+// Inter carries no Bengali glyphs; this sits directly behind it in the stack so
+// the Bangla locale keeps the same optical weight instead of falling back to
+// whatever the operating system happens to ship.
+const notoSansBengali = Noto_Sans_Bengali({
+    subsets: ["bengali"],
+    variable: "--font-bengali",
+    display: "swap",
+});
+
+const jetBrainsMono = JetBrains_Mono({
+    subsets: ["latin"],
+    variable: "--font-jetbrains-mono",
+    display: "swap",
+});
+
+export const generateStaticParams = generateLocaleParams;
+
+export async function generateMetadata({ params }: { params: LocaleParams }): Promise<Metadata> {
+    const locale = await enterLocale(params);
+    const [t, tApp] = await Promise.all([getTranslations("overview.meta"), getTranslations("app")]);
+
+    const shared = buildPageMetadata({
+        title: t("title"),
+        description: t("description"),
+        path: "/",
+        locale,
+        keywords: getToolKeywords(),
+    });
+
+    return {
+        ...shared,
+        ...SITE_ATTRIBUTION,
+        metadataBase: new URL(SITE_URL),
+        // Child pages set a bare title; the template appends the brand so every
+        // tab and every search result reads "<tool> | ToolForge".
+        title: {
+            default: t("title"),
+            template: `%s | ${tApp("name")}`,
+        },
+        applicationName: tApp("name"),
+        referrer: "origin-when-cross-origin",
+        // Stops iOS Safari turning version numbers and ids into phone links.
+        formatDetection: { telephone: false, address: false, email: false },
+        robots: {
+            index: true,
+            follow: true,
+            googleBot: {
+                index: true,
+                follow: true,
+                "max-image-preview": "large",
+                "max-snippet": -1,
+                "max-video-preview": -1,
+            },
+        },
+        other: { "github:repository": SITE_REPOSITORY },
+    };
+}
+
+export const viewport: Viewport = {
+    themeColor: [
+        { media: "(prefers-color-scheme: light)", color: "#fbfbfc" },
+        { media: "(prefers-color-scheme: dark)", color: "#0c0d10" },
+    ],
+};
+
+type RootLayoutProps = Readonly<{ children: ReactNode; params: LocaleParams }>;
+
+export default async function RootLayout({ children, params }: RootLayoutProps) {
+    const locale = await enterLocale(params);
+    const messages = await getMessages();
+
+    // Only the strings the interactive shell actually renders. The long-form
+    // article copy stays server-side instead of shipping in the RSC payload.
+    const clientMessages = {
+        common: messages.common,
+        nav: messages.nav,
+        theme: messages.theme,
+        locale: messages.locale,
+        units: messages.units,
+        analytics: messages.analytics,
+        uuid: {
+            generator: messages.uuid.generator,
+            versions: messages.uuid.versions,
+            errors: messages.uuid.errors,
+            toast: messages.uuid.toast,
+        },
+        base64: {
+            workbench: messages.base64.workbench,
+            errors: messages.base64.errors,
+            toast: messages.base64.toast,
+        },
+        htmlMarkdown: {
+            workbench: messages.htmlMarkdown.workbench,
+            errors: messages.htmlMarkdown.errors,
+            toast: messages.htmlMarkdown.toast,
+        },
+        pdfConverter: {
+            workbench: messages.pdfConverter.workbench,
+            formats: messages.pdfConverter.formats,
+            scripts: messages.pdfConverter.scripts,
+            mdx: messages.pdfConverter.mdx,
+            errors: messages.pdfConverter.errors,
+            notices: messages.pdfConverter.notices,
+            toast: messages.pdfConverter.toast,
+        },
+        bson: {
+            workbench: messages.bson.workbench,
+            formats: messages.bson.formats,
+            encodings: messages.bson.encodings,
+            ejsonModes: messages.bson.ejsonModes,
+            jsonIndents: messages.bson.jsonIndents,
+            delimiters: messages.bson.delimiters,
+            toonIndents: messages.bson.toonIndents,
+            notes: messages.bson.notes,
+            noteKinds: messages.bson.noteKinds,
+            errors: messages.bson.errors,
+            toast: messages.bson.toast,
+        },
+        jwt: {
+            workbench: messages.jwt.workbench,
+            claims: messages.jwt.claims,
+            headerParams: messages.jwt.headerParams,
+            timeStates: messages.jwt.timeStates,
+            findings: messages.jwt.findings,
+            errors: messages.jwt.errors,
+            toast: messages.jwt.toast,
+        },
+        hash: {
+            workbench: messages.hash.workbench,
+            errors: messages.hash.errors,
+            toast: messages.hash.toast,
+        },
+        aes: {
+            workbench: messages.aes.workbench,
+            errors: messages.aes.errors,
+            toast: messages.aes.toast,
+        },
+        rsa: {
+            workbench: messages.rsa.workbench,
+            errors: messages.rsa.errors,
+            toast: messages.rsa.toast,
+        },
+        rsaEncrypt: {
+            workbench: messages.rsaEncrypt.workbench,
+            errors: messages.rsaEncrypt.errors,
+            toast: messages.rsaEncrypt.toast,
+        },
+        json: {
+            workbench: messages.json.workbench,
+            report: messages.json.report,
+            errors: messages.json.errors,
+            toast: messages.json.toast,
+        },
+        url: {
+            workbench: messages.url.workbench,
+            errors: messages.url.errors,
+            toast: messages.url.toast,
+        },
+        urlParser: {
+            workbench: messages.urlParser.workbench,
+            parts: messages.urlParser.parts,
+            params: messages.urlParser.params,
+            errors: messages.urlParser.errors,
+            toast: messages.urlParser.toast,
+        },
+        curl: {
+            workbench: messages.curl.workbench,
+            directions: messages.curl.directions,
+            targets: messages.curl.targets,
+            runtimes: messages.curl.runtimes,
+            styles: messages.curl.styles,
+            headersStyles: messages.curl.headersStyles,
+            indents: messages.curl.indents,
+            shells: messages.curl.shells,
+            request: messages.curl.request,
+            notes: messages.curl.notes,
+            errors: messages.curl.errors,
+            toast: messages.curl.toast,
+        },
+        markdown: {
+            workbench: messages.markdown.workbench,
+            actions: messages.markdown.actions,
+            placeholders: messages.markdown.placeholders,
+            preview: messages.markdown.preview,
+            alerts: messages.markdown.alerts,
+            errors: messages.markdown.errors,
+            toast: messages.markdown.toast,
+        },
+        regex: {
+            workbench: messages.regex.workbench,
+            explain: messages.regex.explain,
+            controlEscapes: messages.regex.controlEscapes,
+            matches: messages.regex.matches,
+            errors: messages.regex.errors,
+            toast: messages.regex.toast,
+        },
+        lorem: {
+            workbench: messages.lorem.workbench,
+            units: messages.lorem.units,
+            sources: messages.lorem.sources,
+            errors: messages.lorem.errors,
+            toast: messages.lorem.toast,
+        },
+        color: {
+            workbench: messages.color.workbench,
+            syntaxes: messages.color.syntaxes,
+            picker: messages.color.picker,
+            formats: messages.color.formats,
+            options: messages.color.options,
+            matches: messages.color.matches,
+            contrast: messages.color.contrast,
+            scale: messages.color.scale,
+            palette: messages.color.palette,
+            errors: messages.color.errors,
+            toast: messages.color.toast,
+        },
+        cron: {
+            workbench: messages.cron.workbench,
+            explain: messages.cron.explain,
+            presets: messages.cron.presets,
+            errors: messages.cron.errors,
+            toast: messages.cron.toast,
+        },
+        timestamp: {
+            workbench: messages.timestamp.workbench,
+            errors: messages.timestamp.errors,
+            toast: messages.timestamp.toast,
+        },
+        backgroundRemover: {
+            workbench: messages.backgroundRemover.workbench,
+            qualities: messages.backgroundRemover.qualities,
+            strip: messages.backgroundRemover.strip,
+            backgrounds: messages.backgroundRemover.backgrounds,
+            result: messages.backgroundRemover.result,
+            errors: messages.backgroundRemover.errors,
+            toast: messages.backgroundRemover.toast,
+        },
+        watermarkRemover: {
+            workbench: messages.watermarkRemover.workbench,
+            result: messages.watermarkRemover.result,
+            errors: messages.watermarkRemover.errors,
+            toast: messages.watermarkRemover.toast,
+            gemini: messages.watermarkRemover.gemini,
+            geminiErrors: messages.watermarkRemover.geminiErrors,
+            geminiToast: messages.watermarkRemover.geminiToast,
+            video: messages.watermarkRemover.video,
+            videoResult: messages.watermarkRemover.videoResult,
+            videoErrors: messages.watermarkRemover.videoErrors,
+            videoToast: messages.watermarkRemover.videoToast,
+        },
+        // The article and the hero stay on the server; only what the
+        // workbench, the file tab, the settings dialog and the player render
+        // crosses.
+        textToSpeech: {
+            workbench: messages.textToSpeech.workbench,
+            scriptErrors: messages.textToSpeech.scriptErrors,
+            translationErrors: messages.textToSpeech.translationErrors,
+            errors: messages.textToSpeech.errors,
+            settings: messages.textToSpeech.settings,
+            file: messages.textToSpeech.file,
+            fileErrors: messages.textToSpeech.fileErrors,
+            result: messages.textToSpeech.result,
+        },
+        password: {
+            workbench: messages.password.workbench,
+            strengths: messages.password.strengths,
+            crackTime: messages.password.crackTime,
+            attacks: messages.password.attacks,
+            separators: messages.password.separators,
+            errors: messages.password.errors,
+            toast: messages.password.toast,
+        },
+        secret: {
+            workbench: messages.secret.workbench,
+            encodings: messages.secret.encodings,
+            shapes: messages.secret.shapes,
+            grades: messages.secret.grades,
+            errors: messages.secret.errors,
+            toast: messages.secret.toast,
+        },
+        qr: {
+            workbench: messages.qr.workbench,
+            kinds: messages.qr.kinds,
+            errorLevels: messages.qr.errorLevels,
+            dotStyles: messages.qr.dotStyles,
+            eyeStyles: messages.qr.eyeStyles,
+            wifiEncryptions: messages.qr.wifiEncryptions,
+            scannedFields: messages.qr.scannedFields,
+            dynamic: messages.qr.dynamic,
+            reader: messages.qr.reader,
+            edit: messages.qr.edit,
+            errors: messages.qr.errors,
+            toast: messages.qr.toast,
+        },
+        // Shared by the QR tool's dynamic codes, the URL Shortener, and the
+        // unlock gate — one vocabulary of failures, so the same problem never
+        // reads two different ways.
+        shortLinks: {
+            errors: messages.shortLinks.errors,
+            result: messages.shortLinks.result,
+            history: messages.shortLinks.history,
+            unlock: messages.shortLinks.unlock,
+        },
+        shortener: {
+            workbench: messages.shortener.workbench,
+            edit: messages.shortener.edit,
+            toast: messages.shortener.toast,
+        },
+        slug: {
+            workbench: messages.slug.workbench,
+            separators: messages.slug.separators,
+            errors: messages.slug.errors,
+            toast: messages.slug.toast,
+        },
+        textCase: {
+            workbench: messages.textCase.workbench,
+            cases: messages.textCase.cases,
+            errors: messages.textCase.errors,
+            toast: messages.textCase.toast,
+        },
+        sort: {
+            workbench: messages.sort.workbench,
+            splitModes: messages.sort.splitModes,
+            splitHints: messages.sort.splitHints,
+            orders: messages.sort.orders,
+            orderHints: messages.sort.orderHints,
+            sortKeys: messages.sort.sortKeys,
+            sortKeyHints: messages.sort.sortKeyHints,
+            formats: messages.sort.formats,
+            formatHints: messages.sort.formatHints,
+            bulletStyles: messages.sort.bulletStyles,
+            numberStyles: messages.sort.numberStyles,
+            errors: messages.sort.errors,
+            toast: messages.sort.toast,
+        },
+        equation: {
+            workbench: messages.equation.workbench,
+            sources: messages.equation.sources,
+            image: messages.equation.image,
+            formats: messages.equation.formats,
+            readings: messages.equation.readings,
+            notes: messages.equation.notes,
+            errors: messages.equation.errors,
+            toast: messages.equation.toast,
+        },
+        diff: {
+            workbench: messages.diff.workbench,
+            errors: messages.diff.errors,
+            toast: messages.diff.toast,
+        },
+        imageCompressor: {
+            workbench: messages.imageCompressor.workbench,
+            formats: messages.imageCompressor.formats,
+            errors: messages.imageCompressor.errors,
+            toast: messages.imageCompressor.toast,
+        },
+        imageConverter: {
+            workbench: messages.imageConverter.workbench,
+            targets: messages.imageConverter.targets,
+            backgrounds: messages.imageConverter.backgrounds,
+            errors: messages.imageConverter.errors,
+            toast: messages.imageConverter.toast,
+        },
+        imageResizer: {
+            workbench: messages.imageResizer.workbench,
+            formats: messages.imageResizer.formats,
+            errors: messages.imageResizer.errors,
+            toast: messages.imageResizer.toast,
+        },
+        // Shipped to every page rather than to the image tools' routes: the
+        // paste-and-fetch controls are one shared island, and six copies of the
+        // same namespace slice is six places to forget one.
+        imageIntake: messages.imageIntake,
+        // The picked-files heading and per-source facts both batch image
+        // tools list under their intake.
+        imageQueue: messages.imageQueue,
+        compareSlider: messages.compareSlider,
+        // The JSON viewer's fold controls, shared by every tool that prints
+        // JSON — the same reasoning as the image intake above.
+        codeViewer: messages.codeViewer,
+        keyboardTester: {
+            workbench: messages.keyboardTester.workbench,
+            sizes: messages.keyboardTester.sizes,
+            standards: messages.keyboardTester.standards,
+            systems: messages.keyboardTester.systems,
+            families: messages.keyboardTester.families,
+            combos: messages.keyboardTester.combos,
+            rollover: messages.keyboardTester.rollover,
+            report: messages.keyboardTester.report,
+            toast: messages.keyboardTester.toast,
+        },
+        mouseTester: {
+            workbench: messages.mouseTester.workbench,
+            buttons: messages.mouseTester.buttons,
+            verdicts: messages.mouseTester.verdicts,
+            faults: messages.mouseTester.faults,
+            diagnosis: messages.mouseTester.diagnosis,
+            log: messages.mouseTester.log,
+            report: messages.mouseTester.report,
+            toast: messages.mouseTester.toast,
+        },
+        imageTo3d: {
+            workbench: messages.imageTo3d.workbench,
+            sources: messages.imageTo3d.sources,
+            shapes: messages.imageTo3d.shapes,
+            formats: messages.imageTo3d.formats,
+            errors: messages.imageTo3d.errors,
+            toast: messages.imageTo3d.toast,
+        },
+        blurPlaceholder: {
+            workbench: messages.blurPlaceholder.workbench,
+            modes: messages.blurPlaceholder.modes,
+            snippets: messages.blurPlaceholder.snippets,
+            errors: messages.blurPlaceholder.errors,
+            toast: messages.blurPlaceholder.toast,
+        },
+        portScanner: {
+            workbench: messages.portScanner.workbench,
+            presets: messages.portScanner.presets,
+            presetHints: messages.portScanner.presetHints,
+            states: messages.portScanner.states,
+            errors: messages.portScanner.errors,
+            toast: messages.portScanner.toast,
+        },
+        subdomainLookup: {
+            workbench: messages.subdomainLookup.workbench,
+            sorts: messages.subdomainLookup.sorts,
+            sortHints: messages.subdomainLookup.sortHints,
+            errors: messages.subdomainLookup.errors,
+            toast: messages.subdomainLookup.toast,
+        },
+        // The article and the hero stay on the server; only what the workbench,
+        // the globe and the hop table render crosses.
+        ipGlobe: {
+            workbench: messages.ipGlobe.workbench,
+            modes: messages.ipGlobe.modes,
+            modeHints: messages.ipGlobe.modeHints,
+            resolvers: messages.ipGlobe.resolvers,
+            options: messages.ipGlobe.options,
+            errors: messages.ipGlobe.errors,
+            hopStatus: messages.ipGlobe.hopStatus,
+            table: messages.ipGlobe.table,
+        },
+        // The studio's own hero and disclosure copy stays on the server; only
+        // the launcher island's strings cross.
+        mockServer: {
+            launcher: messages.mockServer.launcher,
+            recovery: messages.mockServer.recovery,
+            servers: messages.mockServer.servers,
+            endpoints: messages.mockServer.endpoints,
+            builder: messages.mockServer.builder,
+            valueKinds: messages.mockServer.valueKinds,
+            nowFormats: messages.mockServer.nowFormats,
+            fakerCategories: messages.mockServer.fakerCategories,
+            faker: messages.mockServer.faker,
+            suggest: messages.mockServer.suggest,
+            suggestOrigins: messages.mockServer.suggestOrigins,
+            suggestTypes: messages.mockServer.suggestTypes,
+            nodes: messages.mockServer.nodes,
+            handles: messages.mockServer.handles,
+            studio: messages.mockServer.studio,
+            inspector: messages.mockServer.inspector,
+            compareOps: messages.mockServer.compareOps,
+            authModes: messages.mockServer.authModes,
+            logs: messages.mockServer.logs,
+            variables: messages.mockServer.variables,
+            import: messages.mockServer.import,
+            export: messages.mockServer.export,
+            errors: messages.mockServer.errors,
+            serverErrors: messages.mockServer.serverErrors,
+            toast: messages.mockServer.toast,
+        },
+        // The vocabulary both hosted-server studios share: the document editor,
+        // the usage bar, the base-URL row and the reasons reading a document can
+        // fail. One entry rather than one per studio, because the components
+        // that read it live in `tools/components` and are the same component.
+        hostedServer: messages.hostedServer,
+        // The JSON Server Studio. Everything here is a control label or a
+        // failure reason the islands render; `meta` and `hero` stay on the
+        // server, where the pages that use them are rendered.
+        jsonServer: {
+            launcher: messages.jsonServer.launcher,
+            usageFull: messages.jsonServer.usageFull,
+            card: messages.jsonServer.card,
+            tabs: messages.jsonServer.tabs,
+            routes: messages.jsonServer.routes,
+            logs: messages.jsonServer.logs,
+            workbench: messages.jsonServer.workbench,
+            recovery: messages.jsonServer.recovery,
+            errors: messages.jsonServer.errors,
+            toast: messages.jsonServer.toast,
+        },
+        // The GraphQL Server Studio. Same split as its REST sibling: control
+        // labels and failure reasons cross to the island, `meta`, `hero` and the
+        // whole article stay on the server.
+        graphqlServer: {
+            launcher: messages.graphqlServer.launcher,
+            usageFull: messages.graphqlServer.usageFull,
+            card: messages.graphqlServer.card,
+            tabs: messages.graphqlServer.tabs,
+            schema: messages.graphqlServer.schema,
+            skipReasons: messages.graphqlServer.skipReasons,
+            renameReasons: messages.graphqlServer.renameReasons,
+            playground: messages.graphqlServer.playground,
+            snippets: messages.graphqlServer.snippets,
+            logs: messages.graphqlServer.logs,
+            workbench: messages.graphqlServer.workbench,
+            recovery: messages.graphqlServer.recovery,
+            errors: messages.graphqlServer.errors,
+            toast: messages.graphqlServer.toast,
+        },
+        // Seven panels' worth of labels, which is why this slice is the
+        // largest here — everything under `article` still stays on the server.
+        domainInspector: {
+            workbench: messages.domainInspector.workbench,
+            scan: messages.domainInspector.scan,
+            readings: messages.domainInspector.readings,
+            common: messages.domainInspector.common,
+            resolvers: messages.domainInspector.resolvers,
+            overview: messages.domainInspector.overview,
+            dns: messages.domainInspector.dns,
+            recordTypes: messages.domainInspector.recordTypes,
+            registration: messages.domainInspector.registration,
+            hosting: messages.domainInspector.hosting,
+            propagation: messages.domainInspector.propagation,
+            propagationStates: messages.domainInspector.propagationStates,
+            certificate: messages.domainInspector.certificate,
+            http: messages.domainInspector.http,
+            grades: messages.domainInspector.grades,
+            securityHeaders: messages.domainInspector.securityHeaders,
+            technologies: messages.domainInspector.technologies,
+            techCategories: messages.domainInspector.techCategories,
+            evidence: messages.domainInspector.evidence,
+            errors: messages.domainInspector.errors,
+            panelErrors: messages.domainInspector.panelErrors,
+            toast: messages.domainInspector.toast,
+        },
+        // The Hex Editor is one island all the way down — the toolbar, the grid,
+        // the inspector, both dialogs and the status line are all client
+        // components, so every namespace but `meta`, `hero`, `toc` and the
+        // article crosses.
+        hexEditor: {
+            workbench: messages.hexEditor.workbench,
+            toolbar: messages.hexEditor.toolbar,
+            columns: messages.hexEditor.columns,
+            endianness: messages.hexEditor.endianness,
+            inspector: messages.hexEditor.inspector,
+            status: messages.hexEditor.status,
+            search: messages.hexEditor.search,
+            searchModes: messages.hexEditor.searchModes,
+            goto: messages.hexEditor.goto,
+            errors: messages.hexEditor.errors,
+            toast: messages.hexEditor.toast,
+        },
+    };
+
+    return (
+        <html
+            lang={locale}
+            suppressHydrationWarning
+            className={`${inter.variable} ${notoSansBengali.variable} ${jetBrainsMono.variable} h-full antialiased`}
+        >
+            <head>
+                {/* Static and ours: sets `data-sidebar` before first paint. */}
+                <script dangerouslySetInnerHTML={{ __html: SIDEBAR_BOOT_SCRIPT }} />
+            </head>
+            <body className="min-h-full" suppressHydrationWarning>
+                <Providers>
+                    <NextIntlClientProvider locale={locale} messages={clientMessages}>
+                        {/* The shell reads the pathname. On a route whose params are
+                            known at build time that resolves in the prerender, so the
+                            boundary costs nothing; on one whose params are not — a
+                            workspace id, an unlock slug — the shell renders at request
+                            time instead of blocking the whole build. */}
+                        <Suspense fallback={null}>
+                            <AppShell>{children}</AppShell>
+                        </Suspense>
+                        <Suspense fallback={null}>
+                            <AnalyticsGate />
+                        </Suspense>
+                    </NextIntlClientProvider>
+                </Providers>
+            </body>
+        </html>
+    );
+}

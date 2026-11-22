@@ -43,9 +43,17 @@ contain a dot**, because a dot is `next-intl`'s namespace separator. See
 
 ---
 
+## Where the locale comes from
+The `toolforge.locale` cookie, read by `src/proxy.ts`, which rewrites the page
+onto `app/[locale]` without changing the URL. Pages pin it with `enterLocale`;
+Server Actions and route handlers fall back to reading the cookie in
+`src/i18n/request.ts`. → [`patterns/partial-prerendering.md`](patterns/partial-prerendering.md)
+
+---
+
 ## Client bundles get a subset
 
-`src/app/layout.tsx` passes a hand-picked slice of the catalogue to
+`src/app/[locale]/layout.tsx` passes a hand-picked slice of the catalogue to
 `NextIntlClientProvider`. Long-form article copy stays on the server. When a new
 client component needs a namespace, add it to that slice explicitly.
 

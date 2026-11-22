@@ -1,6 +1,8 @@
 import { IconArrowRight, IconBolt, IconBrandGithub, IconLayoutGrid } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
+import { connection } from "next/server";
+import { Suspense } from "react";
 
 import { buttonVariants } from "@/components/ui/button";
 import { FadeIn } from "@/components/motion/reveal";
@@ -10,10 +12,6 @@ import { generateUuid } from "@/modules/uuid/domain/generate";
 
 export async function OverviewHero() {
     const [t, tNav] = await Promise.all([getTranslations("overview.hero"), getTranslations("nav")]);
-
-    // Rendered server-side, so the sample is real output rather than a mockup —
-    // and there is nothing for hydration to reconcile.
-    const sampleUuid = generateUuid(4);
 
     return (
         <section className="bg-card/60 ring-border/70 relative isolate overflow-hidden rounded-3xl ring-1 ring-inset">
@@ -87,7 +85,14 @@ export async function OverviewHero() {
                         </div>
 
                         <code className="bg-muted/60 ring-border/60 block rounded-xl px-3 py-3 font-mono text-[0.8125rem] leading-relaxed ring-1 select-all ring-inset">
-                            {sampleUuid}
+                            {/* Same-width placeholder, so the box does not resize. */}
+                            <Suspense
+                                fallback={
+                                    <span className="invisible">{SAMPLE_UUID_PLACEHOLDER}</span>
+                                }
+                            >
+                                <SampleUuid />
+                            </Suspense>
                         </code>
 
                         <p className="text-muted-foreground pt-3 text-[0.6875rem]">
@@ -98,4 +103,17 @@ export async function OverviewHero() {
             </div>
         </section>
     );
+}
+
+const SAMPLE_UUID_PLACEHOLDER = "00000000-0000-4000-8000-000000000000";
+
+/**
+ * Real output rather than a mockup, minted per request. The hero is otherwise
+ * prerendered, and a UUID baked into that HTML would be the same for every
+ * visitor — so it waits on `connection()` behind its own `<Suspense>`.
+ */
+async function SampleUuid() {
+    await connection();
+
+    return generateUuid(4);
 }

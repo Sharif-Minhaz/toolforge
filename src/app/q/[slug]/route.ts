@@ -13,9 +13,6 @@ import { resolveShortLink } from "@/modules/short-links/repository/resolve";
  * table through the same `resolveShortLink`.
  */
 
-/** Every visit has to reach the database, or a re-pointed link keeps its old target. */
-export const dynamic = "force-dynamic";
-
 const TOOL_PATH = "/tools/qr";
 
 export async function GET(

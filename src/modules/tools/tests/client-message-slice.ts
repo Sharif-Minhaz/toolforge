@@ -4,7 +4,7 @@ import { join } from "node:path";
 /**
  * The scan behind every "is this namespace in the client slice?" test.
  *
- * `src/app/layout.tsx` hands `NextIntlClientProvider` a hand-picked subset of
+ * `src/app/[locale]/layout.tsx` hands `NextIntlClientProvider` a hand-picked subset of
  * the catalogue, so long-form article copy never crosses to the browser. The
  * cost of that is a rule somebody has to remember — *"when a new client
  * component needs a namespace, add it to that slice explicitly"* — and
@@ -23,8 +23,16 @@ import { join } from "node:path";
  * something local.
  */
 
-/** `src/app/layout.tsx`, from anywhere under `src/modules/`. */
-export const CLIENT_SLICE_LAYOUT = join(import.meta.dir, "..", "..", "..", "app", "layout.tsx");
+/** `src/app/[locale]/layout.tsx`, from anywhere under `src/modules/`. */
+export const CLIENT_SLICE_LAYOUT = join(
+    import.meta.dir,
+    "..",
+    "..",
+    "..",
+    "app",
+    "[locale]",
+    "layout.tsx",
+);
 
 /**
  * `useTranslations("mockServer.builder")` → `builder`, over the client

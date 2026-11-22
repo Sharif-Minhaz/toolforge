@@ -10,9 +10,6 @@ import { handleJsonRequest } from "@/modules/json-server/repository/handle";
  * is exactly the set `json-server` itself speaks.
  */
 
-/** Every request must reach the database, or a just-written record serves stale. */
-export const dynamic = "force-dynamic";
-
 type RouteContext = {
     params: Promise<{ serverKey: string; path?: string[] }>;
 };
