@@ -2,7 +2,6 @@
 
 import { IconLanguage } from "@tabler/icons-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
 import {
@@ -19,16 +18,17 @@ import { cn } from "@/lib/utils";
 export function LocaleSwitcher({ className }: { className?: string }) {
     const t = useTranslations("locale");
     const activeLocale = useLocale();
-    const router = useRouter();
     const [isPending, startTransition] = useTransition();
 
     function handleChange(value: string) {
         startTransition(async () => {
             const result = await setLocale(value);
 
+            // A full reload, not `router.refresh()`: each language is its own root
+            // layout under `app/[locale]`, and swapping roots in place keeps the
+            // old tree hidden in the DOM and drops `<html data-sidebar>`.
             if (result.ok) {
-                // Server components re-render with the new cookie in place.
-                router.refresh();
+                window.location.reload();
             }
         });
     }

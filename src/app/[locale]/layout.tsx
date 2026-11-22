@@ -582,11 +582,11 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
             suppressHydrationWarning
             className={`${inter.variable} ${notoSansBengali.variable} ${jetBrainsMono.variable} h-full antialiased`}
         >
-            <head>
-                {/* Static and ours: sets `data-sidebar` before first paint. */}
-                <script dangerouslySetInnerHTML={{ __html: SIDEBAR_BOOT_SCRIPT }} />
-            </head>
             <body className="min-h-full" suppressHydrationWarning>
+                {/* Sets `data-sidebar` before the shell below it is parsed. First in
+                    `<body>`, the way next-themes places its own: an inline script
+                    in a hand-written `<head>` fails to hydrate (React #418). */}
+                <script dangerouslySetInnerHTML={{ __html: SIDEBAR_BOOT_SCRIPT }} />
                 <Providers>
                     <NextIntlClientProvider locale={locale} messages={clientMessages}>
                         {/* The shell reads the pathname. On a route whose params are

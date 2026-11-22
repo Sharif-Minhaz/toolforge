@@ -8,7 +8,7 @@ const COLLAPSED_VALUE = "collapsed";
 export const SIDEBAR_ATTRIBUTE = "data-sidebar";
 
 /**
- * Runs in `<head>` before first paint. The page is prerendered, so the server
+ * Runs first in `<body>`, before the shell is parsed or painted. The page is prerendered, so the server
  * cannot know the rail state; reading the cookie here — the way `next-themes`
  * reads the theme — keeps the content column from jumping sideways on load.
  */
