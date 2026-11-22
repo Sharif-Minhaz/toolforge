@@ -7,12 +7,7 @@ import {
     REDIRECT_PREFIXES,
     SHORTENER_REDIRECT_PREFIX,
 } from "@/modules/short-links/domain/constants";
-import {
-    buildEditUrl,
-    buildShortUrl,
-    isSelfReferential,
-    parseTargetUrl,
-} from "@/modules/short-links/domain/target";
+import { isSelfReferential, linkBases, parseTargetUrl } from "@/modules/short-links/domain/target";
 
 const ORIGIN = "https://toolforge.example";
 
@@ -92,19 +87,43 @@ describe("isSelfReferential", () => {
     test("an unparseable value is not self-referential, only invalid", () => {
         expect(isSelfReferential("not a url", ORIGIN)).toBe(false);
     });
+
+    test("refuses every path on the short-link subdomain", () => {
+        expect(isSelfReferential("https://s.example.net/anything", ORIGIN, "example.net")).toBe(
+            true,
+        );
+        expect(isSelfReferential("https://s.example.net/anything", ORIGIN, null)).toBe(false);
+    });
 });
 
-describe("url builders", () => {
-    test("build absolute links from a prefix", () => {
-        expect(buildShortUrl("abcd2345", ORIGIN, SHORTENER_REDIRECT_PREFIX)).toBe(
-            `${ORIGIN}/s/abcd2345`,
-        );
-        expect(buildEditUrl("token", ORIGIN, QR_EDIT_PREFIX)).toBe(`${ORIGIN}/tools/qr/edit/token`);
+describe("linkBases", () => {
+    test("builds both bases from the tool's prefixes", () => {
+        expect(linkBases("shortener", ORIGIN, null, null)).toEqual({
+            redirect: `${ORIGIN}${SHORTENER_REDIRECT_PREFIX}`,
+            edit: `${ORIGIN}/tools/shortener/edit`,
+        });
+        expect(linkBases("qr", ORIGIN, null, null).edit).toBe(`${ORIGIN}${QR_EDIT_PREFIX}`);
     });
 
     test("a trailing slash on the origin does not double up", () => {
-        expect(buildShortUrl("abcd2345", `${ORIGIN}/`, QR_REDIRECT_PREFIX)).toBe(
-            `${ORIGIN}/q/abcd2345`,
+        expect(linkBases("qr", `${ORIGIN}/`, null, null).redirect).toBe(
+            `${ORIGIN}${QR_REDIRECT_PREFIX}`,
+        );
+    });
+
+    test("a shortener link moves to the subdomain only when served inside the domain", () => {
+        expect(linkBases("shortener", ORIGIN, "toolforge.example", "toolforge.example")).toEqual({
+            redirect: "https://s.toolforge.example",
+            edit: `${ORIGIN}/tools/shortener/edit`,
+        });
+        expect(
+            linkBases("shortener", ORIGIN, "toolforge.vercel.app", "toolforge.example").redirect,
+        ).toBe(`${ORIGIN}/s`);
+    });
+
+    test("a QR link never leaves the main site's path", () => {
+        expect(linkBases("qr", ORIGIN, "toolforge.example", "toolforge.example").redirect).toBe(
+            `${ORIGIN}/q`,
         );
     });
 });

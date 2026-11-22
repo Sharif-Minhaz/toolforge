@@ -1,6 +1,7 @@
 import { IconChevronRight, IconClockPause, IconLock, IconRefresh } from "@tabler/icons-react";
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
+import { headers } from "next/headers";
 import Link from "next/link";
 
 import { FadeIn, Reveal } from "@/components/motion/reveal";
@@ -9,7 +10,7 @@ import { buildPageMetadata } from "@/modules/seo/domain/metadata";
 import { SITE_URL } from "@/modules/seo/domain/site";
 import { buildToolJsonLd } from "@/modules/seo/domain/structured-data";
 import { LinkStateNotice } from "@/modules/short-links/components/link-state-notice";
-import { SHORTENER_REDIRECT_PREFIX } from "@/modules/short-links/domain/constants";
+import { linkBases } from "@/modules/short-links/domain/target";
 import { isShortLinkStorageConfigured } from "@/modules/short-links/repository/config";
 import {
     getShortenerFaqEntries,
@@ -39,13 +40,14 @@ type ShortenerPageProps = {
 };
 
 export default async function ShortenerToolPage({ searchParams }: ShortenerPageProps) {
-    const [t, tTools, tNav, faqs, locale, params] = await Promise.all([
+    const [t, tTools, tNav, faqs, locale, params, requestHeaders] = await Promise.all([
         getTranslations("shortener.hero"),
         getTranslations("tools"),
         getTranslations("nav"),
         getShortenerFaqEntries(),
         getLocale(),
         searchParams,
+        headers(),
     ]);
 
     const parsed = shortenerSearchParamsSchema.safeParse(params);
@@ -58,8 +60,9 @@ export default async function ShortenerToolPage({ searchParams }: ShortenerPageP
     const storageReady = isShortLinkStorageConfigured();
     const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_KEY ?? null;
 
-    // `toolforge.example/s/` — the scheme is noise in front of a field.
-    const aliasPrefix = `${SITE_URL.replace(/^https?:\/\//, "").replace(/\/$/, "")}${SHORTENER_REDIRECT_PREFIX}/`;
+    // `toolforge.example/s/` or `s.example/` — the scheme is noise in front of a field.
+    const redirectBase = linkBases("shortener", SITE_URL, requestHeaders.get("host")).redirect;
+    const aliasPrefix = `${redirectBase.replace(/^https?:\/\//, "")}/`;
 
     const badges = [
         { label: t("badgeEditable"), Icon: IconRefresh },

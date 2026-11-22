@@ -31,7 +31,7 @@ type ServerGridProps = {
     workspaceId: string;
     servers: readonly ServerSummary[];
     /** Rendered so the reader can copy a callable address, not built here. */
-    origin: string;
+    base: string;
 };
 
 /**
@@ -43,7 +43,7 @@ type ServerGridProps = {
  * exists. A key that turns out to be taken is a real outcome rather than an
  * exceptional one: two people naming a server `payments` is the ordinary case.
  */
-export function ServerGrid({ workspaceId, servers, origin }: ServerGridProps) {
+export function ServerGrid({ workspaceId, servers, base }: ServerGridProps) {
     const t = useTranslations("mockServer.servers");
     const tErrors = useTranslations("mockServer.serverErrors");
     const tToast = useTranslations("mockServer.toast");
@@ -197,7 +197,7 @@ export function ServerGrid({ workspaceId, servers, origin }: ServerGridProps) {
                     <p className="text-muted-foreground mt-3 text-xs">
                         {t("addressPreview")}{" "}
                         <code className="text-foreground font-mono">
-                            {origin}/m/{previewKey}/…
+                            {base}/{previewKey}/…
                         </code>
                     </p>
                 ) : null}
@@ -290,7 +290,7 @@ export function ServerGrid({ workspaceId, servers, origin }: ServerGridProps) {
                                     </span>
                                 </div>
 
-                                <MockUrl origin={origin} serverKey={server.key} />
+                                <MockUrl base={base} serverKey={server.key} />
 
                                 {server.isPaused ? (
                                     <p className="text-brand-amber text-[0.6875rem] leading-normal">

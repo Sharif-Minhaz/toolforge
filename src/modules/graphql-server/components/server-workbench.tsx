@@ -47,7 +47,7 @@ import {
     setServerAccess,
     setServerPaused,
 } from "../actions/servers";
-import { GRAPHQL_EXECUTION_PREFIX } from "../domain/constants";
+import { GRAPHQL_SERVICE } from "../domain/constants";
 import { SAMPLE_DOCUMENT } from "../domain/samples";
 import type { ActionProblem, GraphqlServerDetail, RequestLogRow } from "../types";
 import { LogTable } from "./log-table";
@@ -311,7 +311,7 @@ export function ServerWorkbench({ detail: initial }: ServerWorkbenchProps) {
                     </Button>
                 </div>
 
-                <ServerBaseUrl prefix={GRAPHQL_EXECUTION_PREFIX} serverKey={detail.key} />
+                <ServerBaseUrl {...GRAPHQL_SERVICE} serverKey={detail.key} />
 
                 {detail.isPaused ? (
                     <p className="text-brand-amber flex items-start gap-1.5 text-[0.6875rem] leading-normal">

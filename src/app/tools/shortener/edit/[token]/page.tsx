@@ -1,16 +1,13 @@
 import { IconChevronRight } from "@tabler/icons-react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { headers } from "next/headers";
 import Link from "next/link";
 
 import { FadeIn } from "@/components/motion/reveal";
 import { SITE_URL } from "@/modules/seo/domain/site";
-import {
-    SHORTENER_EDIT_PREFIX,
-    SHORTENER_REDIRECT_PREFIX,
-} from "@/modules/short-links/domain/constants";
 import { isValidEditToken } from "@/modules/short-links/domain/slug";
-import { buildEditUrl } from "@/modules/short-links/domain/target";
+import { linkBases } from "@/modules/short-links/domain/target";
 import { toLinkView } from "@/modules/short-links/domain/view";
 import { findShortLinkByEditToken } from "@/modules/short-links/repository/links";
 import { ShortLinkEditor } from "@/modules/shortener/components/short-link-editor";
@@ -37,11 +34,13 @@ type EditPageProps = {
 };
 
 export default async function ShortLinkEditPage({ params }: EditPageProps) {
-    const [t, tNav, { token }] = await Promise.all([
+    const [t, tNav, { token }, requestHeaders] = await Promise.all([
         getTranslations("shortener.edit"),
         getTranslations("nav"),
         params,
+        headers(),
     ]);
+    const bases = linkBases("shortener", SITE_URL, requestHeaders.get("host"));
 
     // Checked before the query, so a mangled link never reaches the database.
     const found = isValidEditToken(token)
@@ -86,8 +85,8 @@ export default async function ShortLinkEditPage({ params }: EditPageProps) {
                 {found.ok ? (
                     <ShortLinkEditor
                         editToken={token}
-                        editUrl={buildEditUrl(token, SITE_URL, SHORTENER_EDIT_PREFIX)}
-                        link={toLinkView(found.value, SITE_URL, SHORTENER_REDIRECT_PREFIX)}
+                        editUrl={`${bases.edit}/${token}`}
+                        link={toLinkView(found.value, bases.redirect)}
                     />
                 ) : (
                     <div className="bg-card ring-border/70 flex flex-col gap-3 rounded-xl p-5 ring-1 ring-inset sm:p-6">

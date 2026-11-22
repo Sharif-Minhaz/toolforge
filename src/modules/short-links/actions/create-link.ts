@@ -4,9 +4,9 @@ import { headers } from "next/headers";
 
 import { SITE_URL } from "@/modules/seo/domain/site";
 import { resolveRemoteIp, verifyTurnstileToken } from "@/modules/tools/repository/turnstile";
-import { TOOL_PREFIXES } from "../domain/constants";
 import { hashLinkPassword } from "../domain/password";
 import { checkSchedule } from "../domain/schedule";
+import { linkBases } from "../domain/target";
 import { checkAlias, checkTarget, toCreatedView } from "../domain/view";
 import { isShortLinkStorageConfigured } from "../repository/config";
 import { createShortLink } from "../repository/links";
@@ -115,8 +115,7 @@ export async function createLink(
         value: toCreatedView(
             created.value.link,
             created.value.editToken,
-            SITE_URL,
-            TOOL_PREFIXES[input.tool],
+            linkBases(input.tool, SITE_URL, (await headers()).get("host")),
         ),
     };
 }

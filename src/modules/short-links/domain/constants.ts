@@ -1,3 +1,5 @@
+import type { PublicService } from "@/modules/tools/domain/service-hosts";
+
 import type { ShortLinkTool } from "../types";
 
 /**
@@ -74,6 +76,16 @@ export const MAX_TARGET_URL_LENGTH = 2_000;
 export const QR_REDIRECT_PREFIX = "/q";
 
 export const SHORTENER_REDIRECT_PREFIX = "/s";
+
+/**
+ * `s.<NEXT_PUBLIC_SERVICE_DOMAIN>/<slug>`, when subdomains are on. QR links have
+ * no subdomain on purpose: a printed code cannot be re-pointed if the domain
+ * lapses, so it keeps the main site's path.
+ */
+export const SHORTENER_SERVICE: PublicService = {
+    subdomain: "s",
+    prefix: SHORTENER_REDIRECT_PREFIX,
+};
 
 export const REDIRECT_PREFIXES: readonly string[] = [QR_REDIRECT_PREFIX, SHORTENER_REDIRECT_PREFIX];
 

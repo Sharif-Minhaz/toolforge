@@ -48,7 +48,7 @@ type EndpointWorkbenchProps = {
     serverKey: string;
     /** Needed for the request-shape lookup, which is workspace-scoped. */
     workspaceId: string;
-    origin: string;
+    base: string;
     endpoints: readonly EndpointSummary[];
 };
 
@@ -113,7 +113,7 @@ export function EndpointWorkbench({
     serverId,
     serverKey,
     workspaceId,
-    origin,
+    base,
     endpoints,
 }: EndpointWorkbenchProps) {
     const t = useTranslations("mockServer.endpoints");
@@ -612,7 +612,7 @@ export function EndpointWorkbench({
                         </p>
                     ) : (
                         <div className="border-border/70 bg-card mt-3 flex flex-col gap-4 rounded-2xl border p-5 shadow-xs">
-                            <MockUrl origin={origin} serverKey={serverKey} path={open.path} />
+                            <MockUrl base={base} serverKey={serverKey} path={open.path} />
 
                             {open.graphProblem !== null ? (
                                 <StatusStrip tone="warning" message={t("graphProblem")} />

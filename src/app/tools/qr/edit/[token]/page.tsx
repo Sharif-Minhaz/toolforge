@@ -5,8 +5,8 @@ import Link from "next/link";
 
 import { FadeIn } from "@/components/motion/reveal";
 import { DynamicQrEditor } from "@/modules/qr/components/dynamic-qr-editor";
-import { QR_REDIRECT_PREFIX } from "@/modules/short-links/domain/constants";
 import { isValidEditToken } from "@/modules/short-links/domain/slug";
+import { linkBases } from "@/modules/short-links/domain/target";
 import { toLinkView } from "@/modules/short-links/domain/view";
 import { findShortLinkByEditToken } from "@/modules/short-links/repository/links";
 import { SITE_URL } from "@/modules/seo/domain/site";
@@ -79,7 +79,7 @@ export default async function DynamicQrEditPage({ params }: EditPageProps) {
                 {found.ok ? (
                     <DynamicQrEditor
                         editToken={token}
-                        link={toLinkView(found.value, SITE_URL, QR_REDIRECT_PREFIX)}
+                        link={toLinkView(found.value, linkBases("qr", SITE_URL, null).redirect)}
                     />
                 ) : (
                     <div className="bg-card ring-border/70 flex flex-col gap-3 rounded-xl p-5 ring-1 ring-inset sm:p-6">

@@ -1,10 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import {
-    MAX_TARGET_URL_LENGTH,
-    TOOL_PREFIXES,
-    SHORTENER_REDIRECT_PREFIX,
-} from "@/modules/short-links/domain/constants";
+import { MAX_TARGET_URL_LENGTH, TOOL_PREFIXES } from "@/modules/short-links/domain/constants";
+import { linkBases } from "@/modules/short-links/domain/target";
 import {
     checkAlias,
     checkTarget,
@@ -80,11 +77,9 @@ describe("checkAlias", () => {
 });
 
 describe("toLinkView", () => {
-    test("builds the address for the prefix it was given", () => {
-        expect(toLinkView(link(), ORIGIN, SHORTENER_REDIRECT_PREFIX).shortUrl).toBe(
-            `${ORIGIN}/s/abcd2345`,
-        );
-        expect(toLinkView(link(), ORIGIN, TOOL_PREFIXES.qr.redirect).shortUrl).toBe(
+    test("hangs the slug off the base it was given", () => {
+        expect(toLinkView(link(), `${ORIGIN}/s`).shortUrl).toBe(`${ORIGIN}/s/abcd2345`);
+        expect(toLinkView(link(), `${ORIGIN}${TOOL_PREFIXES.qr.redirect}`).shortUrl).toBe(
             `${ORIGIN}/q/abcd2345`,
         );
     });
@@ -92,8 +87,7 @@ describe("toLinkView", () => {
     test("timestamps cross the boundary as ISO strings, nulls as null", () => {
         const view = toLinkView(
             link({ startsAt: new Date("2026-08-05T09:00:00.000Z") }),
-            ORIGIN,
-            SHORTENER_REDIRECT_PREFIX,
+            `${ORIGIN}/s`,
         );
 
         expect(view.createdAt).toBe("2026-08-01T10:00:00.000Z");
@@ -103,7 +97,7 @@ describe("toLinkView", () => {
     });
 
     test("says a password exists without carrying anything about it", () => {
-        const view = toLinkView(link({ hasPassword: true }), ORIGIN, SHORTENER_REDIRECT_PREFIX);
+        const view = toLinkView(link({ hasPassword: true }), `${ORIGIN}/s`);
 
         expect(view.hasPassword).toBe(true);
         expect(Object.keys(view)).not.toContain("passwordHash");
@@ -112,14 +106,14 @@ describe("toLinkView", () => {
 
 describe("toCreatedView", () => {
     test("adds the one-time edit link, on the tool's own edit prefix", () => {
-        const view = toCreatedView(link(), "edit-token", ORIGIN, TOOL_PREFIXES.shortener);
+        const view = toCreatedView(link(), "edit-token", linkBases("shortener", ORIGIN, null));
 
         expect(view.shortUrl).toBe(`${ORIGIN}/s/abcd2345`);
         expect(view.editUrl).toBe(`${ORIGIN}/tools/shortener/edit/edit-token`);
     });
 
     test("the QR tool keeps handing out its own pair of paths from the same row", () => {
-        const view = toCreatedView(link(), "edit-token", ORIGIN, TOOL_PREFIXES.qr);
+        const view = toCreatedView(link(), "edit-token", linkBases("qr", ORIGIN, null));
 
         expect(view.shortUrl).toBe(`${ORIGIN}/q/abcd2345`);
         expect(view.editUrl).toBe(`${ORIGIN}/tools/qr/edit/edit-token`);

@@ -1,9 +1,11 @@
 "use server";
 
+import { headers } from "next/headers";
+
 import { SITE_URL } from "@/modules/seo/domain/site";
-import { TOOL_PREFIXES } from "../domain/constants";
 import { hashLinkPassword } from "../domain/password";
 import { checkSchedule } from "../domain/schedule";
+import { linkBases } from "../domain/target";
 import { checkTarget, toLinkView } from "../domain/view";
 import { isShortLinkStorageConfigured } from "../repository/config";
 import { updateShortLink } from "../repository/links";
@@ -88,7 +90,10 @@ export async function updateLink(input: UpdateLinkInput): Promise<ShortLinkResul
     return updated.ok
         ? {
               ok: true,
-              value: toLinkView(updated.value, SITE_URL, TOOL_PREFIXES[input.tool].redirect),
+              value: toLinkView(
+                  updated.value,
+                  linkBases(input.tool, SITE_URL, (await headers()).get("host")).redirect,
+              ),
           }
         : updated;
 }

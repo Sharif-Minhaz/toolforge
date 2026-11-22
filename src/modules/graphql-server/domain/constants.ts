@@ -1,3 +1,5 @@
+import type { PublicService } from "@/modules/tools/domain/service-hosts";
+
 /**
  * Every limit the GraphQL Server Studio runs on that is its own, named once.
  *
@@ -37,8 +39,14 @@ export const CREATE_QUOTA_WINDOW_MS = 60 * 60 * 1_000;
 /** Names the challenge in Cloudflare's dashboard, as every other tool does. */
 export const TURNSTILE_ACTION = "graphql-server";
 
-/** The path prefix a GraphQL server answers on while the studio is path-hosted. */
+/** The path prefix a GraphQL server answers on — on every host, forever. */
 export const GRAPHQL_EXECUTION_PREFIX = "/g";
+
+/** `gql.<NEXT_PUBLIC_SERVICE_DOMAIN>/<key>`, when subdomains are on. */
+export const GRAPHQL_SERVICE: PublicService = {
+    subdomain: "gql",
+    prefix: GRAPHQL_EXECUTION_PREFIX,
+};
 
 // ─── What a public GraphQL endpoint has to bound ────────────────────────────
 

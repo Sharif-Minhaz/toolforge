@@ -1,3 +1,5 @@
+import type { PublicService } from "@/modules/tools/domain/service-hosts";
+
 /**
  * Every limit the JSON Server Studio runs on that is its own, named once.
  *
@@ -35,8 +37,11 @@ export const CREATE_QUOTA_WINDOW_MS = 60 * 60 * 1_000;
 /** Names the challenge in Cloudflare's dashboard, as every other tool does. */
 export const TURNSTILE_ACTION = "json-server";
 
-/** The path prefix a JSON server answers on while the studio is path-hosted. */
+/** The path prefix a JSON server answers on — on every host, forever. */
 export const JSON_EXECUTION_PREFIX = "/j";
+
+/** `json.<NEXT_PUBLIC_SERVICE_DOMAIN>/<key>`, when subdomains are on. */
+export const JSON_SERVICE: PublicService = { subdomain: "json", prefix: JSON_EXECUTION_PREFIX };
 
 // ─── Query semantics, matching json-server v1 ───────────────────────────────
 

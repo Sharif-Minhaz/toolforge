@@ -1,14 +1,36 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { updateSession } from "@/lib/supabase/middleware";
-import { GRAPHQL_EXECUTION_PREFIX } from "@/modules/graphql-server/domain/constants";
-import { JSON_EXECUTION_PREFIX } from "@/modules/json-server/domain/constants";
-import { MOCK_EXECUTION_PREFIX } from "@/modules/mock-server/domain/constants";
+import {
+    GRAPHQL_EXECUTION_PREFIX,
+    GRAPHQL_SERVICE,
+} from "@/modules/graphql-server/domain/constants";
+import { JSON_EXECUTION_PREFIX, JSON_SERVICE } from "@/modules/json-server/domain/constants";
+import { MOCK_EXECUTION_PREFIX, MOCK_SERVICE } from "@/modules/mock-server/domain/constants";
 import { parseMockPath } from "@/modules/mock-server/domain/path-pattern";
+import { SHORTENER_SERVICE } from "@/modules/short-links/domain/constants";
+import { routeServiceHost } from "@/modules/tools/domain/service-hosts";
+
+const PUBLIC_SERVICES = [MOCK_SERVICE, JSON_SERVICE, GRAPHQL_SERVICE, SHORTENER_SERVICE];
 
 // Next 16 renamed `middleware` to `proxy`. The exported function name matters —
 // Next looks for a `proxy` or default export here.
 export async function proxy(request: NextRequest) {
+    // A service subdomain answers its own service and nothing else: every path
+    // on `mock.<domain>` is rewritten onto `/m`, so none of the main site is
+    // reachable there and no auth cookie is ever refreshed onto it. The path
+    // routes keep answering on every host — see `service-hosts.ts`.
+    //
+    // shortcut: the matcher below skips paths ending in an image extension, so
+    // `mock.<domain>/<key>/logo.png` is not rewritten. A matcher cannot depend
+    // on the env-supplied domain; serve such a route from `/m/<key>/…` instead.
+    const routed = routeServiceHost(
+        request.headers.get("host"),
+        request.nextUrl.pathname,
+        PUBLIC_SERVICES,
+    );
+    const pathname = routed ?? request.nextUrl.pathname;
+
     // Mock endpoints are somebody else's program calling somebody else's API.
     // They must not pay for a Supabase session refresh, and they must not have
     // a `Set-Cookie` for this site's auth written onto a public API response —
@@ -16,16 +38,30 @@ export async function proxy(request: NextRequest) {
     // catches every non-static path.
     //
     // Checked here rather than in `config.matcher` because matcher values have
-    // to be build-time constants, and these prefixes are shared constants that
-    // move when execution eventually gets its own subdomain.
-    if (isMockExecutionPath(request.nextUrl.pathname)) {
-        return await serveMockHere(request);
+    // to be build-time constants, and these prefixes are shared constants.
+    if (isMockExecutionPath(pathname)) {
+        const served = await serveMockHere(request, pathname);
+
+        if (served !== null) {
+            return served;
+        }
+    }
+
+    if (routed !== null) {
+        const url = request.nextUrl.clone();
+        url.pathname = routed;
+
+        return NextResponse.rewrite(url);
+    }
+
+    if (isMockExecutionPath(pathname)) {
+        return NextResponse.next();
     }
 
     // The JSON Server Studio's public path, for the same two reasons. It has no
     // `QUERY` equivalent to route from here — `json-server` speaks the seven
     // methods a route file can already export — so this is the bypass alone.
-    if (isUnder(request.nextUrl.pathname, JSON_EXECUTION_PREFIX)) {
+    if (isUnder(pathname, JSON_EXECUTION_PREFIX)) {
         return NextResponse.next();
     }
 
@@ -33,7 +69,7 @@ export async function proxy(request: NextRequest) {
     // the bypass alone: GraphQL over HTTP is `GET`, `POST` and `OPTIONS`, all
     // three of which a route file can export, so nothing has to be served from
     // here the way `QUERY` does for the mock studio.
-    if (isUnder(request.nextUrl.pathname, GRAPHQL_EXECUTION_PREFIX)) {
+    if (isUnder(pathname, GRAPHQL_EXECUTION_PREFIX)) {
         return NextResponse.next();
     }
 
@@ -63,15 +99,15 @@ export async function proxy(request: NextRequest) {
  *   limit, the security headers and the log write cannot drift between them,
  *   because there is only one of each.
  */
-async function serveMockHere(request: NextRequest): Promise<NextResponse | Response> {
+async function serveMockHere(request: NextRequest, pathname: string): Promise<Response | null> {
     if (request.method.toUpperCase() !== "QUERY") {
-        return NextResponse.next();
+        return null;
     }
 
-    const target = parseMockPath(request.nextUrl.pathname, MOCK_EXECUTION_PREFIX);
+    const target = parseMockPath(pathname, MOCK_EXECUTION_PREFIX);
 
     if (target === null) {
-        return NextResponse.next();
+        return null;
     }
 
     const { handleMockRequest } = await import("@/modules/mock-server/repository/handle");

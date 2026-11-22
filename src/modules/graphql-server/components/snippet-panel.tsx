@@ -13,8 +13,9 @@ import { CopyIconSwap } from "@/modules/tools/components/copy-button";
 import { ACCESS_TOKEN_HEADER } from "@/modules/tools/domain/access-token";
 import { copyText } from "@/modules/tools/domain/clipboard";
 import type { HighlightLanguage } from "@/modules/tools/domain/highlight";
+import { serviceBase } from "@/modules/tools/domain/service-hosts";
 
-import { GRAPHQL_EXECUTION_PREFIX } from "../domain/constants";
+import { GRAPHQL_EXECUTION_PREFIX, GRAPHQL_SERVICE } from "../domain/constants";
 
 type SnippetPanelProps = {
     serverKey: string;
@@ -60,7 +61,9 @@ export function SnippetPanel({ serverKey, starterQuery, isPrivate }: SnippetPane
     const [copied, setCopied] = useState(false);
 
     const path = `${GRAPHQL_EXECUTION_PREFIX}/${serverKey}`;
-    const endpoint = hydrated ? `${window.location.origin}${path}` : path;
+    const endpoint = hydrated
+        ? `${serviceBase(GRAPHQL_SERVICE, window.location.origin, window.location.host)}/${serverKey}`
+        : path;
     const snippet = buildSnippet(target, endpoint, starterQuery, isPrivate);
 
     async function copy() {

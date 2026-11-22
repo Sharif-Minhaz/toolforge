@@ -1,6 +1,6 @@
 import type { ShortLink, ShortLinkCreatedView, ShortLinkResult, ShortLinkView } from "../types";
 import { parseAlias } from "./alias";
-import { buildEditUrl, buildShortUrl, isSelfReferential, parseTargetUrl } from "./target";
+import { isSelfReferential, type LinkBases, parseTargetUrl } from "./target";
 
 /**
  * The pure steps every short-link action performs: checking what it was given,
@@ -56,10 +56,11 @@ export function checkAlias(raw: string | null): ShortLinkResult<string | null> {
     return { ok: false, reason: parsed.reason === "reserved" ? "alias_reserved" : "invalid_alias" };
 }
 
-export function toLinkView(link: ShortLink, origin: string, prefix: string): ShortLinkView {
+/** `redirectBase` comes from `linkBases`. */
+export function toLinkView(link: ShortLink, redirectBase: string): ShortLinkView {
     return {
         slug: link.slug,
-        shortUrl: buildShortUrl(link.slug, origin, prefix),
+        shortUrl: `${redirectBase}/${link.slug}`,
         target: link.target,
         hasPassword: link.hasPassword,
         startsAt: link.startsAt?.toISOString() ?? null,
@@ -73,11 +74,10 @@ export function toLinkView(link: ShortLink, origin: string, prefix: string): Sho
 export function toCreatedView(
     link: ShortLink,
     editToken: string,
-    origin: string,
-    prefixes: { readonly redirect: string; readonly edit: string },
+    bases: LinkBases,
 ): ShortLinkCreatedView {
     return {
-        ...toLinkView(link, origin, prefixes.redirect),
-        editUrl: buildEditUrl(editToken, origin, prefixes.edit),
+        ...toLinkView(link, bases.redirect),
+        editUrl: `${bases.edit}/${editToken}`,
     };
 }

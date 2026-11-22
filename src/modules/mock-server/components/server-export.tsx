@@ -15,8 +15,8 @@ import { exportOpenApi } from "../actions/openapi";
 type ServerExportProps = {
     workspaceId: string;
     serverId: string;
-    /** The public origin, needed for OpenAPI's `servers` entry. */
-    origin: string;
+    /** The public base keys hang off, needed for OpenAPI's `servers` entry. */
+    base: string;
 };
 
 type Format = "bundle" | "openapi";
@@ -33,7 +33,7 @@ type Format = "bundle" | "openapi";
  * Offering both, labelled with what each loses, is the honest version. Offering
  * only OpenAPI would quietly turn a backup into a snapshot of one response.
  */
-export function ServerExport({ workspaceId, serverId, origin }: ServerExportProps) {
+export function ServerExport({ workspaceId, serverId, base }: ServerExportProps) {
     const t = useTranslations("mockServer.export");
     const [running, setRunning] = useState<Format | null>(null);
     const [, startTransition] = useTransition();
@@ -45,7 +45,7 @@ export function ServerExport({ workspaceId, serverId, origin }: ServerExportProp
             const result =
                 format === "bundle"
                     ? await exportServerBundle({ workspaceId, serverId })
-                    : await exportOpenApi({ workspaceId, serverId, baseUrl: origin });
+                    : await exportOpenApi({ workspaceId, serverId, baseUrl: base });
 
             setRunning(null);
 

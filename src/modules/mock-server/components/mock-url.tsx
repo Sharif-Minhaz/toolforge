@@ -9,10 +9,9 @@ import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
 import { copyText } from "@/modules/tools/domain/clipboard";
 
-import { MOCK_EXECUTION_PREFIX } from "../domain/constants";
-
 type MockUrlProps = {
-    origin: string;
+    /** `https://mock.<domain>` or `<origin>/m` — from `serviceBase`. */
+    base: string;
     serverKey: string;
     /** Appended after the server key; already normalised by `parsePathPattern`. */
     path?: string;
@@ -22,16 +21,16 @@ type MockUrlProps = {
 /**
  * The address somebody actually calls, with a copy button.
  *
- * `origin` is a prop rather than read from `window` here, because the same
+ * `base` is a prop rather than read from `window` here, because the same
  * component renders inside a server-rendered page and reading the location
  * during render is the hydration trap this repository keeps writing down. The
- * page reads it from `SITE_URL` and hands it down.
+ * page builds it with `serviceBase` and hands it down.
  */
-export function MockUrl({ origin, serverKey, path = "", className }: MockUrlProps) {
+export function MockUrl({ base, serverKey, path = "", className }: MockUrlProps) {
     const t = useTranslations("mockServer.servers");
     const [copied, setCopied] = useState(false);
 
-    const url = `${origin}${MOCK_EXECUTION_PREFIX}/${serverKey}${path === "/" ? "" : path}`;
+    const url = `${base}/${serverKey}${path === "/" ? "" : path}`;
 
     async function copy() {
         const result = await copyText(url);

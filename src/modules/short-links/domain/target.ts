@@ -1,4 +1,12 @@
-import { MAX_TARGET_URL_LENGTH, REDIRECT_PREFIXES } from "./constants";
+import { SERVICE_DOMAIN, serviceBase, serviceHostname } from "@/modules/tools/domain/service-hosts";
+
+import type { ShortLinkTool } from "../types";
+import {
+    MAX_TARGET_URL_LENGTH,
+    REDIRECT_PREFIXES,
+    SHORTENER_SERVICE,
+    TOOL_PREFIXES,
+} from "./constants";
 
 /**
  * Where a short link is allowed to point, and how its own address is built.
@@ -55,11 +63,21 @@ export function parseTargetUrl(raw: string): TargetUrlResult {
  * short links on this host could otherwise hide a destination behind several
  * hops, which is exactly what a redirect service must not make easy. It is also
  * why this is checked at creation and at update, rather than followed later.
+ * Every path on the short-link subdomain is a redirect, so that host is refused
+ * whole.
  */
-export function isSelfReferential(target: string, origin: string): boolean {
+export function isSelfReferential(
+    target: string,
+    origin: string,
+    domain: string | null = SERVICE_DOMAIN,
+): boolean {
     try {
         const url = new URL(target);
         const site = new URL(origin);
+
+        if (url.hostname === serviceHostname(SHORTENER_SERVICE, domain)) {
+            return true;
+        }
 
         if (url.host !== site.host) {
             return false;
@@ -73,14 +91,29 @@ export function isSelfReferential(target: string, origin: string): boolean {
     }
 }
 
-function join(origin: string, path: string): string {
-    return `${origin.replace(/\/$/, "")}${path}`;
-}
+/** The two addresses a tool's links hang off, each without a trailing slash. */
+export type LinkBases = { readonly redirect: string; readonly edit: string };
 
-export function buildShortUrl(slug: string, origin: string, prefix: string): string {
-    return join(origin, `${prefix}/${slug}`);
-}
+/**
+ * A shortener link goes out on the short-link subdomain when the page was
+ * served from inside the service domain (`host`), and on `/s` everywhere else.
+ * A QR link always keeps the main site's path — a printed code cannot follow a
+ * lapsed domain — and so does every edit link, which is this site's own page.
+ */
+export function linkBases(
+    tool: ShortLinkTool,
+    origin: string,
+    host: string | null,
+    domain: string | null = SERVICE_DOMAIN,
+): LinkBases {
+    const site = origin.replace(/\/$/, "");
+    const prefixes = TOOL_PREFIXES[tool];
 
-export function buildEditUrl(token: string, origin: string, prefix: string): string {
-    return join(origin, `${prefix}/${token}`);
+    return {
+        redirect:
+            tool === "shortener"
+                ? serviceBase(SHORTENER_SERVICE, site, host, domain)
+                : `${site}${prefixes.redirect}`,
+        edit: `${site}${prefixes.edit}`,
+    };
 }

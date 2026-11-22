@@ -10,10 +10,13 @@ import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { CopyIconSwap } from "@/modules/tools/components/copy-button";
 import { useIsHydrated } from "@/hooks/use-is-hydrated";
 import { copyText } from "@/modules/tools/domain/clipboard";
+import { serviceBase } from "@/modules/tools/domain/service-hosts";
 
 type BaseUrlProps = {
     /** The execution prefix — `/j` for REST, `/g` for GraphQL. */
     prefix: string;
+    /** Set for a service that also answers on its own subdomain — see `service-hosts.ts`. */
+    subdomain?: string;
     serverKey: string;
     className?: string;
 };
@@ -36,13 +39,18 @@ type BaseUrlProps = {
  * is also the shorter, more readable thing. The absolute form appears a tick
  * later, because that is the form a `curl` needs.
  */
-export function ServerBaseUrl({ prefix, serverKey, className }: BaseUrlProps) {
+export function ServerBaseUrl({ prefix, subdomain, serverKey, className }: BaseUrlProps) {
     const t = useTranslations("hostedServer.baseUrl");
     const hydrated = useIsHydrated();
     const [copied, setCopied] = useState(false);
 
     const path = `${prefix}/${serverKey}`;
-    const shown = hydrated ? `${window.location.origin}${path}` : path;
+    const base = hydrated
+        ? subdomain === undefined
+            ? `${window.location.origin}${prefix}`
+            : serviceBase({ subdomain, prefix }, window.location.origin, window.location.host)
+        : null;
+    const shown = base === null ? path : `${base}/${serverKey}`;
 
     async function copy() {
         const result = await copyText(shown);

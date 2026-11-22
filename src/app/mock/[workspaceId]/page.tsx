@@ -7,6 +7,7 @@ import {
 } from "@tabler/icons-react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { headers } from "next/headers";
 import Link from "next/link";
 
 import { FadeIn, Reveal } from "@/components/motion/reveal";
@@ -15,7 +16,9 @@ import { getServers } from "@/modules/mock-server/actions/servers";
 import { getWorkspaceOverview } from "@/modules/mock-server/actions/workspaces";
 import { ServerGrid } from "@/modules/mock-server/components/server-grid";
 import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
+import { MOCK_SERVICE } from "@/modules/mock-server/domain/constants";
 import { SITE_URL } from "@/modules/seo/domain/site";
+import { serviceBase } from "@/modules/tools/domain/service-hosts";
 
 /**
  * One workspace's servers.
@@ -33,14 +36,16 @@ type WorkspacePageProps = {
 };
 
 export default async function WorkspacePage({ params }: WorkspacePageProps) {
-    const [{ workspaceId }, t, tWorkspace, tLogs, tVars, tImport] = await Promise.all([
-        params,
-        getTranslations("mockServer.workspace"),
-        getTranslations("mockServer.hero"),
-        getTranslations("mockServer.logs"),
-        getTranslations("mockServer.variables"),
-        getTranslations("mockServer.import"),
-    ]);
+    const [{ workspaceId }, t, tWorkspace, tLogs, tVars, tImport, requestHeaders] =
+        await Promise.all([
+            params,
+            getTranslations("mockServer.workspace"),
+            getTranslations("mockServer.hero"),
+            getTranslations("mockServer.logs"),
+            getTranslations("mockServer.variables"),
+            getTranslations("mockServer.import"),
+            headers(),
+        ]);
 
     // Both reads run the ownership gate themselves, so a workspace this browser
     // does not hold comes back empty rather than 403 — and the page says so
@@ -141,7 +146,11 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
                 </Reveal>
             ) : (
                 <Reveal>
-                    <ServerGrid workspaceId={workspaceId} servers={servers} origin={SITE_URL} />
+                    <ServerGrid
+                        workspaceId={workspaceId}
+                        servers={servers}
+                        base={serviceBase(MOCK_SERVICE, SITE_URL, requestHeaders.get("host"))}
+                    />
                 </Reveal>
             )}
         </div>

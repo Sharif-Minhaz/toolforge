@@ -1,3 +1,5 @@
+import type { PublicService } from "@/modules/tools/domain/service-hosts";
+
 /**
  * Every limit and alphabet the studio's identity layer runs on, named once.
  */
@@ -55,8 +57,11 @@ export const COLLECTION_NAME_LENGTH = { min: 1, max: 60 } as const;
 
 export const ENDPOINT_NAME_LENGTH = { min: 1, max: 80 } as const;
 
-/** The path prefix a mock endpoint answers on while the studio is path-hosted. */
+/** The path prefix a mock endpoint answers on — on every host, forever. */
 export const MOCK_EXECUTION_PREFIX = "/m";
+
+/** `mock.<NEXT_PUBLIC_SERVICE_DOMAIN>/<key>`, when subdomains are on. */
+export const MOCK_SERVICE: PublicService = { subdomain: "mock", prefix: MOCK_EXECUTION_PREFIX };
 
 export const MAX_PATH_LENGTH = 512;
 

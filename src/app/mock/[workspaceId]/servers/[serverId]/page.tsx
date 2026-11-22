@@ -1,6 +1,7 @@
 import { IconArrowLeft } from "@tabler/icons-react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { headers } from "next/headers";
 import Link from "next/link";
 
 import { FadeIn, Reveal } from "@/components/motion/reveal";
@@ -10,7 +11,9 @@ import { MockUrl } from "@/modules/mock-server/components/mock-url";
 import { ServerExport } from "@/modules/mock-server/components/server-export";
 import { ServerAccess } from "@/modules/mock-server/components/server-access";
 import { ServerPausePanel } from "@/modules/mock-server/components/server-pause-panel";
+import { MOCK_SERVICE } from "@/modules/mock-server/domain/constants";
 import { SITE_URL } from "@/modules/seo/domain/site";
+import { serviceBase } from "@/modules/tools/domain/service-hosts";
 
 /** Same reasoning as the workspace page: this is somebody's work, not content. */
 export const metadata: Metadata = {
@@ -22,11 +25,13 @@ type ServerPageProps = {
 };
 
 export default async function ServerPage({ params }: ServerPageProps) {
-    const [{ workspaceId, serverId }, t, tEndpoints] = await Promise.all([
+    const [{ workspaceId, serverId }, t, tEndpoints, requestHeaders] = await Promise.all([
         params,
         getTranslations("mockServer.workspace"),
         getTranslations("mockServer.endpoints"),
+        headers(),
     ]);
+    const base = serviceBase(MOCK_SERVICE, SITE_URL, requestHeaders.get("host"));
 
     const server = await getServerDetail(workspaceId, serverId);
 
@@ -63,7 +68,7 @@ export default async function ServerPage({ params }: ServerPageProps) {
                         {server.name}
                     </h1>
 
-                    <MockUrl origin={SITE_URL} serverKey={server.key} className="max-w-2xl" />
+                    <MockUrl base={base} serverKey={server.key} className="max-w-2xl" />
 
                     <p className="text-muted-foreground max-w-[68ch] text-xs leading-relaxed">
                         {tEndpoints("pathHelp")}
@@ -91,7 +96,7 @@ export default async function ServerPage({ params }: ServerPageProps) {
                     serverId={server.id}
                     serverKey={server.key}
                     workspaceId={workspaceId}
-                    origin={SITE_URL}
+                    base={base}
                     endpoints={server.endpoints}
                 />
             </Reveal>
@@ -99,7 +104,7 @@ export default async function ServerPage({ params }: ServerPageProps) {
             {/* Below the routes: exporting is what you do once the work is
                 done, and it should not sit between the reader and the work. */}
             <Reveal>
-                <ServerExport workspaceId={workspaceId} serverId={server.id} origin={SITE_URL} />
+                <ServerExport workspaceId={workspaceId} serverId={server.id} base={base} />
             </Reveal>
         </div>
     );

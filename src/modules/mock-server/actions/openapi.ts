@@ -266,7 +266,7 @@ export async function exportOpenApi(input: unknown): Promise<ExportResult> {
         ok: true,
         filename: `${server.key}-openapi.json`,
         document: JSON.stringify(
-            writeOpenApi(server.name, `${parsed.data.baseUrl}/m/${server.key}`, endpoints),
+            writeOpenApi(server.name, `${parsed.data.baseUrl}/${server.key}`, endpoints),
             null,
             4,
         ),
