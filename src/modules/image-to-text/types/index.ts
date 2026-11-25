@@ -19,6 +19,11 @@ export const OCR_LANGUAGES = [
 
 export type OcrLanguage = (typeof OCR_LANGUAGES)[number];
 
+/** One box per picture, or every picture's text in one box. */
+export const RESULT_LAYOUTS = ["separate", "combined"] as const;
+
+export type ResultLayout = (typeof RESULT_LAYOUTS)[number];
+
 /** What the engine is doing, as far as the reader needs to know. */
 export type OcrPhase = "loading" | "recognizing";
 

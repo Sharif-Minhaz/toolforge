@@ -5704,7 +5704,7 @@
         "hero": {
             "eyebrow": "Image to Text",
             "title": "Image to Text (OCR)",
-            "subtitle": "Drop in photos, scans or screenshots — one, or many at once — and get their text back in a box you can edit, each picture's text under its own heading and the pictures shown large beside it so you can check what was read. Fix a misread letter, drop a line you do not need, then copy. Eight languages, from Bangla and Hindi to Arabic, Chinese and Japanese, with English read alongside each. The pictures are read in this tab and never uploaded.",
+            "subtitle": "Drop in photos, scans or screenshots — one, or many at once — and get each picture's text in its own editable box beside it, or all of it combined in one, with the pictures shown large so you can check what was read. Fix a misread letter, drop a line you do not need, then copy. Eight languages, from Bangla and Hindi to Arabic, Chinese and Japanese, with English read alongside each. The pictures are read in this tab and never uploaded.",
             "badgeLanguages": "8 languages · 6 scripts",
             "badgeLocal": "Picture never uploaded",
             "badgeEditable": "Edit before you copy"
@@ -5734,7 +5734,7 @@
             "statusPreparing": "Preparing the picture…",
             "statusLoading": "Loading the text engine… {percent}",
             "statusRecognizing": "Reading picture {current, number} of {total, number}… {percent}",
-            "statusDone": "Text read. Edit it in the box, then copy.",
+            "statusDone": "Text read. Edit it, then copy.",
             "statusEmpty": "No text found. Try a sharper, larger picture, or check the language.",
             "sourceSize": "{width} × {height}",
             "previewAlt": "Picture {position, number}: {name}",
@@ -5751,7 +5751,15 @@
             "imageEmpty": "No text found",
             "rejected": "{name}: {problem}",
             "picturesLabel": "{count, plural, one {# picture} other {# pictures}}",
-            "resultWaiting": "The text appears here as each picture is read."
+            "resultWaiting": "The text appears here as each picture is read.",
+            "layoutLabel": "Text layout",
+            "layoutHint": "Separate gives each picture its own box and Copy; Combined puts every picture's text in one box.",
+            "layouts": {
+                "separate": "Separate, per picture",
+                "combined": "Combined, one box"
+            },
+            "itemLabel": "Text from picture {position, number}",
+            "itemWaiting": "The text appears here once this picture is read."
         },
         "errors": {
             "empty_file": "That file is empty.",
@@ -5782,7 +5790,7 @@
             },
             "controls": {
                 "title": "The controls",
-                "intro": "There are four, and only the language changes what is read.",
+                "intro": "There are five, and only the language changes what is read.",
                 "headControl": "Control",
                 "headWhat": "What it does",
                 "headWhen": "Reach for it when",
@@ -5791,6 +5799,11 @@
                         "name": "Language of the text",
                         "what": "Chooses the language data the engine loads. Every language except English loads English too, second.",
                         "when": "Always, before adding the picture. A wrong choice does not fail — it reads the wrong alphabet."
+                    },
+                    "layout": {
+                        "name": "Text layout",
+                        "what": "Separate puts each picture's text in its own box beside the picture, with its own Copy. Combined puts every picture's text in one tall box, each under a heading with its number and file name.",
+                        "when": "Separate to check and copy pictures one at a time; Combined to copy a whole multi-page scan in one go."
                     },
                     "readAgain": {
                         "name": "Read all again",
@@ -5808,7 +5821,7 @@
                         "when": "Starting over with another picture."
                     }
                 },
-                "p2": "Add up to {count, number} pictures — drop or choose several, paste with <code>Ctrl+V</code>, or give a public link. They are read one after another, and each one's text is added to the end of the box under a heading with its number and file name, so edits you made to earlier text are kept. More pictures can be added once the current ones are read.",
+                "p2": "Add up to {count, number} pictures — drop or choose several, paste with <code>Ctrl+V</code>, or give a public link. They are read one after another. In the combined layout each one's text is added to the end of the box under a heading with its number and file name, so edits you made to earlier text are kept. Once you have typed in the combined box it is a copy of its own: edits there do not carry back into the separate boxes, and theirs do not carry into it. More pictures can be added once the current ones are read.",
                 "tableCaption": "What each control does, and when to reach for it"
             },
             "languages": {
@@ -5899,7 +5912,7 @@
                     },
                     "several": {
                         "question": "Can I read several pictures at once?",
-                        "answer": "Yes — up to {count, number} in one go, read one after another by a single copy of the engine. Each picture's text lands in the box under a heading with its number and file name, in the order you added them, with the pictures shown beside it to check against."
+                        "answer": "Yes — up to {count, number} in one go, read one after another by a single copy of the engine. By default each picture's text gets its own box beside the picture; switch Text layout to Combined to get all of it in one box, each picture's text under a heading with its number and file name, in the order you added them."
                     },
                     "pdf": {
                         "question": "Does it read a PDF?",

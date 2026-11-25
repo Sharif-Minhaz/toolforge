@@ -1,7 +1,10 @@
 import { DECODABLE_IMAGE_TYPES, type DecodableImageType } from "@/modules/tools/types";
-import type { OcrLanguage } from "../types";
+import type { OcrLanguage, ResultLayout } from "../types";
 
 export const DEFAULT_LANGUAGE: OcrLanguage = "eng";
+
+/** Separate first: a reader checks a picture against its own text before copying. */
+export const DEFAULT_RESULT_LAYOUT: ResultLayout = "separate";
 
 /** Per file. Everything is decoded in this tab, so the ceiling is memory. */
 export const MAX_IMAGE_BYTES = 25 * 1024 * 1024;

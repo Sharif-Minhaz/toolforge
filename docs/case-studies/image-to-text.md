@@ -79,13 +79,25 @@ twenty would otherwise spend most of its time booting. A picture that fails
 goes on. The promise itself fails only when the engine would not start or went
 quiet, and every picture still unread then shows that reason.
 
-The box shows `combineTexts(sections)`: one picture's text alone, or with
+**Two layouts over the same reads.** By default (`DEFAULT_RESULT_LAYOUT`,
+`separate`) each picture has its own box beside it, holding that picture's
+read and the reader's edits to it (`PickedImage.read`), with its own Copy. The
+box is at least as tall as its picture and grows with its text. **Combined** is
+a view, not a second read, so it can be switched mid-batch.
+
+The combined box shows `combineTexts(sections)`, built from the per-picture
+boxes: one picture's text alone, or with
 several pictures, each one's text under a `── n · name ──` heading. The number is
 there because two pasted pictures are both called `pasted-image.png`. That
 derived text holds only **until the reader types**. From then on the box is
-theirs, and a newly read picture is appended to it with `appendTextSection`
+theirs — a copy of its own, so edits there do not flow back into the separate
+boxes, nor theirs into it — and a newly read picture is appended to it with `appendTextSection`
 rather than rebuilding the whole box over their corrections. Read all again is
 the one control that replaces edits, and the article says so.
+
+The combined box stretches to the full height of the column of pictures (the
+grid row's height, through `flex-1`) rather than stopping at one picture's
+height, and `field-sizing-content` lets it grow past that with its text.
 
 Adding pictures is disabled while a batch runs. That avoids queueing a second
 batch behind the first, with its own worker and its own numbering.

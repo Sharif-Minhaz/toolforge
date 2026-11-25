@@ -7,10 +7,8 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
-import { CopyIconSwap } from "@/modules/tools/components/copy-button";
 import { ImageDropzone } from "@/modules/tools/components/image-dropzone";
 import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
@@ -20,22 +18,26 @@ import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import { copyText } from "@/modules/tools/domain/clipboard";
 import { checkImageFile } from "@/modules/tools/domain/image-file";
 import {
+    DEFAULT_RESULT_LAYOUT,
     IMAGE_ACCEPT_ATTRIBUTE,
     IMAGE_FILE_LIMITS,
     MAX_IMAGE_BYTES,
     MAX_IMAGES,
 } from "../domain/constants";
-import { isRightToLeft, LANGUAGE_ENDONYMS, LANGUAGE_TAGS } from "../domain/languages";
+import { LANGUAGE_ENDONYMS } from "../domain/languages";
 import { recognizeImages } from "../domain/recognize";
 import { appendTextSection, combineTexts, countText, type TextSection } from "../domain/text";
 import {
     OCR_LANGUAGES,
+    RESULT_LAYOUTS,
     type ImageRejectionReason,
     type OcrFailure,
     type OcrFailureReason,
     type OcrLanguage,
     type OcrProgress,
+    type ResultLayout,
 } from "../types";
+import { ResultTextBox } from "./result-text-box";
 
 type ImageStatus =
     | { readonly kind: "queued" }
@@ -49,6 +51,8 @@ type PickedImage = {
     readonly file: File;
     readonly previewUrl: string;
     readonly status: ImageStatus;
+    /** This picture's own box: what was read, then whatever the reader made of it. */
+    readonly read: { readonly language: OcrLanguage; readonly text: string } | null;
 };
 
 type Rejection = {
@@ -63,6 +67,8 @@ type ImageToTextWorkbenchProps = {
     urlImportEnabled: boolean;
 };
 
+const COMBINED_COPY_KEY = "combined";
+
 export function ImageToTextWorkbench({
     initialLanguage,
     urlImportEnabled,
@@ -73,25 +79,23 @@ export function ImageToTextWorkbench({
     const tToast = useTranslations("imageToText.toast");
     const format = useFormatter();
     const byteLabel = useByteLabel();
-    const [copied, markCopied] = useCopyFeedback<"text">();
+    const [copied, markCopied] = useCopyFeedback<string>();
     const { ref: resultRef, scrollToResult } = useResultScroll();
 
     const inputId = useId();
     const statusId = useId();
     const picturesId = useId();
-    const resultId = useId();
-    const countsId = useId();
 
     const [language, setLanguage] = useState<OcrLanguage>(initialLanguage);
+    const [layout, setLayout] = useState<ResultLayout>(DEFAULT_RESULT_LAYOUT);
     const [images, setImages] = useState<readonly PickedImage[]>([]);
     const [rejections, setRejections] = useState<readonly Rejection[]>([]);
     const [running, setRunning] = useState(false);
     const [batchFailure, setBatchFailure] = useState<OcrFailure | null>(null);
-    // What each picture read, in page order. The box shows these combined
-    // until the reader types; after that the box is theirs, and a newly read
-    // picture is appended to it rather than rebuilding it over their edits.
-    const [sections, setSections] = useState<readonly TextSection[]>([]);
-    const [edited, setEdited] = useState<string | null>(null);
+    // The combined box shows every picture's box joined until the reader types
+    // in it; after that it is theirs, and a newly read picture is appended
+    // rather than rebuilding it over their edits.
+    const [combinedEdited, setCombinedEdited] = useState<string | null>(null);
     const [readLanguage, setReadLanguage] = useState<OcrLanguage | null>(null);
 
     const nextId = useRef(0);
@@ -115,11 +119,12 @@ export function ImageToTextWorkbench({
         };
     }, []);
 
-    const text = edited ?? combineTexts(sections);
-    // Counted on every keystroke, undebounced: it is a walk over text already
-    // in memory, and a count that lags the box reads as wrong.
-    const counts = countText(text);
-    const boxLanguage = readLanguage ?? language;
+    const sections: TextSection[] = images.flatMap((image, index) =>
+        image.read === null
+            ? []
+            : [{ position: index + 1, name: image.file.name, text: image.read.text }],
+    );
+    const combinedText = combinedEdited ?? combineTexts(sections);
 
     function languageLabel(code: OcrLanguage): string {
         const name = tLanguages(code);
@@ -212,13 +217,19 @@ export function ImageToTextWorkbench({
             };
         }
 
-        return text.length === 0
+        const empty = images.every(
+            (image) => image.status.kind === "done" && image.status.characters === 0,
+        );
+
+        return empty
             ? { tone: "warning", message: t("statusEmpty") }
             : { tone: "success", message: t("statusDone") };
     }
 
-    function patchStatus(id: number | undefined, status: ImageStatus) {
-        setImages((list) => list.map((image) => (image.id === id ? { ...image, status } : image)));
+    function patchImage(id: number | undefined, patch: Partial<Omit<PickedImage, "id">>) {
+        setImages((list) =>
+            list.map((image) => (image.id === id ? { ...image, ...patch } : image)),
+        );
     }
 
     /** `offset` is how many pictures precede the batch, so headings number the whole page. */
@@ -243,7 +254,7 @@ export function ImageToTextWorkbench({
                 signal: run.signal,
                 onProgress: (index, progress) => {
                     if (!run.signal.aborted) {
-                        patchStatus(batch[index]?.id, { kind: "reading", progress });
+                        patchImage(batch[index]?.id, { status: { kind: "reading", progress } });
                     }
                 },
                 onResult: (index, result) => {
@@ -258,7 +269,7 @@ export function ImageToTextWorkbench({
                             reason: result.reason,
                             detail: result.detail ?? null,
                         });
-                        patchStatus(image.id, { kind: "failed", reason: result.reason });
+                        patchImage(image.id, { status: { kind: "failed", reason: result.reason } });
 
                         return;
                     }
@@ -269,12 +280,11 @@ export function ImageToTextWorkbench({
                         text: result.text,
                     };
 
-                    patchStatus(image.id, {
-                        kind: "done",
-                        characters: countText(result.text).characters,
+                    patchImage(image.id, {
+                        status: { kind: "done", characters: countText(result.text).characters },
+                        read: { language: batchLanguage, text: result.text },
                     });
-                    setSections((list) => [...list, section]);
-                    setEdited((current) =>
+                    setCombinedEdited((current) =>
                         current === null ? null : appendTextSection(current, section),
                     );
                 },
@@ -340,6 +350,7 @@ export function ImageToTextWorkbench({
                     file,
                     previewUrl,
                     status: { kind: "queued" },
+                    read: null,
                 });
             }
         }
@@ -355,11 +366,14 @@ export function ImageToTextWorkbench({
     }
 
     function handleReadAgain() {
-        const queued = images.map((image) => ({ ...image, status: { kind: "queued" } as const }));
+        const queued = images.map((image) => ({
+            ...image,
+            status: { kind: "queued" } as const,
+            read: null,
+        }));
 
         setImages(queued);
-        setSections([]);
-        setEdited(null);
+        setCombinedEdited(null);
         setRejections([]);
         void readBatch(queued, 0, language);
     }
@@ -376,17 +390,16 @@ export function ImageToTextWorkbench({
         setRunning(false);
         setImages([]);
         setRejections([]);
-        setSections([]);
-        setEdited(null);
+        setCombinedEdited(null);
         setBatchFailure(null);
         setReadLanguage(null);
     }
 
-    async function handleCopy() {
-        const result = await copyText(text);
+    async function handleCopy(key: string, value: string) {
+        const result = await copyText(value);
 
         if (result.ok) {
-            markCopied("text");
+            markCopied(key);
             toast.success(tToast("copied"));
 
             return;
@@ -394,6 +407,61 @@ export function ImageToTextWorkbench({
 
         logEvent("error", "image_to_text.copy_failed", { reason: result.reason });
         toast.error(tToast("copyFailed"));
+    }
+
+    function renderPicture(image: PickedImage, index: number) {
+        const imageStatus = describeImage(image.status);
+
+        return (
+            <figure className="flex min-w-0 flex-col gap-2">
+                {/* A plain `<img>`, deliberately: the source is an object URL
+                    for a file in this tab, which the image optimiser can
+                    neither fetch nor improve. Shown large and uncropped, so the
+                    reader can check the text against the picture. */}
+                <img
+                    src={image.previewUrl}
+                    alt={t("previewAlt", { position: index + 1, name: image.file.name })}
+                    decoding="async"
+                    className="bg-muted/40 max-h-[32rem] w-full rounded-lg object-contain"
+                />
+                <figcaption className="flex min-w-0 flex-col gap-0.5 px-1 pb-1">
+                    <span className="truncate text-[0.8125rem] leading-[1.4] font-medium">
+                        {index + 1}. {image.file.name}
+                    </span>
+                    <StatusStrip tone={imageStatus.tone} message={imageStatus.message} />
+                </figcaption>
+            </figure>
+        );
+    }
+
+    function renderItemBox(image: PickedImage, index: number) {
+        const key = `image-${image.id}`;
+        const read = image.read;
+
+        return (
+            <ResultTextBox
+                label={t("itemLabel", { position: index + 1 })}
+                text={read?.text ?? ""}
+                language={read?.language ?? language}
+                placeholder={
+                    image.status.kind === "failed"
+                        ? describeFailure(image.status.reason)
+                        : read === null
+                          ? t("itemWaiting")
+                          : t("resultPlaceholder")
+                }
+                readOnly={read === null}
+                copied={copied === key}
+                onCopy={() => void handleCopy(key, read?.text ?? "")}
+                onChange={(text) => {
+                    if (read !== null) {
+                        patchImage(image.id, { read: { ...read, text } });
+                    }
+                }}
+                className="lg:h-full"
+                textareaClassName="min-h-40 flex-1"
+            />
+        );
     }
 
     const status = describeStatus();
@@ -422,6 +490,17 @@ export function ImageToTextWorkbench({
                             OCR_LANGUAGES.map((code) => [code, languageLabel(code)]),
                         )}
                         onChange={setLanguage}
+                    />
+                    {/* A view of the same reads, so it can change mid-batch. */}
+                    <OptionSelect<ResultLayout>
+                        label={t("layoutLabel")}
+                        hint={t("layoutHint")}
+                        value={layout}
+                        values={RESULT_LAYOUTS}
+                        items={Object.fromEntries(
+                            RESULT_LAYOUTS.map((value) => [value, t(`layouts.${value}`)]),
+                        )}
+                        onChange={setLayout}
                     />
                 </div>
 
@@ -461,130 +540,89 @@ export function ImageToTextWorkbench({
                 </div>
 
                 {images.length > 0 && (
-                    <div className="grid min-w-0 gap-5 lg:grid-cols-2 lg:items-start">
-                        <section
-                            aria-labelledby={picturesId}
-                            className="flex min-w-0 flex-col gap-3"
-                        >
-                            <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-                                <h3
-                                    id={picturesId}
-                                    className="text-[0.8125rem] leading-[1.3] font-medium"
-                                >
-                                    {t("picturesLabel", { count: images.length })}
-                                </h3>
-                                <div className="flex shrink-0 gap-2">
-                                    <Button
-                                        variant="outline"
-                                        onClick={handleReadAgain}
-                                        disabled={running}
-                                        className="h-8 px-2.5"
-                                    >
-                                        <IconRefresh
-                                            className="size-4"
-                                            stroke={1.8}
-                                            aria-hidden="true"
-                                        />
-                                        {t("readAgain")}
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        onClick={handleClear}
-                                        className="h-8 px-2.5"
-                                    >
-                                        <IconTrash
-                                            className="size-4"
-                                            stroke={1.8}
-                                            aria-hidden="true"
-                                        />
-                                        {t("clear")}
-                                    </Button>
-                                </div>
-                            </div>
-
-                            <ol className="flex min-w-0 flex-col gap-3">
-                                {images.map((image, index) => {
-                                    const imageStatus = describeImage(image.status);
-
-                                    return (
-                                        <li
-                                            key={image.id}
-                                            className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-2 rounded-xl p-2 ring-1 ring-inset"
-                                        >
-                                            {/* A plain `<img>`, deliberately: the source is an
-                                                object URL for a file in this tab, which the
-                                                image optimiser can neither fetch nor improve.
-                                                Shown large and uncropped, so the reader can
-                                                check the text against the picture. */}
-                                            <img
-                                                src={image.previewUrl}
-                                                alt={t("previewAlt", {
-                                                    position: index + 1,
-                                                    name: image.file.name,
-                                                })}
-                                                decoding="async"
-                                                className="bg-muted/40 max-h-[32rem] w-full rounded-lg object-contain"
-                                            />
-                                            <div className="flex min-w-0 flex-col gap-0.5 px-1 pb-1">
-                                                <span className="truncate text-[0.8125rem] leading-[1.4] font-medium">
-                                                    {index + 1}. {image.file.name}
-                                                </span>
-                                                <StatusStrip
-                                                    tone={imageStatus.tone}
-                                                    message={imageStatus.message}
-                                                />
-                                            </div>
-                                        </li>
-                                    );
-                                })}
-                            </ol>
-                        </section>
-
-                        <div
-                            ref={resultRef}
-                            className="flex min-w-0 scroll-mt-24 flex-col gap-2 lg:sticky lg:top-20"
-                        >
-                            <div className="flex min-w-0 flex-wrap items-end justify-between gap-2">
-                                <div className="flex min-w-0 flex-col gap-0.5">
-                                    <label
-                                        htmlFor={resultId}
-                                        className="text-[0.8125rem] leading-[1.3] font-medium"
-                                    >
-                                        {t("resultLabel")}
-                                    </label>
-                                    <span
-                                        id={countsId}
-                                        className="text-muted-foreground text-[0.6875rem] leading-[1.4]"
-                                    >
-                                        {t("counts", counts)}
-                                    </span>
-                                </div>
+                    <section
+                        ref={resultRef}
+                        aria-labelledby={picturesId}
+                        className="flex min-w-0 scroll-mt-24 flex-col gap-3"
+                    >
+                        <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+                            <h3
+                                id={picturesId}
+                                className="text-[0.8125rem] leading-[1.3] font-medium"
+                            >
+                                {t("picturesLabel", { count: images.length })}
+                            </h3>
+                            <div className="flex shrink-0 gap-2">
                                 <Button
-                                    onClick={() => void handleCopy()}
-                                    disabled={text.length === 0}
-                                    className="h-8 px-3"
+                                    variant="outline"
+                                    onClick={handleReadAgain}
+                                    disabled={running}
+                                    className="h-8 px-2.5"
                                 >
-                                    <CopyIconSwap copied={copied === "text"} />
-                                    {t("copy")}
+                                    <IconRefresh
+                                        className="size-4"
+                                        stroke={1.8}
+                                        aria-hidden="true"
+                                    />
+                                    {t("readAgain")}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={handleClear}
+                                    className="h-8 px-2.5"
+                                >
+                                    <IconTrash className="size-4" stroke={1.8} aria-hidden="true" />
+                                    {t("clear")}
                                 </Button>
                             </div>
-
-                            {/* No ceiling and no meter: nothing here is submitted
-                                or derived from, and the box starts at whatever
-                                the engine read off at most MAX_IMAGES pictures. */}
-                            <Textarea
-                                id={resultId}
-                                value={text}
-                                lang={LANGUAGE_TAGS[boxLanguage]}
-                                dir={isRightToLeft(boxLanguage) ? "rtl" : "ltr"}
-                                spellCheck={false}
-                                aria-describedby={countsId}
-                                placeholder={running ? t("resultWaiting") : t("resultPlaceholder")}
-                                onChange={(event) => setEdited(event.target.value)}
-                                className="max-h-[70vh] min-h-72 text-[0.9375rem] leading-7 lg:min-h-[28rem]"
-                            />
                         </div>
-                    </div>
+
+                        {layout === "separate" ? (
+                            // Each picture beside its own box; the box is at
+                            // least as tall as its picture and grows past it.
+                            <ol className="flex min-w-0 flex-col gap-4">
+                                {images.map((image, index) => (
+                                    <li
+                                        key={image.id}
+                                        className="bg-card/60 ring-border/70 grid min-w-0 gap-3 rounded-xl p-2 ring-1 ring-inset lg:grid-cols-2"
+                                    >
+                                        {renderPicture(image, index)}
+                                        {renderItemBox(image, index)}
+                                    </li>
+                                ))}
+                            </ol>
+                        ) : (
+                            // The combined box stretches to the whole column of
+                            // pictures, not one picture's height, and grows with
+                            // its text past that.
+                            <div className="grid min-w-0 gap-5 lg:grid-cols-2">
+                                <ol className="flex min-w-0 flex-col gap-3">
+                                    {images.map((image, index) => (
+                                        <li
+                                            key={image.id}
+                                            className="bg-card/60 ring-border/70 min-w-0 rounded-xl p-2 ring-1 ring-inset"
+                                        >
+                                            {renderPicture(image, index)}
+                                        </li>
+                                    ))}
+                                </ol>
+
+                                <ResultTextBox
+                                    label={t("resultLabel")}
+                                    text={combinedText}
+                                    language={readLanguage ?? language}
+                                    placeholder={
+                                        running ? t("resultWaiting") : t("resultPlaceholder")
+                                    }
+                                    copied={copied === COMBINED_COPY_KEY}
+                                    onCopy={() => void handleCopy(COMBINED_COPY_KEY, combinedText)}
+                                    onChange={setCombinedEdited}
+                                    className="lg:h-full"
+                                    textareaClassName="min-h-[32rem] flex-1"
+                                />
+                            </div>
+                        )}
+                    </section>
                 )}
             </CardContent>
         </Card>

@@ -15,13 +15,15 @@ export function ImageToTextWorkbenchSkeleton() {
                 <Skeleton className="h-4 w-96 max-w-full" />
             </div>
 
-            {/* The language picker. */}
+            {/* The language and text-layout pickers. */}
             <div className="grid gap-3 sm:grid-cols-2">
-                <div className="flex flex-col gap-1.5">
-                    <Skeleton className="h-3.5 w-28" />
-                    <Skeleton className="h-9 w-full rounded-xl" />
-                    <Skeleton className="h-3 w-56 max-w-full" />
-                </div>
+                {Array.from({ length: 2 }, (_, index) => (
+                    <div key={index} className="flex flex-col gap-1.5">
+                        <Skeleton className="h-3.5 w-28" />
+                        <Skeleton className="h-9 w-full rounded-xl" />
+                        <Skeleton className="h-3 w-56 max-w-full" />
+                    </div>
+                ))}
             </div>
 
             {/* Drop zone, paste and link row, status line. */}

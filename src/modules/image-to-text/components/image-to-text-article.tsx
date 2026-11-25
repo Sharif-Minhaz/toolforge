@@ -23,7 +23,7 @@ export const IMAGE_TO_TEXT_ARTICLE_SECTIONS = [
     { id: "faq", titleKey: "faq.title" },
 ] as const;
 
-const CONTROL_ROWS = ["language", "readAgain", "copy", "clear"] as const;
+const CONTROL_ROWS = ["language", "layout", "readAgain", "copy", "clear"] as const;
 
 const TIP_KEYS = ["crop", "sharp", "flat", "contrast", "oneLanguage"] as const;
 
