@@ -31,7 +31,13 @@ export const updateSession = async (request: NextRequest, rewriteTo?: URL) => {
     // Refreshes the auth token and writes it back onto supabaseResponse via setAll.
     // Do not remove: without this call the proxy returns an untouched response and
     // sessions expire silently.
-    await supabase.auth.getUser();
+    //
+    // `getClaims` rather than `getUser`: it verifies the JWT locally against the
+    // project's published signing keys instead of a round trip to Supabase Auth
+    // on every navigation, and still refreshes a session that is about to
+    // expire. With a legacy HS256 secret it falls back to the server check. The
+    // proxy only refreshes here — nothing downstream trusts this call.
+    await supabase.auth.getClaims();
 
     return supabaseResponse;
 };

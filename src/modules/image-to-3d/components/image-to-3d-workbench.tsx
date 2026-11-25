@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useOnline } from "@/hooks/use-online";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
@@ -20,6 +21,7 @@ import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
 import { toFilenameStem } from "@/modules/tools/domain/filenames";
 import { useCutoutQuality } from "@/modules/tools/components/use-cutout-quality";
+import { readFetchedQualities } from "@/modules/tools/domain/cutout-memory";
 import {
     CUTOUT_MODELS,
     DOWNLOAD_LABEL_DELAY_MS,
@@ -27,7 +29,7 @@ import {
 } from "@/modules/tools/domain/segmentation";
 
 import { MAX_SOURCE_BYTES } from "../domain/constants";
-import { DEPTH_FIRST_RUN_BYTES } from "../domain/depth";
+import { DEPTH_FIRST_RUN_BYTES, isDepthModelCached } from "../domain/depth";
 import { buildModelDownload } from "../domain/export";
 import { buildModel } from "../domain/model";
 import {
@@ -104,6 +106,34 @@ export function ImageTo3dWorkbench({
     // resampled onto a few hundred points, and the tiers do not differ at that
     // scale.
     const [quality] = useCutoutQuality(null);
+    const online = useOnline();
+    // `null` until the Cache API answers, and not knowing is no reason to refuse.
+    const [depthCached, setDepthCached] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        if (online) {
+            return;
+        }
+
+        let cancelled = false;
+
+        // Set from the promise, never in the effect body — the check is async,
+        // and `react-hooks/set-state-in-effect` is satisfied without disabling.
+        void isDepthModelCached().then((cached) => {
+            if (!cancelled) {
+                setDepthCached(cached);
+            }
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [online]);
+
+    // Storage is read only once offline, which `useOnline` never reports during
+    // hydration — so the server pass and the first client pass still agree.
+    const cutoutOffline = !online && !readFetchedQualities().includes(quality);
+    const depthOffline = !online && depthCached === false;
 
     const [picked, setPicked] = useState<PickedSource | null>(null);
     const [reading, setReading] = useState(false);
@@ -324,7 +354,12 @@ export function ImageTo3dWorkbench({
         const file = files[0];
 
         if (file !== undefined) {
-            void read(file, { cutout, depth: geometry.source === "depth" });
+            // Offline with a model not on the device, its fetch can only fail —
+            // skip it and build from brightness; the note beside the control says why.
+            void read(file, {
+                cutout: cutout && !cutoutOffline,
+                depth: geometry.source === "depth" && !depthOffline,
+            });
         }
     }
 
@@ -491,6 +526,8 @@ export function ImageTo3dWorkbench({
                     cutoutDownloadLabel={byteLabel(cutoutBytes)}
                     depthDownloadLabel={byteLabel(DEPTH_FIRST_RUN_BYTES)}
                     cutoutAlreadyTransparent={picked?.source.hadAlpha ?? false}
+                    cutoutOffline={cutoutOffline}
+                    depthOffline={depthOffline}
                     disabled={picked === null || reading}
                     onPatch={patchOptions}
                     onCutoutChange={toggleCutout}

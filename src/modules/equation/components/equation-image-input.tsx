@@ -5,10 +5,12 @@ import { useTranslations } from "next-intl";
 import { useId, useState, type DragEvent } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useOnline } from "@/hooks/use-online";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
+import { OnlineRequiredNote } from "@/modules/tools/components/online-required-note";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
 
@@ -65,6 +67,8 @@ export function EquationImageInput({
     const t = useTranslations("equation.image");
     const tErrors = useTranslations("equation.errors");
     const byteLabel = useByteLabel();
+    // The read is a server call; choosing and previewing the picture are not.
+    const online = useOnline();
 
     const inputId = useId();
     const statusId = useId();
@@ -150,7 +154,7 @@ export function EquationImageInput({
     }
 
     async function handleRead() {
-        if (reading || !canRead || picked === null || token === null) {
+        if (reading || !canRead || !online || picked === null || token === null) {
             return;
         }
 
@@ -302,7 +306,7 @@ export function EquationImageInput({
             )}
 
             <div className="flex flex-wrap items-center gap-2">
-                <Button onClick={() => void handleRead()} disabled={!canRead || reading}>
+                <Button onClick={() => void handleRead()} disabled={!canRead || reading || !online}>
                     {reading ? (
                         <IconLoader2 className="size-4 animate-spin" aria-hidden="true" />
                     ) : (
@@ -310,6 +314,8 @@ export function EquationImageInput({
                     )}
                     {reading ? t("reading") : t("read")}
                 </Button>
+
+                {!online && <OnlineRequiredNote kind="feature" />}
             </div>
 
             <StatusStrip id={statusId} tone={status.tone} message={status.message} />

@@ -13,10 +13,12 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useOnline } from "@/hooks/use-online";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { ImageDropzone } from "@/modules/tools/components/image-dropzone";
 import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
+import { OnlineRequiredNote } from "@/modules/tools/components/online-required-note";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { ToolNotes } from "@/modules/tools/components/tool-notes";
@@ -33,6 +35,7 @@ import {
     tabForBackground,
     TRANSPARENT_BACKGROUND,
 } from "../domain/background";
+import { readFetchedQualities } from "@/modules/tools/domain/cutout-memory";
 import {
     computeAlphaMask,
     CUTOUT_MODELS,
@@ -153,6 +156,10 @@ export function BackgroundRemoverWorkbench({
     const [sheets, setSheets] = useState<readonly Sheet[]>([]);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [quality, setQuality] = useCutoutQuality(namedQuality);
+    const online = useOnline();
+    // Storage is read only once offline, which `useOnline` never reports during
+    // hydration — so the server pass and the first client pass still agree.
+    const modelMissing = !online && !readFetchedQualities().includes(quality);
     const { ref: resultRef, scrollToResult } = useResultScroll();
 
     /**
@@ -791,7 +798,7 @@ export function BackgroundRemoverWorkbench({
                             <div className="flex min-w-0 flex-wrap items-center gap-2">
                                 <Button
                                     onClick={() => void handleRemoveBackground(selected)}
-                                    disabled={selected.working}
+                                    disabled={selected.working || modelMissing}
                                     className="h-9 px-3.5"
                                 >
                                     {selected.working ? (
@@ -823,6 +830,8 @@ export function BackgroundRemoverWorkbench({
                                     {t("clearAll")}
                                 </Button>
                             </div>
+
+                            {modelMissing && <OnlineRequiredNote kind="model" />}
 
                             {selected.composite !== null && (
                                 <CompositeActions

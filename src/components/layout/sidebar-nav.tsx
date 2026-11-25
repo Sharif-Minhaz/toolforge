@@ -31,10 +31,12 @@ import {
     removeRecentTool,
     useRecentToolIds,
 } from "@/modules/preferences/components/use-recent-tools";
+import { useOnline } from "@/hooks/use-online";
 import { MAX_RECENT_TOOLS } from "@/modules/preferences/domain/recent-tools";
 import { TOOL_ACCENT_VARS, TOOL_ICON_TILE } from "@/modules/tools/components/tool-accent";
 import { ToolIcon } from "@/modules/tools/components/tool-icon";
 import { MAX_TOOL_SEARCH_LENGTH, filterTools } from "@/modules/tools/domain/search";
+import { needsNetwork } from "@/modules/tools/domain/network";
 import { TOOL_CATEGORIES, type LocalizedTool } from "@/modules/tools/types";
 
 const INDICATOR_SPRING = { type: "spring", stiffness: 460, damping: 38, mass: 0.7 } as const;
@@ -235,6 +237,13 @@ export function SidebarNav({
     const searchHintId = useId();
     const navRef = useRef<HTMLElement>(null);
     const recentIds = useRecentToolIds();
+    const online = useOnline();
+    // Offline, a tool that needs the server is not offered at all — every list
+    // and count below starts from what can still run.
+    const reachable = useMemo(
+        () => (online ? tools : tools.filter((tool) => !needsNetwork(tool))),
+        [tools, online],
+    );
 
     /**
      * Sections never enter a category group.
@@ -246,7 +255,7 @@ export function SidebarNav({
      * rather than doubling. `getToolsByCategory()` has always excluded them;
      * this is the rail agreeing with it.
      */
-    const pages = useMemo(() => tools.filter((tool) => tool.isSection !== true), [tools]);
+    const pages = useMemo(() => reachable.filter((tool) => tool.isSection !== true), [reachable]);
 
     /**
      * Which studios the current query matches, so a section stays findable by
@@ -258,11 +267,11 @@ export function SidebarNav({
         () =>
             new Set(
                 filterTools(
-                    tools.filter((tool) => tool.isSection === true),
+                    reachable.filter((tool) => tool.isSection === true),
                     query,
                 ).map((tool) => tool.id),
             ),
-        [tools, query],
+        [reachable, query],
     );
 
     const filtered = useMemo(() => filterTools(pages, query), [pages, query]);
@@ -468,23 +477,26 @@ export function SidebarNav({
                             />
                             {/* General rather than Tools: the MCP guide is how
                                 the toolbox is reached from somewhere else, not
-                                another utility to sit between two of them. */}
-                            <NavRow
-                                label={t("mcp")}
-                                href="/mcp"
-                                active={mcpActive}
-                                collapsed={collapsed}
-                                layoutIdPrefix={layoutIdPrefix}
-                                onNavigate={onNavigate}
-                                accentClass={TOOL_ACCENT_VARS.emerald}
-                                icon={
-                                    <IconPlugConnected
-                                        className="size-4"
-                                        stroke={1.75}
-                                        aria-hidden="true"
-                                    />
-                                }
-                            />
+                                another utility to sit between two of them.
+                                Offline it is hidden: nothing keeps that page. */}
+                            {online && (
+                                <NavRow
+                                    label={t("mcp")}
+                                    href="/mcp"
+                                    active={mcpActive}
+                                    collapsed={collapsed}
+                                    layoutIdPrefix={layoutIdPrefix}
+                                    onNavigate={onNavigate}
+                                    accentClass={TOOL_ACCENT_VARS.emerald}
+                                    icon={
+                                        <IconPlugConnected
+                                            className="size-4"
+                                            stroke={1.75}
+                                            aria-hidden="true"
+                                        />
+                                    }
+                                />
+                            )}
                         </ul>
                     </>
                 )}

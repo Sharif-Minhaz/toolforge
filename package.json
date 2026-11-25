@@ -15,7 +15,7 @@
     },
     "scripts": {
         "dev": "next dev",
-        "build": "prisma generate && next build",
+        "build": "prisma generate && next build && bun scripts/build-sw-manifest.ts",
         "start": "next start",
         "lint": "eslint",
         "test": "bun test",

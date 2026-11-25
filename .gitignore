@@ -42,6 +42,9 @@ next-env.d.ts
 
 /src/generated/prisma
 
+# written after `next build` by scripts/build-sw-manifest.ts
+/public/sw-manifest.js
+
 bun.lockb
 bun.lock
 

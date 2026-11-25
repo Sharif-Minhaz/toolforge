@@ -9,9 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useOnline } from "@/hooks/use-online";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
+import { OnlineRequiredNote } from "@/modules/tools/components/online-required-note";
 import { StatusStrip } from "@/modules/tools/components/status-strip";
 import { copyText } from "@/modules/tools/domain/clipboard";
 import { updateLink } from "@/modules/short-links/actions/update-link";
@@ -34,6 +36,7 @@ export function DynamicQrEditor({ editToken, link }: DynamicQrEditorProps) {
     const tToast = useTranslations("qr.toast");
     const format = useFormatter();
     const history = useLinkHistory("qr");
+    const online = useOnline();
 
     const targetId = useId();
 
@@ -154,7 +157,7 @@ export function DynamicQrEditor({ editToken, link }: DynamicQrEditorProps) {
                 <Button
                     type="button"
                     className="w-fit"
-                    disabled={saving || unchanged || target.trim().length === 0}
+                    disabled={saving || unchanged || target.trim().length === 0 || !online}
                     onClick={() => void handleSave()}
                 >
                     {saving ? (
@@ -168,6 +171,8 @@ export function DynamicQrEditor({ editToken, link }: DynamicQrEditorProps) {
                     )}
                     {t("save")}
                 </Button>
+
+                {!online && <OnlineRequiredNote kind="feature" />}
 
                 <dl className="border-border/70 grid gap-2 border-t pt-4 sm:grid-cols-3">
                     <div className="flex flex-col gap-0.5">

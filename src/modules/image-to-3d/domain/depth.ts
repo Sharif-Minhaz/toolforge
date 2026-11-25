@@ -255,6 +255,17 @@ async function fetchDepthModel(
     return buffer.buffer;
 }
 
+/** Whether the depth model is already in this browser's Cache API bucket. */
+export async function isDepthModelCached(): Promise<boolean> {
+    const cache = await openCache();
+
+    try {
+        return cache !== null && (await cache.match(DEPTH_MODEL_URL)) !== undefined;
+    } catch {
+        return false;
+    }
+}
+
 async function openCache(): Promise<Cache | null> {
     try {
         return typeof caches === "undefined" ? null : await caches.open(DEPTH_CACHE_NAME);

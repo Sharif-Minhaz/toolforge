@@ -199,6 +199,12 @@
     --sidebar-w: 4.75rem;
 }
 
+/* Offline (`NETWORK_BOOT_SCRIPT`, `PwaRuntime`): every link to a tool that
+   needs the server, and every group made only of them, steps aside. */
+:root[data-offline] [data-needs-network] {
+    display: none !important;
+}
+
 .dark {
     --background: oklch(0.148 0.008 264);
     --foreground: oklch(0.968 0.003 264);

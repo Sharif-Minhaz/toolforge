@@ -7,6 +7,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { cn } from "@/lib/utils";
 import { TOOL_ACCENT_VARS, TOOL_ICON_TILE } from "@/modules/tools/components/tool-accent";
 import { ToolIcon } from "@/modules/tools/components/tool-icon";
+import { needsNetwork } from "@/modules/tools/domain/network";
 import type { LocalizedTool } from "@/modules/tools/types";
 
 /**
@@ -18,7 +19,7 @@ import type { LocalizedTool } from "@/modules/tools/types";
  */
 export type CategoryToolIcon = Pick<
     LocalizedTool,
-    "id" | "href" | "name" | "description" | "status" | "accent" | "icon"
+    "id" | "href" | "name" | "description" | "status" | "accent" | "icon" | "runsOn"
 >;
 
 /** Opens fast enough to feel like a pointer response rather than a timer. */
@@ -65,7 +66,7 @@ export function CategoryToolIcons({ tools, label }: CategoryToolIconsProps) {
                 );
 
                 return (
-                    <li key={tool.id}>
+                    <li key={tool.id} data-needs-network={needsNetwork(tool) || undefined}>
                         <HoverCard>
                             <HoverCardTrigger
                                 delay={OPEN_DELAY_MS}

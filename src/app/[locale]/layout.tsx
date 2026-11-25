@@ -9,6 +9,8 @@ import { Providers } from "@/components/layout/providers";
 import { enterLocale, generateLocaleParams, type LocaleParams } from "@/i18n/route-locale";
 import { AnalyticsGate } from "@/modules/analytics/components/analytics-gate";
 import { SIDEBAR_BOOT_SCRIPT } from "@/modules/preferences/domain/sidebar";
+import { PwaRuntime } from "@/modules/pwa/components/pwa-runtime";
+import { NETWORK_BOOT_SCRIPT } from "@/modules/pwa/domain/network";
 import { buildPageMetadata, SITE_ATTRIBUTION } from "@/modules/seo/domain/metadata";
 import { SITE_REPOSITORY, SITE_URL } from "@/modules/seo/domain/site";
 import { getToolKeywords } from "@/modules/tools/domain/tool-catalog";
@@ -580,6 +582,11 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
             errors: messages.hexEditor.errors,
             toast: messages.hexEditor.toast,
         },
+        // The install button and every "needs a connection" notice.
+        pwa: {
+            install: messages.pwa.install,
+            onlineRequired: messages.pwa.onlineRequired,
+        },
     };
 
     return (
@@ -592,7 +599,10 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
                 {/* Sets `data-sidebar` before the shell below it is parsed. First in
                     `<body>`, the way next-themes places its own: an inline script
                     in a hand-written `<head>` fails to hydrate (React #418). */}
-                <script dangerouslySetInnerHTML={{ __html: SIDEBAR_BOOT_SCRIPT }} />
+                <script
+                    dangerouslySetInnerHTML={{ __html: SIDEBAR_BOOT_SCRIPT + NETWORK_BOOT_SCRIPT }}
+                />
+                <PwaRuntime />
                 <Providers>
                     <NextIntlClientProvider locale={locale} messages={clientMessages}>
                         {/* The shell reads the pathname. On a route whose params are

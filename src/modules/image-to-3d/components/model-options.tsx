@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 
+import { OnlineRequiredNote } from "@/modules/tools/components/online-required-note";
 import { OptionSelect, OptionSwitch } from "@/modules/tools/components/option-controls";
 
 import {
@@ -44,6 +45,9 @@ type ModelOptionsPanelProps = {
     readonly depthDownloadLabel: string;
     /** True when the picture arrived with its own alpha, so no model will run. */
     readonly cutoutAlreadyTransparent: boolean;
+    /** Offline, and the weights each switch would fetch are not on the device. */
+    readonly cutoutOffline: boolean;
+    readonly depthOffline: boolean;
     readonly disabled: boolean;
     readonly onPatch: (patch: Partial<ModelOptions>) => void;
     readonly onCutoutChange: (next: boolean) => void;
@@ -55,6 +59,8 @@ export function ModelOptionsPanel({
     cutoutDownloadLabel,
     depthDownloadLabel,
     cutoutAlreadyTransparent,
+    cutoutOffline,
+    depthOffline,
     disabled,
     onPatch,
     onCutoutChange,
@@ -82,21 +88,27 @@ export function ModelOptionsPanel({
 
     return (
         <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-            <OptionSelect<HeightSource>
-                label={t("sourceName")}
-                // The one source that fetches a model says what it costs, on
-                // the control rather than in the article — `CLAUDE.md` rule 32.
-                hint={
-                    options.source === "depth"
-                        ? t("sourceDepthHint", { size: depthDownloadLabel })
-                        : t("sourceHint")
-                }
-                value={options.source}
-                items={sourceItems}
-                values={HEIGHT_SOURCES}
-                disabled={disabled}
-                onChange={(source) => onPatch({ source })}
-            />
+            <div className="flex min-w-0 flex-col gap-1.5">
+                <OptionSelect<HeightSource>
+                    label={t("sourceName")}
+                    // The one source that fetches a model says what it costs, on
+                    // the control rather than in the article — `CLAUDE.md` rule 32.
+                    hint={
+                        options.source === "depth"
+                            ? t("sourceDepthHint", { size: depthDownloadLabel })
+                            : t("sourceHint")
+                    }
+                    value={options.source}
+                    items={sourceItems}
+                    values={HEIGHT_SOURCES}
+                    disabled={disabled}
+                    // Only the one source that fetches is refused offline; the
+                    // channels read the picture already in the tab.
+                    disabledValues={depthOffline ? ["depth"] : undefined}
+                    onChange={(source) => onPatch({ source })}
+                />
+                {depthOffline && <OnlineRequiredNote kind="model" />}
+            </div>
 
             <OptionSelect<ModelShape>
                 label={t("shapeName")}
@@ -194,21 +206,30 @@ export function ModelOptionsPanel({
             />
 
             <div className="flex min-w-0 flex-col gap-5">
-                <OptionSwitch
-                    label={t("cutoutName")}
-                    // The one control on this page that can reach the network,
-                    // and it says what that costs before it is switched on —
-                    // `CLAUDE.md` rule 32 puts that here rather than in the
-                    // article.
-                    hint={
-                        cutoutAlreadyTransparent
-                            ? t("cutoutHintTransparent")
-                            : t("cutoutHint", { size: cutoutDownloadLabel })
-                    }
-                    checked={cutout}
-                    disabled={disabled || cutoutAlreadyTransparent}
-                    onCheckedChange={onCutoutChange}
-                />
+                <div className="flex min-w-0 flex-col gap-1.5">
+                    <OptionSwitch
+                        label={t("cutoutName")}
+                        // The one control on this page that can reach the network,
+                        // and it says what that costs before it is switched on —
+                        // `CLAUDE.md` rule 32 puts that here rather than in the
+                        // article.
+                        hint={
+                            cutoutAlreadyTransparent
+                                ? t("cutoutHintTransparent")
+                                : t("cutoutHint", { size: cutoutDownloadLabel })
+                        }
+                        checked={cutout}
+                        // Turning it *off* stays possible offline; only the
+                        // press that would fetch the weights is refused.
+                        disabled={
+                            disabled || cutoutAlreadyTransparent || (cutoutOffline && !cutout)
+                        }
+                        onCheckedChange={onCutoutChange}
+                    />
+                    {cutoutOffline && !cutoutAlreadyTransparent && (
+                        <OnlineRequiredNote kind="model" />
+                    )}
+                </div>
                 <OptionSwitch
                     label={t("invertName")}
                     hint={t("invertHint")}

@@ -7,10 +7,12 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useOnline } from "@/hooks/use-online";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { ImageDropzone } from "@/modules/tools/components/image-dropzone";
 import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
+import { OnlineRequiredNote } from "@/modules/tools/components/online-required-note";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
@@ -24,6 +26,7 @@ import {
     MAX_IMAGE_BYTES,
     MAX_IMAGES,
 } from "../domain/constants";
+import { readFetchedLanguages } from "../domain/language-memory";
 import { LANGUAGE_ENDONYMS } from "../domain/languages";
 import { recognizeImages } from "../domain/recognize";
 import { appendTextSection, combineTexts, countText, type TextSection } from "../domain/text";
@@ -87,6 +90,7 @@ export function ImageToTextWorkbench({
     const picturesId = useId();
 
     const [language, setLanguage] = useState<OcrLanguage>(initialLanguage);
+    const online = useOnline();
     const [layout, setLayout] = useState<ResultLayout>(DEFAULT_RESULT_LAYOUT);
     const [images, setImages] = useState<readonly PickedImage[]>([]);
     const [rejections, setRejections] = useState<readonly Rejection[]>([]);
@@ -465,6 +469,10 @@ export function ImageToTextWorkbench({
     }
 
     const status = describeStatus();
+    // Storage is read only once offline, which `useOnline` never reports during
+    // hydration — so the server pass and the first client pass still agree.
+    const languageMissing = !online && !readFetchedLanguages().includes(language);
+    const intakeDisabled = running || languageMissing;
 
     return (
         <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
@@ -514,16 +522,18 @@ export function ImageToTextWorkbench({
                         })}
                         accept={IMAGE_ACCEPT_ATTRIBUTE}
                         multiple
-                        disabled={running}
+                        disabled={intakeDisabled}
                         describedById={statusId}
                         onFiles={handleFiles}
                     />
 
                     <ImageSourceControls
                         onFiles={handleFiles}
-                        disabled={running}
+                        disabled={intakeDisabled}
                         urlImportEnabled={urlImportEnabled}
                     />
+
+                    {languageMissing && <OnlineRequiredNote kind="model" />}
 
                     <StatusStrip id={statusId} tone={status.tone} message={status.message} />
 
@@ -556,7 +566,7 @@ export function ImageToTextWorkbench({
                                 <Button
                                     variant="outline"
                                     onClick={handleReadAgain}
-                                    disabled={running}
+                                    disabled={intakeDisabled}
                                     className="h-8 px-2.5"
                                 >
                                     <IconRefresh

@@ -16,6 +16,14 @@ const nextConfig: NextConfig = {
     // runtime `require` a bundler cannot follow. Left external, Node loads the
     // package from `node_modules` as its authors expect.
     serverExternalPackages: ["msedge-tts"],
+    // The browser checks the worker for updates on navigation; a cached copy
+    // would keep an installed app on an old build's chunk list.
+    async headers() {
+        return ["/sw.js", "/sw-manifest.js"].map((source) => ({
+            source,
+            headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }],
+        }));
+    },
     experimental: {
         serverActions: {
             // The Watermark Remover forwards the original file to its worker,

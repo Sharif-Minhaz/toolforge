@@ -1,4 +1,4 @@
-import { IconArrowRight, IconBolt, IconBrandGithub, IconLayoutGrid } from "@tabler/icons-react";
+import { IconBolt, IconBrandGithub, IconLayoutGrid } from "@tabler/icons-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { connection } from "next/server";
@@ -7,6 +7,7 @@ import { Suspense } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { FadeIn } from "@/components/motion/reveal";
 import { cn } from "@/lib/utils";
+import { InstallAppButton } from "@/modules/pwa/components/install-app-button";
 import { SITE_REPOSITORY } from "@/modules/seo/domain/site";
 import { generateUuid } from "@/modules/uuid/domain/generate";
 
@@ -37,13 +38,7 @@ export async function OverviewHero() {
                     </p>
 
                     <div className="flex flex-wrap items-center gap-2.5">
-                        <Link
-                            href="/tools/uuid"
-                            className={cn(buttonVariants(), "h-10 px-4 text-[0.9375rem]")}
-                        >
-                            {t("primaryCta")}
-                            <IconArrowRight className="size-4" stroke={2} aria-hidden="true" />
-                        </Link>
+                        <InstallAppButton className="h-10 px-4 text-[0.9375rem]" />
                         <Link
                             href="#featured-tools"
                             className={cn(

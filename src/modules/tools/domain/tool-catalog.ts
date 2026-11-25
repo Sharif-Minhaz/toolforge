@@ -6,6 +6,7 @@ import {
     type ToolCategoryGroup,
     type ToolId,
 } from "../types";
+import { needsNetwork } from "./network";
 
 /**
  * Single source of truth for every tool ToolForge exposes or has queued.
@@ -1530,6 +1531,11 @@ export function getToolById(id: ToolId): Tool | undefined {
 
 export function getAvailableTools(): readonly Tool[] {
     return TOOLS.filter((tool) => tool.status === "available");
+}
+
+/** Shipped single pages the installed app keeps for offline use. */
+export function getOfflineTools(): readonly Tool[] {
+    return getAvailableTools().filter((tool) => tool.isSection !== true && !needsNetwork(tool));
 }
 
 /**

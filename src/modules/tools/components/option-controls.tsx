@@ -29,6 +29,8 @@ type OptionSelectProps<T extends string> = {
     items: Record<string, ReactNode>;
     values: readonly T[];
     disabled?: boolean;
+    /** Options listed but not choosable, while the rest of the select works. */
+    disabledValues?: readonly T[];
     onChange: (value: T) => void;
 };
 
@@ -39,6 +41,7 @@ export function OptionSelect<T extends string>({
     items,
     values,
     disabled,
+    disabledValues,
     onChange,
 }: OptionSelectProps<T>) {
     const labelId = useId();
@@ -63,7 +66,11 @@ export function OptionSelect<T extends string>({
                 </SelectTrigger>
                 <SelectContent className="max-h-72">
                     {values.map((item) => (
-                        <SelectItem key={item} value={item}>
+                        <SelectItem
+                            key={item}
+                            value={item}
+                            disabled={disabledValues?.includes(item)}
+                        >
                             {items[item]}
                         </SelectItem>
                     ))}

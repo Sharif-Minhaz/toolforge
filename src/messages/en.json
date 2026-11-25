@@ -355,7 +355,6 @@
             "titleLead": "The developer toolbox",
             "titleAccent": "that never phones home",
             "subtitle": "Every utility runs entirely in your browser. No accounts, no uploads, no analytics on what you paste. Just fast, precise tools with an interface that gets out of your way.",
-            "primaryCta": "UUID Generator",
             "secondaryCta": "Browse all tools",
             "repoCta": "GitHub",
             "previewLabel": "Live preview",
@@ -9513,6 +9512,31 @@
         "title": "This page has not been forged yet",
         "description": "The tool you are looking for either moved or has not shipped. Everything that is live is one click away.",
         "cta": "Back to overview"
+    },
+    "pwa": {
+        "install": {
+            "button": "Install app",
+            "hintIos": "On iPhone or iPad, tap Share, then “Add to Home Screen”.",
+            "hintMenu": "Open your browser's menu and choose “Install ToolForge” or “Add to Home screen”."
+        },
+        "offline": {
+            "meta": {
+                "title": "Offline",
+                "description": "This page needs an internet connection."
+            },
+            "eyebrow": "Offline",
+            "title": "This page needs a connection",
+            "description": "You are offline, and this page talks to the server. Every tool that runs in your browser still works — pick one from the overview.",
+            "cta": "Back to overview"
+        },
+        "onlineRequired": {
+            "model": "You are offline and this model has not been downloaded yet. Connect to the internet once to fetch it — after that it runs offline.",
+            "feature": "Needs an internet connection."
+        },
+        "screenshots": {
+            "home": "Every tool, one click away",
+            "tool": "Tools that run on your device, even offline"
+        }
     },
     "domainInspector": {
         "meta": {

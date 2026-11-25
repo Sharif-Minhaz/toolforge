@@ -126,6 +126,7 @@ docs/
 | Making the server call something                 | [`patterns/outbound-requests.md`](patterns/outbound-requests.md), [`security.md`](security.md)                           |
 | Adding a free-text field                         | [`patterns/input-limits.md`](patterns/input-limits.md)                                                                   |
 | Adding or changing a page, layout, or the proxy  | [`patterns/partial-prerendering.md`](patterns/partial-prerendering.md)                                                   |
+| A tool that needs the network, a CDN, a model    | [`patterns/offline.md`](patterns/offline.md)                                                                             |
 | Finishing up                                     | [`workflow/verification.md`](workflow/verification.md), [`workflow/documentation.md`](workflow/documentation.md)         |
 
 ## Where to look, by subsystem

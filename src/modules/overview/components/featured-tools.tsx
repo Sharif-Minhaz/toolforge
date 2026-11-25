@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { staggerDelay } from "@/components/motion/motion-tokens";
 import { Reveal } from "@/components/motion/reveal";
 import { ToolCard } from "@/modules/tools/components/tool-card";
+import { needsNetwork } from "@/modules/tools/domain/network";
 import { getFeaturedTools } from "@/modules/tools/domain/tool-catalog";
 import { localizeTools } from "@/modules/tools/presenters/localize-tools";
 import { SectionHeading } from "./section-heading";
@@ -19,9 +20,15 @@ export async function FeaturedTools() {
 
             <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {tools.map((tool, index) => (
-                    <Reveal key={tool.id} as="li" delay={staggerDelay(index)} className="h-full">
-                        <ToolCard tool={tool} />
-                    </Reveal>
+                    <li
+                        key={tool.id}
+                        data-needs-network={needsNetwork(tool) || undefined}
+                        className="h-full"
+                    >
+                        <Reveal delay={staggerDelay(index)} className="h-full">
+                            <ToolCard tool={tool} />
+                        </Reveal>
+                    </li>
                 ))}
             </ul>
         </section>

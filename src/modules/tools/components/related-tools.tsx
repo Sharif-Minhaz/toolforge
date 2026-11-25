@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { staggerDelay } from "@/components/motion/motion-tokens";
 import { Reveal } from "@/components/motion/reveal";
+import { needsNetwork } from "../domain/network";
 import { getRelatedTools } from "../domain/tool-catalog";
 import { localizeTools } from "../presenters/localize-tools";
 import type { ToolId } from "../types";
@@ -58,9 +59,15 @@ export async function RelatedTools({ toolId, limit = 3 }: RelatedToolsProps) {
 
             <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {tools.map((tool, index) => (
-                    <Reveal key={tool.id} as="li" delay={staggerDelay(index)} className="h-full">
-                        <ToolCard tool={tool} />
-                    </Reveal>
+                    <li
+                        key={tool.id}
+                        data-needs-network={needsNetwork(tool) || undefined}
+                        className="h-full"
+                    >
+                        <Reveal delay={staggerDelay(index)} className="h-full">
+                            <ToolCard tool={tool} />
+                        </Reveal>
+                    </li>
                 ))}
             </ul>
         </section>

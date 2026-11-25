@@ -5,6 +5,7 @@ import { Reveal } from "@/components/motion/reveal";
 import { cn } from "@/lib/utils";
 import { TOOL_ACCENT_VARS, TOOL_ICON_TILE } from "@/modules/tools/components/tool-accent";
 import { ToolIcon } from "@/modules/tools/components/tool-icon";
+import { needsNetwork } from "@/modules/tools/domain/network";
 import { getRecentTools } from "@/modules/tools/domain/tool-catalog";
 import { localizeTools } from "@/modules/tools/presenters/localize-tools";
 import type { LocalizedTool } from "@/modules/tools/types";
@@ -78,7 +79,9 @@ export async function RecentTools() {
             <Reveal>
                 <ul className="divide-border/60 bg-card ring-border/70 divide-y overflow-hidden rounded-2xl ring-1 ring-inset">
                     {tools.map((tool) => (
-                        <li key={tool.id}>{renderRow(tool)}</li>
+                        <li key={tool.id} data-needs-network={needsNetwork(tool) || undefined}>
+                            {renderRow(tool)}
+                        </li>
                     ))}
                 </ul>
             </Reveal>

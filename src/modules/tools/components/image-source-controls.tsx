@@ -6,6 +6,7 @@ import { useId, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useOnline } from "@/hooks/use-online";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 
@@ -13,6 +14,7 @@ import { importRemoteImage } from "../actions/import-remote-image";
 import { readClipboardImage } from "../domain/clipboard";
 import { pastedImageFilename } from "../domain/pasted-image";
 import { MAX_REMOTE_IMAGE_URL_LENGTH, type RemoteImageProblem } from "../domain/remote-image";
+import { OnlineRequiredNote } from "./online-required-note";
 import { useImagePaste } from "./use-image-paste";
 
 /**
@@ -55,6 +57,7 @@ export function ImageSourceControls({
 }: ImageSourceControlsProps) {
     const t = useTranslations("imageIntake");
 
+    const online = useOnline();
     const urlId = useId();
     const errorId = useId();
 
@@ -100,7 +103,7 @@ export function ImageSourceControls({
     async function handleImport() {
         const trimmed = url.trim();
 
-        if (trimmed.length === 0 || importing) {
+        if (trimmed.length === 0 || importing || !online) {
             return;
         }
 
@@ -186,7 +189,7 @@ export function ImageSourceControls({
                         <Button
                             type="button"
                             variant="outline"
-                            disabled={disabled || importing || url.trim().length === 0}
+                            disabled={disabled || importing || !online || url.trim().length === 0}
                             onClick={() => void handleImport()}
                             className="h-9 px-3.5"
                         >
@@ -202,6 +205,8 @@ export function ImageSourceControls({
                             {importing ? t("importing") : t("import")}
                         </Button>
                     </div>
+
+                    {!online && <OnlineRequiredNote kind="feature" />}
                 </div>
             )}
 

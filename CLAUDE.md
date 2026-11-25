@@ -59,6 +59,7 @@ docs/
 | A format somebody else has to read          | [`docs/testing.md`](docs/testing.md)                                                                               |
 | An outbound request from the server         | [`docs/patterns/outbound-requests.md`](docs/patterns/outbound-requests.md), [`docs/security.md`](docs/security.md) |
 | A free-text field                           | [`docs/patterns/input-limits.md`](docs/patterns/input-limits.md)                                                   |
+| The service worker, offline, a model or CDN | [`docs/patterns/offline.md`](docs/patterns/offline.md)                                                             |
 | `aes`                                       | [`docs/case-studies/aes.md`](docs/case-studies/aes.md)                                                             |
 | `background-remover`                        | [`docs/case-studies/background-remover.md`](docs/case-studies/background-remover.md)                               |
 | `blur-placeholder`                          | [`docs/case-studies/blurhash.md`](docs/case-studies/blurhash.md)                                                   |

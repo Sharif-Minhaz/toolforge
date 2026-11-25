@@ -4,8 +4,10 @@ import { IconLoader2, IconSparkles } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
+import { useOnline } from "@/hooks/use-online";
 import { cn } from "@/lib/utils";
 import { CreatedLinkCard } from "@/modules/short-links/components/created-link-card";
+import { OnlineRequiredNote } from "@/modules/tools/components/online-required-note";
 import { StatusStrip } from "@/modules/tools/components/status-strip";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
 import { TURNSTILE_ACTION } from "../domain/constants";
@@ -48,6 +50,9 @@ export function QrDynamicPanel({
     onCopy,
 }: QrDynamicPanelProps) {
     const t = useTranslations("qr.dynamic");
+    // A dynamic code is a row on our server and a challenge from Cloudflare;
+    // offline neither can be had, while a static code keeps working.
+    const online = useOnline();
 
     return (
         <div
@@ -62,7 +67,8 @@ export function QrDynamicPanel({
                     <input
                         type="checkbox"
                         checked={enabled}
-                        disabled={!available || created !== null}
+                        // Unticking stays possible offline; only opting in is refused.
+                        disabled={!available || created !== null || (!online && !enabled)}
                         onChange={(event) => onToggle(event.target.checked)}
                         className="accent-primary focus-visible:ring-ring mt-0.5 size-4 shrink-0 rounded focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed"
                     />
@@ -100,7 +106,7 @@ export function QrDynamicPanel({
                         type="button"
                         size="sm"
                         onClick={onCreate}
-                        disabled={creating || token === null || !hasTarget}
+                        disabled={creating || token === null || !hasTarget || !online}
                     >
                         {creating && (
                             <IconLoader2
@@ -119,6 +125,8 @@ export function QrDynamicPanel({
                     )}
                 </div>
             )}
+
+            {!online && available && created === null && <OnlineRequiredNote kind="feature" />}
 
             {created !== null && <CreatedLinkCard link={created} onCopy={onCopy} />}
         </div>

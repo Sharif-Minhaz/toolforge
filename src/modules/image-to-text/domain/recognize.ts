@@ -7,6 +7,7 @@ import { checkImageFile } from "@/modules/tools/domain/image-file";
 import type { PixelSize } from "@/modules/tools/types";
 import type { OcrFailure, OcrLanguage, OcrProgress, OcrResult } from "../types";
 import { IMAGE_FILE_LIMITS, MAX_RECOGNITION_PIXELS, STALL_MS } from "./constants";
+import { rememberFetchedLanguage } from "./language-memory";
 import { tesseractLanguages } from "./languages";
 import { readOcrProgress, StallError, watchStall } from "./progress";
 import { tidyRecognizedText } from "./text";
@@ -136,6 +137,9 @@ export async function recognizeImages(
             });
 
             worker = started;
+            // A started worker has the engine and every language file it asked
+            // for, so this is the moment they are known to be on the device.
+            rememberFetchedLanguage(language);
 
             for (const [index, file] of files.entries()) {
                 signal?.throwIfAborted();
