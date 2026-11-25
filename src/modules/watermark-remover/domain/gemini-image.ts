@@ -5,8 +5,55 @@ import {
     detectWatermark,
     filledProfile,
 } from "./glyph-mask";
+import {
+    GEMINI_CLEAN_BOX_RATIO,
+    GEMINI_LARGE_IMAGE_PX,
+    GEMINI_LARGE_LOGO_PX,
+    GEMINI_LARGE_MARGIN_PX,
+    GEMINI_LOGO_PX,
+    GEMINI_MARGIN_PX,
+    GEMINI_SEARCH_BOX_RATIO,
+} from "./gemini-constants";
 import { applyRepaint, planRepaint } from "./repaint-plan";
-import { planCornerBox, toPixelBox } from "./watermark-box";
+import {
+    clampNormalizedBox,
+    isBottomCorner,
+    isRightCorner,
+    toNormalizedBox,
+    toPixelBox,
+} from "./watermark-box";
+
+/**
+ * A square centred on where Gemini puts its sparkle in `corner`, `ratio` logos
+ * wide. The geometry is in `gemini-constants.ts`; a still that has been
+ * downscaled since carries a smaller mark nearer the corner, which still falls
+ * inside this box down to roughly half size.
+ */
+export function planGeminiBox(
+    size: PixelSize,
+    corner: BoxCorner,
+    ratio: number = GEMINI_CLEAN_BOX_RATIO,
+): NormalizedBox {
+    const large = size.width > GEMINI_LARGE_IMAGE_PX && size.height > GEMINI_LARGE_IMAGE_PX;
+    const logo = large ? GEMINI_LARGE_LOGO_PX : GEMINI_LOGO_PX;
+    const inset = (large ? GEMINI_LARGE_MARGIN_PX : GEMINI_MARGIN_PX) + logo / 2;
+    const side = Math.round(ratio * logo);
+    const centreX = isRightCorner(corner) ? size.width - inset : inset;
+    const centreY = isBottomCorner(corner) ? size.height - inset : inset;
+
+    return clampNormalizedBox(
+        toNormalizedBox(
+            {
+                x: Math.round(centreX - side / 2),
+                y: Math.round(centreY - side / 2),
+                width: side,
+                height: side,
+            },
+            size,
+        ),
+        size,
+    );
+}
 
 /** What was done to the picture, once it has been done. */
 export type GeminiPixelReport = {
@@ -203,7 +250,7 @@ export function scanGeminiCorners(pixels: Uint8ClampedArray, size: PixelSize): G
     let best: GeminiScan | null = null;
 
     for (const corner of GEMINI_CORNER_ORDER) {
-        const box = planCornerBox(size, corner);
+        const box = planGeminiBox(size, corner, GEMINI_SEARCH_BOX_RATIO);
         const found = findGeminiMark(pixels, size, box);
 
         if (found === null) {
@@ -215,5 +262,15 @@ export function scanGeminiCorners(pixels: Uint8ClampedArray, size: PixelSize): G
         }
     }
 
-    return best;
+    if (best === null) {
+        return null;
+    }
+
+    // The corner is chosen in a tight box and cleaned in a roomier one, which
+    // reads the background better. On a still downscaled past half size the
+    // roomier box can lose the shrunken mark; the tight result stands then.
+    const roomy = planGeminiBox(size, best.corner, GEMINI_CLEAN_BOX_RATIO);
+    const refined = findGeminiMark(pixels, size, roomy);
+
+    return refined === null ? best : { ...refined, corner: best.corner, box: roomy };
 }

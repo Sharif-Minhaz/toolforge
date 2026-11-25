@@ -1058,7 +1058,6 @@ const TOOLS: readonly Tool[] = [
             "inpainting",
             "erase logo",
             "clean up photo",
-            "object remover",
         ],
     },
     {

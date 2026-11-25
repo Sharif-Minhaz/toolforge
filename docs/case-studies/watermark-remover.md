@@ -48,6 +48,33 @@ and `domain/` may hold that glue as long as the arithmetic around it stays pure
 and tested — `watermark-remover/domain/region.ts` is the geometry, `canvas.ts` the
 glue.
 
+## A hosted model can be retired under you
+
+On 2026-11-20 Workers AI retired `@cf/runwayml/stable-diffusion-v1-5-inpainting`,
+along with every other model on it that took a mask. The worker answered `500`
+with `AiError 5028 … was deprecated`, which `describeStatus` maps to
+`upstream_unavailable` — so the page said "try again shortly" about a failure no
+retry could fix. The worker's body is in the `watermark_remover.upstream_rejected`
+log line; that is where to look first.
+
+The worker now runs `@cf/black-forest-labs/flux-2-klein-9b`, Cloudflare's listed
+replacement. It edits from a prompt plus reference images sent as multipart
+(`input_image_0`, no larger than 512 px), answers base64, and **takes no mask**.
+The worker still requires the mask, so the contract did not move, and ignores it.
+
+Two things follow:
+
+- **The browser composite is now what confines the change.** Klein repaints the
+  whole square; `composeCleanedImage` cutting it down to the strokes is the only
+  thing keeping the rest of the picture the reader's own. `MASK_DILATION_PX` now
+  only shapes the ignored upload.
+- **The model removes what its prompt names — watermarks, logos and text.** An
+  object the reader brushes over may be painted straight back in. Do not promise
+  object removal while the model cannot see the strokes.
+
+The worker's source is not in this repository; it lives in the Cloudflare
+dashboard.
+
 ---
 
 ## The one place a raw colour literal is correct
@@ -1069,37 +1096,77 @@ has a mark in it — a refusal that is perfectly true about the box and useless
 about the file.
 
 **The control was wrong** because it asked the reader for something the tool can
-measure. All four corners are now searched on the pick — `scanGeminiCorners` —
-and the strongest wins. The control stays, for the run that got it wrong, and it
-re-runs on change rather than waiting to be told twice.
+measure. All four corners are searched when Remove is pressed on a box nobody
+has touched — `scanGeminiCorners` — and the strongest wins. The control stays,
+for the run that got it wrong.
 
-Measured on the module's own fixture: a planted mark peaks between 105 and 142
-against the same picture's loudest empty corner at 52. **The winner is the
-strongest corner rather than the first one over a threshold**, because a floor
-tuned to that margin would sit on top of a real mark — the clip half measured the
-real thing at about a third opacity, not the fixture's nine tenths. What that
-buys is a search that cannot pick the wrong corner when there is a mark, and the
-price, stated in the article rather than hidden, is that a picture with no mark
-gets its brightest corner named.
+**The winner is the strongest corner rather than the first one over a
+threshold**, because a floor tuned to the fixture's margin would sit on top of a
+real mark — the clip half measured the real thing at about a third opacity, not
+the fixture's nine tenths. The price, stated in the article rather than hidden,
+is that a picture with no mark gets its brightest corner named. "Strongest" only
+means something if each corner is searched where the mark would actually be —
+see the next section.
 
-The knock-on is worth noting: the resize handle sits on the corner _opposite_ the
-pinned one, and which way a drag means "grow" follows from the same fact. A
-handle hard-coded to the top-left shrank the box when it was dragged outward on
-three of the four corners.
+The box is a free rectangle with a handle on every corner and every side
+(`resizeBoxEdges`); each handle moves only the edges it sits on. It was a square
+held by one handle first — hard-coded to the top-left, which shrank the box when
+dragged outward on three of the four corners — then a square with four corner
+handles. A square was the wrong shape to insist on: a wide mark forced the reader
+to box the picture above it too. `NormalizedBox` is `x`, `y`, `width`, `height`,
+each a share of its own axis; the detector and the repaint already took width and
+height apart, so nothing downstream had assumed a square.
 
-### A tool that knows where to look should not have a Remove button as step one
+### A still is not a clip: search where Gemini signs a still
+
+The first corner search reused the clip calibration — a box 0.3 of the short side
+wide, centred 0.17 of it in from the corner. A Gemini still signs much nearer the
+corner: a 48 px sparkle at a 32 px margin, centred 56 px in (96 at 64 once both
+sides pass 1024). On a real 1061x1008 still the search therefore put the sparkle
+against its box's wall, and the 300 px box over the opposite corner took in a
+bright orange cloud whose peak beat the sparkle's. The run "found" the mark in
+the top-left and left the real one exactly as it was — residual 118 levels over
+the core, before and after. A reader who nudged the box got a working result,
+which made it look like the first run was flaky rather than wrong.
+
+`planGeminiBox` now uses Gemini's own geometry. The corner is chosen in a box
+twice the logo wide and cleaned in one 2.5 times wide, falling back to the tight
+result if the wider box loses the mark. Measured on that still, residual over the
+core after cleaning:
+
+| Still size             | Clip calibration  | Gemini geometry |
+| ---------------------- | ----------------- | --------------- |
+| 1061 px (as generated) | 118, wrong corner | 2.3             |
+| 796 px                 | 121, wrong corner | 1.3             |
+| 495 px (a pasted copy) | 121, wrong corner | 1               |
+
+Two traps on the way, both worth not repeating:
+
+- **The tight box is what picks the corner.** At 2.5 logos wide the 495 px copy
+  chose the top-left again; only at 2 did every scale choose right. Downscaled
+  copies — screenshots, chat pastes — carry a smaller mark nearer the corner, and
+  a roomier box takes in enough other picture to outscore it. Below about 0.4x the
+  search still fails; the corner control and the box are the answer there.
+- **The fixture had the clip's mark, not the still's.** It planted a glow reaching
+  50 px from the centre, about twice the real logo, so the tight box clipped it
+  and the scan found nothing. Measured on the real still, the arms run tip to tip
+  across the 48 px logo with a hard edge. The fixture now matches that, and the
+  two regressions — a brighter highlight in another corner, and a mark at 0.55x —
+  fail against the old search.
+
+### Run when asked, and search when nobody said where
 
 The first version was a five-step interaction: pick, look at the box, drag it,
-press Remove, wait. Four of those five steps existed because the tool declined to
-use what it already knew. It has the pixels the moment the file is chosen and it
-can find the mark in them, so the run starts on the pick and the answer says
-which corner it landed in.
+press Remove, wait. The second ran on the pick and re-ran on every correction.
+Readers reversed that: a run on the pick changed the picture before they had
+looked at where the box was, and a correction that re-ran mid-adjustment was work
+they had not asked for.
 
-Every control below the picture is now a _correction_ rather than a step, and
-each one re-runs immediately — moving the box, naming the corner, flipping the
-whole-box switch. **A control that requires a second press to take effect is a
-step the reader has to remember; a control that re-runs is a control.** The
-Remove button stays for the case where none of them changed anything.
+So **nothing runs until Remove is pressed**, and the search is kept where it
+earns its place. The box starts as a proposal at Gemini's own spot (`box` is
+`null`); pressed as it is, Remove searches all four corners and says which one it
+used. Once the reader moves or reshapes the box, or names a corner, Remove uses
+exactly that. A change after a result marks it stale rather than re-running.
 
 ### What averaging was buying
 

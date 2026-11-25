@@ -72,7 +72,7 @@ export function paintMaskStrokes(
 /**
  * Cuts `region` out of the picture and scales it to the model's canvas.
  *
- * Exactly `MODEL_CANVAS_SIZE` square, so the worker's own `scale-down` is a
+ * Exactly `MODEL_CANVAS_SIZE` square, so the worker's own resize is a
  * no-op and the model is handed the geometry it is told it has.
  */
 export async function cropRegionToModelPng(
@@ -104,8 +104,10 @@ export async function cropRegionToModelPng(
 }
 
 /**
- * The mask the model reads: white where it should repaint, black where it must
- * leave the pixels alone, in the same 512 px square as the crop.
+ * The mask sent upstream: white where the model should repaint, black where it
+ * must leave the pixels alone, in the same 512 px square as the crop. The
+ * worker still requires it, but its current model (FLUX.2 [klein]) takes no
+ * mask — `composeCleanedImage` is what confines the change to the strokes.
  *
  * The transform maps image pixels onto that square, so the strokes are used
  * exactly as they were recorded and only the dilation has to be converted.

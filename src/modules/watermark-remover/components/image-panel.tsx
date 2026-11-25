@@ -2,9 +2,11 @@
 
 import {
     IconArrowBackUp,
+    IconCloudUpload,
     IconEraser,
     IconLoader2,
     IconPhotoUp,
+    IconScale,
     IconTrash,
 } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
@@ -18,6 +20,7 @@ import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import { ToolNotes } from "@/modules/tools/components/tool-notes";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
@@ -78,9 +81,11 @@ type ImagePanelProps = {
     siteKey: string | null;
     /** Whether this deployment can fetch a picture by its address at all. */
     urlImportEnabled: boolean;
+    /** Whether this tab is showing. Every tab stays mounted, so only the shown one may claim a paste. */
+    active: boolean;
 };
 
-export function ImagePanel({ siteKey, urlImportEnabled }: ImagePanelProps) {
+export function ImagePanel({ siteKey, urlImportEnabled, active }: ImagePanelProps) {
     const t = useTranslations("watermarkRemover.workbench");
     const tErrors = useTranslations("watermarkRemover.errors");
     const tToast = useTranslations("watermarkRemover.toast");
@@ -419,7 +424,7 @@ export function ImagePanel({ siteKey, urlImportEnabled }: ImagePanelProps) {
 
                 <ImageSourceControls
                     onFiles={(files) => void handlePick(files[0])}
-                    disabled={working}
+                    disabled={working || !active}
                     urlImportEnabled={urlImportEnabled}
                 />
 
@@ -575,13 +580,22 @@ export function ImagePanel({ siteKey, urlImportEnabled }: ImagePanelProps) {
              * who can know whether they hold the rights to the one in front
              * of them.
              */}
-            <p className="text-muted-foreground max-w-[68ch] text-[0.6875rem] leading-normal">
-                {t("rightsNote")}
-            </p>
-
-            <p className="text-muted-foreground text-[0.6875rem] leading-normal">
-                {t("privacyNote")}
-            </p>
+            <ToolNotes
+                notes={[
+                    {
+                        key: "rights",
+                        icon: IconScale,
+                        title: t("rightsTitle"),
+                        body: t("rightsNote"),
+                    },
+                    {
+                        key: "privacy",
+                        icon: IconCloudUpload,
+                        title: t("privacyTitle"),
+                        body: t("privacyNote"),
+                    },
+                ]}
+            />
         </div>
     );
 }

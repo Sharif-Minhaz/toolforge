@@ -1,11 +1,20 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+    GEMINI_LOGO_PX,
+    GEMINI_MARGIN_PX,
+} from "@/modules/watermark-remover/domain/gemini-constants";
+import {
     cleanGeminiPixels,
     GEMINI_CORNER_ORDER,
+    planGeminiBox,
     scanGeminiCorners,
 } from "@/modules/watermark-remover/domain/gemini-image";
-import { planCornerBox, toPixelBox } from "@/modules/watermark-remover/domain/watermark-box";
+import {
+    isBottomCorner,
+    isRightCorner,
+    toPixelBox,
+} from "@/modules/watermark-remover/domain/watermark-box";
 import {
     BOX_CORNERS,
     type BoxCorner,
@@ -18,22 +27,46 @@ const SIZE: PixelSize = { width: 640, height: 640 };
 
 /** The corner the single-mark cases plant in, and the box that covers it. */
 const CORNER: BoxCorner = "bottom-left";
-const BOX: NormalizedBox = planCornerBox(SIZE, CORNER);
+const BOX: NormalizedBox = planGeminiBox(SIZE, CORNER);
 const SEARCH: PixelBox = toPixelBox(BOX, SIZE);
 
-/** The glyph, at the scale a generator actually signs a still of this size at. */
-const ARM = 15;
+/**
+ * The glyph, at the scale Gemini signs a still of this size at. Measured on a
+ * real one: the arms run tip to tip across the whole 48 px logo and the edge is
+ * hard, with almost no glow past it — unlike the clip's mark, whose glow is most
+ * of what the eye sees.
+ */
+const ARM = 22;
 const CORE_ALPHA = 0.88;
 const GLOW_ALPHA = 0.32;
-const GLOW_SIGMA = 17;
+const GLOW_SIGMA = 5;
 
 /** How rough the picture is. A generated still is not smooth, and that matters. */
 const GRAIN = 1.5;
 
-function centreOf(corner: BoxCorner): { x: number; y: number } {
-    const box = toPixelBox(planCornerBox(SIZE, corner), SIZE);
+/**
+ * Where Gemini centres its sparkle on a still this size — 56 px in from both
+ * edges — scaled for a still that has been downscaled since it was signed.
+ */
+function centreOf(corner: BoxCorner, scale = 1): { x: number; y: number } {
+    const inset = (GEMINI_MARGIN_PX + GEMINI_LOGO_PX / 2) * scale;
 
-    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    return {
+        x: isRightCorner(corner) ? SIZE.width - inset : inset,
+        y: isBottomCorner(corner) ? SIZE.height - inset : inset,
+    };
+}
+
+/**
+ * A bright highlight — a lamp, a sunlit cloud — where the clip calibration used
+ * to search, inside a still's corner but clear of where the sparkle sits.
+ */
+const HIGHLIGHT = { x: 150, y: 150, alpha: 0.95, sigma: 12 } as const;
+
+function highlightAlpha(x: number, y: number): number {
+    const d2 = (x - HIGHLIGHT.x) ** 2 + (y - HIGHLIGHT.y) ** 2;
+
+    return HIGHLIGHT.alpha * Math.exp(-d2 / (2 * HIGHLIGHT.sigma ** 2));
 }
 
 /**
@@ -44,13 +77,15 @@ function centreOf(corner: BoxCorner): { x: number; y: number } {
  * two or three times the core's radius, and a mark with a hard edge and nothing
  * around it passes tests a real one fails.
  */
-function markAlpha(x: number, y: number, corner: BoxCorner): number {
-    const centre = centreOf(corner);
+function markAlpha(x: number, y: number, corner: BoxCorner, scale = 1): number {
+    const centre = centreOf(corner, scale);
     const dx = Math.abs(x - centre.x);
     const dy = Math.abs(y - centre.y);
+    const arm = ARM * scale;
+    const sigma = GLOW_SIGMA * scale;
 
-    const solid = dx + dy <= ARM && Math.min(dx, dy) <= ARM / 2 - (dx + dy) / 4 ? CORE_ALPHA : 0;
-    const glow = GLOW_ALPHA * Math.exp(-(dx * dx + dy * dy) / (2 * GLOW_SIGMA * GLOW_SIGMA));
+    const solid = dx + dy <= arm && Math.min(dx, dy) <= arm / 2 - (dx + dy) / 4 ? CORE_ALPHA : 0;
+    const glow = GLOW_ALPHA * Math.exp(-(dx * dx + dy * dy) / (2 * sigma * sigma));
 
     return Math.min(1, solid + glow * (1 - solid));
 }
@@ -72,13 +107,23 @@ function backgroundAt(x: number, y: number, channel: number): number {
     );
 }
 
+type RenderOptions = {
+    /** The still was downscaled by this much after it was signed. */
+    readonly scale?: number;
+    /** Lay `HIGHLIGHT` over the top-left corner too. */
+    readonly highlight?: boolean;
+};
+
 /** `null` renders the picture with no mark laid over it at all. */
-function render(marked: BoxCorner | null): Uint8ClampedArray {
+function render(marked: BoxCorner | null, options: RenderOptions = {}): Uint8ClampedArray {
+    const { scale = 1, highlight = false } = options;
     const data = new Uint8ClampedArray(SIZE.width * SIZE.height * 4);
 
     for (let y = 0; y < SIZE.height; y += 1) {
         for (let x = 0; x < SIZE.width; x += 1) {
-            const alpha = marked === null ? 0 : markAlpha(x, y, marked);
+            const mark = marked === null ? 0 : markAlpha(x, y, marked, scale);
+            const extra = highlight ? highlightAlpha(x, y) : 0;
+            const alpha = 1 - (1 - mark) * (1 - extra);
             const offset = (y * SIZE.width + x) * 4;
 
             for (let channel = 0; channel < 3; channel += 1) {
@@ -93,13 +138,18 @@ function render(marked: BoxCorner | null): Uint8ClampedArray {
 }
 
 /** Mean absolute error against the truth, over every pixel the mark reaches. */
-function errorOverMark(pixels: Uint8ClampedArray, truth: Uint8ClampedArray): number {
+function errorOverMark(
+    pixels: Uint8ClampedArray,
+    truth: Uint8ClampedArray,
+    corner: BoxCorner = CORNER,
+    scale = 1,
+): number {
     let total = 0;
     let counted = 0;
 
-    for (let y = SEARCH.y; y < SEARCH.y + SEARCH.height; y += 1) {
-        for (let x = SEARCH.x; x < SEARCH.x + SEARCH.width; x += 1) {
-            if (markAlpha(x, y, CORNER) < 0.02) {
+    for (let y = 0; y < SIZE.height; y += 1) {
+        for (let x = 0; x < SIZE.width; x += 1) {
+            if (markAlpha(x, y, corner, scale) < 0.02) {
                 continue;
             }
 
@@ -134,8 +184,8 @@ describe("cleanGeminiPixels", () => {
 
         // The whole claim of the tab: what comes back is the picture that was
         // there, not something plausible in the shape of the mark. Over this
-        // fixture the mark costs 21 levels of error and the un-blend gives back
-        // all but 0.9 of them — under one level, which is to say inside the
+        // fixture the mark costs 106 levels of error and the un-blend gives back
+        // all but 1.4 of them — about one level, which is to say inside the
         // grain. The ceilings are loose enough not to fail on arithmetic noise
         // and far too tight for a tool that merely blurred the corner.
         expect(before).toBeGreaterThan(15);
@@ -233,16 +283,15 @@ describe("scanGeminiCorners", () => {
      * What the search is, and what it is not.
      *
      * It is a comparison, not a verdict. `detectWatermark` answers "is there
-     * something standing above its surroundings in this box", and on this
-     * fixture — whose background is a strong low-frequency swell — three of the
-     * four corners answer yes with peaks of 25, 33 and 52 on a picture with no
-     * mark in it at all. That is not a bug in the detector; it is what a bright
-     * smooth bump in a corner looks like to a band-pass, and a real picture has
-     * lamps, skies and highlights in it.
+     * something standing above its surroundings in this box". Searched in boxes
+     * sized to Gemini's own logo, none of this fixture's corners answers yes on
+     * the clean picture; searched at the clip calibration, three of them did,
+     * at 25, 33 and 52, because a bright smooth bump in a corner looks like
+     * something to a band-pass. A real picture has lamps, skies and highlights
+     * in it, so the tight box narrows the problem without removing it.
      *
-     * What separates a mark from a bump is **margin**, and the margin is large:
-     * a planted mark peaks between 105 and 142 here, more than twice the loudest
-     * thing the clean picture has to offer. That is why the winner is the
+     * What separates a mark from a bump is **margin**: a planted mark peaks
+     * between 86 and 117 here. That is why the winner is the
      * strongest corner rather than the first one over a threshold — a floor
      * tuned to this fixture would sit right on top of a real mark, which the
      * clip half measured at about a third opacity rather than this one's nine
@@ -259,5 +308,43 @@ describe("scanGeminiCorners", () => {
 
         expect(marked?.corner).toBe("bottom-left");
         expect(marked?.profile.peak).toBeGreaterThan(2 * (clean?.profile.peak ?? 0));
+    });
+
+    /**
+     * The regression. Searched at the clip calibration — 0.17 of the short side
+     * in, 0.3 of it wide — the top-left box took in this highlight and its peak
+     * beat the sparkle, so the run "found" the mark in the wrong corner and left
+     * the real one untouched. Gemini's own geometry keeps the box off it.
+     */
+    test("is not drawn off the mark by a brighter highlight in another corner", () => {
+        const pixels = render("bottom-right", { highlight: true });
+        const found = scanGeminiCorners(pixels, SIZE);
+
+        expect(found?.corner).toBe("bottom-right");
+    });
+
+    /**
+     * A still pasted from a screenshot or a chat app has usually been shrunk, so
+     * its sparkle is smaller and nearer the corner than the geometry says. At a
+     * bit over half size it must still be found and taken out.
+     */
+    test("finds and removes the mark on a still downscaled to about half size", () => {
+        const scale = 0.55;
+        const truth = render(null);
+        const marked = render("bottom-right", { scale });
+        const found = scanGeminiCorners(marked, SIZE);
+
+        expect(found?.corner).toBe("bottom-right");
+
+        if (found === null) {
+            return;
+        }
+
+        const pixels = Uint8ClampedArray.from(marked);
+        const outcome = cleanGeminiPixels(pixels, SIZE, found.box, false);
+
+        expect(outcome.ok).toBe(true);
+        expect(errorOverMark(marked, truth, "bottom-right", scale)).toBeGreaterThan(10);
+        expect(errorOverMark(pixels, truth, "bottom-right", scale)).toBeLessThan(3);
     });
 });

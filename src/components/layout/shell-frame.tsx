@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { recordRecentTool } from "@/modules/preferences/components/use-recent-tools";
 import { readSidebarCollapsed, writeSidebarCollapsed } from "@/modules/preferences/domain/sidebar";
 import { UNLOCK_PREFIX } from "@/modules/short-links/domain/constants";
+import { BackToTop } from "./back-to-top";
 import { LocaleSwitcher } from "./locale-switcher";
 import type { LocalizedTool } from "@/modules/tools/types";
 import { RepoLink } from "./repo-link";
@@ -289,11 +290,15 @@ export function ShellFrame({ tools, children }: ShellFrameProps) {
             <div className={cn("lg:pl-[calc(var(--sidebar-w)+1.5rem)]", SHELL_EASING)}>
                 <main
                     id="main-content"
-                    className="mx-auto w-full max-w-296 px-4 pt-6 pb-24 sm:px-6 lg:px-10 lg:pt-10"
+                    // Focusable from script only, so BackToTop can return focus here.
+                    tabIndex={-1}
+                    className="mx-auto w-full max-w-296 px-4 pt-6 pb-24 outline-none sm:px-6 lg:px-10 lg:pt-10"
                 >
                     {children}
                 </main>
             </div>
+
+            <BackToTop />
         </div>
     );
 }

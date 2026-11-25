@@ -68,7 +68,7 @@ function describeStatus(status: number): WatermarkFailureReason {
 }
 
 /**
- * Calls the Cloudflare Worker that fronts the inpainting model. The only place
+ * Calls the Cloudflare Worker that fronts the image model. The only place
  * the worker URL and its bearer key are read, so the key never leaves the server
  * and no other layer can reach the network on its behalf.
  *

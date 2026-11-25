@@ -4,7 +4,7 @@ import {
     MIN_BOX_SIDE_RATIO,
     WATERMARK_INSET_RATIO,
 } from "./video-constants";
-import type { BoxCorner, NormalizedBox, PixelBox } from "../types";
+import type { BoxCorner, BoxEdges, NormalizedBox, PixelBox } from "../types";
 import type { PixelSize } from "../types";
 
 /** Nothing smaller than this can hold a logo and the border the fill reads from. */
@@ -35,26 +35,37 @@ export function referenceSide(size: PixelSize): number {
 }
 
 /**
- * The one place a box becomes pixels. Rounding, the square constraint and the
- * "must stay inside the frame" rule all live here, so no caller can arrive at a
- * box the rest of the pipeline would have to re-check.
+ * Smallest edge a box may have on an axis this long. Measured against the shorter
+ * side so a thin box is equally thin on either axis; a frame narrower than the
+ * floor is not a case worth a second rule, so the floor simply becomes the frame.
+ */
+function minEdge(size: PixelSize, axis: number): number {
+    return Math.min(Math.max(MIN_BOX_SIDE_RATIO * referenceSide(size), ABSOLUTE_MIN_SIDE_PX), axis);
+}
+
+/** Largest edge a box may have on an axis this long. */
+function maxEdge(size: PixelSize, axis: number): number {
+    return Math.max(MAX_BOX_SIDE_RATIO * axis, minEdge(size, axis));
+}
+
+/**
+ * The one place a box becomes pixels. Rounding, the size limits and the "must
+ * stay inside the frame" rule all live here, so no caller can arrive at a box the
+ * rest of the pipeline would have to re-check.
  */
 export function toPixelBox(box: NormalizedBox, size: PixelSize): PixelBox {
-    const reference = referenceSide(size);
-
-    const side = Math.round(
-        clamp(box.side * reference, MIN_BOX_SIDE_RATIO * reference, MAX_BOX_SIDE_RATIO * reference),
+    const width = Math.round(
+        clamp(box.width * size.width, minEdge(size, size.width), maxEdge(size, size.width)),
+    );
+    const height = Math.round(
+        clamp(box.height * size.height, minEdge(size, size.height), maxEdge(size, size.height)),
     );
 
-    // A frame narrower than the floor is not a case worth a second rule: the box
-    // simply becomes the frame.
-    const bounded = clamp(Math.max(side, ABSOLUTE_MIN_SIDE_PX), 1, reference);
-
     return {
-        x: clamp(Math.round(box.x * size.width), 0, size.width - bounded),
-        y: clamp(Math.round(box.y * size.height), 0, size.height - bounded),
-        width: bounded,
-        height: bounded,
+        x: clamp(Math.round(box.x * size.width), 0, size.width - width),
+        y: clamp(Math.round(box.y * size.height), 0, size.height - height),
+        width,
+        height,
     };
 }
 
@@ -63,7 +74,8 @@ export function toNormalizedBox(box: PixelBox, size: PixelSize): NormalizedBox {
     return {
         x: box.x / size.width,
         y: box.y / size.height,
-        side: box.width / referenceSide(size),
+        width: box.width / size.width,
+        height: box.height / size.height,
     };
 }
 
@@ -93,9 +105,8 @@ export function isBottomCorner(corner: BoxCorner): boolean {
  * in a strip of whatever else lives along the frame's edge. Centred, the mark has
  * clean picture all the way around it, which is what every later step assumes.
  *
- * The corner is a parameter because the two halves that use this disagree about
- * it: a Veo clip signs bottom-right, a Gemini still signs bottom-left, and a
- * single hard-coded corner would put one of them's box on empty picture.
+ * Calibrated on clips. A Gemini still signs much nearer its corner and has its
+ * own geometry — `planGeminiBox` in `gemini-image.ts`.
  */
 export function planCornerBox(size: PixelSize, corner: BoxCorner): NormalizedBox {
     const reference = referenceSide(size);
@@ -109,7 +120,8 @@ export function planCornerBox(size: PixelSize, corner: BoxCorner): NormalizedBox
         {
             x: (centreX - side / 2) / size.width,
             y: (centreY - side / 2) / size.height,
-            side: DEFAULT_BOX_SIDE_RATIO,
+            width: side / size.width,
+            height: side / size.height,
         },
         size,
     );
@@ -131,14 +143,54 @@ export function nudgeNormalizedBox(
 }
 
 /**
- * Grows or shrinks the box with the corner it was planned against pinned.
+ * Moves the edges a handle holds by `dx` and `dy` — shares of each axis — while
+ * the opposite edges stay put. Each moving edge stops at the frame and at the
+ * size limits rather than pushing the box, so a drag never slides the side the
+ * reader was not holding.
+ */
+export function resizeBoxEdges(
+    box: NormalizedBox,
+    edges: BoxEdges,
+    dx: number,
+    dy: number,
+    size: PixelSize,
+): NormalizedBox {
+    const current = toPixelBox(box, size);
+    let left = current.x;
+    let right = current.x + current.width;
+    let top = current.y;
+    let bottom = current.y + current.height;
+
+    const [minW, maxW] = [minEdge(size, size.width), maxEdge(size, size.width)];
+    const [minH, maxH] = [minEdge(size, size.height), maxEdge(size, size.height)];
+
+    if (edges.x < 0) {
+        left = clamp(left + dx * size.width, Math.max(0, right - maxW), right - minW);
+    } else if (edges.x > 0) {
+        right = clamp(right + dx * size.width, left + minW, Math.min(size.width, left + maxW));
+    }
+
+    if (edges.y < 0) {
+        top = clamp(top + dy * size.height, Math.max(0, bottom - maxH), bottom - minH);
+    } else if (edges.y > 0) {
+        bottom = clamp(bottom + dy * size.height, top + minH, Math.min(size.height, top + maxH));
+    }
+
+    return clampNormalizedBox(
+        toNormalizedBox({ x: left, y: top, width: right - left, height: bottom - top }, size),
+        size,
+    );
+}
+
+/**
+ * Grows or shrinks the box on both axes with the corner it was planned against
+ * pinned — the keyboard's `+` and `−`.
  *
  * The conventional anchor is the top-left, but the thing inside this box sits in
  * a corner of the frame: pinning *that* corner means enlarging the box reaches
  * further into the picture instead of sliding off the edge and being clamped
- * back. Which corner that is depends on where the generator signs, so it is a
- * parameter — defaulted to the clip half's bottom-right, which is where this
- * behaviour was worked out.
+ * back. `delta` is a share of the frame's shorter side, so a step grows both
+ * axes by the same number of pixels.
  */
 export function resizeNormalizedBox(
     box: NormalizedBox,
@@ -146,23 +198,17 @@ export function resizeNormalizedBox(
     size: PixelSize,
     corner: BoxCorner = "bottom-right",
 ): NormalizedBox {
-    const reference = referenceSide(size);
-    const current = toPixelBox(box, size);
-    const side = clamp(
-        Math.round((box.side + delta) * reference),
-        MIN_BOX_SIDE_RATIO * reference,
-        MAX_BOX_SIDE_RATIO * reference,
-    );
+    const grow = delta * referenceSide(size);
+    const edges: BoxEdges = {
+        x: isRightCorner(corner) ? -1 : 1,
+        y: isBottomCorner(corner) ? -1 : 1,
+    };
 
-    const right = current.x + current.width;
-    const bottom = current.y + current.height;
-
-    return clampNormalizedBox(
-        {
-            x: (isRightCorner(corner) ? right - side : current.x) / size.width,
-            y: (isBottomCorner(corner) ? bottom - side : current.y) / size.height,
-            side: side / reference,
-        },
+    return resizeBoxEdges(
+        box,
+        edges,
+        (edges.x * grow) / size.width,
+        (edges.y * grow) / size.height,
         size,
     );
 }

@@ -27,7 +27,7 @@ import { useCallback, useRef } from "react";
 /** Anything at least this visible is already being read; leave it alone. */
 const ALREADY_VISIBLE_RATIO = 0.4;
 
-function prefersReducedMotion(): boolean {
+export function prefersReducedMotion(): boolean {
     return (
         typeof window !== "undefined" &&
         window.matchMedia("(prefers-reduced-motion: reduce)").matches

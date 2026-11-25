@@ -43,3 +43,35 @@ export const GEMINI_IMAGE_FILE_LIMITS: ImageFileLimits<GeminiImageType> = {
  * answer at all.
  */
 export const GEMINI_FALLBACK_CORNER: BoxCorner = "bottom-right";
+
+/**
+ * Where Gemini signs a still, in the still's own pixels: a 48 px sparkle at a
+ * 32 px margin from both edges, or 96 px at 64 once both sides pass 1024.
+ *
+ * Not the clip calibration. `WATERMARK_INSET_RATIO` was measured on Veo clips,
+ * where the mark centres 0.17 of the short side in; on a still it centres 56 px
+ * in (measured on a 1061x1008 still: 56 and 55 px). Searching a still at the
+ * clip's inset put the sparkle against the box wall and the box over whatever
+ * else filled the corner, and a bright patch elsewhere outscored the real mark.
+ */
+export const GEMINI_LOGO_PX = 48;
+export const GEMINI_MARGIN_PX = 32;
+export const GEMINI_LARGE_LOGO_PX = 96;
+export const GEMINI_LARGE_MARGIN_PX = 64;
+/** Both sides above this and the still carries the large sparkle. */
+export const GEMINI_LARGE_IMAGE_PX = 1024;
+
+/**
+ * Side of the box each corner is searched in, as a multiple of the logo. Tight on
+ * purpose: it is the only size that kept the right corner winning on a still
+ * downscaled to under half size, where the mark is smaller than the geometry
+ * says and a roomier box takes in enough other picture to outscore it.
+ */
+export const GEMINI_SEARCH_BOX_RATIO = 2;
+
+/**
+ * Side of the box the chosen corner is cleaned in. More ring around the mark
+ * gives the background estimate more to read: on a full-size still the residual
+ * over the core fell from 7 levels at the search size to 2.3 at this one.
+ */
+export const GEMINI_CLEAN_BOX_RATIO = 2.5;

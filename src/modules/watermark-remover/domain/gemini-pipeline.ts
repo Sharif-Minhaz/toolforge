@@ -48,18 +48,16 @@ function failure(reason: GeminiFailureReason, detail?: string): GeminiFailure {
 /**
  * Dresses a fixed-box find as a scan result, so both paths hand back the same
  * shape. The corner is derived rather than stored: a box the reader dragged
- * belongs to whichever corner it is nearest, and that is the corner the resize
- * handle and the reset button then answer to.
+ * belongs to whichever corner it is nearest, and that is the corner the
+ * keyboard resize and the reset button then answer to.
  */
 function withBox(mark: GeminiMark | null, box: NormalizedBox, size: PixelSize): GeminiScan | null {
     if (mark === null) {
         return null;
     }
 
-    // Measured in pixels rather than in the normalized numbers: `x` and `y` are
-    // shares of each axis while `side` is a share of the shorter one, so adding
-    // them would put the centre of a box on a portrait picture in the wrong
-    // half.
+    // Measured in pixels, after `toPixelBox` has applied the frame and size
+    // limits, so the centre is that of the box the run actually searched.
     const pixels = toPixelBox(box, size);
     const half = pixels.x + pixels.width / 2 < size.width / 2 ? "left" : "right";
     const level = pixels.y + pixels.height / 2 < size.height / 2 ? "top" : "bottom";

@@ -21,7 +21,7 @@ type WatermarkRemoverWorkbenchProps = {
 /**
  * The card all three halves live in, and the strip that switches between them.
  *
- * They share a name and nothing else. A picture goes to an inpainting model over
+ * They share a name and nothing else. A picture goes to an image model over
  * the network and comes back repainted; a Gemini still never leaves the browser
  * and has a known blend arithmetically undone; a clip never leaves the browser
  * and has one fixed corner rebuilt from its own surroundings, frame by frame.
@@ -78,11 +78,15 @@ export function WatermarkRemoverWorkbench({
                     </TabsList>
 
                     <TabsContent value="image" className="min-w-0 pt-4" keepMounted>
-                        <ImagePanel siteKey={siteKey} urlImportEnabled={urlImportEnabled} />
+                        <ImagePanel
+                            siteKey={siteKey}
+                            urlImportEnabled={urlImportEnabled}
+                            active={mode === "image"}
+                        />
                     </TabsContent>
 
                     <TabsContent value="gemini" className="min-w-0 pt-4" keepMounted>
-                        <GeminiPanel />
+                        <GeminiPanel active={mode === "gemini"} />
                     </TabsContent>
 
                     <TabsContent value="video" className="min-w-0 pt-4" keepMounted>

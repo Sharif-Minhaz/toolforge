@@ -116,15 +116,25 @@ export type BoxCorner = (typeof BOX_CORNERS)[number];
 /**
  * The search box, stored against the frame rather than against a screen.
  *
- * `x` and `y` are the top-left corner as shares of the frame's width and height;
- * `side` is the square's edge as a share of the frame's *shorter* side, which is
- * what keeps one number describing a square on a portrait clip and a landscape
- * one alike.
+ * Every field is a share of its own axis: `x` and `width` of the frame's width,
+ * `y` and `height` of its height. A rectangle, not a square — a mark is not
+ * always square, and a reader boxing a wide one should not be made to take in
+ * the picture above it.
  */
 export type NormalizedBox = {
     readonly x: number;
     readonly y: number;
-    readonly side: number;
+    readonly width: number;
+    readonly height: number;
+};
+
+/**
+ * Which edges a resize handle holds: `-1` the left or top edge, `1` the right or
+ * bottom one, `0` neither. A corner holds two, a side one.
+ */
+export type BoxEdges = {
+    readonly x: -1 | 0 | 1;
+    readonly y: -1 | 0 | 1;
 };
 
 /** An axis-aligned rectangle in whole image pixels. */

@@ -13,6 +13,7 @@ import {
     planCornerBox,
     planDefaultBox,
     referenceSide,
+    resizeBoxEdges,
     resizeNormalizedBox,
     toNormalizedBox,
     toPixelBox,
@@ -67,11 +68,11 @@ describe("planDefaultBox", () => {
 describe("toPixelBox", () => {
     test("always stays inside the frame, whatever it is handed", () => {
         const wild = [
-            { x: -3, y: -3, side: 0.2 },
-            { x: 5, y: 5, side: 0.2 },
-            { x: 0.9, y: 0.9, side: 0.5 },
-            { x: 0.5, y: 0.5, side: 12 },
-            { x: Number.NaN, y: 0.5, side: 0.2 },
+            { x: -3, y: -3, width: 0.2, height: 0.2 },
+            { x: 5, y: 5, width: 0.2, height: 0.1 },
+            { x: 0.9, y: 0.9, width: 0.5, height: 0.5 },
+            { x: 0.5, y: 0.5, width: 12, height: 3 },
+            { x: Number.NaN, y: 0.5, width: Number.NaN, height: 0.2 },
         ];
 
         for (const box of wild) {
@@ -84,27 +85,30 @@ describe("toPixelBox", () => {
         }
     });
 
-    test("holds the side between the two ratios", () => {
+    test("holds each edge between the two ratios", () => {
         const reference = referenceSide(LANDSCAPE);
+        const tiny = toPixelBox({ x: 0, y: 0, width: 0.0001, height: 0.0001 }, LANDSCAPE);
+        const huge = toPixelBox({ x: 0, y: 0, width: 9, height: 9 }, LANDSCAPE);
 
-        expect(toPixelBox({ x: 0, y: 0, side: 0.0001 }, LANDSCAPE).width).toBe(
-            Math.round(MIN_BOX_SIDE_RATIO * reference),
-        );
-        expect(toPixelBox({ x: 0, y: 0, side: 9 }, LANDSCAPE).width).toBe(
-            Math.round(MAX_BOX_SIDE_RATIO * reference),
-        );
+        // The floor is the same on both axes, so a thin box is equally thin
+        // either way; the ceiling is a share of each axis.
+        expect(tiny.width).toBe(Math.round(MIN_BOX_SIDE_RATIO * reference));
+        expect(tiny.height).toBe(Math.round(MIN_BOX_SIDE_RATIO * reference));
+        expect(huge.width).toBe(Math.round(MAX_BOX_SIDE_RATIO * LANDSCAPE.width));
+        expect(huge.height).toBe(Math.round(MAX_BOX_SIDE_RATIO * LANDSCAPE.height));
     });
 
-    test("is square in pixels even on a frame that is not", () => {
-        const box = toPixelBox({ x: 0.1, y: 0.1, side: 0.3 }, PORTRAIT);
+    test("keeps a rectangle a rectangle", () => {
+        const box = toPixelBox({ x: 0.1, y: 0.1, width: 0.3, height: 0.05 }, PORTRAIT);
 
-        expect(box.width).toBe(box.height);
+        expect(box.width).toBe(Math.round(0.3 * PORTRAIT.width));
+        expect(box.height).toBe(Math.round(0.05 * PORTRAIT.height));
     });
 });
 
 describe("clampNormalizedBox", () => {
     test("is a fixed point — clamping twice changes nothing", () => {
-        const once = clampNormalizedBox({ x: 3, y: -1, side: 0.9 }, LANDSCAPE);
+        const once = clampNormalizedBox({ x: 3, y: -1, width: 0.9, height: 0.2 }, LANDSCAPE);
         const twice = clampNormalizedBox(once, LANDSCAPE);
 
         expect(twice).toEqual(once);
@@ -119,7 +123,7 @@ describe("clampNormalizedBox", () => {
 
 describe("nudgeNormalizedBox", () => {
     test("moves by the share it is given", () => {
-        const start = clampNormalizedBox({ x: 0.5, y: 0.5, side: 0.2 }, LANDSCAPE);
+        const start = clampNormalizedBox({ x: 0.5, y: 0.5, width: 0.1, height: 0.2 }, LANDSCAPE);
         const moved = toPixelBox(nudgeNormalizedBox(start, 0.01, -0.01, LANDSCAPE), LANDSCAPE);
         const before = toPixelBox(start, LANDSCAPE);
 
@@ -143,13 +147,21 @@ describe("nudgeNormalizedBox", () => {
 
 describe("resizeNormalizedBox", () => {
     test("keeps the bottom-right corner where it was", () => {
-        const start = clampNormalizedBox({ x: 0.4, y: 0.4, side: 0.2 }, LANDSCAPE);
+        const start = clampNormalizedBox({ x: 0.4, y: 0.4, width: 0.1, height: 0.2 }, LANDSCAPE);
         const before = toPixelBox(start, LANDSCAPE);
         const after = toPixelBox(resizeNormalizedBox(start, 0.05, LANDSCAPE), LANDSCAPE);
 
         expect(after.x + after.width).toBe(before.x + before.width);
         expect(after.y + after.height).toBe(before.y + before.height);
         expect(after.width).toBeGreaterThan(before.width);
+    });
+
+    test("grows both axes by the same number of pixels", () => {
+        const start = clampNormalizedBox({ x: 0.4, y: 0.4, width: 0.1, height: 0.2 }, LANDSCAPE);
+        const before = toPixelBox(start, LANDSCAPE);
+        const after = toPixelBox(resizeNormalizedBox(start, 0.05, LANDSCAPE), LANDSCAPE);
+
+        expect(after.width - before.width).toBe(after.height - before.height);
     });
 
     test("bottoms out rather than inverting", () => {
@@ -162,6 +174,67 @@ describe("resizeNormalizedBox", () => {
         expect(toPixelBox(box, LANDSCAPE).width).toBe(
             Math.round(MIN_BOX_SIDE_RATIO * referenceSide(LANDSCAPE)),
         );
+    });
+});
+
+describe("resizeBoxEdges", () => {
+    const START = clampNormalizedBox({ x: 0.4, y: 0.4, width: 0.1, height: 0.1 }, LANDSCAPE);
+    const BEFORE = toPixelBox(START, LANDSCAPE);
+
+    test("a side handle changes one dimension and leaves the other alone", () => {
+        const after = toPixelBox(
+            resizeBoxEdges(START, { x: 1, y: 0 }, 0.05, 0.05, LANDSCAPE),
+            LANDSCAPE,
+        );
+
+        expect(after.width).toBe(BEFORE.width + Math.round(0.05 * LANDSCAPE.width));
+        expect(after.height).toBe(BEFORE.height);
+        expect(after.x).toBe(BEFORE.x);
+        expect(after.y).toBe(BEFORE.y);
+    });
+
+    test("a corner handle sizes each axis on its own, so the box need not stay square", () => {
+        const after = toPixelBox(
+            resizeBoxEdges(START, { x: 1, y: 1 }, 0.1, 0.01, LANDSCAPE),
+            LANDSCAPE,
+        );
+
+        expect(after.width).toBe(BEFORE.width + Math.round(0.1 * LANDSCAPE.width));
+        expect(after.height).toBe(BEFORE.height + Math.round(0.01 * LANDSCAPE.height));
+    });
+
+    test("dragging the left or top edge keeps the right and bottom edges still", () => {
+        const after = toPixelBox(
+            resizeBoxEdges(START, { x: -1, y: -1 }, -0.05, -0.05, LANDSCAPE),
+            LANDSCAPE,
+        );
+
+        expect(after.x + after.width).toBe(BEFORE.x + BEFORE.width);
+        expect(after.y + after.height).toBe(BEFORE.y + BEFORE.height);
+        expect(after.width).toBeGreaterThan(BEFORE.width);
+    });
+
+    test("stops at the frame instead of sliding the side nobody was holding", () => {
+        const after = toPixelBox(
+            resizeBoxEdges(START, { x: -1, y: 0 }, -5, 0, LANDSCAPE),
+            LANDSCAPE,
+        );
+
+        expect(after.x).toBeGreaterThanOrEqual(0);
+        expect(after.x + after.width).toBe(BEFORE.x + BEFORE.width);
+    });
+
+    test("stops at the floor rather than inverting", () => {
+        const after = toPixelBox(
+            resizeBoxEdges(START, { x: 1, y: 1 }, -5, -5, LANDSCAPE),
+            LANDSCAPE,
+        );
+        const floor = Math.round(MIN_BOX_SIDE_RATIO * referenceSide(LANDSCAPE));
+
+        expect(after.width).toBe(floor);
+        expect(after.height).toBe(floor);
+        expect(after.x).toBe(BEFORE.x);
+        expect(after.y).toBe(BEFORE.y);
     });
 });
 

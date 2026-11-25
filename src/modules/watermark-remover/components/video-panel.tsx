@@ -4,6 +4,8 @@ import {
     IconEraser,
     IconLoader2,
     IconRefresh,
+    IconScale,
+    IconShieldCheck,
     IconTrash,
     IconVideoPlus,
     IconX,
@@ -19,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import { ToolNotes } from "@/modules/tools/components/tool-notes";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
 import { buildCleanVideoFilename } from "../domain/export";
@@ -584,13 +587,23 @@ export function VideoPanel() {
              * rebuilds one corner of somebody's footage, and the reader is the
              * only one who can know whether they hold the rights to it.
              */}
-            <p className="text-muted-foreground max-w-[68ch] text-[0.6875rem] leading-normal">
-                {t("rightsNote")}
-            </p>
-
-            <p className="text-muted-foreground max-w-[68ch] text-[0.6875rem] leading-normal">
-                {t("privacyNote")}
-            </p>
+            <ToolNotes
+                notes={[
+                    {
+                        key: "rights",
+                        icon: IconScale,
+                        title: t("rightsTitle"),
+                        body: t("rightsNote"),
+                    },
+                    {
+                        key: "privacy",
+                        icon: IconShieldCheck,
+                        tone: "success",
+                        title: t("privacyTitle"),
+                        body: t("privacyNote"),
+                    },
+                ]}
+            />
         </div>
     );
 }

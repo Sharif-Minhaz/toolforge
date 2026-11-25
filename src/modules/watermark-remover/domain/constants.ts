@@ -38,9 +38,9 @@ export const MASK_FILE_LIMITS: ImageFileLimits<"image/png"> = {
 };
 
 /**
- * Side of the square canvas the inpainting model works in. Both the crop and its
+ * Side of the square canvas the image model works in. Both the crop and its
  * mask are resized to exactly this before they are sent, which makes the
- * worker's own `scale-down` a no-op: it is told 512x512, so it must be handed
+ * worker's own resize a no-op: it is told 512x512, so it must be handed
  * 512x512 or the geometry it reports and the geometry it received disagree.
  */
 export const MODEL_CANVAS_SIZE = 512;
@@ -73,6 +73,9 @@ export const MIN_FEATHER_PX = 2;
  * How far the mask sent upstream is grown past what the reader painted, in model
  * canvas pixels. A watermark's anti-aliased fringe sits just outside the shape a
  * hand traces around it, and a fringe left behind reads as a failed removal.
+ *
+ * The worker's current model, FLUX.2 [klein], takes no mask, so today this only
+ * shapes a file the worker ignores. The composite uses the strokes undilated.
  */
 export const MASK_DILATION_PX = 4;
 

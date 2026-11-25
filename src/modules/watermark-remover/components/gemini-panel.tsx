@@ -5,6 +5,8 @@ import {
     IconLoader2,
     IconPhotoPlus,
     IconRefresh,
+    IconScale,
+    IconShieldCheck,
     IconTrash,
 } from "@tabler/icons-react";
 import { useFormatter, useTranslations } from "next-intl";
@@ -25,6 +27,8 @@ import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import { ToolNotes } from "@/modules/tools/components/tool-notes";
+import { useImagePaste } from "@/modules/tools/components/use-image-paste";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
 import { buildCleanImageFilename } from "../domain/export";
@@ -33,8 +37,9 @@ import {
     GEMINI_FALLBACK_CORNER,
     MAX_GEMINI_IMAGE_BYTES,
 } from "../domain/gemini-constants";
+import { planGeminiBox } from "../domain/gemini-image";
 import { cleanGeminiImage, probeGeminiImage } from "../domain/gemini-pipeline";
-import { planCornerBox, toPixelBox } from "../domain/watermark-box";
+import { toPixelBox } from "../domain/watermark-box";
 import {
     BOX_CORNERS,
     type BoxCorner,
@@ -83,15 +88,18 @@ function isBoxCorner(value: string): value is BoxCorner {
  * generator's mark is white composited over the picture at a known strength and
  * that operation has an inverse. No network, no bot check, no queue.
  *
- * **Choosing a file is the whole interaction.** The run starts on the pick, and
- * the corner is searched for rather than asked about — a reader who drops a
- * generated image should get a clean one back without being quizzed about where
- * the sparkle is, which they can see perfectly well and the tool can measure.
- * Every control below the picture exists for the run that got it wrong: move the
- * box, name the corner, or rebuild the whole square. Each of them re-runs
- * immediately, so a correction is one action rather than two.
+ * **Nothing runs until Remove is pressed.** Choosing a file shows the picture
+ * with a box where Gemini signs; the reader can move or reshape it first, or
+ * leave it alone and let the run search all four corners. Readers asked for
+ * this: a run on the pick changed the picture before they had looked at where
+ * the box was, and every correction re-ran before they had finished making it.
  */
-export function GeminiPanel() {
+type GeminiPanelProps = {
+    /** Whether this tab is showing. Every tab stays mounted, so only the shown one may claim a paste. */
+    readonly active: boolean;
+};
+
+export function GeminiPanel({ active }: GeminiPanelProps) {
     const t = useTranslations("watermarkRemover.gemini");
     const tErrors = useTranslations("watermarkRemover.geminiErrors");
     const tToast = useTranslations("watermarkRemover.geminiToast");
@@ -105,7 +113,8 @@ export function GeminiPanel() {
     const cornerId = useId();
 
     const [picked, setPicked] = useState<Picked | null>(null);
-    // `null` while the first run is still deciding, and never again after it.
+    // `null` until the reader moves the box or a run places it. While it is
+    // `null`, Remove searches all four corners and the box shown is a proposal.
     const [box, setBox] = useState<NormalizedBox | null>(null);
     const [corner, setCorner] = useState<BoxCorner>(GEMINI_FALLBACK_CORNER);
     const [scanning, setScanning] = useState(false);
@@ -142,6 +151,10 @@ export function GeminiPanel() {
 
     const busy = probing || working;
     const canRemove = picked !== null && !busy;
+
+    // Paste only, no URL import: that path fetches through the server, and this
+    // tab promises nothing leaves the browser.
+    useImagePaste((file) => void handlePick(file), active && !busy);
     const stale =
         result !== null &&
         (result.facts !== picked?.facts ||
@@ -208,8 +221,6 @@ export function GeminiPanel() {
         setProbing(true);
         setFailure(null);
 
-        let chosen: Picked;
-
         try {
             const probe = await probeGeminiImage(file);
 
@@ -225,9 +236,8 @@ export function GeminiPanel() {
                 return;
             }
 
-            chosen = { file, url: URL.createObjectURL(file), facts: probe.facts };
-
-            setPicked(chosen);
+            setPicked({ file, url: URL.createObjectURL(file), facts: probe.facts });
+            setCorner(GEMINI_FALLBACK_CORNER);
             setBox(null);
             setResult(null);
         } catch (caught) {
@@ -242,10 +252,6 @@ export function GeminiPanel() {
         } finally {
             setProbing(false);
         }
-
-        // Straight into the run, with no box: the tool measures all four corners
-        // and the reader is told where it landed rather than asked in advance.
-        await runClean(chosen, null, fillWholeBox);
     }
 
     function handleDrop(event: DragEvent<HTMLLabelElement>) {
@@ -287,7 +293,7 @@ export function GeminiPanel() {
                 if (next === null) {
                     setCorner(GEMINI_FALLBACK_CORNER);
                     setBox(
-                        planCornerBox(
+                        planGeminiBox(
                             { width: source.facts.width, height: source.facts.height },
                             GEMINI_FALLBACK_CORNER,
                         ),
@@ -329,22 +335,13 @@ export function GeminiPanel() {
             return;
         }
 
-        const planned = planCornerBox(
+        const planned = planGeminiBox(
             { width: picked.facts.width, height: picked.facts.height },
             next,
         );
 
         setCorner(next);
         setBox(planned);
-        void runClean(picked, planned, fillWholeBox);
-    }
-
-    function handleFillChange(next: boolean) {
-        setFillWholeBox(next);
-
-        if (picked !== null && box !== null && !busy) {
-            void runClean(picked, box, next);
-        }
     }
 
     async function handleRemove() {
@@ -380,10 +377,11 @@ export function GeminiPanel() {
     }
 
     const status = describeStatus();
+    const pickedSize =
+        picked === null ? null : { width: picked.facts.width, height: picked.facts.height };
+    const shownBox = pickedSize === null ? null : (box ?? planGeminiBox(pickedSize, corner));
     const searchBox =
-        picked === null || box === null
-            ? null
-            : toPixelBox(box, { width: picked.facts.width, height: picked.facts.height });
+        pickedSize === null || shownBox === null ? null : toPixelBox(shownBox, pickedSize);
 
     const cornerItems: Record<string, ReactNode> = Object.fromEntries(
         BOX_CORNERS.map((item) => [item, t(`corners.${item}`)]),
@@ -449,11 +447,11 @@ export function GeminiPanel() {
                 </p>
             </div>
 
-            {picked !== null && box !== null && (
+            {picked !== null && pickedSize !== null && shownBox !== null && (
                 <div className="flex min-w-0 flex-col gap-3">
                     <WatermarkBoxEditor
-                        size={{ width: picked.facts.width, height: picked.facts.height }}
-                        box={box}
+                        size={pickedSize}
+                        box={shownBox}
                         disabled={working}
                         label={t("boxLabel")}
                         describedById={boxHintId}
@@ -544,7 +542,7 @@ export function GeminiPanel() {
                         <Switch
                             checked={fillWholeBox}
                             disabled={working}
-                            onCheckedChange={handleFillChange}
+                            onCheckedChange={setFillWholeBox}
                             aria-labelledby={fillId}
                             aria-describedby={`${fillId}-hint`}
                         />
@@ -608,13 +606,23 @@ export function GeminiPanel() {
              * rebuilds one corner of somebody's picture, and the reader is the
              * only one who can know whether they hold the rights to it.
              */}
-            <p className="text-muted-foreground max-w-[68ch] text-[0.6875rem] leading-normal">
-                {t("rightsNote")}
-            </p>
-
-            <p className="text-muted-foreground max-w-[68ch] text-[0.6875rem] leading-normal">
-                {t("privacyNote")}
-            </p>
+            <ToolNotes
+                notes={[
+                    {
+                        key: "rights",
+                        icon: IconScale,
+                        title: t("rightsTitle"),
+                        body: t("rightsNote"),
+                    },
+                    {
+                        key: "privacy",
+                        icon: IconShieldCheck,
+                        tone: "success",
+                        title: t("privacyTitle"),
+                        body: t("privacyNote"),
+                    },
+                ]}
+            />
         </div>
     );
 }

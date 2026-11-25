@@ -13,20 +13,46 @@ import {
     BOX_OUTLINE_COLOR,
 } from "../domain/video-constants";
 import {
-    isBottomCorner,
-    isRightCorner,
     nudgeNormalizedBox,
-    referenceSide,
+    resizeBoxEdges,
     resizeNormalizedBox,
     toPixelBox,
 } from "../domain/watermark-box";
-import type { BoxCorner, NormalizedBox, PixelSize } from "../types";
+import type { BoxCorner, BoxEdges, NormalizedBox, PixelSize } from "../types";
+
+/** Four corners, then four sides. Each holds the edges it is drawn on. */
+const HANDLES: readonly BoxEdges[] = [
+    { x: -1, y: -1 },
+    { x: 1, y: -1 },
+    { x: -1, y: 1 },
+    { x: 1, y: 1 },
+    { x: 0, y: -1 },
+    { x: 0, y: 1 },
+    { x: -1, y: 0 },
+    { x: 1, y: 0 },
+];
+
+const HANDLE_LEFT = { [-1]: "-left-1", 0: "left-1/2 -translate-x-1/2", 1: "-right-1" } as const;
+const HANDLE_TOP = { [-1]: "-top-1", 0: "top-1/2 -translate-y-1/2", 1: "-bottom-1" } as const;
+
+function handleCursor({ x, y }: BoxEdges): string {
+    if (x === 0) {
+        return "cursor-ns-resize";
+    }
+
+    if (y === 0) {
+        return "cursor-ew-resize";
+    }
+
+    return x === y ? "cursor-nwse-resize" : "cursor-nesw-resize";
+}
 
 type DragOrigin = {
     readonly pointerX: number;
     readonly pointerY: number;
     readonly box: NormalizedBox;
-    readonly mode: "move" | "resize";
+    /** The handle being dragged; `null` moves the whole box. */
+    readonly handle: BoxEdges | null;
 };
 
 type WatermarkBoxEditorProps = {
@@ -37,7 +63,7 @@ type WatermarkBoxEditorProps = {
     /** Accessible name for the box itself. */
     label: string;
     describedById: string;
-    /** The corner the box is pinned to while it is resized. */
+    /** The corner the box is pinned to while + and − resize it. */
     corner: BoxCorner;
     onBoxChange: (box: NormalizedBox) => void;
     /** The media the box is drawn over — a clip, a still, anything with a size. */
@@ -72,13 +98,7 @@ export function WatermarkBoxEditor({
 
     const pixels = toPixelBox(box, size);
 
-    // The handle sits on the corner opposite the pinned one, because that is the
-    // only corner that moves when the square grows. Which way a drag *means*
-    // grow follows from the same fact: away from the pin on both axes.
-    const handleOnRight = !isRightCorner(corner);
-    const handleOnBottom = !isBottomCorner(corner);
-
-    function beginDrag(event: PointerEvent<HTMLElement>, mode: DragOrigin["mode"]) {
+    function beginDrag(event: PointerEvent<HTMLElement>, handle: BoxEdges | null) {
         if (disabled) {
             return;
         }
@@ -89,7 +109,7 @@ export function WatermarkBoxEditor({
             pointerX: event.clientX,
             pointerY: event.clientY,
             box,
-            mode,
+            handle,
         };
     }
 
@@ -107,20 +127,15 @@ export function WatermarkBoxEditor({
         const dx = (event.clientX - drag.pointerX) / rect.width;
         const dy = (event.clientY - drag.pointerY) / rect.height;
 
-        if (drag.mode === "move") {
+        if (drag.handle === null) {
             onBoxChange(nudgeNormalizedBox(drag.box, dx, dy, size));
 
             return;
         }
 
-        // Dragging the handle away from the pinned corner grows the square; the
-        // two axes are averaged so a diagonal drag does not count twice.
-        const reference = referenceSide(size);
-        const along =
-            (handleOnRight ? dx * size.width : -dx * size.width) +
-            (handleOnBottom ? dy * size.height : -dy * size.height);
-
-        onBoxChange(resizeNormalizedBox(drag.box, along / 2 / reference, size, corner));
+        // A handle moves the edges it sits on and nothing else, so the box can
+        // take any shape the mark needs; the edges across from it stay put.
+        onBoxChange(resizeBoxEdges(drag.box, drag.handle, dx, dy, size));
     }
 
     function endDrag(event: PointerEvent<HTMLElement>) {
@@ -193,7 +208,7 @@ export function WatermarkBoxEditor({
                     aria-disabled={disabled}
                     tabIndex={disabled ? -1 : 0}
                     onKeyDown={handleKeyDown}
-                    onPointerDown={(event) => beginDrag(event, "move")}
+                    onPointerDown={(event) => beginDrag(event, null)}
                     onPointerMove={continueDrag}
                     onPointerUp={endDrag}
                     onPointerCancel={endDrag}
@@ -210,30 +225,29 @@ export function WatermarkBoxEditor({
                         backgroundColor: BOX_FILL_COLOR,
                     }}
                 >
-                    <span
-                        aria-hidden="true"
-                        onPointerDown={(event) => {
-                            event.stopPropagation();
-                            beginDrag(event, "resize");
-                        }}
-                        onPointerMove={continueDrag}
-                        onPointerUp={endDrag}
-                        onPointerCancel={endDrag}
-                        className={cn(
-                            "absolute block size-3 touch-none rounded-[2px]",
-                            handleOnBottom ? "-bottom-1" : "-top-1",
-                            handleOnRight ? "-right-1" : "-left-1",
-                            disabled
-                                ? "cursor-default"
-                                : handleOnRight === handleOnBottom
-                                  ? "cursor-nwse-resize"
-                                  : "cursor-nesw-resize",
-                        )}
-                        style={{
-                            backgroundColor: BOX_HANDLE_COLOR,
-                            boxShadow: `0 0 0 1px ${BOX_HANDLE_RING_COLOR}`,
-                        }}
-                    />
+                    {HANDLES.map((handle) => (
+                        <span
+                            key={`${handle.x}${handle.y}`}
+                            aria-hidden="true"
+                            onPointerDown={(event) => {
+                                event.stopPropagation();
+                                beginDrag(event, handle);
+                            }}
+                            onPointerMove={continueDrag}
+                            onPointerUp={endDrag}
+                            onPointerCancel={endDrag}
+                            className={cn(
+                                "absolute block size-3 touch-none rounded-[2px]",
+                                HANDLE_LEFT[handle.x],
+                                HANDLE_TOP[handle.y],
+                                disabled ? "cursor-default" : handleCursor(handle),
+                            )}
+                            style={{
+                                backgroundColor: BOX_HANDLE_COLOR,
+                                boxShadow: `0 0 0 1px ${BOX_HANDLE_RING_COLOR}`,
+                            }}
+                        />
+                    ))}
                 </div>
             </div>
 
