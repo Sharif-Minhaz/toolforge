@@ -160,6 +160,8 @@ export function ImagePanel({ siteKey, urlImportEnabled, active }: ImagePanelProp
                 return tErrors("challenge_failed");
             case "rate_limited":
                 return tErrors("rate_limited");
+            case "quota_exhausted":
+                return tErrors("quota_exhausted");
             case "unauthorized":
                 return tErrors("unauthorized");
             case "not_configured":

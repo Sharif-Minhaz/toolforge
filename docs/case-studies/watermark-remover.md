@@ -75,6 +75,28 @@ Two things follow:
 The worker's source is not in this repository; it lives in the Cloudflare
 dashboard.
 
+## A spent allowance is not an outage
+
+On 2026-11-25 every removal failed with "try again shortly" again. The worker was
+up and the model was not retired: the body was `AiError: 4006: you have used up
+your daily free allocation of 10,000 neurons`. The worker answers every exception
+with `500`, so the status alone cannot separate that from an outage, and
+`classifyUpstreamFailure` (`domain/upstream-failure.ts`) reads the body to name it
+`quota_exhausted`. It is checked before `429`, because "wait a minute" is the wrong
+advice for an allowance that resets at 00:00 UTC.
+
+**Price the replacement when you replace a model.** From Cloudflare's price list on
+that date, for one 512 px square in and out:
+
+| Model             | Neurons per removal | Removals per free day |
+| ----------------- | ------------------- | --------------------- |
+| `flux-2-klein-9b` | 1,409 – 1,545       | 6 or 7                |
+| `flux-2-klein-4b` | 31                  | about 318             |
+
+9b bills a whole first output megapixel however small the picture is; 4b bills per
+512 px tile, which is exactly the size this tool sends. The range on 9b is whether a
+512 px input rounds up to a full megapixel, which the price list does not say.
+
 ---
 
 ## The one place a raw colour literal is correct
@@ -1071,6 +1093,93 @@ exactly where a Gemini watermark sits. The two would have been fighting over the
 same forty pixels, so the editor's `<video>` carries no `controls` and a slider
 below the frame moves through the clip instead. **When an affordance and the
 thing it exists to reveal want the same pixels, move the affordance.**
+
+### A wordmark is not a big sparkle
+
+Reported as "the video remover is not working": a Qwen clip came back with the
+`Q` gone and the rest of the name still there. Nothing had failed. The detector
+commits to the **one** blob nearest the middle of the box and bounds everything
+after it by a disc around that blob, which is exactly right for a sparkle and is
+"remove one letter" for a name. In the default box it did worse — it committed to
+a piece of the artwork and repainted that.
+
+`domain/wordmark.ts` answers a different question. Not which blob is the mark, but
+**which blobs were laid on at one opacity**: a white top-hat stands each glyph up
+as a plateau, and a wordmark is a row of plateaus of the same height. Scenery is
+bright, static and compact often enough; it is not flat, and not flat at the same
+height three times in a row. On the real clip the seven pieces measured 61–78
+levels in every box from 195 px to 460 px wide, where nothing around them was flat
+at all.
+
+Two choices in it that look arbitrary:
+
+- **Top-hat, not a blur.** A blur averages the letters into the background they
+  are measured against, so a letter beside a letter measures fainter than a letter
+  alone.
+- **The median of the per-frame lifts, not the lift of the average.** The average
+  holds everything that was ever in the corner. The median holds what was there
+  most of the time.
+
+It does not replace the sparkle's detector: `prefersWordmark` arbitrates, and a
+lone mark in the middle of the box and outside the row — a sparkle beside a short
+caption — still wins. **The sparkle's path is unchanged, byte for byte.** Every
+number above this section was bought on clips this repository no longer has, so
+the new case went beside it rather than through it.
+
+### The mark is grey, and the average cannot tell you
+
+`WATERMARK_COLOR` is 255 and its comment says what happens if a future mark is not
+white. This one is not: fitting `o = (1 − a)·b + a·W` across the frames gives
+`W ≈ 215` at `a ≈ 0.45`. Assuming white fits the _average_ just as well, at
+`a = 0.34`, and is then wrong on every frame that is not average — 24 levels too
+dark where the clip's burst of light takes the corner past the mark's own grey,
+where the mark is the **darker** thing and removing it must add light.
+
+So a wordmark is sampled twice: once to find it, once more, cut down to it, to
+measure. The slope of observed against background is `1 − a`, the intercept is
+`a·W`, and neither is visible in one averaged corner. A clip whose corner never
+changes cannot draw that line; white is used, and is harmless there.
+
+**Two unknowns fitted to one average is a family of answers, all of which look
+right on the average.**
+
+### Brightness and colour have different opacities
+
+With grey and opacity right, the letters still came back faintly tinted. The same
+fit, run on colour instead of brightness, says why: 0.46 of the brightness was
+covered and 0.33 of the colour. A clip stores colour at half resolution, so along
+a stroke six pixels wide every colour sample is part mark and part footage. Each
+gets its own map. The mark is neutral, so the colour's fit has no intercept to
+find — measured, 0.2 to 0.8 of a level.
+
+### Let the two answers vote
+
+A sparkle is mostly glow; a wordmark is nearly all edge, and the codec's ringing
+along every edge spells the name out again in outline. Filling instead smears
+whatever crosses it. Planting the measured mark on the clip's own footage (the
+method above) settled which to use: neither.
+
+| corner              | untouched | un-blend | fill | un-blend, outline, gate |
+| ------------------- | --------- | -------- | ---- | ----------------------- |
+| smoke with stars    | 28.0      | 4.2      | 5.0  | **3.1**                 |
+| static ring, runes  | 27.2      | 5.7      | 9.3  | **4.9**                 |
+| smoke, moving light | 28.7      | 5.0      | 6.3  | **3.7**                 |
+
+The gate is per pixel and per frame: where recovered and filled agree to within
+the codec's own noise, the difference _is_ the noise and the fill is cleaner;
+where they differ by more, the footage has something in it a fill cannot know.
+Sparks crossing the letters survive, and smooth frames come back with no outline.
+
+### What it still cannot do
+
+- **A mark the box cuts** is refused, because a row running into the wall of the
+  box is also what a caption looks like. The box has to hold all of it.
+- **Letters fused to equally bright, static scenery** are not separable: planted on
+  the smear of light beside the chest, the logo and `Q` were found and `wen` was
+  not; planted on the chest itself nothing was. Loosening the rules to reach them
+  was tried and pulled in scenery on corners that already worked.
+- **A dark mark on light footage** is never looked for. Only light ones stand up in
+  a white top-hat.
 
 ---
 

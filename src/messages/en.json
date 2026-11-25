@@ -5020,7 +5020,7 @@
             "tabVideo": "Video",
             "imageTitle": "Remove a watermark from a picture",
             "imageDescription": "JPEG, PNG or WebP. Only the square you mark is uploaded for repainting; the rest of the picture never leaves your device.",
-            "videoTitle": "Remove the Gemini sparkle from a clip",
+            "videoTitle": "Remove a corner watermark from a clip",
             "videoDescription": "MP4, MOV, WebM or MKV. The clip is decoded, repainted frame by frame and written back here in your browser — nothing is uploaded and no model is involved.",
             "dropTitle": "Drop an image here, or click to choose one",
             "dropHint": "JPEG, PNG or WebP — up to {limit}.",
@@ -5150,6 +5150,7 @@
             "challenge_required": "The bot check has to pass before an image can be repainted.",
             "challenge_failed": "The bot check failed. Reload the page and try again.",
             "rate_limited": "The repainting service is busy — it accepts five uploads a minute in total, shared by everyone using the page. Wait a minute, then try again.",
+            "quota_exhausted": "The repainting service has used up its allowance for today, which everyone using the page shares. It resets at midnight UTC, and trying again before then will not help.",
             "unauthorized": "The repainting service rejected this site's credentials.",
             "not_configured": "The remover is not configured on this deployment.",
             "upstream_unavailable": "The repainting service is unavailable right now. Try again shortly.",
@@ -5168,7 +5169,7 @@
             "no_video_track": "That file has no video track in it.",
             "undecodable": "This browser cannot decode that clip's video codec.",
             "no_encoder": "This browser has no video encoder this tool can write with.",
-            "mark_not_found": "No watermark was found inside the box. Move it over the sparkle, make it a little larger, or turn on “Repaint the whole box”.",
+            "mark_not_found": "No watermark was found inside the box. Move it so the whole mark is inside with a little room around it, or turn on “Repaint the whole box”.",
             "clean_failed": "The clip could not be cleaned. Its video track may use a feature this browser's decoder refuses part-way through.",
             "canceled": "The run was stopped. Nothing was changed."
         },
@@ -5310,10 +5311,11 @@
                 "limitNote": "It will not help with a tiled watermark across the whole frame, a stock-library bar, or a mark that is not white — those are blends this tab cannot invert, and the picture tab's model is the better answer for them. And the corner search is a comparison rather than a verdict: handed a picture with no mark at all it will name its brightest corner and repaint a little of it, which the before-and-after view shows you and Clear undoes."
             },
             "video": {
-                "title": "Cleaning a Gemini or Veo clip",
+                "title": "Cleaning a Gemini, Veo or Qwen clip",
                 "intro": "The video tab is a different machine from the picture tab, and it is worth knowing which one you are using. Nothing is uploaded: your browser opens the container, decodes the frames through its own codecs, repaints one fixed rectangle in each of them, and writes a new MP4. There is no model, no server and no queue — which is why it costs a minute of your laptop rather than a second of somebody's GPU.",
                 "finding": "Gemini and Veo sign in the same place every time: a small white sparkle in the bottom-right corner, at a size that scales with the frame. The tool averages that corner across two dozen moments spread through the clip. Footage that moves washes out of an average; a mark that never moves does not, so what is left standing brighter than its own surroundings is the watermark. It is found twice over: once roughly, against a blurred copy of the corner, and then again against a proper estimate of the footage underneath — reconstructed by interpolating the averaged corner across the rough mark. The second pass is what catches the glow. Measured against a blur, a sparkle's halo is wide enough to have been averaged into the blur itself, so it reads as background and survives; measured against the reconstruction, it stands at its true height.",
                 "filling": "What the tool then knows is not where a hole is but how strongly the mark covers each pixel. A watermark is not a hole: it is white laid over the footage at a strength that falls from the core to nothing, so the observed pixel is (1 − a) × footage + a × white. With the opacity a known per pixel and the white known, that equation has one unknown left, and rearranging it hands back the footage exactly — grain, texture, gradient and all. Only the few pixels at the very centre, where the mark is effectively solid and the division stops being stable, have nothing left to recover; those are rebuilt from the pixels around them by a harmonic fill, after the rest has already been cleaned, so what they read from is real footage rather than leftover glow.",
+                "wordmark": "A logo with a name beside it, such as the one Qwen signs with, is found a different way. It is several shapes rather than one, so the tool looks for a row of them standing at the same height above the footage — the trace of having been laid on at one opacity, which nothing in the scene shares. It then visits the same moments again and measures the mark's grey as well as its opacity, because a grey mark is lighter than a dark frame and darker than a bright one, and assuming white would leave a ghost on whichever the clip has less of. The whole name has to be inside the box: a row that runs into the edge is taken for a caption and left alone.",
                 "tableCaption": "Every control on the video tab, what it does, and when to reach for it",
                 "colControl": "Control",
                 "colDoes": "What it does",
@@ -5323,7 +5325,7 @@
                 "uploadWhen": "Always first. A clip past the size or length ceiling is refused here rather than after a minute of work.",
                 "boxName": "Search box",
                 "boxDoes": "Drag it anywhere on the frame. Only what is inside it is ever looked at or changed.",
-                "boxWhen": "The default corner covers Gemini and Veo. Move it for a mark somewhere else.",
+                "boxWhen": "The default corner covers Gemini, Veo and Qwen. Move it for a mark somewhere else.",
                 "resizeName": "Corner and side handles",
                 "resizeDoes": "A corner handle reshapes the box from that corner and a side handle moves only that side, while the edges across from it stay put.",
                 "resizeWhen": "The mark is clipped by the box, or the box is large enough to be picking up something else.",
@@ -5368,7 +5370,7 @@
                 "title": "What this cannot do",
                 "p1": "It cannot recover what a watermark covered. There is no original underneath to find — those pixels were overwritten before the file ever reached you, and what comes back is invention, however convincing it looks.",
                 "p2": "It cannot remove an invisible watermark. Statistical marks spread across a whole image, SynthID and similar provenance signals among them, are not what this touches; masking a region says nothing about them. It also cannot repaint an animation, which is why GIF is not accepted at all.",
-                "p3": "And it cannot do very much of it. The worker accepts five uploads a minute in total across everyone using the page, not five per person, so a busy moment arrives as a rate-limit message. The model runs on a shared queue, so a single attempt can take the better part of a minute.",
+                "p3": "And it cannot do very much of it. The worker accepts five uploads a minute in total across everyone using the page, not five per person, so a busy moment arrives as a rate-limit message. It also has a daily allowance, shared the same way, and once that is spent nothing can be repainted until midnight UTC. The model runs on a shared queue, so a single attempt can take the better part of a minute.",
                 "formatNote": "JPEG, PNG and WebP, up to 10 MB, one at a time. GIF and BMP are refused because a single still repaint of an animation is not a useful answer, and SVG, AVIF and HEIC because the pipeline cannot decode them — convert to PNG or JPEG first. Both rules are checked in your browser and again on the server. The download is always a PNG whatever went in, because the composite has to be lossless to avoid re-compressing the pixels it did not change."
             },
             "privacy": {

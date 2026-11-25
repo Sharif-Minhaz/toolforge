@@ -46,6 +46,15 @@ import {
     OUTPUT_VIDEO_TYPE,
 } from "./video-constants";
 import { toPixelBox } from "./watermark-box";
+import {
+    addLiftSample,
+    addWordmarkSample,
+    createLiftSamples,
+    createWordmarkFit,
+    findWordmark,
+    finishWordmarkFit,
+    prefersWordmark,
+} from "./wordmark";
 
 /**
  * Containers the reader is allowed to hand over. Named one by one rather than
@@ -197,33 +206,88 @@ async function findMark(
         return failure("clean_failed", "detect: no 2d context");
     }
 
+    const { width, height } = searchBox;
+    const accumulator = createFrameAccumulator(width, height);
+    const lifts = createLiftSamples(width, height);
+
+    // Two passes at most. The first looks at the whole box and settles what the
+    // mark is; a wordmark then needs the same moments again, cut down to it, to
+    // be measured frame by frame. The bar counts both, so it never runs backwards.
+    const sampled = await sampleBox(
+        track,
+        searchBox,
+        duration,
+        context,
+        signal,
+        (pixels, ratio) => {
+            addFrameSample(accumulator, pixels);
+            addLiftSample(lifts, pixels);
+            report({ stage: "detecting", ratio: ratio / 2 });
+        },
+    );
+
+    if (!sampled) {
+        return failure("canceled");
+    }
+
+    const lone = detectWatermark(accumulator);
+    const wordmark = findWordmark(lifts);
+
+    if (wordmark === null || !prefersWordmark(wordmark, lone, width, height)) {
+        report({ stage: "detecting", ratio: 1 });
+
+        return lone.ok ? { ok: true, profile: lone.profile } : failure("mark_not_found");
+    }
+
+    const fit = createWordmarkFit(wordmark, width, height);
+    const window = {
+        ...fit.window,
+        x: searchBox.x + fit.window.x,
+        y: searchBox.y + fit.window.y,
+    };
+    const measured = await sampleBox(track, window, duration, context, signal, (pixels, ratio) => {
+        addWordmarkSample(fit, pixels);
+        report({ stage: "detecting", ratio: (1 + ratio) / 2 });
+    });
+
+    return measured
+        ? { ok: true, profile: finishWordmarkFit(fit, width, height) }
+        : failure("canceled");
+}
+
+/**
+ * Hands over one rectangle of the picture at moments spread across the clip.
+ * `false` means the reader stopped it part-way.
+ */
+async function sampleBox(
+    track: InputVideoTrack,
+    box: PixelBox,
+    duration: number,
+    context: CanvasRenderingContext2D,
+    signal: AbortSignal | undefined,
+    onSample: (pixels: Uint8ClampedArray, ratio: number) => void,
+): Promise<boolean> {
     const sink = new CanvasSink(track, { poolSize: 2 });
-    const accumulator = createFrameAccumulator(searchBox.width, searchBox.height);
     const timestamps = sampleTimestamps(duration, DETECT_SAMPLE_COUNT);
     let seen = 0;
 
     for await (const wrapped of sink.canvasesAtTimestamps(timestamps)) {
         if (signal?.aborted === true) {
-            return failure("canceled");
+            return false;
         }
 
         seen += 1;
-        report({ stage: "detecting", ratio: clamp01(seen / timestamps.length) });
 
-        if (wrapped === null) {
-            continue;
+        if (wrapped !== null) {
+            context.drawImage(wrapped.canvas, -box.x, -box.y);
+            onSample(
+                context.getImageData(0, 0, box.width, box.height).data,
+                clamp01(seen / timestamps.length),
+            );
         }
-
-        context.drawImage(wrapped.canvas, -searchBox.x, -searchBox.y);
-        addFrameSample(
-            accumulator,
-            context.getImageData(0, 0, searchBox.width, searchBox.height).data,
-        );
     }
 
-    const detection = detectWatermark(accumulator);
-
-    return detection.ok ? { ok: true, profile: detection.profile } : failure("mark_not_found");
+    return true;
 }
 
 /**

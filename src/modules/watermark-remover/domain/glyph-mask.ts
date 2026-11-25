@@ -849,6 +849,7 @@ export function filledProfile(width: number, height: number): WatermarkProfile {
         halo: new Float32Array(width * height * 3),
         coverage: 1,
         peak: 0,
+        neutral: null,
     };
 }
 
@@ -1143,6 +1144,7 @@ export function detectWatermark(accumulator: FrameAccumulator): WatermarkDetecti
                       ),
             coverage,
             peak: measured.peak,
+            neutral: null,
         },
     };
 }

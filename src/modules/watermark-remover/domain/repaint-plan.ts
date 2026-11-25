@@ -1,6 +1,7 @@
 import type { PixelBox, PixelSize, WatermarkProfile } from "../types";
-import { cropAlpha, cropChannels, maskBounds } from "./glyph-mask";
+import { cropAlpha, cropChannels, cropMask, maskBounds } from "./glyph-mask";
 import { rebuildHoles, relaxationPassesFor, removeOverlay } from "./inpaint";
+import { outlineOf, removeNeutralOverlay, type NeutralOverlay } from "./neutral-overlay";
 import { INPAINT_MARGIN_PX } from "./video-constants";
 import { expandPixelBox } from "./watermark-box";
 
@@ -16,10 +17,12 @@ import { expandPixelBox } from "./watermark-box";
 export type RepaintPlan = {
     /** The rectangle actually written to, in the source picture's own pixels. */
     readonly work: PixelBox;
-    /** The profile's three maps, cropped to `work`. */
+    /** The profile's maps, cropped to `work`. */
     readonly alpha: Float32Array;
     readonly rebuild: Float32Array;
     readonly halo: Float32Array;
+    /** The same mark for `removeNeutralOverlay`, when its colour was measured. */
+    readonly neutral: NeutralOverlay | null;
     /** Relaxation sweeps, sized to the hole this particular mark leaves. */
     readonly passes: number;
 };
@@ -79,6 +82,32 @@ export function planRepaint(
     const rebuild = cropAlpha(profile.rebuild, searchBox.width, searchBox.height, window);
     const halo = cropChannels(profile.halo, searchBox.width, searchBox.height, window);
 
+    if (profile.neutral !== null) {
+        const touched = cropMask(profile.touched, searchBox.width, searchBox.height, window);
+
+        return {
+            work,
+            alpha,
+            rebuild,
+            halo,
+            neutral: {
+                alpha,
+                chroma: cropAlpha(
+                    profile.neutral.chroma,
+                    searchBox.width,
+                    searchBox.height,
+                    window,
+                ),
+                color: profile.neutral.color,
+                touched,
+                outline: outlineOf(alpha, work.width, work.height),
+            },
+            // Its strokes are far thinner than it is tall, so its height is
+            // already more sweeps than its widest hole needs.
+            passes: relaxationPassesFor(Math.min(bounds.width, bounds.height)),
+        };
+    }
+
     // Sized here rather than per sample, from the solid core this mark actually
     // has. A constant is right for a thin sparkle and far too few sweeps for a
     // fat one, and an under-converged fill is a visible patch.
@@ -89,12 +118,19 @@ export function planRepaint(
         alpha,
         rebuild,
         halo,
+        neutral: null,
         passes: relaxationPassesFor(core === null ? 0 : Math.max(core.width, core.height)),
     };
 }
 
 /** Applies a plan to one rectangle of RGBA, in place. The plan's own geometry. */
 export function applyRepaint(patch: Uint8ClampedArray, plan: RepaintPlan): void {
+    if (plan.neutral !== null) {
+        removeNeutralOverlay(patch, plan.work.width, plan.work.height, plan.neutral, plan.passes);
+
+        return;
+    }
+
     removeOverlay(
         patch,
         plan.work.width,

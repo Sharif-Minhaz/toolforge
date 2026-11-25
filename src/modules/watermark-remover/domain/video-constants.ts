@@ -587,3 +587,95 @@ export const BOX_OUTLINE_COLOR = "rgba(255, 62, 116, 0.95)";
 export const BOX_FILL_COLOR = "rgba(255, 62, 116, 0.12)";
 export const BOX_HANDLE_COLOR = "rgba(255, 255, 255, 0.95)";
 export const BOX_HANDLE_RING_COLOR = "rgba(0, 0, 0, 0.55)";
+
+/**
+ * How wide a structure the wordmark finder keeps, as a share of the box's shorter
+ * side either way. Anything wider than twice this and a pixel is opened away as
+ * scenery.
+ *
+ * Two, because the two ends pull apart: the wide one holds the fattest part of a
+ * logo in the snuggest box a reader would draw, and the narrow one parts a mark
+ * from soft scenery in a generous box. The finder takes whichever shows more mark.
+ */
+export const WORDMARK_OPENING_RATIOS = [0.12, 0.2] as const;
+
+/**
+ * Lift thresholds the glyphs are looked for at, in 0–255 luma, faintest first.
+ *
+ * A ladder because no single one works: a faint mark needs a low one, and a low
+ * one fuses a strong mark's letters to whatever soft scenery is beside them. The
+ * finder takes the rung that shows the most mark.
+ */
+export const WORDMARK_LEVELS = [6, 10, 16, 24, 36, 54] as const;
+
+/** A glyph smaller than this, in pixels, is a speck and not a letter. */
+export const WORDMARK_MIN_GLYPH_PIXELS = 12;
+
+/**
+ * What makes a blob a glyph: a plateau. Its brightest tenth stands this many
+ * times above the threshold that found it, and its median sits at least this
+ * share of the way up to that tenth.
+ *
+ * Both are needed. Scenery fades into its surroundings, so its median is far
+ * below its peak; and scenery that barely clears the threshold is flat only
+ * because everything lower was cut off.
+ */
+export const WORDMARK_MIN_STAND = 1.5;
+export const WORDMARK_MIN_FLATNESS = 0.8;
+
+/** How far apart two glyphs of one mark may be, as a share of the taller one's height. */
+export const WORDMARK_LINK_GAP_RATIO = 0.6;
+
+/** How alike the lift of two neighbouring glyphs has to be. One mark is one opacity. */
+export const WORDMARK_LINK_LIFT_RATIO = 0.75;
+
+/** Fewer glyphs than this is not a row, and the sparkle's detector answers instead. */
+export const WORDMARK_MIN_GLYPHS = 3;
+
+/** A row of glyphs is at least this many times wider than it is tall. */
+export const WORDMARK_MIN_ASPECT = 1.4;
+
+/**
+ * How far past the glyphs the mark's fringe reaches, as a share of the row's
+ * height, and the floor under it. The fringe is the anti-aliasing plus the
+ * ringing a codec leaves around a hard edge.
+ */
+export const WORDMARK_FRINGE_RATIO = 0.08;
+export const WORDMARK_MIN_FRINGE_PX = 3;
+
+/** How far in from a glyph's edge its opacity is taken to be the mark's own, in pixels. */
+export const WORDMARK_CORE_EROSION_PX = 1;
+
+/** Radius the colour opacity is smoothed over, in pixels: one colour sample is two wide. */
+export const WORDMARK_CHROMA_BLUR_PX = 1;
+
+/**
+ * How much the background under the mark has to move across the clip, as a
+ * standard deviation in 0–255 levels, before the mark's colour can be read off
+ * it — and the slope past which there is too little mark to read one from.
+ */
+export const WORDMARK_MIN_COLOR_SPREAD = 12;
+export const WORDMARK_MAX_SLOPE = 0.95;
+
+/** How big a step in opacity, as a share of the mark's own, puts a pixel on a glyph's outline. */
+export const NEUTRAL_OUTLINE_STEP = 0.25;
+
+/**
+ * How far apart the recovered and the filled picture may sit, in 0–255 levels
+ * averaged over a small neighbourhood, for the difference to be the codec's
+ * ringing — and how far before it has to be the footage itself.
+ *
+ * Measured by planting a known mark on a real clip's own footage and cleaning it.
+ * Lower leaves the letters' outlines standing on the clip somebody complained
+ * about; higher starts filling over texture the recovery had right.
+ */
+export const NEUTRAL_FILL_AGREES = 6;
+export const NEUTRAL_FILL_DISAGREES = 14;
+export const NEUTRAL_FILL_RADIUS_PX = 4;
+
+/**
+ * How close to the middle of the box a lone mark has to sit to outrank a row of
+ * glyphs elsewhere in it, as a share of the box's shorter side. The default box
+ * is centred on the sparkle, so a sparkle beside a caption is always this close.
+ */
+export const LONE_MARK_CENTRE_RATIO = 0.12;

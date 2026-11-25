@@ -9,6 +9,7 @@ import {
     MAX_UPSTREAM_ERROR_LENGTH,
     REMOVAL_TIMEOUT_MS,
 } from "../domain/constants";
+import { classifyUpstreamFailure } from "../domain/upstream-failure";
 import type { WatermarkFailureReason } from "../types";
 
 export type WatermarkWorkerResult =
@@ -44,27 +45,6 @@ async function readErrorDetail(response: Response): Promise<string> {
     } catch {
         return "";
     }
-}
-
-/** HTTP status → the reason the reader is shown. */
-function describeStatus(status: number): WatermarkFailureReason {
-    if (status === 401 || status === 403) {
-        return "unauthorized";
-    }
-
-    if (status === 429) {
-        return "rate_limited";
-    }
-
-    if (status === 413) {
-        return "too_large";
-    }
-
-    if (status === 415) {
-        return "unsupported_type";
-    }
-
-    return status >= 400 && status < 500 ? "invalid_request" : "upstream_unavailable";
 }
 
 /**
@@ -109,12 +89,13 @@ export async function requestWatermarkRemoval(
         });
 
         if (!response.ok) {
-            const reason = describeStatus(response.status);
+            const detail = await readErrorDetail(response);
+            const reason = classifyUpstreamFailure(response.status, detail);
 
             logEvent("warn", "watermark_remover.upstream_rejected", {
                 status: response.status,
                 reason,
-                detail: await readErrorDetail(response),
+                detail,
             });
 
             return { ok: false, reason };

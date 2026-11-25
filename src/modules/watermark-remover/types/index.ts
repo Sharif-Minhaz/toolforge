@@ -62,6 +62,7 @@ export const WATERMARK_FAILURE_REASONS = [
     "challenge_required",
     "challenge_failed",
     "rate_limited",
+    "quota_exhausted",
     "unauthorized",
     "not_configured",
     "upstream_unavailable",
@@ -190,6 +191,13 @@ export type WatermarkProfile = {
     readonly coverage: number;
     /** How far the brightest found pixel stood above its surroundings, in luma. */
     readonly peak: number;
+    /**
+     * What a mark measured across the frames adds: the grey it is drawn in, and
+     * how much of the footage's *colour* it covers, which along a thin stroke is
+     * less than how much of the brightness. `null` for a mark assumed to be white,
+     * where `alpha` stands for both.
+     */
+    readonly neutral: { readonly color: number; readonly chroma: Float32Array } | null;
 };
 
 export type WatermarkDetection =

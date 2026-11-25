@@ -265,6 +265,7 @@ export async function WatermarkRemoverArticle() {
                         <p>{t("video.intro")}</p>
                         <p>{t("video.finding")}</p>
                         <p>{t("video.filling")}</p>
+                        <p>{t("video.wordmark")}</p>
                     </div>
 
                     <div className="ring-border/80 mt-5 overflow-x-auto rounded-xl ring-1 ring-inset">
