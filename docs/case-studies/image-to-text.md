@@ -54,18 +54,41 @@ same step:
 - scales it down past `MAX_RECOGNITION_PIXELS` (8.3 MP, a 4K screenshot) instead
   of refusing it
 
-## The download size is copy, so it is measured
+## The download size is measured, not estimated
 
-The disclosure above the controls names the size of the first download for the
-chosen language. The numbers in `domain/constants.ts` come from jsDelivr's
-manifest, not from an estimate:
+The article and the FAQ say a first read downloads 7 to 9 MB. That range comes
+from jsDelivr's manifest — the 3.9 MB core plus the language's
+`4.0.0_best_int` data and English's — not from a guess:
 
 ```bash
 curl -s "https://data.jsdelivr.com/v1/packages/npm/@tesseract.js-data/<code>@1.0.0?structure=flat"
 curl -s "https://data.jsdelivr.com/v1/packages/npm/tesseract.js-core@7.0.0?structure=flat"
 ```
 
-Upgrading `tesseract.js` or its data packages means reading these again.
+Upgrading `tesseract.js` or its data packages means reading these again. The
+figure used to sit above the controls as well; it was removed at the user's
+request. That is allowed because rule 32 is about the promise that nothing is
+uploaded, and the picture still never leaves the tab — only the engine comes in.
+
+## Many pictures, one worker, and edits that survive
+
+Up to `MAX_IMAGES` (20) pictures are read by `recognizeImages`, one after
+another, through a **single** worker: starting one costs seconds, and a batch of
+twenty would otherwise spend most of its time booting. A picture that fails
+(an undecodable file, a crashed read) is reported through `onResult` and the batch
+goes on. The promise itself fails only when the engine would not start or went
+quiet, and every picture still unread then shows that reason.
+
+The box shows `combineTexts(sections)`: one picture's text alone, or with
+several pictures, each one's text under a `── n · name ──` heading. The number is
+there because two pasted pictures are both called `pasted-image.png`. That
+derived text holds only **until the reader types**. From then on the box is
+theirs, and a newly read picture is appended to it with `appendTextSection`
+rather than rebuilding the whole box over their corrections. Read all again is
+the one control that replaces edits, and the article says so.
+
+Adding pictures is disabled while a batch runs. That avoids queueing a second
+batch behind the first, with its own worker and its own numbering.
 
 ## The box is written in the language it was read in
 
@@ -88,6 +111,6 @@ reason is recorded in `mcp/tools/index.ts` and on `/mcp`.
 ## What `bun test` cannot reach
 
 The language table, the text tidy-up, progress mapping, the stall watchdog and
-the pixel fit are all tested. `recognizeImage` itself (worker, canvas, CDN) is
+the pixel fit, the combining of several pictures' text are all tested. `recognizeImages` itself (worker, canvas, CDN) is
 not: Bun has neither a canvas nor a browser worker. It has to be checked in a
 browser, once per language family: Latin, an Indic script, Arabic, CJK.

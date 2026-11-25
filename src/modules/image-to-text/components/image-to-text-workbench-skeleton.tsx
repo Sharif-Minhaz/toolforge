@@ -15,9 +15,6 @@ export function ImageToTextWorkbenchSkeleton() {
                 <Skeleton className="h-4 w-96 max-w-full" />
             </div>
 
-            {/* The download disclosure. */}
-            <Skeleton className="h-16 w-full rounded-xl" />
-
             {/* The language picker. */}
             <div className="grid gap-3 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">

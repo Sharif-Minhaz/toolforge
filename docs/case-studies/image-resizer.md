@@ -439,6 +439,54 @@ no `IMAGE_IMPORT_IP_SALT` means no URL field at all, on any of the six — not a
 field that errors when pressed. Everything else about every one of those tools
 keeps working, because nothing else about them ever touches the network.
 
+## A batch shares settings, never hand edits
+"I may want to resize multiple images at once" arrived after everything above,
+and the tool is built around one decoded picture with an undo stack. The batch
+is the compressor's shape — `ImageDropzone multiple`, `ImageQueueHeader`, a row
+per file, `buildZipArchive` — laid over that rather than replacing it.
+
+**One picture is still the editor, exactly.** Every pick _adds_, up to
+`MAX_FILES`; the first file is decoded into `Loaded` as before, and a batch cut
+back to one decodes the survivor so the editor comes back. Start over is what
+replaces. That is the one change a single-picture reader can notice: a second
+drop used to swap the picture and now adds to it, and the dropzone says "Add
+more pictures" once something is loaded so the press says what it does.
+
+**Crop, turn, flip and undo are hidden while several are loaded**, with a line
+under the frame saying so. A crop box is placed by hand on one picture's pixels;
+it means nothing on nineteen others of different sizes, and applying it to "the
+selected one only" would make a batch whose members were each treated
+differently with nothing on screen saying which. What a batch _can_ share is
+the shape lock, so `batchCrop` cuts every picture to the largest centred box of
+that shape — the same box the single-picture switch lands on from an untouched
+frame. The picture that was open before the others joined keeps its applied
+edits: `renderItem` reads its `Loaded.pixels` rather than re-decoding the file,
+because discarding work the reader already did is worse than a rule with one
+exception.
+
+**A linked side is left blank in a batch, not filled in.** Out of a batch the
+chain derives the other side from the crop's shape. In one it would derive it
+from whichever picture is in the frame and force every other picture into that
+box — padding every portrait in a set of landscapes. Leaving it blank is what
+"keep the shape" means per picture.
+
+**A control stays live while it applies to any member.** Under `original` a
+JPEG stays a JPEG and a PNG stays a PNG, so the quality slider is live if any
+picture will be lossy, not only the one in the frame. Background and fit stay
+live throughout, because nothing is decoded until the press and transparency
+and shape are therefore unknown — and an unknown fails open toward a working
+control.
+
+**Nothing is decoded until a download is pressed, and then one at a time.**
+Rows hold the `File` and a measured size; the frame previews the selected row
+by layout alone (`previewLayout` never needed pixels). A row's download renders
+it under whatever the panel says at that moment, so there is no cached result
+to go stale. Download all reads each finished blob into bytes as soon as it
+exists and lets the blob go, so the tab holds one copy of every output rather
+than two — which is still why `MAX_FILES` is 20 rather than the compressor's
+40: a resize can make a file far larger than its source, and every output is
+held until the ZIP is written.
+
 ## Related
 
 - [`image-codecs.md`](image-codecs.md) — the encoder layer this tool drives, and

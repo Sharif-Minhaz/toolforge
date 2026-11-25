@@ -22,32 +22,15 @@ export const MAX_RECOGNITION_PIXELS = 8_300_000;
  */
 export const STALL_MS = 120_000;
 
+/**
+ * Pictures held at once. They are read one after another by a single worker,
+ * so the ceiling is the previews' memory and a reader's patience, not the engine.
+ */
+export const MAX_IMAGES = 20;
+
 export const IMAGE_FILE_LIMITS = {
     allowedTypes: DECODABLE_IMAGE_TYPES,
     maxBytes: MAX_IMAGE_BYTES,
 } as const satisfies { allowedTypes: readonly DecodableImageType[]; maxBytes: number };
 
 export const IMAGE_ACCEPT_ATTRIBUTE = DECODABLE_IMAGE_TYPES.join(",");
-
-/**
- * Gzipped `4.0.0_best_int` traineddata as jsDelivr serves it, read from
- * `data.jsdelivr.com/v1/packages/npm/@tesseract.js-data/<code>@1.0.0?structure=flat`
- * rather than estimated — the number is shown to the reader before they commit.
- */
-export const LANGUAGE_DATA_BYTES: Record<OcrLanguage, number> = {
-    eng: 2_952_873,
-    spa: 2_100_190,
-    hin: 1_389_692,
-    ben: 1_373_429,
-    ara: 1_661_906,
-    chi_sim: 1_718_768,
-    chi_tra: 1_656_239,
-    jpn: 2_030_256,
-};
-
-/**
- * `tesseract.js@7.0.0`'s worker (111,307 bytes) plus the largest of the three
- * `tesseract.js-core@7.0.0` LSTM builds it picks between by CPU support
- * (relaxed-SIMD, 3,905,767 bytes). Same source as above.
- */
-export const ENGINE_BYTES = 111_307 + 3_905_767;

@@ -11,6 +11,14 @@ export const MAX_QUALITY = 100;
  */
 export const DEFAULT_QUALITY = 92;
 
+/**
+ * Half the compressor's 40. A batch is decoded one picture at a time, but every
+ * finished file is held until the ZIP is written, and a resize can make a file
+ * far larger than its source — twenty 40 MP PNGs is already more than a tab
+ * holds comfortably.
+ */
+export const MAX_FILES = 20;
+
 /** Per file. Everything is decoded in this tab, so the ceiling is memory. */
 export const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
 

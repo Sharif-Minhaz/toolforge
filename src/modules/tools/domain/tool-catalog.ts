@@ -936,6 +936,8 @@ const TOOLS: readonly Tool[] = [
             "crop image",
             "image cropper",
             "crop photo",
+            "batch resize images",
+            "bulk image resizer",
             "passport photo",
             "passport size photo",
             "45x55",

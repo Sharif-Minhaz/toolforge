@@ -290,7 +290,7 @@
         },
         "image-to-text": {
             "name": "Image to Text (OCR)",
-            "description": "Pull the text out of a photo, scan or screenshot — English, Spanish, Hindi, Bangla, Arabic, Chinese or Japanese — and edit it in the box before you copy. The picture is read in your browser."
+            "description": "Pull the text out of photos, scans or screenshots — several at once, in English, Spanish, Hindi, Bangla, Arabic, Chinese or Japanese — and edit it in the box before you copy. Pictures are read in your browser."
         },
         "related": {
             "title": "Popular tools",
@@ -5699,12 +5699,12 @@
     "imageToText": {
         "meta": {
             "title": "Image to Text (OCR) — read the text in a picture, in your browser",
-            "description": "Extract text from a photo or screenshot in English, Spanish, Hindi, Bangla, Arabic, Chinese or Japanese, and edit it before you copy. The picture is read in your browser and never uploaded."
+            "description": "Extract text from photos and screenshots — several at once — in English, Spanish, Hindi, Bangla, Arabic, Chinese or Japanese, and edit it before you copy. Pictures are read in your browser and never uploaded."
         },
         "hero": {
             "eyebrow": "Image to Text",
             "title": "Image to Text (OCR)",
-            "subtitle": "Drop in a photo, a scan or a screenshot and get its text back in a box you can edit — fix a misread letter, drop a line you do not need — before you copy it. Eight languages, from Bangla and Hindi to Arabic, Chinese and Japanese, with English read alongside each. The picture is read in this tab and never uploaded.",
+            "subtitle": "Drop in photos, scans or screenshots — one, or many at once — and get their text back in a box you can edit, each picture's text under its own heading and the pictures shown large beside it so you can check what was read. Fix a misread letter, drop a line you do not need, then copy. Eight languages, from Bangla and Hindi to Arabic, Chinese and Japanese, with English read alongside each. The pictures are read in this tab and never uploaded.",
             "badgeLanguages": "8 languages · 6 scripts",
             "badgeLocal": "Picture never uploaded",
             "badgeEditable": "Edit before you copy"
@@ -5728,24 +5728,30 @@
             "languageLabel": "Language of the text",
             "languageHint": "English mixed into the picture is read too, whichever language you pick.",
             "languageOption": "{name} — {endonym}",
-            "dropTitle": "Drop a picture here, or click to choose one",
-            "dropHint": "PNG, JPEG, WebP, AVIF, GIF or BMP, up to {limit}.",
-            "downloadTitle": "The reader is downloaded, your picture is not",
-            "downloadNote": "The first {language} read downloads the text engine and its language data — about {size} — from jsDelivr, and this browser keeps them for next time. The picture is read in this tab and never leaves it.",
-            "statusPick": "Add a picture to read its text.",
+            "dropTitle": "Drop pictures here, or click to choose them",
+            "dropHint": "PNG, JPEG, WebP, AVIF, GIF or BMP, up to {limit} each. Add up to {count, number} at once.",
+            "statusPick": "Add one or more pictures to read their text.",
             "statusPreparing": "Preparing the picture…",
             "statusLoading": "Loading the text engine… {percent}",
-            "statusRecognizing": "Reading the text… {percent}",
-            "statusDone": "Text read. Edit it below, then copy.",
+            "statusRecognizing": "Reading picture {current, number} of {total, number}… {percent}",
+            "statusDone": "Text read. Edit it in the box, then copy.",
             "statusEmpty": "No text found. Try a sharper, larger picture, or check the language.",
             "sourceSize": "{width} × {height}",
-            "previewAlt": "The picture being read",
-            "readAgain": "Read again",
-            "clear": "Clear",
+            "previewAlt": "Picture {position, number}: {name}",
+            "readAgain": "Read all again",
+            "clear": "Clear all",
             "resultLabel": "Extracted text",
             "resultPlaceholder": "No text was found. You can still type here.",
             "counts": "{characters, plural, one {# character} other {# characters}} · {lines, plural, one {# line} other {# lines}}",
-            "copy": "Copy text"
+            "copy": "Copy text",
+            "statusPartial": "{failed, plural, one {# picture} other {# pictures}} of {total, number} could not be read — the reason is under each one.",
+            "imageQueued": "Waiting its turn",
+            "imageReading": "Reading… {percent}",
+            "imageDone": "{characters, plural, one {# character} other {# characters}} read",
+            "imageEmpty": "No text found",
+            "rejected": "{name}: {problem}",
+            "picturesLabel": "{count, plural, one {# picture} other {# pictures}}",
+            "resultWaiting": "The text appears here as each picture is read."
         },
         "errors": {
             "empty_file": "That file is empty.",
@@ -5754,7 +5760,8 @@
             "undecodable": "This browser could not open that picture. The file may be damaged.",
             "engine_unavailable": "The text engine could not be downloaded. Check your connection, or whether something is blocking cdn.jsdelivr.net, and try again.",
             "stalled": "The text engine stopped responding. Try again, or try a smaller picture.",
-            "recognition_failed": "Reading the picture failed. Try again, or try a different picture."
+            "recognition_failed": "Reading the picture failed. Try again, or try a different picture.",
+            "too_many": "Only {limit, number} pictures can be read at once; this one was left out."
         },
         "toast": {
             "copied": "Text copied.",
@@ -5786,8 +5793,8 @@
                         "when": "Always, before adding the picture. A wrong choice does not fail — it reads the wrong alphabet."
                     },
                     "readAgain": {
-                        "name": "Read again",
-                        "what": "Reads the same picture again in the language now chosen. It replaces what is in the box, edits included.",
+                        "name": "Read all again",
+                        "what": "Reads every picture again in the language now chosen. It replaces what is in the box, edits included.",
                         "when": "You picked the wrong language, or want to undo your edits."
                     },
                     "copy": {
@@ -5796,12 +5803,12 @@
                         "when": "You have finished correcting the text."
                     },
                     "clear": {
-                        "name": "Clear",
-                        "what": "Removes the picture and the text.",
+                        "name": "Clear all",
+                        "what": "Removes every picture and the text.",
                         "when": "Starting over with another picture."
                     }
                 },
-                "p2": "Adding a picture starts a read straight away and replaces the box. Pasting a picture with <code>Ctrl+V</code>, or giving a public link, works the same as dropping a file.",
+                "p2": "Add up to {count, number} pictures — drop or choose several, paste with <code>Ctrl+V</code>, or give a public link. They are read one after another, and each one's text is added to the end of the box under a heading with its number and file name, so edits you made to earlier text are kept. More pictures can be added once the current ones are read.",
                 "tableCaption": "What each control does, and when to reach for it"
             },
             "languages": {
@@ -5889,6 +5896,10 @@
                     "mixed": {
                         "question": "Can it read a picture with two languages?",
                         "answer": "English is read alongside every language, so Bangla with English words in it, or Arabic with English brand names, works in one read. For two languages other than English, read the picture twice, once in each."
+                    },
+                    "several": {
+                        "question": "Can I read several pictures at once?",
+                        "answer": "Yes — up to {count, number} in one go, read one after another by a single copy of the engine. Each picture's text lands in the box under a heading with its number and file name, in the order you added them, with the pictures shown beside it to check against."
                     },
                     "pdf": {
                         "question": "Does it read a PDF?",
@@ -8410,21 +8421,21 @@
     "imageResizer": {
         "meta": {
             "title": "Image Resizer & Cropper — crop to any ratio, resize in px, %, inches or mm",
-            "description": "Drag out the part you want to keep, then size it in pixels, as a percentage, or in millimetres at a print resolution. Passport presets including Bangladesh's 45 × 55 mm, social and print sizes, and a crop that copies pixels instead of resampling them. Runs in your browser."
+            "description": "Drag out the part you want to keep, then size it in pixels, as a percentage, or in millimetres at a print resolution. Passport presets including Bangladesh's 45 × 55 mm, social and print sizes, and a crop that copies pixels instead of resampling them. Resizes a whole batch at once. Runs in your browser."
         },
         "hero": {
             "eyebrow": "Image Resizer",
             "title": "Image Resizer & Cropper",
-            "subtitle": "Drag out the part you want to keep, then give the result a size — in pixels, as a percentage, or in millimetres at a print resolution. A crop taken at its own size copies the pixels rather than resampling them, so nothing is softened that did not have to be.",
+            "subtitle": "Drag out the part you want to keep, then give the result a size — in pixels, as a percentage, or in millimetres at a print resolution. A crop taken at its own size copies the pixels rather than resampling them, so nothing is softened that did not have to be. Pick several pictures and the same size, shape and format apply to all of them, downloaded as one ZIP.",
             "badgeCodecs": "MozJPEG · libwebp · libaom · OxiPNG",
             "badgeOffline": "Cropping and resizing run offline",
             "badgePassport": "Passport 45 × 55 mm"
         },
         "workbench": {
             "title": "Crop and resize",
-            "description": "Pick a picture, drag the box over the part you want, then choose a size for the result.",
-            "dropTitle": "Drop a picture, or click to choose one",
-            "dropHint": "JPG, PNG, WebP, AVIF, GIF or BMP, up to {limit}",
+            "description": "Pick a picture, drag the box over the part you want, then choose a size for the result — or pick several and size them all at once.",
+            "dropTitle": "Drop one picture or several, or click to choose",
+            "dropHint": "JPG, PNG, WebP, AVIF, GIF or BMP · up to {limit} each · {count} at a time",
             "statusIdle": "Nothing loaded yet.",
             "statusReady": "Ready — {width} × {height} px selected.",
             "statusWorking": "Working…",
@@ -8547,7 +8558,21 @@
             "angleTooLarge": "Rotated, this picture would pass {count} megapixels. Resize it down first.",
             "cropCancel": "Cancel",
             "resultAlt": "The picture at the size and shape Export will write it",
-            "settingsLockedHint": "The size settings are on hold while you crop — apply the crop or cancel it to reach them again. The shape lock below still works."
+            "settingsLockedHint": "The size settings are on hold while you crop — apply the crop or cancel it to reach them again. The shape lock below still works.",
+            "dropMoreTitle": "Add more pictures",
+            "downloadAll": "Download all (ZIP)",
+            "downloadingAll": "Resizing {done} of {total}…",
+            "statusBatchWorking": "Resizing {done} of {total}. Leave this tab open.",
+            "statusBatchReady": "{count, plural, =1 {# picture} other {# pictures}} loaded — every setting applies to all of them.",
+            "statusBatchFailed": "{count, plural, =1 {# picture} other {# pictures}} could not be resized — the list says why.",
+            "batchSummary": "The picture shown comes out at {width} × {height} px as {format}.",
+            "batchHint": "Download all applies these settings to every picture and saves one ZIP; each row also downloads on its own. Crop, rotate and flip work on one picture at a time — remove the others to reach them. A picture you had already cropped or turned keeps that.",
+            "ratioHintBatch": "Every picture is cut to the largest centred box of this shape. Free keeps each one whole.",
+            "lockAspectHintBatch": "Linked: type one side and every picture keeps its own shape.",
+            "rowSelect": "Preview {name}",
+            "rowWorking": "Resizing…",
+            "rowDownload": "Download {name}",
+            "rowRemove": "Remove {name}"
         },
         "formats": {
             "original": "Original",
@@ -8569,7 +8594,8 @@
             "undecodable": "That file could not be decoded. It may be truncated or misnamed.",
             "empty_crop": "The crop is empty. Drag out an area first.",
             "output_too_large": "That would produce an image over {count} megapixels. Ask for a smaller size.",
-            "encode_failed": "The encoder could not write that file."
+            "encode_failed": "The encoder could not write that file.",
+            "too_many_files": "Only {count} pictures can be loaded at once."
         },
         "toast": {
             "downloaded": "Saved {filename}",
@@ -8577,7 +8603,9 @@
             "cropped": "Cropped to {width} × {height}.",
             "rotated": "Rotated — now {width} × {height}.",
             "flippedHorizontal": "Flipped left to right.",
-            "flippedVertical": "Flipped top to bottom."
+            "flippedVertical": "Flipped top to bottom.",
+            "rejected": "{count, plural, =1 {# file was skipped} other {# files were skipped}}",
+            "archiveFailed": "The archive could not be built."
         },
         "toc": {
             "title": "On this page"
@@ -8677,7 +8705,10 @@
                 "undoWhen": "You cropped too far. Every crop you have applied is on the stack, so you can walk all the way back to the file you opened.",
                 "exportName": "Export",
                 "exportDoes": "Encodes the picture at the size and format chosen and saves the file. There is no preview step — the line under the buttons already says what will come out.",
-                "exportWhen": "You are done."
+                "exportWhen": "You are done.",
+                "batchName": "Several pictures",
+                "batchDoes": "Pick or drop more than one and they are listed under the intake. Every setting applies to all of them: the shape lock cuts each to the largest centred box of that shape, and a linked width or height leaves the other side blank so each picture keeps its own shape. Download all writes one ZIP, and each row downloads on its own. Crop, rotate, flip and undo work on one picture at a time, so they are hidden while several are loaded.",
+                "batchWhen": "A set of photographs all need the same size or format — product shots, or a form's worth of ID photos."
             },
             "quality": {
                 "title": "What actually costs you quality",
@@ -8687,7 +8718,7 @@
             },
             "limits": {
                 "title": "Limits",
-                "body": "One file at a time, up to {bytes} and {pixels} megapixels — four bytes a pixel is what has to fit in the tab, and a small file can hold a very large picture. The output is capped at the same megapixel count, because a tiny crop enlarged to twenty thousand pixels square asks for more memory than the source ever did. Fetching a picture by its address is capped lower still, at {remote}, since those bytes cross the network twice."
+                "body": "Up to {count} files at a time, each up to {bytes} and {pixels} megapixels — four bytes a pixel is what has to fit in the tab, and a small file can hold a very large picture. A batch is decoded one picture at a time, but every finished file is held until the ZIP is written, which is why the count is lower than the Image Compressor's. The output is capped at the same megapixel count, because a tiny crop enlarged to twenty thousand pixels square asks for more memory than the source ever did. Fetching a picture by its address is capped lower still, at {remote}, since those bytes cross the network twice."
             },
             "privacy": {
                 "title": "What leaves your browser",
@@ -8709,7 +8740,9 @@
                 "q6": "What happens to a picture with a transparent background?",
                 "a6": "It keeps its transparency in PNG, WebP and AVIF. JPEG has no alpha channel at all, so anything transparent is flattened onto the background colour on the way in — which is why that colour stays live even when nothing is being padded.",
                 "q7": "Is anything uploaded?",
-                "a7": "Only if you paste a picture's address, and only that address. Everything else — the file you choose, the crop, the resize, the encode — happens in this tab."
+                "a7": "Only if you paste a picture's address, and only that address. Everything else — the file you choose, the crop, the resize, the encode — happens in this tab.",
+                "q8": "Can I resize several pictures at once?",
+                "a8": "Yes. Pick or drop up to {count, number} at once; a paste or a fetched address adds one more each time. Every setting applies to all of them, the shape lock cuts each to the largest centred box of that shape, and Download all saves one ZIP. Cropping by hand, turning and mirroring are for one picture at a time, so remove the others to reach them."
             }
         }
     },

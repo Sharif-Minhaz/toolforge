@@ -225,6 +225,7 @@ export type ResizeFailureReason =
     | "empty_file"
     | "unsupported_type"
     | "too_large"
+    | "too_many_files"
     | "too_many_pixels"
     | "undecodable"
     | "empty_crop"

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import {
     applyRatio,
+    batchCrop,
     centeredCrop,
     clampCrop,
     fullCrop,
@@ -279,5 +280,27 @@ describe("applyRatio", () => {
         expect(reshaped.y).toBeGreaterThanOrEqual(0);
         expect(reshaped.x + reshaped.width).toBeLessThanOrEqual(BOUNDS.width);
         expect(reshaped.y + reshaped.height).toBeLessThanOrEqual(BOUNDS.height);
+    });
+});
+
+describe("batchCrop", () => {
+    test("keeps the whole picture under a free shape", () => {
+        expect(batchCrop(BOUNDS, "free", null)).toEqual(fullCrop(BOUNDS));
+    });
+
+    test("keeps the whole picture under its own shape", () => {
+        expect(batchCrop(BOUNDS, "original", null)).toEqual(fullCrop(BOUNDS));
+    });
+
+    test("cuts each picture to the largest centred box of a locked shape", () => {
+        expect(batchCrop(BOUNDS, "1:1", null)).toEqual(rect(100, 0, 800, 800));
+        expect(batchCrop({ width: 300, height: 600 }, "1:1", null)).toEqual(rect(0, 150, 300, 300));
+    });
+
+    test("reads a custom shape, and falls back to the whole picture without one", () => {
+        expect(batchCrop(BOUNDS, "custom", { width: 1, height: 1 })).toEqual(
+            rect(100, 0, 800, 800),
+        );
+        expect(batchCrop(BOUNDS, "custom", null)).toEqual(fullCrop(BOUNDS));
     });
 });

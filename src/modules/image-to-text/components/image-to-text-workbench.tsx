@@ -1,6 +1,6 @@
 "use client";
 
-import { IconCloudDownload, IconRefresh, IconTrash } from "@tabler/icons-react";
+import { IconRefresh, IconTrash } from "@tabler/icons-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { CopyIconSwap } from "@/modules/tools/components/copy-button";
@@ -16,37 +15,45 @@ import { ImageDropzone } from "@/modules/tools/components/image-dropzone";
 import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
-import { ToolNotes } from "@/modules/tools/components/tool-notes";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import { copyText } from "@/modules/tools/domain/clipboard";
 import { checkImageFile } from "@/modules/tools/domain/image-file";
-import { IMAGE_ACCEPT_ATTRIBUTE, IMAGE_FILE_LIMITS, MAX_IMAGE_BYTES } from "../domain/constants";
 import {
-    firstRunBytes,
-    isRightToLeft,
-    LANGUAGE_ENDONYMS,
-    LANGUAGE_TAGS,
-} from "../domain/languages";
-import { recognizeImage } from "../domain/recognize";
-import { countText } from "../domain/text";
+    IMAGE_ACCEPT_ATTRIBUTE,
+    IMAGE_FILE_LIMITS,
+    MAX_IMAGE_BYTES,
+    MAX_IMAGES,
+} from "../domain/constants";
+import { isRightToLeft, LANGUAGE_ENDONYMS, LANGUAGE_TAGS } from "../domain/languages";
+import { recognizeImages } from "../domain/recognize";
+import { appendTextSection, combineTexts, countText, type TextSection } from "../domain/text";
 import {
     OCR_LANGUAGES,
+    type ImageRejectionReason,
     type OcrFailure,
+    type OcrFailureReason,
     type OcrLanguage,
     type OcrProgress,
-    type OcrResult,
 } from "../types";
 
+type ImageStatus =
+    | { readonly kind: "queued" }
+    | { readonly kind: "reading"; readonly progress: OcrProgress | null }
+    | { readonly kind: "done"; readonly characters: number }
+    | { readonly kind: "failed"; readonly reason: OcrFailureReason };
+
 type PickedImage = {
+    /** Bumped per pick, so React keys stay unique for two files with one name. */
+    readonly id: number;
     readonly file: File;
     readonly previewUrl: string;
+    readonly status: ImageStatus;
 };
 
-/** What the box holds, and which language it was read in — that decides its direction. */
-type ReadText = {
-    readonly language: OcrLanguage;
-    readonly text: string;
+type Rejection = {
+    readonly name: string;
+    readonly reason: ImageRejectionReason;
 };
 
 type ImageToTextWorkbenchProps = {
@@ -71,31 +78,48 @@ export function ImageToTextWorkbench({
 
     const inputId = useId();
     const statusId = useId();
+    const picturesId = useId();
     const resultId = useId();
     const countsId = useId();
 
     const [language, setLanguage] = useState<OcrLanguage>(initialLanguage);
-    const [picked, setPicked] = useState<PickedImage | null>(null);
+    const [images, setImages] = useState<readonly PickedImage[]>([]);
+    const [rejections, setRejections] = useState<readonly Rejection[]>([]);
     const [running, setRunning] = useState(false);
-    const [progress, setProgress] = useState<OcrProgress | null>(null);
-    const [failure, setFailure] = useState<OcrFailure | null>(null);
-    const [read, setRead] = useState<ReadText | null>(null);
+    const [batchFailure, setBatchFailure] = useState<OcrFailure | null>(null);
+    // What each picture read, in page order. The box shows these combined
+    // until the reader types; after that the box is theirs, and a newly read
+    // picture is appended to it rather than rebuilding it over their edits.
+    const [sections, setSections] = useState<readonly TextSection[]>([]);
+    const [edited, setEdited] = useState<string | null>(null);
+    const [readLanguage, setReadLanguage] = useState<OcrLanguage | null>(null);
 
-    // Held outside state so a new pick, Clear and unmount can all stop the
-    // run in flight, and so its late answer is recognised as stale.
+    const nextId = useRef(0);
+    // Held outside state so Clear and unmount can stop the run in flight, and
+    // so its late answers are recognised as stale.
     const runRef = useRef<AbortController | null>(null);
-    const previewRef = useRef<string | null>(null);
+    // Held outside state so the unmount cleanup sees every URL ever handed out.
+    const previewUrls = useRef(new Set<string>());
 
-    useEffect(
-        () => () => {
+    useEffect(() => {
+        const urls = previewUrls.current;
+
+        return () => {
             runRef.current?.abort();
 
-            if (previewRef.current !== null) {
-                URL.revokeObjectURL(previewRef.current);
+            for (const url of urls) {
+                URL.revokeObjectURL(url);
             }
-        },
-        [],
-    );
+
+            urls.clear();
+        };
+    }, []);
+
+    const text = edited ?? combineTexts(sections);
+    // Counted on every keystroke, undebounced: it is a walk over text already
+    // in memory, and a count that lags the box reads as wrong.
+    const counts = countText(text);
+    const boxLanguage = readLanguage ?? language;
 
     function languageLabel(code: OcrLanguage): string {
         const name = tLanguages(code);
@@ -104,139 +128,262 @@ export function ImageToTextWorkbench({
         return name === endonym ? name : t("languageOption", { name, endonym });
     }
 
-    function describeFailure(reason: OcrFailure["reason"]): string {
-        return reason === "too_large"
-            ? tErrors("too_large", { limit: byteLabel(MAX_IMAGE_BYTES) })
-            : tErrors(reason);
+    function percentOf(progress: OcrProgress): string {
+        return format.number(progress.ratio, { style: "percent", maximumFractionDigits: 0 });
+    }
+
+    function describeFailure(reason: ImageRejectionReason | OcrFailureReason): string {
+        switch (reason) {
+            case "too_large":
+                return tErrors("too_large", { limit: byteLabel(MAX_IMAGE_BYTES) });
+            case "too_many":
+                return tErrors("too_many", { limit: MAX_IMAGES });
+            default:
+                return tErrors(reason);
+        }
+    }
+
+    function describeImage(status: ImageStatus): { tone: StatusTone; message: string } {
+        switch (status.kind) {
+            case "queued":
+                return { tone: "idle", message: t("imageQueued") };
+            case "reading":
+                if (status.progress === null) {
+                    return { tone: "pending", message: t("statusPreparing") };
+                }
+
+                return {
+                    tone: "pending",
+                    message:
+                        status.progress.phase === "loading"
+                            ? t("statusLoading", { percent: percentOf(status.progress) })
+                            : t("imageReading", { percent: percentOf(status.progress) }),
+                };
+            case "done":
+                return status.characters === 0
+                    ? { tone: "warning", message: t("imageEmpty") }
+                    : {
+                          tone: "success",
+                          message: t("imageDone", { characters: status.characters }),
+                      };
+            case "failed":
+                return { tone: "error", message: describeFailure(status.reason) };
+        }
     }
 
     function describeStatus(): { tone: StatusTone; message: string } {
         if (running) {
-            if (progress === null) {
+            const index = images.findIndex((image) => image.status.kind === "reading");
+            const status = images[index]?.status;
+
+            if (status?.kind !== "reading" || status.progress === null) {
                 return { tone: "pending", message: t("statusPreparing") };
             }
 
-            const percent = format.number(progress.ratio, {
-                style: "percent",
-                maximumFractionDigits: 0,
-            });
+            const percent = percentOf(status.progress);
 
             return {
                 tone: "pending",
                 message:
-                    progress.phase === "recognizing"
-                        ? t("statusRecognizing", { percent })
-                        : t("statusLoading", { percent }),
+                    status.progress.phase === "loading"
+                        ? t("statusLoading", { percent })
+                        : t("statusRecognizing", {
+                              current: index + 1,
+                              total: images.length,
+                              percent,
+                          }),
             };
         }
 
-        if (failure !== null) {
-            return { tone: "error", message: describeFailure(failure.reason) };
+        if (batchFailure !== null) {
+            return { tone: "error", message: describeFailure(batchFailure.reason) };
         }
 
-        if (read === null) {
+        if (images.length === 0) {
             return { tone: "idle", message: t("statusPick") };
         }
 
-        return read.text.length === 0
+        const failed = images.filter((image) => image.status.kind === "failed").length;
+
+        if (failed > 0) {
+            return {
+                tone: "warning",
+                message: t("statusPartial", { failed, total: images.length }),
+            };
+        }
+
+        return text.length === 0
             ? { tone: "warning", message: t("statusEmpty") }
             : { tone: "success", message: t("statusDone") };
     }
 
-    function stopRun() {
-        runRef.current?.abort();
-        runRef.current = null;
-        setRunning(false);
-        setProgress(null);
+    function patchStatus(id: number | undefined, status: ImageStatus) {
+        setImages((list) => list.map((image) => (image.id === id ? { ...image, status } : image)));
     }
 
-    async function runRead(file: File, readLanguage: OcrLanguage) {
+    /** `offset` is how many pictures precede the batch, so headings number the whole page. */
+    async function readBatch(
+        batch: readonly PickedImage[],
+        offset: number,
+        batchLanguage: OcrLanguage,
+    ) {
         runRef.current?.abort();
 
         const run = new AbortController();
 
         runRef.current = run;
         setRunning(true);
-        setProgress(null);
-        setFailure(null);
+        setBatchFailure(null);
+        setReadLanguage(batchLanguage);
 
-        const result: OcrResult = await recognizeImage(file, readLanguage, {
-            signal: run.signal,
-            onProgress: (next) => {
-                if (!run.signal.aborted) {
-                    setProgress(next);
-                }
+        const failure = await recognizeImages(
+            batch.map((image) => image.file),
+            batchLanguage,
+            {
+                signal: run.signal,
+                onProgress: (index, progress) => {
+                    if (!run.signal.aborted) {
+                        patchStatus(batch[index]?.id, { kind: "reading", progress });
+                    }
+                },
+                onResult: (index, result) => {
+                    const image = batch[index];
+
+                    if (run.signal.aborted || image === undefined) {
+                        return;
+                    }
+
+                    if (!result.ok) {
+                        logEvent("warn", "image_to_text.read_failed", {
+                            reason: result.reason,
+                            detail: result.detail ?? null,
+                        });
+                        patchStatus(image.id, { kind: "failed", reason: result.reason });
+
+                        return;
+                    }
+
+                    const section = {
+                        position: offset + index + 1,
+                        name: image.file.name,
+                        text: result.text,
+                    };
+
+                    patchStatus(image.id, {
+                        kind: "done",
+                        characters: countText(result.text).characters,
+                    });
+                    setSections((list) => [...list, section]);
+                    setEdited((current) =>
+                        current === null ? null : appendTextSection(current, section),
+                    );
+                },
             },
-        }).catch((caught: unknown): OcrResult => ({
+        ).catch((caught: unknown): OcrFailure => ({
             ok: false,
             reason: "recognition_failed",
             detail: describeError(caught),
         }));
 
-        // A newer pick, Clear or unmount has taken over; this answer is stale.
+        // Clear or unmount has taken over; whatever this run says is stale.
         if (run.signal.aborted) {
             return;
         }
 
         runRef.current = null;
         setRunning(false);
-        setProgress(null);
 
-        if (!result.ok) {
-            logEvent("warn", "image_to_text.read_failed", {
-                reason: result.reason,
-                detail: result.detail ?? null,
+        if (failure !== null) {
+            logEvent("warn", "image_to_text.batch_failed", {
+                reason: failure.reason,
+                detail: failure.detail ?? null,
             });
-            setFailure(result);
 
-            return;
+            // The engine never got to these; they share its reason.
+            const inBatch = new Set(batch.map((image) => image.id));
+
+            setImages((list) =>
+                list.map((image) =>
+                    inBatch.has(image.id) &&
+                    (image.status.kind === "queued" || image.status.kind === "reading")
+                        ? { ...image, status: { kind: "failed", reason: failure.reason } }
+                        : image,
+                ),
+            );
+            setBatchFailure(failure);
         }
 
-        setRead({ language: readLanguage, text: result.text });
         scrollToResult();
     }
 
-    function replacePreview(next: PickedImage | null) {
-        if (previewRef.current !== null) {
-            URL.revokeObjectURL(previewRef.current);
+    function handleFiles(files: readonly File[]) {
+        if (running || files.length === 0) {
+            return;
         }
 
-        previewRef.current = next?.previewUrl ?? null;
-        setPicked(next);
+        const accepted: PickedImage[] = [];
+        const turnedAway: Rejection[] = [];
+
+        for (const file of files) {
+            const check = checkImageFile(file, IMAGE_FILE_LIMITS);
+
+            if (!check.ok) {
+                turnedAway.push({ name: file.name, reason: check.reason });
+            } else if (images.length + accepted.length >= MAX_IMAGES) {
+                turnedAway.push({ name: file.name, reason: "too_many" });
+            } else {
+                const previewUrl = URL.createObjectURL(file);
+
+                previewUrls.current.add(previewUrl);
+                accepted.push({
+                    id: (nextId.current += 1),
+                    file,
+                    previewUrl,
+                    status: { kind: "queued" },
+                });
+            }
+        }
+
+        setRejections(turnedAway);
+
+        if (accepted.length === 0) {
+            return;
+        }
+
+        setImages((list) => [...list, ...accepted]);
+        void readBatch(accepted, images.length, language);
     }
 
-    function handleFiles(files: readonly File[]) {
-        const file = files[0];
+    function handleReadAgain() {
+        const queued = images.map((image) => ({ ...image, status: { kind: "queued" } as const }));
 
-        if (file === undefined) {
-            return;
-        }
-
-        const check = checkImageFile(file, IMAGE_FILE_LIMITS);
-
-        if (!check.ok) {
-            stopRun();
-            setFailure({ ok: false, reason: check.reason });
-
-            return;
-        }
-
-        // The box belonged to the previous picture; keeping it would pair
-        // that text with this one.
-        setRead(null);
-        replacePreview({ file, previewUrl: URL.createObjectURL(file) });
-        void runRead(file, language);
+        setImages(queued);
+        setSections([]);
+        setEdited(null);
+        setRejections([]);
+        void readBatch(queued, 0, language);
     }
 
     function handleClear() {
-        stopRun();
-        replacePreview(null);
-        setRead(null);
-        setFailure(null);
+        runRef.current?.abort();
+        runRef.current = null;
+
+        for (const url of previewUrls.current) {
+            URL.revokeObjectURL(url);
+        }
+
+        previewUrls.current.clear();
+        setRunning(false);
+        setImages([]);
+        setRejections([]);
+        setSections([]);
+        setEdited(null);
+        setBatchFailure(null);
+        setReadLanguage(null);
     }
 
-    async function handleCopy(value: string) {
-        const result = await copyText(value);
+    async function handleCopy() {
+        const result = await copyText(text);
 
         if (result.ok) {
             markCopied("text");
@@ -250,9 +397,6 @@ export function ImageToTextWorkbench({
     }
 
     const status = describeStatus();
-    // Counted on every keystroke, undebounced: it is a walk over text already
-    // in memory, and a count that lags the box reads as wrong.
-    const counts = read === null ? null : countText(read.text);
 
     return (
         <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
@@ -267,24 +411,6 @@ export function ImageToTextWorkbench({
             </CardHeader>
 
             <CardContent className="flex min-w-0 flex-col gap-5">
-                {/* Above the controls, not in the article: the one thing that
-                    leaves this tab is the engine coming in, and a reader
-                    should know before they press anything. */}
-                <ToolNotes
-                    notes={[
-                        {
-                            key: "download",
-                            icon: IconCloudDownload,
-                            tone: "muted",
-                            title: t("downloadTitle"),
-                            body: t("downloadNote", {
-                                language: tLanguages(language),
-                                size: byteLabel(firstRunBytes(language)),
-                            }),
-                        },
-                    ]}
-                />
-
                 <div className="grid min-w-0 gap-3 sm:grid-cols-2">
                     <OptionSelect<OcrLanguage>
                         label={t("languageLabel")}
@@ -303,98 +429,161 @@ export function ImageToTextWorkbench({
                     <ImageDropzone
                         inputId={inputId}
                         title={t("dropTitle")}
-                        hint={t("dropHint", { limit: byteLabel(MAX_IMAGE_BYTES) })}
+                        hint={t("dropHint", {
+                            limit: byteLabel(MAX_IMAGE_BYTES),
+                            count: MAX_IMAGES,
+                        })}
                         accept={IMAGE_ACCEPT_ATTRIBUTE}
+                        multiple
+                        disabled={running}
                         describedById={statusId}
                         onFiles={handleFiles}
                     />
 
                     <ImageSourceControls
                         onFiles={handleFiles}
+                        disabled={running}
                         urlImportEnabled={urlImportEnabled}
                     />
 
                     <StatusStrip id={statusId} tone={status.tone} message={status.message} />
+
+                    {rejections.map((rejection, index) => (
+                        <StatusStrip
+                            key={`${rejection.name}-${index}`}
+                            tone="error"
+                            message={t("rejected", {
+                                name: rejection.name,
+                                problem: describeFailure(rejection.reason),
+                            })}
+                        />
+                    ))}
                 </div>
 
-                {picked !== null && (
-                    <div className="bg-card/60 ring-border/70 flex min-w-0 flex-wrap items-center gap-3 rounded-xl px-3 py-2.5 ring-1 ring-inset">
-                        {/* A plain `<img>`, deliberately: the source is an
-                            object URL for a file in this tab, which the image
-                            optimiser can neither fetch nor improve. */}
-                        <img
-                            src={picked.previewUrl}
-                            alt={t("previewAlt")}
-                            decoding="async"
-                            className="ring-border/70 size-12 shrink-0 rounded-lg object-cover ring-1"
-                        />
-                        <span className="min-w-0 flex-1 truncate text-[0.8125rem] leading-[1.4] font-medium">
-                            {picked.file.name}
-                        </span>
-                        <div className="flex shrink-0 gap-2">
-                            <Button
-                                variant="outline"
-                                onClick={() => void runRead(picked.file, language)}
-                                disabled={running}
-                                className="h-8 px-2.5"
-                            >
-                                <IconRefresh className="size-4" stroke={1.8} aria-hidden="true" />
-                                {t("readAgain")}
-                            </Button>
-                            <Button variant="outline" onClick={handleClear} className="h-8 px-2.5">
-                                <IconTrash className="size-4" stroke={1.8} aria-hidden="true" />
-                                {t("clear")}
-                            </Button>
-                        </div>
-                    </div>
-                )}
-
-                {read !== null && counts !== null && (
-                    <div ref={resultRef} className="flex min-w-0 scroll-mt-24 flex-col gap-2">
-                        <div className="flex min-w-0 flex-wrap items-end justify-between gap-2">
-                            <div className="flex min-w-0 flex-col gap-0.5">
-                                <label
-                                    htmlFor={resultId}
+                {images.length > 0 && (
+                    <div className="grid min-w-0 gap-5 lg:grid-cols-2 lg:items-start">
+                        <section
+                            aria-labelledby={picturesId}
+                            className="flex min-w-0 flex-col gap-3"
+                        >
+                            <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+                                <h3
+                                    id={picturesId}
                                     className="text-[0.8125rem] leading-[1.3] font-medium"
                                 >
-                                    {t("resultLabel")}
-                                </label>
-                                <span
-                                    id={countsId}
-                                    className="text-muted-foreground text-[0.6875rem] leading-[1.4]"
-                                >
-                                    {t("counts", counts)}
-                                </span>
+                                    {t("picturesLabel", { count: images.length })}
+                                </h3>
+                                <div className="flex shrink-0 gap-2">
+                                    <Button
+                                        variant="outline"
+                                        onClick={handleReadAgain}
+                                        disabled={running}
+                                        className="h-8 px-2.5"
+                                    >
+                                        <IconRefresh
+                                            className="size-4"
+                                            stroke={1.8}
+                                            aria-hidden="true"
+                                        />
+                                        {t("readAgain")}
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={handleClear}
+                                        className="h-8 px-2.5"
+                                    >
+                                        <IconTrash
+                                            className="size-4"
+                                            stroke={1.8}
+                                            aria-hidden="true"
+                                        />
+                                        {t("clear")}
+                                    </Button>
+                                </div>
                             </div>
-                            <Button
-                                onClick={() => void handleCopy(read.text)}
-                                disabled={read.text.length === 0}
-                                className="h-8 px-3"
-                            >
-                                <CopyIconSwap copied={copied === "text"} />
-                                {t("copy")}
-                            </Button>
-                        </div>
 
-                        {/* No ceiling and no meter: nothing here is submitted
-                            or derived from, and the box starts at whatever the
-                            engine read off one picture. */}
-                        <Textarea
-                            id={resultId}
-                            value={read.text}
-                            lang={LANGUAGE_TAGS[read.language]}
-                            dir={isRightToLeft(read.language) ? "rtl" : "ltr"}
-                            spellCheck={false}
-                            aria-describedby={countsId}
-                            placeholder={t("resultPlaceholder")}
-                            onChange={(event) =>
-                                setRead({ language: read.language, text: event.target.value })
-                            }
-                            className={cn(
-                                "max-h-[36rem] min-h-56 text-[0.9375rem] leading-7 transition-opacity duration-200",
-                                running && "opacity-55",
-                            )}
-                        />
+                            <ol className="flex min-w-0 flex-col gap-3">
+                                {images.map((image, index) => {
+                                    const imageStatus = describeImage(image.status);
+
+                                    return (
+                                        <li
+                                            key={image.id}
+                                            className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-2 rounded-xl p-2 ring-1 ring-inset"
+                                        >
+                                            {/* A plain `<img>`, deliberately: the source is an
+                                                object URL for a file in this tab, which the
+                                                image optimiser can neither fetch nor improve.
+                                                Shown large and uncropped, so the reader can
+                                                check the text against the picture. */}
+                                            <img
+                                                src={image.previewUrl}
+                                                alt={t("previewAlt", {
+                                                    position: index + 1,
+                                                    name: image.file.name,
+                                                })}
+                                                decoding="async"
+                                                className="bg-muted/40 max-h-[32rem] w-full rounded-lg object-contain"
+                                            />
+                                            <div className="flex min-w-0 flex-col gap-0.5 px-1 pb-1">
+                                                <span className="truncate text-[0.8125rem] leading-[1.4] font-medium">
+                                                    {index + 1}. {image.file.name}
+                                                </span>
+                                                <StatusStrip
+                                                    tone={imageStatus.tone}
+                                                    message={imageStatus.message}
+                                                />
+                                            </div>
+                                        </li>
+                                    );
+                                })}
+                            </ol>
+                        </section>
+
+                        <div
+                            ref={resultRef}
+                            className="flex min-w-0 scroll-mt-24 flex-col gap-2 lg:sticky lg:top-20"
+                        >
+                            <div className="flex min-w-0 flex-wrap items-end justify-between gap-2">
+                                <div className="flex min-w-0 flex-col gap-0.5">
+                                    <label
+                                        htmlFor={resultId}
+                                        className="text-[0.8125rem] leading-[1.3] font-medium"
+                                    >
+                                        {t("resultLabel")}
+                                    </label>
+                                    <span
+                                        id={countsId}
+                                        className="text-muted-foreground text-[0.6875rem] leading-[1.4]"
+                                    >
+                                        {t("counts", counts)}
+                                    </span>
+                                </div>
+                                <Button
+                                    onClick={() => void handleCopy()}
+                                    disabled={text.length === 0}
+                                    className="h-8 px-3"
+                                >
+                                    <CopyIconSwap copied={copied === "text"} />
+                                    {t("copy")}
+                                </Button>
+                            </div>
+
+                            {/* No ceiling and no meter: nothing here is submitted
+                                or derived from, and the box starts at whatever
+                                the engine read off at most MAX_IMAGES pictures. */}
+                            <Textarea
+                                id={resultId}
+                                value={text}
+                                lang={LANGUAGE_TAGS[boxLanguage]}
+                                dir={isRightToLeft(boxLanguage) ? "rtl" : "ltr"}
+                                spellCheck={false}
+                                aria-describedby={countsId}
+                                placeholder={running ? t("resultWaiting") : t("resultPlaceholder")}
+                                onChange={(event) => setEdited(event.target.value)}
+                                className="max-h-[70vh] min-h-72 text-[0.9375rem] leading-7 lg:min-h-[28rem]"
+                            />
+                        </div>
                     </div>
                 )}
             </CardContent>

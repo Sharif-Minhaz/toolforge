@@ -5,6 +5,7 @@ import {
     IconCheck,
     IconCrop,
     IconDownload,
+    IconFileZip,
     IconFlipHorizontal,
     IconFlipVertical,
     IconFocusCentered,
@@ -23,7 +24,7 @@ import {
     IconX,
 } from "@tabler/icons-react";
 import { useFormatter, useTranslations } from "next-intl";
-import { useEffect, useId, useRef, useState, type DragEvent, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -35,12 +36,20 @@ import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { ImageDropzone } from "@/modules/tools/components/image-dropzone";
+import { ImageQueueHeader } from "@/modules/tools/components/image-queue";
 import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
 import { OptionSelect, OptionSwitch } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { ToolNotes } from "@/modules/tools/components/tool-notes";
+import { buildZipArchive } from "@/modules/tools/domain/archive";
+import { uniqueFilenames } from "@/modules/tools/domain/filenames";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
 import { decodeToPixels } from "@/modules/tools/domain/image-codec";
+import {
+    knownPixelSize,
+    readImagePixelSize,
+    type ImagePixelSize,
+} from "@/modules/tools/domain/image-element";
 import { isOpaque } from "@/modules/tools/domain/pixels";
 import { checkImageFile } from "@/modules/tools/domain/image-file";
 import type { PixelSize } from "@/modules/tools/types";
@@ -56,6 +65,7 @@ import {
     DPI_PRESETS,
     IMAGE_ACCEPT_ATTRIBUTE,
     IMAGE_FILE_LIMITS,
+    MAX_FILES,
     MAX_IMAGE_BYTES,
     MAX_OUTPUT_PIXELS,
     MAX_PERCENTAGE,
@@ -68,9 +78,9 @@ import {
     DEFAULT_ZOOM,
     ZOOM_STEP,
 } from "../domain/constants";
-import { applyRatio, centeredCrop, fullCrop, isFullCrop } from "../domain/crop";
+import { applyRatio, batchCrop, centeredCrop, fullCrop, isFullCrop } from "../domain/crop";
 import { densityApplies } from "../domain/density";
-import { buildOutputFilename } from "../domain/filenames";
+import { buildArchiveFilename, buildOutputFilename } from "../domain/filenames";
 import {
     backgroundApplies,
     clampDpi,
@@ -108,18 +118,38 @@ import {
     type FlipAxis,
     type LengthUnit,
     type OutputFormat,
+    type ResizedImage,
     type ResizeFailureReason,
     type ResizeMode,
     type ResizeOptions,
+    type ResizeResult,
     type RgbaImage,
 } from "../types";
 import { cropPixels } from "../domain/compose";
+import { BatchRow } from "./batch-row";
 import { CropCanvas } from "./crop-canvas";
 import { OutputPreview } from "./output-preview";
 import { PresetPicker } from "./preset-picker";
 
+/**
+ * One picked file. Only the file is kept: a batch is decoded one picture at a
+ * time when it is exported, never all at once when it is picked.
+ */
+type BatchItem = {
+    readonly id: string;
+    readonly file: File;
+    readonly previewUrl: string;
+    /** Measured once after the pick; `null` until then, or if it would not decode. */
+    readonly dimensions: ImagePixelSize | null;
+    readonly working: boolean;
+    /** Why the last render of this picture failed, cleared when it is tried again. */
+    readonly reason: ResizeFailureReason | null;
+};
+
 /** One picture, decoded once and kept, because every export re-reads it. */
 type Loaded = {
+    /** The `BatchItem` this was decoded from. */
+    readonly id: string;
     readonly file: File;
     readonly previewUrl: string;
     readonly pixels: RgbaImage;
@@ -131,6 +161,9 @@ type Loaded = {
      */
     readonly hasAlpha: boolean;
 };
+
+/** What the frame needs to preview a picture, which a batch row has without decoding. */
+type Framed = Pick<Loaded, "file" | "previewUrl" | "size">;
 
 const MODE_LABEL_KEY = {
     dimensions: "modeDimensions",
@@ -231,6 +264,7 @@ export function ImageResizerWorkbench({
     const transformId = useId();
     const angleId = useId();
     const angleHintId = useId();
+    const queueHeadingId = useId();
 
     const [loaded, setLoaded] = useState<Loaded | null>(null);
     const [crop, setCrop] = useState<CropRect>({ x: 0, y: 0, width: 1, height: 1 });
@@ -279,6 +313,17 @@ export function ImageResizerWorkbench({
      * anything against the current frame.
      */
     const [history, setHistory] = useState<readonly Loaded[]>([]);
+    /**
+     * Every picked file. One of them is the editor's picture; two or more make
+     * a batch, which shares every setting and none of the hand edits.
+     */
+    const [items, setItems] = useState<readonly BatchItem[]>([]);
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [progress, setProgress] = useState({ done: 0, total: 0 });
+
+    // Ids come from a counter rather than `crypto.randomUUID`, so nothing in
+    // this component is a per-render source of entropy.
+    const nextId = useRef(0);
 
     // Held outside state because the cleanup must see every URL ever handed
     // out, including ones created after the last render this effect closed over.
@@ -296,25 +341,56 @@ export function ImageResizerWorkbench({
         };
     }, []);
 
-    const sourceType = loaded?.file.type ?? "";
+    const batch = items.length > 1;
+    const selected = batch ? (items.find((item) => item.id === selectedId) ?? items[0]) : undefined;
+    /**
+     * What the frame shows. One picture is the decoded, editable one, as it
+     * always was. In a batch it is the selected row — its edited pixels if it
+     * is the picture that was open before the others joined, otherwise the
+     * file as picked, previewed by layout alone with nothing decoded.
+     */
+    const frame: Framed | null = !batch
+        ? loaded
+        : selected === undefined
+          ? null
+          : loaded?.id === selected.id
+            ? loaded
+            : selected.dimensions === null
+              ? null
+              : { file: selected.file, previewUrl: selected.previewUrl, size: selected.dimensions };
+    const sourceType = frame?.file.type ?? "";
     const outputFormat = resolveFormat(sourceType, options.format);
+    const customShape = parseAspectText(customRatio);
+    // A batch has no hand-placed box, so the shape lock is its whole crop.
+    const frameCrop = batch && frame !== null ? batchCrop(frame.size, aspect, customShape) : crop;
     // Derived during render from pure functions, so the numbers under the
     // controls are never a frame behind the controls themselves.
-    const plan = loaded === null ? null : planRender(crop, options);
+    const plan = frame === null ? null : planRender(frameCrop, options);
     const output = plan?.canvas ?? { width: 0, height: 0 };
-    const ratio = ratioForPreset(
-        aspect,
-        loaded?.size ?? { width: 1, height: 1 },
-        parseAspectText(customRatio),
-    );
+    const ratio = ratioForPreset(aspect, frame?.size ?? { width: 1, height: 1 }, customShape);
     const customInvalid = aspect === "custom" && customRatio.trim() !== "" && ratio === null;
-    const densityAvailable = densityApplies(outputFormat);
-    const backgroundLive = backgroundApplies(options.fit, outputFormat, loaded?.hasAlpha ?? false);
+    /**
+     * Under `original` one batch can write several formats — a JPEG stays a
+     * JPEG and a PNG stays a PNG — so a control stays live while it applies to
+     * any picture in the batch, not only to the one in the frame.
+     */
+    const formats = batch
+        ? items.map((item) => resolveFormat(item.file.type, options.format))
+        : [outputFormat];
+    const densityAvailable = formats.some(densityApplies);
+    const qualityLive = formats.some(qualityApplies);
+    // Nothing in a batch is decoded before the press, so neither its
+    // transparency nor every picture's shape is known — and an unknown leaves
+    // the control live rather than dead.
+    const backgroundLive =
+        batch || backgroundApplies(options.fit, outputFormat, loaded?.hasAlpha ?? false);
     const fitMatters =
-        plan !== null &&
-        (plan.clips ||
-            plan.draw.width !== plan.canvas.width ||
-            plan.draw.height !== plan.canvas.height);
+        batch ||
+        (plan !== null &&
+            (plan.clips ||
+                plan.draw.width !== plan.canvas.width ||
+                plan.draw.height !== plan.canvas.height));
+    const totalBytes = items.reduce((total, item) => total + item.file.size, 0);
 
     // Cropping to the whole frame would replace the picture with itself, so
     // the button says so by going dead rather than by doing nothing.
@@ -396,6 +472,8 @@ export function ImageResizerWorkbench({
                 return tErrors("unsupported_type");
             case "too_large":
                 return tErrors("too_large", { limit: byteLabel(MAX_IMAGE_BYTES) });
+            case "too_many_files":
+                return tErrors("too_many_files", { count: format.number(MAX_FILES) });
             case "too_many_pixels":
                 return tErrors("too_many_pixels", {
                     count: format.number(Math.round(MAX_PIXELS / 1_000_000)),
@@ -414,12 +492,30 @@ export function ImageResizerWorkbench({
     }
 
     function describeStatus(): { tone: StatusTone; message: string } {
+        if (working && progress.total > 0) {
+            return {
+                tone: "pending",
+                message: t("statusBatchWorking", {
+                    done: format.number(progress.done + 1),
+                    total: format.number(progress.total),
+                }),
+            };
+        }
+
         if (working) {
             return { tone: "pending", message: t("statusWorking") };
         }
 
         if (reason !== null) {
             return { tone: "error", message: describeFailure(reason) };
+        }
+
+        if (batch) {
+            const failed = items.filter((item) => item.reason !== null).length;
+
+            return failed > 0
+                ? { tone: "warning", message: t("statusBatchFailed", { count: failed }) }
+                : { tone: "idle", message: t("statusBatchReady", { count: items.length }) };
         }
 
         if (loaded === null) {
@@ -461,63 +557,183 @@ export function ImageResizerWorkbench({
         setHistory([]);
     }
 
-    async function handleFiles(files: readonly File[]) {
-        const file = files[0];
+    /** A row for a picked file, with its own thumbnail URL. */
+    function createItem(file: File): BatchItem {
+        const previewUrl = URL.createObjectURL(file);
 
-        if (file === undefined || working) {
+        objectUrls.current.add(previewUrl);
+
+        return {
+            id: `item-${(nextId.current += 1)}`,
+            file,
+            previewUrl,
+            dimensions: null,
+            working: false,
+            reason: null,
+        };
+    }
+
+    /**
+     * Every pick adds to what is loaded, up to `MAX_FILES`.
+     *
+     * The first picture opens in the editor exactly as it always has. A second
+     * turns the page into a batch — one set of settings for all of them — and
+     * Start over is what replaces rather than adds.
+     */
+    function handlePick(picked: readonly File[]) {
+        if (working) {
             return;
         }
 
-        const checked = checkImageFile(file, IMAGE_FILE_LIMITS);
+        const room = Math.max(0, MAX_FILES - items.length);
+        const accepted = picked.slice(0, room);
 
-        if (!checked.ok) {
-            setReason(checked.reason);
-            toast.error(describeFailure(checked.reason));
+        if (picked.length > accepted.length) {
+            toast.error(describeFailure("too_many_files"));
+        }
+
+        const added: BatchItem[] = [];
+        const refused: ResizeFailureReason[] = [];
+
+        for (const file of accepted) {
+            const checked = checkImageFile(file, IMAGE_FILE_LIMITS);
+
+            if (checked.ok) {
+                added.push(createItem(file));
+            } else {
+                refused.push(checked.reason);
+            }
+        }
+
+        const [onlyRefusal] = refused;
+
+        // A lone file keeps its own sentence, as it always did; a batch is counted.
+        if (accepted.length === 1 && onlyRefusal !== undefined) {
+            setReason(onlyRefusal);
+            toast.error(describeFailure(onlyRefusal));
+        } else if (refused.length > 0) {
+            toast.error(tToast("rejected", { count: refused.length }));
+        }
+
+        const [first] = added;
+
+        if (first === undefined) {
+            return;
+        }
+
+        setItems([...items, ...added]);
+        measure(added);
+
+        if (items.length === 0 && added.length === 1) {
+            void decodeItem(first);
 
             return;
         }
 
+        // The crop tool works on one picture, so joining a batch closes it the
+        // way Cancel does.
+        if (cropping) {
+            stopCropping();
+        }
+
+        setReason(null);
+    }
+
+    /**
+     * Reads each new picture's pixel size once, after it is already listed, so
+     * the row appears the moment the file is picked and its size follows. A
+     * row removed in the meantime is simply not found.
+     */
+    function measure(added: readonly BatchItem[]) {
+        for (const item of added) {
+            void readImagePixelSize(item.previewUrl).then((size) => {
+                setItems((current) =>
+                    replaceItem(current, item.id, { dimensions: knownPixelSize(size) }),
+                );
+            });
+        }
+    }
+
+    /** A picture that will not open is refused outright, as a single pick always was. */
+    function refuseItem(item: BatchItem, why: ResizeFailureReason) {
+        releaseUrl(item.previewUrl);
+        setItems((current) => current.filter((candidate) => candidate.id !== item.id));
+        setReason(why);
+        toast.error(describeFailure(why));
+    }
+
+    /**
+     * Decodes a picture into the editor: the first one picked, or the one left
+     * when a batch is cut back down to one. The caller has already let go of
+     * whatever was loaded before.
+     */
+    async function decodeItem(item: BatchItem) {
         setWorking(true);
         setReason(null);
 
         try {
-            const pixels = await decodeToPixels(file);
+            const pixels = await decodeToPixels(item.file);
 
             if (pixels === null) {
-                setReason("undecodable");
-                toast.error(describeFailure("undecodable"));
+                refuseItem(item, "undecodable");
 
                 return;
             }
 
             if (pixels.width * pixels.height > MAX_PIXELS) {
-                setReason("too_many_pixels");
-                toast.error(describeFailure("too_many_pixels"));
+                refuseItem(item, "too_many_pixels");
 
                 return;
             }
 
-            const previewUrl = URL.createObjectURL(file);
+            const previewUrl = URL.createObjectURL(item.file);
 
             objectUrls.current.add(previewUrl);
 
             const size = { width: pixels.width, height: pixels.height };
-            const hasAlpha = !isOpaque(pixels);
 
-            if (loaded !== null) {
-                releaseUrl(loaded.previewUrl);
-            }
-
-            clearHistory();
-            setLoaded({ file, previewUrl, pixels, size, hasAlpha });
+            setLoaded({
+                id: item.id,
+                file: item.file,
+                previewUrl,
+                pixels,
+                size,
+                hasAlpha: !isOpaque(pixels),
+            });
             // A fresh picture opens as a picture, not as a crop in progress.
             setCropping(false);
             placeCrop(fullCrop(size));
         } catch (caught) {
             logEvent("error", "image_resizer.decode_threw", { error: describeError(caught) });
-            setReason("undecodable");
+            refuseItem(item, "undecodable");
         } finally {
             setWorking(false);
+        }
+    }
+
+    function handleRemove(id: string) {
+        const target = items.find((item) => item.id === id);
+
+        if (target === undefined || working) {
+            return;
+        }
+
+        const rest = items.filter((item) => item.id !== id);
+
+        releaseUrl(target.previewUrl);
+        setItems(rest);
+
+        if (loaded?.id === id) {
+            releaseUrl(loaded.previewUrl);
+            clearHistory();
+            setLoaded(null);
+        }
+
+        const [only] = rest;
+
+        // Back to one picture: it opens in the editor, the way a single pick does.
+        if (rest.length === 1 && only !== undefined && loaded?.id !== only.id) {
+            void decodeItem(only);
         }
     }
 
@@ -556,13 +772,24 @@ export function ImageResizerWorkbench({
         const parsed = raw.trim() === "" ? null : Number(raw);
         const value = parsed === null || !Number.isFinite(parsed) ? null : parsed;
 
-        if (!options.lockAspect || value === null || loaded === null) {
+        // In a batch the linked side is left blank rather than filled in from
+        // the picture in the frame: blank is what lets every picture keep its
+        // own shape, where a number would force all of them into this one's.
+        if (batch && options.lockAspect) {
+            patch(
+                side === "width" ? { width: value, height: null } : { height: value, width: null },
+            );
+
+            return;
+        }
+
+        if (!options.lockAspect || value === null || frame === null) {
             patch({ [side]: value });
 
             return;
         }
 
-        const shape = cropRatio(crop);
+        const shape = cropRatio(frameCrop);
         const pixels = toPixels(value, options.unit, options.dpi);
         const otherPixels = side === "width" ? pixels / shape : pixels * shape;
         const other = roundForUnit(
@@ -889,12 +1116,155 @@ export function ImageResizerWorkbench({
         }
     }
 
+    /**
+     * One picture of a batch, decoded, rendered and let go again — so a batch
+     * never holds more than one source picture at a time.
+     *
+     * The picture that was open in the editor before the others joined keeps
+     * its applied crops and turns: those pixels are already in hand, and
+     * dropping them would quietly undo work. Nothing else here is hand-edited.
+     */
+    async function renderItem(item: BatchItem): Promise<ResizeResult> {
+        const pixels = loaded?.id === item.id ? loaded.pixels : await decodeToPixels(item.file);
+
+        if (pixels === null) {
+            return { ok: false, reason: "undecodable" };
+        }
+
+        if (pixels.width * pixels.height > MAX_PIXELS) {
+            return { ok: false, reason: "too_many_pixels" };
+        }
+
+        const size = { width: pixels.width, height: pixels.height };
+
+        return renderImage(pixels, item.file.type, batchCrop(size, aspect, customShape), options);
+    }
+
+    /**
+     * Renders one row, marking it while it runs and recording why if it fails.
+     * Caught per row rather than per run: one picture the decoder chokes on
+     * should not abandon the nineteen behind it.
+     */
+    async function renderRow(item: BatchItem): Promise<ResizedImage | null> {
+        setItems((current) => replaceItem(current, item.id, { working: true, reason: null }));
+
+        const outcome = await renderItem(item).catch((caught: unknown) => {
+            logEvent("error", "image_resizer.batch_render_threw", {
+                error: describeError(caught),
+            });
+
+            return { ok: false, reason: "encode_failed" } as const;
+        });
+
+        if (!outcome.ok) {
+            logEvent("warn", "image_resizer.batch_render_failed", { reason: outcome.reason });
+        }
+
+        setItems((current) =>
+            replaceItem(current, item.id, {
+                working: false,
+                reason: outcome.ok ? null : outcome.reason,
+            }),
+        );
+
+        return outcome.ok ? outcome.image : null;
+    }
+
+    /** One row's own download, under whatever the panel says right now. */
+    async function handleDownloadOne(item: BatchItem) {
+        if (working) {
+            return;
+        }
+
+        setWorking(true);
+        setReason(null);
+
+        try {
+            // `null` is a failure the row itself already shows.
+            const image = await renderRow(item);
+
+            if (image === null) {
+                return;
+            }
+
+            const filename = buildOutputFilename(item.file.name, image.format, image.size);
+
+            saveBlob({ filename, blob: image.blob });
+            toast.success(tToast("downloaded", { filename }));
+        } catch (caught) {
+            logEvent("error", "image_resizer.download_failed", { error: describeError(caught) });
+            toast.error(tToast("downloadFailed"));
+        } finally {
+            setWorking(false);
+        }
+    }
+
+    /**
+     * Every picture, one after another, into one ZIP.
+     *
+     * Each result is read into bytes as soon as it exists and its blob let go,
+     * so the tab holds one copy of every finished file rather than two. A
+     * picture that fails is left out of the archive and says why in its row.
+     */
+    async function handleDownloadAll() {
+        if (working) {
+            return;
+        }
+
+        setWorking(true);
+        setReason(null);
+
+        try {
+            const finished: { name: string; bytes: Uint8Array<ArrayBuffer> }[] = [];
+
+            for (const [index, item] of items.entries()) {
+                setProgress({ done: index, total: items.length });
+
+                const image = await renderRow(item);
+
+                if (image !== null) {
+                    finished.push({
+                        name: buildOutputFilename(item.file.name, image.format, image.size),
+                        bytes: new Uint8Array(await image.blob.arrayBuffer()),
+                    });
+                }
+            }
+
+            if (finished.length === 0) {
+                return;
+            }
+
+            const names = uniqueFilenames(finished.map((entry) => entry.name));
+            const stamp = new Date();
+            const filename = buildArchiveFilename(stamp);
+            const archive = buildZipArchive(
+                finished.map((entry, index) => ({ name: names[index], bytes: entry.bytes })),
+                stamp,
+            );
+
+            saveBlob({ filename, blob: new Blob([archive], { type: "application/zip" }) });
+            toast.success(tToast("downloaded", { filename }));
+        } catch (caught) {
+            logEvent("error", "image_resizer.archive_failed", { error: describeError(caught) });
+            toast.error(tToast("archiveFailed"));
+        } finally {
+            setWorking(false);
+            setProgress({ done: 0, total: 0 });
+        }
+    }
+
     function handleReset() {
         if (loaded !== null) {
             releaseUrl(loaded.previewUrl);
         }
 
+        for (const item of items) {
+            releaseUrl(item.previewUrl);
+        }
+
         clearHistory();
+        setItems([]);
+        setSelectedId(null);
         setLoaded(null);
         setCropping(false);
         setReason(null);
@@ -925,15 +1295,20 @@ export function ImageResizerWorkbench({
                     <ImageDropzone
                         inputId={inputId}
                         describedById={hintId}
+                        multiple
+                        compact={items.length > 0}
                         accept={IMAGE_ACCEPT_ATTRIBUTE}
                         disabled={working}
-                        title={t("dropTitle")}
-                        hint={t("dropHint", { limit: byteLabel(MAX_IMAGE_BYTES) })}
-                        onFiles={(files) => void handleFiles(files)}
+                        title={items.length > 0 ? t("dropMoreTitle") : t("dropTitle")}
+                        hint={t("dropHint", {
+                            limit: byteLabel(MAX_IMAGE_BYTES),
+                            count: format.number(MAX_FILES),
+                        })}
+                        onFiles={handlePick}
                     />
 
                     <ImageSourceControls
-                        onFiles={(files) => void handleFiles(files)}
+                        onFiles={handlePick}
                         disabled={working}
                         urlImportEnabled={urlImportEnabled}
                     />
@@ -941,7 +1316,53 @@ export function ImageResizerWorkbench({
                     <StatusStrip id={hintId} tone={status.tone} message={status.message} />
                 </div>
 
-                {loaded !== null && (
+                {batch && (
+                    <section
+                        aria-labelledby={queueHeadingId}
+                        className="flex min-w-0 flex-col gap-2.5"
+                    >
+                        <ImageQueueHeader
+                            id={queueHeadingId}
+                            count={items.length}
+                            totalBytes={totalBytes}
+                        />
+
+                        {/*
+                         * Capped and scrolled: the frame and the settings are
+                         * what this page is for, and twenty rows above them
+                         * would push both below the fold.
+                         */}
+                        <ul className="flex max-h-80 min-w-0 flex-col gap-2 overflow-y-auto">
+                            {items.map((item) => {
+                                const own = loaded?.id === item.id ? loaded : null;
+
+                                return (
+                                    <BatchRow
+                                        key={item.id}
+                                        name={item.file.name}
+                                        bytes={item.file.size}
+                                        type={item.file.type}
+                                        dimensions={own?.size ?? item.dimensions}
+                                        previewUrl={own?.previewUrl ?? item.previewUrl}
+                                        selected={item.id === selected?.id}
+                                        working={item.working}
+                                        failure={
+                                            item.reason === null
+                                                ? null
+                                                : describeFailure(item.reason)
+                                        }
+                                        busy={working}
+                                        onSelect={() => setSelectedId(item.id)}
+                                        onDownload={() => void handleDownloadOne(item)}
+                                        onRemove={() => handleRemove(item.id)}
+                                    />
+                                );
+                            })}
+                        </ul>
+                    </section>
+                )}
+
+                {(loaded !== null || batch) && (
                     <div className="grid min-w-0 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
                         {/*
                          * Sticky, and `self-start` is what makes that work: a
@@ -970,7 +1391,7 @@ export function ImageResizerWorkbench({
                                           })}
                                 </span>
                             </div>
-                            {cropping && plan !== null ? (
+                            {cropping && loaded !== null ? (
                                 <CropCanvas
                                     previewUrl={loaded.previewUrl}
                                     alt={t("previewAlt")}
@@ -982,17 +1403,18 @@ export function ImageResizerWorkbench({
                                     onCommit={() => void handleApplyCrop()}
                                 />
                             ) : (
-                                plan !== null && (
+                                plan !== null &&
+                                frame !== null && (
                                     <OutputPreview
-                                        previewUrl={loaded.previewUrl}
+                                        previewUrl={frame.previewUrl}
                                         alt={t("resultAlt")}
-                                        source={loaded.size}
+                                        source={frame.size}
                                         plan={plan}
                                     />
                                 )
                             )}
 
-                            {cropping && (
+                            {cropping && loaded !== null && (
                                 <>
                                     <div className="flex min-w-0 flex-wrap items-center gap-2">
                                         <Button
@@ -1042,9 +1464,11 @@ export function ImageResizerWorkbench({
                              * edit to the picture in the frame, like a crop and
                              * unlike a setting — and doing it under an open crop
                              * box would move the box out from under the reader's
-                             * pointer mid-drag.
+                             * pointer mid-drag. Hidden in a batch too, with the
+                             * crop: a hand edit is to one picture, and the
+                             * settings are the only thing a batch shares.
                              */}
-                            {!cropping && (
+                            {!cropping && !batch && (
                                 <div className="flex min-w-0 flex-col gap-1.5">
                                     <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                                         <span
@@ -1218,7 +1642,48 @@ export function ImageResizerWorkbench({
                              * were furthest from what they were looking at.
                              */}
                             <div className="flex min-w-0 flex-wrap items-center gap-2">
-                                {cropping ? (
+                                {batch ? (
+                                    <>
+                                        <Button
+                                            onClick={() => void handleDownloadAll()}
+                                            disabled={working}
+                                            className="h-9 px-3.5"
+                                        >
+                                            {working ? (
+                                                <IconLoader2
+                                                    className="size-4 animate-spin"
+                                                    aria-hidden="true"
+                                                />
+                                            ) : (
+                                                <IconFileZip
+                                                    className="size-4"
+                                                    stroke={1.8}
+                                                    aria-hidden="true"
+                                                />
+                                            )}
+                                            {working && progress.total > 0
+                                                ? t("downloadingAll", {
+                                                      done: format.number(progress.done + 1),
+                                                      total: format.number(progress.total),
+                                                  })
+                                                : t("downloadAll")}
+                                        </Button>
+
+                                        <Button
+                                            variant="ghost"
+                                            onClick={handleReset}
+                                            disabled={working}
+                                            className="h-9 px-3"
+                                        >
+                                            <IconTrash
+                                                className="size-4"
+                                                stroke={1.8}
+                                                aria-hidden="true"
+                                            />
+                                            {t("reset")}
+                                        </Button>
+                                    </>
+                                ) : cropping ? (
                                     <>
                                         <Button
                                             onClick={() => void handleApplyCrop()}
@@ -1327,19 +1792,28 @@ export function ImageResizerWorkbench({
                              * that used to sit under one says what the next
                              * press will do instead.
                              */}
-                            <p className="text-muted-foreground max-w-[68ch] text-[0.6875rem] leading-normal">
-                                {t("exportSummary", {
-                                    width: format.number(output.width),
-                                    height: format.number(output.height),
-                                    format: tFormats(outputFormat),
-                                })}{" "}
-                                {plan !== null && copiesPixels(plan)
-                                    ? t("outputCopied")
-                                    : t("outputResampled")}
-                            </p>
+                            {plan !== null && (
+                                <p className="text-muted-foreground max-w-[68ch] text-[0.6875rem] leading-normal">
+                                    {t(batch ? "batchSummary" : "exportSummary", {
+                                        width: format.number(output.width),
+                                        height: format.number(output.height),
+                                        format: tFormats(outputFormat),
+                                    })}{" "}
+                                    {copiesPixels(plan) ? t("outputCopied") : t("outputResampled")}
+                                </p>
+                            )}
 
+                            {/*
+                             * The batch's one rule, said where the crop and turn
+                             * buttons would have been: hand edits are to one
+                             * picture, so with several loaded they are gone.
+                             */}
                             <p className="text-muted-foreground max-w-[68ch] text-[0.6875rem] leading-normal">
-                                {cropping ? t("cropHint") : t("previewHint")}
+                                {batch
+                                    ? t("batchHint")
+                                    : cropping
+                                      ? t("cropHint")
+                                      : t("previewHint")}
                             </p>
                         </div>
 
@@ -1367,7 +1841,7 @@ export function ImageResizerWorkbench({
                              */}
                             <OptionSelect<AspectPreset>
                                 label={t("ratioLabel")}
-                                hint={t("ratioHint")}
+                                hint={batch ? t("ratioHintBatch") : t("ratioHint")}
                                 value={aspect}
                                 values={ASPECT_PRESETS}
                                 disabled={working}
@@ -1553,9 +2027,11 @@ export function ImageResizerWorkbench({
                                     </div>
 
                                     <p className="text-muted-foreground -mt-2 text-[0.6875rem] leading-[1.4]">
-                                        {options.lockAspect
-                                            ? t("lockAspectHintOn")
-                                            : t("lockAspectHintOff")}
+                                        {!options.lockAspect
+                                            ? t("lockAspectHintOff")
+                                            : batch
+                                              ? t("lockAspectHintBatch")
+                                              : t("lockAspectHintOn")}
                                     </p>
 
                                     <OptionSelect<LengthUnit>
@@ -1842,7 +2318,7 @@ export function ImageResizerWorkbench({
                                         value={options.quality}
                                         min={MIN_QUALITY}
                                         max={MAX_QUALITY}
-                                        disabled={settingsLocked || !qualityApplies(outputFormat)}
+                                        disabled={settingsLocked || !qualityLive}
                                         onValueChange={(next) =>
                                             patch({
                                                 quality: clampQuality(
@@ -1859,7 +2335,7 @@ export function ImageResizerWorkbench({
                                     </span>
                                 </div>
                                 <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                                    {qualityApplies(outputFormat)
+                                    {qualityLive
                                         ? t("qualityHint", {
                                               value: format.number(options.quality),
                                           })
@@ -1902,4 +2378,12 @@ export function ImageResizerWorkbench({
             </CardContent>
         </Card>
     );
+}
+
+function replaceItem(
+    items: readonly BatchItem[],
+    id: string,
+    patch: Partial<BatchItem>,
+): readonly BatchItem[] {
+    return items.map((item) => (item.id === id ? { ...item, ...patch } : item));
 }

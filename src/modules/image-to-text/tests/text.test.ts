@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { countText, tidyRecognizedText } from "../domain/text";
+import { appendTextSection, combineTexts, countText, tidyRecognizedText } from "../domain/text";
 
 describe("tidyRecognizedText", () => {
     test("removes the space Tesseract puts between Chinese characters", () => {
@@ -49,5 +49,48 @@ describe("countText", () => {
 
     test("an empty box has no lines", () => {
         expect(countText("")).toEqual({ characters: 0, lines: 0 });
+    });
+});
+
+describe("combineTexts", () => {
+    const first = { position: 1, name: "receipt.png", text: "Total 120" };
+    const second = { position: 2, name: "pasted-image.png", text: "মোট ১২০" };
+
+    test("one picture is its text alone", () => {
+        expect(combineTexts([first])).toBe("Total 120");
+    });
+
+    test("nothing read is an empty box", () => {
+        expect(combineTexts([])).toBe("");
+    });
+
+    test("several pictures are headed and kept in order", () => {
+        expect(combineTexts([first, second])).toBe(
+            "── 1 · receipt.png ──\nTotal 120\n\n── 2 · pasted-image.png ──\nমোট ১২০",
+        );
+    });
+
+    test("a picture with no text gets no heading", () => {
+        expect(combineTexts([first, { position: 2, name: "blank.png", text: "" }])).toBe(
+            "── 1 · receipt.png ──\nTotal 120",
+        );
+    });
+});
+
+describe("appendTextSection", () => {
+    const next = { position: 2, name: "page-2.png", text: "Second page" };
+
+    test("adds the next picture after the reader's edits", () => {
+        expect(appendTextSection("First page, corrected\n", next)).toBe(
+            "First page, corrected\n\n── 2 · page-2.png ──\nSecond page",
+        );
+    });
+
+    test("an emptied box starts with the new picture", () => {
+        expect(appendTextSection("  \n", next)).toBe("── 2 · page-2.png ──\nSecond page");
+    });
+
+    test("a picture with no text leaves the edits as they are", () => {
+        expect(appendTextSection("kept", { ...next, text: "" })).toBe("kept");
     });
 });

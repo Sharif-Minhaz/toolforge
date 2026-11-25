@@ -8,6 +8,7 @@ import {
 } from "@/modules/tools/components/article-section";
 import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc";
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
+import { MAX_IMAGES } from "../domain/constants";
 import { LANGUAGE_ENDONYMS, LANGUAGE_TAGS } from "../domain/languages";
 import { OCR_LANGUAGES } from "../types";
 
@@ -26,7 +27,15 @@ const CONTROL_ROWS = ["language", "readAgain", "copy", "clear"] as const;
 
 const TIP_KEYS = ["crop", "sharp", "flat", "contrast", "oneLanguage"] as const;
 
-const FAQ_KEYS = ["uploaded", "firstRun", "handwriting", "nonsense", "mixed", "pdf"] as const;
+const FAQ_KEYS = [
+    "uploaded",
+    "firstRun",
+    "handwriting",
+    "nonsense",
+    "mixed",
+    "several",
+    "pdf",
+] as const;
 
 const TABLE_FRAME = "ring-border/80 mt-5 overflow-x-auto rounded-xl ring-1 ring-inset";
 const TABLE = "w-full min-w-160 border-collapse text-left text-sm";
@@ -40,7 +49,7 @@ export async function getImageToTextFaqEntries(): Promise<FaqEntry[]> {
 
     return FAQ_KEYS.map((key) => ({
         question: t(`${key}.question`),
-        answer: t(`${key}.answer`),
+        answer: t(`${key}.answer`, { count: MAX_IMAGES }),
     }));
 }
 
@@ -114,7 +123,7 @@ export async function ImageToTextArticle() {
                         </table>
                     </div>
                     <div className={`mt-5 ${PROSE}`}>
-                        <p>{t.rich("controls.p2", ARTICLE_TAGS)}</p>
+                        <p>{t.rich("controls.p2", { ...ARTICLE_TAGS, count: MAX_IMAGES })}</p>
                     </div>
                 </ArticleSection>
 

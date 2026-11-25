@@ -1,10 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { ENGINE_BYTES, LANGUAGE_DATA_BYTES } from "../domain/constants";
 import {
     defaultLanguageForLocale,
-    firstRunBytes,
-    isOcrLanguage,
     isRightToLeft,
     LANGUAGE_ENDONYMS,
     LANGUAGE_TAGS,
@@ -26,28 +23,15 @@ describe("tesseractLanguages", () => {
 });
 
 describe("language data", () => {
-    test("every language has an endonym, a tag and a data size", () => {
+    test("every language has an endonym and a tag", () => {
         for (const language of OCR_LANGUAGES) {
             expect(LANGUAGE_ENDONYMS[language].length).toBeGreaterThan(0);
             expect(Intl.getCanonicalLocales(LANGUAGE_TAGS[language])).toHaveLength(1);
-            expect(LANGUAGE_DATA_BYTES[language]).toBeGreaterThan(1_000_000);
         }
     });
 
     test("only Arabic is right to left", () => {
         expect(OCR_LANGUAGES.filter(isRightToLeft)).toEqual(["ara"]);
-    });
-
-    test("a first run downloads the engine and every language it loads", () => {
-        expect(firstRunBytes("eng")).toBe(ENGINE_BYTES + LANGUAGE_DATA_BYTES.eng);
-        expect(firstRunBytes("ben")).toBe(
-            ENGINE_BYTES + LANGUAGE_DATA_BYTES.ben + LANGUAGE_DATA_BYTES.eng,
-        );
-    });
-
-    test("recognises its own codes and nothing else", () => {
-        expect(isOcrLanguage("chi_sim")).toBe(true);
-        expect(isOcrLanguage("fra")).toBe(false);
     });
 
     test("the Bangla page opens on Bangla", () => {

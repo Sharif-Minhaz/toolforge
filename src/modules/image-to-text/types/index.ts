@@ -45,4 +45,7 @@ export type OcrFailure = {
     readonly detail?: string;
 };
 
+/** Why a picture was turned away before reading: the file, or one too many. */
+export type ImageRejectionReason = ImageFileRejection | "too_many";
+
 export type OcrResult = { readonly ok: true; readonly text: string } | OcrFailure;

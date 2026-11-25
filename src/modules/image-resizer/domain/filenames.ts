@@ -1,5 +1,5 @@
 import { RASTER_FORMAT_EXTENSIONS } from "@/modules/tools/domain/image-codec";
-import { toFilenameStem } from "@/modules/tools/domain/filenames";
+import { buildTimestampedFilename, toFilenameStem } from "@/modules/tools/domain/filenames";
 import type { PixelSize, RasterFormat } from "@/modules/tools/types";
 
 /**
@@ -17,4 +17,9 @@ export function buildOutputFilename(
     size: PixelSize,
 ): string {
     return `${toFilenameStem(originalName)}-${size.width}x${size.height}.${RASTER_FORMAT_EXTENSIONS[format]}`;
+}
+
+/** `toolforge-resized-20260803T101500Z.zip` — one archive for a whole batch. */
+export function buildArchiveFilename(generatedAt: Date): string {
+    return buildTimestampedFilename("resized", generatedAt, "zip");
 }

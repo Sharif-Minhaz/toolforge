@@ -1,5 +1,6 @@
+import { ratioForPreset } from "./aspect";
 import { MIN_CROP_SIZE } from "./constants";
-import type { CropHandle, CropRect } from "../types";
+import type { AspectPreset, AspectRatio, CropHandle, CropRect } from "../types";
 import type { PixelSize } from "@/modules/tools/types";
 
 /**
@@ -240,6 +241,22 @@ function buildRect(
         },
         bounds,
     );
+}
+
+/**
+ * The crop a picture gets in a batch: the largest centred box of the locked
+ * shape, or the whole picture under a free one.
+ *
+ * No hand-placed box can mean anything across twenty pictures of different
+ * sizes, so the shape is the only crop setting a batch can share — and from an
+ * untouched picture it lands where the single-picture shape switch does.
+ */
+export function batchCrop(
+    size: PixelSize,
+    preset: AspectPreset,
+    custom: AspectRatio | null,
+): CropRect {
+    return centeredCrop(size, ratioForPreset(preset, size, custom));
 }
 
 /** The largest box of a given shape, centred in the picture. */

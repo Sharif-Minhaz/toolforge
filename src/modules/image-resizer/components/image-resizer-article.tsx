@@ -10,7 +10,7 @@ import { ArticleToc, type TocItem } from "@/modules/tools/components/article-toc
 import { FaqAccordion, type FaqEntry } from "@/modules/tools/components/faq-accordion";
 import { MAX_REMOTE_IMAGE_BYTES } from "@/modules/tools/domain/remote-image";
 import { describeByteSize } from "@/modules/tools/domain/byte-size";
-import { DEFAULT_DPI, MAX_IMAGE_BYTES, MAX_PIXELS } from "../domain/constants";
+import { DEFAULT_DPI, MAX_FILES, MAX_IMAGE_BYTES, MAX_PIXELS } from "../domain/constants";
 import { presetsInGroup, presetPixels } from "../domain/presets";
 
 export const IMAGE_RESIZER_ARTICLE_SECTIONS = [
@@ -39,6 +39,7 @@ export async function getImageResizerFaqEntries(): Promise<FaqEntry[]> {
         { question: t("faq.q5"), answer: t("faq.a5") },
         { question: t("faq.q6"), answer: t("faq.a6") },
         { question: t("faq.q7"), answer: t("faq.a7") },
+        { question: t("faq.q8"), answer: t("faq.a8", { count: MAX_FILES }) },
     ];
 }
 
@@ -74,6 +75,7 @@ export async function ImageResizerArticle() {
         "quality",
         "density",
         "export",
+        "batch",
     ] as const;
 
     // Read from the same table the picker reads, so the article cannot drift
@@ -246,6 +248,7 @@ export async function ImageResizerArticle() {
                     <div className={PROSE}>
                         <p>
                             {t("limits.body", {
+                                count: format.number(MAX_FILES),
                                 bytes: byteLabel(MAX_IMAGE_BYTES),
                                 pixels: format.number(Math.round(MAX_PIXELS / 1_000_000)),
                                 remote: byteLabel(MAX_REMOTE_IMAGE_BYTES),
