@@ -283,6 +283,12 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
             fileErrors: messages.textToSpeech.fileErrors,
             result: messages.textToSpeech.result,
         },
+        imageToText: {
+            workbench: messages.imageToText.workbench,
+            languages: messages.imageToText.languages,
+            errors: messages.imageToText.errors,
+            toast: messages.imageToText.toast,
+        },
         password: {
             workbench: messages.password.workbench,
             strengths: messages.password.strengths,

@@ -288,6 +288,10 @@
             "name": "Text to Speech",
             "description": "Turn text — typed, pasted, or pulled out of a PDF, Word or spreadsheet file, and optionally translated first — into natural speech in 322 voices across 75 languages, with pauses and voice controls, and download it as an MP3."
         },
+        "image-to-text": {
+            "name": "Image to Text (OCR)",
+            "description": "Pull the text out of a photo, scan or screenshot — English, Spanish, Hindi, Bangla, Arabic, Chinese or Japanese — and edit it in the box before you copy. The picture is read in your browser."
+        },
         "related": {
             "title": "Popular tools",
             "description": "Other utilities from the toolbox, ready when you need them.",
@@ -5689,6 +5693,208 @@
                 "a8": "No. The service accepts only the plain text Edge itself sends — markup such as <code>'<'break></code> is refused outright, which is why pauses are markers in the text instead.",
                 "q9": "Can it translate my text before reading it?",
                 "a9": "Yes. Pick a voice in the language you want, then press Translate: the box is translated into that language by Google Translate, with pause markers untouched, and Undo translation brings your original back. It only happens when you press the button."
+            }
+        }
+    },
+    "imageToText": {
+        "meta": {
+            "title": "Image to Text (OCR) — read the text in a picture, in your browser",
+            "description": "Extract text from a photo or screenshot in English, Spanish, Hindi, Bangla, Arabic, Chinese or Japanese, and edit it before you copy. The picture is read in your browser and never uploaded."
+        },
+        "hero": {
+            "eyebrow": "Image to Text",
+            "title": "Image to Text (OCR)",
+            "subtitle": "Drop in a photo, a scan or a screenshot and get its text back in a box you can edit — fix a misread letter, drop a line you do not need — before you copy it. Eight languages, from Bangla and Hindi to Arabic, Chinese and Japanese, with English read alongside each. The picture is read in this tab and never uploaded.",
+            "badgeLanguages": "8 languages · 6 scripts",
+            "badgeLocal": "Picture never uploaded",
+            "badgeEditable": "Edit before you copy"
+        },
+        "toc": {
+            "title": "On this page"
+        },
+        "languages": {
+            "eng": "English",
+            "spa": "Spanish",
+            "hin": "Hindi",
+            "ben": "Bangla",
+            "ara": "Arabic",
+            "chi_sim": "Chinese (Simplified)",
+            "chi_tra": "Chinese (Traditional)",
+            "jpn": "Japanese"
+        },
+        "workbench": {
+            "title": "Read the text in a picture",
+            "description": "Pick the language the text is written in, then add a picture. What it reads lands in a box you can edit before you copy.",
+            "languageLabel": "Language of the text",
+            "languageHint": "English mixed into the picture is read too, whichever language you pick.",
+            "languageOption": "{name} — {endonym}",
+            "dropTitle": "Drop a picture here, or click to choose one",
+            "dropHint": "PNG, JPEG, WebP, AVIF, GIF or BMP, up to {limit}.",
+            "downloadTitle": "The reader is downloaded, your picture is not",
+            "downloadNote": "The first {language} read downloads the text engine and its language data — about {size} — from jsDelivr, and this browser keeps them for next time. The picture is read in this tab and never leaves it.",
+            "statusPick": "Add a picture to read its text.",
+            "statusPreparing": "Preparing the picture…",
+            "statusLoading": "Loading the text engine… {percent}",
+            "statusRecognizing": "Reading the text… {percent}",
+            "statusDone": "Text read. Edit it below, then copy.",
+            "statusEmpty": "No text found. Try a sharper, larger picture, or check the language.",
+            "sourceSize": "{width} × {height}",
+            "previewAlt": "The picture being read",
+            "readAgain": "Read again",
+            "clear": "Clear",
+            "resultLabel": "Extracted text",
+            "resultPlaceholder": "No text was found. You can still type here.",
+            "counts": "{characters, plural, one {# character} other {# characters}} · {lines, plural, one {# line} other {# lines}}",
+            "copy": "Copy text"
+        },
+        "errors": {
+            "empty_file": "That file is empty.",
+            "unsupported_type": "That is not a picture this browser can read. Use PNG, JPEG, WebP, AVIF, GIF or BMP.",
+            "too_large": "That picture is over {limit}. Try a smaller or more compressed one.",
+            "undecodable": "This browser could not open that picture. The file may be damaged.",
+            "engine_unavailable": "The text engine could not be downloaded. Check your connection, or whether something is blocking cdn.jsdelivr.net, and try again.",
+            "stalled": "The text engine stopped responding. Try again, or try a smaller picture.",
+            "recognition_failed": "Reading the picture failed. Try again, or try a different picture."
+        },
+        "toast": {
+            "copied": "Text copied.",
+            "copyFailed": "Could not copy that."
+        },
+        "article": {
+            "whatItIs": {
+                "title": "What this does",
+                "p1": "This page finds the text in a picture — a screenshot, a photographed page, a sign, a scanned form — and gives it back as text you can edit and copy. It reads printed text in eight languages, from English and Spanish to Bangla, Hindi, Arabic, Chinese and Japanese.",
+                "example": "<code>这 是 中 文</code>, as the engine reads it → <code>这是中文</code>, as the box hands it to you",
+                "p2": "Choose the language before you add the picture: it decides which alphabet the engine looks for, and English is read alongside every choice. Nothing is uploaded — the picture is read in this tab, and the only download is the engine itself, once."
+            },
+            "howItWorks": {
+                "title": "How it reads a picture",
+                "p1": "The engine is <code>Tesseract</code>, the open-source OCR engine, compiled to WebAssembly by <code>tesseract.js</code> and run in a web worker so the page stays responsive. It uses Tesseract's LSTM recogniser, a neural network that reads a whole line at a time rather than one letter at a time.",
+                "p2": "Before reading, the picture is turned upright from the orientation a phone records, laid on white so dark text on a transparent screenshot does not vanish into black, and scaled down if it is larger than 8.3 megapixels — a 4K screenshot reads at full size.",
+                "p3": "Afterwards the text is tidied: Tesseract puts a space between every Chinese and Japanese character, which is removed, and so are the trailing spaces and runs of blank lines its layout analysis leaves behind. Nothing else is changed — what you see is what it read."
+            },
+            "controls": {
+                "title": "The controls",
+                "intro": "There are four, and only the language changes what is read.",
+                "headControl": "Control",
+                "headWhat": "What it does",
+                "headWhen": "Reach for it when",
+                "rows": {
+                    "language": {
+                        "name": "Language of the text",
+                        "what": "Chooses the language data the engine loads. Every language except English loads English too, second.",
+                        "when": "Always, before adding the picture. A wrong choice does not fail — it reads the wrong alphabet."
+                    },
+                    "readAgain": {
+                        "name": "Read again",
+                        "what": "Reads the same picture again in the language now chosen. It replaces what is in the box, edits included.",
+                        "when": "You picked the wrong language, or want to undo your edits."
+                    },
+                    "copy": {
+                        "name": "Copy text",
+                        "what": "Copies what is in the box now — your edits, not the original read.",
+                        "when": "You have finished correcting the text."
+                    },
+                    "clear": {
+                        "name": "Clear",
+                        "what": "Removes the picture and the text.",
+                        "when": "Starting over with another picture."
+                    }
+                },
+                "p2": "Adding a picture starts a read straight away and replaces the box. Pasting a picture with <code>Ctrl+V</code>, or giving a public link, works the same as dropping a file.",
+                "tableCaption": "What each control does, and when to reach for it"
+            },
+            "languages": {
+                "title": "Languages and scripts",
+                "p1": "Each language is a separate model. Pick the one the text is written in; the table says what to expect from each.",
+                "headLanguage": "Language",
+                "headScript": "Script",
+                "headNotes": "Worth knowing",
+                "rows": {
+                    "eng": {
+                        "script": "Latin",
+                        "notes": "Read on its own when chosen, and alongside every other language."
+                    },
+                    "spa": {
+                        "script": "Latin",
+                        "notes": "Pick Spanish rather than English so accents, ñ, ¿ and ¡ are in the alphabet it reads."
+                    },
+                    "hin": {
+                        "script": "Devanagari",
+                        "notes": "English words in a Hindi text come back whole, because English is read alongside."
+                    },
+                    "ben": {
+                        "script": "Bengali",
+                        "notes": "The Bangla edition of this site opens on Bangla."
+                    },
+                    "ara": {
+                        "script": "Arabic",
+                        "notes": "The box switches to right to left, so the text edits the way it reads."
+                    },
+                    "chi_sim": {
+                        "script": "Han (simplified)",
+                        "notes": "Mainland China and Singapore. The space Tesseract puts between characters is removed."
+                    },
+                    "chi_tra": {
+                        "script": "Han (traditional)",
+                        "notes": "Taiwan, Hong Kong and Macau. Tidied the same way as Simplified."
+                    },
+                    "jpn": {
+                        "script": "Kanji and kana",
+                        "notes": "Horizontal text only. Rotate a vertical page so its lines run across."
+                    }
+                },
+                "tableCaption": "The languages this tool reads, their scripts, and what to know about each"
+            },
+            "tips": {
+                "title": "Getting a clean read",
+                "items": {
+                    "crop": "Crop to the text. A page in a photo of a desk reads better once the desk is gone.",
+                    "sharp": "Keep it sharp. A thumbnail or a heavily compressed screenshot loses the strokes that tell similar letters apart.",
+                    "flat": "Keep it straight and flat. A page shot at an angle, or curled at the spine, reads worse than a scan.",
+                    "contrast": "Dark text on a light, even background reads best. Shadows across a page and text over a photograph are the hardest cases.",
+                    "oneLanguage": "One language per read, besides English. For a page in Bangla and Arabic, read it twice — once in each."
+                }
+            },
+            "limits": {
+                "title": "What it cannot read",
+                "p1": "Handwriting. The models are trained on printed text; neat capitals sometimes come through, joined-up writing does not.",
+                "p2": "Layout. Columns, tables and captions come back as lines of text in the order the engine finds them, not as a table. Check the order after a multi-column page.",
+                "p3": "A wrong language. It does not fail — it reads the alphabet it was given, confidently — so a box of nonsense usually means the language is wrong."
+            },
+            "privacy": {
+                "title": "Privacy",
+                "p1": "A picture you drop, choose or paste is read in this tab and never uploaded — there is no server step in reading it. The text you edit stays in the page until you copy it.",
+                "p2": "The engine and its language data come from jsDelivr, a public CDN, the first time you read a language — between 7 and 9 MB in all — and this browser keeps them, so later reads do not download them again. Importing a picture by link is the one exception: this server fetches it on your behalf, because a browser is not allowed to read another site's pictures directly."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "items": {
+                    "uploaded": {
+                        "question": "Is my picture uploaded?",
+                        "answer": "No. It is read in this tab by Tesseract compiled to WebAssembly. The only network traffic is the engine and language data from jsDelivr on first use — unless you import the picture by link, which this server fetches for you."
+                    },
+                    "firstRun": {
+                        "question": "Why is the first read slower?",
+                        "answer": "It downloads the engine and the language data first, 7 to 9 MB in all. The browser keeps them, so the next read in the same language starts straight away."
+                    },
+                    "handwriting": {
+                        "question": "Can it read handwriting?",
+                        "answer": "Not reliably. The models are trained on printed text. Neat capitals sometimes work; joined-up writing does not."
+                    },
+                    "nonsense": {
+                        "question": "Why is my text full of nonsense characters?",
+                        "answer": "Usually the language is wrong — the engine reads the alphabet it was given. Pick the language the text is in and press Read again. If the language is right, try a sharper, straighter crop."
+                    },
+                    "mixed": {
+                        "question": "Can it read a picture with two languages?",
+                        "answer": "English is read alongside every language, so Bangla with English words in it, or Arabic with English brand names, works in one read. For two languages other than English, read the picture twice, once in each."
+                    },
+                    "pdf": {
+                        "question": "Does it read a PDF?",
+                        "answer": "Not directly — it reads pictures. Take a screenshot of the page and drop that in."
+                    }
+                }
             }
         }
     },
@@ -12615,7 +12821,7 @@
                 "p1": "Five groups are missing on purpose. Each one is a fact about the tool rather than a gap in the endpoint, and <code>toolforge_catalog_list</code> returns the web address of every one of them so an assistant can send you to the page instead of reporting a dead end.",
                 "images": {
                     "title": "The image tools",
-                    "body": "The compressor, converter, resizer, blur placeholder and background remover decode pixels in a canvas and re-encode them through WebAssembly codecs built for a browser. There is no canvas in a request handler, and a server-side reimplementation would be a second encoder to keep in step with the first. The background remover adds a second reason: its segmentation weights are fetched into the reader's own browser and cached there, so running it here would move a hundred-megabyte download and the inference behind it onto this deployment for every call."
+                    "body": "The compressor, converter, resizer, blur placeholder and background remover decode pixels in a canvas and re-encode them through WebAssembly codecs built for a browser. There is no canvas in a request handler, and a server-side reimplementation would be a second encoder to keep in step with the first. The background remover adds a second reason: its segmentation weights are fetched into the reader's own browser and cached there, so running it here would move a hundred-megabyte download and the inference behind it onto this deployment for every call. Image to Text is absent for that second reason: its engine and language data are fetched into the reader's browser and run in a web worker there, so running it here would put seconds of recognition per picture onto this deployment for every call — and a model that wants the text in a picture can already read it."
                 },
                 "studios": {
                     "title": "The server studios and the shortener",

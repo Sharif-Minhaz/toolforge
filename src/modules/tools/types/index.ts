@@ -62,6 +62,7 @@ export const TOOL_IDS = [
     "hex-editor",
     "image-to-3d",
     "text-to-speech",
+    "image-to-text",
     "mouse-tester",
     "keyboard-tester",
 ] as const;

@@ -162,7 +162,7 @@ export async function decodeToPixels(
     }
 }
 
-async function decodeToDrawable(blob: Blob): Promise<ImageBitmap | HTMLImageElement | null> {
+export async function decodeToDrawable(blob: Blob): Promise<ImageBitmap | HTMLImageElement | null> {
     if (typeof createImageBitmap === "function") {
         try {
             return await createImageBitmap(blob, { imageOrientation: "from-image" });

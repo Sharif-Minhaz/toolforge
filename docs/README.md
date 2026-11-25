@@ -92,6 +92,7 @@ docs/
 │   ├── html-markdown.md
 │   ├── image-codecs.md
 │   ├── image-resizer.md
+│   ├── image-to-text.md
 │   ├── json-server.md
 │   ├── mock-server.md
 │   ├── keyboard-tester.md
@@ -146,6 +147,7 @@ records a defect that was expensive to find and is easy to reintroduce.
 | `html-markdown`                          | [`case-studies/html-markdown.md`](case-studies/html-markdown.md), [`patterns/format-conversion.md`](patterns/format-conversion.md) |
 | `image-compressor`, `image-converter`    | [`case-studies/image-codecs.md`](case-studies/image-codecs.md)                                                                     |
 | `image-resizer`, any image tool's intake | [`case-studies/image-resizer.md`](case-studies/image-resizer.md)                                                                   |
+| `image-to-text`                          | [`case-studies/image-to-text.md`](case-studies/image-to-text.md)                                                                   |
 | `image-to-3d`                            | [`case-studies/image-to-3d.md`](case-studies/image-to-3d.md)                                                                       |
 | `ip-globe`                               | [`case-studies/ip-globe.md`](case-studies/ip-globe.md)                                                                             |
 | `json-server`                            | [`case-studies/json-server.md`](case-studies/json-server.md), [`patterns/growth-ceilings.md`](patterns/growth-ceilings.md)         |

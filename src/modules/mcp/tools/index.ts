@@ -52,8 +52,12 @@ import { uuidGenerateTool } from "./uuid";
  *   fetched into the *reader's* browser and cached there, so running it here
  *   would move a hundred-megabyte download and the inference that follows onto
  *   this deployment for every call — the tool is local precisely so that cost
- *   is not ours to pay. `toolforge_catalog_list` returns their addresses so a
- *   caller can send somebody to the page instead.
+ *   is not ours to pay. Image to Text is absent for that second reason alone:
+ *   Tesseract and its language data are fetched into the reader's browser and
+ *   run in a web worker there, so an adapter would put seconds of recognition
+ *   per picture onto this deployment for every call — and a model that wants
+ *   the text in a picture can already read it. `toolforge_catalog_list` returns
+ *   their addresses so a caller can send somebody to the page instead.
  * - **The studios** — Mock Server, JSON Server, GraphQL Server, and the URL
  *   Shortener. Every one of them mints a public address and stores what is
  *   posted to it, against an ownership model built on browser cookies. An MCP

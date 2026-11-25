@@ -1087,6 +1087,38 @@ const TOOLS: readonly Tool[] = [
         ],
     },
     {
+        id: "image-to-text",
+        href: "/tools/image-to-text",
+        category: "ai",
+        status: "available",
+        // Tesseract compiled to WebAssembly, in a worker in the reader's own tab:
+        // the picture never leaves it. The engine and the language data come
+        // from jsDelivr on first use, which is disclosed above the controls.
+        runsOn: "browser",
+        accent: "cyan",
+        icon: "scan",
+        addedOn: "2026-11-25",
+        featured: false,
+        popularity: 76,
+        keywords: [
+            "ocr",
+            "image to text",
+            "picture to text",
+            "photo to text",
+            "screenshot to text",
+            "extract text",
+            "text recognition",
+            "tesseract",
+            "bangla ocr",
+            "bengali ocr",
+            "hindi ocr",
+            "arabic ocr",
+            "chinese ocr",
+            "japanese ocr",
+            "spanish ocr",
+        ],
+    },
+    {
         id: "domain-inspector",
         href: "/tools/domain-inspector",
         category: "network",
