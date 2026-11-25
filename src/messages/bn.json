@@ -72,6 +72,9 @@
         "mockServers": "মক সার্ভার",
         "jsonServers": "JSON সার্ভার",
         "sectionStudio": "স্টুডিও",
+        "sectionRecent": "সাম্প্রতিক",
+        "recentRemove": "সাম্প্রতিক থেকে {name} সরান",
+        "searchKeysHint": "প্রথম ফলাফল খুলতে Enter চাপুন, অথবা তালিকায় যেতে নিচের তীরচিহ্ন চাপুন।",
         "graphqlServers": "GraphQL সার্ভার",
         "mcp": "MCP"
     },

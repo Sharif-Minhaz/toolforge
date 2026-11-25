@@ -331,6 +331,13 @@
         -webkit-tap-highlight-color: transparent;
     }
 
+    /* Tailwind v4's preflight leaves buttons on the default cursor; this is its
+       own upgrade-guide snippet, so a bare <button> reads as clickable too. */
+    button:not(:disabled),
+    [role="button"]:not(:disabled) {
+        cursor: pointer;
+    }
+
     body {
         @apply bg-background text-foreground;
         font-feature-settings:

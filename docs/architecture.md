@@ -65,6 +65,12 @@ heading per category. A new category needs the union widened **and**
 `categories.<id>.name` / `.description` in both locales, or the rail renders a
 heading with no words in it.
 
+Above the categories, a **Recent** section lists the last tools this browser
+visited (`toolforge.recent-tools` in `localStorage`, ids only, via
+`preferences/domain/recent-tools.ts`); `ShellFrame` records a visit on every
+route change, and each row's × drops it until the next visit. In the search box, Enter opens the first result and the arrow
+keys walk the rail's links.
+
 ---
 
 ## The shared layer: `src/modules/tools/`

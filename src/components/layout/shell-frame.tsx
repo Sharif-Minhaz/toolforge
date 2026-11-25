@@ -21,6 +21,7 @@ import {
 import { ToolForgeMark, ToolForgeWordmark } from "@/components/brand/toolforge-mark";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { recordRecentTool } from "@/modules/preferences/components/use-recent-tools";
 import { readSidebarCollapsed, writeSidebarCollapsed } from "@/modules/preferences/domain/sidebar";
 import { UNLOCK_PREFIX } from "@/modules/short-links/domain/constants";
 import { LocaleSwitcher } from "./locale-switcher";
@@ -88,7 +89,8 @@ export function ShellFrame({ tools, children }: ShellFrameProps) {
     // The rail state lives on `<html>` rather than in the chrome below, so
     // stepping through a standalone route and back does not quietly expand a
     // rail the reader had collapsed.
-    const standalone = isStandalonePath(usePathname());
+    const pathname = usePathname();
+    const standalone = isStandalonePath(pathname);
 
     const setCollapsedState = useCallback((next: boolean) => setSidebarCollapsed(next), []);
 
@@ -113,6 +115,19 @@ export function ShellFrame({ tools, children }: ShellFrameProps) {
         focusSearchOnExpand.current = false;
         searchRef.current?.focus();
     }, [collapsed]);
+
+    // Recorded here rather than in `SidebarNav`, which mounts twice (rail and
+    // drawer); a visit from the overview grid or a shared link counts too.
+    useEffect(() => {
+        const visited = tools.find(
+            (tool) =>
+                tool.href === pathname && tool.isSection !== true && tool.status === "available",
+        );
+
+        if (visited) {
+            recordRecentTool(visited.id);
+        }
+    }, [pathname, tools]);
 
     useEffect(() => {
         // No rail and no search box to reach, so the browser keeps its own

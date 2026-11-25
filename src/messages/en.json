@@ -72,6 +72,9 @@
         "mockServers": "Mock Servers",
         "jsonServers": "JSON Servers",
         "sectionStudio": "Studio",
+        "sectionRecent": "Recent",
+        "recentRemove": "Remove {name} from Recent",
+        "searchKeysHint": "Press Enter to open the first result, or the down arrow to move through the list.",
         "graphqlServers": "GraphQL Servers",
         "mcp": "MCP"
     },

@@ -2,6 +2,7 @@
 
 import {
     IconDatabase,
+    IconHistory,
     IconLayoutDashboard,
     IconPlugConnected,
     IconSearch,
@@ -13,11 +14,24 @@ import { motion } from "motion/react";
 import { useFormatter, useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useId, useMemo, useState, type ReactNode, type RefObject } from "react";
+import {
+    useId,
+    useMemo,
+    useRef,
+    useState,
+    type KeyboardEvent,
+    type ReactNode,
+    type RefObject,
+} from "react";
 
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import {
+    removeRecentTool,
+    useRecentToolIds,
+} from "@/modules/preferences/components/use-recent-tools";
+import { MAX_RECENT_TOOLS } from "@/modules/preferences/domain/recent-tools";
 import { TOOL_ACCENT_VARS, TOOL_ICON_TILE } from "@/modules/tools/components/tool-accent";
 import { ToolIcon } from "@/modules/tools/components/tool-icon";
 import { MAX_TOOL_SEARCH_LENGTH, filterTools } from "@/modules/tools/domain/search";
@@ -35,6 +49,9 @@ type NavRowProps = {
     accentClass?: string;
     layoutIdPrefix: string;
     onNavigate?: () => void;
+    /** Adds a hover-revealed × that calls this; `removeLabel` names it. */
+    onRemove?: () => void;
+    removeLabel?: string;
 };
 
 function NavRow({
@@ -47,8 +64,11 @@ function NavRow({
     accentClass,
     layoutIdPrefix,
     onNavigate,
+    onRemove,
+    removeLabel,
 }: NavRowProps) {
     const interactive = href !== undefined;
+    const removable = onRemove !== undefined && !collapsed;
 
     const content = (
         <>
@@ -92,6 +112,8 @@ function NavRow({
             : "cursor-default opacity-55",
         active && "hover:bg-transparent",
         collapsed && "justify-center gap-0",
+        // Room for the × so a long name truncates before it, not under it.
+        removable && "pr-8",
     );
 
     const row = interactive ? (
@@ -110,7 +132,7 @@ function NavRow({
     );
 
     return (
-        <li className="relative">
+        <li className="group/item relative">
             {active && (
                 <>
                     <motion.span
@@ -135,6 +157,28 @@ function NavRow({
             ) : (
                 row
             )}
+            {removable && (
+                // A sibling of the link, not inside it: a button nested in an
+                // anchor is invalid and would also navigate. Hover-only would
+                // strand keyboard and touch users, so focus and hover:none show it.
+                <button
+                    type="button"
+                    aria-label={removeLabel}
+                    onClick={(event) => {
+                        // This row is about to unmount; hand focus to a
+                        // neighbour rather than dropping it to <body>.
+                        const item = event.currentTarget.closest("li");
+                        const neighbour = (
+                            item?.nextElementSibling ?? item?.previousElementSibling
+                        )?.querySelector("a");
+                        onRemove();
+                        neighbour?.focus();
+                    }}
+                    className="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-1.5 grid size-6 -translate-y-1/2 place-items-center rounded-md opacity-0 transition-[opacity,color,background-color] duration-200 group-hover/item:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:outline-none [@media(hover:none)]:opacity-100"
+                >
+                    <IconX className="size-3.5" stroke={2} aria-hidden="true" />
+                </button>
+            )}
         </li>
     );
 }
@@ -150,7 +194,7 @@ function SectionLabel({ children, trailing, ruleWhenCollapsed }: SectionLabelPro
     return (
         <>
             <div className="flex items-center justify-between gap-2 px-2 pt-5 pb-1.5 group-data-[collapsed=true]/shell:sr-only">
-                <span className="text-muted-foreground/85 text-[0.6875rem] font-semibold tracking-[0.09em] uppercase">
+                <span className="text-muted-foreground/85 flex items-center gap-1.5 text-[0.6875rem] font-semibold tracking-[0.09em] uppercase">
                     {children}
                 </span>
                 {trailing}
@@ -188,6 +232,9 @@ export function SidebarNav({
     const pathname = usePathname();
     const [query, setQuery] = useState("");
     const searchId = useId();
+    const searchHintId = useId();
+    const navRef = useRef<HTMLElement>(null);
+    const recentIds = useRecentToolIds();
 
     /**
      * Sections never enter a category group.
@@ -220,6 +267,20 @@ export function SidebarNav({
 
     const filtered = useMemo(() => filterTools(pages, query), [pages, query]);
 
+    // The page you are on is left out: it is already highlighted in its own
+    // category, and a second active row would share that row's `layoutId`.
+    const recent = useMemo(
+        () =>
+            recentIds
+                .flatMap((id) => {
+                    const tool = pages.find((page) => page.id === id);
+
+                    return tool?.status === "available" && tool.href !== pathname ? [tool] : [];
+                })
+                .slice(0, MAX_RECENT_TOOLS),
+        [recentIds, pages, pathname],
+    );
+
     // Grouped only while browsing. A search is already a ranking, and slicing
     // three matches across five headings buries them.
     const groups = useMemo(
@@ -241,7 +302,56 @@ export function SidebarNav({
     const jsonActive = pathname === "/json" || pathname.startsWith("/json/");
     const graphqlActive = pathname === "/graphql" || pathname.startsWith("/graphql/");
 
-    function renderRow(tool: LocalizedTool) {
+    // While a query is typed the first link in the list is the top result —
+    // read from the DOM so Enter always opens exactly what is shown first.
+    function handleSearchKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+        // Enter also commits an IME composition, which Bangla input uses.
+        if (event.nativeEvent.isComposing) {
+            return;
+        }
+
+        const first = navRef.current?.querySelector("a");
+
+        if (!first) {
+            return;
+        }
+
+        if (event.key === "ArrowDown") {
+            event.preventDefault();
+            first.focus();
+        } else if (event.key === "Enter" && query.length > 0) {
+            event.preventDefault();
+            first.click();
+            setQuery("");
+            event.currentTarget.blur();
+        }
+    }
+
+    // Arrow keys step through the links; up from the first returns to search.
+    function handleNavKeyDown(event: KeyboardEvent<HTMLElement>) {
+        if (event.key !== "ArrowDown" && event.key !== "ArrowUp") {
+            return;
+        }
+
+        const links = Array.from(event.currentTarget.querySelectorAll("a"));
+        const index = links.findIndex((link) => link === document.activeElement);
+
+        if (index === -1) {
+            return;
+        }
+
+        event.preventDefault();
+
+        const next = links[index + (event.key === "ArrowDown" ? 1 : -1)];
+
+        if (next) {
+            next.focus();
+        } else if (event.key === "ArrowUp") {
+            document.getElementById(searchId)?.focus();
+        }
+    }
+
+    function renderRow(tool: LocalizedTool, onRemove?: () => void) {
         const available = tool.status === "available";
 
         return (
@@ -254,6 +364,8 @@ export function SidebarNav({
                 layoutIdPrefix={layoutIdPrefix}
                 onNavigate={onNavigate}
                 accentClass={TOOL_ACCENT_VARS[tool.accent]}
+                onRemove={onRemove}
+                removeLabel={onRemove ? t("recentRemove", { name: tool.name }) : undefined}
                 icon={<ToolIcon name={tool.icon} className="size-4" />}
                 badge={
                     available ? undefined : (
@@ -298,6 +410,8 @@ export function SidebarNav({
                             maxLength={MAX_TOOL_SEARCH_LENGTH}
                             value={query}
                             onChange={(event) => setQuery(event.target.value)}
+                            onKeyDown={handleSearchKeyDown}
+                            aria-describedby={searchHintId}
                             placeholder={t("searchPlaceholder")}
                             autoComplete="off"
                             className="bg-card/70 h-9 rounded-xl pr-9 pl-8 text-[0.8125rem] shadow-xs [&::-webkit-search-cancel-button]:hidden"
@@ -319,11 +433,16 @@ export function SidebarNav({
                                 ⌘K
                             </kbd>
                         )}
+                        <span id={searchHintId} className="sr-only">
+                            {t("searchKeysHint")}
+                        </span>
                     </div>
                 )}
             </div>
 
             <nav
+                ref={navRef}
+                onKeyDown={handleNavKeyDown}
                 aria-label={t("primaryLabel")}
                 className="scroll-fade-b no-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-2 pb-3"
             >
@@ -366,6 +485,18 @@ export function SidebarNav({
                                     />
                                 }
                             />
+                        </ul>
+                    </>
+                )}
+
+                {query.length === 0 && recent.length > 0 && (
+                    <>
+                        <SectionLabel ruleWhenCollapsed>
+                            <IconHistory className="size-3" stroke={2} aria-hidden="true" />
+                            {t("sectionRecent")}
+                        </SectionLabel>
+                        <ul className="flex flex-col gap-0.5">
+                            {recent.map((tool) => renderRow(tool, () => removeRecentTool(tool.id)))}
                         </ul>
                     </>
                 )}
@@ -459,7 +590,9 @@ export function SidebarNav({
                             >
                                 {t("sectionTools")}
                             </SectionLabel>
-                            <ul className="flex flex-col gap-0.5">{filtered.map(renderRow)}</ul>
+                            <ul className="flex flex-col gap-0.5">
+                                {filtered.map((tool) => renderRow(tool))}
+                            </ul>
                         </>
                     ) : (
                         matchedSectionIds.size === 0 && (
@@ -487,7 +620,9 @@ export function SidebarNav({
                             >
                                 {group.label}
                             </SectionLabel>
-                            <ul className="flex flex-col gap-0.5">{group.tools.map(renderRow)}</ul>
+                            <ul className="flex flex-col gap-0.5">
+                                {group.tools.map((tool) => renderRow(tool))}
+                            </ul>
                         </div>
                     ))
                 )}
