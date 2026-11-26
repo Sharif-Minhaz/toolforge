@@ -227,9 +227,12 @@ export function LevelMeter({ stream, children }: LevelMeterProps) {
                 />
             </dl>
 
+            {/* Two lines reserved: the verdict changes several times a second
+                while somebody speaks, and a one-line "Good level." swapping
+                with a two-line warning would bounce everything below it. */}
             <p
                 className={cn(
-                    "text-[0.8125rem] leading-6",
+                    "min-h-12 text-[0.8125rem] leading-6",
                     verdict === "clipping"
                         ? "text-destructive font-medium"
                         : "text-muted-foreground",

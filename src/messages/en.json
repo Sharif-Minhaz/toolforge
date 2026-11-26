@@ -9464,7 +9464,7 @@
             "kilohertz": "{value} kHz",
             "meterHint": "RMS is the average loudness, peak the loudest moment. Speech usually sits between −30 and −12 dBFS.",
             "verdict": {
-                "silent": "Silent — nothing is reaching the browser. Check that the microphone is not muted and that the right one is chosen.",
+                "silent": "Silent — check the microphone is not muted and is the right one.",
                 "quiet": "Quiet — move closer to the microphone, or raise its input level in the system sound settings.",
                 "good": "Good level.",
                 "clipping": "Clipping — the loudest sounds are being cut off. Move back a little, or lower the input level."
