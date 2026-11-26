@@ -41,7 +41,8 @@ export const DNS_FAILURE_REASONS = [
 export type DnsFailureReason = (typeof DNS_FAILURE_REASONS)[number];
 
 /**
- * Who runs the machine behind an address.
+ * What DNS alone says about an address: its reverse name, and Team Cymru's
+ * record of the AS announcing it.
  *
  * `country` comes from the routing registry's allocation record, never from a
  * geo-IP database: it says which country a block was assigned to, which is a
@@ -49,7 +50,7 @@ export type DnsFailureReason = (typeof DNS_FAILURE_REASONS)[number];
  * is. Anything drawing this on a map owes the reader that resolution — see
  * `tools/domain/countries.ts`.
  */
-export type HostAddress = {
+export type HostRouting = {
     readonly ip: string;
     readonly version: IpVersion;
     readonly reverse: string | null;
@@ -59,6 +60,10 @@ export type HostAddress = {
     /** ISO 3166-1 alpha-2, from the routing registry rather than a geo-IP guess. */
     readonly country: string | null;
     readonly registry: string | null;
+};
+
+/** Who runs the machine behind an address: the routing view plus the RDAP record. */
+export type HostAddress = HostRouting & {
     readonly network: string | null;
     readonly org: string | null;
 };

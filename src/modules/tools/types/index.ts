@@ -65,6 +65,7 @@ export const TOOL_IDS = [
     "image-to-text",
     "mouse-tester",
     "keyboard-tester",
+    "my-ip",
 ] as const;
 
 export type ToolId = (typeof TOOL_IDS)[number];
@@ -142,7 +143,8 @@ export type ToolIconName =
     | "cube"
     | "speech"
     | "mouse"
-    | "keyboard";
+    | "keyboard"
+    | "world-pin";
 
 export type Tool = {
     readonly id: ToolId;

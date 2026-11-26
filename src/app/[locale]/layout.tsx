@@ -471,6 +471,11 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
             hopStatus: messages.ipGlobe.hopStatus,
             table: messages.ipGlobe.table,
         },
+        // Everything else on the page is server-rendered; only the copy
+        // buttons' failure toasts cross.
+        myIp: {
+            toast: messages.myIp.toast,
+        },
         // The studio's own hero and disclosure copy stays on the server; only
         // the launcher island's strings cross.
         mockServer: {

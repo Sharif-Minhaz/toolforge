@@ -199,6 +199,9 @@ Not gaps. Each one is a fact about the tool.
 - **The mouse and keyboard testers** — they measure a physical device in a
   browser. There is no mouse or keyboard on the other end of an MCP call, and an
   adapter over a list of timestamps would be a tool nobody had a reason to call.
+- **What Is My IP** — its answer is the address the request came from, and over
+  MCP that is the assistant's host, not the person asking. An adapter would
+  report somebody else's address as theirs; `/api/ip` serves a terminal instead.
 
 `toolforge_catalog_list` returns the web address of every one of them, so an
 assistant asked to compress a photograph sends the reader to the page rather

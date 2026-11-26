@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+    countryDescriber,
     countryFlagEmoji,
     countryLocation,
     knownCountryCodes,
@@ -113,5 +114,21 @@ describe("the coordinate table", () => {
         expect(countryLocation("US")!.longitude).toBeLessThan(0);
         expect(countryLocation("BR")!.latitude).toBeLessThan(0);
         expect(countryLocation("BR")!.longitude).toBeLessThan(0);
+    });
+});
+
+describe("countryDescriber", () => {
+    test("names a code in the requested locale, with its flag", () => {
+        expect(countryDescriber("en")("bd")).toEqual({ flag: "🇧🇩", name: "Bangladesh" });
+    });
+
+    test("nothing to describe is nothing, not a blank chip", () => {
+        expect(countryDescriber("en")(null)).toEqual({ flag: null, name: null });
+        expect(countryDescriber("en")("")).toEqual({ flag: null, name: null });
+    });
+
+    test("a code ICU does not know falls back rather than echoing itself", () => {
+        expect(countryDescriber("en")("ZZ").name).not.toBe("ZZ");
+        expect(countryDescriber("en")("-").name).toBeNull();
     });
 });

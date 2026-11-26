@@ -46,6 +46,7 @@ import {
     IconTransform,
     IconMouse,
     IconVolume,
+    IconWorldPin,
     IconWorldWww,
     type IconProps,
 } from "@tabler/icons-react";
@@ -102,6 +103,7 @@ const ICONS: Record<ToolIconName, ComponentType<IconProps>> = {
     dice: IconDice5,
     "lock-code": IconLockCode,
     "file-pdf": IconFileTypePdf,
+    "world-pin": IconWorldPin,
 };
 
 type ToolIconProps = {

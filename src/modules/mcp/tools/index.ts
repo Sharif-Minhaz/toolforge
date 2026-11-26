@@ -107,6 +107,11 @@ import { uuidGenerateTool } from "./uuid";
  * not offer, and behind a model that can be talked into things, a token is not
  * the protection it looks like.
  *
+ * What Is My IP is absent because its answer is a fact about whoever sent the
+ * request, and over MCP that is the assistant's host — a hosted client's
+ * egress address, not the person asking. An adapter would report somebody
+ * else's address as theirs. `/api/ip` answers the same question for a terminal.
+ *
  * The Mouse and Keyboard Testers are absent because there is nothing on the
  * other end of an MCP call to test. What they measure is a physical device in
  * a browser — the gaps between presses, the wheel, the pointer reports

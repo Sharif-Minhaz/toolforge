@@ -331,6 +331,57 @@ export function countryLocation(code: string | null): CountryLocation | null {
     return { code: normalized, latitude: entry[0], longitude: entry[1], name: entry[2] };
 }
 
+export type CountryLabel = {
+    readonly flag: string | null;
+    readonly name: string | null;
+};
+
+/**
+ * A country code turned into a flag and a localised name.
+ *
+ * `Intl.DisplayNames` carries CLDR's country names in every locale this site
+ * speaks, which is the only reason ~250 translated names are not sitting in
+ * both message catalogues. Its output can differ between ICU versions, so call
+ * this only where one runtime renders the result: a server component, or a
+ * client subtree mounted after an action returned — see `useCountryName`.
+ *
+ * The English name from the coordinate table is the fallback, so a locale whose
+ * ICU build lacks a region name still gets words rather than a bare code.
+ */
+export function countryDescriber(locale: string): (code: string | null) => CountryLabel {
+    let display: Intl.DisplayNames | null = null;
+
+    try {
+        display = new Intl.DisplayNames([locale], { type: "region" });
+    } catch {
+        display = null;
+    }
+
+    return function describeCountry(code) {
+        if (code === null || code.length === 0) {
+            return { flag: null, name: null };
+        }
+
+        const normalized = code.toUpperCase();
+        const fallback = countryLocation(normalized)?.name ?? null;
+
+        // `of` returns the input unchanged for a code it does not know, which
+        // would show "ZZ" twice — as the chip and as its own explanation.
+        let localized: string | null = null;
+
+        try {
+            localized = display?.of(normalized) ?? null;
+        } catch {
+            // `of` throws a RangeError for anything that is not a region code.
+            localized = null;
+        }
+
+        const name = localized !== null && localized !== normalized ? localized : fallback;
+
+        return { flag: countryFlagEmoji(normalized), name };
+    };
+}
+
 /** Every code the table knows, for the test that guards its shape. */
 export function knownCountryCodes(): readonly string[] {
     return Object.keys(COUNTRIES);

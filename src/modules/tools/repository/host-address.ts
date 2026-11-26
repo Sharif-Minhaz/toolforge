@@ -6,7 +6,7 @@ import { CYMRU_AS_ZONE } from "../domain/network-constants";
 import { cymruOriginName, reverseArpaName } from "../domain/reverse-names";
 import { queryDns, queryTxtValue } from "./doh";
 import { fetchNetworkInfo } from "./rdap";
-import type { DnsResolver, HostAddress } from "../types/network";
+import type { DnsResolver, HostAddress, HostRouting } from "../types/network";
 
 /**
  * Who runs the machine behind an address.
@@ -21,13 +21,37 @@ import type { DnsResolver, HostAddress } from "../types/network";
  * leaves a `null` field, never a failed lookup.
  */
 export async function describeAddress(ip: string, resolver: DnsResolver): Promise<HostAddress> {
+    const [routing, network] = await Promise.all([
+        describeRouting(ip, resolver),
+        fetchNetworkInfo(ip),
+    ]);
+
+    return {
+        ...routing,
+        // The routing registry is the better authority on the country; Cymru's
+        // is derived from the same allocation and is the fallback.
+        country: network?.country ?? routing.country,
+        network: network?.network ?? null,
+        org: network?.org ?? null,
+    };
+}
+
+/**
+ * The DNS half of `describeAddress`, on its own: the reverse name and Team
+ * Cymru's origin and AS-name zones, without the RDAP request.
+ *
+ * Separate because RDAP registries meter by calling address — which is this
+ * server's — while these answers come through a public DoH resolver that caches
+ * them for hours. A page that looks one up on every view, rather than behind a
+ * quota, can afford this half and not the other.
+ */
+export async function describeRouting(ip: string, resolver: DnsResolver): Promise<HostRouting> {
     const arpa = reverseArpaName(ip);
     const originName = cymruOriginName(ip);
 
-    const [reverse, origin, network] = await Promise.all([
+    const [reverse, origin] = await Promise.all([
         arpa === null ? Promise.resolve(null) : lookupReverse(arpa, resolver),
         originName === null ? Promise.resolve(null) : queryTxtValue(originName, resolver),
-        fetchNetworkInfo(ip),
     ]);
 
     const parsedOrigin = origin === null ? null : parseCymruOrigin(origin);
@@ -45,12 +69,8 @@ export async function describeAddress(ip: string, resolver: DnsResolver): Promis
         asn: parsedOrigin?.asn ?? null,
         asName,
         prefix: parsedOrigin?.prefix ?? null,
-        // The routing registry is the better authority on the country; Cymru's
-        // is derived from the same allocation and is the fallback.
-        country: network?.country ?? parsedOrigin?.country ?? null,
+        country: parsedOrigin?.country ?? null,
         registry: parsedOrigin?.registry ?? null,
-        network: network?.network ?? null,
-        org: network?.org ?? null,
     };
 }
 

@@ -322,6 +322,10 @@
             "name": "IP & Route Globe",
             "description": "Map an IP address, a hostname, or pasted traceroute output onto a spinning globe. Every hop is placed by the country its block was allocated to — registry data, not a geo-IP guess — with the ASN, the network operator and the reverse name in a table beside it."
         },
+        "my-ip": {
+            "name": "What Is My IP",
+            "description": "See your public IP address, the network that announces it, and the headers your browser sends."
+        },
         "mock-server": {
             "name": "Mock Server Studio",
             "description": "Build mock REST APIs visually and call them from a real URL. No account — a recovery key moves a workspace between browsers."
@@ -6857,6 +6861,87 @@
             }
         }
     },
+    "myIp": {
+        "meta": {
+            "title": "What Is My IP Address? — Public IP, ASN and Request Headers",
+            "description": "See your public IP address as the internet sees it, with its IPv4 or IPv6 family, reverse DNS name, ASN, network operator, announced prefix and registry country, plus the user agent, languages and client hints your browser sends. Works from a terminal with curl too."
+        },
+        "hero": {
+            "eyebrow": "Network",
+            "title": "What Is My IP",
+            "subtitle": "Your public address as this server sees it, the network behind it, and what your browser sends with every request.",
+            "badgeRequest": "Read from your own request",
+            "badgeRegistry": "Registry data, not geo-IP",
+            "badgeCli": "Works with curl"
+        },
+        "report": {
+            "addressLabel": "Your public IP address",
+            "copyAddress": "Copy IP address",
+            "copyValue": "Copy {label}",
+            "missing": "This request arrived without a client address, so there is nothing to show.",
+            "restricted": "This is a private or reserved address, so you are reaching the site over a local network or a development server. It has no public owner.",
+            "invalid": "The proxy in front of this site reported something that is not an IP address.",
+            "requestTitle": "What your browser sent",
+            "notSent": "Not sent"
+        },
+        "fields": {
+            "userAgent": "User agent",
+            "language": "Languages",
+            "encoding": "Compression",
+            "referer": "Referrer",
+            "brands": "Browser brands",
+            "platform": "Platform",
+            "mobile": "Mobile",
+            "doNotTrack": "Do Not Track",
+            "globalPrivacyControl": "Global Privacy Control"
+        },
+        "network": {
+            "title": "Network",
+            "reverse": "Reverse DNS",
+            "asn": "ASN",
+            "asName": "Operator",
+            "prefix": "Announced prefix",
+            "registry": "Registry",
+            "country": "Allocated to",
+            "notFound": "Not found",
+            "notPublic": "A private address has no public route or owner to look up.",
+            "empty": "No reverse name or route announcement was found for this address."
+        },
+        "cli": {
+            "title": "From a terminal",
+            "text": "Address only",
+            "json": "Address and headers as JSON",
+            "copy": "Copy command"
+        },
+        "toast": {
+            "copyFailed": {
+                "empty": "There is nothing to copy",
+                "unsupported": "This browser will not let a page write to the clipboard",
+                "denied": "Clipboard permission was refused"
+            }
+        },
+        "article": {
+            "understanding": {
+                "title": "What this page shows you",
+                "p1": "Every request your browser makes carries a return address, and this page shows the one it arrived from. That is your public IP: the address of your router, your mobile carrier's gateway or your VPN, not the private one your device has on the local network.",
+                "example": "<code>curl https://…/api/ip</code> → <code>203.0.113.7</code> — add <code>?format=json</code> for the headers too",
+                "p2": "The network panel names who announces the address — the <code>ASN</code>, operator, prefix and the country its block was allocated to — from reverse DNS and Team Cymru's routing data. That is a registry record, not a guess at your city, so it names your provider's country rather than your street."
+            },
+            "faq": {
+                "title": "Questions people ask",
+                "q1": "Why is this different from the IP address in my network settings?",
+                "a1": "Your device usually has a private address such as 192.168.1.20 that only your local network can see. Your router swaps it for one shared public address on the way out, and that public address is the one every website sees — and the one shown here.",
+                "q2": "Why do I see an IPv6 address and not IPv4, or the other way round?",
+                "a2": "A connection uses one family at a time. If your network has IPv6, your browser normally prefers it, so that is what arrives. You may have an IPv4 address as well; this page can only see the one your browser chose for this request.",
+                "q3": "Why is the location only a country?",
+                "a3": "Because that is what the routing registry records about an address block. A city-level pin would come from a geo-IP database's guess, which is often wrong for mobile networks and VPNs. On a VPN you will see the VPN's exit address and its network instead of yours.",
+                "q4": "How do I get my IP from a script?",
+                "a4": "Run curl against /api/ip for the address alone, followed by a newline, or add ?format=json for the address and the headers as JSON. Neither does any lookup, so polling it is cheap.",
+                "q5": "Does this page store my IP address?",
+                "a5": "This tool saves nothing. It reads the address from your request and looks up the network through public DNS, which sees this server's address, not yours. Like any website, the hosting platform keeps its ordinary request logs."
+            }
+        }
+    },
     "mockServer": {
         "meta": {
             "title": "Visual Mock Server Studio — Build Mock APIs Without Writing JSON",
@@ -8589,7 +8674,7 @@
             },
             "absent": {
                 "title": "What is not here, and why",
-                "p1": "Five groups are missing on purpose. Each one is a fact about the tool rather than a gap in the endpoint, and <code>toolforge_catalog_list</code> returns the web address of every one of them so an assistant can send you to the page instead of reporting a dead end.",
+                "p1": "Six groups are missing on purpose. Each one is a fact about the tool rather than a gap in the endpoint, and <code>toolforge_catalog_list</code> returns the web address of every one of them so an assistant can send you to the page instead of reporting a dead end.",
                 "images": {
                     "title": "The image tools",
                     "body": "The compressor, converter, resizer, blur placeholder and background remover decode pixels in a canvas and re-encode them through WebAssembly codecs built for a browser. There is no canvas in a request handler, and a server-side reimplementation would be a second encoder to keep in step with the first. The background remover adds a second reason: its segmentation weights are fetched into the reader's own browser and cached there, so running it here would move a hundred-megabyte download and the inference behind it onto this deployment for every call. Image to Text is absent for that second reason: its engine and language data are fetched into the reader's browser and run in a web worker there, so running it here would put seconds of recognition per picture onto this deployment for every call — and a model that wants the text in a picture can already read it."
@@ -8609,6 +8694,10 @@
                 "hardware": {
                     "title": "The hardware testers",
                     "body": "The mouse and keyboard testers measure a physical device in a browser: the gaps between presses, the wheel, the keys held at once. An MCP call has no mouse or keyboard on the other end of it, and a tool that took a list of timestamps instead would be one nobody had a reason to call."
+                },
+                "connection": {
+                    "title": "What Is My IP",
+                    "body": "It reports the address a request arrived from. Over MCP that request comes from the assistant's host, not from you, so the answer would be somebody else's address presented as yours. Ask from a terminal with curl instead."
                 }
             },
             "faq": {

@@ -110,9 +110,11 @@ they stay Latin in both locales exactly as the Bangla copy already writes 10¹¹
 not in both catalogues. Its output can differ between ICU builds, so the
 hydration rule in
 [`hydration-and-platform-pitfalls.md`](hydration-and-platform-pitfalls.md) would
-normally bar it — it is allowed in `use-country-name.ts` only because every
-caller lives under the report view, which mounts after the server action returns
-and is therefore never server-rendered. **Move a caller above that boundary and
+normally bar it. `countryDescriber` in `tools/domain/countries.ts` is allowed in
+exactly two places where only one runtime renders the result: a server component
+(What Is My IP's network panel), and `use-country-name.ts`, whose every caller
+lives under a report view that mounts after the server action returns and is
+therefore never server-rendered. **Move a client caller above that boundary and
 the rule applies again.**
 
 ---

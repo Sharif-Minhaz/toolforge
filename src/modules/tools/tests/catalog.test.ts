@@ -196,6 +196,9 @@ describe("tool catalog", () => {
             "port-scanner",
             "subdomain-lookup",
             "ip-globe",
+            // The address is read from the request itself, and the network
+            // panel asks public DNS about it from this server.
+            "my-ip",
             "mock-server",
             "json-server",
             "graphql-server",
