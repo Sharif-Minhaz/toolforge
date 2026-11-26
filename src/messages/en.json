@@ -366,6 +366,18 @@
             "name": "Number to Words",
             "description": "Spell a number or a cheque amount out in English and Bangla at once, in lakhs and crores or in millions."
         },
+        "land-measurement": {
+            "name": "Land Measurement",
+            "description": "Convert land between বিঘা, কাঠা, শতাংশ, কানি, গণ্ডা, acres and square feet, with district sizes, drawn to scale on a football pitch."
+        },
+        "photo-exif": {
+            "name": "Photo EXIF",
+            "description": "See the GPS location, camera, serial numbers and names hidden in a photo, and remove them without re-encoding."
+        },
+        "speed-test": {
+            "name": "Internet Speed Test",
+            "description": "Download, upload and latency, plus lag under load, what the line can handle, your plan vs reality, and the hours it slows down."
+        },
         "mock-server": {
             "name": "Mock Server Studio",
             "description": "Build mock REST APIs visually and call them from a real URL. No account — a recovery key moves a workspace between browsers."
@@ -7536,6 +7548,467 @@
                 "a5": "Because taka, rupees, dollars, euros and pounds all divide into a hundred, so a third decimal is not something anybody can pay. Rounding it would put a sum on the cheque that nobody wrote down, so the tool asks you to decide instead.",
                 "q6": "How large a number can it read?",
                 "a6": "Up to {digits} digits before the decimal point — 999 duotrigintillion on the international scale, past a googol — and {decimals} after it. Exactly ten to the hundredth reads as one googol. It stops there because that is where the standard English names run out."
+            }
+        }
+    },
+    "landMeasurement": {
+        "meta": {
+            "title": "Land Measurement — Bigha, Katha, Decimal, Kani, Gonda, Acre and Square Feet",
+            "description": "Convert land between বিঘা, কাঠা, ছটাক, শতাংশ (decimal), কানি, গণ্ডা, অযুতাংশ, acres, hectares, square feet and square metres at once, with the district sizes of the বিঘা and কানি shown openly — and see how big the plot really is beside a bed, a parking space, a court or a football pitch. Runs in your browser."
+        },
+        "hero": {
+            "eyebrow": "Generators",
+            "title": "Land Measurement",
+            "subtitle": "Type an area in any unit and read it in every Bangladeshi and international unit at once — then see it beside a bed, a car, a court or a pitch.",
+            "badgeRegional": "District sizes",
+            "badgeSize": "Sizes you can picture",
+            "badgeOffline": "Works offline"
+        },
+        "workbench": {
+            "inputLabel": "Area",
+            "placeholder": "5",
+            "inputHint": "Western or Bangla digits. Commas or spaces between digit groups are fine.",
+            "clear": "Clear the area",
+            "unitLabel": "Unit",
+            "regionsLabel": "District sizes",
+            "bighaRegionLabel": "Size of a বিঘা",
+            "bighaRegionHint": "Also sets the কাঠা and ছটাক, which are a twentieth and a 320th of it.",
+            "kaniRegionLabel": "Size of a কানি",
+            "kaniRegionHint": "Also sets the গণ্ডা, কড়া, ক্রান্তি and তিল, which are fractions of it.",
+            "regionOption": "{name} · {decimals} decimal",
+            "regions": {
+                "standard": "Standard",
+                "faridpur": "Faridpur",
+                "dinajpur": "Dinajpur",
+                "rangpur": "Rangpur",
+                "comilla-noakhali": "Comilla / Noakhali",
+                "chittagong": "Chittagong"
+            },
+            "units": {
+                "bigha": {
+                    "name": "Bigha · বিঘা",
+                    "short": "bigha"
+                },
+                "katha": {
+                    "name": "Katha · কাঠা",
+                    "short": "katha"
+                },
+                "chhatak": {
+                    "name": "Chhatak · ছটাক",
+                    "short": "chhatak"
+                },
+                "kani": {
+                    "name": "Kani · কানি",
+                    "short": "kani"
+                },
+                "gonda": {
+                    "name": "Gonda · গণ্ডা",
+                    "short": "gonda"
+                },
+                "kora": {
+                    "name": "Kora · কড়া",
+                    "short": "kora"
+                },
+                "kranti": {
+                    "name": "Kranti · ক্রান্তি",
+                    "short": "kranti"
+                },
+                "til": {
+                    "name": "Til · তিল",
+                    "short": "til"
+                },
+                "decimal": {
+                    "name": "Decimal (shotok) · শতাংশ",
+                    "short": "decimal"
+                },
+                "ojutangsho": {
+                    "name": "Ojutangsho · অযুতাংশ",
+                    "short": "ojutangsho"
+                },
+                "square-hand": {
+                    "name": "Square hand · বর্গহাত",
+                    "short": "sq hand"
+                },
+                "acre": {
+                    "name": "Acre",
+                    "short": "acre"
+                },
+                "hectare": {
+                    "name": "Hectare",
+                    "short": "ha"
+                },
+                "square-kilometer": {
+                    "name": "Square kilometre",
+                    "short": "km²"
+                },
+                "square-meter": {
+                    "name": "Square metre",
+                    "short": "m²"
+                },
+                "square-foot": {
+                    "name": "Square foot",
+                    "short": "sq ft"
+                },
+                "square-yard": {
+                    "name": "Square yard",
+                    "short": "sq yd"
+                }
+            },
+            "outputLabel": "In every unit",
+            "groups": {
+                "local": "Bangladeshi units",
+                "international": "International units"
+            },
+            "oneIs": "1 {unit} = {value} sq ft",
+            "typedTag": "Typed",
+            "regionTag": "{region} size",
+            "copyValue": "Copy the area in {unit}",
+            "statusEmpty": "Type an area to convert it.",
+            "statusReady": "{value} {unit} is {squareFeet} sq ft.",
+            "sizeLabel": "How big is that?",
+            "sizeEmpty": "Type an area to see how big it is.",
+            "sizeAbout": "Your land is about the size of {things}.",
+            "sizeShare": "Your land is about {percent} of {thing}.",
+            "objectSize": "One {name} is {length} × {width} m ({area} m²)",
+            "objects": {
+                "single-bed": {
+                    "name": "single bed",
+                    "a": "a single bed",
+                    "count": "{count, plural, one {# single bed} other {# single beds}}"
+                },
+                "parking-space": {
+                    "name": "car parking space",
+                    "a": "a car parking space",
+                    "count": "{count, plural, one {# car parking space} other {# car parking spaces}}"
+                },
+                "badminton-court": {
+                    "name": "badminton court",
+                    "a": "a badminton court",
+                    "count": "{count, plural, one {# badminton court} other {# badminton courts}}"
+                },
+                "tennis-court": {
+                    "name": "tennis court",
+                    "a": "a tennis court",
+                    "count": "{count, plural, one {# tennis court} other {# tennis courts}}"
+                },
+                "futsal-court": {
+                    "name": "futsal court",
+                    "a": "a futsal court",
+                    "count": "{count, plural, one {# futsal court} other {# futsal courts}}"
+                },
+                "football-pitch": {
+                    "name": "football pitch",
+                    "a": "a football pitch",
+                    "count": "{count, plural, one {# football pitch} other {# football pitches}}"
+                }
+            },
+            "pitchTruncated": "Showing {drawn} of {total} pitches.",
+            "legendLand": "Your land",
+            "legendLandSquare": "Your land, as a square {meters} m ({feet} ft) a side",
+            "sideMeters": "{meters} m"
+        },
+        "errors": {
+            "invalidCharacter": "Character {position} is not part of a number. Type the area as digits, with one decimal point at most.",
+            "misplacedSeparator": "The separator at character {position} has to sit between two digits of the whole number.",
+            "tooManyPoints": "There is a second decimal point at character {position}.",
+            "noDigits": "There are no digits in this yet.",
+            "negative": "An area cannot be negative. Remove the minus sign.",
+            "tooLarge": "That is larger than any plot of land — more than {max} km². Check the number and the unit."
+        },
+        "toast": {
+            "copied": "Area copied",
+            "copyFailedEmpty": "There is nothing to copy yet.",
+            "copyFailedUnsupported": "This browser will not let the page reach the clipboard.",
+            "copyFailedDenied": "Clipboard access was refused. Select the figure and copy it instead."
+        },
+        "article": {
+            "understanding": {
+                "title": "Why one plot of land has five different sizes",
+                "p1": "A plot in Bangladesh is bought in কাঠা, recorded in শতাংশ, surveyed in square feet and taxed in acres, so the same piece of ground needs several answers at once. The standard ones are fixed: a কাঠা is 720 sq ft, a বিঘা is 20 কাঠা, a শতাংশ is a hundredth of an acre, and a গণ্ডা in the land record is 864 sq ft, twenty of them to a কানি.",
+                "example": "5 কাঠা = 3,600 sq ft = 8.26 শতাংশ = 0.25 বিঘা = 334.45 m²",
+                "p2": "The trouble starts outside Dhaka. A বিঘা is 52 শতাংশ in Faridpur and 60 in Rangpur, and a কানি is 120 শতাংশ in Comilla and Noakhali, against the standard 40. This converter uses the government's sizes unless you choose a district, says beside every figure which size it used, and draws the plot next to something you have stood beside — a bed, a parking space, a badminton or tennis court, a football pitch — so you can see how much land the number actually is."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Is anything I type sent anywhere?",
+                "a1": "No. Every figure is worked out in your browser as you type, and the page makes no request while you do. It keeps working with your connection turned off.",
+                "q2": "Which sizes does it use by default?",
+                "a2": "The government's: a কাঠা of 720 sq ft and 16 ছটাক, a বিঘা of 20 কাঠা (33.06 শতাংশ), a শতাংশ of 435.6 sq ft, an অযুতাংশ of a hundredth of a শতাংশ, a গণ্ডা of 864 sq ft, a কানি of 20 গণ্ডা, a কড়া of a quarter গণ্ডা, a ক্রান্তি of a third of a কড়া, a তিল of a twentieth of a ক্রান্তি, and a বর্গহাত of 1.5 × 1.5 ft.",
+                "q3": "Why is a বিঘা different in my district?",
+                "a3": "Because the বিঘা and the কানি were local measures long before there was a national one, and many districts kept their own. The district sizes here come from Banglapedia's agrometrology tables. Choosing one changes the units under it too — a Faridpur কাঠা is a twentieth of a Faridpur বিঘা — and leaves the শতাংশ, acre and square feet alone, because those are defined the same everywhere. If your deed names a different size, the deed is right.",
+                "q4": "Is a গণ্ডা 2 শতাংশ or 864 sq ft?",
+                "a4": "The land record says both, and they are not quite the same: 2 শতাংশ is 871.2 sq ft. This tool uses 864 sq ft, because the units under the গণ্ডা — কড়া 216, ক্রান্তি 72, তিল 3.6 — are all written in square feet, and keeping them whole keeps the chain consistent. That makes the standard কানি 39.67 শতাংশ rather than exactly 40.",
+                "q5": "What does the size picture compare my land with?",
+                "a5": "The largest everyday thing your land is at least as big as, drawn beside it at the same scale: a single bed (1.9 × 0.9 m), a car parking space (5 × 2.5 m), a badminton court (13.4 × 6.1 m), a tennis court (23.77 × 10.97 m), a futsal court (40 × 20 m) or a football pitch (105 × 68 m). So five কাঠা reads as about 1.3 tennis courts rather than a speck on a pitch. Land of a pitch or more is laid out on pitches, up to thirty of them, after which the count says the rest.",
+                "q6": "How accurate are the figures?",
+                "a6": "Exact wherever the units are defined exactly — a foot is exactly 0.3048 m and an acre exactly 43,560 sq ft — and shown to four decimal places, or four significant digits for anything smaller than one. The figure you typed is always shown exactly as you typed it, never as a rounded round trip."
+            }
+        }
+    },
+    "photoExif": {
+        "meta": {
+            "title": "Photo EXIF Viewer and Remover — See and Strip GPS, Camera and Serial Numbers",
+            "description": "See everything a photo says about you — GPS location, camera serial number, names, the date it was taken — then remove it without re-encoding, so the picture keeps every pixel. JPEG, PNG and WebP cleaned; HEIC, AVIF and TIFF read. Nothing is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Media",
+            "title": "Photo EXIF",
+            "subtitle": "See what a photo gives away — where it was taken, on which camera, by whom — and download a clean copy with every pixel unchanged.",
+            "badgeLossless": "No re-encoding",
+            "badgePrivacy": "Finds GPS and serials",
+            "badgeOffline": "Nothing uploaded"
+        },
+        "workbench": {
+            "pickLabel": "Photo",
+            "dropTitle": "Drop a photo, or choose one",
+            "dropHint": "JPEG, PNG, WebP, HEIC, AVIF or TIFF, up to {limit}. It never leaves your device.",
+            "dropAnother": "Choose another photo",
+            "fileSummary": "{name} · {format} · {size}",
+            "previewAlt": "Preview of {name}",
+            "previewUnavailable": "This browser cannot display {format} files, but the metadata below was still read.",
+            "reading": "Reading the metadata…",
+            "revealsLabel": "What it gives away",
+            "findings": {
+                "location": "Where it was taken",
+                "people": "Names",
+                "serial": "Serial numbers",
+                "thumbnail": "A hidden preview",
+                "time": "When it was taken",
+                "device": "Which device",
+                "software": "Software",
+                "comment": "Comments"
+            },
+            "findingHints": {
+                "location": "GPS coordinates, usually precise enough to find the building.",
+                "people": "A name or copyright somebody wrote into the file.",
+                "serial": "Links every photo from the same camera or lens together.",
+                "thumbnail": "An embedded thumbnail, which can still show what was cropped out.",
+                "time": "As the camera's clock wrote it.",
+                "device": "The make and model of the camera or phone.",
+                "software": "The app or editor that last saved it.",
+                "comment": "Text written into the file, which most viewers never show."
+            },
+            "nothingFound": "Nothing in this photo identifies a person, a place or a device.",
+            "altitude": "{altitude} m above sea level",
+            "openMap": "Open in OpenStreetMap",
+            "openMapHint": "Sends these coordinates to openstreetmap.org when you click it — and only then.",
+            "factsLabel": "Camera details",
+            "facts": {
+                "camera": "Camera",
+                "lens": "Lens",
+                "takenAt": "Taken",
+                "exposure": "Shutter",
+                "aperture": "Aperture",
+                "iso": "ISO",
+                "focalLength": "Focal length",
+                "software": "Software",
+                "orientation": "Orientation"
+            },
+            "allTagsLabel": "All tags ({count})",
+            "groups": {
+                "ifd0": "Image",
+                "exif": "EXIF",
+                "gps": "GPS",
+                "ifd1": "Thumbnail",
+                "interop": "Interoperability",
+                "xmp": "XMP",
+                "iptc": "IPTC",
+                "icc": "ICC colour profile",
+                "jfif": "JFIF",
+                "ihdr": "PNG header",
+                "comment": "Comments"
+            },
+            "bytesValue": "{size} of binary data",
+            "noTags": "This photo carries no metadata at all.",
+            "stripLabel": "Remove the metadata",
+            "keepProfileLabel": "Keep the colour profile",
+            "keepProfileHint": "It describes colours, not people. Without it a wide-gamut photo can look washed out.",
+            "keepOrientationLabel": "Keep the orientation",
+            "keepOrientationHint": "Only the rotation flag, so a phone photo still opens the right way up.",
+            "stripButton": "Remove metadata",
+            "stripUnavailable": "{format} files can be read here but not cleaned: their metadata sits in boxes whose positions are written into the rest of the file. Convert the photo to JPEG first.",
+            "cleanLabel": "Clean copy",
+            "sizeChange": "{before} → {after}",
+            "removedLabel": "Removed",
+            "removedKinds": {
+                "exif": "EXIF, with GPS",
+                "xmp": "XMP",
+                "iptc": "IPTC",
+                "icc": "ICC colour profile",
+                "comment": "Comments",
+                "text": "Text chunks",
+                "time": "Timestamp",
+                "thumbnail": "Embedded thumbnail",
+                "trailer": "Data after the image",
+                "other": "Other metadata"
+            },
+            "removedItem": "{kind} · {size}",
+            "nothingRemoved": "There was nothing to remove — the clean copy is identical to the original.",
+            "keptOrientation": "Kept the orientation flag, so it opens the right way up.",
+            "keptProfile": "Kept the colour profile.",
+            "verified": "Checked: the clean copy holds nothing that identifies a person, a place or a device.",
+            "verifyFailed": "The clean copy still holds: {findings}. Do not share it.",
+            "download": "Download clean copy",
+            "lossless": "The image data is copied byte for byte. Nothing is decoded or re-encoded, so no quality is lost.",
+            "statusIdle": "Choose a photo to see its metadata.",
+            "statusReady": "Found {count, plural, one {# tag} other {# tags}} in this {format}.",
+            "statusEmpty": "This {format} carries no metadata."
+        },
+        "errors": {
+            "unsupported_format": "This is not a photo the tool can read. It takes JPEG, PNG, WebP, HEIC, AVIF and TIFF.",
+            "too_large": "This file is over {limit}, which is more than a browser tab can rewrite safely.",
+            "empty": "This file is empty.",
+            "unreadable": "The metadata in this file is damaged and could not be read.",
+            "malformed": "The structure of this file is damaged, so it cannot be rewritten safely."
+        },
+        "toast": {
+            "downloaded": "Clean copy downloaded"
+        },
+        "article": {
+            "understanding": {
+                "title": "What a photo says about you",
+                "p1": "A phone writes far more into a photo than the picture. Alongside the pixels sit the GPS coordinates of where you stood, the exact second it was taken, the make, model and often the serial number of the camera, the software that edited it — and sometimes a thumbnail of the original that survives cropping. Most of it is invisible in a photo viewer and all of it travels with the file.",
+                "example": "GPS 23.8100° N, 90.4150° E · 2024-05-01 14:30:15 +06:00 · Body serial SN-12345678",
+                "p2": "This tool shows all of it, says which parts identify you, and removes them by rewriting the file around the image rather than re-saving the image: the compressed picture is copied byte for byte, so nothing is lost. Everything happens in your browser — the photo is never uploaded."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Is my photo uploaded anywhere?",
+                "a1": "No. The file is read and rewritten inside your browser, and the page makes no request while it does. The one exception is the map link, which sends the coordinates to OpenStreetMap only if you click it.",
+                "q2": "Does removing the metadata lower the quality?",
+                "a2": "No. Most tools strip metadata by decoding the picture and saving it again, which recompresses a JPEG and loses detail every time. This one takes the file apart at its blocks, drops the metadata blocks and copies the compressed image unchanged, so every pixel is identical.",
+                "q3": "Why keep the colour profile and the orientation?",
+                "a3": "Neither says anything about you. The profile tells a screen how to show the colours, and a wide-gamut photo without it looks washed out. The orientation is one number saying the photo was stored sideways; without it a phone photo opens rotated. Both can be turned off if you want the file completely bare.",
+                "q4": "Do social networks remove this already?",
+                "a4": "The big ones usually strip GPS from what other people download, but they read it first, and messaging apps, email, cloud links and file transfers send the original untouched. Removing it yourself is the only way to be sure.",
+                "q5": "Why can it read HEIC but not clean it?",
+                "a5": "In HEIC, AVIF and TIFF the metadata sits in boxes whose byte positions are written into the rest of the file, so removing one means recalculating every offset after it. Getting that wrong produces a file that will not open, so the tool refuses rather than risk it. Convert the photo to JPEG first, then clean that.",
+                "q6": "What exactly is removed?",
+                "a6": "EXIF (with GPS and any embedded thumbnail), XMP, IPTC, JPEG comments, PNG text and timestamp chunks, maker-specific blocks, a JFIF thumbnail, and anything stored after the end of the image — where some phones hide a second picture or a video. What stays is what is needed to show the picture."
+            }
+        }
+    },
+    "speedTest": {
+        "meta": {
+            "title": "Internet Speed Test — Download, Upload, Lag Under Load and What Your Line Can Handle",
+            "description": "Measure download, upload, latency and jitter against Cloudflare's nearest server, then see what ordinary speed tests leave out: lag under load (bufferbloat) with a grade, whether the line can handle 4K, calls and gaming, how much of your plan you actually get, and which hours of the day it slows down. History stays in your browser."
+        },
+        "hero": {
+            "eyebrow": "Network",
+            "title": "Internet Speed Test",
+            "subtitle": "Measure your connection, then see what the number means: whether calls will freeze, how much of your plan you get, and when it slows down.",
+            "badgeBloat": "Lag under load",
+            "badgeVerdicts": "What it can handle",
+            "badgeHistory": "History stays on your device"
+        },
+        "workbench": {
+            "disclosure": "The test downloads and uploads random data to Cloudflare's nearest server (speed.cloudflare.com), which sees your IP address as any website does. Results are not reported to Cloudflare or to us; they stay in this browser. On a fast line one run moves a few hundred megabytes, so mind a mobile data cap.",
+            "startLabel": "Run the test",
+            "start": "Start test",
+            "again": "Test again",
+            "cancel": "Stop",
+            "phases": {
+                "latency": "Measuring latency…",
+                "download": "Measuring download…",
+                "upload": "Measuring upload…"
+            },
+            "download": "Download",
+            "upload": "Upload",
+            "latency": "Latency",
+            "mbps": "Mbps",
+            "ms": "ms",
+            "jitter": "Jitter {value} ms",
+            "notMeasured": "—",
+            "failed": "The test could not measure a download. Check the connection and try again — a VPN, an ad blocker or a firewall that blocks speed.cloudflare.com will stop it.",
+            "statusIdle": "Press start to measure this connection.",
+            "statusDone": "Measured at {time}.",
+            "resultsLabel": "What it means",
+            "bloatTitle": "Lag under load",
+            "bloatGrade": "Grade {grade}",
+            "bloatDetail": "Idle {idle} ms → busy {busy} ms (+{increase} ms)",
+            "bloatHints": {
+                "aPlus": "No lag added at all when the line is busy.",
+                "a": "Barely any lag under load. Calls and games stay smooth while something downloads.",
+                "b": "A little lag under load. Most people will not notice.",
+                "c": "Noticeable lag when the line is busy: a call may stutter while someone else streams.",
+                "d": "Heavy lag under load. Calls and games suffer whenever the line is in use.",
+                "f": "Severe bufferbloat: the line is fast but everything interactive freezes when it is busy. A router with SQM or Smart Queue fixes this."
+            },
+            "bloatUnavailable": "Not enough samples under load to grade it.",
+            "useCasesTitle": "What this connection can handle",
+            "useCases": {
+                "streaming-4k": "4K streaming",
+                "streaming-hd": "HD streaming",
+                "video-call": "Video calls",
+                "gaming": "Online gaming",
+                "live-upload": "Live streaming and big uploads"
+            },
+            "verdicts": {
+                "great": "Great",
+                "ok": "Workable",
+                "poor": "Struggles"
+            },
+            "limitedBy": {
+                "download": "held back by download speed",
+                "upload": "held back by upload speed",
+                "latency": "held back by latency",
+                "jitter": "held back by jitter",
+                "bufferbloat": "held back by lag under load"
+            },
+            "transfersTitle": "How long things take",
+            "downloadTime": "A 5 GB game or film",
+            "uploadTime": "A 1 GB video upload",
+            "durationHours": "{hours} h {minutes} min",
+            "durationMinutes": "{minutes} min {seconds} s",
+            "durationSeconds": "{seconds} s",
+            "planTitle": "Plan vs reality",
+            "planLabel": "Your plan, in Mbps",
+            "planPlaceholder": "20",
+            "planHint": "The download speed on your bill. Kept in this browser.",
+            "planInvalid": "Type the plan as a number of Mbps, like 20 or 12.5.",
+            "planResult": "You are getting {share} of your {plan} Mbps plan.",
+            "planVerdicts": {
+                "full": "That is what you pay for.",
+                "most": "A little under — worth testing again at another time of day.",
+                "short": "Well under what you pay for. Test again over a cable; if it stays low, it is worth a call to your ISP."
+            },
+            "planNeedsRun": "Run a test to compare it with your plan.",
+            "historyLabel": "Your history",
+            "historyEmpty": "Finished runs are kept here, in this browser only, so you can see when your line slows down.",
+            "hourChartTitle": "Median download by hour of day",
+            "hourBar": "{hour}:00 — {speed} Mbps from {runs, plural, one {# run} other {# runs}}",
+            "hourEmpty": "{hour}:00 — no runs",
+            "peakSlowdown": "Your line is {percent} slower at {slow}:00 than at {fast}:00.",
+            "peakNeedsMore": "Test at different times of day — two runs in each of two hours — to see whether evenings are slower.",
+            "recentTitle": "Recent runs",
+            "recentDown": "{value} down",
+            "recentUp": "{value} up",
+            "clearHistory": "Clear history"
+        },
+        "toast": {
+            "cleared": "History cleared"
+        },
+        "article": {
+            "understanding": {
+                "title": "Why a fast line can still freeze your calls",
+                "p1": "A speed test that reports one big number answers the question nobody really has. A 100 Mbps line streams 4K easily and can still freeze a video call the moment someone else starts a download, because what breaks a call is not bandwidth but how long each packet waits in a queue when the line is busy. That waiting is called bufferbloat, and ordinary speed tests never measure it.",
+                "example": "Download 96 Mbps · Idle 14 ms → busy 312 ms · Lag under load: D · Video calls: struggles",
+                "p2": "This test measures latency while the line is idle and again while it is downloading and uploading, grades the difference, and turns the numbers into plain verdicts: 4K, calls, gaming, uploads. It compares the result with the plan you pay for, and keeps every run in your browser so you can see whether your line slows down in the evening."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Where does the test traffic go?",
+                "a1": "To Cloudflare's speed test servers at speed.cloudflare.com, from whichever of their locations is nearest to you — there is one in Dhaka. A test against a nearby server measures your own line rather than the distance to somebody's data centre. Cloudflare sees your IP address, as any website does; the results themselves are not reported back to them or to us.",
+                "q2": "What is lag under load?",
+                "a2": "The extra delay your connection adds when it is busy. A router with large buffers queues packets instead of dropping them, so a call's audio waits behind a download. The grade measures how much latency grows under load: A+ under 5 ms, A under 30, B under 60, C under 200, D under 400, and F beyond that. A router with SQM or Smart Queue Management usually turns an F into an A.",
+                "q3": "Why is my result lower than my plan?",
+                "a3": "Wi-Fi is the commonest reason: walls, distance and a crowded channel cost more than most lines lose. Other tabs and devices using the connection, an old phone or laptop, a VPN, and the time of day all play a part. Test over a cable, with nothing else running, at a few different times before you call your ISP — and use the history to show them when it is slow.",
+                "q4": "How much data does a test use?",
+                "a4": "It depends on the line, because the test keeps sending larger files until each takes about a second. A slow connection uses a few megabytes; a fast one can move a few hundred. On a capped mobile plan, run it sparingly.",
+                "q5": "Is my history sent anywhere?",
+                "a5": "No. Each finished run — the time, the speeds and the latencies — is kept in this browser's local storage and nowhere else, as is your plan. Clearing the history removes it.",
+                "q6": "How accurate is it?",
+                "a6": "It uses the measurement engine behind speed.cloudflare.com: several file sizes in each direction, timings from the browser's own Resource Timing API so page overhead is excluded, the 90th percentile of the download and upload samples, and the median of twenty idle latency samples. It measures the path to Cloudflare's nearest server, which is close to, but not exactly, the path to every site you use."
             }
         }
     },

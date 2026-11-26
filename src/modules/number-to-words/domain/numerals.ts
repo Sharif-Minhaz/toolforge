@@ -1,7 +1,5 @@
 import type { EnglishScale, ParsedNumber } from "../types";
 
-const BANGLA_DIGITS = "০১২৩৪৫৬৭৮৯";
-
 /** `1234567` → `1,234,567`. */
 function groupInThousands(digits: string): string {
     return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -17,10 +15,6 @@ function groupInLakhs(digits: string): string {
     const tail = digits.slice(-3);
 
     return `${head.replace(/\B(?=(\d{2})+(?!\d))/g, ",")},${tail}`;
-}
-
-export function toBanglaDigits(text: string): string {
-    return text.replace(/\d/g, (digit) => BANGLA_DIGITS[Number(digit)]);
 }
 
 /**

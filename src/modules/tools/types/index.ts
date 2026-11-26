@@ -76,6 +76,9 @@ export const TOOL_IDS = [
     "chmod",
     "bijoy-unicode",
     "number-to-words",
+    "land-measurement",
+    "photo-exif",
+    "speed-test",
 ] as const;
 
 export type ToolId = (typeof TOOL_IDS)[number];
@@ -164,7 +167,10 @@ export type ToolIconName =
     | "world-pin"
     | "lock-access"
     | "bangla"
-    | "number";
+    | "number"
+    | "land"
+    | "photo-shield"
+    | "speedtest";
 
 export type Tool = {
     readonly id: ToolId;

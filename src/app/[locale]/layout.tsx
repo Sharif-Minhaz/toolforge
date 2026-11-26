@@ -533,6 +533,20 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
             errors: messages.numberToWords.errors,
             toast: messages.numberToWords.toast,
         },
+        landMeasurement: {
+            workbench: messages.landMeasurement.workbench,
+            errors: messages.landMeasurement.errors,
+            toast: messages.landMeasurement.toast,
+        },
+        photoExif: {
+            workbench: messages.photoExif.workbench,
+            errors: messages.photoExif.errors,
+            toast: messages.photoExif.toast,
+        },
+        speedTest: {
+            workbench: messages.speedTest.workbench,
+            toast: messages.speedTest.toast,
+        },
         // The studio's own hero and disclosure copy stays on the server; only
         // the launcher island's strings cross.
         mockServer: {

@@ -84,7 +84,9 @@ docs/
 | `mock-server`                               | [`docs/case-studies/mock-server.md`](docs/case-studies/mock-server.md)                                             |
 | `keyboard-tester`                           | [`docs/case-studies/keyboard-tester.md`](docs/case-studies/keyboard-tester.md)                                     |
 | `mouse-tester`                              | [`docs/case-studies/mouse-tester.md`](docs/case-studies/mouse-tester.md)                                           |
+| `land-measurement`                          | [`docs/case-studies/land-measurement.md`](docs/case-studies/land-measurement.md)                                   |
 | `number-to-words`                           | [`docs/case-studies/number-to-words.md`](docs/case-studies/number-to-words.md)                                     |
+| `photo-exif`                                | [`docs/case-studies/photo-exif.md`](docs/case-studies/photo-exif.md)                                               |
 | `pdf-converter`                             | [`docs/case-studies/pdf-converter.md`](docs/case-studies/pdf-converter.md)                                         |
 | `port-scanner`                              | [`docs/case-studies/port-scanner.md`](docs/case-studies/port-scanner.md)                                           |
 | `refresh-rate-tester`                       | [`docs/case-studies/refresh-rate-tester.md`](docs/case-studies/refresh-rate-tester.md)                             |
@@ -94,6 +96,7 @@ docs/
 | `screen-tester`                             | [`docs/case-studies/screen-tester.md`](docs/case-studies/screen-tester.md)                                         |
 | `short-links`, `shortener`                  | [`docs/case-studies/short-links.md`](docs/case-studies/short-links.md)                                             |
 | `sort`                                      | [`docs/case-studies/sort.md`](docs/case-studies/sort.md)                                                           |
+| `speed-test`                                | [`docs/case-studies/speed-test.md`](docs/case-studies/speed-test.md)                                               |
 | `sql-formatter`                             | [`docs/case-studies/sql-formatter.md`](docs/case-studies/sql-formatter.md)                                         |
 | `subdomain-lookup`                          | [`docs/case-studies/subdomain-lookup.md`](docs/case-studies/subdomain-lookup.md)                                   |
 | `text-to-speech`                            | [`docs/case-studies/text-to-speech.md`](docs/case-studies/text-to-speech.md)                                       |

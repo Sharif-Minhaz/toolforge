@@ -1,7 +1,6 @@
-import type { ParseResult } from "../types";
+import { westernDigit } from "@/modules/tools/domain/bangla-digits";
 
-/** Bangla digits read as the digits they are. */
-const BANGLA_DIGITS = "০১২৩৪৫৬৭৮৯";
+import type { ParseResult } from "../types";
 
 /**
  * Characters people put between digit groups: a comma, a space, an underscore
@@ -9,16 +8,6 @@ const BANGLA_DIGITS = "০১২৩৪৫৬৭৮৯";
  * substitutes. Allowed only between two digits of the whole part.
  */
 const GROUP_SEPARATORS = new Set([",", " ", "_", " ", " ", " ", "٬"]);
-
-function digitValue(char: string): string | null {
-    if (char >= "0" && char <= "9") {
-        return char;
-    }
-
-    const bangla = BANGLA_DIGITS.indexOf(char);
-
-    return bangla === -1 ? null : String(bangla);
-}
 
 /**
  * A typed number, taken apart into sign, whole part and fraction.
@@ -61,7 +50,7 @@ export function parseNumber(input: string): ParseResult {
     for (; index < end; index++) {
         const char = chars[index];
         const position = index + 1;
-        const digit = digitValue(char);
+        const digit = westernDigit(char);
 
         if (digit !== null) {
             if (inFraction) {
@@ -83,7 +72,7 @@ export function parseNumber(input: string): ParseResult {
         }
 
         if (GROUP_SEPARATORS.has(char)) {
-            const nextIsDigit = index + 1 < end && digitValue(chars[index + 1]) !== null;
+            const nextIsDigit = index + 1 < end && westernDigit(chars[index + 1]) !== null;
 
             if (inFraction || !previousWasDigit || !nextIsDigit) {
                 return { ok: false, reason: "misplaced_separator", position };

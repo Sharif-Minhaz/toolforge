@@ -18,11 +18,13 @@ import { htmlMarkdownConvertTool } from "./html-markdown";
 import { ipGlobeMapTool } from "./ip-globe";
 import { jsonFormatTool } from "./json";
 import { jwtDecodeTool, jwtSignTool, jwtVerifyTool } from "./jwt";
+import { landMeasurementConvertTool } from "./land-measurement";
 import { loremGenerateTool } from "./lorem";
 import { markdownAnalyzeTool } from "./markdown";
 import { numberToWordsConvertTool } from "./number-to-words";
 import { passwordGenerateTool } from "./password";
 import { pdfConverterConvertTool } from "./pdf-converter";
+import { photoExifReadTool, photoExifStripTool } from "./photo-exif";
 import { qrGenerateTool } from "./qr";
 import { regexTestTool } from "./regex";
 import { rsaCryptTool, rsaGenerateTool } from "./rsa";
@@ -137,6 +139,12 @@ import { uuidGenerateTool } from "./uuid";
  *
  * The Microphone Tester is absent for the same reason: it listens to the
  * reader's own microphone, and an MCP call has no microphone to listen to.
+ *
+ * The Internet Speed Test is absent for the reason What Is My IP is: run from
+ * here it would measure this server's connection, or the assistant host's,
+ * and report it as the reader's. Its verdicts and history are pure functions,
+ * but without a measurement of the reader's own line there is nothing for them
+ * to judge.
  */
 export const MCP_TOOLS: readonly McpTool[] = [
     aesCryptTool,
@@ -164,11 +172,14 @@ export const MCP_TOOLS: readonly McpTool[] = [
     jwtDecodeTool,
     jwtSignTool,
     jwtVerifyTool,
+    landMeasurementConvertTool,
     loremGenerateTool,
     markdownAnalyzeTool,
     numberToWordsConvertTool,
     passwordGenerateTool,
     pdfConverterConvertTool,
+    photoExifReadTool,
+    photoExifStripTool,
     qrGenerateTool,
     regexTestTool,
     rsaCryptTool,

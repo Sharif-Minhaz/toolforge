@@ -202,6 +202,8 @@ describe("tool catalog", () => {
             "mock-server",
             "json-server",
             "graphql-server",
+            // Test traffic goes to Cloudflare's nearest server by design.
+            "speed-test",
         ] as const;
 
         for (const id of networked) {

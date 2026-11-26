@@ -1,3 +1,5 @@
+import { toBanglaDigits } from "@/modules/tools/domain/bangla-digits";
+
 import type {
     NumberWordsFailure,
     NumberWordsOptions,
@@ -14,7 +16,7 @@ import {
 } from "./constants";
 import { englishDigits, englishInteger, ENGLISH_WORDS } from "./english";
 import { applyLetterCase } from "./letter-case";
-import { formatNumeral, isZero, toBanglaDigits } from "./numerals";
+import { formatNumeral, isZero } from "./numerals";
 import { parseNumber } from "./parse";
 
 type Lines = { readonly english: string; readonly bangla: string };

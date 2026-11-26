@@ -6,6 +6,7 @@ import {
     IconBlur,
     IconBraces,
     IconBrandDocker,
+    IconBrandSpeedtest,
     IconBrowser,
     IconCalendarTime,
     IconCamera,
@@ -38,9 +39,11 @@ import {
     IconNumber123,
     IconPalette,
     IconPhotoScan,
+    IconPhotoShield,
     IconQrcode,
     IconRadar2,
     IconRegex,
+    IconRulerMeasure,
     IconScissors,
     IconServer2,
     IconShieldLock,
@@ -124,6 +127,9 @@ const ICONS: Record<ToolIconName, ComponentType<IconProps>> = {
     "lock-access": IconLockAccess,
     bangla: IconAlphabetBangla,
     number: IconNumber123,
+    land: IconRulerMeasure,
+    "photo-shield": IconPhotoShield,
+    speedtest: IconBrandSpeedtest,
 };
 
 type ToolIconProps = {

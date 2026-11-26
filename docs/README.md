@@ -99,7 +99,9 @@ docs/
 │   ├── mock-server.md
 │   ├── keyboard-tester.md
 │   ├── mouse-tester.md
+│   ├── land-measurement.md
 │   ├── number-to-words.md
+│   ├── photo-exif.md
 │   ├── pdf-converter.md
 │   ├── port-scanner.md
 │   ├── qr.md
@@ -109,6 +111,7 @@ docs/
 │   ├── screen-tester.md
 │   ├── short-links.md
 │   ├── sql-formatter.md
+│   ├── speed-test.md
 │   ├── subdomain-lookup.md
 │   ├── watermark-remover.md
 │   └── webcam-tester.md
@@ -166,7 +169,9 @@ records a defect that was expensive to find and is easy to reintroduce.
 | `mock-server`                            | [`case-studies/mock-server.md`](case-studies/mock-server.md), [`mock-server-studio.md`](mock-server-studio.md)                     |
 | `keyboard-tester`                        | [`case-studies/keyboard-tester.md`](case-studies/keyboard-tester.md)                                                               |
 | `mouse-tester`                           | [`case-studies/mouse-tester.md`](case-studies/mouse-tester.md)                                                                     |
+| `land-measurement`                       | [`case-studies/land-measurement.md`](case-studies/land-measurement.md)                                                             |
 | `number-to-words`                        | [`case-studies/number-to-words.md`](case-studies/number-to-words.md)                                                               |
+| `photo-exif`                             | [`case-studies/photo-exif.md`](case-studies/photo-exif.md)                                                                         |
 | `pdf-converter`                          | [`case-studies/pdf-converter.md`](case-studies/pdf-converter.md), [`patterns/format-conversion.md`](patterns/format-conversion.md) |
 | `port-scanner`                           | [`case-studies/port-scanner.md`](case-studies/port-scanner.md)                                                                     |
 | `qr`                                     | [`case-studies/qr.md`](case-studies/qr.md)                                                                                         |
@@ -176,6 +181,7 @@ records a defect that was expensive to find and is easy to reintroduce.
 | `screen-tester`                          | [`case-studies/screen-tester.md`](case-studies/screen-tester.md)                                                                   |
 | `short-links`, `shortener`               | [`case-studies/short-links.md`](case-studies/short-links.md)                                                                       |
 | `sort`                                   | [`case-studies/sort.md`](case-studies/sort.md)                                                                                     |
+| `speed-test`                             | [`case-studies/speed-test.md`](case-studies/speed-test.md)                                                                         |
 | `sql-formatter`                          | [`case-studies/sql-formatter.md`](case-studies/sql-formatter.md)                                                                   |
 | `subdomain-lookup`                       | [`case-studies/subdomain-lookup.md`](case-studies/subdomain-lookup.md)                                                             |
 | `text-to-speech`                         | [`case-studies/text-to-speech.md`](case-studies/text-to-speech.md)                                                                 |
