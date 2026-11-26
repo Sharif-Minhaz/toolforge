@@ -1,7 +1,7 @@
 import { BLACK_MATTE, WHITE_MATTE } from "@/modules/tools/domain/pixels";
 import type { MatteColor, RasterFormat } from "@/modules/tools/types";
 import { DEFAULT_ICON_SIZES } from "./constants";
-import { FAVICON_ICO_SIZES, FAVICON_PNGS } from "./favicon";
+import { FAVICON_ICO_SIZES, FAVICON_PNGS } from "@/modules/tools/domain/favicon";
 import {
     BACKGROUND_CHOICES,
     type BackgroundChoice,

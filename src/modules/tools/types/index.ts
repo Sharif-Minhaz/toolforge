@@ -28,8 +28,10 @@ export const TOOL_IDS = [
     "url",
     "url-parser",
     "curl",
+    "docker-compose",
     "markdown",
     "html-markdown",
+    "sql-formatter",
     "pdf-converter",
     "regex",
     "lorem",
@@ -47,6 +49,7 @@ export const TOOL_IDS = [
     "diff",
     "image-compressor",
     "image-converter",
+    "favicon-generator",
     "image-resizer",
     "background-remover",
     "blur-placeholder",
@@ -65,7 +68,12 @@ export const TOOL_IDS = [
     "image-to-text",
     "mouse-tester",
     "keyboard-tester",
+    "screen-tester",
+    "refresh-rate-tester",
+    "webcam-tester",
+    "mic-tester",
     "my-ip",
+    "chmod",
 ] as const;
 
 export type ToolId = (typeof TOOL_IDS)[number];
@@ -105,6 +113,7 @@ export type ToolIconName =
     | "world"
     | "markdown"
     | "html"
+    | "sql"
     | "regex"
     | "text"
     | "palette"
@@ -124,8 +133,10 @@ export type ToolIconName =
     | "compress"
     | "crop"
     | "transform"
+    | "browser"
     | "blur"
     | "terminal"
+    | "docker"
     | "radar"
     | "database"
     | "network"
@@ -144,7 +155,12 @@ export type ToolIconName =
     | "speech"
     | "mouse"
     | "keyboard"
-    | "world-pin";
+    | "monitor"
+    | "gauge"
+    | "camera"
+    | "microphone"
+    | "world-pin"
+    | "lock-access";
 
 export type Tool = {
     readonly id: ToolId;

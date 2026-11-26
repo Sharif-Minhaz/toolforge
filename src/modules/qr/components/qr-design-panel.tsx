@@ -5,15 +5,14 @@ import { useTranslations } from "next-intl";
 import { useId, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+import { ColorField } from "@/modules/tools/components/color-field";
 import { OptionSelect, OptionSwitch } from "@/modules/tools/components/option-controls";
 import { OptionsDisclosure } from "@/modules/tools/components/workbench-step";
 import {
     DEFAULT_BACKGROUND,
-    HEX_COLOR_LENGTH,
     LOGO_ACCEPT_ATTRIBUTE,
     LOGO_SCALE_RANGE,
     MARGIN_RANGE,
@@ -30,58 +29,6 @@ import {
     type QrEyeStyle,
     type QrOptions,
 } from "../types";
-
-type ColorFieldProps = {
-    label: string;
-    value: string;
-    disabled?: boolean;
-    onChange: (value: string) => void;
-};
-
-/**
- * A swatch and the hex beside it. Both write the same value: the picker is the
- * fast way in, and the text field is the only way to paste a brand colour.
- */
-function ColorField({ label, value, disabled, onChange }: ColorFieldProps) {
-    const id = useId();
-    const swatch = value === TRANSPARENT_BACKGROUND ? DEFAULT_BACKGROUND : value;
-
-    return (
-        <div className="flex min-w-0 flex-col gap-1.5">
-            <Label htmlFor={id} className="text-muted-foreground text-xs">
-                <span className="leading-[1.3]">{label}</span>
-            </Label>
-            <div className="flex items-center gap-2">
-                <input
-                    type="color"
-                    aria-label={label}
-                    disabled={disabled}
-                    value={swatch}
-                    onChange={(event) => onChange(event.target.value)}
-                    className={cn(
-                        "ring-border/70 size-9 shrink-0 cursor-pointer rounded-lg bg-transparent ring-1 ring-inset",
-                        "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
-                        "disabled:cursor-not-allowed disabled:opacity-55",
-                    )}
-                />
-                <Input
-                    id={id}
-                    // `#rrggbb` and nothing else — `hexColorSchema` refuses
-                    // shorthand and names, so there is no longer spelling to
-                    // leave room for. No meter: a seven-character ceiling has no
-                    // "nearly full" worth reporting.
-                    maxLength={HEX_COLOR_LENGTH}
-                    value={value}
-                    disabled={disabled}
-                    spellCheck={false}
-                    autoComplete="off"
-                    onChange={(event) => onChange(event.target.value)}
-                    className="font-mono text-xs"
-                />
-            </div>
-        </div>
-    );
-}
 
 type QrDesignPanelProps = {
     options: QrOptions;
@@ -116,6 +63,11 @@ export function QrDesignPanel({ options, lowContrast, onChange, onLogoPick }: Qr
                     <ColorField
                         label={t("background")}
                         value={options.background}
+                        swatch={
+                            options.background === TRANSPARENT_BACKGROUND
+                                ? DEFAULT_BACKGROUND
+                                : options.background
+                        }
                         disabled={options.background === TRANSPARENT_BACKGROUND}
                         onChange={(background) => onChange({ background })}
                     />

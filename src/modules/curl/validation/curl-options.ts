@@ -8,8 +8,8 @@ import {
     FETCH_RUNTIMES,
     HEADERS_STYLES,
     INDENT_WIDTHS,
-    SHELL_DIALECTS,
 } from "../types";
+import { SHELL_DIALECTS } from "@/modules/tools/domain/shell-tokenize";
 
 export const curlDirectionSchema = z.enum(CURL_DIRECTIONS);
 export const codeTargetSchema = z.enum(CODE_TARGETS);

@@ -48,8 +48,8 @@ import type {
     CurlOptions,
     FetchRuntime,
     CodeStyle,
-    ShellDialect,
 } from "../types";
+import type { ShellDialect } from "@/modules/tools/domain/shell-tokenize";
 import { CURL_DIRECTIONS } from "../types";
 import { CodeBlock } from "@/modules/tools/components/code-block";
 import { CodeEditor } from "@/modules/tools/components/code-editor";

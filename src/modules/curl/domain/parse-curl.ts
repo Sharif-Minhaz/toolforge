@@ -8,9 +8,14 @@ import type {
     HttpVersion,
     KeyValue,
     MultipartPart,
-    ShellDialect,
     TransferOptions,
 } from "../types";
+import {
+    detectShellDialect,
+    stripPrompt,
+    tokenize,
+    type ShellDialect,
+} from "@/modules/tools/domain/shell-tokenize";
 import {
     EMPTY_TRANSFER,
     FORM_CONTENT_TYPE,
@@ -27,7 +32,6 @@ import {
     setHeader,
     splitCookies,
 } from "./headers";
-import { detectShellDialect, stripPrompt, tokenize } from "./tokenize";
 import { appendQuery, ensureScheme, parseUrlEncodedBody, percentEncode, queryOf } from "./url";
 
 export type CurlParseResult =

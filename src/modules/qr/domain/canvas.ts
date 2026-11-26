@@ -1,3 +1,4 @@
+import { toPngBlob } from "@/modules/tools/domain/canvas";
 import { loadImageElement } from "@/modules/tools/domain/image-element";
 
 /**
@@ -18,12 +19,6 @@ export const browserCanvasFactory: CanvasFactory = (width, height) => {
 
     return canvas;
 };
-
-function toPngBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
-    return new Promise((resolve) => {
-        canvas.toBlob((blob) => resolve(blob), "image/png");
-    });
-}
 
 /**
  * Rasterises the code at whatever size was asked for.

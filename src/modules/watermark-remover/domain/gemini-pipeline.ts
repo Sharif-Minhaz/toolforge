@@ -10,7 +10,8 @@ import type {
     NormalizedBox,
     PixelSize,
 } from "../types";
-import { browserCanvasFactory, toPngBlob, type CanvasFactory } from "./canvas";
+import { toPngBlob } from "@/modules/tools/domain/canvas";
+import { browserCanvasFactory, type CanvasFactory } from "./canvas";
 import { describeEngineError } from "./failure-detail";
 import { GEMINI_IMAGE_FILE_LIMITS } from "./gemini-constants";
 import { toPixelBox } from "./watermark-box";

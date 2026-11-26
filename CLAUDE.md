@@ -67,6 +67,7 @@ docs/
 | `bson`                                      | [`docs/case-studies/bson.md`](docs/case-studies/bson.md)                                                           |
 | `curl`                                      | [`docs/case-studies/curl.md`](docs/case-studies/curl.md)                                                           |
 | `diff`                                      | [`docs/case-studies/diff.md`](docs/case-studies/diff.md)                                                           |
+| `docker-compose`                            | [`docs/case-studies/docker-compose.md`](docs/case-studies/docker-compose.md)                                       |
 | `domain-inspector`                          | [`docs/case-studies/domain-inspector.md`](docs/case-studies/domain-inspector.md)                                   |
 | `graphql-server`                            | [`docs/case-studies/graphql-server.md`](docs/case-studies/graphql-server.md)                                       |
 | `hex-editor`                                | [`docs/case-studies/hex-editor.md`](docs/case-studies/hex-editor.md)                                               |
@@ -78,20 +79,25 @@ docs/
 | `image-to-3d`                               | [`docs/case-studies/image-to-3d.md`](docs/case-studies/image-to-3d.md)                                             |
 | `json-server`                               | [`docs/case-studies/json-server.md`](docs/case-studies/json-server.md)                                             |
 | `mcp`, or any tool's MCP adapter            | [`docs/case-studies/mcp.md`](docs/case-studies/mcp.md)                                                             |
+| `mic-tester`                                | [`docs/case-studies/mic-tester.md`](docs/case-studies/mic-tester.md)                                               |
 | `mock-server`                               | [`docs/case-studies/mock-server.md`](docs/case-studies/mock-server.md)                                             |
 | `keyboard-tester`                           | [`docs/case-studies/keyboard-tester.md`](docs/case-studies/keyboard-tester.md)                                     |
 | `mouse-tester`                              | [`docs/case-studies/mouse-tester.md`](docs/case-studies/mouse-tester.md)                                           |
 | `pdf-converter`                             | [`docs/case-studies/pdf-converter.md`](docs/case-studies/pdf-converter.md)                                         |
 | `port-scanner`                              | [`docs/case-studies/port-scanner.md`](docs/case-studies/port-scanner.md)                                           |
+| `refresh-rate-tester`                       | [`docs/case-studies/refresh-rate-tester.md`](docs/case-studies/refresh-rate-tester.md)                             |
 | `qr`                                        | [`docs/case-studies/qr.md`](docs/case-studies/qr.md)                                                               |
 | `rsa`                                       | [`docs/case-studies/rsa.md`](docs/case-studies/rsa.md)                                                             |
 | `rsa-encrypt`                               | [`docs/case-studies/rsa-encrypt.md`](docs/case-studies/rsa-encrypt.md)                                             |
+| `screen-tester`                             | [`docs/case-studies/screen-tester.md`](docs/case-studies/screen-tester.md)                                         |
 | `short-links`, `shortener`                  | [`docs/case-studies/short-links.md`](docs/case-studies/short-links.md)                                             |
 | `sort`                                      | [`docs/case-studies/sort.md`](docs/case-studies/sort.md)                                                           |
+| `sql-formatter`                             | [`docs/case-studies/sql-formatter.md`](docs/case-studies/sql-formatter.md)                                         |
 | `subdomain-lookup`                          | [`docs/case-studies/subdomain-lookup.md`](docs/case-studies/subdomain-lookup.md)                                   |
 | `text-to-speech`                            | [`docs/case-studies/text-to-speech.md`](docs/case-studies/text-to-speech.md)                                       |
 | `url-parser`                                | [`docs/patterns/derived-state-editors.md`](docs/patterns/derived-state-editors.md)                                 |
 | `watermark-remover`, `ai-*`                 | [`docs/case-studies/watermark-remover.md`](docs/case-studies/watermark-remover.md)                                 |
+| `webcam-tester`                             | [`docs/case-studies/webcam-tester.md`](docs/case-studies/webcam-tester.md)                                         |
 
 ---
 

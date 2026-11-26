@@ -1,3 +1,4 @@
+import { toPngBlob } from "@/modules/tools/domain/canvas";
 import { MASK_DILATION_PX, MODEL_CANVAS_SIZE } from "./constants";
 import { featherRadius } from "./region";
 import type { MaskStroke, PixelSize, RemovalRegion } from "../types";
@@ -16,13 +17,6 @@ export const browserCanvasFactory: CanvasFactory = (width, height) => {
 
     return canvas;
 };
-
-/** `null` rather than a throw: every caller here already has a named refusal for it. */
-export function toPngBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
-    return new Promise((resolve) => {
-        canvas.toBlob((blob) => resolve(blob), "image/png");
-    });
-}
 
 /**
  * Traces the painted strokes in the context's current colour and transform.

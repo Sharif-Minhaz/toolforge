@@ -47,7 +47,7 @@ and cut with `splitTokenLines`.
 
 ## The highlighter is a different tokenizer from the parser
 
-`highlight.ts`, not `tokenize.ts` — because the two want opposite things. The
+`highlight.ts`, not `shell-tokenize.ts` — because the two want opposite things. The
 parser resolves escapes and discards quotes; the highlighter **must return every
 character it was given, in order.**
 

@@ -15,11 +15,11 @@ import {
     FETCH_RUNTIMES,
     HEADERS_STYLES,
     INDENT_WIDTHS,
-    SHELL_DIALECTS,
     type CodeOptions,
     type CurlDirection,
     type CurlOptions,
 } from "../types";
+import { SHELL_DIALECTS } from "@/modules/tools/domain/shell-tokenize";
 
 type ConversionOptionsProps = {
     direction: CurlDirection;

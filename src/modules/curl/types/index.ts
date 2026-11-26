@@ -7,6 +7,8 @@
  * about what a flag means.
  */
 
+import type { ShellDialect } from "@/modules/tools/domain/shell-tokenize";
+
 export const CURL_DIRECTIONS = ["curlToCode", "codeToCurl"] as const;
 
 export type CurlDirection = (typeof CURL_DIRECTIONS)[number];
@@ -55,15 +57,6 @@ export type CodeOptions = {
     readonly includeResponse: boolean;
     readonly indent: IndentWidth;
 };
-
-/**
- * How a shell command is quoted. Also what the reader's pasted command is
- * detected as — Chrome, Firefox and Safari all offer "Copy as cURL" in each of
- * these three, and they escape nothing alike.
- */
-export const SHELL_DIALECTS = ["posix", "cmd", "powershell"] as const;
-
-export type ShellDialect = (typeof SHELL_DIALECTS)[number];
 
 export type CurlOptions = {
     readonly shell: ShellDialect;

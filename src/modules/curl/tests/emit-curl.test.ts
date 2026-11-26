@@ -1,10 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
 import { DEFAULT_CURL_OPTIONS } from "@/modules/curl/domain/constants";
-import { emitCurl, quoteArgument } from "@/modules/curl/domain/emit-curl";
+import { emitCurl } from "@/modules/curl/domain/emit-curl";
 import { parseCurl } from "@/modules/curl/domain/parse-curl";
-import { tokenize } from "@/modules/curl/domain/tokenize";
-import { SHELL_DIALECTS, type CurlOptions, type HttpRequest } from "@/modules/curl/types";
+import type { CurlOptions, HttpRequest } from "@/modules/curl/types";
+import { quoteArgument } from "@/modules/tools/domain/shell-quote";
+import { SHELL_DIALECTS, tokenize } from "@/modules/tools/domain/shell-tokenize";
 
 const ONE_LINE: CurlOptions = { ...DEFAULT_CURL_OPTIONS, multiLine: false };
 

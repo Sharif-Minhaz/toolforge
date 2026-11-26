@@ -5,9 +5,9 @@ import type {
     CurlOptions,
     HttpVersion,
     IndentWidth,
-    ShellDialect,
     TransferOptions,
 } from "../types";
+import type { ShellDialect } from "@/modules/tools/domain/shell-tokenize";
 
 export const DEFAULT_DIRECTION: CurlDirection = "curlToCode";
 

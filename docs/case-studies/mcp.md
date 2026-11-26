@@ -186,7 +186,9 @@ Not gaps. Each one is a fact about the tool.
 - **Image tools** (compressor, converter, resizer, blur placeholder) — they
   decode pixels in a canvas and re-encode through browser-targeted WebAssembly
   codecs. No canvas in a request handler, and a server-side reimplementation
-  would be a second encoder to keep in step with the first.
+  would be a second encoder to keep in step with the first. The favicon
+  generator joins them from the drawing side: it sets text on a canvas in the
+  reader's fonts and system emoji.
 - **The studios and the shortener** — each mints a public address and stores
   what is posted to it, with ownership proved by a browser cookie. An MCP client
   has no cookie jar, so creating one here would mint something nobody could
@@ -199,6 +201,14 @@ Not gaps. Each one is a fact about the tool.
 - **The mouse and keyboard testers** — they measure a physical device in a
   browser. There is no mouse or keyboard on the other end of an MCP call, and an
   adapter over a list of timestamps would be a tool nobody had a reason to call.
+- **The refresh rate tester** — it times the frames a screen paces in a browser
+  tab, and an MCP call has no screen behind it.
+- **The dead pixel and screen tester** — its only output is colour on the
+  reader's own panel, and an MCP call has no panel to paint.
+- **The webcam tester** — it opens the reader's own camera through
+  `getUserMedia`, and an MCP call has no camera to open.
+- **The microphone tester** — it listens to the reader's own microphone, and an
+  MCP call has no microphone to listen to.
 - **What Is My IP** — its answer is the address the request came from, and over
   MCP that is the assistant's host, not the person asking. An adapter would
   report somebody else's address as theirs; `/api/ip` serves a terminal instead.

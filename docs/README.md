@@ -94,17 +94,22 @@ docs/
 │   ├── image-resizer.md
 │   ├── image-to-text.md
 │   ├── json-server.md
+│   ├── mic-tester.md
 │   ├── mock-server.md
 │   ├── keyboard-tester.md
 │   ├── mouse-tester.md
 │   ├── pdf-converter.md
 │   ├── port-scanner.md
 │   ├── qr.md
+│   ├── refresh-rate-tester.md
 │   ├── rsa.md
 │   ├── rsa-encrypt.md
+│   ├── screen-tester.md
 │   ├── short-links.md
+│   ├── sql-formatter.md
 │   ├── subdomain-lookup.md
-│   └── watermark-remover.md
+│   ├── watermark-remover.md
+│   └── webcam-tester.md
 │
 └── mock-server-studio.md       the full system design for the Mock Server Studio
 ```
@@ -154,20 +159,25 @@ records a defect that was expensive to find and is easy to reintroduce.
 | `ip-globe`                               | [`case-studies/ip-globe.md`](case-studies/ip-globe.md)                                                                             |
 | `json-server`                            | [`case-studies/json-server.md`](case-studies/json-server.md), [`patterns/growth-ceilings.md`](patterns/growth-ceilings.md)         |
 | `mcp`, or any tool's MCP adapter         | [`case-studies/mcp.md`](case-studies/mcp.md)                                                                                       |
+| `mic-tester`                             | [`case-studies/mic-tester.md`](case-studies/mic-tester.md)                                                                         |
 | `mock-server`                            | [`case-studies/mock-server.md`](case-studies/mock-server.md), [`mock-server-studio.md`](mock-server-studio.md)                     |
 | `keyboard-tester`                        | [`case-studies/keyboard-tester.md`](case-studies/keyboard-tester.md)                                                               |
 | `mouse-tester`                           | [`case-studies/mouse-tester.md`](case-studies/mouse-tester.md)                                                                     |
 | `pdf-converter`                          | [`case-studies/pdf-converter.md`](case-studies/pdf-converter.md), [`patterns/format-conversion.md`](patterns/format-conversion.md) |
 | `port-scanner`                           | [`case-studies/port-scanner.md`](case-studies/port-scanner.md)                                                                     |
 | `qr`                                     | [`case-studies/qr.md`](case-studies/qr.md)                                                                                         |
+| `refresh-rate-tester`                    | [`case-studies/refresh-rate-tester.md`](case-studies/refresh-rate-tester.md)                                                       |
 | `rsa`                                    | [`case-studies/rsa.md`](case-studies/rsa.md)                                                                                       |
 | `rsa-encrypt`                            | [`case-studies/rsa-encrypt.md`](case-studies/rsa-encrypt.md)                                                                       |
+| `screen-tester`                          | [`case-studies/screen-tester.md`](case-studies/screen-tester.md)                                                                   |
 | `short-links`, `shortener`               | [`case-studies/short-links.md`](case-studies/short-links.md)                                                                       |
 | `sort`                                   | [`case-studies/sort.md`](case-studies/sort.md)                                                                                     |
+| `sql-formatter`                          | [`case-studies/sql-formatter.md`](case-studies/sql-formatter.md)                                                                   |
 | `subdomain-lookup`                       | [`case-studies/subdomain-lookup.md`](case-studies/subdomain-lookup.md)                                                             |
 | `text-to-speech`                         | [`case-studies/text-to-speech.md`](case-studies/text-to-speech.md)                                                                 |
 | `url-parser`                             | [`patterns/derived-state-editors.md`](patterns/derived-state-editors.md)                                                           |
 | `watermark-remover`, `ai-*`              | [`case-studies/watermark-remover.md`](case-studies/watermark-remover.md)                                                           |
+| `webcam-tester`                          | [`case-studies/webcam-tester.md`](case-studies/webcam-tester.md)                                                                   |
 | `timestamp`                              | [`hydration-and-platform-pitfalls.md`](hydration-and-platform-pitfalls.md)                                                         |
 
 ## Where new knowledge goes

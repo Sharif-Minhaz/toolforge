@@ -2,6 +2,7 @@
 
 import {
     IconArrowsMinimize,
+    IconDownload,
     IconFileZip,
     IconInfoCircle,
     IconLoader2,
@@ -111,6 +112,7 @@ export function ImageCompressorWorkbench({
     const tFormats = useTranslations("imageCompressor.formats");
     const tErrors = useTranslations("imageCompressor.errors");
     const tToast = useTranslations("imageCompressor.toast");
+    const tCommon = useTranslations("common");
     const format = useFormatter();
     const byteLabel = useByteLabel();
 
@@ -153,6 +155,8 @@ export function ImageCompressorWorkbench({
             : [{ originalBytes: item.file.size, outputBytes: item.result.bytes }],
     );
     const summary = summariseSavings(results);
+    // One finished file saves as itself; a ZIP of one is a needless extra step.
+    const lone = summary.count === 1 ? items.find((item) => item.result !== null) : undefined;
     const totalBytes = items.reduce((total, item) => total + item.file.size, 0);
     const stale = items.some((item) => item.result !== null && item.signature !== signature);
     const failedCount = items.filter((item) => item.status === "failed").length;
@@ -740,7 +744,11 @@ export function ImageCompressorWorkbench({
 
                             <Button
                                 variant="outline"
-                                onClick={() => void handleDownloadAll()}
+                                onClick={() =>
+                                    lone === undefined
+                                        ? void handleDownloadAll()
+                                        : handleDownload(lone.id)
+                                }
                                 disabled={summary.count === 0 || packing || working}
                                 className="h-9 w-full"
                             >
@@ -749,14 +757,24 @@ export function ImageCompressorWorkbench({
                                         className="size-4 animate-spin"
                                         aria-hidden="true"
                                     />
-                                ) : (
+                                ) : lone === undefined ? (
                                     <IconFileZip
                                         className="size-4"
                                         stroke={1.8}
                                         aria-hidden="true"
                                     />
+                                ) : (
+                                    <IconDownload
+                                        className="size-4"
+                                        stroke={1.8}
+                                        aria-hidden="true"
+                                    />
                                 )}
-                                {packing ? t("packing") : t("downloadAll")}
+                                {packing
+                                    ? t("packing")
+                                    : lone === undefined
+                                      ? t("downloadAll")
+                                      : tCommon("download")}
                             </Button>
                         </div>
                     </div>

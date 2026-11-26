@@ -129,7 +129,11 @@ Two traps it cost:
 
 The code editor started in this module and moved to `tools/` whole the moment the
 BSON converter needed one. The tokenizer for it is a **different** tokenizer from
-the one that reads the command — `highlight.ts`, not `tokenize.ts` — because the
+the one that reads the command — `highlight.ts`, not `shell-tokenize.ts` — because the
 two want opposite things.
+
+The command reader and the quoter moved to `tools/` too
+(`shell-tokenize.ts`, `shell-quote.ts`) when the Docker Run ↔ Compose converter
+needed both — see [`docker-compose.md`](docker-compose.md).
 
 See [`../patterns/syntax-highlighting.md`](../patterns/syntax-highlighting.md).

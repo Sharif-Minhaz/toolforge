@@ -1,4 +1,11 @@
+import {
+    assembleFaviconPack,
+    buildWebManifest,
+    FAVICON_PNGS,
+    ICO_MIME_TYPE,
+} from "@/modules/tools/domain/favicon";
 import { toFilenameStem } from "@/modules/tools/domain/filenames";
+import { buildIcoFile, type IcoImage } from "@/modules/tools/domain/ico";
 import {
     browserCanvasFactory,
     decodeToPixels,
@@ -10,25 +17,12 @@ import {
 import { fitWithinEdge, flattenOntoMatte, isOpaque } from "@/modules/tools/domain/pixels";
 import type { MatteColor, PixelSize } from "@/modules/tools/types";
 import { MAX_PIXELS, MAX_TRACE_EDGE } from "./constants";
-import {
-    buildFaviconHeadHtml,
-    buildWebManifest,
-    FAVICON_ICO_NAME,
-    FAVICON_MANIFEST_NAME,
-    FAVICON_PNGS,
-    FAVICON_SNIPPET_NAME,
-} from "./favicon";
 import { buildConvertedFilename } from "./filenames";
-import { buildIcoFile, type IcoImage } from "./ico";
 import { iconLayout, isUpscale, padToSquare } from "./icon-layout";
 import { isSvgSource, rasterizeSvg, readSvgSize, SVG_MIME_TYPE } from "./svg-source";
 import { resolveBackground, resolveIconSizes, svgRenderEdge, targetFormat } from "./targets";
 import { tracePixelsToSvg } from "./vectorize";
 import type { ConversionOptions, ConversionOutcome, ConvertedFile, IconSize } from "../types";
-
-const ICO_MIME_TYPE = "image/vnd.microsoft.icon";
-const MANIFEST_MIME_TYPE = "application/manifest+json";
-const HTML_MIME_TYPE = "text/html";
 
 /**
  * Converts one file end to end.
@@ -293,26 +287,15 @@ async function convertToFaviconPack(
     const pngs = await Promise.all(
         FAVICON_PNGS.map(async (spec) => ({
             name: spec.name,
-            blob: new Blob([await encodeSquarePng(decoded, spec.size, matte)], {
-                type: RASTER_FORMAT_MIME_TYPES.png,
-            }),
+            png: await encodeSquarePng(decoded, spec.size, matte),
         })),
     );
 
-    const stem = toFilenameStem(file.name);
-
-    const files: ConvertedFile[] = [
-        { name: FAVICON_ICO_NAME, blob: new Blob([ico], { type: ICO_MIME_TYPE }) },
-        ...pngs,
-        {
-            name: FAVICON_MANIFEST_NAME,
-            blob: new Blob([buildWebManifest(stem)], { type: MANIFEST_MIME_TYPE }),
-        },
-        {
-            name: FAVICON_SNIPPET_NAME,
-            blob: new Blob([buildFaviconHeadHtml()], { type: HTML_MIME_TYPE }),
-        },
-    ].map((entry) => ({ ...entry, bytes: entry.blob.size }));
+    const files: readonly ConvertedFile[] = assembleFaviconPack(
+        ico,
+        pngs,
+        buildWebManifest(toFilenameStem(file.name)),
+    );
 
     const sizes = [...icoSizes, ...FAVICON_PNGS.map((png) => png.size)];
     const largest = Math.max(...sizes);

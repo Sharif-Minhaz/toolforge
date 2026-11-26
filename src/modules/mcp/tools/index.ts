@@ -3,10 +3,12 @@ import { aesCryptTool } from "./aes";
 import { base64ConvertTool } from "./base64";
 import { bsonConvertTool } from "./bson";
 import { catalogListTool } from "./catalog";
+import { chmodConvertTool } from "./chmod";
 import { colorConvertTool } from "./color";
 import { cronExplainTool } from "./cron";
 import { curlConvertTool } from "./curl";
 import { diffCompareTool } from "./diff";
+import { dockerComposeConvertTool } from "./docker-compose";
 import { domainInspectTool } from "./domain-inspector";
 import { equationConvertTool } from "./equation";
 import { hashCompareTool, hashDetectTool, hashGenerateTool } from "./hash";
@@ -25,6 +27,7 @@ import { rsaCryptTool, rsaGenerateTool } from "./rsa";
 import { secretGenerateTool } from "./secret";
 import { slugCreateTool } from "./slug";
 import { sortLinesTool } from "./sort";
+import { sqlFormatterFormatTool } from "./sql-formatter";
 import { subdomainLookupTool } from "./subdomain-lookup";
 import { textCaseConvertTool } from "./text-case";
 import { timestampConvertTool } from "./timestamp";
@@ -45,7 +48,9 @@ import { uuidGenerateTool } from "./uuid";
  * - **The image tools** — compressor, converter, resizer, blur placeholder, the
  *   Image to 3D Model, and the Background Remover. They decode pixels
  *   in a canvas and re-encode them through WebAssembly codecs built for the
- *   browser. There is no canvas in a
+ *   browser. The Favicon Generator is absent for the same reason from the other
+ *   end: it draws text on a canvas with the reader's fonts, and its emoji with
+ *   the reader's system emoji font. There is no canvas in a
  *   request handler, and a server-side reimplementation would be a second
  *   encoder to keep in step with the one on the page. The Background Remover
  *   adds a second reason on top of the first: its segmentation weights are
@@ -117,16 +122,31 @@ import { uuidGenerateTool } from "./uuid";
  * a browser — the gaps between presses, the wheel, the pointer reports
  * coalesced between frames, the keys held at once — and an adapter that took
  * a list of timestamps instead would be a tool nobody had a reason to call.
+ *
+ * The Dead Pixel & Screen Tester is absent for the same reason: what it tests
+ * is the panel the reader is looking at, and its whole output is colour on that
+ * screen. An MCP call has no screen to paint.
+ *
+ * The Refresh Rate Tester is absent for the same reason: it times the frames a
+ * screen paces in a browser tab, and an MCP call has no screen behind it.
+ *
+ * The Webcam Tester is absent for the same reason: it opens the reader's own
+ * camera through `getUserMedia`, and an MCP call has no camera to open.
+ *
+ * The Microphone Tester is absent for the same reason: it listens to the
+ * reader's own microphone, and an MCP call has no microphone to listen to.
  */
 export const MCP_TOOLS: readonly McpTool[] = [
     aesCryptTool,
     base64ConvertTool,
     bsonConvertTool,
     catalogListTool,
+    chmodConvertTool,
     colorConvertTool,
     cronExplainTool,
     curlConvertTool,
     diffCompareTool,
+    dockerComposeConvertTool,
     domainInspectTool,
     equationConvertTool,
     hashCompareTool,
@@ -152,6 +172,7 @@ export const MCP_TOOLS: readonly McpTool[] = [
     secretGenerateTool,
     slugCreateTool,
     sortLinesTool,
+    sqlFormatterFormatTool,
     subdomainLookupTool,
     textCaseConvertTool,
     timestampConvertTool,

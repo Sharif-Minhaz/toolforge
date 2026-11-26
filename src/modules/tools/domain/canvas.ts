@@ -46,6 +46,13 @@ export function context2d(canvas: HTMLCanvasElement): CanvasRenderingContext2D |
  * Setting either dimension to zero releases the backing store immediately, in
  * every engine, and is the documented way to do it.
  */
+/** `null` rather than a throw: every caller already has a named refusal for an encoder that gives up. */
+export function toPngBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
+    return new Promise((resolve) => {
+        canvas.toBlob((blob) => resolve(blob), "image/png");
+    });
+}
+
 export function releaseCanvas(canvas: HTMLCanvasElement | null): void {
     if (canvas === null) {
         return;

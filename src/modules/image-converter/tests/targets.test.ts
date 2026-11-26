@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { DEFAULT_ICON_SIZES, DEFAULT_OPTIONS } from "@/modules/image-converter/domain/constants";
-import { FAVICON_ICO_SIZES, FAVICON_PNGS } from "@/modules/image-converter/domain/favicon";
+import { FAVICON_ICO_SIZES, FAVICON_PNGS } from "@/modules/tools/domain/favicon";
 import {
     backgroundValues,
     clampQuality,

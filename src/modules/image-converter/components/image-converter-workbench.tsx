@@ -1,6 +1,7 @@
 "use client";
 
 import {
+    IconDownload,
     IconFileZip,
     IconInfoCircle,
     IconLoader2,
@@ -32,6 +33,7 @@ import {
 } from "@/modules/tools/components/workbench-step";
 import { buildZipArchive } from "@/modules/tools/domain/archive";
 import { copyText } from "@/modules/tools/domain/clipboard";
+import { buildFaviconHeadHtml, FAVICON_ICO_SIZES } from "@/modules/tools/domain/favicon";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
 import {
     knownPixelSize,
@@ -50,7 +52,6 @@ import {
     RESIZE_EDGES,
 } from "../domain/constants";
 import { convertImage } from "../domain/convert";
-import { buildFaviconHeadHtml, FAVICON_ICO_SIZES } from "../domain/favicon";
 import { buildArchiveFilename, buildPackFilename } from "../domain/filenames";
 import { buildArchivePaths } from "../domain/outputs";
 import { resolveImageType } from "../domain/svg-source";
@@ -178,6 +179,8 @@ export function ImageConverterWorkbench({
         (total, item) => total + (item.result?.files.length ?? 0),
         0,
     );
+    // One output file saves as itself; a ZIP of one is a needless extra step.
+    const lone = outputCount === 1 ? finished[0] : undefined;
     const totalBytes = items.reduce((total, item) => total + item.file.size, 0);
     const stale = items.some((item) => item.result !== null && item.signature !== signature);
     const failedCount = items.filter((item) => item.status === "failed").length;
@@ -764,7 +767,11 @@ export function ImageConverterWorkbench({
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => void handleDownloadAll()}
+                                onClick={() =>
+                                    void (lone === undefined
+                                        ? handleDownloadAll()
+                                        : handleDownload(lone.id))
+                                }
                                 disabled={finished.length === 0 || packing || working}
                             >
                                 {packing ? (
@@ -772,14 +779,24 @@ export function ImageConverterWorkbench({
                                         className="size-3.5 animate-spin"
                                         aria-hidden="true"
                                     />
-                                ) : (
+                                ) : lone === undefined ? (
                                     <IconFileZip
                                         className="size-3.5"
                                         stroke={1.8}
                                         aria-hidden="true"
                                     />
+                                ) : (
+                                    <IconDownload
+                                        className="size-3.5"
+                                        stroke={1.8}
+                                        aria-hidden="true"
+                                    />
                                 )}
-                                {packing ? t("packing") : t("downloadAll")}
+                                {packing
+                                    ? t("packing")
+                                    : lone === undefined
+                                      ? t("downloadAll")
+                                      : tCommon("download")}
                             </Button>
                         </div>
 

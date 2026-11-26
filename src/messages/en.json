@@ -193,6 +193,10 @@
             "name": "cURL ↔ Fetch Converter",
             "description": "Turn a cURL command into working fetch, axios or node:https — and back again. Headers, query, cookies, auth, every body form, redirects, timeouts and TLS flags, with a plain list of anything that could not carry across."
         },
+        "docker-compose": {
+            "name": "Docker Run ↔ Compose",
+            "description": "Turn docker run commands into a compose.yaml — and a compose file back into commands. Ports, volumes, environment, networks, healthchecks and limits, with a plain list of anything that has no equivalent."
+        },
         "markdown": {
             "name": "Markdown Preview",
             "description": "Write markdown and watch it render — Mermaid diagrams, LaTeX maths, and export to HTML or PDF."
@@ -200,6 +204,10 @@
         "html-markdown": {
             "name": "HTML to Markdown",
             "description": "Convert HTML to Markdown and Markdown to HTML, with GitHub tables and full control over the output."
+        },
+        "sql-formatter": {
+            "name": "SQL Formatter",
+            "description": "Format SQL for 20 dialects — keyword case, indentation and blank lines between statements, with errors located by line."
         },
         "pdf-converter": {
             "name": "Document to PDF",
@@ -269,6 +277,10 @@
             "name": "Image Converter",
             "description": "Convert between PNG, JPG, WebP, AVIF and traced SVG, or turn one picture into a favicon.ico and a full favicon pack — all in your browser."
         },
+        "favicon-generator": {
+            "name": "Favicon Generator",
+            "description": "Make a favicon pack from a letter, initials, Bangla or an emoji — favicon.ico, every PNG size, a web app manifest and the head tags, drawn in your browser."
+        },
         "background-remover": {
             "name": "Background Remover",
             "description": "Cut the background out of a photo in your browser, then drop in a colour, a blurred version of the original, or a free stock photograph."
@@ -288,6 +300,22 @@
         "mouse-tester": {
             "name": "Mouse Tester",
             "description": "Test every button, the wheel and the polling rate inside a capture area that blocks Back and Forward, and get a verdict on double-click chatter, drag drops and wheel jump-back you can download as evidence."
+        },
+        "screen-tester": {
+            "name": "Dead Pixel & Screen Tester",
+            "description": "Fill the screen with black, white, red, green, blue, grey or your own colour, a black-to-white gradient and a one-pixel checkerboard to find dead, stuck and hot pixels, backlight bleed and banding — with no flashing."
+        },
+        "refresh-rate-tester": {
+            "name": "Refresh Rate Tester",
+            "description": "Measure the refresh rate of the screen your browser is on from real frame times, with the nearest common rate, dropped frames, jitter and a moving-block motion test."
+        },
+        "webcam-tester": {
+            "name": "Webcam Tester",
+            "description": "Check a webcam in your browser: switch between cameras, mirror the preview, see the resolution, frame rate and aspect ratio it really sends and the ranges it supports, and save a PNG snapshot. Nothing leaves your device."
+        },
+        "mic-tester": {
+            "name": "Microphone Tester",
+            "description": "Check a microphone in your browser: switch between microphones, watch its level in dBFS and its spectrum, turn echo cancellation, noise suppression and automatic gain on or off, and record a short clip to play back. Nothing leaves your device."
         },
         "text-to-speech": {
             "name": "Text to Speech",
@@ -325,6 +353,10 @@
         "my-ip": {
             "name": "What Is My IP",
             "description": "See your public IP address, the network that announces it, and the headers your browser sends."
+        },
+        "chmod": {
+            "name": "Chmod Calculator",
+            "description": "Work out a Unix file mode from checkboxes, octal or an ls -l string, and copy the chmod command."
         },
         "mock-server": {
             "name": "Mock Server Studio",
@@ -2088,6 +2120,108 @@
             }
         }
     },
+    "dockerCompose": {
+        "meta": {
+            "title": "Docker Run to Compose Converter — and Back to docker run",
+            "description": "Paste one or several docker run commands and get a compose.yaml: ports, volumes, --mount, environment, networks, healthchecks, limits and logging all carried across. Paste a compose file to get the docker run commands back. Reads bash, cmd and PowerShell, escapes $ for compose, and names every flag that has no equivalent."
+        },
+        "hero": {
+            "eyebrow": "Encoding",
+            "title": "Docker Run ↔ Compose Converter",
+            "subtitle": "Turn docker run commands into a compose.yaml — or a compose file back into commands.",
+            "badgeShells": "bash, cmd, PowerShell",
+            "badgeOffline": "Works offline",
+            "badgeHonest": "Says what it drops"
+        },
+        "workbench": {
+            "directionLabel": "Direction",
+            "inputLabelRun": "docker run commands",
+            "inputLabelCompose": "Compose file",
+            "placeholderRun": "docker run -d --name web -p 8080:80 nginx",
+            "placeholderCompose": "services:\n  web:\n    image: nginx",
+            "example": "Try an example",
+            "clear": "Clear input",
+            "outputLabelCompose": "compose.yaml",
+            "outputLabelRun": "docker run commands",
+            "outputPlaceholder": "The converted result appears here.",
+            "copy": "Copy",
+            "download": "Download",
+            "swap": "Send the output back as input",
+            "statusEmpty": "Paste commands or a compose file to convert them.",
+            "statusReady": "{services, plural, one {# service} other {# services}} converted. {notes, plural, =0 {Everything carried across} one {# note below} other {# notes below}}.",
+            "notesTitle": "What did not carry across",
+            "notesEmpty": "Everything in the input has an equivalent on the other side.",
+            "kindDropped": "Dropped",
+            "kindAdapted": "Adapted"
+        },
+        "directions": {
+            "runToCompose": "Run → Compose",
+            "composeToRun": "Compose → Run"
+        },
+        "notes": {
+            "notDockerRun": "Skipped a line that is not docker run: {detail}.",
+            "unknownFlag": "{detail} is not a docker run flag this converter knows, so it was skipped. If it takes a value, check that the image was read correctly.",
+            "noComposeEquivalent": "{detail} has no compose equivalent and was left out.",
+            "detach": "{detail} has no key: compose runs services in the background when you start them with docker compose up -d.",
+            "autoRemove": "{detail} has no key: compose keeps stopped containers until docker compose down. docker compose run --rm is the closest match.",
+            "commandSubstitution": "{detail} was run by your shell, and compose cannot run commands. It was kept as literal text — replace it with a value.",
+            "pwdVariable": "{detail} became $'{'PWD'}', which compose reads from the same shell.",
+            "externalNetwork": "{detail} is marked external: docker run needed it to exist already, so compose will use it rather than create it.",
+            "noRunEquivalent": "{detail} has no docker run flag and was left out.",
+            "unreadableValue": "{detail} could not be read and was left out.",
+            "noImage": "{detail} builds its image instead of naming one, so docker run has nothing to start. Build it, then add image:.",
+            "buildIgnored": "{detail} also has build:. docker run cannot build, so the command uses the image as named.",
+            "createNetwork": "Compose creates {detail} itself. Run docker network create {detail} first.",
+            "projectVolume": "Compose would have named the volume after the project, as in myapp_{detail}. This command uses {detail}, so it will not see that data.",
+            "defaultNetwork": "Compose puts every service on one shared network, so they reach each other by name. docker run uses the default bridge, where they cannot: create a network and add --network to each command.",
+            "interpolation": "{detail} is left for your shell to fill in. Compose would also have read it from a .env file.",
+            "healthcheckShell": "{detail}: --health-cmd always runs through a shell, so the exec-form healthcheck was joined into one shell command.",
+            "entrypointSplit": "{detail}: docker run takes one word for --entrypoint, so the rest of the entrypoint was moved to the front of the command.",
+            "commandCut": "{detail}: compose reads a command string only up to the first &&, ;, | or #, so the rest never ran. Wrap it in sh -c to run all of it."
+        },
+        "errors": {
+            "tooLong": "That is longer than {max, number} characters. Convert it in smaller pieces.",
+            "unbalancedQuote": "A quote is opened and never closed, so it is not clear where an argument ends.",
+            "noRunCommand": "There is no docker run command in that. Each command has to start with docker run.",
+            "missingValue": "{token} needs a value, but nothing follows it.",
+            "missingImage": "The command ends before it names an image.",
+            "invalidYaml": "That is not valid YAML.",
+            "invalidYamlAt": "That is not valid YAML — the problem is on line {line, number}.",
+            "notCompose": "That YAML has no services to convert.",
+            "noRunnableService": "No service names an image, so there is nothing for docker run to start."
+        },
+        "toast": {
+            "copied": "Copied",
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The download could not be started",
+            "copyFailedEmpty": "There is nothing to copy yet",
+            "copyFailedUnsupported": "This browser will not let a page write to the clipboard",
+            "copyFailedDenied": "Clipboard permission was refused"
+        },
+        "article": {
+            "understanding": {
+                "title": "One container, written two ways",
+                "p1": "A <code>docker run</code> command and a compose service describe the same thing: one container, with its image, ports, volumes, environment and limits. A compose file is easier to keep, review and start together, but most READMEs still hand you a command.",
+                "example": "<code>docker run -p 8080:80 --name web nginx</code> → a <code>web</code> service with <code>image: nginx</code> and <code>ports: [\"8080:80\"]</code>",
+                "p2": "Both directions read into one description of the container and write it back out, so a flag means the same thing either way. Dollar signs are translated by where they stood: <code>''pa$word''</code> becomes <code>pa$$word</code>, because compose would otherwise read a variable, while <code>\"$HOME\"</code> stays one. Nothing is uploaded — it all runs in this tab."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Does anything get uploaded?",
+                "a1": "No. Both directions run in your browser, including the download. Commands and compose files often carry passwords and tokens, which is exactly why this tool has no server to send them to.",
+                "q2": "Which flags does it understand?",
+                "a2": "Every flag docker run --help lists, plus hidden aliases such as --net. Around eighty map to a compose key; the rest, such as --rm, -d and --cidfile, are named in the notes rather than dropped. An unknown flag is named too, because guessing whether it takes a value is how a reader ends up treating the next word as the image.",
+                "q3": "Why does my volume or network look different?",
+                "a3": "Because compose names things after the project. A network a docker run joined already existed, so it is declared external: true; a named volume keeps its exact name with name:, so compose finds the data the container already has. Going the other way, the notes say which networks to create first and which volumes compose would have prefixed.",
+                "q4": "What happens to $VARIABLES?",
+                "a4": "They stay variables. Compose fills $'{'TAG'}' and $TAG from your shell and a .env file, as the shell would have; a dollar the shell would not have expanded becomes $$, compose's literal dollar. $(pwd) becomes $'{'PWD'}'; any other command substitution is kept as text and named in the notes, because compose cannot run commands.",
+                "q5": "Can I paste several commands at once?",
+                "a5": "Yes. Put each on its own line, or join them with &&. Each docker run becomes a service, keyed by its --name or else its image; other commands, such as docker network create, are skipped and listed. A --link or --volumes-from that names another container in the same paste is written as that service.",
+                "q6": "Why do the generated commands all have -d and --name?",
+                "a6": "-d starts each container in the background, the way docker compose up -d does, so the next command in the script runs. --name takes the service name when the file sets no container_name, because on a shared network the container's name is what the others look up."
+            }
+        }
+    },
     "markdown": {
         "meta": {
             "title": "Markdown Preview — Live Editor with Mermaid Diagrams and LaTeX Maths",
@@ -2323,6 +2457,86 @@
                 "a5": "In one direction, close to it: with <code>Keep inline HTML</code> on, anything Markdown cannot say survives as a tag. Going back is lossier by nature — Markdown carries no class names, no <code>id</code> attributes and no styling, so an element that had them arrives without them.",
                 "q6": "Why is there a size limit?",
                 "a6": "Converting HTML means building a document tree first, and that happens on the same thread that draws the page. Half a megabyte converts in a moment on a modest phone; several megabytes would freeze the tab while it worked."
+            }
+        }
+    },
+    "sqlFormatter": {
+        "meta": {
+            "title": "SQL Formatter and Beautifier",
+            "description": "Format and beautify SQL for PostgreSQL, MySQL, SQL Server, Oracle PL/SQL, SQLite, BigQuery, Snowflake and 13 more dialects. Choose keyword case, indentation and blank lines between statements. Runs entirely in your browser — nothing is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Formatting",
+            "title": "SQL Formatter",
+            "subtitle": "Paste a query or a whole script and get it back with every clause on its own line.",
+            "badgeDialects": "20 dialects",
+            "badgeComments": "Keeps comments",
+            "badgeOffline": "Works offline"
+        },
+        "workbench": {
+            "dialectLabel": "Dialect",
+            "dialectStandard": "Standard SQL",
+            "keywordCaseLabel": "Keyword case",
+            "keywordCases": {
+                "preserve": "As written",
+                "upper": "UPPERCASE",
+                "lower": "lowercase"
+            },
+            "keywordCaseHint": "Also recases a column named like a keyword, such as month",
+            "keywordCaseLockedHint": "ClickHouse function names are case-sensitive, so the case stays as written",
+            "indentLabel": "Indentation",
+            "indents": {
+                "space2": "2 spaces",
+                "space4": "4 spaces",
+                "tab": "Tab"
+            },
+            "linesLabel": "Between statements",
+            "lines": "{count, plural, =0 {No blank line} one {# blank line} other {# blank lines}}",
+            "inputLabel": "SQL in",
+            "outputLabel": "Formatted SQL",
+            "placeholder": "Paste a query, a migration or a whole script",
+            "outputPlaceholder": "Formatted SQL will appear here",
+            "upload": "Upload file",
+            "clear": "Clear input",
+            "copy": "Copy",
+            "download": "Download"
+        },
+        "errors": {
+            "tooLarge": "That is more than {limit}. Split the script and format it in parts.",
+            "tooDeep": "Brackets nest more than {depth, number} deep. Flatten the expression, or format the outer query on its own.",
+            "unparseable": "This does not read as {dialect} at line {line, number}, column {column, number}. Check the statement there, or pick the dialect your database uses.",
+            "unparseableAnywhere": "This does not read as {dialect}. Check the query, or pick the dialect your database uses.",
+            "fileTooLarge": "{name} is larger than {limit}.",
+            "fileUnreadable": "That file could not be read."
+        },
+        "toast": {
+            "copied": "Copied to clipboard",
+            "copyFailedUnsupported": "Your browser blocked clipboard access",
+            "copyFailedDenied": "Clipboard permission was denied",
+            "copyFailedEmpty": "Nothing to copy yet",
+            "downloaded": "Downloaded {filename}",
+            "downloadFailed": "The download could not be started",
+            "fileLoaded": "Loaded {name}"
+        },
+        "article": {
+            "understanding": {
+                "title": "Only the whitespace changes",
+                "p1": "A SQL formatter rewrites the spaces and line breaks in a query so every clause starts its own line and everything inside it is indented beneath. Keywords can be recased on the way; names, literals and comments come back exactly as they went in.",
+                "example": "<code>select id,name from users where active=1</code> → three clauses on their own lines, <code>id</code> and <code>name</code> indented beneath <code>select</code>",
+                "p2": "The dialect is the setting that matters. Each database spells a few things its own way — backtick names in MySQL, <code>::</code> casts in PostgreSQL, square brackets in SQL Server — and a query that uses one only reads correctly as that dialect. Formatting runs in this tab; no query is uploaded."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Does anything I paste get uploaded?",
+                "a1": "No. The formatter runs in this tab, and the page makes no request while you type — which you can confirm in your network panel.",
+                "q2": "Can formatting change what my query does?",
+                "a2": "With keyword case left “As written”, only spaces and line breaks move — never inside a string literal or a quoted name. Recasing is safe wherever unquoted names ignore case, which is almost everywhere; the exception is a column named like a keyword, such as <code>month</code>, in a database that compares names by case. ClickHouse keeps its case for that reason.",
+                "q3": "Why does it say my query does not read?",
+                "a3": "Usually because the dialect is wrong: backticks are names in MySQL and an error in PostgreSQL, and “Standard SQL” accepts only what the standard does. Pick the database the query was written for. If it still fails, the line and column point at the first thing the parser could not place.",
+                "q4": "Why is there a size and nesting limit?",
+                "a4": "The parser runs on the same thread that draws the page, and its work grows with the square of how deeply brackets nest. 64 KB of ordinary SQL formats in a fraction of a second; a few hundred nested brackets would freeze the tab, so the tool refuses them instead.",
+                "q5": "Are my comments kept?",
+                "a5": "Yes. Both <code>--</code> line comments and <code>/* */</code> block comments stay where they were, beside the clause they belonged to."
             }
         }
     },
@@ -5266,6 +5480,95 @@
             }
         }
     },
+    "faviconGenerator": {
+        "meta": {
+            "title": "Favicon Generator — favicon.ico and a PNG pack from text or an emoji",
+            "description": "Type a letter, initials, Bangla or an emoji, pick colours and a shape, and download favicon.ico, every PNG size, a site.webmanifest and the head tags. Drawn in your browser — nothing is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Favicon Generator",
+            "title": "Favicon Generator",
+            "subtitle": "A whole favicon pack from a letter, initials, Bangla or an emoji: favicon.ico, every PNG size, a manifest and the tags to paste.",
+            "badgeOffline": "Drawn in your browser",
+            "badgeNoImage": "No image needed"
+        },
+        "workbench": {
+            "textLabel": "Text",
+            "textHint": "One or two characters read best at 16 pixels. Emoji are drawn with your device's emoji font, so they look different on other systems.",
+            "fontLabel": "Font",
+            "fontHint": "Sans-serif and monospace are this site's own fonts; Bangla uses Noto Sans Bengali.",
+            "fontSerifHint": "Your device's own serif font — it differs between systems.",
+            "shapeLabel": "Shape",
+            "shapeHint": "Applies to the tab icons and the manifest icons. The iOS icon stays square; iOS rounds it itself.",
+            "needsBackground": "Needs a background colour — switch off the transparent background.",
+            "boldLabel": "Bold",
+            "boldHint": "Heavier strokes stay legible at 16 pixels.",
+            "foreground": "Text colour",
+            "background": "Background",
+            "transparentLabel": "Transparent background",
+            "transparentHint": "No plate: the page shows behind the glyph. iOS puts a transparent home-screen icon on black.",
+            "webAppTitle": "Web app",
+            "maskableLabel": "Maskable icons",
+            "maskableHint": "Adds two icons with the glyph inside the safe zone, so Android can crop them to any shape.",
+            "appNameLabel": "App name",
+            "appNameHint": "Written to site.webmanifest. Left blank, the text is the name.",
+            "resultTitle": "Preview",
+            "previews": {
+                "tab16": "Tab",
+                "tab32": "Tab, high-DPI screen",
+                "home": "iOS home screen",
+                "maskable": "Maskable"
+            },
+            "download": "Download pack",
+            "packing": "Drawing…",
+            "snippetTitle": "Link the pack from your page",
+            "snippetDescription": "Put the files at your site root, then paste this into your page's head. The pack ships the same snippet as head.html.",
+            "snippetCopy": "Copy snippet"
+        },
+        "fonts": {
+            "sans": "Sans-serif",
+            "mono": "Monospace",
+            "serif": "Serif"
+        },
+        "shapes": {
+            "square": "Square",
+            "rounded": "Rounded",
+            "circle": "Circle"
+        },
+        "errors": {
+            "empty_text": "Type at least one visible character.",
+            "invisible_text": "This font draws nothing for that text — try another character or font.",
+            "invalid_foreground": "The text colour must be a hex colour such as #ffffff.",
+            "invalid_background": "The background must be a hex colour such as #4f46e5."
+        },
+        "toast": {
+            "downloaded": "Downloaded {filename}",
+            "packFailed": "The pack could not be drawn. Try again, or reload the page.",
+            "snippetCopied": "Snippet copied.",
+            "snippetCopyFailed": "Could not copy the snippet."
+        },
+        "article": {
+            "howItWorks": {
+                "title": "How the icons are drawn",
+                "p1": "A favicon is the small picture a browser shows beside your page's title. This tool draws one from text — a letter, initials, a Bangla character or an emoji — at every size a browser, iOS and Android ask for, and packs them with a <code>site.webmanifest</code> and the tags that link them.",
+                "example": "<code>A</code> on indigo, rounded → <code>favicon.ico</code> (16, 32, 48), <code>favicon-96x96.png</code>, <code>apple-touch-icon.png</code>, two manifest icons, <code>site.webmanifest</code> and <code>head.html</code>",
+                "p2": "Every size is drawn from the text on its own rather than shrunk from a large one, so the 16-pixel tab icon stays sharp. The glyph is centred on its ink, not on its baseline — which is what keeps Bangla and emoji in the middle of the plate."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Why is there no SVG favicon?",
+                "a1": "An SVG favicon would draw the text with whatever fonts the visitor's device has, because the font is not embedded in it. A letter set in this site's Inter would turn into the visitor's default sans-serif, and an emoji would change with every operating system. PNG and ICO hold the pixels themselves, so every visitor sees the icon you saw here.",
+                "q2": "Why does my emoji look different on another computer?",
+                "a2": "Emoji are drawn with your device's own emoji font, and Apple, Google, Microsoft and others each draw them differently. The pack holds exactly the icon in your preview; somebody making the same icon on another system gets that system's emoji.",
+                "q3": "What is a maskable icon?",
+                "a3": "Android launchers crop app icons to a circle, a squircle or a rounded square, depending on the device. A maskable icon fills its whole square with the background and keeps the glyph inside a central circle 80% of the edge across, which every mask is guaranteed to leave visible. It needs an opaque background, because the launcher fills the whole mask.",
+                "q4": "Why is the iOS icon square when I picked a circle?",
+                "a4": "iOS rounds a home-screen icon's corners itself. An icon that was already rounded or circular gets cut a second time, leaving a thin band of the wrong colour at each corner. The shape you pick applies to the tab icons and the manifest icons.",
+                "q5": "Where do the files go?",
+                "a5": "At the root of your site: browsers ask for /favicon.ico there even when nothing links to it. Then paste the contents of head.html into your page's head. The manifest's theme and background colours come from the background you picked, and are left out for a transparent icon."
+            }
+        }
+    },
     "imageConverter": {
         "meta": {
             "title": "Image Converter — PNG, JPG, WebP, AVIF, SVG and favicon packs in your browser",
@@ -6942,6 +7245,111 @@
             }
         }
     },
+    "chmod": {
+        "meta": {
+            "title": "Chmod Calculator — Octal, rwx and the chmod Command",
+            "description": "Tick read, write and execute for owner, group and others, or type 755 or rwxr-xr-x, and get the octal mode, the ls -l string, the u=rwx,g=rx,o=rx form and the chmod command. Setuid, setgid and sticky included. Checked against GNU chmod; nothing leaves your browser."
+        },
+        "hero": {
+            "eyebrow": "Security",
+            "title": "Chmod Calculator",
+            "subtitle": "Tick the permissions or type a mode, then copy it as octal, as rwx, or as the chmod command.",
+            "badgeGnu": "Matches GNU chmod",
+            "badgeSpecial": "Setuid, setgid, sticky",
+            "badgeOffline": "Works offline"
+        },
+        "workbench": {
+            "presetsLabel": "Common modes",
+            "octalLabel": "Octal",
+            "symbolicLabel": "Symbolic",
+            "octalHint": "Three digits, or four with a special digit in front.",
+            "symbolicHint": "Nine characters as ls -l prints them; a file-type letter in front is fine.",
+            "classHeader": "Who",
+            "digitHeader": "Digit",
+            "cellLabel": "{who}: {permission}",
+            "specialLabel": "Special bits",
+            "resultLabel": "Result",
+            "copyCommand": "Copy command",
+            "copyOutput": "Copy {output}",
+            "pathLabel": "File or directory",
+            "pathHint": "Goes into the command exactly as typed — quote a name that has spaces.",
+            "worldWritable": "Others can write: every account on this machine can change it. 777 is almost never the fix — grant the group instead."
+        },
+        "classes": {
+            "owner": "Owner",
+            "group": "Group",
+            "others": "Others"
+        },
+        "permissions": {
+            "read": "Read",
+            "write": "Write",
+            "execute": "Execute"
+        },
+        "special": {
+            "setuid": {
+                "label": "Set user ID",
+                "hint": "A program runs as the file's owner, not as whoever starts it."
+            },
+            "setgid": {
+                "label": "Set group ID",
+                "hint": "Runs as the file's group; a directory hands its group to new files."
+            },
+            "sticky": {
+                "label": "Sticky",
+                "hint": "In a directory, only an entry's owner may delete or rename it."
+            }
+        },
+        "presets": {
+            "644": "Ordinary files: you edit, everyone reads.",
+            "755": "Programs and directories: you edit, everyone reads and runs or enters.",
+            "600": "Private files such as SSH keys: only you read and write.",
+            "700": "Private directories and scripts: only you, for everything.",
+            "775": "Shared work: you and your group edit, everyone else reads.",
+            "777": "Everyone may do everything — almost never what you want."
+        },
+        "outputs": {
+            "octal": "Octal",
+            "symbolic": "Symbolic",
+            "assignment": "Assignment",
+            "command": "Command"
+        },
+        "errors": {
+            "empty": "Type a mode.",
+            "notOctal": "Character {position, number} is not an octal digit — only 0 to 7.",
+            "outOfRange": "A mode has at most four octal digits — the largest is 7777.",
+            "invalidLength": "A permission string is nine characters, like rwxr-xr-x.",
+            "notInSlot": "Character {position, number} can only be {expected} there."
+        },
+        "toast": {
+            "copied": "{output} copied",
+            "copyFailedEmpty": "There is nothing to copy yet",
+            "copyFailedUnsupported": "This browser will not let a page write to the clipboard",
+            "copyFailedDenied": "Clipboard permission was refused"
+        },
+        "article": {
+            "understanding": {
+                "title": "How a Unix mode is written",
+                "p1": "Every file on Linux, macOS and the BSDs carries twelve permission bits: read, write and execute for its owner, its group and everyone else, plus three special bits. <code>chmod</code> sets them, and <code>ls -l</code> prints them back as letters.",
+                "example": "<code>755</code> → <code>rwxr-xr-x</code> → <code>u=rwx,g=rx,o=rx</code> — the owner gets 4 + 2 + 1, the group and others 4 + 1",
+                "p2": "Each octal digit is one audience, and the digit is the sum of read 4, write 2 and execute 1; a fourth digit in front holds setuid, setgid and sticky the same way. Every string this page writes was checked against GNU <code>chmod</code> and <code>stat</code> for all 4,096 modes, and all of it happens in this tab."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "What does a fourth digit in front of the mode do?",
+                "a1": "It holds the three special bits, weighted like the others: <code>4</code> is set-user-ID, <code>2</code> set-group-ID, <code>1</code> sticky. <code>4755</code> is <code>755</code> plus set-user-ID, which <code>ls -l</code> shows as <code>rwsr-xr-x</code>. A leading <code>0</code>, as in <code>0755</code>, means none of them.",
+                "q2": "What does a capital S or T mean?",
+                "a2": "The special bit is set but execute is not. A lowercase <code>s</code> or <code>t</code> means both are. On a file, a set-ID bit without execute does nothing, so a capital <code>S</code> usually means execute was removed by accident.",
+                "q3": "Why does chmod 755 leave set-group-ID on my directory?",
+                "a3": "GNU <code>chmod</code> keeps a directory's set-user-ID and set-group-ID bits unless you name them, and that holds for <code>u=rwx,g=rx,o=rx</code> as much as for <code>755</code>. Clear them with <code>chmod g-s dir</code> or <code>chmod u-s dir</code>, or with an extra leading zero: <code>chmod 00755 dir</code>. On a regular file, both forms set exactly the mode shown.",
+                "q4": "Is 777 ever the right answer?",
+                "a4": "Rarely. It lets every account on the machine — and every process running as one, such as a compromised web server — change or replace the file. When two people need to write, put them in one group and use <code>775</code> or <code>664</code>. The exception is a shared scratch directory such as <code>/tmp</code>, which is <code>1777</code>: the sticky bit stops people deleting each other's files.",
+                "q5": "Can I type u+x or work out a umask here?",
+                "a5": "No — this page sets whole modes only. <code>u+x</code> changes whatever mode a file already has, so its result depends on a file this page cannot see, and a umask is taken away from the mode a program asks for when it creates one. The assignment form, <code>u=rwx,g=rx,o=rx</code>, is the symbolic way to state the whole mode.",
+                "q6": "Can I paste a line from ls -l?",
+                "a6": "Paste its first column. <code>drwxr-sr-x</code> works, file-type letter and all, and so does the trailing <code>.</code>, <code>+</code> or <code>@</code> that SELinux, ACLs and macOS extended attributes add. Case matters, because <code>s</code> and <code>S</code> are different modes."
+            }
+        }
+    },
     "mockServer": {
         "meta": {
             "title": "Visual Mock Server Studio — Build Mock APIs Without Writing JSON",
@@ -8531,6 +8939,403 @@
             }
         }
     },
+    "screenTester": {
+        "meta": {
+            "title": "Dead Pixel & Screen Tester — full-screen colours, gradient and pixel checkerboard",
+            "description": "Fill your screen with black, white, red, green, blue, grey or any colour, a black-to-white gradient and a one-pixel checkerboard to find dead, stuck and hot pixels, backlight bleed and banding. Keyboard, mouse and touch. No flashing. Nothing is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Hardware",
+            "title": "Dead Pixel & Screen Tester",
+            "subtitle": "Fill the screen with solid colours, a gradient and a pixel checkerboard to find dead, stuck and hot pixels, backlight bleed and banding.",
+            "badgeFullscreen": "Full screen, keys and touch",
+            "badgeSafe": "No flashing patterns",
+            "badgeLocal": "Runs in your browser"
+        },
+        "workbench": {
+            "patternsLabel": "Choose where to start",
+            "customColour": "Custom colour",
+            "customColourHint": "Shown as the custom screen. Pick the colour a fault showed up on to look at it again.",
+            "startLabel": "Run it full screen",
+            "start": "Start test",
+            "legendNext": "Next screen",
+            "legendPrevious": "Previous screen",
+            "legendExit": "Leave the test",
+            "legendClick": "Click or tap anywhere for the next screen",
+            "legendIdle": "The cursor and the on-screen guide hide after {seconds, number} seconds without movement",
+            "noFullscreen": {
+                "title": "Full screen isn't available here",
+                "body": "This browser can't hide its own bars — iPhone Safari is one. The test fills the window instead: turn the phone sideways, or add this site to your Home Screen and open it from there to lose Safari's bars."
+            },
+            "screen": {
+                "title": "Screen test",
+                "guide": "→ or Space: next · ←: previous · Esc: exit · tap: next",
+                "position": "{current, number} of {total, number}",
+                "previous": "Previous screen",
+                "next": "Next screen",
+                "exit": "Exit",
+                "unsupported": "Full screen isn't available in this browser, so the test fills the window.",
+                "refused": "The browser declined full screen, so the test fills the window."
+            }
+        },
+        "patterns": {
+            "black": {
+                "name": "Black",
+                "hint": "Stuck and hot pixels, backlight bleed"
+            },
+            "white": {
+                "name": "White",
+                "hint": "Dead pixels, dust and dim corners"
+            },
+            "red": {
+                "name": "Red",
+                "hint": "A red sub-pixel stuck off, or another stuck on"
+            },
+            "green": {
+                "name": "Green",
+                "hint": "A green sub-pixel stuck off, or another stuck on"
+            },
+            "blue": {
+                "name": "Blue",
+                "hint": "A blue sub-pixel stuck off, or another stuck on"
+            },
+            "grey": {
+                "name": "Grey",
+                "hint": "Clouding and uneven brightness"
+            },
+            "custom": {
+                "name": "Custom",
+                "hint": "The colour you pick below"
+            },
+            "gradient": {
+                "name": "Gradient",
+                "hint": "Banding between smooth tones"
+            },
+            "checker": {
+                "name": "Checkerboard",
+                "hint": "Every pixel alternating, for scaling and shimmer"
+            }
+        },
+        "article": {
+            "understanding": {
+                "title": "What a screen test shows you",
+                "p1": "It fills your whole screen with one colour at a time, so a pixel that is not doing what it should has nowhere to hide. A dot that stays dark on white, or lit on black, is a fault in the panel rather than in the picture.",
+                "example": "<code>#000000</code> full screen → one bright green dot that stays put → a green sub-pixel stuck on",
+                "p2": "Clean the screen first and look from about arm's length, then step through every colour: each fault shows up best on one of them. Everything is painted in your browser, and nothing flashes — a screen changes only when you ask it to."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "What is the difference between a dead, a stuck and a hot pixel?",
+                "a1": "A dead pixel never lights: it shows as a black dot on white and on every other colour. A stuck pixel has one or two of its red, green and blue sub-pixels permanently on, so it shows as a coloured dot, clearest on black. A hot pixel has all three stuck on and shows as a white dot on black. Dust looks similar but sits on the surface: its edge is soft, and it moves against the picture when you move your head.",
+                "q2": "I found one. What should I do?",
+                "a2": "Photograph it close up on the screen that shows it best, and note where it sits. Check the seller's return window first — it is usually the easiest remedy — then the maker's pixel policy, since many accept a few faulty pixels before they will replace a panel. A stuck pixel sometimes clears by itself after the screen has been on for a while; a dead one does not. Do not press on the panel, which can make it worse.",
+                "q3": "Why is there no stuck-pixel fixer?",
+                "a3": "Fixers flash colours many times a second, and flashing more than three times a second can trigger seizures in people with photosensitive epilepsy. The evidence that they revive stuck pixels is thin, so this test never flashes: a screen changes only when you press a key, click or tap.",
+                "q4": "The gradient shows steps. Is my screen faulty?",
+                "a4": "Faint, evenly spaced steps are normal: most screens show 256 shades from black to white, which is several pixels per shade across a wide display. Hard bands, uneven steps or a colour tint point at a 6-bit panel, a colour profile or a brightness setting such as dynamic contrast — turn those off and look again.",
+                "q5": "What is the checkerboard for?",
+                "a5": "It alternates black and white on every physical pixel, drawn at your screen's own resolution. From arm's length it should look like an even grey. Shimmer, crawling lines or a moiré pattern mean the picture is being scaled — the display is not at its native resolution — or the panel flickers under that pattern.",
+                "q6": "Why doesn't it go full screen on my iPhone?",
+                "a6": "Safari on the iPhone gives web pages no full-screen mode, so the test fills the window instead and says so. Turn the phone sideways, or add this site to your Home Screen and open it from there: it then runs without Safari's bars. iPads and other phones go full screen as usual."
+            }
+        }
+    },
+    "refreshRateTester": {
+        "meta": {
+            "title": "Refresh Rate Tester — measure your screen’s Hz, dropped frames and jitter",
+            "description": "Measure the refresh rate of the screen your browser is on — 60, 120, 144, 240 Hz or more — from real frame times, with the nearest common rate, dropped frames, jitter and a motion test at the speed you pick. Nothing is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Hardware",
+            "title": "Refresh Rate Tester",
+            "subtitle": "Keep this tab in front for a few seconds to read your screen’s refresh rate, dropped frames and jitter, then check the motion by eye.",
+            "badgeFrames": "Timed from real frames",
+            "badgeDrops": "Dropped frames and jitter",
+            "badgeLocal": "Runs in your browser"
+        },
+        "workbench": {
+            "rateLabel": "Refresh rate",
+            "hzReading": "{value} <unit>Hz</unit>",
+            "status": {
+                "warmingUp": "Warming up…",
+                "collecting": "Counting frames…"
+            },
+            "nearest": "Nearest common rate: {rate} Hz",
+            "nearestNone": "Between common rates — a custom mode, or an adaptive-sync screen following the browser",
+            "rateHint": "The screen this window is on, over the last {seconds} seconds. Switching tabs restarts the count.",
+            "powerSaverHint": "{rate} Hz is usually a battery saver or low-power mode holding the browser back, not the screen.",
+            "timingTitle": "Frame timing",
+            "restart": "Restart",
+            "frameTime": "Frame time",
+            "frameTimeHint": "Median gap between frames",
+            "jitter": "Jitter",
+            "jitterValue": "±{value} ms",
+            "jitterHint": "Spread of the on-time frames",
+            "dropped": "Dropped frames",
+            "droppedHint": "Refreshes missed in the last {seconds} s",
+            "frames": "Frames",
+            "framesHint": "Measured, warm-up left out",
+            "ms": "{value} ms",
+            "motionLabel": "Motion test",
+            "speed": "Speed",
+            "speedOption": "{name} · {px} px/s",
+            "speeds": {
+                "slow": "Slow",
+                "medium": "Medium",
+                "fast": "Fast",
+                "fastest": "Fastest"
+            },
+            "play": "Play",
+            "pause": "Pause",
+            "step": "{px} px per refresh at {hz} Hz",
+            "stepIdle": "The step per refresh appears once the rate is measured",
+            "motionHint": "Follow the block with your eyes. A stutter is a dropped frame; a smeared trail is the panel’s response time, not its refresh rate."
+        },
+        "article": {
+            "understanding": {
+                "title": "What a refresh rate tester measures",
+                "p1": "It times the frames your browser draws. A browser draws once per screen refresh, so the gap between frames is the refresh period, and the frames in a second are the refresh rate.",
+                "example": "<code>6.94 ms</code> between frames → <code>144.0 Hz</code> — and one gap of <code>13.9 ms</code> is one dropped frame, not a slower screen",
+                "p2": "It reads the browser’s pace, which is the screen’s unless something holds it back: a battery saver, a low-power mode, or a browser that keeps pages at 60. Nothing is sent anywhere — every frame is timed in this tab."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Why does it read 60 Hz on my 120 or 144 Hz screen?",
+                "a1": "Check the display’s own setting first — on Windows under Settings › System › Display › Advanced display, on a Mac under System Settings › Displays. If that says 144, something between the screen and the page is capping it: Safari has long kept web pages at 60 frames a second on ProMotion screens, and remote desktops and screen sharing often do the same.",
+                "q2": "Why does it read 30 Hz?",
+                "a2": "A battery saver is holding the browser back. Chrome’s Energy Saver and Low Power Mode on an iPhone or iPad both keep pages at about 30 frames a second. Plug in or switch the mode off and the reading comes back.",
+                "q3": "Which screen does it measure when I have two?",
+                "a3": "The one the browser window is on. Drag the window to the other screen and the reading follows within a few seconds, because it only covers the last five. If it never changes, your system or browser is pacing every window to one screen, which some setups with mixed refresh rates do.",
+                "q4": "Does it work with G-Sync, FreeSync or other adaptive sync?",
+                "a4": "It measures whatever the screen is doing. A browser normally draws at the screen’s maximum rate, so that is what it reads. Where adaptive sync is active for the browser window, a late frame makes the screen wait instead of skipping a refresh, so the reading dips and jitter rises rather than a dropped frame being counted.",
+                "q5": "What are dropped frames and jitter?",
+                "a5": "A dropped frame is a refresh the browser missed: a gap twice the usual length is one drop, three times is two. A few while the page loads or you switch windows are normal; a steady count means the computer or the browser cannot keep up. Jitter is how much the on-time gaps differ from each other — a fraction of a millisecond on a healthy system.",
+                "q6": "Why does it read 59.94 or 143.9 instead of a round number?",
+                "a6": "Many panels really run slightly off the number on the box — 59.94 Hz is an old television rate plenty of laptops still use — and browsers round their frame times, which the reading averages out over five seconds. The nearest common rate beside it is the name of the mode you are in.",
+                "q7": "What should I look for in the motion test?",
+                "a7": "Smoothness. At 960 px/s the block jumps 16 px between refreshes at 60 Hz and under 7 px at 144 Hz, so a faster screen looks visibly smoother. A stutter is a dropped frame. A blurred or doubled trail behind the block is the panel’s response time, or how your eyes follow motion — not the refresh rate."
+            }
+        }
+    },
+    "mediaDevices": {
+        "picker": {
+            "label": "{kind, select, video {Camera} other {Microphone}}",
+            "default": "{kind, select, video {Default camera} other {Default microphone}}",
+            "unnamed": "{kind, select, video {Camera} other {Microphone}} {position, number}",
+            "hintEmpty": "Names appear once the browser is allowed to use the {kind, select, video {camera} other {microphone}}."
+        },
+        "failures": {
+            "insecure_context": {
+                "title": "This page is not on a secure connection",
+                "body": "Browsers only open a {kind, select, video {camera} other {microphone}} for pages served over HTTPS. Open this page from its https:// address and try again."
+            },
+            "unsupported": {
+                "title": "{kind, select, video {This browser cannot use a camera} other {This browser cannot use a microphone}}",
+                "body": "It has no media capture, or it is switched off in its settings. Try a current Chrome, Edge, Firefox or Safari."
+            },
+            "denied": {
+                "title": "{kind, select, video {Camera access is blocked} other {Microphone access is blocked}}",
+                "body": "Allow it from the icon at the left of the address bar, then try again. If the browser already allows it, look in the system privacy settings: macOS and Windows can block it for the whole browser."
+            },
+            "no_device": {
+                "title": "{kind, select, video {No camera found} other {No microphone found}}",
+                "body": "Nothing is connected, or the system has it switched off. Plug one in, open any privacy shutter or switch, and try again."
+            },
+            "in_use": {
+                "title": "{kind, select, video {The camera is busy} other {The microphone is busy}}",
+                "body": "Another app or browser tab is holding it, or its driver would not start. Close video calls and other apps that use it, then try again."
+            },
+            "overconstrained": {
+                "title": "{kind, select, video {That camera is not available} other {That microphone is not available}}",
+                "body": "The one picked was unplugged, or cannot do what was asked. Choose another in the list, or try again for the default."
+            },
+            "ended": {
+                "title": "{kind, select, video {The camera stopped} other {The microphone stopped}}",
+                "body": "It was unplugged, switched off, or taken over by the system. Try again to reopen it."
+            },
+            "failed": {
+                "title": "{kind, select, video {The camera did not start} other {The microphone did not start}}",
+                "body": "The browser did not say why. Close other apps that may be using it, reload the page, and try again."
+            }
+        }
+    },
+    "webcamTester": {
+        "meta": {
+            "title": "Webcam Tester — check your camera, its resolution and frame rate",
+            "description": "Test your webcam in the browser: switch between cameras, mirror the preview, and see the resolution, frame rate and aspect ratio it really sends and the ranges it supports. Save a PNG snapshot. Nothing is recorded or uploaded."
+        },
+        "hero": {
+            "eyebrow": "Hardware",
+            "title": "Webcam Tester",
+            "subtitle": "Start your camera to see that it works, switch between cameras, and read the resolution and frame rate it really sends.",
+            "badgeLocal": "Nothing leaves this device",
+            "badgeReport": "Real resolution and frame rate",
+            "badgeSnapshot": "PNG snapshot"
+        },
+        "workbench": {
+            "previewLabel": "Camera preview",
+            "privacy": "The video stays on this device: nothing is recorded or uploaded, and a snapshot goes straight to your downloads.",
+            "idle": "Press Start camera, then allow access when the browser asks.",
+            "starting": "Waiting for the camera…",
+            "live": "Live",
+            "start": "Start camera",
+            "stop": "Stop",
+            "snapshot": "Save snapshot",
+            "resolution": "Requested size",
+            "resolutionHint": "A request, not an order: the camera answers with the nearest size it has.",
+            "largest": "Largest available",
+            "presetName": "{name} · {width} × {height}",
+            "mirror": "Mirror the preview",
+            "mirrorHint": "Shows you as a mirror would. People on a call see the unmirrored picture; a snapshot is saved as the preview shows it.",
+            "reportLabel": "What the camera reports",
+            "reportEmpty": "Start the camera to read its resolution, frame rate, aspect ratio and the ranges it supports.",
+            "sizeTile": "Resolution",
+            "resolutionValue": "{width} × {height}",
+            "frameRate": "Frame rate",
+            "frameRateValue": "{value} fps",
+            "aspect": "Aspect ratio",
+            "aspectApprox": "≈ {label}",
+            "notReported": "Not reported",
+            "device": "Device",
+            "delivery": {
+                "largest": "This is the largest picture the camera offered.",
+                "matched": "Exactly the size that was asked for.",
+                "smaller": "Asked for {requested}; the nearest the camera has is {delivered}.",
+                "different": "Asked for {requested}; the browser chose {delivered}, the nearest mode the camera has."
+            },
+            "capabilitiesTitle": "Supported ranges",
+            "capabilitiesNone": "This browser does not report what the camera supports.",
+            "rangeValue": "{min} – {max}"
+        },
+        "capabilities": {
+            "width": "Width",
+            "height": "Height",
+            "frameRate": "Frame rate",
+            "zoom": "Zoom",
+            "facingMode": "Facing",
+            "resizeMode": "Resize mode"
+        },
+        "toast": {
+            "saved": "Saved {filename}",
+            "failed": "The snapshot could not be saved."
+        },
+        "article": {
+            "understanding": {
+                "title": "What a webcam test shows",
+                "p1": "It opens your camera in this tab and reads back what the camera is really sending: its size, its frame rate and its shape. If the picture appears, the camera, its cable, its driver and the browser's permission all work.",
+                "example": "ask for <code>1920 × 1080</code> → the camera sends <code>1280 × 720</code> at 30 fps, 16:9 — its largest mode, not a fault",
+                "p2": "What you ask for is a preference, not an order. The browser opens the camera in the mode nearest to it and the report shows that mode — which is how you find out whether a camera sold as 1080p really is."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Is the video recorded or sent anywhere?",
+                "a1": "No. The picture goes from the camera to this tab and nowhere else. A snapshot is drawn in the tab and saved straight to your downloads.",
+                "q2": "Why does the camera list only say Default camera?",
+                "a2": "Browsers hide device names until a page is allowed to use the camera. Press Start camera and allow access, and the list fills in with every camera connected.",
+                "q3": "Why did I get 720p when I asked for 1080p?",
+                "a3": "The camera has no 1080p mode, or none the browser can use. Many laptop cameras stop at 720p. Choose Largest available to see the biggest mode it offers.",
+                "q4": "It says the camera is busy. What now?",
+                "a4": "Another app is holding it — a video call, a camera app or another browser tab. On Windows only one app can use a camera at a time. Close the others and press Start camera again.",
+                "q5": "I blocked the camera by mistake. How do I allow it again?",
+                "a5": "Click the icon at the left of the address bar, set the camera to Allow and reload the page. If it is allowed there and still blocked, the privacy settings on macOS or Windows are blocking the browser itself.",
+                "q6": "Why is the picture choppy when the frame rate says 30?",
+                "a6": "The figure is the rate the camera was set to, not a count of the frames that arrived. In a dim room many webcams lengthen each exposure and send fewer frames than the setting says. More light usually fixes it.",
+                "q7": "Why does the preview look mirrored?",
+                "a7": "It is flipped so that moving left moves you left, as in a mirror. People on a call see the unmirrored picture; turn off Mirror the preview to see that version."
+            }
+        }
+    },
+    "micTester": {
+        "meta": {
+            "title": "Microphone Tester — check your mic, its level and how it sounds",
+            "description": "Test your microphone in the browser: see its RMS and peak level in dBFS and a live spectrum, switch echo cancellation, noise suppression and automatic gain, read its sample rate and channels, and record a clip to hear yourself back. Nothing is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Hardware",
+            "title": "Microphone Tester",
+            "subtitle": "Start your microphone to see that it hears you, watch its level, and record a short clip to hear how you sound.",
+            "badgeLocal": "Nothing leaves this device",
+            "badgeMeter": "Level in dBFS",
+            "badgeRecord": "Record and play back"
+        },
+        "workbench": {
+            "inputLabel": "Microphone level",
+            "privacy": "The sound stays on this device: nothing is uploaded, and a clip you record is kept in this tab only until you leave.",
+            "spectrumLabel": "Live frequency spectrum of the microphone",
+            "idle": "Press Start microphone, then allow access when the browser asks.",
+            "starting": "Waiting for the microphone…",
+            "live": "Live",
+            "start": "Start microphone",
+            "stop": "Stop",
+            "rms": "Level (RMS)",
+            "peak": "Peak",
+            "dbfsValue": "{value} dBFS",
+            "noReading": "—",
+            "hertz": "{value} Hz",
+            "kilohertz": "{value} kHz",
+            "meterHint": "RMS is the average loudness, peak the loudest moment. Speech usually sits between −30 and −12 dBFS.",
+            "verdict": {
+                "silent": "Silent — nothing is reaching the browser. Check that the microphone is not muted and that the right one is chosen.",
+                "quiet": "Quiet — move closer to the microphone, or raise its input level in the system sound settings.",
+                "good": "Good level.",
+                "clipping": "Clipping — the loudest sounds are being cut off. Move back a little, or lower the input level."
+            },
+            "processingTitle": "Voice processing",
+            "processingHint": "Calls usually have all three on. Changing one reopens the microphone.",
+            "echoCancellation": "Echo cancellation",
+            "echoCancellationHint": "Removes the sound of your own speakers that the microphone picks up again.",
+            "noiseSuppression": "Noise suppression",
+            "noiseSuppressionHint": "Filters out steady background noise such as fans and hum.",
+            "autoGainControl": "Automatic gain",
+            "autoGainControlHint": "Raises and lowers the level to keep your voice even. Turn it off to see the microphone's own level.",
+            "recordLabel": "Record and play back",
+            "recordEmpty": "Start the microphone to record a clip of up to {seconds, number} seconds.",
+            "record": "Record a clip",
+            "recordAgain": "Record again",
+            "stopRecording": "Stop recording",
+            "recording": "Recording… {elapsed, number} of {limit, number} seconds",
+            "recordUnsupported": "This browser cannot record audio. The level meter and the report still work.",
+            "recordFailed": "The clip could not be recorded. Try again, or reload the page.",
+            "clipLabel": "Recorded clip",
+            "clipReady": "A clip of {seconds, plural, one {# second} other {# seconds}}. It stays in this tab and is gone when you leave the page.",
+            "reportLabel": "What the microphone reports",
+            "reportEmpty": "Start the microphone to read its sample rate, its channels and the processing the browser applied.",
+            "device": "Device",
+            "sampleRate": "Sample rate",
+            "sampleRateValue": "{value} Hz",
+            "channels": "Channels",
+            "channelsValue": "{count, plural, =1 {Mono} =2 {Stereo} other {# channels}}",
+            "notReported": "Not reported",
+            "on": "On",
+            "off": "Off",
+            "notApplied": "{applied} (asked for {requested})"
+        },
+        "article": {
+            "understanding": {
+                "title": "What a microphone test shows",
+                "p1": "It opens your microphone in this tab and shows what reaches the browser: how loud it is, in dBFS, and how the sound spreads from low to high frequencies. If the meter moves when you speak, the microphone, its cable, its driver and the browser's permission all work.",
+                "example": "speak at a normal distance → RMS around <code>−20 dBFS</code>, peaks near <code>−8 dBFS</code> — a good level; a peak at <code>0 dBFS</code> is clipping",
+                "p2": "Calls clean the sound up before sending it, with echo cancellation, noise suppression and automatic gain. Turn them off to hear what the microphone itself picks up, and record a clip each way to compare."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Is my voice recorded or sent anywhere?",
+                "a1": "No. The sound goes from the microphone to this tab and nowhere else. A clip you record is held in the tab's memory, played back there, and discarded when you leave the page.",
+                "q2": "Why does the microphone list only say Default microphone?",
+                "a2": "Browsers hide device names until a page is allowed to use the microphone. Press Start microphone and allow access, and the list fills in with every microphone connected.",
+                "q3": "What is dBFS, and what level should I aim for?",
+                "a3": "Decibels relative to full scale: 0 dBFS is the loudest a digital signal can be, so every reading below it is negative. Normal speech should read about −30 to −12 dBFS RMS, with peaks staying below about −3. A full-scale tone reads −3 dBFS RMS here, as in most audio software.",
+                "q4": "The meter does not move. What is wrong?",
+                "a4": "Something before the browser is silent: a mute switch on the headset or its cable, the input level turned all the way down in the system sound settings, or a different microphone chosen than the one you are speaking into. Pick the right one in the list, then check the system's input settings.",
+                "q5": "It says the microphone is busy. What now?",
+                "a5": "Another app is holding it — a call, a recorder or another browser tab — or its driver would not start. Close the others and press Start microphone again. Unplugging a USB headset and plugging it back in often helps too.",
+                "q6": "Why does my voice sound different with the processing off?",
+                "a6": "With it on, the browser removes echo and steady noise and evens out your level, which is what people on a call hear. With it off you hear the microphone itself: usually more background noise, and a level that rises and falls with your distance. Some browsers ignore a switch; the report shows what was really applied.",
+                "q7": "Why can't I hear myself live while I speak?",
+                "a7": "Playing the microphone straight back through the speakers would loop into the microphone and howl. Record a clip and play it back instead — through headphones you hear exactly what was captured."
+            }
+        }
+    },
     "codeViewer": {
         "lineCount": "{count, plural, one {# line} other {# lines}}",
         "collapseAll": "Collapse all",
@@ -8677,7 +9482,7 @@
                 "p1": "Six groups are missing on purpose. Each one is a fact about the tool rather than a gap in the endpoint, and <code>toolforge_catalog_list</code> returns the web address of every one of them so an assistant can send you to the page instead of reporting a dead end.",
                 "images": {
                     "title": "The image tools",
-                    "body": "The compressor, converter, resizer, blur placeholder and background remover decode pixels in a canvas and re-encode them through WebAssembly codecs built for a browser. There is no canvas in a request handler, and a server-side reimplementation would be a second encoder to keep in step with the first. The background remover adds a second reason: its segmentation weights are fetched into the reader's own browser and cached there, so running it here would move a hundred-megabyte download and the inference behind it onto this deployment for every call. Image to Text is absent for that second reason: its engine and language data are fetched into the reader's browser and run in a web worker there, so running it here would put seconds of recognition per picture onto this deployment for every call — and a model that wants the text in a picture can already read it."
+                    "body": "The compressor, converter, resizer, blur placeholder and background remover decode pixels in a canvas and re-encode them through WebAssembly codecs built for a browser. There is no canvas in a request handler, and a server-side reimplementation would be a second encoder to keep in step with the first. The favicon generator is absent for the same reason: it draws its text on a canvas, in the reader's fonts and the reader's system emoji. The background remover adds a second reason: its segmentation weights are fetched into the reader's own browser and cached there, so running it here would move a hundred-megabyte download and the inference behind it onto this deployment for every call. Image to Text is absent for that second reason: its engine and language data are fetched into the reader's browser and run in a web worker there, so running it here would put seconds of recognition per picture onto this deployment for every call — and a model that wants the text in a picture can already read it."
                 },
                 "studios": {
                     "title": "The server studios and the shortener",
@@ -8693,7 +9498,7 @@
                 },
                 "hardware": {
                     "title": "The hardware testers",
-                    "body": "The mouse and keyboard testers measure a physical device in a browser: the gaps between presses, the wheel, the keys held at once. An MCP call has no mouse or keyboard on the other end of it, and a tool that took a list of timestamps instead would be one nobody had a reason to call."
+                    "body": "The mouse and keyboard testers measure a physical device in a browser: the gaps between presses, the wheel, the keys held at once. An MCP call has no mouse or keyboard on the other end of it, and a tool that took a list of timestamps instead would be one nobody had a reason to call. The refresh rate tester times the frames a screen paces in a tab, and an MCP call has no screen behind it either. The same goes for the dead pixel and screen tester, whose only output is colour on the screen you are looking at. The webcam tester opens the camera on your own device, and an MCP call has no camera to open — nor the microphone tester a microphone to listen to."
                 },
                 "connection": {
                     "title": "What Is My IP",

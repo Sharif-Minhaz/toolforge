@@ -11,7 +11,8 @@ import { emitCurl } from "@/modules/curl/domain/emit-curl";
 import { emitFetch, withAuthorizationHeader } from "@/modules/curl/domain/emit-fetch";
 import { parseCurl } from "@/modules/curl/domain/parse-curl";
 import { parseFetch } from "@/modules/curl/domain/parse-fetch";
-import { SHELL_DIALECTS, type HttpRequest } from "@/modules/curl/types";
+import type { HttpRequest } from "@/modules/curl/types";
+import { SHELL_DIALECTS } from "@/modules/tools/domain/shell-tokenize";
 
 /**
  * The invariant worth testing is not that the text comes back byte for byte —

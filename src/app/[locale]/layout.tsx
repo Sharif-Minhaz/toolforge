@@ -118,6 +118,11 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
             errors: messages.htmlMarkdown.errors,
             toast: messages.htmlMarkdown.toast,
         },
+        sqlFormatter: {
+            workbench: messages.sqlFormatter.workbench,
+            errors: messages.sqlFormatter.errors,
+            toast: messages.sqlFormatter.toast,
+        },
         pdfConverter: {
             workbench: messages.pdfConverter.workbench,
             formats: messages.pdfConverter.formats,
@@ -200,6 +205,13 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
             notes: messages.curl.notes,
             errors: messages.curl.errors,
             toast: messages.curl.toast,
+        },
+        dockerCompose: {
+            workbench: messages.dockerCompose.workbench,
+            directions: messages.dockerCompose.directions,
+            notes: messages.dockerCompose.notes,
+            errors: messages.dockerCompose.errors,
+            toast: messages.dockerCompose.toast,
         },
         markdown: {
             workbench: messages.markdown.workbench,
@@ -391,6 +403,13 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
             errors: messages.imageConverter.errors,
             toast: messages.imageConverter.toast,
         },
+        faviconGenerator: {
+            workbench: messages.faviconGenerator.workbench,
+            fonts: messages.faviconGenerator.fonts,
+            shapes: messages.faviconGenerator.shapes,
+            errors: messages.faviconGenerator.errors,
+            toast: messages.faviconGenerator.toast,
+        },
         imageResizer: {
             workbench: messages.imageResizer.workbench,
             formats: messages.imageResizer.formats,
@@ -408,6 +427,17 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
         // The JSON viewer's fold controls, shared by every tool that prints
         // JSON — the same reasoning as the image intake above.
         codeViewer: messages.codeViewer,
+        // The camera and microphone pickers and their named failures, shared
+        // by both device testers.
+        mediaDevices: messages.mediaDevices,
+        webcamTester: {
+            workbench: messages.webcamTester.workbench,
+            capabilities: messages.webcamTester.capabilities,
+            toast: messages.webcamTester.toast,
+        },
+        micTester: {
+            workbench: messages.micTester.workbench,
+        },
         keyboardTester: {
             workbench: messages.keyboardTester.workbench,
             sizes: messages.keyboardTester.sizes,
@@ -428,6 +458,13 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
             log: messages.mouseTester.log,
             report: messages.mouseTester.report,
             toast: messages.mouseTester.toast,
+        },
+        screenTester: {
+            workbench: messages.screenTester.workbench,
+            patterns: messages.screenTester.patterns,
+        },
+        refreshRateTester: {
+            workbench: messages.refreshRateTester.workbench,
         },
         imageTo3d: {
             workbench: messages.imageTo3d.workbench,
@@ -475,6 +512,16 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
         // buttons' failure toasts cross.
         myIp: {
             toast: messages.myIp.toast,
+        },
+        chmod: {
+            workbench: messages.chmod.workbench,
+            classes: messages.chmod.classes,
+            permissions: messages.chmod.permissions,
+            special: messages.chmod.special,
+            presets: messages.chmod.presets,
+            outputs: messages.chmod.outputs,
+            errors: messages.chmod.errors,
+            toast: messages.chmod.toast,
         },
         // The studio's own hero and disclosure copy stays on the server; only
         // the launcher island's strings cross.
