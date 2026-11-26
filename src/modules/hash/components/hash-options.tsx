@@ -61,10 +61,6 @@ export function HashOptionsPanel({ options, onChange }: HashOptionsPanelProps) {
 
     return (
         <div className="flex flex-col gap-3">
-            <h3 className="text-muted-foreground text-xs leading-[1.3] font-medium">
-                {t("title")}
-            </h3>
-
             {family === "digest" && (
                 <div className="grid gap-3 sm:grid-cols-2">
                     <div className="flex min-w-0 flex-col gap-1.5">

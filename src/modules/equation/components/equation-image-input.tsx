@@ -13,6 +13,7 @@ import { ImageSourceControls } from "@/modules/tools/components/image-source-con
 import { OnlineRequiredNote } from "@/modules/tools/components/online-required-note";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
+import { StepLabel } from "@/modules/tools/components/workbench-step";
 
 import { recognizeEquations } from "../actions/recognize-equations";
 import {
@@ -196,6 +197,11 @@ export function EquationImageInput({
             </p>
 
             <div className="flex min-w-0 flex-col gap-2">
+                {/* The title sits on the step label, which labels the same
+                    input as the box under it. */}
+                <StepLabel step={1} htmlFor={inputId}>
+                    {picked === null ? t("dropTitle") : t("replaceTitle")}
+                </StepLabel>
                 <input
                     id={inputId}
                     type="file"
@@ -227,9 +233,6 @@ export function EquationImageInput({
                         stroke={1.6}
                         aria-hidden="true"
                     />
-                    <span className="text-[0.9375rem] leading-[1.4] font-medium">
-                        {picked === null ? t("dropTitle") : t("replaceTitle")}
-                    </span>
                     <span className="text-muted-foreground text-[0.8125rem] leading-[1.5]">
                         {t("dropHint", { limit: byteLabel(MAX_EQUATION_IMAGE_BYTES) })}
                     </span>

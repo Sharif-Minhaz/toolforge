@@ -2,6 +2,7 @@
 
 import {
     IconAlertTriangle,
+    IconArrowsLeftRight,
     IconArrowsUpDown,
     IconBinary,
     IconClipboardCheck,
@@ -15,9 +16,7 @@ import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
@@ -27,6 +26,11 @@ import { CodeEditor } from "@/modules/tools/components/code-editor";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { JsonViewer } from "@/modules/tools/components/json-viewer";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import {
+    OptionsDisclosure,
+    RESULT_TRAY,
+    StepLabel,
+} from "@/modules/tools/components/workbench-step";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveBlob, saveFile } from "@/modules/tools/domain/file-saver";
 import type { HighlightLanguage } from "@/modules/tools/domain/highlight";
@@ -268,219 +272,248 @@ export function BsonWorkbench({
     const size = sizeSummary();
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
-
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-            </CardHeader>
-
-            <CardContent className="flex flex-col gap-5">
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <FormatPicker label={t("fromLabel")} value={source} onChange={selectSource} />
-                    <FormatPicker label={t("toLabel")} value={target} onChange={selectTarget} />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                        <Label htmlFor={inputId} className="text-muted-foreground text-xs">
-                            <span className="leading-[1.3]">{t("inputLabel")}</span>
-                        </Label>
-                        <div className="flex items-center gap-1.5">
-                            <InputLimitMeter reading={inputLimit} className="mr-1" />
-
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => fileInput.current?.click()}
-                            >
-                                <IconFileUpload
-                                    className="size-3.5"
-                                    stroke={1.8}
-                                    aria-hidden="true"
-                                />
-                                {t("openFile")}
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={handleExample}>
-                                <IconWand className="size-3.5" stroke={1.8} aria-hidden="true" />
-                                {t("example")}
-                            </Button>
-                            <button
-                                type="button"
-                                onClick={() => setInput("")}
-                                disabled={input.length === 0}
-                                aria-label={t("clear")}
-                                className={cn(
-                                    buttonVariants({ variant: "ghost", size: "icon-sm" }),
-                                    "text-muted-foreground hover:text-foreground",
-                                )}
-                            >
-                                <IconX className="size-4" stroke={1.9} aria-hidden="true" />
-                            </button>
-                        </div>
+        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+            <CardContent className="flex flex-col gap-6">
+                {/* What to read and write, then the finer settings folded away,
+                    so the input and its result are the first things on screen. */}
+                <div className="flex flex-col gap-3">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <FormatPicker
+                            label={t("fromLabel")}
+                            value={source}
+                            onChange={selectSource}
+                        />
+                        <FormatPicker label={t("toLabel")} value={target} onChange={selectTarget} />
                     </div>
 
-                    <input
-                        ref={fileInput}
-                        type="file"
-                        accept=".bson,application/bson,application/octet-stream"
-                        className="sr-only"
-                        onChange={(event) => {
-                            void handleFile(event.target.files?.[0]);
-                            // Cleared so re-picking the same file fires again.
-                            event.target.value = "";
-                        }}
-                    />
-
-                    <CodeEditor
-                        id={inputId}
-                        value={input}
-                        language={inputLanguage}
-                        placeholder={INPUT_PLACEHOLDERS[source]}
-                        ariaDescribedBy={statusId}
-                        onChange={setInput}
-                        // Hex and base64 are one long run with no lines to count.
-                        lineNumbers={inputLanguage === "json"}
-                        className="[&_textarea]:min-h-40"
-                    />
-
-                    <StatusStrip
-                        id={statusId}
-                        tone={status.tone}
-                        message={status.message}
-                        className="[&>span]:min-w-0 [&>span]:wrap-break-word"
-                    />
-                </div>
-
-                <OptionsPanel
-                    source={source}
-                    target={target}
-                    options={options}
-                    onChange={(patch) => setOptions((current) => ({ ...current, ...patch }))}
-                />
-
-                <div className="flex items-center gap-3">
-                    <Separator className="flex-1" />
-                    <Tooltip>
-                        <TooltipTrigger
-                            render={
-                                <button
-                                    type="button"
-                                    onClick={handleSwap}
-                                    disabled={output.length === 0}
-                                    aria-label={t("swap")}
-                                    className={cn(
-                                        buttonVariants({ variant: "outline", size: "icon-sm" }),
-                                        "rounded-full",
-                                    )}
-                                />
+                    <OptionsDisclosure label={t("optionsTitle")}>
+                        <OptionsPanel
+                            source={source}
+                            target={target}
+                            options={options}
+                            onChange={(patch) =>
+                                setOptions((current) => ({ ...current, ...patch }))
                             }
-                        >
-                            <IconArrowsUpDown className="size-4" stroke={1.8} aria-hidden="true" />
-                        </TooltipTrigger>
-                        <TooltipContent side="top">{t("swap")}</TooltipContent>
-                    </Tooltip>
-                    <Separator className="flex-1" />
+                        />
+                    </OptionsDisclosure>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                        {/* A plain span, not a Label: the output is not a form
-                            control, so `htmlFor` has nothing to address. */}
-                        <span id={outputId} className="text-muted-foreground text-xs leading-[1.3]">
-                            {t("outputLabel")}
-                        </span>
-                        <div className="flex items-center gap-1.5">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleCopy}
-                                disabled={output.length === 0}
-                            >
-                                <IconClipboardCheck
-                                    className="size-3.5"
-                                    stroke={1.8}
-                                    aria-hidden="true"
-                                />
-                                {t("copy")}
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleDownload}
-                                disabled={output.length === 0}
-                            >
-                                <IconDownload
-                                    className="size-3.5"
-                                    stroke={1.8}
-                                    aria-hidden="true"
-                                />
-                                {t("download")}
-                            </Button>
-                            {result.ok && result.bytes !== null && (
-                                <Button variant="outline" size="sm" onClick={handleDownloadBytes}>
-                                    <IconBinary
+                {/* Step 1 beside step 2 on a wide screen; stacked on a narrow one. */}
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+                    <div className="flex min-w-0 flex-col gap-3">
+                        <div className="flex min-h-7 flex-wrap items-center justify-between gap-2">
+                            <StepLabel step={1} htmlFor={inputId}>
+                                {t("inputLabel")}
+                            </StepLabel>
+                            <div className="flex items-center gap-1.5">
+                                <InputLimitMeter reading={inputLimit} className="mr-1" />
+
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => fileInput.current?.click()}
+                                >
+                                    <IconFileUpload
                                         className="size-3.5"
                                         stroke={1.8}
                                         aria-hidden="true"
                                     />
-                                    {t("downloadBytes")}
+                                    {t("openFile")}
                                 </Button>
-                            )}
+                                <Button variant="ghost" size="sm" onClick={handleExample}>
+                                    <IconWand
+                                        className="size-3.5"
+                                        stroke={1.8}
+                                        aria-hidden="true"
+                                    />
+                                    {t("example")}
+                                </Button>
+                                <button
+                                    type="button"
+                                    onClick={() => setInput("")}
+                                    disabled={input.length === 0}
+                                    aria-label={t("clear")}
+                                    className={cn(
+                                        buttonVariants({ variant: "ghost", size: "icon-sm" }),
+                                        "text-muted-foreground hover:text-foreground",
+                                    )}
+                                >
+                                    <IconX className="size-4" stroke={1.9} aria-hidden="true" />
+                                </button>
+                            </div>
                         </div>
+
+                        <input
+                            ref={fileInput}
+                            type="file"
+                            accept=".bson,application/bson,application/octet-stream"
+                            className="sr-only"
+                            onChange={(event) => {
+                                void handleFile(event.target.files?.[0]);
+                                // Cleared so re-picking the same file fires again.
+                                event.target.value = "";
+                            }}
+                        />
+
+                        <CodeEditor
+                            id={inputId}
+                            value={input}
+                            language={inputLanguage}
+                            placeholder={INPUT_PLACEHOLDERS[source]}
+                            ariaDescribedBy={statusId}
+                            onChange={setInput}
+                            // Hex and base64 are one long run with no lines to count.
+                            lineNumbers={inputLanguage === "json"}
+                            className="[&_textarea]:min-h-40"
+                        />
+
+                        <StatusStrip
+                            id={statusId}
+                            tone={status.tone}
+                            message={status.message}
+                            className="[&>span]:min-w-0 [&>span]:wrap-break-word"
+                        />
                     </div>
 
-                    {failure === null ? (
-                        // Dimmed rather than emptied while the debounce settles,
-                        // so the panel never flashes between two valid results.
-                        outputLanguage === "json" ? (
-                            <JsonViewer
-                                code={output}
-                                labelledBy={outputId}
-                                placeholder={t("outputPlaceholder")}
-                                pending={pending}
-                                className="max-h-96 min-h-40"
-                            />
+                    <div className="flex items-center gap-3 lg:flex-col lg:pt-10">
+                        <span
+                            aria-hidden="true"
+                            className="bg-border h-px flex-1 lg:h-auto lg:w-px"
+                        />
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={
+                                    <button
+                                        type="button"
+                                        onClick={handleSwap}
+                                        disabled={output.length === 0}
+                                        aria-label={t("swap")}
+                                        className={cn(
+                                            buttonVariants({ variant: "outline", size: "icon-sm" }),
+                                            "rounded-full",
+                                        )}
+                                    />
+                                }
+                            >
+                                <IconArrowsUpDown
+                                    className="size-4 lg:hidden"
+                                    stroke={1.75}
+                                    aria-hidden="true"
+                                />
+                                <IconArrowsLeftRight
+                                    className="hidden size-4 lg:block"
+                                    stroke={1.75}
+                                    aria-hidden="true"
+                                />
+                            </TooltipTrigger>
+                            <TooltipContent side="top">{t("swap")}</TooltipContent>
+                        </Tooltip>
+                        <span
+                            aria-hidden="true"
+                            className="bg-border h-px flex-1 lg:h-auto lg:w-px"
+                        />
+                    </div>
+
+                    <div className={RESULT_TRAY}>
+                        <div className="flex min-h-7 flex-wrap items-center justify-between gap-2">
+                            {/* No `htmlFor`: the output is not a form control; the
+                            viewer below points back here by id instead. */}
+                            <StepLabel step={2} id={outputId}>
+                                {t("outputLabel")}
+                            </StepLabel>
+                            <div className="flex items-center gap-1.5">
+                                {/* The one filled button: taking the result is
+                                where the tool ends. */}
+                                <Button
+                                    size="sm"
+                                    onClick={handleCopy}
+                                    disabled={output.length === 0}
+                                >
+                                    <IconClipboardCheck
+                                        className="size-3.5"
+                                        stroke={1.8}
+                                        aria-hidden="true"
+                                    />
+                                    {t("copy")}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleDownload}
+                                    disabled={output.length === 0}
+                                >
+                                    <IconDownload
+                                        className="size-3.5"
+                                        stroke={1.8}
+                                        aria-hidden="true"
+                                    />
+                                    {t("download")}
+                                </Button>
+                                {result.ok && result.bytes !== null && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleDownloadBytes}
+                                    >
+                                        <IconBinary
+                                            className="size-3.5"
+                                            stroke={1.8}
+                                            aria-hidden="true"
+                                        />
+                                        {t("downloadBytes")}
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+
+                        {failure === null ? (
+                            // Dimmed rather than emptied while the debounce settles,
+                            // so the panel never flashes between two valid results.
+                            outputLanguage === "json" ? (
+                                <JsonViewer
+                                    code={output}
+                                    labelledBy={outputId}
+                                    placeholder={t("outputPlaceholder")}
+                                    pending={pending}
+                                    className="max-h-96 min-h-40"
+                                />
+                            ) : (
+                                <CodeBlock
+                                    code={output}
+                                    language={outputLanguage}
+                                    placeholder={t("outputPlaceholder")}
+                                    pending={pending}
+                                    className="max-h-96 min-h-40"
+                                />
+                            )
                         ) : (
-                            <CodeBlock
-                                code={output}
-                                language={outputLanguage}
-                                placeholder={t("outputPlaceholder")}
-                                pending={pending}
-                                className="max-h-96 min-h-40"
-                            />
-                        )
-                    ) : (
-                        <p
-                            role="alert"
-                            className={cn(
-                                "text-destructive ring-destructive/30 bg-destructive/8 flex min-h-40 items-start gap-2.5 rounded-xl p-3 text-[0.8125rem] leading-6 ring-1 ring-inset",
-                                "transition-opacity duration-200",
-                                pending && "opacity-55",
-                            )}
-                        >
-                            <IconAlertTriangle
-                                className="mt-0.5 size-4 shrink-0"
-                                stroke={1.9}
-                                aria-hidden="true"
-                            />
-                            {failure}
-                        </p>
-                    )}
+                            <p
+                                role="alert"
+                                className={cn(
+                                    "text-destructive ring-destructive/30 bg-destructive/8 flex min-h-40 items-start gap-2.5 rounded-xl p-3 text-[0.8125rem] leading-6 ring-1 ring-inset",
+                                    "transition-opacity duration-200",
+                                    pending && "opacity-55",
+                                )}
+                            >
+                                <IconAlertTriangle
+                                    className="mt-0.5 size-4 shrink-0"
+                                    stroke={1.9}
+                                    aria-hidden="true"
+                                />
+                                {failure}
+                            </p>
+                        )}
 
-                    {size !== null && (
-                        <p className="text-muted-foreground flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[0.6875rem] leading-[1.4]">
-                            <span className="font-mono tabular-nums">{size}</span>
-                            <span className="text-muted-foreground/70">{t("sizeHint")}</span>
-                        </p>
-                    )}
+                        {size !== null && (
+                            <p className="text-muted-foreground flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[0.6875rem] leading-[1.4]">
+                                <span className="font-mono tabular-nums">{size}</span>
+                                <span className="text-muted-foreground/70">{t("sizeHint")}</span>
+                            </p>
+                        )}
+
+                        {result.ok && <NotesList notes={result.notes} />}
+                    </div>
                 </div>
-
-                {result.ok && <NotesList notes={result.notes} />}
             </CardContent>
         </Card>
     );

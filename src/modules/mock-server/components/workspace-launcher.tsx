@@ -14,7 +14,6 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { CopyIconSwap } from "@/modules/tools/components/copy-button";
@@ -22,6 +21,7 @@ import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input
 import { MAX_TYPED_RECOVERY_KEY_LENGTH } from "@/modules/tools/domain/recovery-key";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
+import { StepLabel } from "@/modules/tools/components/workbench-step";
 import { copyText } from "@/modules/tools/domain/clipboard";
 
 import {
@@ -288,9 +288,9 @@ export function WorkspaceLauncher({ overview, turnstileSiteKey }: WorkspaceLaunc
                     {panel === "create" ? (
                         <div className="flex flex-col gap-1.5">
                             <div className="flex max-w-md flex-wrap items-center justify-between gap-2">
-                                <Label htmlFor={nameId} className="text-xs">
+                                <StepLabel step={1} htmlFor={nameId}>
                                     {t("nameLabel")}
-                                </Label>
+                                </StepLabel>
                                 <InputLimitMeter reading={nameLimit} />
                             </div>
                             <Input
@@ -306,9 +306,9 @@ export function WorkspaceLauncher({ overview, turnstileSiteKey }: WorkspaceLaunc
                         </div>
                     ) : (
                         <div className="flex flex-col gap-1.5">
-                            <Label htmlFor={keyId} className="text-xs">
+                            <StepLabel step={1} htmlFor={keyId}>
                                 {t("keyLabel")}
-                            </Label>
+                            </StepLabel>
                             <Input
                                 id={keyId}
                                 // The printed spelling, not the canonical
@@ -433,10 +433,7 @@ export function WorkspaceLauncher({ overview, turnstileSiteKey }: WorkspaceLaunc
             ) : null}
 
             <section aria-labelledby="workspaces-heading">
-                <h2
-                    id="workspaces-heading"
-                    className="text-muted-foreground text-[0.6875rem] font-semibold tracking-[0.09em] uppercase"
-                >
+                <h2 id="workspaces-heading" className="text-muted-foreground text-xs font-medium">
                     {t("yourWorkspaces")}
                 </h2>
 

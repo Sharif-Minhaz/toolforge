@@ -4,11 +4,14 @@ import { IconChevronDown } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import { StepLabel } from "@/modules/tools/components/workbench-step";
 
 type SidePanelProps = {
     title: string;
     /** Rendered beside the title, e.g. a count. */
     badge?: ReactNode;
+    /** Stamps the title as a workbench step, for the panel that holds the answer. */
+    step?: number;
     pending: boolean;
     children: ReactNode;
 };
@@ -20,7 +23,7 @@ type SidePanelProps = {
  * and folding one away is the difference between reading the tool and scrolling
  * past it.
  */
-export function SidePanel({ title, badge, pending, children }: SidePanelProps) {
+export function SidePanel({ title, badge, step, pending, children }: SidePanelProps) {
     return (
         <details
             open
@@ -38,9 +41,15 @@ export function SidePanel({ title, badge, pending, children }: SidePanelProps) {
                     stroke={1.9}
                     aria-hidden="true"
                 />
-                <span className="min-w-0 flex-1 truncate text-[0.8125rem] leading-[1.3] font-medium">
-                    {title}
-                </span>
+                {step === undefined ? (
+                    <span className="min-w-0 flex-1 truncate text-[0.8125rem] leading-[1.3] font-medium">
+                        {title}
+                    </span>
+                ) : (
+                    <StepLabel step={step} className="min-w-0 flex-1">
+                        <span className="truncate">{title}</span>
+                    </StepLabel>
+                )}
                 {badge}
             </summary>
 

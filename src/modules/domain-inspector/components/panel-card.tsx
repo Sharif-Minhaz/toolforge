@@ -87,7 +87,7 @@ export function PanelBody<T>({
  */
 const WRAP = "wrap-anywhere";
 
-const LABEL = "text-muted-foreground text-[0.625rem] leading-normal tracking-[0.14em] uppercase";
+const LABEL = "text-muted-foreground text-xs leading-normal";
 
 type RowProps = {
     label: ReactNode;

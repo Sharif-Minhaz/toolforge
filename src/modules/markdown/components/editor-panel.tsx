@@ -3,10 +3,10 @@
 import { useTranslations } from "next-intl";
 import type { KeyboardEvent, RefObject, UIEvent } from "react";
 
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
+import { StepLabel } from "@/modules/tools/components/workbench-step";
 import { MAX_MARKDOWN_LENGTH } from "../domain/constants";
 import type { MarkdownEditAction } from "../types";
 import { EditorToolbar } from "./editor-toolbar";
@@ -72,10 +72,10 @@ export function EditorPanel({
         <section
             className={cn("flex min-w-0 flex-col gap-2", fill ? "h-full min-h-0" : "lg:h-full")}
         >
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <Label id={labelId} htmlFor={inputId} className="text-muted-foreground text-xs">
+            <div className="flex min-h-7 flex-wrap items-center justify-between gap-2">
+                <StepLabel step={1} id={labelId} htmlFor={inputId}>
                     {t("editorLabel")}
-                </Label>
+                </StepLabel>
                 <InputLimitMeter reading={reading} />
             </div>
 

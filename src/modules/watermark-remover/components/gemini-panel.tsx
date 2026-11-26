@@ -28,6 +28,7 @@ import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { ToolNotes } from "@/modules/tools/components/tool-notes";
+import { OptionsDisclosure } from "@/modules/tools/components/workbench-step";
 import { useImagePaste } from "@/modules/tools/components/use-image-paste";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
@@ -538,25 +539,34 @@ export function GeminiPanel({ active }: GeminiPanelProps) {
                         </Button>
                     </div>
 
-                    <div className="flex min-w-0 items-center gap-2">
-                        <Switch
-                            checked={fillWholeBox}
-                            disabled={working}
-                            onCheckedChange={setFillWholeBox}
-                            aria-labelledby={fillId}
-                            aria-describedby={`${fillId}-hint`}
-                        />
-                        <span id={fillId} className="text-[0.8125rem] leading-[1.3] font-medium">
-                            {t("fillWholeBox")}
-                        </span>
-                    </div>
+                    {/* Off by default and only for when the detector misses, so
+                        it waits behind a fold rather than beside the box. */}
+                    <OptionsDisclosure>
+                        <div className="flex min-w-0 flex-col gap-3">
+                            <div className="flex min-w-0 items-center gap-2">
+                                <Switch
+                                    checked={fillWholeBox}
+                                    disabled={working}
+                                    onCheckedChange={setFillWholeBox}
+                                    aria-labelledby={fillId}
+                                    aria-describedby={`${fillId}-hint`}
+                                />
+                                <span
+                                    id={fillId}
+                                    className="text-[0.8125rem] leading-[1.3] font-medium"
+                                >
+                                    {t("fillWholeBox")}
+                                </span>
+                            </div>
 
-                    <p
-                        id={`${fillId}-hint`}
-                        className="text-muted-foreground max-w-[68ch] text-[0.6875rem] leading-normal"
-                    >
-                        {t("fillWholeBoxHint")}
-                    </p>
+                            <p
+                                id={`${fillId}-hint`}
+                                className="text-muted-foreground max-w-[68ch] text-[0.6875rem] leading-normal"
+                            >
+                                {t("fillWholeBoxHint")}
+                            </p>
+                        </div>
+                    </OptionsDisclosure>
                 </div>
             )}
 

@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip } from "@/modules/tools/components/status-strip";
+import { OptionsDisclosure, StepLabel } from "@/modules/tools/components/workbench-step";
 import { saveFile } from "@/modules/tools/domain/file-saver";
 import { combosFor } from "../domain/combos";
 import {
@@ -197,8 +198,9 @@ export function KeyboardTesterWorkbench({
                     />
                 </div>
                 <div className="flex shrink-0 items-center gap-1.5">
+                    {/* The one filled button: the report is what the reader
+                        takes away. */}
                     <Button
-                        variant="outline"
                         size="sm"
                         className="h-8"
                         onClick={handleDownload}
@@ -222,6 +224,10 @@ export function KeyboardTesterWorkbench({
 
             {/* 2 — the board, and what it just heard. */}
             <div className="flex flex-col gap-3 p-4 sm:p-5">
+                {/* The way in. The area keeps its own `aria-label`, so this
+                    names it for the eye without changing what it announces. */}
+                <StepLabel step={1}>{t("areaLabel")}</StepLabel>
+
                 {capture.unidentified > 0 && (
                     <StatusStrip tone="warning" message={t("virtualKeyboard")} />
                 )}
@@ -481,24 +487,29 @@ export function KeyboardTesterWorkbench({
                             ))}
                         </span>
                     )}
-                    <span className="mt-auto flex flex-col gap-1.5 pt-1">
-                        <span className="flex items-center justify-between gap-2">
-                            <span id={windowLabelId}>{t("faultWindow")}</span>
-                            <span className="text-foreground font-mono tabular-nums">
-                                {t("ms", { value: formatter.number(faultWindowMs) })}
+                    {/* A tuning control among readings: folded so the count leads. */}
+                    <div className="mt-auto pt-1">
+                        <OptionsDisclosure>
+                            <span className="flex flex-col gap-1.5">
+                                <span className="flex items-center justify-between gap-2">
+                                    <span id={windowLabelId}>{t("faultWindow")}</span>
+                                    <span className="text-foreground font-mono tabular-nums">
+                                        {t("ms", { value: formatter.number(faultWindowMs) })}
+                                    </span>
+                                </span>
+                                <Slider
+                                    aria-labelledby={windowLabelId}
+                                    min={MIN_KEY_FAULT_WINDOW_MS}
+                                    max={MAX_KEY_FAULT_WINDOW_MS}
+                                    step={KEY_FAULT_WINDOW_STEP_MS}
+                                    value={faultWindowMs}
+                                    onValueChange={(value) =>
+                                        setFaultWindowMs(Array.isArray(value) ? value[0] : value)
+                                    }
+                                />
                             </span>
-                        </span>
-                        <Slider
-                            aria-labelledby={windowLabelId}
-                            min={MIN_KEY_FAULT_WINDOW_MS}
-                            max={MAX_KEY_FAULT_WINDOW_MS}
-                            step={KEY_FAULT_WINDOW_STEP_MS}
-                            value={faultWindowMs}
-                            onValueChange={(value) =>
-                                setFaultWindowMs(Array.isArray(value) ? value[0] : value)
-                            }
-                        />
-                    </span>
+                        </OptionsDisclosure>
+                    </div>
                 </Reading>
 
                 <Reading
@@ -579,9 +590,7 @@ export function KeyboardTesterWorkbench({
 function InfoRow({ label, children }: { label: string; children: ReactNode }) {
     return (
         <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
-            <span className="text-muted-foreground w-36 shrink-0 text-[0.6875rem] font-medium tracking-wider uppercase">
-                {label}
-            </span>
+            <span className="text-muted-foreground w-36 shrink-0 text-xs font-medium">{label}</span>
             <div className="flex min-w-0 flex-1">{children}</div>
         </div>
     );
@@ -599,9 +608,7 @@ type ReadingProps = {
 function Reading({ label, value, alert = false, children }: ReadingProps) {
     return (
         <section className="ring-border/60 flex h-full min-w-0 flex-col gap-1.5 rounded-xl p-3.5 ring-1 ring-inset">
-            <h3 className="text-muted-foreground text-[0.6875rem] font-medium tracking-wider uppercase">
-                {label}
-            </h3>
+            <h3 className="text-muted-foreground text-xs font-medium">{label}</h3>
             <p
                 className={cn(
                     "font-mono text-2xl font-semibold tabular-nums",

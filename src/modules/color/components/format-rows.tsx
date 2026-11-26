@@ -31,7 +31,7 @@ export function FormatRows({ rows, copied, pending, onCopy }: FormatRowsProps) {
                     key={row.format}
                     className="bg-card/60 ring-border/70 flex items-center gap-3 rounded-xl px-3 py-2.5 ring-1 ring-inset"
                 >
-                    <span className="text-muted-foreground w-12 shrink-0 text-[0.6875rem] font-medium tracking-wide uppercase">
+                    <span className="text-muted-foreground w-12 shrink-0 text-xs font-medium">
                         {t(`${row.format}.label`)}
                     </span>
 

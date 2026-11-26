@@ -9,6 +9,7 @@
         "copied": "Copied",
         "copyAll": "Copy all",
         "download": "Download",
+        "options": "Options",
         "regenerate": "Regenerate",
         "generate": "Generate",
         "soon": "Soon",
@@ -413,7 +414,7 @@
             }
         },
         "featured": {
-            "title": "Featured tools",
+            "title": "Featured <accent>tools</accent>",
             "description": "The utilities developers reach for most.",
             "viewAll": "See all tools"
         },
@@ -1369,8 +1370,6 @@
             "badgeFormats": "PEM, DER and JWK"
         },
         "workbench": {
-            "title": "Encrypt and decrypt",
-            "description": "Paste a key, put something in the box, and the answer appears underneath. Both steps happen in this tab.",
             "reset": "Reset all",
             "resetHint": "Clears the key, the payload and the result, and puts every setting back",
             "localNotice": "The key and the payload are read by your browser's own Web Crypto. Nothing is uploaded, and no request on this page carries either of them.",
@@ -1786,8 +1785,6 @@
             "badgeEditable": "Editable query"
         },
         "workbench": {
-            "title": "Read a link, and edit its query",
-            "description": "Paste or type a URL. Everything below updates as you go, and editing a parameter rewrites the link above.",
             "inputLabel": "URL",
             "placeholder": "https://example.com/path?key=value#section",
             "clear": "Clear URL",
@@ -2223,8 +2220,6 @@
             "badgeRoundTrip": "Converts both ways"
         },
         "workbench": {
-            "title": "Convert between HTML and Markdown",
-            "description": "Paste or upload a document, pick a direction, and the result updates as you go.",
             "modeLabel": "Direction",
             "modes": {
                 "htmlToMarkdown": "HTML to Markdown",
@@ -2341,8 +2336,6 @@
             "badgeText": "Selectable text, not pictures"
         },
         "workbench": {
-            "title": "Build a PDF",
-            "description": "Pick a file or paste a document, choose how the page should look, and the PDF is written in this tab.",
             "sourceLabel": "Where the document comes from",
             "sources": {
                 "file": "Upload a file",
@@ -3393,10 +3386,7 @@
         "workbench": {
             "tabImage": "Image",
             "tabVideo": "Video",
-            "imageTitle": "Remove a watermark from a picture",
             "imageDescription": "JPEG, PNG or WebP. Only the square you mark is uploaded for repainting; the rest of the picture never leaves your device.",
-            "videoTitle": "Remove a corner watermark from a clip",
-            "videoDescription": "MP4, MOV, WebM or MKV. The clip is decoded, repainted frame by frame and written back here in your browser — nothing is uploaded and no model is involved.",
             "dropTitle": "Drop an image here, or click to choose one",
             "dropHint": "JPEG, PNG or WebP — up to {limit}.",
             "pickPrompt": "Choose an image to clean up — up to {limit}.",
@@ -3418,9 +3408,7 @@
             "rightsNote": "Removing a mark grants no rights to the work underneath, and passing the result off as your own is not what this is for.",
             "privacyTitle": "The marked square is uploaded",
             "privacyNote": "It goes to a Cloudflare Worker and an image model; the rest of the picture stays here. Do not upload anything confidential.",
-            "tabGemini": "Gemini image",
-            "geminiTitle": "Remove the Gemini sparkle from an image",
-            "geminiDescription": "JPEG, PNG, WebP or AVIF. The mark is a known blend, so it is subtracted rather than guessed at — here in your browser, with nothing uploaded and no model involved."
+            "tabGemini": "Gemini image"
         },
         "gemini": {
             "dropTitle": "Drop a Gemini image here, or click to choose one",
@@ -3775,8 +3763,6 @@
             "jpn": "Japanese"
         },
         "workbench": {
-            "title": "Read the text in a picture",
-            "description": "Pick the language the text is written in, then add a picture. What it reads lands in a box you can edit before you copy.",
             "languageLabel": "Language of the text",
             "languageHint": "English mixed into the picture is read too, whichever language you pick.",
             "languageOption": "{name} — {endonym}",
@@ -3883,7 +3869,7 @@
             "badgeCrack": "Assumptions shown"
         },
         "workbench": {
-            "title": "Generate a password",
+            "resultLabel": "Your password",
             "description": "Every value is composed in this browser tab. Nothing is uploaded, logged or saved.",
             "modeLabel": "Type",
             "modes": {
@@ -4048,7 +4034,7 @@
             "badgeExact": "Exact entropy"
         },
         "workbench": {
-            "title": "Draw a secret key",
+            "resultLabel": "Your key",
             "description": "Every value is drawn in this browser tab. Nothing is uploaded, logged or saved.",
             "drawing": "Drawing a key in your browser.",
             "copy": "Copy key",
@@ -4690,8 +4676,6 @@
             "badgeBulk": "Line by line"
         },
         "workbench": {
-            "title": "Convert a case",
-            "description": "Type or paste the text and pick a case. The result updates as you go, and never leaves this tab.",
             "inputLabel": "Text",
             "placeholder": "Accidentally left the caps lock on and typed something?",
             "placeholderPerLine": "One line per result",
@@ -5178,7 +5162,6 @@
         },
         "workbench": {
             "title": "Compress images",
-            "description": "Pick a quality, a format and a size cap, then press Compress. Files are compressed one after another so the tab stays usable while it works.",
             "dropTitle": "Drop your images here",
             "dropHint": "JPG, PNG, WebP, AVIF, GIF or BMP · up to {limit} each · {count} files at a time",
             "dropMoreTitle": "Add more images",
@@ -5294,7 +5277,6 @@
         },
         "workbench": {
             "title": "Convert images",
-            "description": "Pick a target format, drop your files in and press Convert. Everything is converted one file at a time, so the tab stays usable while it works.",
             "dropTitle": "Drop your images here",
             "dropHint": "JPG, PNG, WebP, AVIF, GIF, BMP or SVG · up to {limit} each · {count} files at a time",
             "dropMoreTitle": "Add more images",
@@ -5440,7 +5422,6 @@
         },
         "workbench": {
             "title": "Crop and resize",
-            "description": "Pick a picture, drag the box over the part you want, then choose a size for the result — or pick several and size them all at once.",
             "dropTitle": "Drop one picture or several, or click to choose",
             "dropHint": "JPG, PNG, WebP, AVIF, GIF or BMP · up to {limit} each · {count} at a time",
             "statusIdle": "Nothing loaded yet.",
@@ -5844,7 +5825,6 @@
         },
         "workbench": {
             "title": "Blur placeholder",
-            "description": "Pick a picture to make a hash, or paste a hash to see it painted. Both directions produce the same three things: the string, the data URI and the code to use them.",
             "modeLabel": "Start from",
             "dropTitle": "Drop an image here",
             "dropHint": "JPG, PNG, WebP, AVIF, GIF or BMP · up to {limit}",
@@ -5951,19 +5931,15 @@
             "badgePrintable": "Closed and printable"
         },
         "workbench": {
-            "title": "Build a model",
-            "description": "Pick a picture, set how deep the relief goes, and download the mesh.",
             "dropTitle": "Drop a picture here",
             "dropHint": "PNG, JPEG, WebP, AVIF, GIF or BMP, up to {limit}. It never leaves this tab.",
             "clear": "Clear",
             "reading": "Reading the picture…",
             "building": "Building the mesh…",
             "sourceSummary": "{name} — {width}×{height}",
-            "previewTitle": "Preview",
             "previewHint": "Drag to turn it, scroll to zoom. This is the mesh itself, not a picture of it.",
             "previewUnavailable": "This browser would not give the preview a WebGL canvas. The model still builds and downloads correctly.",
             "previewLoading": "Loading the viewer…",
-            "optionsTitle": "Shape",
             "sourceName": "Height from",
             "sourceHint": "Which channel decides how high a point sits.",
             "invertName": "Invert",
@@ -6129,8 +6105,6 @@
             "badgeChallenge": "Challenge protected"
         },
         "workbench": {
-            "title": "Look up a domain",
-            "description": "A hostname, a full URL, or an IP address. Everything else is read from the name.",
             "hostLabel": "Domain or URL",
             "hostPlaceholder": "example.com",
             "hint": "Press Inspect to run the lookup.",
@@ -6523,8 +6497,6 @@
             "badgeLimited": "Rate limited"
         },
         "workbench": {
-            "title": "Scan a host",
-            "description": "One TCP connection per port. Nothing is written to the socket and nothing is read back — a completed handshake is the whole finding.",
             "hostLabel": "Host or IP address",
             "hostPlaceholder": "example.com",
             "yourIp": "Your address is {address}",
@@ -6652,7 +6624,6 @@
             "badgeLarge": "Built for long answers"
         },
         "workbench": {
-            "title": "Look up a domain",
             "description": "One query against a public index of names harvested from certificate transparency logs, retired CT archives, zone files and crawls. Nothing is probed and no DNS request is made on your behalf.",
             "disclosureTitle": "This one is not private, and cannot be",
             "disclosure": "The index lives at crt.name, so the domain you type leaves your browser and reaches a third party through our servers. They see our address, not yours. Nothing about the lookup is stored except a count against a hash of your address, so the hourly limit can be enforced.",
@@ -6781,7 +6752,6 @@
             "badgePassive": "Never contacts the hosts"
         },
         "workbench": {
-            "title": "Map a route",
             "description": "Hosts are resolved and every address is looked up against the routing registry, Team Cymru's ASN zones and the reverse DNS tree. Nothing is probed — no packet reaches the machines on the map.",
             "modeLabel": "Input",
             "resolverLabel": "DNS resolver",
@@ -6944,7 +6914,7 @@
         "launcher": {
             "yourWorkspaces": "Your workspaces",
             "empty": "No workspaces on this browser yet.",
-            "emptyHint": "Create one below, or bring an existing one across with its recovery key.",
+            "emptyHint": "Create one above, or bring an existing one across with its recovery key.",
             "panelLabel": "How to get a workspace",
             "createTab": "Create",
             "importTab": "Import",
@@ -7038,7 +7008,7 @@
         "servers": {
             "heading": "Mock servers",
             "empty": "No servers in this workspace yet.",
-            "emptyHint": "Create one below. Its address starts answering the moment it has an endpoint.",
+            "emptyHint": "Create one above. Its address starts answering the moment it has an endpoint.",
             "createTitle": "Create a server",
             "createDescription": "The key is the part of the address people will call. Leave it blank and one is drawn from the name.",
             "nameLabel": "Server name",

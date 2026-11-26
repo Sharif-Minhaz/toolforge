@@ -27,7 +27,7 @@ export function StatTile({ label, value, active = false, alert = false }: StatTi
                       : "bg-muted/30 ring-border/60",
             )}
         >
-            <span className="text-muted-foreground w-full truncate text-[0.625rem] font-semibold tracking-wider uppercase">
+            <span className="text-muted-foreground w-full truncate text-xs font-medium">
                 {label}
             </span>
             <span

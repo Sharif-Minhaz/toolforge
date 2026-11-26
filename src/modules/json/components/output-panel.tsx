@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ByteSize } from "@/modules/tools/components/byte-size";
 import { JsonViewer } from "@/modules/tools/components/json-viewer";
+import { RESULT_TRAY, StepLabel } from "@/modules/tools/components/workbench-step";
 
 type OutputPanelProps = {
     outputId: string;
@@ -36,13 +37,13 @@ export function OutputPanel({
     const empty = output.length === 0;
 
     return (
-        <div className="flex flex-col gap-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                {/* Names the code region below. Not a <label>: a <pre> is not a
-                    form control, so there is nothing for one to point at. */}
-                <p id={outputId} className="text-muted-foreground text-xs leading-[1.3]">
+        <div className={RESULT_TRAY}>
+            <div className="flex min-h-7 flex-wrap items-center justify-between gap-2">
+                {/* Names the code region below by id. No `htmlFor`: a <pre> is
+                    not a form control, so there is nothing to point at. */}
+                <StepLabel step={2} id={outputId}>
                     {t("outputLabel")}
-                </p>
+                </StepLabel>
 
                 <div className="flex flex-wrap items-center gap-1.5">
                     {error === null && (
@@ -51,7 +52,7 @@ export function OutputPanel({
                             className="text-muted-foreground mr-1 font-mono text-[0.6875rem] tabular-nums"
                         />
                     )}
-                    <Button variant="outline" size="sm" onClick={onCopy} disabled={empty}>
+                    <Button size="sm" onClick={onCopy} disabled={empty}>
                         <IconClipboardCheck className="size-3.5" stroke={1.8} aria-hidden="true" />
                         {t("copy")}
                     </Button>

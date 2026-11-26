@@ -12,6 +12,7 @@ import { IconCopyButton } from "@/modules/tools/components/copy-button";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import { RESULT_TRAY, StepLabel } from "@/modules/tools/components/workbench-step";
 import { ALGORITHM_LABELS, ENCODING_LABELS } from "../domain/algorithms";
 import { MAX_HASH_INPUT_LENGTH } from "../domain/constants";
 import type { CompareResult, DetectedHash } from "../types";
@@ -124,12 +125,12 @@ export function ComparePanel({
                 </button>
             </div>
 
-            <div className="grid min-w-0 gap-5 xl:grid-cols-2 xl:gap-6">
+            <div className="grid min-w-0 gap-4 lg:grid-cols-2">
                 <div className="flex min-w-0 flex-col gap-2">
                     <div className="flex items-center justify-between gap-2">
-                        <Label htmlFor={leftId} className="text-muted-foreground text-xs">
-                            <span className="leading-[1.3]">{t("leftLabel")}</span>
-                        </Label>
+                        <StepLabel step={1} htmlFor={leftId}>
+                            {t("leftLabel")}
+                        </StepLabel>
                         <div className="flex items-center gap-1.5">
                             <InputLimitMeter reading={leftLimit} />
                             <IconCopyButton
@@ -191,7 +192,7 @@ export function ComparePanel({
 
             <div
                 className={cn(
-                    "bg-card/60 ring-border/70 flex min-w-0 flex-col gap-2 rounded-xl p-3 ring-1 ring-inset",
+                    RESULT_TRAY,
                     "transition-opacity duration-200",
                     pending && "opacity-55",
                 )}

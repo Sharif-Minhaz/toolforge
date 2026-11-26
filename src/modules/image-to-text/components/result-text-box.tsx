@@ -19,6 +19,8 @@ type ResultTextBoxProps = {
     readonly placeholder: string;
     /** Until a picture is read there is nothing to edit; the box holds its place. */
     readonly readOnly?: boolean;
+    /** Whether Copy is the workbench's one filled button; false when several boxes show. */
+    readonly primary?: boolean;
     readonly copied: boolean;
     readonly onCopy: () => void;
     readonly onChange: (text: string) => void;
@@ -33,6 +35,7 @@ export function ResultTextBox({
     language,
     placeholder,
     readOnly = false,
+    primary = true,
     copied,
     onCopy,
     onChange,
@@ -60,7 +63,12 @@ export function ResultTextBox({
                         {t("counts", counts)}
                     </span>
                 </div>
-                <Button onClick={onCopy} disabled={text.length === 0} className="h-8 px-3">
+                <Button
+                    variant={primary ? "default" : "outline"}
+                    onClick={onCopy}
+                    disabled={text.length === 0}
+                    className="h-8 px-3"
+                >
                     <CopyIconSwap copied={copied} />
                     {t("copy")}
                 </Button>
@@ -78,7 +86,7 @@ export function ResultTextBox({
                 aria-describedby={countsId}
                 placeholder={placeholder}
                 onChange={(event) => onChange(event.target.value)}
-                className={cn("text-[0.9375rem] leading-7", textareaClassName)}
+                className={cn("bg-card text-[0.9375rem] leading-7", textareaClassName)}
             />
         </div>
     );

@@ -45,11 +45,12 @@ export default function OverviewLoading() {
             </div>
 
             <div className="flex flex-col gap-4">
-                <Skeleton className="h-6 w-44" />
-                <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                <Skeleton className="h-9 w-56" />
+                <Skeleton className="h-4 w-64" />
+                <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {Array.from({ length: 6 }, (_, index) => (
                         <li key={index}>
-                            <Skeleton className="h-44 w-full rounded-2xl" />
+                            <Skeleton className="h-54 w-full rounded-2xl" />
                         </li>
                     ))}
                 </ul>

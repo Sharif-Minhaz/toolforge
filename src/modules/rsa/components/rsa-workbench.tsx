@@ -2,18 +2,18 @@
 
 import { IconFileZip, IconKey, IconLoader2, IconRotate2 } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
-    Card,
-    CardAction,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { ARTICLE_TAGS } from "@/modules/tools/components/article-section";
@@ -22,6 +22,11 @@ import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
+import {
+    OptionsDisclosure,
+    RESULT_TRAY,
+    StepLabel,
+} from "@/modules/tools/components/workbench-step";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveBlob, saveFile } from "@/modules/tools/domain/file-saver";
 import {
@@ -72,6 +77,8 @@ export function RsaWorkbench({ initialOptions }: RsaWorkbenchProps) {
     const t = useTranslations("rsa.workbench");
     const tErrors = useTranslations("rsa.errors");
     const tToast = useTranslations("rsa.toast");
+
+    const keySizeLabelId = useId();
 
     const [options, setOptions] = useState<RsaOptions>(initialOptions);
     const [material, setMaterial] = useState<RsaKeyMaterial | null>(null);
@@ -297,16 +304,12 @@ export function RsaWorkbench({ initialOptions }: RsaWorkbenchProps) {
         JSON.stringify(options) === JSON.stringify(initialOptions);
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
-
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-                <CardAction>
+        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+            <CardContent className="flex min-w-0 flex-col gap-6">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                    <p className="text-muted-foreground max-w-2xl min-w-0 flex-1 text-[0.8125rem] leading-normal">
+                        {t("localNotice")}
+                    </p>
                     {/* Quiet until there is something to undo, so it never reads
                         as a button that might do nothing. */}
                     <button
@@ -316,111 +319,130 @@ export function RsaWorkbench({ initialOptions }: RsaWorkbenchProps) {
                         title={t("resetHint")}
                         className={cn(
                             buttonVariants({ variant: "outline", size: "sm" }),
-                            "h-7 px-2 text-[0.6875rem]",
+                            "h-7 shrink-0 px-2 text-[0.6875rem]",
                         )}
                     >
                         <IconRotate2 className="size-3.5" stroke={1.8} aria-hidden="true" />
                         {t("reset")}
                     </button>
-                </CardAction>
-            </CardHeader>
+                </div>
 
-            <CardContent className="flex min-w-0 flex-col gap-5">
-                <p className="text-muted-foreground max-w-2xl text-[0.8125rem] leading-normal">
-                    {t("localNotice")}
-                </p>
+                {/* The shape of the key, then the settings minted into it that
+                    a reader rarely changes, folded away. */}
+                <div className="flex min-w-0 flex-col gap-4">
+                    {/* Written out rather than an `OptionSelect`, whose label
+                        cannot carry the step number. */}
+                    <div className="flex min-w-0 flex-col gap-1.5 sm:max-w-xs">
+                        <StepLabel step={1} id={keySizeLabelId}>
+                            {t("keySizeLabel")}
+                        </StepLabel>
+                        <Select
+                            items={keySizeItems}
+                            value={String(options.keySize)}
+                            onValueChange={(next) => {
+                                const size = Number(next);
 
-                <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <OptionSelect
-                        label={t("keySizeLabel")}
-                        hint={
-                            isWeakKeySize(options.keySize)
+                                if (next !== null && isRsaKeySize(size)) {
+                                    updateOptions({ keySize: size });
+                                }
+                            }}
+                        >
+                            <SelectTrigger aria-labelledby={keySizeLabelId} className="w-full">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-72">
+                                {RSA_KEY_SIZES.map((size) => (
+                                    <SelectItem key={size} value={String(size)}>
+                                        {keySizeItems[String(size)]}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                            {isWeakKeySize(options.keySize)
                                 ? t("keySizeHintWeak")
                                 : isSlowKeySize(options.keySize)
                                   ? t("keySizeHintSlow")
-                                  : t("keySizeHint")
-                        }
-                        value={String(options.keySize)}
-                        items={keySizeItems}
-                        values={RSA_KEY_SIZES.map(String)}
-                        onChange={(next) => {
-                            const size = Number(next);
+                                  : t("keySizeHint")}
+                        </p>
+                    </div>
 
-                            if (isRsaKeySize(size)) {
-                                updateOptions({ keySize: size });
-                            }
-                        }}
-                    />
+                    <div className="grid items-start gap-4 sm:grid-cols-2">
+                        <OptionSelect
+                            label={t("usageLabel")}
+                            hint={t(`usageHint.${options.usage}`)}
+                            value={options.usage}
+                            items={usageItems}
+                            values={RSA_USAGES}
+                            onChange={(next) => {
+                                if (isRsaUsage(next)) {
+                                    updateOptions({ usage: next });
+                                }
+                            }}
+                        />
 
-                    {/* Disabled under JWK, which has no DER container for the
-                        choice to act on — and it says so rather than sitting
-                        there taking a value that changes nothing. */}
-                    <OptionSelect
-                        label={t("keyFormatLabel")}
-                        hint={
-                            containerApplies
-                                ? t(`keyFormatHint.${options.keyFormat}`)
-                                : t("keyFormatDisabled")
-                        }
-                        value={options.keyFormat}
-                        items={keyFormatItems}
-                        values={RSA_KEY_FORMATS}
-                        disabled={!containerApplies}
-                        onChange={(next) => {
-                            if (isRsaKeyFormat(next)) {
-                                updateOptions({ keyFormat: next });
-                            }
-                        }}
-                    />
+                        <OptionSelect
+                            label={t("outputFormatLabel")}
+                            hint={t.rich(`outputFormatHint.${options.outputFormat}`, ARTICLE_TAGS)}
+                            value={options.outputFormat}
+                            items={outputFormatItems}
+                            values={RSA_OUTPUT_FORMATS}
+                            onChange={(next) => {
+                                if (isRsaOutputFormat(next)) {
+                                    updateOptions({ outputFormat: next });
+                                }
+                            }}
+                        />
+                    </div>
 
-                    <OptionSelect
-                        label={t("outputFormatLabel")}
-                        hint={t.rich(`outputFormatHint.${options.outputFormat}`, ARTICLE_TAGS)}
-                        value={options.outputFormat}
-                        items={outputFormatItems}
-                        values={RSA_OUTPUT_FORMATS}
-                        onChange={(next) => {
-                            if (isRsaOutputFormat(next)) {
-                                updateOptions({ outputFormat: next });
-                            }
-                        }}
-                    />
+                    <OptionsDisclosure label={t("advanced.title")}>
+                        <div className="flex min-w-0 flex-col gap-4">
+                            <div className="grid items-start gap-4 sm:grid-cols-2">
+                                {/* Disabled under JWK, which has no DER container
+                                    for the choice to act on — and it says so
+                                    rather than sitting there taking a value that
+                                    changes nothing. */}
+                                <OptionSelect
+                                    label={t("keyFormatLabel")}
+                                    hint={
+                                        containerApplies
+                                            ? t(`keyFormatHint.${options.keyFormat}`)
+                                            : t("keyFormatDisabled")
+                                    }
+                                    value={options.keyFormat}
+                                    items={keyFormatItems}
+                                    values={RSA_KEY_FORMATS}
+                                    disabled={!containerApplies}
+                                    onChange={(next) => {
+                                        if (isRsaKeyFormat(next)) {
+                                            updateOptions({ keyFormat: next });
+                                        }
+                                    }}
+                                />
+
+                                <OptionSelect
+                                    label={t("hashLabel")}
+                                    hint={t.rich("hashHint", ARTICLE_TAGS)}
+                                    value={options.hash}
+                                    items={hashItems}
+                                    values={RSA_HASHES}
+                                    onChange={(next) => {
+                                        if (isRsaHash(next)) {
+                                            updateOptions({ hash: next });
+                                        }
+                                    }}
+                                />
+                            </div>
+
+                            <AdvancedSettings
+                                value={options.publicExponent}
+                                invalid={exponentInvalid}
+                                unportable={exponent !== null && !isPortableExponent(exponent)}
+                                onChange={(publicExponent) => updateOptions({ publicExponent })}
+                            />
+                        </div>
+                    </OptionsDisclosure>
                 </div>
-
-                <div className="grid items-start gap-4 sm:grid-cols-2">
-                    <OptionSelect
-                        label={t("usageLabel")}
-                        hint={t(`usageHint.${options.usage}`)}
-                        value={options.usage}
-                        items={usageItems}
-                        values={RSA_USAGES}
-                        onChange={(next) => {
-                            if (isRsaUsage(next)) {
-                                updateOptions({ usage: next });
-                            }
-                        }}
-                    />
-
-                    <OptionSelect
-                        label={t("hashLabel")}
-                        hint={t.rich("hashHint", ARTICLE_TAGS)}
-                        value={options.hash}
-                        items={hashItems}
-                        values={RSA_HASHES}
-                        onChange={(next) => {
-                            if (isRsaHash(next)) {
-                                updateOptions({ hash: next });
-                            }
-                        }}
-                    />
-                </div>
-
-                <AdvancedSettings
-                    value={options.publicExponent}
-                    invalid={exponentInvalid}
-                    unportable={exponent !== null && !isPortableExponent(exponent)}
-                    onChange={(publicExponent) => updateOptions({ publicExponent })}
-                />
 
                 <Button
                     onClick={() => void handleGenerate()}
@@ -435,7 +457,9 @@ export function RsaWorkbench({ initialOptions }: RsaWorkbenchProps) {
                     {material === null ? t("generate") : t("regenerate")}
                 </Button>
 
-                <div ref={resultRef} className="flex min-w-0 scroll-mt-24 flex-col gap-4">
+                <div ref={resultRef} className={cn(RESULT_TRAY, "scroll-mt-24")}>
+                    <StepLabel step={2}>{t("title")}</StepLabel>
+
                     <StatusStrip tone={status.tone} message={status.message} />
 
                     {/* Mapped rather than written out twice, so the two halves
@@ -459,7 +483,7 @@ export function RsaWorkbench({ initialOptions }: RsaWorkbenchProps) {
                     </div>
 
                     {material !== null && (
-                        <div className="ring-border/70 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-xl px-3 py-2.5 ring-1 ring-inset">
+                        <div className="bg-card ring-border/70 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-xl px-3 py-2.5 ring-1 ring-inset">
                             <span className="text-muted-foreground text-xs leading-[1.3]">
                                 {t("fingerprintLabel")}
                             </span>

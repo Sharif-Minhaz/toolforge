@@ -1,11 +1,10 @@
 "use client";
 
-import { IconChevronDown } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
-import { cn } from "@/lib/utils";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
+import { OptionsDisclosure } from "@/modules/tools/components/workbench-step";
 import { MAX_SALT_BYTES } from "../domain/constants";
 import { isGcmTagLength, usesKeyDerivation } from "../domain/key";
 import {
@@ -23,9 +22,9 @@ import { IterationField } from "./iteration-field";
 /**
  * The three parameters a reader rarely changes and always needs to see.
  *
- * Native `<details>` rather than the vendor Accordion, which unmounts its panel
- * when closed — folding this away while a salt is half-typed would throw the
- * half away. The Regex tool has a similar disclosure, kept separate on purpose:
+ * `OptionsDisclosure` is a native `<details>` rather than the vendor Accordion,
+ * which unmounts its panel when closed — folding this away while a salt is
+ * half-typed would throw the half away. The Regex tool has a similar disclosure, kept separate on purpose:
  * that one is open by default, scrolls inside a fixed height and dims while a
  * match is pending, none of which applies here.
  */
@@ -74,25 +73,8 @@ export function AdvancedSettings({
     );
 
     return (
-        <details className="bg-card/60 ring-border/70 group/advanced min-w-0 rounded-xl ring-1 ring-inset">
-            <summary
-                className={cn(
-                    "flex cursor-pointer list-none items-center gap-2 rounded-xl px-3 py-2.5",
-                    "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
-                    "[&::-webkit-details-marker]:hidden",
-                )}
-            >
-                <IconChevronDown
-                    className="text-muted-foreground size-4 shrink-0 -rotate-90 transition-transform duration-200 group-open/advanced:rotate-0"
-                    stroke={1.9}
-                    aria-hidden="true"
-                />
-                <span className="min-w-0 flex-1 text-[0.8125rem] leading-[1.3] font-medium">
-                    {t("title")}
-                </span>
-            </summary>
-
-            <div className="flex flex-col gap-4 px-3 pt-1 pb-3">
+        <OptionsDisclosure label={t("title")}>
+            <div className="flex flex-col gap-4">
                 {!derived && (
                     <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
                         {t("disabledForRawKey")}
@@ -173,6 +155,6 @@ export function AdvancedSettings({
                     onChange={(iterations) => onChange({ iterations })}
                 />
             </div>
-        </details>
+        </OptionsDisclosure>
     );
 }

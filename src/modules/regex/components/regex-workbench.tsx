@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useId, useState } from "react";
 import { toast } from "sonner";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
@@ -244,20 +244,10 @@ export function RegexWorkbench({
     return (
         <Card
             className={cn(
-                "relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]",
+                "[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]",
                 TOOL_ACCENT_VARS.violet,
             )}
         >
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
-
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-            </CardHeader>
-
             <CardContent className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
                     <Label id={modeLabelId} className="text-muted-foreground text-xs">
@@ -312,6 +302,9 @@ export function RegexWorkbench({
                             matches={analysis.matches}
                             pending={pending}
                             blocked={blocked}
+                            // Match mode ends at the export; the other two end
+                            // at the result pane's Copy, which takes the fill.
+                            primaryDownload={mode === "match"}
                             onChange={setTestString}
                             onClear={() => setTestString("")}
                             onShare={handleShare}
@@ -337,6 +330,9 @@ export function RegexWorkbench({
                     <div className="flex min-w-0 flex-col gap-3">
                         <ExplanationPanel nodes={analysis.explanation} pending={pending} />
                         <MatchInformation
+                            // Step 3 only where the matches are the answer; in
+                            // the other modes the result pane carries it.
+                            step={mode === "match" ? 3 : undefined}
                             matches={analysis.matches}
                             truncated={analysis.truncated}
                             blocked={blocked}

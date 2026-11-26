@@ -253,6 +253,7 @@ export function ResponseBuilder({ value, onChange }: ResponseBuilderProps) {
                         <Button
                             type="button"
                             size="sm"
+                            variant="outline"
                             disabled={jsonLimit.state === "over"}
                             onClick={applyJson}
                         >

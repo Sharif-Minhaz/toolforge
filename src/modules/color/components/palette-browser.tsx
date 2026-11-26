@@ -37,7 +37,7 @@ function Swatch({
             onClick={() => onSelect(swatch)}
             style={{ background: swatch.hex }}
             className={cn(
-                "focus-visible:ring-ring h-8 w-full min-w-8 rounded-md ring-1 ring-black/10 transition-transform duration-150 ring-inset hover:scale-105 focus-visible:ring-2 focus-visible:outline-none",
+                "focus-visible:ring-ring h-8 w-full min-w-8 rounded-md ring-1 ring-black/10 transition-shadow duration-150 ring-inset hover:ring-black/30 focus-visible:ring-2 focus-visible:outline-none",
                 active && "ring-2 ring-[var(--tool-accent)]",
             )}
         />

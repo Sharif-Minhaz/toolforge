@@ -81,9 +81,16 @@ type MatchInformationProps = {
     /** Set when the pattern or input was refused, so "no matches" would mislead. */
     blocked: boolean;
     pending: boolean;
+    step?: number;
 };
 
-export function MatchInformation({ matches, truncated, blocked, pending }: MatchInformationProps) {
+export function MatchInformation({
+    matches,
+    truncated,
+    blocked,
+    pending,
+    step,
+}: MatchInformationProps) {
     const t = useTranslations("regex.workbench");
     const tMatches = useTranslations("regex.matches");
     const format = useFormatter();
@@ -91,6 +98,7 @@ export function MatchInformation({ matches, truncated, blocked, pending }: Match
     return (
         <SidePanel
             title={t("matchInformationTitle")}
+            step={step}
             pending={pending}
             badge={
                 matches.length > 0 ? (

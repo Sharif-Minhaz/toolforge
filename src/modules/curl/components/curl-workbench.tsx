@@ -1,6 +1,7 @@
 "use client";
 
 import {
+    IconArrowsLeftRight,
     IconArrowsUpDown,
     IconClipboardCheck,
     IconCode,
@@ -13,9 +14,8 @@ import { useId, useState } from "react";
 import { toast } from "sonner";
 
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
@@ -23,6 +23,11 @@ import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import {
+    OptionsDisclosure,
+    RESULT_TRAY,
+    StepLabel,
+} from "@/modules/tools/components/workbench-step";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
 import {
@@ -48,7 +53,7 @@ import type {
 import { CURL_DIRECTIONS } from "../types";
 import { CodeBlock } from "@/modules/tools/components/code-block";
 import { CodeEditor } from "@/modules/tools/components/code-editor";
-import { ConversionOptions } from "./conversion-options";
+import { ConversionOptions, TargetSelect } from "./conversion-options";
 import { NotesList } from "./notes-list";
 import { RequestPanel } from "./request-panel";
 
@@ -208,213 +213,254 @@ export function CurlWorkbench({
     }
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
+        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+            <CardContent className="flex flex-col gap-6">
+                {/* Which way and into what, then the finer settings folded
+                    away, so the input and its result are the first things on
+                    screen. */}
+                <div className="flex flex-col gap-3">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="flex flex-col gap-2">
+                            <Label className="text-muted-foreground text-xs">
+                                <span className="leading-[1.3]">{t("directionLabel")}</span>
+                            </Label>
+                            <Tabs
+                                value={direction}
+                                onValueChange={(next) => {
+                                    if (next !== null) {
+                                        setDirection(next as CurlDirection);
+                                    }
+                                }}
+                            >
+                                <TabsList className="w-full max-w-80">
+                                    {CURL_DIRECTIONS.map((value) => (
+                                        <TabsTrigger key={value} value={value}>
+                                            {tDirections(value)}
+                                        </TabsTrigger>
+                                    ))}
+                                </TabsList>
+                            </Tabs>
+                        </div>
 
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-            </CardHeader>
+                        {direction === "curlToCode" && (
+                            <TargetSelect
+                                code={code}
+                                onCodeChange={(patch) =>
+                                    setCode((current) => ({ ...current, ...patch }))
+                                }
+                            />
+                        )}
+                    </div>
 
-            <CardContent className="flex flex-col gap-5">
-                <div className="flex flex-col gap-2">
-                    <Label className="text-muted-foreground text-xs">
-                        <span className="leading-[1.3]">{t("directionLabel")}</span>
-                    </Label>
-                    <Tabs
-                        value={direction}
-                        onValueChange={(next) => {
-                            if (next !== null) {
-                                setDirection(next as CurlDirection);
+                    <OptionsDisclosure label={t("optionsTitle")}>
+                        <ConversionOptions
+                            direction={direction}
+                            code={code}
+                            curl={curl}
+                            onCodeChange={(patch) =>
+                                setCode((current) => ({ ...current, ...patch }))
                             }
-                        }}
-                    >
-                        <TabsList className="w-full max-w-80">
-                            {CURL_DIRECTIONS.map((value) => (
-                                <TabsTrigger key={value} value={value}>
-                                    {tDirections(value)}
-                                </TabsTrigger>
-                            ))}
-                        </TabsList>
-                    </Tabs>
+                            onCurlChange={(patch) =>
+                                setCurl((current) => ({ ...current, ...patch }))
+                            }
+                        />
+                    </OptionsDisclosure>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                        <Label htmlFor={inputId} className="text-muted-foreground text-xs">
-                            <span className="leading-[1.3]">
+                {/* Step 1 beside step 2 on a wide screen, so the start and the
+                    end of the tool are read together; stacked on a narrow one. */}
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+                    <div className="flex min-w-0 flex-col gap-3">
+                        <div className="flex min-h-7 flex-wrap items-center justify-between gap-2">
+                            <StepLabel step={1} htmlFor={inputId}>
                                 {direction === "curlToCode"
                                     ? t("inputLabelCurl")
                                     : t("inputLabelCode")}
-                            </span>
-                        </Label>
-                        <div className="flex items-center gap-1.5">
-                            <InputLimitMeter reading={inputLimit} className="mr-1" />
+                            </StepLabel>
+                            <div className="flex items-center gap-1.5">
+                                <InputLimitMeter reading={inputLimit} className="mr-1" />
 
-                            <Button variant="ghost" size="sm" onClick={handleExample}>
-                                <IconWand className="size-3.5" stroke={1.8} aria-hidden="true" />
-                                {t("example")}
-                            </Button>
-                            <button
-                                type="button"
-                                onClick={() => setInput("")}
-                                disabled={input.length === 0}
-                                aria-label={t("clear")}
-                                className={cn(
-                                    buttonVariants({ variant: "ghost", size: "icon-sm" }),
-                                    "text-muted-foreground hover:text-foreground",
-                                )}
-                            >
-                                <IconX className="size-4" stroke={1.9} aria-hidden="true" />
-                            </button>
-                        </div>
-                    </div>
-
-                    <CodeEditor
-                        id={inputId}
-                        value={input}
-                        language={inputLanguage}
-                        placeholder={
-                            direction === "curlToCode" ? t("placeholderCurl") : t("placeholderCode")
-                        }
-                        ariaDescribedBy={statusId}
-                        onChange={setInput}
-                    />
-
-                    <StatusStrip
-                        id={statusId}
-                        tone={status.tone}
-                        message={status.message}
-                        className="[&>span]:min-w-0 [&>span]:wrap-break-word"
-                    />
-
-                    {result.ok && result.detectedShell !== null && (
-                        <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                            {t("detected", { shell: tShells(result.detectedShell) })}
-                        </p>
-                    )}
-                </div>
-
-                <ConversionOptions
-                    direction={direction}
-                    code={code}
-                    curl={curl}
-                    onCodeChange={(patch) => setCode((current) => ({ ...current, ...patch }))}
-                    onCurlChange={(patch) => setCurl((current) => ({ ...current, ...patch }))}
-                />
-
-                <div className="flex items-center gap-3">
-                    <Separator className="flex-1" />
-                    <Tooltip>
-                        <TooltipTrigger
-                            render={
+                                <Button variant="ghost" size="sm" onClick={handleExample}>
+                                    <IconWand
+                                        className="size-3.5"
+                                        stroke={1.8}
+                                        aria-hidden="true"
+                                    />
+                                    {t("example")}
+                                </Button>
                                 <button
                                     type="button"
-                                    onClick={handleSwap}
-                                    disabled={!swappable}
-                                    aria-label={t("swap")}
+                                    onClick={() => setInput("")}
+                                    disabled={input.length === 0}
+                                    aria-label={t("clear")}
                                     className={cn(
-                                        buttonVariants({ variant: "outline", size: "icon-sm" }),
-                                        "rounded-full",
+                                        buttonVariants({ variant: "ghost", size: "icon-sm" }),
+                                        "text-muted-foreground hover:text-foreground",
                                     )}
-                                />
-                            }
-                        >
-                            <IconArrowsUpDown className="size-4" stroke={1.8} aria-hidden="true" />
-                        </TooltipTrigger>
-                        <TooltipContent side="top">{t("swap")}</TooltipContent>
-                    </Tooltip>
-                    <Separator className="flex-1" />
-                </div>
-
-                <Tabs defaultValue="output">
-                    <TabsList className="w-full max-w-64">
-                        <TabsTrigger value="output">{t("tabs.output")}</TabsTrigger>
-                        <TabsTrigger value="request">{t("tabs.request")}</TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="output" className="flex flex-col gap-3 pt-4">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                            <span className="text-muted-foreground text-xs">
-                                {t("outputLabel")}
-                            </span>
-                            <div className="flex items-center gap-1.5">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => copyValue(output, tToast("copied"))}
-                                    disabled={output.length === 0}
                                 >
-                                    <IconClipboardCheck
-                                        className="size-3.5"
-                                        stroke={1.8}
-                                        aria-hidden="true"
-                                    />
-                                    {t("copy")}
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleDownload}
-                                    disabled={output.length === 0}
-                                >
-                                    <IconDownload
-                                        className="size-3.5"
-                                        stroke={1.8}
-                                        aria-hidden="true"
-                                    />
-                                    {t("download")}
-                                </Button>
+                                    <IconX className="size-4" stroke={1.9} aria-hidden="true" />
+                                </button>
                             </div>
                         </div>
 
-                        <CodeBlock
-                            code={output}
-                            language={outputLanguage}
-                            placeholder={t("outputPlaceholder")}
-                            pending={pending}
-                            className="max-h-96"
+                        <CodeEditor
+                            id={inputId}
+                            value={input}
+                            language={inputLanguage}
+                            placeholder={
+                                direction === "curlToCode"
+                                    ? t("placeholderCurl")
+                                    : t("placeholderCode")
+                            }
+                            ariaDescribedBy={statusId}
+                            onChange={setInput}
                         />
 
-                        {result.ok && <NotesList notes={result.notes} />}
-                    </TabsContent>
+                        <StatusStrip
+                            id={statusId}
+                            tone={status.tone}
+                            message={status.message}
+                            className="[&>span]:min-w-0 [&>span]:wrap-break-word"
+                        />
 
-                    <TabsContent value="request" className="flex flex-col gap-3 pt-4">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                            <span className="text-muted-foreground text-xs">
-                                {tRequest("description")}
-                            </span>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={!result.ok}
-                                onClick={() =>
-                                    result.ok
-                                        ? copyValue(
-                                              buildRequestJson(result.request),
-                                              tToast("copiedRequest"),
-                                          )
-                                        : undefined
+                        {result.ok && result.detectedShell !== null && (
+                            <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                                {t("detected", { shell: tShells(result.detectedShell) })}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-3 lg:flex-col lg:pt-10">
+                        <span
+                            aria-hidden="true"
+                            className="bg-border h-px flex-1 lg:h-auto lg:w-px"
+                        />
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={
+                                    <button
+                                        type="button"
+                                        onClick={handleSwap}
+                                        disabled={!swappable}
+                                        aria-label={t("swap")}
+                                        className={cn(
+                                            buttonVariants({ variant: "outline", size: "icon-sm" }),
+                                            "rounded-full",
+                                        )}
+                                    />
                                 }
                             >
-                                <IconCode className="size-3.5" stroke={1.8} aria-hidden="true" />
-                                {t("copy")}
-                            </Button>
-                        </div>
+                                <IconArrowsUpDown
+                                    className="size-4 lg:hidden"
+                                    stroke={1.75}
+                                    aria-hidden="true"
+                                />
+                                <IconArrowsLeftRight
+                                    className="hidden size-4 lg:block"
+                                    stroke={1.75}
+                                    aria-hidden="true"
+                                />
+                            </TooltipTrigger>
+                            <TooltipContent side="top">{t("swap")}</TooltipContent>
+                        </Tooltip>
+                        <span
+                            aria-hidden="true"
+                            className="bg-border h-px flex-1 lg:h-auto lg:w-px"
+                        />
+                    </div>
 
-                        <div
-                            className={cn(
-                                "transition-opacity duration-200",
-                                pending && "opacity-55",
-                            )}
-                        >
-                            <RequestPanel request={result.ok ? result.request : null} />
-                        </div>
-                    </TabsContent>
-                </Tabs>
+                    <div className={RESULT_TRAY}>
+                        <Tabs defaultValue="output">
+                            <TabsList className="w-full max-w-64">
+                                <TabsTrigger value="output">{t("tabs.output")}</TabsTrigger>
+                                <TabsTrigger value="request">{t("tabs.request")}</TabsTrigger>
+                            </TabsList>
+
+                            <TabsContent value="output" className="flex flex-col gap-3 pt-4">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <StepLabel step={2}>{t("outputLabel")}</StepLabel>
+                                    <div className="flex items-center gap-1.5">
+                                        {/* The one filled button: taking the result is
+                                    where the tool ends. */}
+                                        <Button
+                                            size="sm"
+                                            onClick={() => copyValue(output, tToast("copied"))}
+                                            disabled={output.length === 0}
+                                        >
+                                            <IconClipboardCheck
+                                                className="size-3.5"
+                                                stroke={1.8}
+                                                aria-hidden="true"
+                                            />
+                                            {t("copy")}
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleDownload}
+                                            disabled={output.length === 0}
+                                        >
+                                            <IconDownload
+                                                className="size-3.5"
+                                                stroke={1.8}
+                                                aria-hidden="true"
+                                            />
+                                            {t("download")}
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <CodeBlock
+                                    code={output}
+                                    language={outputLanguage}
+                                    placeholder={t("outputPlaceholder")}
+                                    pending={pending}
+                                    className="bg-card max-h-96"
+                                />
+
+                                {result.ok && <NotesList notes={result.notes} />}
+                            </TabsContent>
+
+                            <TabsContent value="request" className="flex flex-col gap-3 pt-4">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <span className="text-muted-foreground text-xs">
+                                        {tRequest("description")}
+                                    </span>
+                                    {/* Filled too: only one tab shows at a time, so this
+                                is still the only filled button on screen. */}
+                                    <Button
+                                        size="sm"
+                                        disabled={!result.ok}
+                                        onClick={() =>
+                                            result.ok
+                                                ? copyValue(
+                                                      buildRequestJson(result.request),
+                                                      tToast("copiedRequest"),
+                                                  )
+                                                : undefined
+                                        }
+                                    >
+                                        <IconCode
+                                            className="size-3.5"
+                                            stroke={1.8}
+                                            aria-hidden="true"
+                                        />
+                                        {t("copy")}
+                                    </Button>
+                                </div>
+
+                                <div
+                                    className={cn(
+                                        "transition-opacity duration-200",
+                                        pending && "opacity-55",
+                                    )}
+                                >
+                                    <RequestPanel request={result.ok ? result.request : null} />
+                                </div>
+                            </TabsContent>
+                        </Tabs>
+                    </div>
+                </div>
             </CardContent>
         </Card>
     );

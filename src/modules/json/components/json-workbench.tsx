@@ -1,19 +1,23 @@
 "use client";
 
-import { IconArrowsUpDown } from "@tabler/icons-react";
+import { IconArrowsLeftRight, IconArrowsUpDown } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { useId, useState } from "react";
 import { toast } from "sonner";
 
 import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
+import {
+    OptionsDisclosure,
+    RESULT_TRAY,
+    StepLabel,
+} from "@/modules/tools/components/workbench-step";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
 import {
@@ -240,92 +244,118 @@ export function JsonWorkbench({
     }
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
+        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+            <CardContent className="flex flex-col gap-6">
+                {/* What to do, then how — the how folded away, so the input and
+                    its result are the first things on screen. */}
+                <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-2">
+                        <Label id={modeLabelId} className="text-muted-foreground text-xs">
+                            <span className="leading-[1.3]">{t("modeLabel")}</span>
+                        </Label>
+                        <ModeSelector value={mode} onChange={setMode} labelId={modeLabelId} />
+                    </div>
 
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-            </CardHeader>
-
-            <CardContent className="flex flex-col gap-5">
-                <div className="flex flex-col gap-2">
-                    <Label id={modeLabelId} className="text-muted-foreground text-xs">
-                        <span className="leading-[1.3]">{t("modeLabel")}</span>
-                    </Label>
-                    <ModeSelector value={mode} onChange={setMode} labelId={modeLabelId} />
+                    <OptionsDisclosure>
+                        <FormatOptions mode={mode} options={options} onChange={updateOptions} />
+                    </OptionsDisclosure>
                 </div>
 
-                <InputPanel
-                    mode={mode}
-                    text={text}
-                    inputId={inputId}
-                    inputBytes={result.inputBytes}
-                    onTextChange={setText}
-                    onFileSelect={handleFileSelect}
-                    onSample={handleSample}
-                    onClear={() => setText("")}
-                />
-
-                <FormatOptions mode={mode} options={options} onChange={updateOptions} />
-
-                {mode !== "validate" && (
-                    <div className="flex items-center gap-3">
-                        <Separator className="flex-1" />
-                        <Tooltip>
-                            <TooltipTrigger
-                                render={
-                                    <button
-                                        type="button"
-                                        onClick={handleSwap}
-                                        disabled={!swappable}
-                                        aria-label={t("swap")}
-                                        className={cn(
-                                            buttonVariants({ variant: "outline", size: "icon-sm" }),
-                                            "rounded-full",
-                                        )}
-                                    />
-                                }
-                            >
-                                <IconArrowsUpDown
-                                    className="size-4"
-                                    stroke={1.8}
-                                    aria-hidden="true"
-                                />
-                            </TooltipTrigger>
-                            <TooltipContent side="top">{t("swap")}</TooltipContent>
-                        </Tooltip>
-                        <Separator className="flex-1" />
-                    </div>
-                )}
-
-                {mode === "validate" ? (
-                    <ValidationReport
-                        verdict={idle ? "idle" : result.ok ? "valid" : "invalid"}
-                        error={error}
-                        stats={result.ok ? result.stats : null}
-                        advisories={advisories}
-                        repairs={repairs}
-                        pending={pending}
+                {/* One grid either way, so the input keeps its place (and its
+                    editor state) when the action changes. Step 1 beside step 2
+                    on a wide screen; the validation report is a wide grid of
+                    counts, so it stays below the input. */}
+                <div
+                    className={cn(
+                        "grid gap-4",
+                        mode !== "validate" && "lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]",
+                    )}
+                >
+                    <InputPanel
+                        mode={mode}
+                        text={text}
+                        inputId={inputId}
+                        inputBytes={result.inputBytes}
+                        onTextChange={setText}
+                        onFileSelect={handleFileSelect}
+                        onSample={handleSample}
+                        onClear={() => setText("")}
                     />
-                ) : (
-                    <>
-                        <OutputPanel
-                            outputId={outputId}
-                            output={output}
-                            outputBytes={result.ok ? result.outputBytes : 0}
-                            sizeLabel={sizeLabel}
-                            error={error}
-                            pending={pending}
-                            onCopy={handleCopy}
-                            onDownload={handleDownload}
-                        />
-                        <JsonNotices advisories={advisories} repairs={repairs} />
-                    </>
-                )}
+
+                    {mode === "validate" ? (
+                        <div className={RESULT_TRAY}>
+                            <div className="flex min-h-7 items-center">
+                                <StepLabel step={2}>{t("outputLabel")}</StepLabel>
+                            </div>
+                            <ValidationReport
+                                verdict={idle ? "idle" : result.ok ? "valid" : "invalid"}
+                                error={error}
+                                stats={result.ok ? result.stats : null}
+                                advisories={advisories}
+                                repairs={repairs}
+                                pending={pending}
+                            />
+                        </div>
+                    ) : (
+                        <>
+                            <div className="flex items-center gap-3 lg:flex-col lg:pt-10">
+                                <span
+                                    aria-hidden="true"
+                                    className="bg-border h-px flex-1 lg:h-auto lg:w-px"
+                                />
+                                <Tooltip>
+                                    <TooltipTrigger
+                                        render={
+                                            <button
+                                                type="button"
+                                                onClick={handleSwap}
+                                                disabled={!swappable}
+                                                aria-label={t("swap")}
+                                                className={cn(
+                                                    buttonVariants({
+                                                        variant: "outline",
+                                                        size: "icon-sm",
+                                                    }),
+                                                    "rounded-full",
+                                                )}
+                                            />
+                                        }
+                                    >
+                                        <IconArrowsUpDown
+                                            className="size-4 lg:hidden"
+                                            stroke={1.75}
+                                            aria-hidden="true"
+                                        />
+                                        <IconArrowsLeftRight
+                                            className="hidden size-4 lg:block"
+                                            stroke={1.75}
+                                            aria-hidden="true"
+                                        />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">{t("swap")}</TooltipContent>
+                                </Tooltip>
+                                <span
+                                    aria-hidden="true"
+                                    className="bg-border h-px flex-1 lg:h-auto lg:w-px"
+                                />
+                            </div>
+
+                            <div className="flex min-w-0 flex-col gap-3">
+                                <OutputPanel
+                                    outputId={outputId}
+                                    output={output}
+                                    outputBytes={result.ok ? result.outputBytes : 0}
+                                    sizeLabel={sizeLabel}
+                                    error={error}
+                                    pending={pending}
+                                    onCopy={handleCopy}
+                                    onDownload={handleDownload}
+                                />
+                                <JsonNotices advisories={advisories} repairs={repairs} />
+                            </div>
+                        </>
+                    )}
+                </div>
             </CardContent>
         </Card>
     );

@@ -6,7 +6,7 @@ import { useId, useState } from "react";
 import { toast } from "sonner";
 
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
@@ -16,6 +16,11 @@ import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input
 import { OptionSwitch } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
+import {
+    OptionsDisclosure,
+    RESULT_TRAY,
+    StepLabel,
+} from "@/modules/tools/components/workbench-step";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { describeText } from "@/modules/tools/domain/text-stats";
 import type { TextStats } from "@/modules/tools/types";
@@ -164,154 +169,157 @@ export function TextCaseWorkbench({ initialText, initialCase }: TextCaseWorkbenc
     }
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
-
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-            </CardHeader>
-
-            <CardContent className="flex flex-col gap-5">
-                <div className="flex flex-col gap-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                        <Label htmlFor={inputId} className="text-muted-foreground text-xs">
-                            {t("inputLabel")}
+        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+            <CardContent className="flex flex-col gap-6">
+                {/* Which case, then the two refinements folded away, so the
+                    input and its result are the first things on screen. */}
+                <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-2">
+                        <Label id={caseLabelId} className="text-muted-foreground text-xs">
+                            {t("caseLabel")}
                         </Label>
-                        <div className="flex items-center gap-1.5">
-                            <InputLimitMeter reading={inputLimit} />
-                            <button
-                                type="button"
-                                onClick={() => setText("")}
-                                disabled={text.length === 0}
-                                aria-label={t("clear")}
-                                className={cn(
-                                    buttonVariants({ variant: "ghost", size: "icon-sm" }),
-                                    "text-muted-foreground hover:text-foreground",
-                                )}
-                            >
-                                <IconX className="size-4" stroke={1.9} aria-hidden="true" />
-                            </button>
-                        </div>
-                    </div>
-                    <Textarea
-                        id={inputId}
-                        value={text}
-                        onChange={(event) => setText(event.target.value)}
-                        placeholder={options.perLine ? t("placeholderPerLine") : t("placeholder")}
-                        spellCheck={false}
-                        autoComplete="off"
-                        className="bg-card/70 max-h-80 min-h-32 resize-y rounded-xl text-[0.9375rem] leading-6"
-                    />
-                    <p
-                        className={cn(
-                            "text-muted-foreground font-mono text-[0.6875rem] tabular-nums",
-                            "transition-opacity duration-200",
-                            pending && "opacity-55",
-                        )}
-                    >
-                        {describeStats(inputStats)}
-                    </p>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                    <Label id={caseLabelId} className="text-muted-foreground text-xs">
-                        {t("caseLabel")}
-                    </Label>
-                    <CasePicker
-                        value={options.textCase}
-                        labelId={caseLabelId}
-                        onChange={handleCaseChange}
-                    />
-                    <p className="text-muted-foreground max-w-[68ch] text-[0.6875rem] leading-[1.4]">
-                        {t("caseHint")}
-                    </p>
-                </div>
-
-                <div className="grid gap-2 sm:grid-cols-2">
-                    <OptionSwitch
-                        label={t("perLineLabel")}
-                        hint={t("perLineHint")}
-                        checked={options.perLine}
-                        onCheckedChange={(perLine) => patch({ perLine })}
-                    />
-                    {/* Disabled rather than silently ignored: a switch that does
-                        nothing on nine of the fourteen cases has to say which
-                        one it is standing down for. */}
-                    <OptionSwitch
-                        label={t("acronymsLabel")}
-                        hint={
-                            acronymsAvailable
-                                ? t("acronymsHint")
-                                : t("acronymsHintUnavailable", { name: caseName })
-                        }
-                        checked={options.preserveAcronyms && acronymsAvailable}
-                        disabled={!acronymsAvailable}
-                        onCheckedChange={(preserveAcronyms) => patch({ preserveAcronyms })}
-                    />
-                </div>
-
-                <div ref={resultRef} className="flex scroll-mt-24 flex-col gap-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                        <Label htmlFor={outputId} className="text-muted-foreground text-xs">
-                            {t("outputLabel")}
-                        </Label>
-
-                        <div className="flex items-center gap-1.5">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleCopy}
-                                disabled={converted.length === 0}
-                            >
-                                <IconClipboardCheck
-                                    className="size-3.5"
-                                    stroke={1.8}
-                                    aria-hidden="true"
-                                />
-                                {t("copy")}
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleDownload}
-                                disabled={converted.length === 0}
-                            >
-                                <IconDownload
-                                    className="size-3.5"
-                                    stroke={1.8}
-                                    aria-hidden="true"
-                                />
-                                {t("download")}
-                            </Button>
-                        </div>
+                        <CasePicker
+                            value={options.textCase}
+                            labelId={caseLabelId}
+                            onChange={handleCaseChange}
+                        />
+                        <p className="text-muted-foreground max-w-[68ch] text-[0.6875rem] leading-[1.4]">
+                            {t("caseHint")}
+                        </p>
                     </div>
 
-                    <Textarea
-                        id={outputId}
-                        readOnly
-                        value={converted}
-                        placeholder={t("outputPlaceholder")}
-                        spellCheck={false}
-                        aria-describedby={statusId}
-                        // Dimmed rather than emptied while the debounce settles,
-                        // so the panel never flashes between two valid results.
-                        className={cn(
-                            "bg-muted/45 max-h-80 min-h-32 resize-y rounded-xl text-[0.9375rem] leading-6",
-                            "transition-opacity duration-200",
-                            pending && "opacity-55",
-                        )}
-                    />
+                    <OptionsDisclosure>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                            <OptionSwitch
+                                label={t("perLineLabel")}
+                                hint={t("perLineHint")}
+                                checked={options.perLine}
+                                onCheckedChange={(perLine) => patch({ perLine })}
+                            />
+                            {/* Disabled rather than silently ignored: a switch that does
+                                nothing on nine of the fourteen cases has to say which
+                                one it is standing down for. */}
+                            <OptionSwitch
+                                label={t("acronymsLabel")}
+                                hint={
+                                    acronymsAvailable
+                                        ? t("acronymsHint")
+                                        : t("acronymsHintUnavailable", { name: caseName })
+                                }
+                                checked={options.preserveAcronyms && acronymsAvailable}
+                                disabled={!acronymsAvailable}
+                                onCheckedChange={(preserveAcronyms) => patch({ preserveAcronyms })}
+                            />
+                        </div>
+                    </OptionsDisclosure>
+                </div>
 
-                    <StatusStrip
-                        id={statusId}
-                        tone={status.tone}
-                        message={status.message}
-                        className={cn("transition-opacity duration-200", pending && "opacity-55")}
-                    />
+                {/* Step 1 beside step 2 on a wide screen; stacked on a narrow one. */}
+                <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="flex min-w-0 flex-col gap-3">
+                        <div className="flex min-h-7 flex-wrap items-center justify-between gap-2">
+                            <StepLabel step={1} htmlFor={inputId}>
+                                {t("inputLabel")}
+                            </StepLabel>
+                            <div className="flex items-center gap-1.5">
+                                <InputLimitMeter reading={inputLimit} />
+                                <button
+                                    type="button"
+                                    onClick={() => setText("")}
+                                    disabled={text.length === 0}
+                                    aria-label={t("clear")}
+                                    className={cn(
+                                        buttonVariants({ variant: "ghost", size: "icon-sm" }),
+                                        "text-muted-foreground hover:text-foreground",
+                                    )}
+                                >
+                                    <IconX className="size-4" stroke={1.9} aria-hidden="true" />
+                                </button>
+                            </div>
+                        </div>
+                        <Textarea
+                            id={inputId}
+                            value={text}
+                            onChange={(event) => setText(event.target.value)}
+                            placeholder={
+                                options.perLine ? t("placeholderPerLine") : t("placeholder")
+                            }
+                            spellCheck={false}
+                            autoComplete="off"
+                            className="bg-card/70 max-h-80 min-h-32 resize-y rounded-xl text-[0.9375rem] leading-6"
+                        />
+                        <p
+                            className={cn(
+                                "text-muted-foreground font-mono text-[0.6875rem] tabular-nums",
+                                "transition-opacity duration-200",
+                                pending && "opacity-55",
+                            )}
+                        >
+                            {describeStats(inputStats)}
+                        </p>
+                    </div>
+
+                    <div ref={resultRef} className={cn(RESULT_TRAY, "scroll-mt-24")}>
+                        <div className="flex min-h-7 flex-wrap items-center justify-between gap-2">
+                            <StepLabel step={2} htmlFor={outputId}>
+                                {t("outputLabel")}
+                            </StepLabel>
+
+                            <div className="flex items-center gap-1.5">
+                                <Button
+                                    size="sm"
+                                    onClick={handleCopy}
+                                    disabled={converted.length === 0}
+                                >
+                                    <IconClipboardCheck
+                                        className="size-3.5"
+                                        stroke={1.8}
+                                        aria-hidden="true"
+                                    />
+                                    {t("copy")}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleDownload}
+                                    disabled={converted.length === 0}
+                                >
+                                    <IconDownload
+                                        className="size-3.5"
+                                        stroke={1.8}
+                                        aria-hidden="true"
+                                    />
+                                    {t("download")}
+                                </Button>
+                            </div>
+                        </div>
+
+                        <Textarea
+                            id={outputId}
+                            readOnly
+                            value={converted}
+                            placeholder={t("outputPlaceholder")}
+                            spellCheck={false}
+                            aria-describedby={statusId}
+                            // Dimmed rather than emptied while the debounce settles,
+                            // so the panel never flashes between two valid results.
+                            className={cn(
+                                "bg-card max-h-80 min-h-32 resize-y rounded-lg text-[0.9375rem] leading-6",
+                                "transition-opacity duration-200",
+                                pending && "opacity-55",
+                            )}
+                        />
+
+                        <StatusStrip
+                            id={statusId}
+                            tone={status.tone}
+                            message={status.message}
+                            className={cn(
+                                "transition-opacity duration-200",
+                                pending && "opacity-55",
+                            )}
+                        />
+                    </div>
                 </div>
             </CardContent>
         </Card>

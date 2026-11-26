@@ -2,30 +2,23 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * The workbench while it waits: the fallback for the request-time half of
- * the page, and the matching block in `loading.tsx`.
+ * the page, and the matching block in `loading.tsx`. Field, challenge, the
+ * folded options, then the result actions.
  */
 export function DomainInspectorWorkbenchSkeleton() {
     return (
         <div aria-hidden="true" className="flex min-w-0 flex-col gap-4">
             <div className="bg-card ring-border/70 flex flex-col gap-5 rounded-xl p-5 ring-1 ring-inset sm:p-6">
-                <div className="flex flex-col gap-1.5">
-                    <Skeleton className="h-5 w-52" />
-                    <Skeleton className="h-4 w-72" />
-                </div>
-
                 {/* The lookup console: one frame holding the field and its verdict. */}
                 <div className="flex flex-col gap-2">
-                    <Skeleton className="h-2.5 w-24" />
-                    <Skeleton className="h-19 w-full rounded-xl" />
-                </div>
-
-                {/* Two option cards of equal weight. */}
-                <div className="grid gap-3 sm:grid-cols-2">
-                    <Skeleton className="h-22 w-full rounded-xl" />
-                    <Skeleton className="h-22 w-full rounded-xl" />
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-24 w-full rounded-xl" />
                 </div>
 
                 <Skeleton className="h-16 w-full max-w-82 rounded-lg" />
+
+                {/* The folded options: only their summary line shows. */}
+                <Skeleton className="h-5 w-24" />
 
                 <div className="flex flex-wrap items-center gap-2">
                     <Skeleton className="h-9 w-24 rounded-lg" />

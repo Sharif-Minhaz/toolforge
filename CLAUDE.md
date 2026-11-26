@@ -55,6 +55,7 @@ docs/
 | Prisma, Supabase, a Server Action           | [`docs/server-and-data.md`](docs/server-and-data.md)                                                               |
 | User-facing text or numbers                 | [`docs/internationalization.md`](docs/internationalization.md)                                                     |
 | A tool article (opening + FAQ only)         | [`docs/patterns/article-openings.md`](docs/patterns/article-openings.md)                                           |
+| A tool's workbench layout                   | [`docs/patterns/workbench-layout.md`](docs/patterns/workbench-layout.md)                                           |
 | Colours, motion, scroll behaviour           | [`docs/design-system.md`](docs/design-system.md)                                                                   |
 | A format somebody else has to read          | [`docs/testing.md`](docs/testing.md)                                                                               |
 | An outbound request from the server         | [`docs/patterns/outbound-requests.md`](docs/patterns/outbound-requests.md), [`docs/security.md`](docs/security.md) |

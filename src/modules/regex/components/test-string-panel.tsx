@@ -5,9 +5,9 @@ import { useTranslations } from "next-intl";
 import { useRef, type UIEvent } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
+import { StepLabel } from "@/modules/tools/components/workbench-step";
 import { MAX_TEST_STRING_LENGTH } from "../domain/constants";
 import { toMatchSegments } from "../domain/segments";
 import type { RegexMatch } from "../types";
@@ -21,6 +21,8 @@ type TestStringPanelProps = {
     pending: boolean;
     /** True when nothing ran, so there is no report worth exporting. */
     blocked: boolean;
+    /** Fills the export when it is where the tool ends, so one button leads. */
+    primaryDownload: boolean;
     onChange: (value: string) => void;
     onClear: () => void;
     onShare: () => void;
@@ -33,6 +35,7 @@ export function TestStringPanel({
     matches,
     pending,
     blocked,
+    primaryDownload,
     onChange,
     onClear,
     onShare,
@@ -57,9 +60,9 @@ export function TestStringPanel({
     return (
         <div className="flex min-w-0 flex-col gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
-                <Label htmlFor={inputId} className="text-muted-foreground text-xs">
+                <StepLabel step={2} htmlFor={inputId}>
                     {t("testStringLabel")}
-                </Label>
+                </StepLabel>
                 <div className="flex items-center gap-1.5">
                     <InputLimitMeter reading={reading} className="mr-1" />
 
@@ -81,7 +84,12 @@ export function TestStringPanel({
                     </Button>
                     {/* One export for the whole tool, in every mode: a JSON
                         report of the matches and their capture groups. */}
-                    <Button variant="outline" size="sm" onClick={onDownload} disabled={blocked}>
+                    <Button
+                        variant={primaryDownload ? "default" : "outline"}
+                        size="sm"
+                        onClick={onDownload}
+                        disabled={blocked}
+                    >
                         <IconDownload className="size-3.5" stroke={1.8} aria-hidden="true" />
                         {t("download")}
                     </Button>

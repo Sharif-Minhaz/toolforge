@@ -58,7 +58,7 @@ export function MouseDiagram({ held, flash, verdicts, labels }: MouseDiagramProp
                 x="68"
                 y="96"
                 textAnchor="middle"
-                className="fill-muted-foreground text-[11px] font-medium tracking-wider uppercase"
+                className="fill-muted-foreground text-xs font-medium"
             >
                 {labels.left}
             </text>
@@ -66,7 +66,7 @@ export function MouseDiagram({ held, flash, verdicts, labels }: MouseDiagramProp
                 x="152"
                 y="96"
                 textAnchor="middle"
-                className="fill-muted-foreground text-[11px] font-medium tracking-wider uppercase"
+                className="fill-muted-foreground text-xs font-medium"
             >
                 {labels.right}
             </text>
@@ -103,7 +103,7 @@ export function MouseDiagram({ held, flash, verdicts, labels }: MouseDiagramProp
                 x="110"
                 y="240"
                 textAnchor="middle"
-                className="fill-muted-foreground/70 font-heading text-[7.5px] font-semibold tracking-[0.32em] uppercase"
+                className="fill-muted-foreground/70 font-heading text-[7.5px] font-medium tracking-[0.32em]"
             >
                 ToolForge
             </text>
@@ -139,18 +139,10 @@ export function MouseDiagram({ held, flash, verdicts, labels }: MouseDiagramProp
                 rx="7"
                 className={partClass(held.has("back"), verdicts.back)}
             />
-            <text
-                x="8"
-                y="142"
-                className="fill-muted-foreground text-[10px] font-medium tracking-wider uppercase"
-            >
+            <text x="8" y="142" className="fill-muted-foreground text-xs font-medium">
                 {labels.forward}
             </text>
-            <text
-                x="8"
-                y="262"
-                className="fill-muted-foreground text-[10px] font-medium tracking-wider uppercase"
-            >
+            <text x="8" y="262" className="fill-muted-foreground text-xs font-medium">
                 {labels.back}
             </text>
         </svg>

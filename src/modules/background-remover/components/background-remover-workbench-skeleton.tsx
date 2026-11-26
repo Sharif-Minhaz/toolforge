@@ -2,32 +2,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * The workbench while it waits: the fallback for the request-time half of
- * the page, and the matching block in `loading.tsx`.
+ * the page, and the matching block in `loading.tsx`. The folded quality
+ * option on top, then step 1's label over the drop zone.
  */
 export function BackgroundRemoverWorkbenchSkeleton() {
     return (
         <div
             aria-hidden="true"
-            className="bg-card ring-border/70 flex flex-col gap-5 rounded-xl p-5 ring-1 ring-inset sm:p-6"
+            className="bg-card ring-border/70 flex flex-col gap-6 rounded-xl p-5 ring-1 ring-inset sm:p-6"
         >
-            <div className="flex flex-col gap-1.5">
-                <Skeleton className="h-5 w-52" />
-                <Skeleton className="h-4 w-80 max-w-full" />
-            </div>
+            <Skeleton className="h-5 w-24" />
 
-            {/* Drop zone, then the paste row underneath it. */}
+            {/* Step label, drop zone, then the paste row underneath it. */}
             <div className="flex flex-col gap-2">
+                <Skeleton className="h-5 w-52" />
                 <Skeleton className="h-36 w-full rounded-xl" />
                 <Skeleton className="h-8 w-full rounded-lg" />
-            </div>
-
-            {/* Cut-out quality. */}
-            <div className="grid gap-3 sm:grid-cols-2">
-                <div className="flex flex-col gap-1.5">
-                    <Skeleton className="h-3.5 w-24" />
-                    <Skeleton className="h-9 w-full rounded-xl" />
-                    <Skeleton className="h-3 w-40" />
-                </div>
             </div>
 
             {/* Picture on the left, background picker on the right. */}

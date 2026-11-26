@@ -162,7 +162,6 @@ export function ShellFrame({ tools, children }: ShellFrameProps) {
     if (standalone) {
         return (
             <div className="relative isolate">
-                <ShellBackdrop />
                 <main
                     id="main-content"
                     className="flex min-h-dvh w-full flex-col items-center justify-center px-4 py-10 sm:px-6"
@@ -175,8 +174,6 @@ export function ShellFrame({ tools, children }: ShellFrameProps) {
 
     return (
         <div className="group/shell relative isolate min-h-dvh" data-collapsed={collapsed}>
-            <ShellBackdrop />
-
             <a
                 href="#main-content"
                 className="bg-primary text-primary-foreground sr-only rounded-lg px-4 py-2 text-sm font-medium focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-100"
@@ -191,7 +188,7 @@ export function ShellFrame({ tools, children }: ShellFrameProps) {
                     SHELL_EASING,
                 )}
             >
-                <div className="panel-sheen bg-sidebar/75 ring-sidebar-border flex h-full flex-col overflow-hidden rounded-2xl shadow-[0_1px_2px_oklch(0_0_0/0.04),0_12px_32px_-12px_oklch(0_0_0/0.12)] ring-1 backdrop-blur-xl">
+                <div className="bg-sidebar ring-sidebar-border flex h-full flex-col overflow-hidden rounded-2xl ring-1">
                     <div
                         className={cn(
                             "flex gap-2 px-3 pt-3 pb-1",
@@ -262,7 +259,8 @@ export function ShellFrame({ tools, children }: ShellFrameProps) {
             </aside>
 
             {/* ------------------------------------------------- mobile chrome */}
-            <header className="border-border/70 bg-background/80 sticky top-0 z-30 flex h-14 items-center gap-2 border-b px-3 backdrop-blur-xl lg:hidden">
+            {/* Solid, not blurred: a backdrop filter on a sticky bar repaints every scroll frame on a phone. */}
+            <header className="border-border/70 bg-background sticky top-0 z-30 flex h-14 items-center gap-2 border-b px-3 lg:hidden">
                 <button
                     type="button"
                     onClick={() => setMobileOpen(true)}
@@ -299,16 +297,6 @@ export function ShellFrame({ tools, children }: ShellFrameProps) {
             </div>
 
             <BackToTop />
-        </div>
-    );
-}
-
-/** Fixed, non-interactive wash that keeps the page from reading as flat white. */
-function ShellBackdrop() {
-    return (
-        <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-            <div className="absolute -top-40 -left-32 size-144 rounded-full bg-[radial-gradient(circle,var(--shell-glow-a),transparent_68%)] blur-3xl" />
-            <div className="absolute -top-24 right-0 size-120 rounded-full bg-[radial-gradient(circle,var(--shell-glow-b),transparent_70%)] blur-3xl" />
         </div>
     );
 }

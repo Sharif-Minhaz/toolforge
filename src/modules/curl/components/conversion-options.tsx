@@ -29,11 +29,31 @@ type ConversionOptionsProps = {
     onCurlChange: (patch: Partial<CurlOptions>) => void;
 };
 
+type TargetSelectProps = Pick<ConversionOptionsProps, "code" | "onCodeChange">;
+
+/** The language is what the first result is written in, so it stays on screen. */
+export function TargetSelect({ code, onCodeChange }: TargetSelectProps) {
+    const t = useTranslations("curl.workbench");
+    const tTargets = useTranslations("curl.targets");
+
+    return (
+        <OptionSelect
+            label={t("target")}
+            hint={t("targetHint")}
+            value={code.target}
+            values={CODE_TARGETS}
+            items={Object.fromEntries(CODE_TARGETS.map((target) => [target, tTargets(target)]))}
+            onChange={(target) => onCodeChange({ target })}
+        />
+    );
+}
+
 /**
  * The panel shows the set that matches the direction: shell quoting has nothing
  * to say about a `fetch` snippet, and a Headers instance has nothing to say
  * about a command. Within the code set, a control a target ignores is disabled
- * with the reason under it — never left present and inert.
+ * with the reason under it — never left present and inert. The target itself is
+ * `TargetSelect`, outside the fold.
  */
 export function ConversionOptions({
     direction,
@@ -43,7 +63,6 @@ export function ConversionOptions({
     onCurlChange,
 }: ConversionOptionsProps) {
     const t = useTranslations("curl.workbench");
-    const tTargets = useTranslations("curl.targets");
     const tRuntimes = useTranslations("curl.runtimes");
     const tStyles = useTranslations("curl.styles");
     const tHeaders = useTranslations("curl.headersStyles");
@@ -53,8 +72,6 @@ export function ConversionOptions({
     if (direction === "codeToCurl") {
         return (
             <div className="flex flex-col gap-3">
-                <p className="text-muted-foreground text-xs">{t("optionsTitle")}</p>
-
                 <div className="grid gap-3 sm:grid-cols-2">
                     <OptionSelect
                         label={t("shell")}
@@ -99,19 +116,7 @@ export function ConversionOptions({
 
     return (
         <div className="flex flex-col gap-3">
-            <p className="text-muted-foreground text-xs">{t("optionsTitle")}</p>
-
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <OptionSelect
-                    label={t("target")}
-                    hint={t("targetHint")}
-                    value={code.target}
-                    values={CODE_TARGETS}
-                    items={Object.fromEntries(
-                        CODE_TARGETS.map((target) => [target, tTargets(target)]),
-                    )}
-                    onChange={(target) => onCodeChange({ target })}
-                />
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <OptionSelect
                     label={t("runtime")}
                     hint={runtimeOff ? t("runtimeUnavailable") : t("runtimeHint")}

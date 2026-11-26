@@ -19,6 +19,7 @@ import {
 } from "@/modules/tools/components/input-limit-meter";
 
 import { StatusStrip } from "@/modules/tools/components/status-strip";
+import { RESULT_TRAY, StepLabel } from "@/modules/tools/components/workbench-step";
 
 import { importDocument, type ImportReport } from "../actions/openapi";
 import { MAX_OPENAPI_DOCUMENT_BYTES, WORKSPACE_NAME_LENGTH } from "../domain/constants";
@@ -204,8 +205,8 @@ export function ImportPanel({ workspaceId }: ImportPanelProps) {
                 the empty editor, not after. */}
             <section aria-labelledby={exampleId} className="flex min-w-0 flex-col gap-2">
                 <div className="flex flex-col gap-0.5">
-                    <h2 id={exampleId} className="text-foreground text-xs font-semibold">
-                        {t("exampleLabel")}
+                    <h2 id={exampleId}>
+                        <StepLabel step={1}>{t("exampleLabel")}</StepLabel>
                     </h2>
                     <p className="text-muted-foreground text-[0.6875rem] leading-normal">
                         {t("exampleHint")}
@@ -218,7 +219,7 @@ export function ImportPanel({ workspaceId }: ImportPanelProps) {
                             <button
                                 type="button"
                                 onClick={() => pickExample(spec)}
-                                className="border-border/70 bg-card hover:border-brand-cyan/50 hover:bg-brand-cyan/4 focus-visible:ring-ring flex h-full min-w-0 flex-col items-start gap-2 rounded-xl border p-3.5 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                                className="border-border/70 bg-card hover:border-border hover:bg-muted/40 focus-visible:ring-ring flex h-full min-w-0 flex-col items-start gap-2 rounded-xl border p-3.5 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none"
                             >
                                 {/* A chip the width of the mark, not of the card.
                                     These are other people's logos, drawn for
@@ -364,8 +365,10 @@ export function ImportPanel({ workspaceId }: ImportPanelProps) {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
+                {/* Filled until there is a report, whose Open is then the next press. */}
                 <Button
                     type="button"
+                    variant={report === null ? "default" : "outline"}
                     disabled={pending || text.trim() === "" || textLimit.state === "over"}
                     onClick={submit}
                     className="gap-1.5"
@@ -397,14 +400,11 @@ export function ImportPanel({ workspaceId }: ImportPanelProps) {
             </div>
 
             {report !== null ? (
-                <section
-                    aria-labelledby="import-report"
-                    className="border-border/70 bg-card rounded-2xl border p-5"
-                >
-                    <h2 id="import-report" className="text-foreground text-sm font-semibold">
-                        {t("reportTitle")}
+                <section aria-labelledby="import-report" className={RESULT_TRAY}>
+                    <h2 id="import-report">
+                        <StepLabel step={2}>{t("reportTitle")}</StepLabel>
                     </h2>
-                    <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
+                    <p className="text-muted-foreground text-xs leading-relaxed">
                         {t("reportCreated", { count: report.created })}
                         {report.created > 0
                             ? ` ${t("reportExamples", { count: report.examples })}`
@@ -415,10 +415,10 @@ export function ImportPanel({ workspaceId }: ImportPanelProps) {
                     </p>
 
                     {report.skipped.length > 0 ? (
-                        <>
+                        <div>
                             {/* Listed, never summarised away: a silent truncation
                                 reads as complete coverage. */}
-                            <p className="text-brand-amber mt-3 text-xs font-medium">
+                            <p className="text-brand-amber text-xs font-medium">
                                 {t("reportSkipped", { count: report.skipped.length })}
                             </p>
                             <ul className="text-muted-foreground mt-1 flex flex-col gap-0.5">
@@ -431,13 +431,13 @@ export function ImportPanel({ workspaceId }: ImportPanelProps) {
                                     </li>
                                 ))}
                             </ul>
-                        </>
+                        </div>
                     ) : null}
 
                     <Button
                         type="button"
                         size="sm"
-                        className="mt-4"
+                        className="self-start"
                         onClick={() =>
                             router.push(`/mock/${workspaceId}/servers/${report.serverId}`)
                         }

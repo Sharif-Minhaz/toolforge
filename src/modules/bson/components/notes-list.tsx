@@ -74,7 +74,7 @@ export function NotesList({ notes }: NotesListProps) {
                                         time. */}
                                     {tNotes(note.id)}
                                 </span>
-                                <span className="text-muted-foreground/70 text-[0.6875rem] leading-[1.4] font-medium tracking-wide uppercase">
+                                <span className="text-muted-foreground/70 text-xs leading-[1.4] font-medium">
                                     {tKinds(note.kind)}
                                 </span>
                             </span>

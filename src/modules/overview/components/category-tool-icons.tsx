@@ -45,7 +45,7 @@ export function CategoryToolIcons({ tools, label }: CategoryToolIconsProps) {
     const t = useTranslations("common");
 
     return (
-        <ul aria-label={label} className="flex flex-wrap items-center gap-1.5">
+        <ul aria-label={label} className="-ml-1.5 flex flex-wrap items-center gap-0.5">
             {tools.map((tool) => {
                 const available = tool.status === "available";
 
@@ -57,11 +57,9 @@ export function CategoryToolIcons({ tools, label }: CategoryToolIconsProps) {
                 );
 
                 const tileClassName = cn(
-                    TOOL_ICON_TILE,
-                    TOOL_ACCENT_VARS[tool.accent],
-                    "size-8 outline-none transition-transform duration-200",
+                    "text-muted-foreground grid size-8 place-items-center rounded-lg outline-none transition-colors duration-150",
                     available
-                        ? "hover:scale-[1.08] focus-visible:ring-2 focus-visible:ring-ring data-popup-open:scale-[1.08]"
+                        ? "hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring data-popup-open:bg-muted data-popup-open:text-foreground"
                         : "opacity-55",
                 );
 

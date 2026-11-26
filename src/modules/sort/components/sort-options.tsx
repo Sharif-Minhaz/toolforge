@@ -34,13 +34,44 @@ type SortOptionsPanelProps = {
     onChange: (patch: Partial<SortOptions>) => void;
     onStartChange: (raw: string) => void;
     onStartCommit: (value: number) => void;
+};
+
+type SortOrderFieldProps = {
+    order: SortOptions["order"];
+    onChange: (order: SortOptions["order"]) => void;
     onReshuffle: () => void;
 };
 
+/** The one choice a first result needs, so it stays on screen above the input. */
+export function SortOrderField({ order, onChange, onReshuffle }: SortOrderFieldProps) {
+    const t = useTranslations("sort.workbench");
+    const tOrderHints = useTranslations("sort.orderHints");
+    const orderLabelId = useId();
+
+    return (
+        <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label id={orderLabelId} className="text-muted-foreground text-xs">
+                    {t("orderLabel")}
+                </Label>
+                {order === "shuffle" && (
+                    <Button variant="outline" size="sm" onClick={onReshuffle}>
+                        <IconArrowsShuffle className="size-3.5" stroke={1.8} aria-hidden="true" />
+                        {t("reshuffle")}
+                    </Button>
+                )}
+            </div>
+            <OrderPicker value={order} labelId={orderLabelId} onChange={onChange} />
+            <p className="text-muted-foreground max-w-[68ch] text-[0.6875rem] leading-[1.4]">
+                {tOrderHints(order)}
+            </p>
+        </div>
+    );
+}
+
 /**
- * Everything between the two boxes, in the order the work happens: where a line
- * ends, what order the items go in, what they are written back as, and what is
- * thrown away on the way.
+ * The finer settings, in the order the work happens: where a line ends, what
+ * the items are written back as, and what is thrown away on the way.
  *
  * Four controls here can be inert, and every one of them says so rather than
  * being quietly ignored — the sort key under an order that compares nothing,
@@ -54,13 +85,11 @@ export function SortOptionsPanel({
     onChange,
     onStartChange,
     onStartCommit,
-    onReshuffle,
 }: SortOptionsPanelProps) {
     const t = useTranslations("sort.workbench");
     const tSplit = useTranslations("sort.splitModes");
     const tSplitHints = useTranslations("sort.splitHints");
     const tOrders = useTranslations("sort.orders");
-    const tOrderHints = useTranslations("sort.orderHints");
     const tKeys = useTranslations("sort.sortKeys");
     const tKeyHints = useTranslations("sort.sortKeyHints");
     const tFormats = useTranslations("sort.formats");
@@ -68,7 +97,6 @@ export function SortOptionsPanel({
     const tBullets = useTranslations("sort.bulletStyles");
     const tNumbers = useTranslations("sort.numberStyles");
 
-    const orderLabelId = useId();
     const startId = useId();
     const startHintId = useId();
 
@@ -93,32 +121,6 @@ export function SortOptionsPanel({
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                    <Label id={orderLabelId} className="text-muted-foreground text-xs">
-                        {t("orderLabel")}
-                    </Label>
-                    {options.order === "shuffle" && (
-                        <Button variant="outline" size="sm" onClick={onReshuffle}>
-                            <IconArrowsShuffle
-                                className="size-3.5"
-                                stroke={1.8}
-                                aria-hidden="true"
-                            />
-                            {t("reshuffle")}
-                        </Button>
-                    )}
-                </div>
-                <OrderPicker
-                    value={options.order}
-                    labelId={orderLabelId}
-                    onChange={(order) => onChange({ order })}
-                />
-                <p className="text-muted-foreground max-w-[68ch] text-[0.6875rem] leading-[1.4]">
-                    {tOrderHints(options.order)}
-                </p>
-            </div>
-
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 <OptionSelect
                     label={t("splitLabel")}

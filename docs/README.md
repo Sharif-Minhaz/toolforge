@@ -119,6 +119,7 @@ docs/
 | Writing anything that touches Prisma or Supabase | [`server-and-data.md`](server-and-data.md)                                                                               |
 | Writing a client component                       | [`hydration-and-platform-pitfalls.md`](hydration-and-platform-pitfalls.md), [`coding-standards.md`](coding-standards.md) |
 | Adding user-facing text                          | [`internationalization.md`](internationalization.md)                                                                     |
+| Laying out a tool's workbench | [`patterns/workbench-layout.md`](patterns/workbench-layout.md) |
 | Writing a tool article's opening section         | [`patterns/article-openings.md`](patterns/article-openings.md)                                                           |
 | Styling or animating                             | [`design-system.md`](design-system.md)                                                                                   |
 | Writing tests                                    | [`testing.md`](testing.md)                                                                                               |

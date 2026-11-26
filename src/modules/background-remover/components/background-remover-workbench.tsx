@@ -12,7 +12,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useOnline } from "@/hooks/use-online";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
@@ -24,6 +24,7 @@ import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-
 import { ToolNotes } from "@/modules/tools/components/tool-notes";
 import { useCutoutQuality } from "@/modules/tools/components/use-cutout-quality";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
+import { OptionsDisclosure, StepLabel } from "@/modules/tools/components/workbench-step";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
 import { loadImageElement } from "@/modules/tools/domain/image-element";
 import { checkImageFile, normalizeImageType } from "@/modules/tools/domain/image-file";
@@ -677,28 +678,47 @@ export function BackgroundRemoverWorkbench({
     const downloadSize = byteLabel(firstRunBytes(quality, RUNTIME_WASM_BYTES.gpu));
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
+        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+            <CardContent className="flex min-w-0 flex-col gap-6">
+                {/* The tier has a sensible default, so it is folded above the
+                    intake rather than standing between the picture and the
+                    press that cuts it out. */}
+                <OptionsDisclosure>
+                    <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+                        <OptionSelect
+                            label={t("quality")}
+                            hint={t("qualityHint", { size: downloadSize })}
+                            value={quality}
+                            disabled={busy}
+                            items={Object.fromEntries(
+                                CUTOUT_QUALITIES.map((name) => [
+                                    name,
+                                    tQualities(name, {
+                                        size: byteLabel(CUTOUT_MODELS[name].bytes),
+                                    }),
+                                ]),
+                            )}
+                            values={CUTOUT_QUALITIES}
+                            onChange={setQuality}
+                        />
+                    </div>
+                </OptionsDisclosure>
 
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-            </CardHeader>
-
-            <CardContent className="flex min-w-0 flex-col gap-5">
                 <div className="flex min-w-0 flex-col gap-2">
                     {sheets.length === 0 && (
                         <>
+                            <StepLabel step={1} htmlFor={inputId}>
+                                {t("dropTitle")}
+                            </StepLabel>
                             <ImageDropzone
                                 inputId={inputId}
                                 describedById={hintId}
                                 accept={IMAGE_ACCEPT_ATTRIBUTE}
                                 multiple
                                 icon={IconPhotoUp}
-                                title={t("dropTitle")}
+                                // The step label above carries the title and
+                                // labels the same input; the box keeps the hint.
+                                title={null}
                                 hint={t("dropHint", {
                                     limit: byteLabel(MAX_IMAGE_BYTES),
                                     max: MAX_SHEETS,
@@ -727,25 +747,6 @@ export function BackgroundRemoverWorkbench({
                     {selected === null && (
                         <StatusStrip id={hintId} tone={status.tone} message={status.message} />
                     )}
-                </div>
-
-                <div className="grid min-w-0 gap-3 sm:grid-cols-2">
-                    <OptionSelect
-                        label={t("quality")}
-                        hint={t("qualityHint", { size: downloadSize })}
-                        value={quality}
-                        disabled={busy}
-                        items={Object.fromEntries(
-                            CUTOUT_QUALITIES.map((name) => [
-                                name,
-                                tQualities(name, {
-                                    size: byteLabel(CUTOUT_MODELS[name].bytes),
-                                }),
-                            ]),
-                        )}
-                        values={CUTOUT_QUALITIES}
-                        onChange={setQuality}
-                    />
                 </div>
 
                 {/*

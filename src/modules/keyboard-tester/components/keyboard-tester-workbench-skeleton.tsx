@@ -18,12 +18,9 @@ export function KeyboardTesterWorkbenchSkeleton() {
                     </div>
                 ))}
             </div>
-            <div className="border-border/70 grid grid-cols-2 gap-2 border-b p-4 sm:grid-cols-4 sm:p-5">
-                {Array.from({ length: 4 }, (_, index) => (
-                    <Skeleton key={index} className="h-16 rounded-xl" />
-                ))}
-            </div>
+            {/* The board under its step label, then the readings. */}
             <div className="flex flex-col gap-3 p-4 sm:p-5">
+                <Skeleton className="h-5 w-40" />
                 <Skeleton className="aspect-[22.5/6.5] w-full rounded-2xl" />
                 <Skeleton className="h-4 w-2/3" />
                 <div className="flex gap-1.5">
@@ -31,6 +28,11 @@ export function KeyboardTesterWorkbenchSkeleton() {
                         <Skeleton key={index} className="h-6 w-12 rounded-md" />
                     ))}
                 </div>
+            </div>
+            <div className="border-border/70 grid gap-3 border-t p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-4">
+                {Array.from({ length: 4 }, (_, index) => (
+                    <Skeleton key={index} className="h-36 rounded-xl" />
+                ))}
             </div>
             <div className="border-border/70 grid gap-5 border-t p-4 sm:p-5 lg:grid-cols-3">
                 {Array.from({ length: 3 }, (_, index) => (

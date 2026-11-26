@@ -2,10 +2,12 @@
 
 import { useFormatter, useTranslations } from "next-intl";
 
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { previewFrameMaxWidth } from "@/modules/tools/domain/preview-frame";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
-import { IconCopyButton } from "@/modules/tools/components/copy-button";
+import { CopyIconSwap, IconCopyButton } from "@/modules/tools/components/copy-button";
+import { RESULT_TRAY, StepLabel } from "@/modules/tools/components/workbench-step";
 import { buildSnippet, SNIPPET_KINDS, type SnippetKind } from "../domain/snippets";
 import type { BlurPlaceholder } from "../types";
 import { BlurPreview } from "./blur-preview";
@@ -64,12 +66,34 @@ export function PlaceholderOutput({
     const caption = "text-muted-foreground text-[0.6875rem] leading-normal";
 
     return (
-        <div
-            className={cn(
-                "flex min-w-0 flex-col gap-4 transition-opacity duration-200",
-                stale && "opacity-55",
-            )}
-        >
+        <div className={cn(RESULT_TRAY, "transition-opacity duration-200", stale && "opacity-55")}>
+            <dl className="grid min-w-0 gap-2 sm:grid-cols-2">
+                {/* The hash is what gets stored, so it heads the tray and
+                    carries the one filled button. */}
+                <Field
+                    lead
+                    label={t("hashLabel")}
+                    hint={t("hashHint", {
+                        count: format.number(placeholder.hash.length),
+                        x: String(placeholder.componentX),
+                        y: String(placeholder.componentY),
+                    })}
+                    value={placeholder.hash}
+                    copyLabel={t("copyHash")}
+                    copied={copied === "hash"}
+                    onCopy={() => onCopy("hash", placeholder.hash)}
+                />
+
+                <Field
+                    label={t("dataUriLabel")}
+                    hint={t("dataUriHint", { size: byteLabel(placeholder.dataUriBytes) })}
+                    value={placeholder.dataUri}
+                    copyLabel={t("copyDataUri")}
+                    copied={copied === "dataUri"}
+                    onCopy={() => onCopy("dataUri", placeholder.dataUri)}
+                />
+            </dl>
+
             {/*
              * Side by side and the same size, because "does this look like my
              * picture" is the only question this tool is really asked, and it
@@ -120,31 +144,7 @@ export function PlaceholderOutput({
                 </figure>
             </div>
 
-            <dl className="grid min-w-0 gap-2 sm:grid-cols-2">
-                <Field
-                    label={t("hashLabel")}
-                    hint={t("hashHint", {
-                        count: format.number(placeholder.hash.length),
-                        x: String(placeholder.componentX),
-                        y: String(placeholder.componentY),
-                    })}
-                    value={placeholder.hash}
-                    copyLabel={t("copyHash")}
-                    copied={copied === "hash"}
-                    onCopy={() => onCopy("hash", placeholder.hash)}
-                />
-
-                <Field
-                    label={t("dataUriLabel")}
-                    hint={t("dataUriHint", { size: byteLabel(placeholder.dataUriBytes) })}
-                    value={placeholder.dataUri}
-                    copyLabel={t("copyDataUri")}
-                    copied={copied === "dataUri"}
-                    onCopy={() => onCopy("dataUri", placeholder.dataUri)}
-                />
-            </dl>
-
-            <div className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-2 rounded-xl px-3 py-2.5 ring-1 ring-inset">
+            <div className="bg-card ring-border/70 flex min-w-0 flex-col gap-2 rounded-xl px-3 py-2.5 ring-1 ring-inset">
                 <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
                     <div role="tablist" aria-label={tSnippets("label")} className="flex gap-1">
                         {SNIPPET_KINDS.map((kind) => (
@@ -187,6 +187,8 @@ export function PlaceholderOutput({
 }
 
 type FieldProps = {
+    /** Step 2's label and the filled copy button: the string the reader came for. */
+    lead?: boolean;
     label: string;
     hint: string;
     value: string;
@@ -197,12 +199,25 @@ type FieldProps = {
 
 /** One copyable string with its own caption. `min-w-0` throughout, or a
  *  200-character data URI blows the grid out at 390 px. */
-function Field({ label, hint, value, copyLabel, copied, onCopy }: FieldProps) {
+function Field({ lead = false, label, hint, value, copyLabel, copied, onCopy }: FieldProps) {
     return (
-        <div className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-1 rounded-xl px-3 py-2.5 ring-1 ring-inset">
+        <div className="bg-card ring-border/70 flex min-w-0 flex-col gap-1 rounded-xl px-3 py-2.5 ring-1 ring-inset">
             <div className="flex min-w-0 items-start justify-between gap-2">
-                <dt className="text-[0.8125rem] leading-[1.3] font-medium">{label}</dt>
-                <IconCopyButton copied={copied} aria-label={copyLabel} onClick={onCopy} />
+                {lead ? (
+                    <dt>
+                        <StepLabel step={2}>{label}</StepLabel>
+                    </dt>
+                ) : (
+                    <dt className="text-[0.8125rem] leading-[1.3] font-medium">{label}</dt>
+                )}
+                {lead ? (
+                    <Button size="sm" onClick={onCopy}>
+                        <CopyIconSwap copied={copied} />
+                        {copyLabel}
+                    </Button>
+                ) : (
+                    <IconCopyButton copied={copied} aria-label={copyLabel} onClick={onCopy} />
+                )}
             </div>
             <dd className="min-w-0">
                 <p className="text-muted-foreground max-h-24 min-w-0 overflow-y-auto font-mono text-[0.6875rem] leading-[1.6] break-all">

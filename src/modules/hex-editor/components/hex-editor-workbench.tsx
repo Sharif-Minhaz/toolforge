@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/
 import { useIsHydrated } from "@/hooks/use-is-hydrated";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
+import { StepLabel } from "@/modules/tools/components/workbench-step";
 import { copyText } from "@/modules/tools/domain/clipboard";
 import { MAX_COPY_BYTES, MAX_FILE_BYTES } from "../domain/constants";
 import { byteToAscii, byteToHex, formatHexDump } from "../domain/format";
@@ -462,9 +463,11 @@ export function HexEditorWorkbench({
                                 aria-hidden="true"
                             />
                             <div className="flex max-w-[42ch] flex-col gap-1">
-                                <p className="text-foreground text-sm font-medium">
+                                {/* The way in, while there is nothing else to do. No
+                                    `htmlFor`: naming the button would rename it. */}
+                                <StepLabel step={1} className="justify-center">
                                     {t("emptyTitle")}
-                                </p>
+                                </StepLabel>
                                 <p className="text-muted-foreground text-[0.8125rem] leading-6">
                                     {t("emptyDescription")}
                                 </p>

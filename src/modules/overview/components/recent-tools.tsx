@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { Reveal } from "@/components/motion/reveal";
 import { cn } from "@/lib/utils";
-import { TOOL_ACCENT_VARS, TOOL_ICON_TILE } from "@/modules/tools/components/tool-accent";
+import { KEYCAP_ICON } from "@/modules/tools/components/tool-accent";
 import { ToolIcon } from "@/modules/tools/components/tool-icon";
 import { needsNetwork } from "@/modules/tools/domain/network";
 import { getRecentTools } from "@/modules/tools/domain/tool-catalog";
@@ -24,7 +24,7 @@ export async function RecentTools() {
 
         const inner = (
             <>
-                <span className={cn(TOOL_ICON_TILE, "size-8")}>
+                <span className={cn(KEYCAP_ICON, "size-8 rounded-lg")}>
                     <ToolIcon name={tool.icon} className="size-4" />
                 </span>
                 <span className="min-w-0 flex-1 truncate text-[0.875rem] font-medium">
@@ -55,7 +55,6 @@ export async function RecentTools() {
 
         const rowClass = cn(
             "flex items-center gap-3 px-3 py-2.5 transition-colors duration-200",
-            TOOL_ACCENT_VARS[tool.accent],
             available
                 ? "hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:-outline-offset-2"
                 : "opacity-65",

@@ -6,14 +6,18 @@ import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent } from "@/components/ui/card";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { StatusStrip } from "@/modules/tools/components/status-strip";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
+import {
+    OptionsDisclosure,
+    RESULT_TRAY,
+    StepLabel,
+} from "@/modules/tools/components/workbench-step";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
 import { MAX_PDF_SOURCE_BYTES, PDF_FONT_DIRECTORY, PDF_MIME_TYPE } from "../domain/constants";
 import { coerceOptions, convertText, describeDocument } from "../domain/convert";
@@ -296,201 +300,204 @@ export function PdfConverterWorkbench({
     const convertible = result?.ok === true && !building && !reading;
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
-
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-            </CardHeader>
-
-            <CardContent className="flex flex-col gap-5">
-                <div className="flex flex-col gap-2">
-                    <span id={sourceLabelId} className="text-muted-foreground text-xs">
-                        {t("sourceLabel")}
-                    </span>
-                    <div
-                        role="radiogroup"
-                        aria-labelledby={sourceLabelId}
-                        className="bg-muted/50 ring-border/70 inline-flex w-fit gap-1 rounded-xl p-1 ring-1 ring-inset"
-                    >
-                        {(["file", "paste"] as const).map((value) => (
-                            <button
-                                key={value}
-                                type="button"
-                                role="radio"
-                                aria-checked={source === value}
-                                onClick={() => {
-                                    setSource(value);
-                                    forget();
-                                }}
-                                className={cn(
-                                    "focus-visible:ring-ring rounded-lg px-3.5 py-1.5 text-[0.8125rem] leading-[1.3] font-medium",
-                                    "transition-colors duration-200 focus-visible:ring-2 focus-visible:outline-none",
-                                    source === value
-                                        ? "bg-card text-foreground shadow-sm"
-                                        : "text-muted-foreground hover:text-foreground",
-                                )}
-                            >
-                                {t(`sources.${value}`)}
-                            </button>
-                        ))}
+        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+            <CardContent className="flex flex-col gap-6">
+                <div className="flex flex-col gap-5">
+                    <div className="flex flex-col gap-2">
+                        <StepLabel step={1} id={sourceLabelId}>
+                            {t("sourceLabel")}
+                        </StepLabel>
+                        <div
+                            role="radiogroup"
+                            aria-labelledby={sourceLabelId}
+                            className="bg-muted/50 ring-border/70 inline-flex w-fit gap-1 rounded-xl p-1 ring-1 ring-inset"
+                        >
+                            {(["file", "paste"] as const).map((value) => (
+                                <button
+                                    key={value}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={source === value}
+                                    onClick={() => {
+                                        setSource(value);
+                                        forget();
+                                    }}
+                                    className={cn(
+                                        "focus-visible:ring-ring rounded-lg px-3.5 py-1.5 text-[0.8125rem] leading-[1.3] font-medium",
+                                        "transition-colors duration-200 focus-visible:ring-2 focus-visible:outline-none",
+                                        source === value
+                                            ? "bg-card text-foreground shadow-sm"
+                                            : "text-muted-foreground hover:text-foreground",
+                                    )}
+                                >
+                                    {t(`sources.${value}`)}
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                </div>
 
-                {source === "file" ? (
-                    <FilePicker
-                        file={file}
-                        reading={reading}
-                        error={inputProblem === null ? null : describeFailure(inputProblem)}
-                        onFile={handleFile}
-                        onClear={handleClearFile}
-                    />
-                ) : (
-                    <PastePanel
-                        format={pasteFormat}
-                        text={text}
-                        error={inputProblem === null ? null : describeFailure(inputProblem)}
-                        onFormatChange={(next) => {
-                            setPasteFormat(next);
-                            forget();
-                        }}
-                        onTextChange={(next) => {
-                            setText(next);
-                            forget();
-                        }}
-                        onClear={() => {
-                            setText("");
-                            forget();
-                        }}
-                    />
-                )}
-
-                <Separator />
-
-                <PdfOptions
-                    format={format}
-                    options={effective}
-                    onChange={(patch) => {
-                        setOptions((current) => ({ ...current, ...patch }));
-                        forget();
-                    }}
-                />
-
-                <Separator />
-
-                <section
-                    className={cn(
-                        "flex flex-col gap-3 transition-opacity duration-200",
-                        pending && "opacity-55",
-                    )}
-                    aria-label={t("summaryTitle")}
-                >
-                    {summary === null ? (
-                        <div className="flex flex-col gap-1">
-                            <p className="text-[0.9375rem] leading-[1.4] font-medium">
-                                {documentProblem === null ? t("emptyTitle") : t("summaryTitle")}
-                            </p>
-                            <p className="text-muted-foreground text-xs leading-[1.5]">
-                                {documentProblem === null
-                                    ? t("emptyDescription")
-                                    : describeFailure(documentProblem)}
-                            </p>
-                        </div>
+                    {source === "file" ? (
+                        <FilePicker
+                            file={file}
+                            reading={reading}
+                            error={inputProblem === null ? null : describeFailure(inputProblem)}
+                            onFile={handleFile}
+                            onClear={handleClearFile}
+                        />
                     ) : (
-                        <div className="flex flex-col gap-2">
-                            <p className="text-muted-foreground text-xs">{t("summaryTitle")}</p>
-                            <ul className="flex flex-wrap items-center gap-1.5">
-                                {[
-                                    summary.layout === "slides"
-                                        ? t("summarySlides", { count: summary.units })
-                                        : t("summaryBlocks", { count: summary.units }),
-                                    t("summaryWords", { count: summary.words }),
-                                    ...(summary.tables > 0
-                                        ? [t("summaryTables", { count: summary.tables })]
-                                        : []),
-                                    ...(summary.images > 0
-                                        ? [t("summaryImages", { count: summary.images })]
-                                        : []),
-                                ].map((label) => (
-                                    <li
-                                        key={label}
-                                        className="bg-card/70 text-muted-foreground ring-border/70 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset"
-                                    >
-                                        {label}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-
-                    {result?.ok === true && <ConversionNotes notes={result.notes} />}
-
-                    {renderFailure !== null && (
-                        <StatusStrip
-                            tone="error"
-                            message={tErrors(
-                                renderFailure === "font_unavailable"
-                                    ? "fontUnavailable"
-                                    : "engineFailed",
-                            )}
+                        <PastePanel
+                            format={pasteFormat}
+                            text={text}
+                            error={inputProblem === null ? null : describeFailure(inputProblem)}
+                            onFormatChange={(next) => {
+                                setPasteFormat(next);
+                                forget();
+                            }}
+                            onTextChange={(next) => {
+                                setText(next);
+                                forget();
+                            }}
+                            onClear={() => {
+                                setText("");
+                                forget();
+                            }}
                         />
                     )}
-                </section>
-
-                <div className="flex flex-wrap items-center gap-2">
-                    <Button onClick={handleConvert} disabled={!convertible}>
-                        {building ? (
-                            <IconLoader2
-                                className="size-4 animate-spin"
-                                stroke={1.8}
-                                aria-hidden="true"
-                            />
-                        ) : (
-                            <IconFileTypePdf className="size-4" stroke={1.8} aria-hidden="true" />
-                        )}
-                        {building ? t("converting") : t("convert")}
-                    </Button>
                 </div>
 
-                {output !== null && (
-                    <div
-                        ref={resultRef}
-                        className="bg-card/60 ring-border/70 flex flex-wrap items-center justify-between gap-3 rounded-xl px-4 py-3 ring-1 ring-inset"
-                    >
-                        <div className="flex min-w-0 flex-col gap-0.5">
-                            <p className="text-muted-foreground text-xs">{t("resultTitle")}</p>
-                            <p className="truncate text-[0.9375rem] leading-[1.4] font-medium">
-                                {output.filename}
-                            </p>
-                            <p className="text-muted-foreground font-mono text-[0.6875rem] tabular-nums">
-                                {byteLabel(output.bytes.length)}
-                            </p>
-                        </div>
+                <OptionsDisclosure label={t("optionsTitle")}>
+                    <PdfOptions
+                        format={format}
+                        options={effective}
+                        onChange={(patch) => {
+                            setOptions((current) => ({ ...current, ...patch }));
+                            forget();
+                        }}
+                    />
+                </OptionsDisclosure>
 
-                        <div className="flex flex-wrap items-center gap-2">
-                            <Button variant="outline" size="sm" onClick={handlePreview}>
-                                <IconExternalLink
-                                    className="size-3.5"
+                <div className={RESULT_TRAY}>
+                    <StepLabel step={2}>{t("resultTitle")}</StepLabel>
+
+                    <section
+                        className={cn(
+                            "flex flex-col gap-3 transition-opacity duration-200",
+                            pending && "opacity-55",
+                        )}
+                        aria-label={t("summaryTitle")}
+                    >
+                        {summary === null ? (
+                            <div className="flex flex-col gap-1">
+                                <p className="text-[0.9375rem] leading-[1.4] font-medium">
+                                    {documentProblem === null ? t("emptyTitle") : t("summaryTitle")}
+                                </p>
+                                <p className="text-muted-foreground text-xs leading-[1.5]">
+                                    {documentProblem === null
+                                        ? t("emptyDescription")
+                                        : describeFailure(documentProblem)}
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col gap-2">
+                                <p className="text-muted-foreground text-xs">{t("summaryTitle")}</p>
+                                <ul className="flex flex-wrap items-center gap-1.5">
+                                    {[
+                                        summary.layout === "slides"
+                                            ? t("summarySlides", { count: summary.units })
+                                            : t("summaryBlocks", { count: summary.units }),
+                                        t("summaryWords", { count: summary.words }),
+                                        ...(summary.tables > 0
+                                            ? [t("summaryTables", { count: summary.tables })]
+                                            : []),
+                                        ...(summary.images > 0
+                                            ? [t("summaryImages", { count: summary.images })]
+                                            : []),
+                                    ].map((label) => (
+                                        <li
+                                            key={label}
+                                            className="bg-card text-muted-foreground ring-border/70 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset"
+                                        >
+                                            {label}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
+                        {result?.ok === true && <ConversionNotes notes={result.notes} />}
+
+                        {renderFailure !== null && (
+                            <StatusStrip
+                                tone="error"
+                                message={tErrors(
+                                    renderFailure === "font_unavailable"
+                                        ? "fontUnavailable"
+                                        : "engineFailed",
+                                )}
+                            />
+                        )}
+                    </section>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                        {/* One filled button at a time: Create PDF until there is a
+                        PDF, then Download — the next press either way. */}
+                        <Button
+                            variant={output === null ? "default" : "outline"}
+                            onClick={handleConvert}
+                            disabled={!convertible}
+                        >
+                            {building ? (
+                                <IconLoader2
+                                    className="size-4 animate-spin"
                                     stroke={1.8}
                                     aria-hidden="true"
                                 />
-                                {t("openPreview")}
-                            </Button>
-                            <Button size="sm" onClick={handleDownload}>
-                                <IconDownload
-                                    className="size-3.5"
+                            ) : (
+                                <IconFileTypePdf
+                                    className="size-4"
                                     stroke={1.8}
                                     aria-hidden="true"
                                 />
-                                {t("download")}
-                            </Button>
-                        </div>
+                            )}
+                            {building ? t("converting") : t("convert")}
+                        </Button>
                     </div>
-                )}
+
+                    {output !== null && (
+                        <div
+                            ref={resultRef}
+                            className="bg-card ring-border/70 flex flex-wrap items-center justify-between gap-3 rounded-xl px-4 py-3 ring-1 ring-inset"
+                        >
+                            <div className="flex min-w-0 flex-col gap-0.5">
+                                <p className="truncate text-[0.9375rem] leading-[1.4] font-medium">
+                                    {output.filename}
+                                </p>
+                                <p className="text-muted-foreground font-mono text-[0.6875rem] tabular-nums">
+                                    {byteLabel(output.bytes.length)}
+                                </p>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Button variant="outline" size="sm" onClick={handlePreview}>
+                                    <IconExternalLink
+                                        className="size-3.5"
+                                        stroke={1.8}
+                                        aria-hidden="true"
+                                    />
+                                    {t("openPreview")}
+                                </Button>
+                                <Button size="sm" onClick={handleDownload}>
+                                    <IconDownload
+                                        className="size-3.5"
+                                        stroke={1.8}
+                                        aria-hidden="true"
+                                    />
+                                    {t("download")}
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </CardContent>
         </Card>
     );

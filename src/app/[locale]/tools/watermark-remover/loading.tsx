@@ -14,18 +14,16 @@ export default function WatermarkRemoverLoading() {
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                     {Array.from({ length: 5 }, (_, index) => (
-                        <Skeleton key={index} className="h-6 w-28 rounded-full" />
+                        <Skeleton key={index} className="h-4 w-28" />
                     ))}
                 </div>
             </div>
 
             <div className="bg-card ring-border/70 flex flex-col gap-5 rounded-xl p-5 ring-1 ring-inset sm:p-6">
-                <div className="flex flex-col gap-1.5">
-                    <Skeleton className="h-5 w-52" />
-                    <Skeleton className="h-4 w-72" />
-                </div>
-
                 <Skeleton className="h-8 w-full rounded-lg" />
+
+                {/* The image tab's upload disclosure line. */}
+                <Skeleton className="h-4 w-full max-w-xl" />
 
                 <div className="flex flex-col gap-2">
                     <Skeleton className="h-32 w-full rounded-xl" />

@@ -6,9 +6,8 @@ import { useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useIsHydrated } from "@/hooks/use-is-hydrated";
 import { cn } from "@/lib/utils";
@@ -19,6 +18,11 @@ import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
+import {
+    OptionsDisclosure,
+    RESULT_TRAY,
+    StepLabel,
+} from "@/modules/tools/components/workbench-step";
 import { ZonePicker } from "@/modules/tools/components/zone-picker";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
@@ -235,23 +239,18 @@ export function CronWorkbench({
     const runCountInvalid = String(options.runCount) !== runCountText.trim();
 
     return (
-        <div className={cn("flex flex-col gap-6", TOOL_ACCENT_VARS.emerald)}>
-            <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-                <span
-                    aria-hidden="true"
-                    className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-                />
-
-                <CardHeader>
-                    <CardTitle className="text-lg">{t("title")}</CardTitle>
-                    <CardDescription>{t("description")}</CardDescription>
-                </CardHeader>
-
-                <CardContent className="flex flex-col gap-5">
-                    <div className="flex flex-col gap-1.5">
-                        <Label htmlFor={inputId} className="text-muted-foreground text-xs">
-                            <span className="leading-[1.3]">{t("inputLabel")}</span>
-                        </Label>
+        <Card
+            className={cn(
+                "[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]",
+                TOOL_ACCENT_VARS.emerald,
+            )}
+        >
+            <CardContent className="flex flex-col gap-6">
+                <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-2">
+                        <StepLabel step={1} htmlFor={inputId}>
+                            {t("inputLabel")}
+                        </StepLabel>
 
                         <div
                             className={cn(
@@ -297,109 +296,122 @@ export function CronWorkbench({
                     </div>
 
                     {result.ok && (
-                        <>
-                            <div
-                                className={cn(
-                                    "rounded-xl px-4 py-3 ring-1 transition-opacity duration-200 ring-inset",
-                                    "bg-[color-mix(in_oklch,var(--tool-accent)_10%,transparent)]",
-                                    "ring-[color-mix(in_oklch,var(--tool-accent)_22%,transparent)]",
-                                    pending && "opacity-55",
-                                )}
-                            >
-                                <p className="text-[0.9375rem] leading-[1.6] font-medium sm:text-base">
-                                    {renderExplanation(result.explanation)}
-                                </p>
-                                {result.explanation.dayUnion && (
-                                    <p className="text-muted-foreground mt-1.5 text-[0.75rem] leading-normal">
-                                        {t("dayUnionNote")}
-                                    </p>
-                                )}
-                            </div>
-
-                            <CronFieldGrid expression={result.expression} pending={pending} />
-                        </>
+                        <CronFieldGrid expression={result.expression} pending={pending} />
                     )}
 
                     <CronPresets active={expression.trim()} onSelect={setExpression} />
+                </div>
 
-                    <Separator />
+                {/* Zone, weekday numbering and run count: each has a sensible
+                    default, and the runs below name the zone they are read in. */}
+                <OptionsDisclosure>
+                    <div className="flex flex-col gap-5">
+                        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,14rem)]">
+                            <div className="flex flex-col gap-2">
+                                <ZonePicker
+                                    region={region}
+                                    timeZone={options.timeZone}
+                                    regionLabel={t("regionLabel")}
+                                    cityLabel={t("cityLabel")}
+                                    onRegionChange={setRegion}
+                                    onTimeZoneChange={(timeZone) => patch({ timeZone })}
+                                />
+                                {hydrated && localTimeZone !== options.timeZone && (
+                                    <div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleTimeZoneChange(localTimeZone)}
+                                        >
+                                            <IconMapPin
+                                                className="size-3.5"
+                                                stroke={1.8}
+                                                aria-hidden="true"
+                                            />
+                                            {t("useLocalZone", {
+                                                zone: getTimeZoneCity(localTimeZone),
+                                            })}
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
 
-                    <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,14rem)]">
-                        <div className="flex flex-col gap-2">
-                            <ZonePicker
-                                region={region}
-                                timeZone={options.timeZone}
-                                regionLabel={t("regionLabel")}
-                                cityLabel={t("cityLabel")}
-                                onRegionChange={setRegion}
-                                onTimeZoneChange={(timeZone) => patch({ timeZone })}
+                            <OptionSelect
+                                label={t("weekdayBaseLabel")}
+                                hint={t("weekdayBaseHint")}
+                                value={options.weekdayBase}
+                                items={{
+                                    unix: t("bases.unix"),
+                                    quartz: t("bases.quartz"),
+                                }}
+                                values={CRON_WEEKDAY_BASES}
+                                onChange={(weekdayBase) => patch({ weekdayBase })}
                             />
-                            {hydrated && localTimeZone !== options.timeZone && (
-                                <div>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handleTimeZoneChange(localTimeZone)}
-                                    >
-                                        <IconMapPin
-                                            className="size-3.5"
-                                            stroke={1.8}
-                                            aria-hidden="true"
-                                        />
-                                        {t("useLocalZone", {
-                                            zone: getTimeZoneCity(localTimeZone),
-                                        })}
-                                    </Button>
-                                </div>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                            <Label htmlFor={runCountId} className="text-muted-foreground text-xs">
+                                <span className="leading-[1.3]">{t("runCountLabel")}</span>
+                            </Label>
+                            <NumberStepper
+                                value={runCountText}
+                                numeric={options.runCount}
+                                min={MIN_RUN_COUNT}
+                                max={MAX_RUN_COUNT}
+                                presets={RUN_COUNT_PRESETS}
+                                invalid={runCountInvalid}
+                                inputId={runCountId}
+                                describedById={runCountHintId}
+                                hint={t("runCountHint", { min: MIN_RUN_COUNT, max: MAX_RUN_COUNT })}
+                                presetsLabel={t("runCountPresets")}
+                                decreaseLabel={t("runCountDecrease")}
+                                increaseLabel={t("runCountIncrease")}
+                                onChange={handleRunCountChange}
+                                onPreset={setRunCount}
+                                onStep={(delta) => setRunCount(options.runCount + delta)}
+                            />
+                        </div>
+                    </div>
+                </OptionsDisclosure>
+
+                {result.ok && (
+                    <div className={RESULT_TRAY}>
+                        <div className="flex min-h-7 flex-wrap items-center justify-between gap-2">
+                            <StepLabel step={2}>{t("runsTitle")}</StepLabel>
+                            {/* The one filled button: taking the runs away is
+                                where the tool ends. */}
+                            {result.schedule.runs.length > 0 && (
+                                <Button size="sm" onClick={handleDownload}>
+                                    <IconDownload
+                                        className="size-3.5"
+                                        stroke={1.8}
+                                        aria-hidden="true"
+                                    />
+                                    {t("download")}
+                                </Button>
                             )}
                         </div>
 
-                        <OptionSelect
-                            label={t("weekdayBaseLabel")}
-                            hint={t("weekdayBaseHint")}
-                            value={options.weekdayBase}
-                            items={{
-                                unix: t("bases.unix"),
-                                quartz: t("bases.quartz"),
-                            }}
-                            values={CRON_WEEKDAY_BASES}
-                            onChange={(weekdayBase) => patch({ weekdayBase })}
-                        />
-                    </div>
+                        <div
+                            className={cn(
+                                "rounded-lg px-4 py-3 ring-1 transition-opacity duration-200 ring-inset",
+                                // Mixed into the card, not the tray, so the sentence keeps its
+                                // own surface inside the result.
+                                "bg-[color-mix(in_oklch,var(--tool-accent)_10%,var(--card))]",
+                                "ring-[color-mix(in_oklch,var(--tool-accent)_22%,transparent)]",
+                                pending && "opacity-55",
+                            )}
+                        >
+                            <p className="text-[0.9375rem] leading-[1.6] font-medium sm:text-base">
+                                {renderExplanation(result.explanation)}
+                            </p>
+                            {result.explanation.dayUnion && (
+                                <p className="text-muted-foreground mt-1.5 text-[0.75rem] leading-normal">
+                                    {t("dayUnionNote")}
+                                </p>
+                            )}
+                        </div>
 
-                    <div className="flex flex-col gap-1.5">
-                        <Label htmlFor={runCountId} className="text-muted-foreground text-xs">
-                            <span className="leading-[1.3]">{t("runCountLabel")}</span>
-                        </Label>
-                        <NumberStepper
-                            value={runCountText}
-                            numeric={options.runCount}
-                            min={MIN_RUN_COUNT}
-                            max={MAX_RUN_COUNT}
-                            presets={RUN_COUNT_PRESETS}
-                            invalid={runCountInvalid}
-                            inputId={runCountId}
-                            describedById={runCountHintId}
-                            hint={t("runCountHint", { min: MIN_RUN_COUNT, max: MAX_RUN_COUNT })}
-                            presetsLabel={t("runCountPresets")}
-                            decreaseLabel={t("runCountDecrease")}
-                            increaseLabel={t("runCountIncrease")}
-                            onChange={handleRunCountChange}
-                            onPreset={setRunCount}
-                            onStep={(delta) => setRunCount(options.runCount + delta)}
-                        />
-                    </div>
-                </CardContent>
-            </Card>
-
-            {result.ok && (
-                <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-                    <CardHeader>
-                        <CardTitle className="text-lg">{t("runsTitle")}</CardTitle>
-                        <CardDescription>{t("runsDescription")}</CardDescription>
-                    </CardHeader>
-
-                    <CardContent className="flex flex-col gap-4">
                         {!result.timeZoneSupported && (
                             <p
                                 role="status"
@@ -417,22 +429,9 @@ export function CronWorkbench({
                             copiedField={copiedField}
                             onCopy={handleCopy}
                         />
-
-                        {result.schedule.runs.length > 0 && (
-                            <div>
-                                <Button variant="outline" size="sm" onClick={handleDownload}>
-                                    <IconDownload
-                                        className="size-3.5"
-                                        stroke={1.8}
-                                        aria-hidden="true"
-                                    />
-                                    {t("download")}
-                                </Button>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            )}
-        </div>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
     );
 }

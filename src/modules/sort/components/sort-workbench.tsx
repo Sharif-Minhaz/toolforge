@@ -6,8 +6,7 @@ import { useId, useState } from "react";
 import { toast } from "sonner";
 
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
@@ -15,6 +14,11 @@ import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
+import {
+    OptionsDisclosure,
+    RESULT_TRAY,
+    StepLabel,
+} from "@/modules/tools/components/workbench-step";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
 import { cryptoRandomBytes } from "@/modules/tools/domain/random";
@@ -29,7 +33,7 @@ import { createSortExportFile } from "../domain/export";
 import { drawShuffleSeed } from "../domain/shuffle";
 import { sortLines } from "../domain/sort-lines";
 import type { ListFormat, SortFailure, SortOptions, SortOrder } from "../types";
-import { SortOptionsPanel } from "./sort-options";
+import { SortOptionsPanel, SortOrderField } from "./sort-options";
 
 type SortWorkbenchProps = {
     initialText: string;
@@ -205,155 +209,164 @@ export function SortWorkbench({
     }
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
-
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-            </CardHeader>
-
-            <CardContent className="flex flex-col gap-5">
-                <div className="flex flex-col gap-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                        <Label htmlFor={inputId} className="text-muted-foreground text-xs">
-                            {t("inputLabel")}
-                        </Label>
-                        <div className="flex items-center gap-1.5">
-                            <InputLimitMeter reading={inputLimit} />
-                            <button
-                                type="button"
-                                onClick={() => setText("")}
-                                disabled={text.length === 0}
-                                aria-label={t("clear")}
-                                className={cn(
-                                    buttonVariants({ variant: "ghost", size: "icon-sm" }),
-                                    "text-muted-foreground hover:text-foreground",
-                                )}
-                            >
-                                <IconX className="size-4" stroke={1.9} aria-hidden="true" />
-                            </button>
-                        </div>
-                    </div>
-                    <Textarea
-                        id={inputId}
-                        value={text}
-                        onChange={(event) => setText(event.target.value)}
-                        placeholder={t("placeholder")}
-                        spellCheck={false}
-                        autoComplete="off"
-                        className="bg-card/70 max-h-80 min-h-32 resize-y rounded-xl text-[0.9375rem] leading-6"
+        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+            <CardContent className="flex flex-col gap-6">
+                {/* The order, then the finer settings folded away, so the
+                    input and its result are the first things on screen. */}
+                <div className="flex flex-col gap-3">
+                    <SortOrderField
+                        order={options.order}
+                        onChange={(order) => patch({ order })}
+                        onReshuffle={handleReshuffle}
                     />
-                    {/* Counted from the settled value, or the counter and the
-                        result would disagree by a keystroke. */}
-                    <p
-                        className={cn(
-                            "text-muted-foreground font-mono text-[0.6875rem] tabular-nums",
-                            "transition-opacity duration-200",
-                            pending && "opacity-55",
-                        )}
-                    >
-                        {result.ok
-                            ? t("inputStats", {
-                                  lines: formatter.number(result.counts.lines),
-                                  items: formatter.number(result.counts.split),
-                              })
-                            : null}
-                        {result.ok && result.counts.joined > 0 && result.counts.wrapWidth !== null
-                            ? ` · ${t("joinedNote", {
-                                  joined: result.counts.joined,
-                                  column: formatter.number(result.counts.wrapWidth),
-                              })}`
-                            : null}
-                    </p>
+
+                    <OptionsDisclosure>
+                        <SortOptionsPanel
+                            options={options}
+                            startField={startField}
+                            startInvalid={startInvalid}
+                            onChange={patch}
+                            onStartChange={handleStartChange}
+                            onStartCommit={handleStartCommit}
+                        />
+                    </OptionsDisclosure>
                 </div>
 
-                <SortOptionsPanel
-                    options={options}
-                    startField={startField}
-                    startInvalid={startInvalid}
-                    onChange={patch}
-                    onStartChange={handleStartChange}
-                    onStartCommit={handleStartCommit}
-                    onReshuffle={handleReshuffle}
-                />
-
-                <div ref={resultRef} className="flex scroll-mt-24 flex-col gap-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                        <Label htmlFor={outputId} className="text-muted-foreground text-xs">
-                            {t("outputLabel")}
-                        </Label>
-
-                        <div className="flex items-center gap-1.5">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleCopy}
-                                disabled={sorted.length === 0}
-                            >
-                                <IconClipboardCheck
-                                    className="size-3.5"
-                                    stroke={1.8}
-                                    aria-hidden="true"
-                                />
-                                {t("copy")}
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleDownload}
-                                disabled={sorted.length === 0}
-                            >
-                                <IconDownload
-                                    className="size-3.5"
-                                    stroke={1.8}
-                                    aria-hidden="true"
-                                />
-                                {t("download")}
-                            </Button>
+                {/* Step 1 beside step 2 on a wide screen; stacked on a narrow one. */}
+                <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="flex min-w-0 flex-col gap-3">
+                        <div className="flex min-h-7 flex-wrap items-center justify-between gap-2">
+                            <StepLabel step={1} htmlFor={inputId}>
+                                {t("inputLabel")}
+                            </StepLabel>
+                            <div className="flex items-center gap-1.5">
+                                <InputLimitMeter reading={inputLimit} />
+                                <button
+                                    type="button"
+                                    onClick={() => setText("")}
+                                    disabled={text.length === 0}
+                                    aria-label={t("clear")}
+                                    className={cn(
+                                        buttonVariants({ variant: "ghost", size: "icon-sm" }),
+                                        "text-muted-foreground hover:text-foreground",
+                                    )}
+                                >
+                                    <IconX className="size-4" stroke={1.9} aria-hidden="true" />
+                                </button>
+                            </div>
                         </div>
+                        <Textarea
+                            id={inputId}
+                            value={text}
+                            onChange={(event) => setText(event.target.value)}
+                            placeholder={t("placeholder")}
+                            spellCheck={false}
+                            autoComplete="off"
+                            className="bg-card/70 max-h-80 min-h-32 resize-y rounded-xl text-[0.9375rem] leading-6"
+                        />
+                        {/* Counted from the settled value, or the counter and the
+                            result would disagree by a keystroke. */}
+                        <p
+                            className={cn(
+                                "text-muted-foreground font-mono text-[0.6875rem] tabular-nums",
+                                "transition-opacity duration-200",
+                                pending && "opacity-55",
+                            )}
+                        >
+                            {result.ok
+                                ? t("inputStats", {
+                                      lines: formatter.number(result.counts.lines),
+                                      items: formatter.number(result.counts.split),
+                                  })
+                                : null}
+                            {result.ok &&
+                            result.counts.joined > 0 &&
+                            result.counts.wrapWidth !== null
+                                ? ` · ${t("joinedNote", {
+                                      joined: result.counts.joined,
+                                      column: formatter.number(result.counts.wrapWidth),
+                                  })}`
+                                : null}
+                        </p>
                     </div>
 
-                    <Textarea
-                        id={outputId}
-                        readOnly
-                        value={sorted}
-                        placeholder={t("outputPlaceholder")}
-                        spellCheck={false}
-                        aria-describedby={statusId}
-                        // Dimmed rather than emptied while the debounce settles,
-                        // so the panel never flashes between two valid results.
-                        className={cn(
-                            "bg-muted/45 max-h-80 min-h-32 resize-y rounded-xl font-mono text-[0.875rem] leading-6",
-                            "transition-opacity duration-200",
-                            pending && "opacity-55",
-                        )}
-                    />
+                    <div ref={resultRef} className={cn(RESULT_TRAY, "scroll-mt-24")}>
+                        <div className="flex min-h-7 flex-wrap items-center justify-between gap-2">
+                            <StepLabel step={2} htmlFor={outputId}>
+                                {t("outputLabel")}
+                            </StepLabel>
 
-                    <div
-                        className={cn(
-                            "flex flex-col gap-1 transition-opacity duration-200",
-                            pending && "opacity-55",
-                        )}
-                    >
-                        <StatusStrip id={statusId} tone={status.tone} message={status.message} />
-                        {result.ok && result.counts.items > 0 && (
-                            <p className="text-muted-foreground font-mono text-[0.6875rem] tabular-nums">
-                                {t("outputStats", {
-                                    items: formatter.number(result.counts.items),
-                                    characters: formatter.number(result.stats.characters),
-                                })}
-                                {removed > 0
-                                    ? ` · ${t("cleanupNote", {
-                                          blanks: result.counts.blanksRemoved,
-                                          duplicates: result.counts.duplicatesRemoved,
-                                      })}`
-                                    : null}
-                            </p>
-                        )}
+                            <div className="flex items-center gap-1.5">
+                                <Button
+                                    size="sm"
+                                    onClick={handleCopy}
+                                    disabled={sorted.length === 0}
+                                >
+                                    <IconClipboardCheck
+                                        className="size-3.5"
+                                        stroke={1.8}
+                                        aria-hidden="true"
+                                    />
+                                    {t("copy")}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleDownload}
+                                    disabled={sorted.length === 0}
+                                >
+                                    <IconDownload
+                                        className="size-3.5"
+                                        stroke={1.8}
+                                        aria-hidden="true"
+                                    />
+                                    {t("download")}
+                                </Button>
+                            </div>
+                        </div>
+
+                        <Textarea
+                            id={outputId}
+                            readOnly
+                            value={sorted}
+                            placeholder={t("outputPlaceholder")}
+                            spellCheck={false}
+                            aria-describedby={statusId}
+                            // Dimmed rather than emptied while the debounce settles,
+                            // so the panel never flashes between two valid results.
+                            className={cn(
+                                "bg-card max-h-80 min-h-32 resize-y rounded-lg font-mono text-[0.875rem] leading-6",
+                                "transition-opacity duration-200",
+                                pending && "opacity-55",
+                            )}
+                        />
+
+                        <div
+                            className={cn(
+                                "flex flex-col gap-1 transition-opacity duration-200",
+                                pending && "opacity-55",
+                            )}
+                        >
+                            <StatusStrip
+                                id={statusId}
+                                tone={status.tone}
+                                message={status.message}
+                            />
+                            {result.ok && result.counts.items > 0 && (
+                                <p className="text-muted-foreground font-mono text-[0.6875rem] tabular-nums">
+                                    {t("outputStats", {
+                                        items: formatter.number(result.counts.items),
+                                        characters: formatter.number(result.stats.characters),
+                                    })}
+                                    {removed > 0
+                                        ? ` · ${t("cleanupNote", {
+                                              blanks: result.counts.blanksRemoved,
+                                              duplicates: result.counts.duplicatesRemoved,
+                                          })}`
+                                        : null}
+                                </p>
+                            )}
+                        </div>
                     </div>
                 </div>
             </CardContent>

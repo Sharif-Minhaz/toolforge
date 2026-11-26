@@ -13,7 +13,7 @@ import { useId, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,6 +26,7 @@ import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-
 import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
+import { OptionsDisclosure, StepLabel } from "@/modules/tools/components/workbench-step";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { checkHostSyntax, type HostSyntaxFailure } from "@/modules/tools/domain/host-syntax";
 import { saveFile } from "@/modules/tools/domain/file-saver";
@@ -42,10 +43,6 @@ import { isFullyFiltered } from "../domain/summary";
 import type { QuotaState } from "@/modules/tools/types";
 import { PORT_PRESETS, type PortPreset, type ScanFailure, type ScanReport } from "../types";
 import { ResultsTable } from "./results-table";
-
-/** Small-caps label, matching the result panels the form sits above. */
-const FIELD_LABEL =
-    "text-muted-foreground text-[0.625rem] leading-normal tracking-[0.14em] uppercase";
 
 const SYNTAX_FAILURES: readonly HostSyntaxFailure[] = [
     "empty_input",
@@ -277,17 +274,7 @@ export function PortScannerWorkbench({
 
     return (
         <div className={cn("flex flex-col gap-6", TOOL_ACCENT_VARS.rose)}>
-            <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-                <span
-                    aria-hidden="true"
-                    className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-                />
-
-                <CardHeader>
-                    <CardTitle className="text-lg">{t("title")}</CardTitle>
-                    <CardDescription>{t("description")}</CardDescription>
-                </CardHeader>
-
+            <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
                 <CardContent className="flex flex-col gap-5">
                     {/*
                      * Above the form, not below it. This tool cannot keep the
@@ -316,9 +303,9 @@ export function PortScannerWorkbench({
 
                     <div className="flex flex-col gap-2">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                            <Label htmlFor={hostId} className={FIELD_LABEL}>
-                                <span className="leading-[1.3]">{t("hostLabel")}</span>
-                            </Label>
+                            <StepLabel step={1} htmlFor={hostId}>
+                                {t("hostLabel")}
+                            </StepLabel>
                             {viewerAddress !== null && (
                                 <Button
                                     variant="ghost"
@@ -349,7 +336,7 @@ export function PortScannerWorkbench({
                             placeholder={t("hostPlaceholder")}
                             aria-describedby={statusId}
                             onChange={(event) => setHost(event.target.value)}
-                            className="font-mono text-[0.8125rem]"
+                            className="h-11 font-mono text-base md:text-base"
                         />
 
                         {viewerAddress !== null && (
@@ -373,48 +360,6 @@ export function PortScannerWorkbench({
                                 {describeFailure(failure)}
                             </p>
                         )}
-                    </div>
-
-                    <div className="grid gap-4 sm:grid-cols-2">
-                        <OptionSelect
-                            label={t("presetLabel")}
-                            hint={tPresetHints(preset)}
-                            value={preset}
-                            values={PORT_PRESETS}
-                            items={Object.fromEntries(
-                                PORT_PRESETS.map((value) => [value, tPresets(value)]),
-                            )}
-                            onChange={setPreset}
-                        />
-
-                        <div className="flex min-w-0 flex-col gap-1.5">
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                                <Label htmlFor={portsId} className="text-muted-foreground text-xs">
-                                    <span className="leading-[1.3]">{t("portsLabel")}</span>
-                                </Label>
-                                {preset === "custom" && <InputLimitMeter reading={specLimit} />}
-                            </div>
-                            <Textarea
-                                id={portsId}
-                                maxLength={MAX_PORT_SPEC_LENGTH}
-                                value={spec}
-                                disabled={preset !== "custom"}
-                                spellCheck={false}
-                                placeholder={t("portsPlaceholder")}
-                                onChange={(event) => setSpec(event.target.value)}
-                                className="min-h-16 resize-y rounded-xl font-mono text-[0.8125rem]"
-                            />
-                            {/* Not the preset's hint again — that is already
-                                under the select two inches away, and printing
-                                it twice reads as a rendering bug. A disabled
-                                field's caption is for saying why it is
-                                disabled. */}
-                            <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                                {preset === "custom"
-                                    ? t("portsHint", { max: MAX_PORTS_PER_SCAN })
-                                    : t("portsDisabled", { preset: tPresets("custom") })}
-                            </p>
-                        </div>
                     </div>
 
                     {siteKey !== null && (
@@ -478,6 +423,53 @@ export function PortScannerWorkbench({
                         message={status.message}
                         className="[&>span]:min-w-0 [&>span]:wrap-break-word"
                     />
+
+                    <OptionsDisclosure>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <OptionSelect
+                                label={t("presetLabel")}
+                                hint={tPresetHints(preset)}
+                                value={preset}
+                                values={PORT_PRESETS}
+                                items={Object.fromEntries(
+                                    PORT_PRESETS.map((value) => [value, tPresets(value)]),
+                                )}
+                                onChange={setPreset}
+                            />
+
+                            <div className="flex min-w-0 flex-col gap-1.5">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <Label
+                                        htmlFor={portsId}
+                                        className="text-muted-foreground text-xs"
+                                    >
+                                        <span className="leading-[1.3]">{t("portsLabel")}</span>
+                                    </Label>
+                                    {preset === "custom" && <InputLimitMeter reading={specLimit} />}
+                                </div>
+                                <Textarea
+                                    id={portsId}
+                                    maxLength={MAX_PORT_SPEC_LENGTH}
+                                    value={spec}
+                                    disabled={preset !== "custom"}
+                                    spellCheck={false}
+                                    placeholder={t("portsPlaceholder")}
+                                    onChange={(event) => setSpec(event.target.value)}
+                                    className="min-h-16 resize-y rounded-xl font-mono text-[0.8125rem]"
+                                />
+                                {/* Not the preset's hint again — that is already
+                                    under the select two inches away, and printing
+                                    it twice reads as a rendering bug. A disabled
+                                    field's caption is for saying why it is
+                                    disabled. */}
+                                <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                                    {preset === "custom"
+                                        ? t("portsHint", { max: MAX_PORTS_PER_SCAN })
+                                        : t("portsDisabled", { preset: tPresets("custom") })}
+                                </p>
+                            </div>
+                        </div>
+                    </OptionsDisclosure>
                 </CardContent>
             </Card>
 
@@ -505,7 +497,7 @@ export function PortScannerWorkbench({
                 {!running && report !== null && (
                     <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
                         <CardHeader>
-                            <CardTitle className="text-base">{t("resultsTitle")}</CardTitle>
+                            <StepLabel step={2}>{t("resultsTitle")}</StepLabel>
                             <CardDescription className="font-mono text-[0.75rem]">
                                 {report.hostname}
                                 {report.address !== report.hostname && ` · ${report.address}`}

@@ -384,6 +384,10 @@ export function ImagePanel({ siteKey, urlImportEnabled, active }: ImagePanelProp
 
     return (
         <div className="flex min-w-0 flex-col gap-5">
+            {/* Above the intake, not only in the notes below: this tab sends
+                the marked square off the device, and says so before a pick. */}
+            <p className="text-muted-foreground text-sm">{t("imageDescription")}</p>
+
             <div className="flex min-w-0 flex-col gap-2">
                 <input
                     id={inputId}

@@ -5,11 +5,11 @@ import { useTranslations } from "next-intl";
 import type { ChangeEvent } from "react";
 
 import { buttonVariants } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { CodeEditor } from "@/modules/tools/components/code-editor";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
+import { StepLabel } from "@/modules/tools/components/workbench-step";
 import { MAX_JSON_INPUT_BYTES } from "../domain/constants";
 import type { JsonMode } from "../types";
 
@@ -51,11 +51,11 @@ export function InputPanel({
     }
 
     return (
-        <div className="flex flex-col gap-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <Label htmlFor={inputId} className="text-muted-foreground text-xs">
-                    <span className="leading-[1.3]">{t("inputLabel")}</span>
-                </Label>
+        <div className="flex min-w-0 flex-col gap-3">
+            <div className="flex min-h-7 flex-wrap items-center justify-between gap-2">
+                <StepLabel step={1} htmlFor={inputId}>
+                    {t("inputLabel")}
+                </StepLabel>
 
                 <div className="flex flex-wrap items-center gap-1.5">
                     {/* Against the ceiling rather than a bare size, so the

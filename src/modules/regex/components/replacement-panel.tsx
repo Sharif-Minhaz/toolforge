@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { RESULT_TRAY, StepLabel } from "@/modules/tools/components/workbench-step";
 import { MAX_REPLACEMENT_LENGTH, REPLACEMENT_TOKENS } from "../domain/constants";
 import type { RegexMode } from "../types";
 import { FIELD_PADDING, FIELD_TEXT } from "./field-styles";
@@ -68,28 +69,32 @@ export function ReplacementPanel({
                 ))}
             </p>
 
-            <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
-                <Label htmlFor={outputId} className="text-muted-foreground text-xs">
-                    {t("resultLabel")}
-                </Label>
-                <Button variant="outline" size="sm" onClick={onCopy} disabled={output.length === 0}>
-                    <IconClipboardCheck className="size-3.5" stroke={1.8} aria-hidden="true" />
-                    {t("copy")}
-                </Button>
-            </div>
+            <div className={cn(RESULT_TRAY, "mt-2")}>
+                <div className="flex min-h-7 flex-wrap items-center justify-between gap-2">
+                    <StepLabel step={3} htmlFor={outputId}>
+                        {t("resultLabel")}
+                    </StepLabel>
+                    {/* The one filled button in this mode: taking the result is
+                        where the tool ends. */}
+                    <Button size="sm" onClick={onCopy} disabled={output.length === 0}>
+                        <IconClipboardCheck className="size-3.5" stroke={1.8} aria-hidden="true" />
+                        {t("copy")}
+                    </Button>
+                </div>
 
-            <Textarea
-                id={outputId}
-                readOnly
-                value={output}
-                placeholder={t("resultPlaceholder")}
-                spellCheck={false}
-                className={cn(
-                    "bg-muted/45 max-h-72 min-h-32 resize-y rounded-xl font-mono text-[0.8125rem] leading-6 wrap-break-word",
-                    "transition-opacity duration-200",
-                    pending && "opacity-55",
-                )}
-            />
+                <Textarea
+                    id={outputId}
+                    readOnly
+                    value={output}
+                    placeholder={t("resultPlaceholder")}
+                    spellCheck={false}
+                    className={cn(
+                        "bg-card max-h-72 min-h-32 resize-y rounded-lg font-mono text-[0.8125rem] leading-6 wrap-break-word",
+                        "transition-opacity duration-200",
+                        pending && "opacity-55",
+                    )}
+                />
+            </div>
         </div>
     );
 }

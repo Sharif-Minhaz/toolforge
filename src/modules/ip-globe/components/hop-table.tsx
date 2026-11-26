@@ -43,7 +43,7 @@ export function HopTable({ hops }: HopTableProps) {
             <table className="w-full min-w-[46rem] border-collapse text-left text-[0.8125rem]">
                 <caption className="sr-only">{t("caption")}</caption>
                 <thead>
-                    <tr className="bg-card/70 text-muted-foreground text-[0.6875rem] tracking-[0.08em] uppercase">
+                    <tr className="bg-card/70 text-muted-foreground text-xs">
                         <th scope="col" className="px-3 py-2 font-medium">
                             {t("hop")}
                         </th>

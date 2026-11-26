@@ -91,7 +91,7 @@ export function ValidationReport({
 
             {stats !== null && (
                 <section className="flex flex-col gap-2">
-                    <h3 className="text-muted-foreground text-[0.6875rem] leading-[1.4] font-semibold tracking-[0.06em] uppercase">
+                    <h3 className="text-muted-foreground text-xs leading-[1.4] font-medium tracking-[0.06em]">
                         {t("statsTitle")}
                     </h3>
                     <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">

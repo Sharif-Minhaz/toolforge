@@ -9,6 +9,7 @@ import { CodeEditor } from "@/modules/tools/components/code-editor";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { JsonViewer } from "@/modules/tools/components/json-viewer";
+import { StepLabel } from "@/modules/tools/components/workbench-step";
 import type { JwtSegmentName } from "../types";
 
 const CARET_COLOR: Record<JwtSegmentName, string> = {
@@ -21,6 +22,8 @@ type JsonBoxProps = {
     id: string;
     /** The small caption inside the box header, e.g. "Algorithm & Token Type". */
     label: string;
+    /** Stamps the caption as a workbench step, for the box a reader starts in. */
+    step?: number;
     part: JwtSegmentName;
     value: string;
     readOnly?: boolean;
@@ -51,6 +54,7 @@ type JsonBoxProps = {
 export function JsonBox({
     id,
     label,
+    step,
     part,
     value,
     readOnly = false,
@@ -68,6 +72,17 @@ export function JsonBox({
     // meter is not rendered in that case, so the reading is never read.
     const reading = useInputLimit(value.length, limit ?? 0);
 
+    const caption = (
+        <>
+            <IconChevronRight
+                className={cn("size-3.5 shrink-0", CARET_COLOR[part])}
+                stroke={2.2}
+                aria-hidden="true"
+            />
+            <span className="truncate leading-[1.3]">{label}</span>
+        </>
+    );
+
     return (
         <div
             className={cn(
@@ -78,18 +93,24 @@ export function JsonBox({
             <div className="flex items-center justify-between gap-2">
                 {/* `htmlFor` only while there is a textarea to point at; the
                     viewer is named by the label's id instead. */}
-                <Label
-                    id={labelId}
-                    htmlFor={readOnly ? undefined : id}
-                    className="text-muted-foreground min-w-0 gap-1 text-xs"
-                >
-                    <IconChevronRight
-                        className={cn("size-3.5 shrink-0", CARET_COLOR[part])}
-                        stroke={2.2}
-                        aria-hidden="true"
-                    />
-                    <span className="truncate leading-[1.3]">{label}</span>
-                </Label>
+                {step === undefined ? (
+                    <Label
+                        id={labelId}
+                        htmlFor={readOnly ? undefined : id}
+                        className="text-muted-foreground min-w-0 gap-1 text-xs"
+                    >
+                        {caption}
+                    </Label>
+                ) : (
+                    <StepLabel
+                        step={step}
+                        id={labelId}
+                        htmlFor={readOnly ? undefined : id}
+                        className="min-w-0"
+                    >
+                        {caption}
+                    </StepLabel>
+                )}
                 <div className="flex items-center gap-1.5">
                     {limit === null ? null : <InputLimitMeter reading={reading} />}
                     <IconCopyButton copied={copied} onClick={onCopy} aria-label={copyLabel} />

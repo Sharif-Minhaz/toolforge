@@ -6,6 +6,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { CompareSlider } from "@/modules/tools/components/compare-slider";
+import { RESULT_TRAY } from "@/modules/tools/components/workbench-step";
 import type { SourceImageFacts } from "../types";
 
 type CleanedResultProps = {
@@ -53,10 +54,7 @@ export function CleanedResult({
     const byteLabel = useByteLabel();
 
     return (
-        <section
-            aria-label={t("label")}
-            className="ring-border/70 bg-card/60 flex min-w-0 flex-col gap-4 rounded-xl p-4 ring-1 ring-inset sm:p-5"
-        >
+        <section aria-label={t("label")} className={RESULT_TRAY}>
             <CompareSlider
                 beforeUrl={beforeUrl}
                 afterUrl={afterUrl}

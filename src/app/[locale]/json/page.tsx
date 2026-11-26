@@ -82,9 +82,7 @@ export default async function JsonServerStudioPage({ params }: { params: LocaleP
 
             <FadeIn>
                 <header className="flex flex-col gap-3">
-                    <p className="text-muted-foreground text-[0.6875rem] font-semibold tracking-[0.09em] uppercase">
-                        {t("eyebrow")}
-                    </p>
+                    <p className="text-muted-foreground text-xs font-medium">{t("eyebrow")}</p>
                     <h1 className="text-foreground text-2xl leading-[1.2] font-semibold text-balance sm:text-3xl">
                         {t("title")}
                     </h1>

@@ -2,8 +2,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * Matches the workbench block for block: the back link, the header card with its
- * base URL and usage bar, the access panel, the tab row, then the route table the Routes tab opens
- * on. A skeleton that does not agree with what replaces it reads as a layout
+ * base URL and usage bar, the access panel, the tab row, then the schema the
+ * Schema tab opens on. A skeleton that does not agree with what replaces it reads as a layout
  * shift rather than as loading.
  */
 export default function GraphqlServerDetailLoading() {

@@ -3,6 +3,7 @@
 import {
     IconArrowBackUp,
     IconFileText,
+    IconInfoCircle,
     IconLanguage,
     IconLoader2,
     IconPlayerStop,
@@ -33,6 +34,7 @@ import {
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
+import { RESULT_TRAY, StepLabel } from "@/modules/tools/components/workbench-step";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
 import { buildTimestampedFilename } from "@/modules/tools/domain/filenames";
 import { clampToLimit, measureCharacters } from "@/modules/tools/domain/input-limit";
@@ -123,6 +125,7 @@ export function TextToSpeechWorkbench({
     const tScript = useTranslations("textToSpeech.scriptErrors");
     const tErrors = useTranslations("textToSpeech.errors");
     const tTranslate = useTranslations("textToSpeech.translationErrors");
+    const tResult = useTranslations("textToSpeech.result");
     const formatter = useFormatter();
     const interfaceLocale = useLocale();
     const clock = useClock();
@@ -437,13 +440,19 @@ export function TextToSpeechWorkbench({
             : 0;
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
-
+        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
             <CardContent className="flex min-w-0 flex-col gap-5">
+                {/* Rule 32: the text leaves the browser, so the reader is told
+                    before the controls, not only in the article. */}
+                <p className="text-muted-foreground flex items-start gap-2 text-[0.8125rem] leading-relaxed">
+                    <IconInfoCircle
+                        className="mt-0.5 size-4 shrink-0"
+                        stroke={1.75}
+                        aria-hidden="true"
+                    />
+                    {t("disclosure")}
+                </p>
+
                 <Tabs
                     value={mode}
                     onValueChange={(next) => setMode(next === "file" ? "file" : "text")}
@@ -466,13 +475,18 @@ export function TextToSpeechWorkbench({
                         keepMounted
                     >
                         <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-                            <span className="ring-border/80 inline-flex h-8 items-center rounded-full px-3 ring-1 ring-inset">
-                                <InputLimitMeter
-                                    reading={reading}
-                                    always
-                                    className="text-xs font-medium"
-                                />
-                            </span>
+                            <div className="flex min-w-0 flex-wrap items-center gap-3">
+                                <StepLabel step={1} htmlFor={textId}>
+                                    {t("textLabel")}
+                                </StepLabel>
+                                <span className="ring-border/80 inline-flex h-8 items-center rounded-full px-3 ring-1 ring-inset">
+                                    <InputLimitMeter
+                                        reading={reading}
+                                        always
+                                        className="text-xs font-medium"
+                                    />
+                                </span>
+                            </div>
 
                             <div className="flex flex-wrap items-center justify-end gap-2">
                                 {translated !== null ? (
@@ -568,9 +582,6 @@ export function TextToSpeechWorkbench({
                         </div>
 
                         <div className="flex min-w-0 flex-col gap-2">
-                            <label htmlFor={textId} className="sr-only">
-                                {t("textLabel")}
-                            </label>
                             <Textarea
                                 id={textId}
                                 ref={textareaRef}
@@ -629,11 +640,14 @@ export function TextToSpeechWorkbench({
                         </div>
 
                         {/*
-                         * One panel for the act of generating: the check, the
-                         * button, then whatever is happening — side by side on
-                         * a wide screen so neither floats alone.
+                         * One tray for generating and what it made: the check,
+                         * the button, whatever is happening, then the file —
+                         * check and button side by side on a wide screen so
+                         * neither floats alone.
                          */}
-                        <div className="bg-muted/35 ring-border/70 flex min-w-0 flex-col gap-3 rounded-2xl p-3 ring-1 ring-inset sm:p-4">
+                        <div className={RESULT_TRAY}>
+                            <StepLabel step={2}>{tResult("label")}</StepLabel>
+
                             <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
                                 {siteKey !== null && configured && (
                                     // Reserves the widget's height so the row
@@ -671,6 +685,10 @@ export function TextToSpeechWorkbench({
                                     </Button>
                                 ) : (
                                     <Button
+                                        // One filled button at a time: Generate
+                                        // until there is current audio, then the
+                                        // result's Download.
+                                        variant={audio !== null && !stale ? "outline" : "default"}
                                         onClick={() => void handleGenerate()}
                                         disabled={!canGenerate}
                                         className="h-12 min-w-0 flex-1 rounded-xl text-[0.9375rem] font-medium"
@@ -732,17 +750,17 @@ export function TextToSpeechWorkbench({
                                     className="px-0.5"
                                 />
                             )}
-                        </div>
 
-                        {audio !== null && (
-                            <div ref={resultRef} className="min-w-0">
-                                <SpeechResult
-                                    audio={audio}
-                                    stale={stale}
-                                    onDownload={handleDownload}
-                                />
-                            </div>
-                        )}
+                            {audio !== null && (
+                                <div ref={resultRef} className="min-w-0">
+                                    <SpeechResult
+                                        audio={audio}
+                                        stale={stale}
+                                        onDownload={handleDownload}
+                                    />
+                                </div>
+                            )}
+                        </div>
                     </TabsContent>
 
                     <TabsContent value="file" className="min-w-0 pt-4" keepMounted>

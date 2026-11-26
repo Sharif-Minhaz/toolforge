@@ -4,11 +4,12 @@ import { useTranslations } from "next-intl";
 import { useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
+import { OptionsDisclosure } from "@/modules/tools/components/workbench-step";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
 import { compareHash } from "../domain/compare";
@@ -198,66 +199,66 @@ export function HashWorkbench({
     }
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
+        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+            <CardContent className="flex min-w-0 flex-col gap-6">
+                {/* What to do and with which algorithm, then the settings that
+                    family takes, folded away. */}
+                <div className="flex min-w-0 flex-col gap-3">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="flex min-w-0 flex-col gap-2">
+                            <Label id={modeLabelId} className="text-muted-foreground text-xs">
+                                <span className="leading-[1.3]">{t("modeLabel")}</span>
+                            </Label>
+                            <ModeSelector value={mode} onChange={setMode} labelId={modeLabelId} />
+                        </div>
 
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-            </CardHeader>
-
-            <CardContent className="flex min-w-0 flex-col gap-5">
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="flex min-w-0 flex-col gap-2">
-                        <Label id={modeLabelId} className="text-muted-foreground text-xs">
-                            <span className="leading-[1.3]">{t("modeLabel")}</span>
-                        </Label>
-                        <ModeSelector value={mode} onChange={setMode} labelId={modeLabelId} />
+                        {mode === "generate" && (
+                            <div className="flex min-w-0 flex-col gap-1.5">
+                                <Label
+                                    id={algorithmLabelId}
+                                    className="text-muted-foreground text-xs"
+                                >
+                                    <span className="leading-[1.3]">{t("algorithmLabel")}</span>
+                                </Label>
+                                <AlgorithmSelect
+                                    value={options.algorithm}
+                                    onChange={handleAlgorithmChange}
+                                    labelledBy={algorithmLabelId}
+                                    className="w-full"
+                                />
+                                <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                                    {t("algorithmHint")}
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     {mode === "generate" && (
-                        <div className="flex min-w-0 flex-col gap-1.5">
-                            <Label id={algorithmLabelId} className="text-muted-foreground text-xs">
-                                <span className="leading-[1.3]">{t("algorithmLabel")}</span>
-                            </Label>
-                            <AlgorithmSelect
-                                value={options.algorithm}
-                                onChange={handleAlgorithmChange}
-                                labelledBy={algorithmLabelId}
-                                className="w-full"
-                            />
-                            <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                                {t("algorithmHint")}
-                            </p>
-                        </div>
+                        <OptionsDisclosure label={t("options.title")}>
+                            <HashOptionsPanel options={options} onChange={updateOptions} />
+                        </OptionsDisclosure>
                     )}
                 </div>
 
                 {mode === "generate" ? (
-                    <>
-                        <HashOptionsPanel options={options} onChange={updateOptions} />
-                        <GeneratePanel
-                            algorithm={options.algorithm}
-                            text={text}
-                            onTextChange={setText}
-                            onClear={() => setText("")}
-                            onNewSalt={handleNewSalt}
-                            result={hashResult}
-                            pending={generatePending}
-                            copied={copied === "output"}
-                            onCopy={() =>
-                                void handleCopy(
-                                    "output",
-                                    hashResult?.ok === true ? hashResult.hash : "",
-                                )
-                            }
-                            onDownload={handleDownload}
-                            describeFailure={describeHashFailure}
-                        />
-                    </>
+                    <GeneratePanel
+                        algorithm={options.algorithm}
+                        text={text}
+                        onTextChange={setText}
+                        onClear={() => setText("")}
+                        onNewSalt={handleNewSalt}
+                        result={hashResult}
+                        pending={generatePending}
+                        copied={copied === "output"}
+                        onCopy={() =>
+                            void handleCopy(
+                                "output",
+                                hashResult?.ok === true ? hashResult.hash : "",
+                            )
+                        }
+                        onDownload={handleDownload}
+                        describeFailure={describeHashFailure}
+                    />
                 ) : (
                     <ComparePanel
                         left={left}

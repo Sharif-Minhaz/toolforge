@@ -2,7 +2,7 @@ import {
     IconChevronRight,
     IconPhotoEdit,
     IconShieldLock,
-    IconSparkles,
+    IconPhotoMinus,
     IconVideo,
     IconWand,
 } from "@tabler/icons-react";
@@ -55,7 +55,7 @@ export default async function WatermarkRemoverToolPage({ params }: { params: Loc
     const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_KEY ?? null;
 
     const badges = [
-        { label: t("badgeGemini"), Icon: IconSparkles },
+        { label: t("badgeGemini"), Icon: IconPhotoMinus },
         { label: t("badgeVideo"), Icon: IconVideo },
         { label: t("badgeModel"), Icon: IconWand },
         { label: t("badgeChallenge"), Icon: IconShieldLock },
@@ -103,17 +103,13 @@ export default async function WatermarkRemoverToolPage({ params }: { params: Loc
                         </p>
                     </div>
 
-                    <ul className="flex flex-wrap items-center gap-1.5">
+                    <ul className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
                         {badges.map(({ label, Icon }) => (
                             <li
                                 key={label}
-                                className="bg-card/70 text-muted-foreground ring-border/70 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset"
+                                className="text-muted-foreground inline-flex items-center gap-1.5 text-xs"
                             >
-                                <Icon
-                                    className="text-primary size-3.5"
-                                    stroke={1.9}
-                                    aria-hidden="true"
-                                />
+                                <Icon className="size-3.5" stroke={1.9} aria-hidden="true" />
                                 {label}
                             </li>
                         ))}

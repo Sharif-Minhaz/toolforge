@@ -66,6 +66,9 @@ Server component by default:
 
 ## 6. Keep the client island small
 
+Lay the workbench out as [`../patterns/workbench-layout.md`](../patterns/workbench-layout.md)
+describes: no card header, `1` on the input, `2` on the result, one filled button.
+
 One interactive component per tool holding state; everything static stays a
 server component. Long-form content is a server component, never part of the
 island.

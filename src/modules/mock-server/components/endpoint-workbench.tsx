@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import { StepLabel } from "@/modules/tools/components/workbench-step";
 
 import { getRequestShape, type RequestShapeResult } from "../actions/request-shape";
 import { createEndpoint, deleteEndpoint, getEndpoint, updateEndpoint } from "../actions/servers";
@@ -442,11 +443,8 @@ export function EndpointWorkbench({
         <SuggestionProvider value={suggestions}>
             <div className="grid gap-5 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
                 <section aria-labelledby="routes-heading" className="min-w-0">
-                    <h2
-                        id="routes-heading"
-                        className="text-muted-foreground text-[0.6875rem] font-semibold tracking-[0.09em] uppercase"
-                    >
-                        {t("heading")}
+                    <h2 id="routes-heading">
+                        <StepLabel step={1}>{t("heading")}</StepLabel>
                     </h2>
 
                     <div className="border-border/70 bg-card mt-3 flex flex-col gap-2 rounded-2xl border p-3 shadow-xs">
@@ -479,9 +477,12 @@ export function EndpointWorkbench({
                                 />
                             </div>
                         </div>
+                        {/* Filled only until a route is open, so Save is then the
+                            one filled press on the bench. */}
                         <Button
                             type="button"
                             size="sm"
+                            variant={open === null ? "default" : "outline"}
                             disabled={pending || draftPath.trim() === ""}
                             onClick={addEndpoint}
                             className="gap-1.5 self-start"
@@ -503,7 +504,7 @@ export function EndpointWorkbench({
                                         className={cn(
                                             "border-border/70 bg-card hover:border-border hover:bg-muted/40 relative flex items-center gap-2 rounded-xl border px-2.5 py-2 transition-colors",
                                             (open?.id === row.id || loadingId === row.id) &&
-                                                "border-(--tool-accent)/50",
+                                                "border-primary/50",
                                         )}
                                     >
                                         {/*
@@ -591,11 +592,8 @@ export function EndpointWorkbench({
                 </section>
 
                 <section aria-labelledby="editor-heading" className="min-w-0">
-                    <h2
-                        id="editor-heading"
-                        className="text-muted-foreground text-[0.6875rem] font-semibold tracking-[0.09em] uppercase"
-                    >
-                        {t("editorHeading")}
+                    <h2 id="editor-heading">
+                        <StepLabel step={2}>{t("editorHeading")}</StepLabel>
                     </h2>
 
                     {/* The skeleton wins over both, and only a *load* raises it —

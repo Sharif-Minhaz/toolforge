@@ -15,7 +15,7 @@ import { toast } from "sonner";
 
 import { MOTION_EASE } from "@/components/motion/motion-tokens";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -23,12 +23,12 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { LIVE_UPDATE_DEBOUNCE_MS } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
+import { RESULT_TRAY, StepLabel } from "@/modules/tools/components/workbench-step";
 import { MAX_UUID_QUANTITY, MIN_UUID_QUANTITY } from "../domain/constants";
 import { createExportFile } from "../domain/export";
 import { generateUuids, isValidQuantity } from "../domain/generate";
@@ -225,23 +225,13 @@ export function UuidWorkbench({
     }
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
-
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-            </CardHeader>
-
-            <CardContent className="flex flex-col gap-5">
+        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+            <CardContent className="flex flex-col gap-6">
                 <div className="grid gap-5 md:grid-cols-2 md:gap-6">
                     <div className="flex flex-col gap-2">
-                        <Label id={versionLabelId} className="text-muted-foreground text-xs">
+                        <StepLabel step={1} id={versionLabelId}>
                             {t("versionLabel")}
-                        </Label>
+                        </StepLabel>
                         <VersionSelector
                             value={version}
                             onChange={handleVersionChange}
@@ -266,82 +256,92 @@ export function UuidWorkbench({
                     </div>
                 </div>
 
-                <Separator />
+                <div className={RESULT_TRAY}>
+                    <StepLabel step={2}>{t("resultsLabel")}</StepLabel>
 
-                <div className="flex flex-wrap items-center gap-2">
-                    <Button
-                        onClick={handleRegenerate}
-                        disabled={quantityInvalid}
-                        className="h-9 px-3.5"
-                    >
-                        <motion.span
-                            key={spinToken}
-                            initial={reduceMotion ? false : { rotate: -180 }}
-                            animate={{ rotate: 0 }}
-                            transition={{ duration: 0.32, ease: MOTION_EASE }}
-                            className="grid place-items-center"
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                            onClick={handleRegenerate}
+                            disabled={quantityInvalid}
+                            className="h-9 px-3.5"
                         >
-                            <IconRefresh className="size-4" stroke={1.9} aria-hidden="true" />
-                        </motion.span>
-                        {t("regenerate")}
-                    </Button>
+                            <motion.span
+                                key={spinToken}
+                                initial={reduceMotion ? false : { rotate: -180 }}
+                                animate={{ rotate: 0 }}
+                                transition={{ duration: 0.32, ease: MOTION_EASE }}
+                                className="grid place-items-center"
+                            >
+                                <IconRefresh className="size-4" stroke={1.9} aria-hidden="true" />
+                            </motion.span>
+                            {t("regenerate")}
+                        </Button>
 
-                    <Button
-                        variant="outline"
-                        onClick={handleCopyAll}
-                        disabled={uuids.length === 0}
-                        className="h-9 px-3.5"
-                    >
-                        <IconClipboardCheck className="size-4" stroke={1.8} aria-hidden="true" />
-                        {t("copyAll")}
-                    </Button>
-
-                    <DropdownMenu>
-                        <DropdownMenuTrigger
-                            render={
-                                <Button
-                                    variant="outline"
-                                    disabled={uuids.length === 0}
-                                    className="h-9 px-3.5"
-                                />
-                            }
+                        <Button
+                            variant="outline"
+                            onClick={handleCopyAll}
+                            disabled={uuids.length === 0}
+                            className="h-9 px-3.5"
                         >
-                            <IconDownload className="size-4" stroke={1.8} aria-hidden="true" />
-                            {t("download")}
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="min-w-44">
-                            {UUID_EXPORT_FORMATS.map((format) => {
-                                const Icon = FORMAT_ICONS[format];
+                            <IconClipboardCheck
+                                className="size-4"
+                                stroke={1.8}
+                                aria-hidden="true"
+                            />
+                            {t("copyAll")}
+                        </Button>
 
-                                return (
-                                    <DropdownMenuItem
-                                        key={format}
-                                        onClick={() => handleDownload(format)}
-                                    >
-                                        <Icon className="size-4" stroke={1.8} aria-hidden="true" />
-                                        {t("downloadAs", { format: format.toUpperCase() })}
-                                    </DropdownMenuItem>
-                                );
-                            })}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger
+                                render={
+                                    <Button
+                                        variant="outline"
+                                        disabled={uuids.length === 0}
+                                        className="h-9 px-3.5"
+                                    />
+                                }
+                            >
+                                <IconDownload className="size-4" stroke={1.8} aria-hidden="true" />
+                                {t("download")}
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="min-w-44">
+                                {UUID_EXPORT_FORMATS.map((format) => {
+                                    const Icon = FORMAT_ICONS[format];
 
-                    <span
-                        className={cn(
-                            "text-muted-foreground ml-auto font-mono text-xs tabular-nums",
-                            "hidden sm:inline",
-                        )}
-                    >
-                        {format.number(uuids.length)}
-                    </span>
+                                    return (
+                                        <DropdownMenuItem
+                                            key={format}
+                                            onClick={() => handleDownload(format)}
+                                        >
+                                            <Icon
+                                                className="size-4"
+                                                stroke={1.8}
+                                                aria-hidden="true"
+                                            />
+                                            {t("downloadAs", { format: format.toUpperCase() })}
+                                        </DropdownMenuItem>
+                                    );
+                                })}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        <span
+                            className={cn(
+                                "text-muted-foreground ml-auto font-mono text-xs tabular-nums",
+                                "hidden sm:inline",
+                            )}
+                        >
+                            {format.number(uuids.length)}
+                        </span>
+                    </div>
+
+                    <UuidResults
+                        uuids={uuids}
+                        generationId={generationId}
+                        copiedIndex={copiedIndex}
+                        onCopy={handleCopyOne}
+                    />
                 </div>
-
-                <UuidResults
-                    uuids={uuids}
-                    generationId={generationId}
-                    copiedIndex={copiedIndex}
-                    onCopy={handleCopyOne}
-                />
             </CardContent>
         </Card>
     );

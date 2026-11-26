@@ -38,7 +38,7 @@ export function SwatchMatches({ tailwind, cssName, pending, onSelect }: SwatchMa
                     <button
                         type="button"
                         onClick={() => onSelect(row.match)}
-                        className="bg-card/60 ring-border/70 hover:ring-border focus-visible:ring-ring flex w-full min-w-0 items-center gap-3 rounded-xl px-3 py-2.5 text-left ring-1 transition-all duration-200 ring-inset focus-visible:ring-2 focus-visible:outline-none"
+                        className="bg-card/60 ring-border/70 hover:ring-border focus-visible:ring-ring flex w-full min-w-0 items-center gap-3 rounded-xl px-3 py-2.5 text-left ring-1 transition duration-200 ring-inset focus-visible:ring-2 focus-visible:outline-none"
                     >
                         <span
                             aria-hidden="true"

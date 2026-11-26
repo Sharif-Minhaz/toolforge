@@ -35,7 +35,7 @@ export function SecretOutput({
         <div className="flex min-w-0 flex-col gap-3">
             <div
                 className={cn(
-                    "bg-card/60 ring-border/70 min-w-0 rounded-2xl px-4 py-3.5 ring-1 ring-inset",
+                    "bg-card ring-border/70 min-w-0 rounded-2xl px-4 py-3.5 ring-1 ring-inset",
                     "transition-opacity duration-200",
                     stale && "opacity-55",
                 )}

@@ -8,14 +8,18 @@ import { toast } from "sonner";
 
 import { MOTION_EASE } from "@/components/motion/motion-tokens";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { LIVE_UPDATE_DEBOUNCE_MS } from "@/hooks/use-debounced-value";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { NumberStepper } from "@/modules/tools/components/number-stepper";
 import { OptionSelect, OptionSwitch } from "@/modules/tools/components/option-controls";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
+import {
+    OptionsDisclosure,
+    RESULT_TRAY,
+    StepLabel,
+} from "@/modules/tools/components/workbench-step";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
 import {
@@ -278,45 +282,15 @@ export function LoremWorkbench({ initialOptions, initialDraft }: LoremWorkbenchP
     }
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
-
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-            </CardHeader>
-
-            <CardContent className="flex min-w-0 flex-col gap-5">
-                <div className="grid gap-5 md:grid-cols-2 md:gap-6">
-                    <OptionSelect<LoremSource>
-                        label={t("sourceLabel")}
-                        hint={tSources(`${options.source}.tagline`)}
-                        value={options.source}
-                        items={SOURCE_ITEMS}
-                        values={LOREM_SOURCES}
-                        onChange={handleSourceChange}
-                    />
-
-                    <div className="flex min-w-0 flex-col gap-1.5">
-                        <Label id={unitLabelId} className="text-muted-foreground text-xs">
-                            <span className="leading-[1.3]">{t("unitLabel")}</span>
-                        </Label>
-                        <UnitSelector
-                            value={options.unit}
-                            onChange={handleUnitChange}
-                            labelId={unitLabelId}
-                        />
-                    </div>
-                </div>
-
+        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+            <CardContent className="flex min-w-0 flex-col gap-6">
+                {/* How much, in what, from which source — the paragraph split
+                    and formatting extras folded away below. */}
                 <div className="grid gap-5 md:grid-cols-2 md:gap-6">
                     <div className="flex min-w-0 flex-col gap-2">
-                        <Label htmlFor={amountInputId} className="text-muted-foreground text-xs">
-                            <span className="leading-[1.3]">{t("amountLabel")}</span>
-                        </Label>
+                        <StepLabel step={1} htmlFor={amountInputId}>
+                            {t("amountLabel")}
+                        </StepLabel>
                         <NumberStepper
                             value={amountInput}
                             numeric={options.amount}
@@ -343,136 +317,172 @@ export function LoremWorkbench({ initialOptions, initialDraft }: LoremWorkbenchP
                         />
                     </div>
 
-                    <div className="flex min-w-0 flex-col gap-2">
-                        <Label htmlFor={paragraphInputId} className="text-muted-foreground text-xs">
-                            <span className="leading-[1.3]">{t("paragraphLabel")}</span>
+                    <div className="flex min-w-0 flex-col gap-1.5">
+                        <Label id={unitLabelId} className="text-muted-foreground text-xs">
+                            <span className="leading-[1.3]">{t("unitLabel")}</span>
                         </Label>
-                        <NumberStepper
-                            value={paragraphInput}
-                            numeric={options.paragraphs}
-                            min={MIN_LOREM_PARAGRAPHS}
-                            max={MAX_LOREM_PARAGRAPHS}
-                            presets={LOREM_PARAGRAPH_PRESETS}
-                            invalid={paragraphInvalid}
-                            // Counting paragraphs and then splitting across
-                            // paragraphs is the same setting twice.
-                            disabled={!splitAvailable}
-                            inputId={paragraphInputId}
-                            describedById={paragraphHintId}
-                            hint={
-                                !splitAvailable
-                                    ? t("paragraphDisabled")
-                                    : paragraphInvalid
-                                      ? tErrors("paragraphRange", {
-                                            min: MIN_LOREM_PARAGRAPHS,
-                                            max: MAX_LOREM_PARAGRAPHS,
-                                        })
-                                      : t("paragraphHint", {
-                                            min: MIN_LOREM_PARAGRAPHS,
-                                            max: MAX_LOREM_PARAGRAPHS,
-                                        })
-                            }
-                            presetsLabel={t("paragraphPresets")}
-                            decreaseLabel={t("decrease")}
-                            increaseLabel={t("increase")}
-                            onChange={(raw) => applyParagraphCount(raw, false)}
-                            onPreset={(preset) => applyParagraphCount(String(preset), true)}
-                            onStep={handleParagraphStep}
+                        <UnitSelector
+                            value={options.unit}
+                            onChange={handleUnitChange}
+                            labelId={unitLabelId}
                         />
                     </div>
-                </div>
 
-                <div className="grid gap-2 sm:grid-cols-2">
-                    <OptionSwitch
-                        label={t("openerLabel")}
-                        hint={openerAvailable ? t("openerHint") : t("openerUnavailable")}
-                        checked={options.startWithOpener && openerAvailable}
-                        disabled={!openerAvailable}
-                        onCheckedChange={(startWithOpener) =>
-                            applyOptions({ ...options, startWithOpener }, true)
-                        }
-                    />
-                    <OptionSwitch
-                        label={t("htmlLabel")}
-                        hint={t("htmlHint")}
-                        checked={options.format === "html"}
-                        // Pure re-rendering of the passage already generated,
-                        // so it never costs the reader their current text.
-                        onCheckedChange={(html) =>
-                            setOptions((current) => ({
-                                ...current,
-                                format: html ? "html" : "plain",
-                            }))
-                        }
+                    <OptionSelect<LoremSource>
+                        label={t("sourceLabel")}
+                        hint={tSources(`${options.source}.tagline`)}
+                        value={options.source}
+                        items={SOURCE_ITEMS}
+                        values={LOREM_SOURCES}
+                        onChange={handleSourceChange}
                     />
                 </div>
 
-                <Separator />
-
-                <div className="flex flex-wrap items-center gap-2">
-                    <Button
-                        onClick={handleRegenerate}
-                        disabled={amountInvalid || paragraphInvalid}
-                        className="h-9 px-3.5"
-                    >
-                        <motion.span
-                            key={spinToken}
-                            initial={reduceMotion ? false : { rotate: -180 }}
-                            animate={{ rotate: 0 }}
-                            transition={{ duration: 0.32, ease: MOTION_EASE }}
-                            className="grid place-items-center"
-                        >
-                            <IconRefresh className="size-4" stroke={1.9} aria-hidden="true" />
-                        </motion.span>
-                        {t("regenerate")}
-                    </Button>
-
-                    <Button
-                        variant="outline"
-                        onClick={handleCopyAll}
-                        disabled={text.length === 0}
-                        className="h-9 px-3.5"
-                    >
-                        <IconClipboardCheck className="size-4" stroke={1.8} aria-hidden="true" />
-                        {t("copyAll")}
-                    </Button>
-
-                    <Button
-                        variant="outline"
-                        onClick={handleDownload}
-                        disabled={text.length === 0}
-                        className="h-9 px-3.5"
-                    >
-                        <IconDownload className="size-4" stroke={1.8} aria-hidden="true" />
-                        {t("download")}
-                    </Button>
-                </div>
-
-                <dl aria-label={t("statsLabel")} className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    {STAT_KEYS.map((key) => (
-                        <div
-                            key={key}
-                            className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-0.5 rounded-xl px-3 py-2 ring-1 ring-inset"
-                        >
-                            <dt className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                                {t(`stats.${key}`)}
-                            </dt>
-                            <dd className="font-mono text-sm tabular-nums">
-                                {formatter.number(draft.stats[key])}
-                            </dd>
+                <OptionsDisclosure>
+                    <div className="flex flex-col gap-5">
+                        <div className="flex min-w-0 flex-col gap-2">
+                            <Label
+                                htmlFor={paragraphInputId}
+                                className="text-muted-foreground text-xs"
+                            >
+                                <span className="leading-[1.3]">{t("paragraphLabel")}</span>
+                            </Label>
+                            <NumberStepper
+                                value={paragraphInput}
+                                numeric={options.paragraphs}
+                                min={MIN_LOREM_PARAGRAPHS}
+                                max={MAX_LOREM_PARAGRAPHS}
+                                presets={LOREM_PARAGRAPH_PRESETS}
+                                invalid={paragraphInvalid}
+                                // Counting paragraphs and then splitting across
+                                // paragraphs is the same setting twice.
+                                disabled={!splitAvailable}
+                                inputId={paragraphInputId}
+                                describedById={paragraphHintId}
+                                hint={
+                                    !splitAvailable
+                                        ? t("paragraphDisabled")
+                                        : paragraphInvalid
+                                          ? tErrors("paragraphRange", {
+                                                min: MIN_LOREM_PARAGRAPHS,
+                                                max: MAX_LOREM_PARAGRAPHS,
+                                            })
+                                          : t("paragraphHint", {
+                                                min: MIN_LOREM_PARAGRAPHS,
+                                                max: MAX_LOREM_PARAGRAPHS,
+                                            })
+                                }
+                                presetsLabel={t("paragraphPresets")}
+                                decreaseLabel={t("decrease")}
+                                increaseLabel={t("increase")}
+                                onChange={(raw) => applyParagraphCount(raw, false)}
+                                onPreset={(preset) => applyParagraphCount(String(preset), true)}
+                                onStep={handleParagraphStep}
+                            />
                         </div>
-                    ))}
-                </dl>
 
-                <LoremOutput
-                    blocks={blocks}
-                    lang={draft.lang}
-                    monospace={options.format === "html"}
-                    stats={draft.stats}
-                    generationId={generationId}
-                    copiedKey={copiedKey}
-                    onCopy={handleCopyParagraph}
-                />
+                        <div className="grid gap-2 sm:grid-cols-2">
+                            <OptionSwitch
+                                label={t("openerLabel")}
+                                hint={openerAvailable ? t("openerHint") : t("openerUnavailable")}
+                                checked={options.startWithOpener && openerAvailable}
+                                disabled={!openerAvailable}
+                                onCheckedChange={(startWithOpener) =>
+                                    applyOptions({ ...options, startWithOpener }, true)
+                                }
+                            />
+                            <OptionSwitch
+                                label={t("htmlLabel")}
+                                hint={t("htmlHint")}
+                                checked={options.format === "html"}
+                                // Pure re-rendering of the passage already generated,
+                                // so it never costs the reader their current text.
+                                onCheckedChange={(html) =>
+                                    setOptions((current) => ({
+                                        ...current,
+                                        format: html ? "html" : "plain",
+                                    }))
+                                }
+                            />
+                        </div>
+                    </div>
+                </OptionsDisclosure>
+
+                <div className={RESULT_TRAY}>
+                    <StepLabel step={2}>{t("resultsLabel")}</StepLabel>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                            onClick={handleRegenerate}
+                            disabled={amountInvalid || paragraphInvalid}
+                            className="h-9 px-3.5"
+                        >
+                            <motion.span
+                                key={spinToken}
+                                initial={reduceMotion ? false : { rotate: -180 }}
+                                animate={{ rotate: 0 }}
+                                transition={{ duration: 0.32, ease: MOTION_EASE }}
+                                className="grid place-items-center"
+                            >
+                                <IconRefresh className="size-4" stroke={1.9} aria-hidden="true" />
+                            </motion.span>
+                            {t("regenerate")}
+                        </Button>
+
+                        <Button
+                            variant="outline"
+                            onClick={handleCopyAll}
+                            disabled={text.length === 0}
+                            className="h-9 px-3.5"
+                        >
+                            <IconClipboardCheck
+                                className="size-4"
+                                stroke={1.8}
+                                aria-hidden="true"
+                            />
+                            {t("copyAll")}
+                        </Button>
+
+                        <Button
+                            variant="outline"
+                            onClick={handleDownload}
+                            disabled={text.length === 0}
+                            className="h-9 px-3.5"
+                        >
+                            <IconDownload className="size-4" stroke={1.8} aria-hidden="true" />
+                            {t("download")}
+                        </Button>
+                    </div>
+
+                    <dl
+                        aria-label={t("statsLabel")}
+                        className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+                    >
+                        {STAT_KEYS.map((key) => (
+                            <div
+                                key={key}
+                                className="bg-card ring-border/70 flex min-w-0 flex-col gap-0.5 rounded-xl px-3 py-2 ring-1 ring-inset"
+                            >
+                                <dt className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                                    {t(`stats.${key}`)}
+                                </dt>
+                                <dd className="font-mono text-sm tabular-nums">
+                                    {formatter.number(draft.stats[key])}
+                                </dd>
+                            </div>
+                        ))}
+                    </dl>
+
+                    <LoremOutput
+                        blocks={blocks}
+                        lang={draft.lang}
+                        monospace={options.format === "html"}
+                        stats={draft.stats}
+                        generationId={generationId}
+                        copiedKey={copiedKey}
+                        onCopy={handleCopyParagraph}
+                    />
+                </div>
             </CardContent>
         </Card>
     );

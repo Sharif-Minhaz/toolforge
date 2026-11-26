@@ -67,7 +67,7 @@ export function QueryParamsPanel({ params, onChange }: QueryParamsPanelProps) {
                             aria-label={t("keyLabel", { index: index + 1 })}
                             spellCheck={false}
                             autoComplete="off"
-                            className="h-9 rounded-lg font-mono text-[0.8125rem]"
+                            className="bg-card h-9 rounded-lg font-mono text-[0.8125rem]"
                         />
                         <span className="text-muted-foreground text-sm" aria-hidden="true">
                             =
@@ -82,7 +82,7 @@ export function QueryParamsPanel({ params, onChange }: QueryParamsPanelProps) {
                             aria-label={t("valueLabel", { index: index + 1 })}
                             spellCheck={false}
                             autoComplete="off"
-                            className="h-9 rounded-lg font-mono text-[0.8125rem]"
+                            className="bg-card h-9 rounded-lg font-mono text-[0.8125rem]"
                         />
                         {isBlankRow ? (
                             <span className="size-7" />

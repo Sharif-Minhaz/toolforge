@@ -72,21 +72,18 @@ export function AnalyticsConsentBanner() {
         </div>
     );
 
-    if (reduceMotion) {
-        return (
-            <section aria-label={t("title")} className={className}>
-                {panel}
-            </section>
-        );
-    }
-
     return (
         <motion.section
             aria-label={t("title")}
             className={className}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: MOTION_DURATION.reveal, ease: MOTION_EASE }}
+            // Same element either way — see `INSTANT` in components/motion/reveal.tsx.
+            transition={
+                reduceMotion
+                    ? { duration: 0 }
+                    : { duration: MOTION_DURATION.reveal, ease: MOTION_EASE }
+            }
         >
             {panel}
         </motion.section>

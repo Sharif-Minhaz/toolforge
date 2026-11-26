@@ -75,9 +75,7 @@ type SectionProps = {
 function Section({ title, children }: SectionProps) {
     return (
         <div className="flex min-w-0 flex-col gap-1.5">
-            <h3 className="text-muted-foreground text-[0.6875rem] font-medium tracking-wide uppercase">
-                {title}
-            </h3>
+            <h3 className="text-muted-foreground text-xs font-medium">{title}</h3>
             {children}
         </div>
     );

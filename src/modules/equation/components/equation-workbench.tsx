@@ -6,7 +6,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
@@ -18,6 +18,11 @@ import { OptionSelect, OptionSwitch } from "@/modules/tools/components/option-co
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { useImagePaste } from "@/modules/tools/components/use-image-paste";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
+import {
+    OptionsDisclosure,
+    RESULT_TRAY,
+    StepLabel,
+} from "@/modules/tools/components/workbench-step";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
 import { pastedImageFilename } from "@/modules/tools/domain/pasted-image";
@@ -393,18 +398,8 @@ export function EquationWorkbench({
     );
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
-
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-            </CardHeader>
-
-            <CardContent className="flex flex-col gap-5">
+        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+            <CardContent className="flex flex-col gap-6">
                 <div className="flex flex-col gap-2">
                     <Label id={sourceLabelId} className="text-muted-foreground text-xs">
                         {t("sourceModeLabel")}
@@ -449,9 +444,9 @@ export function EquationWorkbench({
                 ) : (
                     <div className="flex flex-col gap-2">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                            <Label htmlFor={inputId} className="text-muted-foreground text-xs">
+                            <StepLabel step={1} htmlFor={inputId}>
                                 {t("inputLabel")}
-                            </Label>
+                            </StepLabel>
                             <div className="flex items-center gap-1.5">
                                 <InputLimitMeter reading={inputLimit} />
                                 <button
@@ -495,7 +490,7 @@ export function EquationWorkbench({
                 )}
 
                 {current !== undefined && (
-                    <div ref={resultRef} className="flex scroll-mt-24 flex-col gap-4">
+                    <div ref={resultRef} className={cn(RESULT_TRAY, "scroll-mt-24 gap-4")}>
                         {drafts.length > 1 && (
                             <div className="flex flex-col gap-2">
                                 <Label id={tabsLabelId} className="text-muted-foreground text-xs">
@@ -517,12 +512,9 @@ export function EquationWorkbench({
                         <div className="grid gap-4 lg:grid-cols-2">
                             <div className="flex min-w-0 flex-col gap-2">
                                 <div className="flex flex-wrap items-center justify-between gap-2">
-                                    <Label
-                                        htmlFor={sourceId}
-                                        className="text-muted-foreground text-xs"
-                                    >
+                                    <StepLabel step={2} htmlFor={sourceId}>
                                         {t("sourceLabel")}
-                                    </Label>
+                                    </StepLabel>
                                     {current.latex !== current.generated && (
                                         <span className="text-brand-amber text-[0.6875rem] font-medium">
                                             {t("sourceEdited")}
@@ -535,7 +527,7 @@ export function EquationWorkbench({
                                     language="latex"
                                     placeholder={t("sourcePlaceholder")}
                                     onChange={handleEdit}
-                                    className="min-h-32"
+                                    className="bg-card min-h-32"
                                 />
                                 <p className="text-muted-foreground font-mono text-[0.6875rem] tabular-nums">
                                     {t("characters", {
@@ -583,21 +575,26 @@ export function EquationWorkbench({
                             />
                         )}
 
-                        <div className="grid gap-2 sm:grid-cols-2">
-                            <OptionSwitch
-                                label={t("displayLabel")}
-                                hint={display ? t("displayHint") : t("inlineHint")}
-                                checked={display}
-                                onCheckedChange={setDisplay}
-                            />
-                            <OptionSelect
-                                label={t("copyFormatLabel")}
-                                value={format}
-                                items={formatLabels}
-                                values={OUTPUT_FORMATS}
-                                onChange={setFormat}
-                            />
-                        </div>
+                        {/* How it is set and what Copy writes both have
+                            defaults, so they fold beside the buttons they
+                            change rather than above the result. */}
+                        <OptionsDisclosure>
+                            <div className="grid gap-2 sm:grid-cols-2">
+                                <OptionSwitch
+                                    label={t("displayLabel")}
+                                    hint={display ? t("displayHint") : t("inlineHint")}
+                                    checked={display}
+                                    onCheckedChange={setDisplay}
+                                />
+                                <OptionSelect
+                                    label={t("copyFormatLabel")}
+                                    value={format}
+                                    items={formatLabels}
+                                    values={OUTPUT_FORMATS}
+                                    onChange={setFormat}
+                                />
+                            </div>
+                        </OptionsDisclosure>
 
                         <div className="flex flex-wrap items-center gap-1.5">
                             <Button variant="outline" size="sm" onClick={handleCopy}>

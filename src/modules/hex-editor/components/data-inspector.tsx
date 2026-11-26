@@ -80,9 +80,7 @@ export function DataInspector({ onClose }: { onClose: () => void }) {
         <div className="flex h-full min-w-0 flex-col gap-3 overflow-y-auto p-3">
             <div className="flex items-start justify-between gap-2">
                 <div className="flex min-w-0 flex-col gap-1.5">
-                    <p className="text-muted-foreground/85 text-[0.6875rem] font-semibold tracking-[0.09em] uppercase">
-                        {t("title")}
-                    </p>
+                    <p className="text-muted-foreground/85 text-xs font-medium">{t("title")}</p>
                     <p className="text-muted-foreground font-mono text-[0.6875rem] tabular-nums">
                         {document === null
                             ? t("noFile")

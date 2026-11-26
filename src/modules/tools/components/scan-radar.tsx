@@ -141,9 +141,7 @@ export function ScanRadar({ label, captions, restingCaption, className }: ScanRa
 
             <div className="relative flex min-w-0 flex-col items-center gap-1.5 text-center">
                 <p className="max-w-full min-w-0 truncate font-mono text-sm">{label}</p>
-                <p className="text-muted-foreground text-[0.6875rem] leading-normal tracking-[0.14em] uppercase">
-                    {caption}
-                </p>
+                <p className="text-muted-foreground text-xs leading-normal">{caption}</p>
             </div>
         </section>
     );

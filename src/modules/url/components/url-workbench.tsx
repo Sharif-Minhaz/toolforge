@@ -1,19 +1,19 @@
 "use client";
 
-import { IconArrowsUpDown } from "@tabler/icons-react";
+import { IconArrowsLeftRight, IconArrowsUpDown } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { useId, useState } from "react";
 import { toast } from "sonner";
 
 import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
+import { OptionsDisclosure } from "@/modules/tools/components/workbench-step";
 import { getByteLength } from "@/modules/tools/domain/byte-size";
 import { getCharsetLabel, isEncodable, type CharsetId } from "@/modules/tools/domain/charsets";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
@@ -210,83 +210,102 @@ export function UrlWorkbench({
     }
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
+        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+            <CardContent className="flex flex-col gap-6">
+                {/* Which way, then how — the how folded away, so the input and
+                    its result are the first things on screen. */}
+                <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-2">
+                        <Label id={modeLabelId} className="text-muted-foreground text-xs">
+                            {t("modeLabel")}
+                        </Label>
+                        <ModeSelector
+                            value={mode}
+                            onChange={handleModeChange}
+                            labelId={modeLabelId}
+                        />
+                    </div>
 
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-            </CardHeader>
+                    {mode === "decode" && (
+                        <p className="text-muted-foreground text-xs leading-relaxed">
+                            {t("decodeHint")}
+                        </p>
+                    )}
 
-            <CardContent className="flex flex-col gap-5">
-                <div className="flex flex-col gap-2">
-                    <Label id={modeLabelId} className="text-muted-foreground text-xs">
-                        {t("modeLabel")}
-                    </Label>
-                    <ModeSelector value={mode} onChange={handleModeChange} labelId={modeLabelId} />
+                    <OptionsDisclosure>
+                        <ConversionOptions
+                            mode={mode}
+                            options={options}
+                            fileSource={file !== null}
+                            onChange={updateOptions}
+                        />
+                    </OptionsDisclosure>
                 </div>
 
-                <InputPanel
-                    mode={mode}
-                    text={text}
-                    file={file}
-                    inputId={inputId}
-                    inputBytes={inputBytes}
-                    onTextChange={setText}
-                    onFileSelect={handleFileSelect}
-                    onClear={handleClear}
-                />
+                {/* Step 1 beside step 2 on a wide screen, so the start and the
+                    end of the tool are read together; stacked on a narrow one. */}
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+                    <InputPanel
+                        mode={mode}
+                        text={text}
+                        file={file}
+                        inputId={inputId}
+                        inputBytes={inputBytes}
+                        onTextChange={setText}
+                        onFileSelect={handleFileSelect}
+                        onClear={handleClear}
+                    />
 
-                <ConversionOptions
-                    mode={mode}
-                    options={options}
-                    fileSource={file !== null}
-                    onChange={updateOptions}
-                />
-
-                {mode === "decode" && (
-                    <p className="text-muted-foreground text-xs leading-relaxed">
-                        {t("decodeHint")}
-                    </p>
-                )}
-
-                <div className="flex items-center gap-3">
-                    <Separator className="flex-1" />
-                    <Tooltip>
-                        <TooltipTrigger
-                            render={
-                                <button
-                                    type="button"
-                                    onClick={handleSwap}
-                                    disabled={!swappable}
-                                    aria-label={t("swap")}
-                                    className={cn(
-                                        buttonVariants({ variant: "outline", size: "icon-sm" }),
-                                        "rounded-full",
-                                    )}
+                    <div className="flex items-center gap-3 lg:flex-col lg:pt-10">
+                        <span
+                            aria-hidden="true"
+                            className="bg-border h-px flex-1 lg:h-auto lg:w-px"
+                        />
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={
+                                    <button
+                                        type="button"
+                                        onClick={handleSwap}
+                                        disabled={!swappable}
+                                        aria-label={t("swap")}
+                                        className={cn(
+                                            buttonVariants({ variant: "outline", size: "icon-sm" }),
+                                            "rounded-full",
+                                        )}
+                                    />
+                                }
+                            >
+                                <IconArrowsUpDown
+                                    className="size-4 lg:hidden"
+                                    stroke={1.75}
+                                    aria-hidden="true"
                                 />
-                            }
-                        >
-                            <IconArrowsUpDown className="size-4" stroke={1.8} aria-hidden="true" />
-                        </TooltipTrigger>
-                        <TooltipContent side="top">{t("swap")}</TooltipContent>
-                    </Tooltip>
-                    <Separator className="flex-1" />
-                </div>
+                                <IconArrowsLeftRight
+                                    className="hidden size-4 lg:block"
+                                    stroke={1.75}
+                                    aria-hidden="true"
+                                />
+                            </TooltipTrigger>
+                            <TooltipContent side="top">{t("swap")}</TooltipContent>
+                        </Tooltip>
+                        <span
+                            aria-hidden="true"
+                            className="bg-border h-px flex-1 lg:h-auto lg:w-px"
+                        />
+                    </div>
 
-                <OutputPanel
-                    outputId={outputId}
-                    output={output}
-                    outputBytes={result.ok ? result.outputBytes : 0}
-                    passes={result.ok ? result.passes : 1}
-                    error={error}
-                    pending={pending}
-                    onCopy={handleCopy}
-                    onDownload={handleDownload}
-                />
+                    <OutputPanel
+                        outputId={outputId}
+                        output={output}
+                        outputBytes={result.ok ? result.outputBytes : 0}
+                        passes={result.ok ? result.passes : 1}
+                        error={error}
+                        pending={pending}
+                        onCopy={handleCopy}
+                        onDownload={handleDownload}
+                    />
+                </div>
             </CardContent>
         </Card>
     );

@@ -60,7 +60,7 @@ export function QrTypeSelector({ value, labelId, onChange }: QrTypeSelectorProps
                         onClick={() => onChange(kind)}
                         className={cn(
                             "flex min-w-0 flex-col items-center justify-center gap-1.5 rounded-xl px-2 py-3",
-                            "ring-1 transition-all duration-200 ring-inset",
+                            "ring-1 transition duration-200 ring-inset",
                             "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
                             active
                                 ? "bg-primary/8 text-foreground ring-primary/40"

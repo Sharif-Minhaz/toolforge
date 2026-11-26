@@ -22,6 +22,7 @@ import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input
 import { JsonDocumentEditor } from "@/modules/tools/components/json-document-editor";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
+import { OptionsDisclosure, StepLabel } from "@/modules/tools/components/workbench-step";
 import { copyText } from "@/modules/tools/domain/clipboard";
 import { exceedsUploadLimit } from "@/modules/tools/domain/json-document";
 import { MAX_TYPED_RECOVERY_KEY_LENGTH } from "@/modules/tools/domain/recovery-key";
@@ -262,26 +263,28 @@ export function ServerLauncher({ overview, turnstileSiteKey }: ServerLauncherPro
                 <div className="mt-4 flex flex-col gap-4">
                     {panel === "create" ? (
                         <>
-                            <div className="grid gap-3 sm:grid-cols-2">
-                                <div className="flex min-w-0 flex-col gap-1.5">
-                                    <div className="flex flex-wrap items-center justify-between gap-2">
-                                        <Label htmlFor={nameId} className="text-xs">
-                                            {t("nameLabel")}
-                                        </Label>
-                                        <InputLimitMeter reading={nameLimit} />
-                                    </div>
-                                    <Input
-                                        id={nameId}
-                                        maxLength={SERVER_NAME_LENGTH.max}
-                                        value={name}
-                                        onChange={(event) => setName(event.target.value)}
-                                        placeholder={t("namePlaceholder")}
-                                        disabled={!storageReady || !hasRoom}
-                                        autoComplete="off"
-                                    />
+                            <div className="flex max-w-md min-w-0 flex-col gap-1.5">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <StepLabel step={1} htmlFor={nameId}>
+                                        {t("nameLabel")}
+                                    </StepLabel>
+                                    <InputLimitMeter reading={nameLimit} />
                                 </div>
+                                <Input
+                                    id={nameId}
+                                    maxLength={SERVER_NAME_LENGTH.max}
+                                    value={name}
+                                    onChange={(event) => setName(event.target.value)}
+                                    placeholder={t("namePlaceholder")}
+                                    disabled={!storageReady || !hasRoom}
+                                    autoComplete="off"
+                                />
+                            </div>
 
-                                <div className="flex min-w-0 flex-col gap-1.5">
+                            {/* Folded: a blank address is drawn from the name, so a
+                                first server never needs it. */}
+                            <OptionsDisclosure>
+                                <div className="flex max-w-md min-w-0 flex-col gap-1.5">
                                     <div className="flex flex-wrap items-center justify-between gap-2">
                                         <Label htmlFor={keyId} className="text-xs">
                                             {t("keyLabel")}
@@ -303,7 +306,7 @@ export function ServerLauncher({ overview, turnstileSiteKey }: ServerLauncherPro
                                         {t("keyHint")}
                                     </p>
                                 </div>
-                            </div>
+                            </OptionsDisclosure>
 
                             <JsonDocumentEditor
                                 value={document}
@@ -319,9 +322,9 @@ export function ServerLauncher({ overview, turnstileSiteKey }: ServerLauncherPro
                         </>
                     ) : (
                         <div className="flex flex-col gap-1.5">
-                            <Label htmlFor={recoveryId} className="text-xs">
+                            <StepLabel step={1} htmlFor={recoveryId}>
                                 {t("keyRecoveryLabel")}
-                            </Label>
+                            </StepLabel>
                             <Input
                                 id={recoveryId}
                                 // Formatted keys carry separators, so the cap is
@@ -443,10 +446,7 @@ export function ServerLauncher({ overview, turnstileSiteKey }: ServerLauncherPro
             ) : null}
 
             <section aria-labelledby="servers-heading">
-                <h2
-                    id="servers-heading"
-                    className="text-muted-foreground text-[0.6875rem] font-semibold tracking-[0.09em] uppercase"
-                >
+                <h2 id="servers-heading" className="text-muted-foreground text-xs font-medium">
                     {t("yourServers")}
                 </h2>
 

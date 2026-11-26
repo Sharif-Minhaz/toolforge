@@ -104,6 +104,7 @@ export function QrDynamicPanel({
 
                     <Button
                         type="button"
+                        variant="outline"
                         size="sm"
                         onClick={onCreate}
                         disabled={creating || token === null || !hasTarget || !online}

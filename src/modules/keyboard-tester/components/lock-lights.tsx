@@ -36,7 +36,7 @@ export function LockLights({ locks, className }: { locks: LockStates; className?
                                       : "bg-muted-foreground/25 ring-border",
                             )}
                         />
-                        <span className="text-muted-foreground text-[0.7em] leading-none tracking-wide uppercase">
+                        <span className="text-muted-foreground text-[0.7em] leading-none">
                             {PRINTED[key]}
                         </span>
                     </span>

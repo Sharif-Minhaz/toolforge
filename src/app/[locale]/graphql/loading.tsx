@@ -27,7 +27,7 @@ export default function GraphqlServerStudioLoading() {
             </div>
 
             <div className="flex flex-col gap-6">
-                {/* The create card: tabs, two fields, then the editor. */}
+                {/* The create card: tabs, the name, the folded options, then the editor. */}
                 <Skeleton className="h-[30rem] w-full rounded-2xl" />
 
                 <div>

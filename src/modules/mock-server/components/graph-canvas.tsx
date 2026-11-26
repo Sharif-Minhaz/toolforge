@@ -22,7 +22,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { cn } from "@/lib/utils";
-import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
+import { CATEGORY_HUE_VARS } from "@/modules/tools/components/tool-accent";
 
 import { isTypingTarget } from "../domain/keyboard";
 import { handlesFor, nodeDefinition } from "../domain/node-registry";
@@ -68,7 +68,7 @@ function StudioNode({ data, selected }: NodeProps) {
         <div
             className={cn(
                 "border-border/70 bg-card min-w-44 rounded-xl border px-3 py-2 shadow-xs transition-colors",
-                TOOL_ACCENT_VARS[definition.accent],
+                CATEGORY_HUE_VARS[definition.accent],
                 selected && "border-[var(--tool-accent)] ring-2 ring-[var(--tool-accent)]/30",
             )}
         >

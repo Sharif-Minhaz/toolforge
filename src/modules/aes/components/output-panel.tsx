@@ -4,7 +4,7 @@ import { IconDownload, IconFileDownload } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { useId, type ReactNode } from "react";
 
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
     Select,
@@ -14,8 +14,9 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { IconCopyButton } from "@/modules/tools/components/copy-button";
+import { CopyIconSwap } from "@/modules/tools/components/copy-button";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import { RESULT_TRAY, StepLabel } from "@/modules/tools/components/workbench-step";
 import type { AesDirection } from "../types";
 
 type OutputPanelProps = {
@@ -65,13 +66,13 @@ export function OutputPanel({
     const side = direction === "encrypt" ? "ciphertext" : "plaintext";
 
     return (
-        <div className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-2 rounded-xl p-3 ring-1 ring-inset">
+        <div className={RESULT_TRAY}>
             <div className="flex flex-wrap items-center justify-between gap-2">
-                <Label htmlFor={outputId} className="text-muted-foreground text-xs">
-                    <span className="leading-[1.3]">{t(`outputLabel.${side}`)}</span>
-                </Label>
+                <StepLabel step={2} htmlFor={outputId}>
+                    {t(`outputLabel.${side}`)}
+                </StepLabel>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5">
                     <Label id={encodingLabelId} className="sr-only">
                         {t(`encodingLabel.${side}`)}
                     </Label>
@@ -129,20 +130,22 @@ export function OutputPanel({
                             {t("downloadBytes")}
                         </button>
                     )}
-                    <IconCopyButton
-                        copied={copied}
+                    <Button
+                        size="sm"
                         onClick={onCopy}
                         disabled={output.length === 0}
-                        aria-label={t(`copyOutput.${side}`)}
-                        className="disabled:pointer-events-none disabled:opacity-40"
-                    />
+                        className="h-7 px-2 text-[0.6875rem]"
+                    >
+                        <CopyIconSwap copied={copied} />
+                        {t(`copyOutput.${side}`)}
+                    </Button>
                 </div>
             </div>
 
             <output
                 id={outputId}
                 className={cn(
-                    "bg-muted/40 min-h-32 rounded-lg px-2.5 py-2",
+                    "bg-card min-h-32 rounded-lg px-2.5 py-2",
                     "font-mono text-[0.8125rem] leading-6 break-all whitespace-pre-wrap",
                     "transition-opacity duration-200",
                     // Dimmed rather than blanked: the previous answer is more

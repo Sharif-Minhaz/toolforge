@@ -16,9 +16,15 @@ export async function FeaturedTools() {
 
     return (
         <section id="featured-tools" className="flex scroll-mt-24 flex-col gap-4">
-            <SectionHeading title={t("title")} description={t("description")} />
+            <SectionHeading
+                lead
+                title={t.rich("title", {
+                    accent: (chunks) => <span className="text-primary">{chunks}</span>,
+                })}
+                description={t("description")}
+            />
 
-            <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {tools.map((tool, index) => (
                     <li
                         key={tool.id}

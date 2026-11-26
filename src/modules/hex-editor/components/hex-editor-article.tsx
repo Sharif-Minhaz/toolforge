@@ -93,7 +93,7 @@ export async function HexEditorArticle() {
                     <p className={PROSE_TEXT}>{t("shortcuts.intro")}</p>
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-[28rem] text-left text-[0.875rem]">
-                            <thead className="text-muted-foreground/85 text-[0.6875rem] tracking-[0.06em] uppercase">
+                            <thead className="text-muted-foreground/85 text-xs tracking-[0.06em]">
                                 <tr className="border-border/70 border-b">
                                     <th scope="col" className="py-2 pr-4 font-semibold">
                                         {t("shortcuts.columnKey")}

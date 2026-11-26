@@ -3,9 +3,9 @@
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
+import { StepLabel } from "@/modules/tools/components/workbench-step";
 import type { RegexLiteral } from "../domain/literal";
 import {
     DELIMITER_CHARACTERS,
@@ -56,9 +56,9 @@ export function PatternField({
     return (
         <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
-                <Label htmlFor={inputId} className="text-muted-foreground text-xs">
+                <StepLabel step={1} htmlFor={inputId}>
                     {t("patternLabel")}
-                </Label>
+                </StepLabel>
                 {stats}
             </div>
 

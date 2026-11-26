@@ -264,7 +264,7 @@ function Section({
 }) {
     return (
         <div className="flex min-w-0 flex-col gap-1">
-            <p className="text-muted-foreground text-[0.625rem] font-semibold tracking-[0.09em] uppercase">
+            <p className="text-muted-foreground text-xs font-medium">
                 {title}
                 {note !== undefined ? (
                     <span className="text-brand-amber ml-1.5 normal-case">{note}</span>

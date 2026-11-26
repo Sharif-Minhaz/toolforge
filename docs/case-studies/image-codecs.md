@@ -134,11 +134,14 @@ Three "failures", zero defects.
   a tab dies halfway through a batch — four bytes a pixel is the real cost, not the
   file size. Sequential work is also the only way the progress count is true.
 
-- **The queue sits under the intake; the settings sit beside it.** Both
-  workbenches are two columns from `lg` up: intake and picked files on the left,
-  a sticky settings panel holding the batch button on the right. The first
-  version listed the files under every control, so on the converter's six a
-  successful pick looked like nothing happened. Once a file is in, the dropzone
+- **The queue sits under the intake.** The compressor is two columns from `lg`
+  up: intake and picked files on the left, a sticky settings panel holding the
+  batch button on the right. The converter is stacked instead — "Convert to"
+  visible, its six settings folded under Options
+  ([`../patterns/workbench-layout.md`](../patterns/workbench-layout.md)), then
+  the intake, Convert, and the queue as the result tray. The first version
+  listed the files under every control, so on the converter's six a successful
+  pick looked like nothing happened; folding them fixes the same problem. Once a file is in, the dropzone
   shrinks to its `compact` row for the same reason; with an empty queue it does
   the opposite, stretching to the settings panel's height so the left column
   is not a short strip over a hole. Every row states the source

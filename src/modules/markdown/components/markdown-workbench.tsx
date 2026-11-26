@@ -16,7 +16,7 @@ import { flushSync } from "react-dom";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
@@ -297,14 +297,14 @@ export function MarkdownWorkbench({
                     </div>
 
                     {/* Six outline buttons in a row read as one undifferentiated
-                        block. Emphasis carries the meaning instead: full screen is
-                        the only filled button, the two document actions stay plain,
-                        and the three export destinations are a separated group with
-                        a hue each, so "which one is HTML" is answered by colour
-                        rather than by reading every label. */}
+                        block. Emphasis carries the meaning instead: Copy — taking
+                        the document away — is the only filled button, full screen
+                        and reset stay plain, and the three export destinations are
+                        a separated group with a hue each, so "which one is HTML"
+                        is answered by colour rather than by reading every label. */}
                     <div className="flex flex-wrap items-center gap-1.5">
                         <Button
-                            variant={fullscreen ? "secondary" : "default"}
+                            variant="outline"
                             size="sm"
                             onClick={() => handleFullscreenChange(!fullscreen)}
                         >
@@ -334,14 +334,9 @@ export function MarkdownWorkbench({
                             />
                             {t("reset")}
                         </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleCopy}
-                            disabled={text.length === 0}
-                        >
+                        <Button size="sm" onClick={handleCopy} disabled={text.length === 0}>
                             <IconClipboardCheck
-                                className="text-muted-foreground size-3.5"
+                                className="size-3.5"
                                 stroke={1.8}
                                 aria-hidden="true"
                             />
@@ -439,17 +434,7 @@ export function MarkdownWorkbench({
 
     return (
         <>
-            <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-                <span
-                    aria-hidden="true"
-                    className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-                />
-
-                <CardHeader>
-                    <CardTitle className="text-lg">{t("title")}</CardTitle>
-                    <CardDescription>{t("description")}</CardDescription>
-                </CardHeader>
-
+            <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
                 <CardContent className="flex flex-col gap-5">
                     {fullscreen ? (
                         <div className="bg-muted/40 ring-border/60 flex flex-col items-start gap-3 rounded-xl p-5 ring-1 ring-inset">

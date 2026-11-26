@@ -23,6 +23,15 @@ type MotionWrapperProps = {
     as?: MotionWrapperTag;
 };
 
+/**
+ * Reduced motion keeps the same element and only zeroes the duration. Returning
+ * a plain element instead looks equivalent, but the server cannot know the
+ * preference: it renders the motion element's `opacity: 0`, the client renders
+ * no style, and React does not patch attributes on hydration, so the content
+ * stays invisible for exactly the readers who asked for less motion.
+ */
+const INSTANT = { duration: 0 } as const;
+
 /** Fades content up the first time it scrolls into view. */
 export function Reveal({
     children,
@@ -33,10 +42,6 @@ export function Reveal({
 }: MotionWrapperProps) {
     const reduceMotion = useReducedMotion();
 
-    if (reduceMotion) {
-        return <Tag className={className}>{children}</Tag>;
-    }
-
     const Animated = motion[Tag];
 
     return (
@@ -45,7 +50,11 @@ export function Reveal({
             initial={{ opacity: 0, y }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-72px" }}
-            transition={{ duration: MOTION_DURATION.reveal, delay, ease: MOTION_EASE }}
+            transition={
+                reduceMotion
+                    ? INSTANT
+                    : { duration: MOTION_DURATION.reveal, delay, ease: MOTION_EASE }
+            }
         >
             {children}
         </Animated>
@@ -62,10 +71,6 @@ export function FadeIn({
 }: MotionWrapperProps) {
     const reduceMotion = useReducedMotion();
 
-    if (reduceMotion) {
-        return <Tag className={className}>{children}</Tag>;
-    }
-
     const Animated = motion[Tag];
 
     return (
@@ -73,7 +78,11 @@ export function FadeIn({
             className={className}
             initial={{ opacity: 0, y }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: MOTION_DURATION.enter, delay, ease: MOTION_EASE }}
+            transition={
+                reduceMotion
+                    ? INSTANT
+                    : { duration: MOTION_DURATION.enter, delay, ease: MOTION_EASE }
+            }
         >
             {children}
         </Animated>

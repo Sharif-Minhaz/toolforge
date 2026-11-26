@@ -6,8 +6,7 @@ import { useId, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
@@ -18,6 +17,7 @@ import { ScanRadar } from "@/modules/tools/components/scan-radar";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
+import { OptionsDisclosure, StepLabel } from "@/modules/tools/components/workbench-step";
 import { readInputLimit } from "@/modules/tools/domain/input-limit";
 import { saveFile } from "@/modules/tools/domain/file-saver";
 import { DNS_RESOLVERS, type DnsResolver } from "@/modules/tools/types/network";
@@ -32,8 +32,7 @@ import { HopTable } from "./hop-table";
 import { RouteGlobe } from "./route-globe";
 
 /** Small-caps label, matching the result panels the form sits above. */
-const FIELD_LABEL =
-    "text-muted-foreground text-[0.625rem] leading-normal tracking-[0.14em] uppercase";
+const FIELD_LABEL = "text-muted-foreground text-xs leading-normal";
 
 /**
  * Complaints about the *input*, which belong beside the input. Everything else
@@ -214,12 +213,10 @@ export function IpGlobeWorkbench({
     return (
         <div className={cn("flex flex-col gap-6", TOOL_ACCENT_VARS.violet)}>
             <Card>
-                <CardHeader>
-                    <CardTitle>{t("title")}</CardTitle>
-                    <CardDescription>{t("description")}</CardDescription>
-                </CardHeader>
-
                 <CardContent className="flex flex-col gap-5">
+                    {/* The only line on the form saying who the addresses go to. */}
+                    <p className="text-muted-foreground text-sm">{t("description")}</p>
+
                     <div className="grid gap-3 sm:grid-cols-2">
                         <OptionSelect
                             label={t("modeLabel")}
@@ -231,23 +228,12 @@ export function IpGlobeWorkbench({
                             values={ROUTE_MODES}
                             onChange={setMode}
                         />
-                        <OptionSelect
-                            label={t("resolverLabel")}
-                            hint={resolverMatters ? t("resolverHint") : t("resolverInert")}
-                            value={resolver}
-                            items={Object.fromEntries(
-                                DNS_RESOLVERS.map((item) => [item, tResolvers(item)]),
-                            )}
-                            values={DNS_RESOLVERS}
-                            disabled={!resolverMatters}
-                            onChange={setResolver}
-                        />
                     </div>
 
                     <div className="flex flex-col gap-2">
-                        <Label htmlFor={inputId} className={FIELD_LABEL}>
+                        <StepLabel step={1} htmlFor={inputId}>
                             {t("inputLabel")}
-                        </Label>
+                        </StepLabel>
                         <Textarea
                             id={inputId}
                             value={text}
@@ -277,31 +263,6 @@ export function IpGlobeWorkbench({
                         )}
                     </div>
 
-                    <div className="grid gap-2 sm:grid-cols-3">
-                        <OptionSwitch
-                            label={tOptions("autoRotateLabel")}
-                            hint={tOptions("autoRotateHint")}
-                            checked={autoRotate}
-                            onCheckedChange={setAutoRotate}
-                        />
-                        <OptionSwitch
-                            label={tOptions("showArcsLabel")}
-                            hint={
-                                arcsPossible ? tOptions("showArcsHint") : tOptions("showArcsInert")
-                            }
-                            checked={showArcs && arcsPossible}
-                            disabled={!arcsPossible}
-                            onCheckedChange={setShowArcs}
-                        />
-                        <OptionSwitch
-                            label={tOptions("groupLabel")}
-                            hint={groupingMatters ? tOptions("groupHint") : tOptions("groupInert")}
-                            checked={groupByCountry}
-                            disabled={!groupingMatters}
-                            onCheckedChange={setGroupByCountry}
-                        />
-                    </div>
-
                     <div className="flex flex-wrap items-center gap-3">
                         <Button type="button" onClick={handleRun} disabled={!canRun}>
                             {running ? (
@@ -322,6 +283,54 @@ export function IpGlobeWorkbench({
                     </div>
 
                     <StatusStrip id={statusId} tone={status.tone} message={status.message} />
+
+                    <OptionsDisclosure>
+                        <div className="flex flex-col gap-3">
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                <OptionSelect
+                                    label={t("resolverLabel")}
+                                    hint={resolverMatters ? t("resolverHint") : t("resolverInert")}
+                                    value={resolver}
+                                    items={Object.fromEntries(
+                                        DNS_RESOLVERS.map((item) => [item, tResolvers(item)]),
+                                    )}
+                                    values={DNS_RESOLVERS}
+                                    disabled={!resolverMatters}
+                                    onChange={setResolver}
+                                />
+                            </div>
+                            <div className="grid gap-2 sm:grid-cols-3">
+                                <OptionSwitch
+                                    label={tOptions("autoRotateLabel")}
+                                    hint={tOptions("autoRotateHint")}
+                                    checked={autoRotate}
+                                    onCheckedChange={setAutoRotate}
+                                />
+                                <OptionSwitch
+                                    label={tOptions("showArcsLabel")}
+                                    hint={
+                                        arcsPossible
+                                            ? tOptions("showArcsHint")
+                                            : tOptions("showArcsInert")
+                                    }
+                                    checked={showArcs && arcsPossible}
+                                    disabled={!arcsPossible}
+                                    onCheckedChange={setShowArcs}
+                                />
+                                <OptionSwitch
+                                    label={tOptions("groupLabel")}
+                                    hint={
+                                        groupingMatters
+                                            ? tOptions("groupHint")
+                                            : tOptions("groupInert")
+                                    }
+                                    checked={groupByCountry}
+                                    disabled={!groupingMatters}
+                                    onCheckedChange={setGroupByCountry}
+                                />
+                            </div>
+                        </div>
+                    </OptionsDisclosure>
                 </CardContent>
             </Card>
 
@@ -348,7 +357,7 @@ export function IpGlobeWorkbench({
                 {!running && report !== null && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>{t("resultTitle")}</CardTitle>
+                            <StepLabel step={2}>{t("resultTitle")}</StepLabel>
                             <CardDescription>
                                 {t("resultDescription", {
                                     countries: report.summary.countries.length,

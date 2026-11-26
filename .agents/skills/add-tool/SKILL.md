@@ -347,6 +347,7 @@ they should not.
 | --- | --- |
 | Article section, prose widths | `@/modules/tools/components/article-section` |
 | Article loading skeleton | `@/modules/tools/components/article-skeleton` |
+| Workbench steps, result tray, folded options | `@/modules/tools/components/workbench-step` — see `docs/patterns/workbench-layout.md` |
 | FAQ | `@/modules/tools/components/faq-accordion` |
 | Copy button, copy/check swap | `@/modules/tools/components/copy-button` |
 | Accent vars, icon tile | `@/modules/tools/components/tool-accent` |

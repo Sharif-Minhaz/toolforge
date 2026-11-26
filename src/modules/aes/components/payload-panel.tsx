@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { ByteSize, useByteLabel } from "@/modules/tools/components/byte-size";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { TOOL_ICON_TILE } from "@/modules/tools/components/tool-accent";
+import { StepLabel } from "@/modules/tools/components/workbench-step";
 import { MAX_AES_INPUT_BYTES, MAX_AES_INPUT_LENGTH } from "../domain/constants";
 import type { AesDirection } from "../types";
 
@@ -90,9 +91,9 @@ export function PayloadPanel({
     return (
         <div className="flex min-w-0 flex-col gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
-                <Label htmlFor={inputId} className="text-muted-foreground text-xs">
-                    <span className="leading-[1.3]">{t(`inputLabel.${side}`)}</span>
-                </Label>
+                <StepLabel step={1} htmlFor={inputId}>
+                    {t(`inputLabel.${side}`)}
+                </StepLabel>
 
                 <div className="flex items-center gap-1.5">
                     {file === null ? (

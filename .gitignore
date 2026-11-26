@@ -53,3 +53,5 @@ bun.lock
 
 # tokenade — legacy per-project embedding model cache (now global)
 .fastembed_cache/
+
+.playwright-mcp

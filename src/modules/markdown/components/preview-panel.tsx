@@ -6,8 +6,8 @@ import { IconAlertTriangle } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import type { RefObject, UIEvent } from "react";
 
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { StepLabel } from "@/modules/tools/components/workbench-step";
 import type { MarkdownDocument } from "../types";
 import { MarkdownNodes } from "./markdown-nodes";
 
@@ -47,9 +47,12 @@ export function PreviewPanel({
         <section
             className={cn("flex min-w-0 flex-col gap-2", fill ? "h-full min-h-0" : "lg:h-full")}
         >
-            <Label id={labelId} className="text-muted-foreground text-xs">
-                {t("previewLabel")}
-            </Label>
+            {/* `min-h-7` matches the editor's label row, so both panes start level. */}
+            <div className="flex min-h-7 items-center">
+                <StepLabel step={2} id={labelId}>
+                    {t("previewLabel")}
+                </StepLabel>
+            </div>
 
             {error !== null ? (
                 <p

@@ -5,14 +5,15 @@ import { useTranslations } from "next-intl";
 import { useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
-import { IconCopyButton } from "@/modules/tools/components/copy-button";
+import { CopyIconSwap } from "@/modules/tools/components/copy-button";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
+import { RESULT_TRAY, StepLabel } from "@/modules/tools/components/workbench-step";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
 import { getKeyFormat, resolveExpectedAlgorithm } from "../domain/algorithms";
@@ -199,141 +200,137 @@ export function JwtEncoder({ example }: JwtEncoderProps) {
                 <ExampleGenerator onGenerate={handleExample} />
             </div>
 
-            <div className="grid min-w-0 gap-5 xl:grid-cols-2 xl:gap-6">
-                <div className="flex min-w-0 flex-col gap-4">
-                    <div className="flex min-w-0 flex-col gap-1.5">
-                        <Label id={algorithmLabelId} className="text-muted-foreground text-xs">
-                            <span className="leading-[1.3]">{tEncoder("algorithmLabel")}</span>
-                        </Label>
-                        <AlgorithmSelect
-                            value={algorithm}
-                            onChange={handleAlgorithmChange}
-                            labelledBy={algorithmLabelId}
-                            className="w-full sm:w-44"
+            <div className="flex min-w-0 flex-col gap-1.5">
+                <Label id={algorithmLabelId} className="text-muted-foreground text-xs">
+                    <span className="leading-[1.3]">{tEncoder("algorithmLabel")}</span>
+                </Label>
+                <AlgorithmSelect
+                    value={algorithm}
+                    onChange={handleAlgorithmChange}
+                    labelledBy={algorithmLabelId}
+                    className="w-full sm:w-44"
+                />
+                <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                    {tEncoder("algorithmHint")}
+                </p>
+            </div>
+
+            {/* The claims first — they are what a reader came to write — with
+                the header beside them from `lg` up. */}
+            <div className="grid min-w-0 gap-4 lg:grid-cols-2">
+                <JsonBox
+                    id={payloadId}
+                    step={1}
+                    label={tEncoder("payloadLabel")}
+                    part="payload"
+                    value={payloadJson}
+                    limit={MAX_JWT_JSON_LENGTH}
+                    onChange={setPayloadJson}
+                    copyLabel={tEncoder("copyPayload")}
+                    copied={copied === "payload"}
+                    onCopy={() => void handleCopy("payload", payloadJson)}
+                    status={
+                        <StatusStrip
+                            {...describeParse(payloadParse, "payload")}
+                            className={cn(
+                                "transition-opacity duration-200",
+                                pending && "opacity-55",
+                            )}
                         />
-                        <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                            {tEncoder("algorithmHint")}
-                        </p>
-                    </div>
+                    }
+                />
 
-                    <JsonBox
-                        id={headerId}
-                        label={tEncoder("headerLabel")}
-                        part="header"
-                        value={headerJson}
-                        limit={MAX_JWT_JSON_LENGTH}
-                        onChange={setHeaderJson}
-                        copyLabel={tEncoder("copyHeader")}
-                        copied={copied === "header"}
-                        onCopy={() => void handleCopy("header", headerJson)}
-                        status={
-                            <StatusStrip
-                                {...describeParse(headerParse, "header")}
-                                className={cn(
-                                    "transition-opacity duration-200",
-                                    pending && "opacity-55",
-                                )}
-                            />
-                        }
-                    />
+                <JsonBox
+                    id={headerId}
+                    label={tEncoder("headerLabel")}
+                    part="header"
+                    value={headerJson}
+                    limit={MAX_JWT_JSON_LENGTH}
+                    onChange={setHeaderJson}
+                    copyLabel={tEncoder("copyHeader")}
+                    copied={copied === "header"}
+                    onCopy={() => void handleCopy("header", headerJson)}
+                    status={
+                        <StatusStrip
+                            {...describeParse(headerParse, "header")}
+                            className={cn(
+                                "transition-opacity duration-200",
+                                pending && "opacity-55",
+                            )}
+                        />
+                    }
+                />
+            </div>
 
-                    <JsonBox
-                        id={payloadId}
-                        label={tEncoder("payloadLabel")}
-                        part="payload"
-                        value={payloadJson}
-                        limit={MAX_JWT_JSON_LENGTH}
-                        onChange={setPayloadJson}
-                        copyLabel={tEncoder("copyPayload")}
-                        copied={copied === "payload"}
-                        onCopy={() => void handleCopy("payload", payloadJson)}
-                        status={
-                            <StatusStrip
-                                {...describeParse(payloadParse, "payload")}
-                                className={cn(
-                                    "transition-opacity duration-200",
-                                    pending && "opacity-55",
-                                )}
-                            />
-                        }
-                    />
+            <section className="flex min-w-0 flex-col gap-3">
+                <div className="flex flex-col gap-1">
+                    <h3 className="text-[0.8125rem] leading-[1.3] font-medium">
+                        {tEncoder("keyTitle")}
+                    </h3>
+                    <p className="text-muted-foreground text-[0.6875rem] leading-normal">
+                        {tEncoder("keyDescription")}
+                    </p>
                 </div>
 
-                <div className="flex min-w-0 flex-col gap-4">
-                    <section className="flex min-w-0 flex-col gap-3">
-                        <div className="flex flex-col gap-1">
-                            <h3 className="text-[0.8125rem] leading-[1.3] font-medium">
-                                {tEncoder("keyTitle")}
-                            </h3>
-                            <p className="text-muted-foreground text-[0.6875rem] leading-normal">
-                                {tEncoder("keyDescription")}
-                            </p>
-                        </div>
+                <KeyField
+                    algorithm={algorithm}
+                    value={keyInput}
+                    onChange={setKeyInput}
+                    purpose="signing"
+                    copied={copied === "key"}
+                    onCopy={() =>
+                        void handleCopy(
+                            "key",
+                            keyInput.kind === "secret" ? keyInput.secret : keyInput.pem,
+                        )
+                    }
+                />
+            </section>
 
-                        <KeyField
-                            algorithm={algorithm}
-                            value={keyInput}
-                            onChange={setKeyInput}
-                            purpose="signing"
-                            copied={copied === "key"}
-                            onCopy={() =>
-                                void handleCopy(
-                                    "key",
-                                    keyInput.kind === "secret" ? keyInput.secret : keyInput.pem,
-                                )
-                            }
-                        />
-                    </section>
-
-                    <div className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-2 rounded-xl p-3 ring-1 ring-inset">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                            <span className="text-muted-foreground text-xs leading-[1.3]">
-                                {tEncoder("tokenLabel")}
-                            </span>
-                            <div className="flex items-center gap-1.5">
-                                <button
-                                    type="button"
-                                    onClick={handleDownload}
-                                    disabled={token.length === 0}
-                                    className={cn(
-                                        buttonVariants({ variant: "outline", size: "sm" }),
-                                        "h-7 px-2 text-[0.6875rem]",
-                                    )}
-                                >
-                                    <IconDownload
-                                        className="size-3.5"
-                                        stroke={1.8}
-                                        aria-hidden="true"
-                                    />
-                                    {tEncoder("download")}
-                                </button>
-                                <IconCopyButton
-                                    copied={copied === "token"}
-                                    onClick={() => void handleCopy("token", token)}
-                                    aria-label={tEncoder("copyToken")}
-                                />
-                            </div>
-                        </div>
-
-                        <div
+            <div className={RESULT_TRAY}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <StepLabel step={2}>{tEncoder("tokenLabel")}</StepLabel>
+                    <div className="flex items-center gap-1.5">
+                        <button
+                            type="button"
+                            onClick={handleDownload}
+                            disabled={token.length === 0}
                             className={cn(
-                                "bg-muted/40 min-h-36 rounded-lg px-2.5 py-2",
-                                "transition-opacity duration-200",
-                                (pending || result === null) && "opacity-55",
+                                buttonVariants({ variant: "outline", size: "sm" }),
+                                "h-7 px-2 text-[0.6875rem]",
                             )}
                         >
-                            {decodedToken?.ok ? (
-                                <TokenSegments segments={decodedToken.segments} />
-                            ) : (
-                                <p className="text-muted-foreground font-mono text-[0.8125rem] leading-6">
-                                    {tEncoder("tokenPlaceholder")}
-                                </p>
-                            )}
-                        </div>
-
-                        <StatusStrip tone={signStatus.tone} message={signStatus.message} />
+                            <IconDownload className="size-3.5" stroke={1.8} aria-hidden="true" />
+                            {tEncoder("download")}
+                        </button>
+                        <Button
+                            size="sm"
+                            onClick={() => void handleCopy("token", token)}
+                            className="h-7 px-2 text-[0.6875rem]"
+                        >
+                            <CopyIconSwap copied={copied === "token"} />
+                            {tEncoder("copyToken")}
+                        </Button>
                     </div>
                 </div>
+
+                <div
+                    className={cn(
+                        "bg-card min-h-36 rounded-lg px-2.5 py-2",
+                        "transition-opacity duration-200",
+                        (pending || result === null) && "opacity-55",
+                    )}
+                >
+                    {decodedToken?.ok ? (
+                        <TokenSegments segments={decodedToken.segments} />
+                    ) : (
+                        <p className="text-muted-foreground font-mono text-[0.8125rem] leading-6">
+                            {tEncoder("tokenPlaceholder")}
+                        </p>
+                    )}
+                </div>
+
+                <StatusStrip tone={signStatus.tone} message={signStatus.message} />
             </div>
         </div>
     );

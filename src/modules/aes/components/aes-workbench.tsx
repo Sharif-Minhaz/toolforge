@@ -1,21 +1,13 @@
 "use client";
 
-import { IconArrowsUpDown, IconRotate2 } from "@tabler/icons-react";
+import { IconArrowsLeftRight, IconArrowsUpDown, IconRotate2 } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { buttonVariants } from "@/components/ui/button";
-import {
-    Card,
-    CardAction,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
@@ -530,157 +522,177 @@ export function AesWorkbench({ initialDirection, initialOptions }: AesWorkbenchP
     }
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
-
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-                <CardAction>
-                    {/* Quiet until there is something to undo, so it never
-                        reads as a button that might do nothing. */}
-                    <button
-                        type="button"
-                        onClick={handleReset}
-                        disabled={pristine}
-                        title={t("resetHint")}
-                        className={cn(
-                            buttonVariants({ variant: "outline", size: "sm" }),
-                            "h-7 px-2 text-[0.6875rem]",
-                        )}
-                    >
-                        <IconRotate2 className="size-3.5" stroke={1.8} aria-hidden="true" />
-                        {t("reset")}
-                    </button>
-                </CardAction>
-            </CardHeader>
-
-            <CardContent className="flex min-w-0 flex-col gap-5">
+        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+            <CardContent className="flex min-w-0 flex-col gap-6">
                 <p className="text-muted-foreground max-w-2xl text-[0.8125rem] leading-normal">
                     {t("secretsNotice")}
                 </p>
 
-                <div className="flex flex-col gap-2">
-                    <Label id={directionLabelId} className="text-muted-foreground text-xs">
-                        <span className="leading-[1.3]">{t("directionLabel")}</span>
-                    </Label>
-                    <DirectionSelector
-                        value={direction}
-                        onChange={setDirection}
-                        labelId={directionLabelId}
-                    />
+                {/* Which way and with what cipher, before anything is typed. */}
+                <div className="flex min-w-0 flex-col gap-4">
+                    <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between gap-2">
+                            <Label id={directionLabelId} className="text-muted-foreground text-xs">
+                                <span className="leading-[1.3]">{t("directionLabel")}</span>
+                            </Label>
+                            {/* Quiet until there is something to undo, so it
+                                never reads as a button that might do nothing. */}
+                            <button
+                                type="button"
+                                onClick={handleReset}
+                                disabled={pristine}
+                                title={t("resetHint")}
+                                className={cn(
+                                    buttonVariants({ variant: "outline", size: "sm" }),
+                                    "h-7 px-2 text-[0.6875rem]",
+                                )}
+                            >
+                                <IconRotate2 className="size-3.5" stroke={1.8} aria-hidden="true" />
+                                {t("reset")}
+                            </button>
+                        </div>
+                        <DirectionSelector
+                            value={direction}
+                            onChange={setDirection}
+                            labelId={directionLabelId}
+                        />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <OptionSelect
+                            label={t("modeLabel")}
+                            hint={t(`modeHint.${options.mode}`)}
+                            value={options.mode}
+                            items={modeItems}
+                            values={AES_MODES}
+                            onChange={handleModeChange}
+                        />
+                        <OptionSelect
+                            label={t("keySizeLabel")}
+                            hint={t("keySizeHint")}
+                            value={String(options.keySize)}
+                            items={keySizeItems}
+                            values={AES_KEY_SIZES.map(String)}
+                            onChange={(next) => {
+                                const size = Number(next);
+
+                                if (isAesKeySize(size)) {
+                                    updateOptions({ keySize: size });
+                                }
+                            }}
+                        />
+                    </div>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <OptionSelect
-                        label={t("modeLabel")}
-                        hint={t(`modeHint.${options.mode}`)}
-                        value={options.mode}
-                        items={modeItems}
-                        values={AES_MODES}
-                        onChange={handleModeChange}
-                    />
-                    <OptionSelect
-                        label={t("keySizeLabel")}
-                        hint={t("keySizeHint")}
-                        value={String(options.keySize)}
-                        items={keySizeItems}
-                        values={AES_KEY_SIZES.map(String)}
-                        onChange={(next) => {
-                            const size = Number(next);
-
-                            if (isAesKeySize(size)) {
-                                updateOptions({ keySize: size });
+                {/* Step 1 and the key it is read with on one side, step 2 on
+                    the other from `lg` up; stacked on a narrow screen. */}
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+                    <div className="flex min-w-0 flex-col gap-4">
+                        <PayloadPanel
+                            direction={direction}
+                            value={input}
+                            file={file}
+                            encoding={encrypting ? options.textEncoding : options.cipherEncoding}
+                            encodingItems={encrypting ? textEncodingItems : cipherEncodingItems}
+                            encodingValues={
+                                encrypting ? PAYLOAD_TEXT_ENCODINGS : PAYLOAD_BINARY_ENCODINGS
                             }
-                        }}
-                    />
-                </div>
+                            encodingApplies={
+                                encrypting ? supportsPlaintextEncoding(direction, source) : true
+                            }
+                            onEncodingChange={handleInputEncodingChange}
+                            onChange={setInput}
+                            onFileSelect={(selected) => void handleFileSelect(selected)}
+                            onClear={handleClear}
+                        />
 
-                <KeyPanel
-                    source={options.keySource}
-                    keySize={options.keySize}
-                    value={secret}
-                    revealed={keyRevealed}
-                    copied={copied === "key"}
-                    onRevealedChange={setKeyRevealed}
-                    onSourceChange={(keySource: AesKeySource) => updateOptions({ keySource })}
-                    onValueChange={setSecret}
-                    onGenerate={handleGenerateKey}
-                    onCopy={() => void handleCopy("key")}
-                />
+                        <KeyPanel
+                            source={options.keySource}
+                            keySize={options.keySize}
+                            value={secret}
+                            revealed={keyRevealed}
+                            copied={copied === "key"}
+                            onRevealedChange={setKeyRevealed}
+                            onSourceChange={(keySource: AesKeySource) =>
+                                updateOptions({ keySource })
+                            }
+                            onValueChange={setSecret}
+                            onGenerate={handleGenerateKey}
+                            onCopy={() => void handleCopy("key")}
+                        />
 
-                <PayloadPanel
-                    direction={direction}
-                    value={input}
-                    file={file}
-                    encoding={encrypting ? options.textEncoding : options.cipherEncoding}
-                    encodingItems={encrypting ? textEncodingItems : cipherEncodingItems}
-                    encodingValues={encrypting ? PAYLOAD_TEXT_ENCODINGS : PAYLOAD_BINARY_ENCODINGS}
-                    encodingApplies={
-                        encrypting ? supportsPlaintextEncoding(direction, source) : true
-                    }
-                    onEncodingChange={handleInputEncodingChange}
-                    onChange={setInput}
-                    onFileSelect={(selected) => void handleFileSelect(selected)}
-                    onClear={handleClear}
-                />
+                        <AdvancedSettings
+                            options={options}
+                            copied={copied === "salt" || copied === "iv" ? copied : null}
+                            saltInvalid={
+                                usesKeyDerivation(options.keySource) &&
+                                readSaltBytes(options.saltHex) === null
+                            }
+                            ivInvalid={!isValidIvHex(options.mode, options.ivHex)}
+                            onChange={updateOptions}
+                            onRegenerate={handleRegenerate}
+                            onCopy={(target) => void handleCopy(target)}
+                            onNonceWidthChange={handleNonceWidthChange}
+                        />
+                    </div>
 
-                <AdvancedSettings
-                    options={options}
-                    copied={copied === "salt" || copied === "iv" ? copied : null}
-                    saltInvalid={
-                        usesKeyDerivation(options.keySource) &&
-                        readSaltBytes(options.saltHex) === null
-                    }
-                    ivInvalid={!isValidIvHex(options.mode, options.ivHex)}
-                    onChange={updateOptions}
-                    onRegenerate={handleRegenerate}
-                    onCopy={(target) => void handleCopy(target)}
-                    onNonceWidthChange={handleNonceWidthChange}
-                />
-
-                <div className="flex items-center gap-3">
-                    <Separator className="flex-1" />
-                    <Tooltip>
-                        <TooltipTrigger
-                            render={
-                                <button
-                                    type="button"
-                                    onClick={handleSwap}
-                                    disabled={output.length === 0}
-                                    aria-label={t("swap")}
-                                    className={cn(
-                                        buttonVariants({ variant: "outline", size: "icon-sm" }),
-                                        "rounded-full",
-                                    )}
+                    <div className="flex items-center gap-3 lg:flex-col lg:pt-10">
+                        <span
+                            aria-hidden="true"
+                            className="bg-border h-px flex-1 lg:h-auto lg:w-px"
+                        />
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={
+                                    <button
+                                        type="button"
+                                        onClick={handleSwap}
+                                        disabled={output.length === 0}
+                                        aria-label={t("swap")}
+                                        className={cn(
+                                            buttonVariants({ variant: "outline", size: "icon-sm" }),
+                                            "rounded-full",
+                                        )}
+                                    />
+                                }
+                            >
+                                <IconArrowsUpDown
+                                    className="size-4 lg:hidden"
+                                    stroke={1.8}
+                                    aria-hidden="true"
                                 />
-                            }
-                        >
-                            <IconArrowsUpDown className="size-4" stroke={1.8} aria-hidden="true" />
-                        </TooltipTrigger>
-                        <TooltipContent side="top">{t("swap")}</TooltipContent>
-                    </Tooltip>
-                    <Separator className="flex-1" />
-                </div>
+                                <IconArrowsLeftRight
+                                    className="hidden size-4 lg:block"
+                                    stroke={1.8}
+                                    aria-hidden="true"
+                                />
+                            </TooltipTrigger>
+                            <TooltipContent side="top">{t("swap")}</TooltipContent>
+                        </Tooltip>
+                        <span
+                            aria-hidden="true"
+                            className="bg-border h-px flex-1 lg:h-auto lg:w-px"
+                        />
+                    </div>
 
-                <OutputPanel
-                    direction={direction}
-                    output={output}
-                    encoding={encrypting ? options.cipherEncoding : options.textEncoding}
-                    encodingItems={encrypting ? cipherEncodingItems : textEncodingItems}
-                    encodingValues={encrypting ? PAYLOAD_BINARY_ENCODINGS : PAYLOAD_TEXT_ENCODINGS}
-                    onEncodingChange={handleOutputEncodingChange}
-                    status={status}
-                    notice={notice}
-                    pending={pending || result === null}
-                    copied={copied === "output"}
-                    onCopy={() => void handleCopy("output")}
-                    onDownload={handleDownload}
-                    onDownloadBytes={encrypting ? null : handleDownloadBytes}
-                />
+                    <OutputPanel
+                        direction={direction}
+                        output={output}
+                        encoding={encrypting ? options.cipherEncoding : options.textEncoding}
+                        encodingItems={encrypting ? cipherEncodingItems : textEncodingItems}
+                        encodingValues={
+                            encrypting ? PAYLOAD_BINARY_ENCODINGS : PAYLOAD_TEXT_ENCODINGS
+                        }
+                        onEncodingChange={handleOutputEncodingChange}
+                        status={status}
+                        notice={notice}
+                        pending={pending || result === null}
+                        copied={copied === "output"}
+                        onCopy={() => void handleCopy("output")}
+                        onDownload={handleDownload}
+                        onDownloadBytes={encrypting ? null : handleDownloadBytes}
+                    />
+                </div>
             </CardContent>
         </Card>
     );

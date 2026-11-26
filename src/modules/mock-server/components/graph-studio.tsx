@@ -30,7 +30,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
+import { CATEGORY_HUE_VARS } from "@/modules/tools/components/tool-accent";
 
 import { INSPECTOR_SHORTCUT, isTypingTarget, PALETTE_SHORTCUT } from "../domain/keyboard";
 import { nodeDefinition, placeableNodeKinds } from "../domain/node-registry";
@@ -212,7 +212,7 @@ export function GraphStudio({ ready }: GraphStudioProps) {
                     <div className="flex items-center gap-1">
                         <span
                             className={cn(
-                                "text-muted-foreground min-w-0 truncate text-[0.6875rem] font-semibold tracking-[0.09em] uppercase",
+                                "text-muted-foreground min-w-0 truncate text-xs font-medium",
                                 // Hidden only where the rail is actually narrow.
                                 // Stacked on a phone it is a full-width bar and
                                 // an unlabelled chevron there says nothing.
@@ -316,7 +316,7 @@ export function GraphStudio({ ready }: GraphStudioProps) {
                         <h3
                             id="inspector-heading"
                             className={cn(
-                                "text-muted-foreground order-1 min-w-0 flex-1 truncate text-[0.6875rem] font-semibold tracking-[0.09em] uppercase lg:order-none",
+                                "text-muted-foreground order-1 min-w-0 flex-1 truncate text-xs font-medium lg:order-none",
                                 !inspectorOpen && "lg:hidden",
                             )}
                         >
@@ -461,7 +461,7 @@ function PaletteButton({ kind, label, onAdd }: PaletteButtonProps) {
             onClick={() => onAdd(kind)}
             className={cn(
                 "border-border/70 bg-card focus-visible:ring-ring flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-[0.6875rem] transition-colors hover:border-[var(--tool-accent)]/50 hover:bg-[var(--tool-accent)]/8 focus-visible:ring-2 focus-visible:outline-none lg:w-full",
-                TOOL_ACCENT_VARS[definition.accent],
+                CATEGORY_HUE_VARS[definition.accent],
                 !definition.implemented && "opacity-60",
             )}
         >

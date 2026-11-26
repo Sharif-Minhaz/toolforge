@@ -1,19 +1,12 @@
 "use client";
 
-import { IconArrowDown, IconRotate2 } from "@tabler/icons-react";
+import { IconArrowDown, IconArrowRight, IconRotate2 } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { buttonVariants } from "@/components/ui/button";
-import {
-    Card,
-    CardAction,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
@@ -21,6 +14,7 @@ import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import type { StatusTone } from "@/modules/tools/components/status-strip";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
+import { OptionsDisclosure } from "@/modules/tools/components/workbench-step";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveBlob, saveFile } from "@/modules/tools/domain/file-saver";
 import { isBinaryEncoding, isTextEncoding } from "@/modules/tools/domain/payload-codec";
@@ -471,43 +465,33 @@ export function RsaCryptWorkbench({ initialDirection, initialOptions }: RsaCrypt
     }
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
-
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-                <CardAction>
-                    {/* Quiet until there is something to undo, so it never
-                        reads as a button that might do nothing. */}
-                    <button
-                        type="button"
-                        onClick={handleReset}
-                        disabled={pristine}
-                        title={t("resetHint")}
-                        className={cn(
-                            buttonVariants({ variant: "outline", size: "sm" }),
-                            "h-7 px-2 text-[0.6875rem]",
-                        )}
-                    >
-                        <IconRotate2 className="size-3.5" stroke={1.8} aria-hidden="true" />
-                        {t("reset")}
-                    </button>
-                </CardAction>
-            </CardHeader>
-
-            <CardContent className="flex min-w-0 flex-col gap-5">
+        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+            <CardContent className="flex min-w-0 flex-col gap-6">
                 <p className="text-muted-foreground max-w-2xl text-[0.8125rem] leading-normal">
                     {t("localNotice")}
                 </p>
 
                 <div className="flex flex-col gap-2">
-                    <Label id={directionLabelId} className="text-muted-foreground text-xs">
-                        <span className="leading-[1.3]">{t("directionLabel")}</span>
-                    </Label>
+                    <div className="flex items-center justify-between gap-2">
+                        <Label id={directionLabelId} className="text-muted-foreground text-xs">
+                            <span className="leading-[1.3]">{t("directionLabel")}</span>
+                        </Label>
+                        {/* Quiet until there is something to undo, so it never
+                            reads as a button that might do nothing. */}
+                        <button
+                            type="button"
+                            onClick={handleReset}
+                            disabled={pristine}
+                            title={t("resetHint")}
+                            className={cn(
+                                buttonVariants({ variant: "outline", size: "sm" }),
+                                "h-7 px-2 text-[0.6875rem]",
+                            )}
+                        >
+                            <IconRotate2 className="size-3.5" stroke={1.8} aria-hidden="true" />
+                            {t("reset")}
+                        </button>
+                    </div>
                     <DirectionSelector
                         value={direction}
                         onChange={handleDirectionChange}
@@ -515,99 +499,124 @@ export function RsaCryptWorkbench({ initialDirection, initialOptions }: RsaCrypt
                     />
                 </div>
 
-                <div className="grid items-start gap-4 sm:grid-cols-2">
-                    <OptionSelect
-                        label={t("keyFormatLabel")}
-                        hint={t(`keyFormatHint.${options.keyFormat}`)}
-                        value={options.keyFormat}
-                        items={keyFormatItems}
-                        values={RSA_KEY_INPUT_FORMATS}
-                        onChange={(next) => {
-                            if (isKeyInputFormat(next)) {
-                                updateOptions({ keyFormat: next });
+                {/* Step 1 and the key it is read with on one side, step 2 on
+                    the other from `lg` up; stacked on a narrow screen. */}
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+                    <div className="flex min-w-0 flex-col gap-4">
+                        <PayloadPanel
+                            direction={direction}
+                            value={input}
+                            file={file}
+                            encoding={encrypting ? options.textEncoding : options.cipherEncoding}
+                            encodingItems={encrypting ? textEncodingItems : binaryEncodingItems}
+                            encodingValues={
+                                encrypting ? PAYLOAD_TEXT_ENCODINGS : PAYLOAD_BINARY_ENCODINGS
                             }
-                        }}
-                    />
-
-                    <KeyKindToggle
-                        value={options.keyKind}
-                        enabled={keyKindApplies(direction)}
-                        onChange={(keyKind: RsaKeyKind) => updateOptions({ keyKind })}
-                    />
-                </div>
-
-                <div className="grid items-start gap-4 sm:grid-cols-2">
-                    {/* One option, and it stays a picker rather than becoming a
-                        label: the answer to "which padding is this?" belongs on
-                        screen, and the hint is where the absent one is named. */}
-                    <OptionSelect
-                        label={t("paddingLabel")}
-                        hint={t("paddingHint")}
-                        value={options.padding}
-                        items={paddingItems}
-                        values={RSA_PADDINGS}
-                        onChange={() => undefined}
-                    />
-
-                    <OptionSelect
-                        label={t("hashLabel")}
-                        hint={t("hashHint")}
-                        value={options.hash}
-                        items={hashItems}
-                        values={RSA_CRYPT_HASHES}
-                        onChange={(next) => {
-                            if (isRsaCryptHash(next)) {
-                                updateOptions({ hash: next });
+                            encodingApplies={
+                                encrypting ? supportsPlaintextEncoding(direction, source) : true
                             }
-                        }}
+                            messageLimit={encrypting ? messageLimit : null}
+                            onEncodingChange={handleInputEncodingChange}
+                            onChange={setInput}
+                            onFileSelect={(selected) => void handleFileSelect(selected)}
+                            onClear={handleClear}
+                        />
+
+                        <div className="grid items-start gap-4 sm:grid-cols-2">
+                            <OptionSelect
+                                label={t("keyFormatLabel")}
+                                hint={t(`keyFormatHint.${options.keyFormat}`)}
+                                value={options.keyFormat}
+                                items={keyFormatItems}
+                                values={RSA_KEY_INPUT_FORMATS}
+                                onChange={(next) => {
+                                    if (isKeyInputFormat(next)) {
+                                        updateOptions({ keyFormat: next });
+                                    }
+                                }}
+                            />
+
+                            <KeyKindToggle
+                                value={options.keyKind}
+                                enabled={keyKindApplies(direction)}
+                                onChange={(keyKind: RsaKeyKind) => updateOptions({ keyKind })}
+                            />
+                        </div>
+
+                        <KeyInputPanel
+                            value={keyText}
+                            kind={options.keyKind}
+                            format={options.keyFormat}
+                            onChange={setKeyText}
+                            onFileSelect={(selected) => void handleKeyFileSelect(selected)}
+                            onClear={() => setKeyText("")}
+                        />
+
+                        <OptionsDisclosure>
+                            <div className="grid items-start gap-4 sm:grid-cols-2">
+                                {/* One option, and it stays a picker rather than
+                                    becoming a label: the answer to "which padding
+                                    is this?" belongs on screen, and the hint is
+                                    where the absent one is named. */}
+                                <OptionSelect
+                                    label={t("paddingLabel")}
+                                    hint={t("paddingHint")}
+                                    value={options.padding}
+                                    items={paddingItems}
+                                    values={RSA_PADDINGS}
+                                    onChange={() => undefined}
+                                />
+
+                                <OptionSelect
+                                    label={t("hashLabel")}
+                                    hint={t("hashHint")}
+                                    value={options.hash}
+                                    items={hashItems}
+                                    values={RSA_CRYPT_HASHES}
+                                    onChange={(next) => {
+                                        if (isRsaCryptHash(next)) {
+                                            updateOptions({ hash: next });
+                                        }
+                                    }}
+                                />
+                            </div>
+                        </OptionsDisclosure>
+                    </div>
+
+                    <div
+                        className="flex items-center gap-3 lg:flex-col lg:pt-10"
+                        aria-hidden="true"
+                    >
+                        <span className="bg-border h-px flex-1 lg:h-auto lg:w-px" />
+                        <IconArrowDown
+                            className="text-muted-foreground size-4 lg:hidden"
+                            stroke={1.8}
+                        />
+                        <IconArrowRight
+                            className="text-muted-foreground hidden size-4 lg:block"
+                            stroke={1.8}
+                        />
+                        <span className="bg-border h-px flex-1 lg:h-auto lg:w-px" />
+                    </div>
+
+                    <OutputPanel
+                        direction={direction}
+                        output={output}
+                        encoding={encrypting ? options.cipherEncoding : options.textEncoding}
+                        encodingItems={encrypting ? binaryEncodingItems : textEncodingItems}
+                        encodingValues={
+                            encrypting ? PAYLOAD_BINARY_ENCODINGS : PAYLOAD_TEXT_ENCODINGS
+                        }
+                        onEncodingChange={handleOutputEncodingChange}
+                        status={status}
+                        notice={notice}
+                        pending={pending || result === null}
+                        copied={copied === "output"}
+                        onCopy={() => void handleCopy()}
+                        onDownload={handleDownload}
+                        onDownloadBytes={encrypting ? null : handleDownloadBytes}
                     />
                 </div>
-
-                <KeyInputPanel
-                    value={keyText}
-                    kind={options.keyKind}
-                    format={options.keyFormat}
-                    onChange={setKeyText}
-                    onFileSelect={(selected) => void handleKeyFileSelect(selected)}
-                    onClear={() => setKeyText("")}
-                />
-
-                <PayloadPanel
-                    direction={direction}
-                    value={input}
-                    file={file}
-                    encoding={encrypting ? options.textEncoding : options.cipherEncoding}
-                    encodingItems={encrypting ? textEncodingItems : binaryEncodingItems}
-                    encodingValues={encrypting ? PAYLOAD_TEXT_ENCODINGS : PAYLOAD_BINARY_ENCODINGS}
-                    encodingApplies={
-                        encrypting ? supportsPlaintextEncoding(direction, source) : true
-                    }
-                    messageLimit={encrypting ? messageLimit : null}
-                    onEncodingChange={handleInputEncodingChange}
-                    onChange={setInput}
-                    onFileSelect={(selected) => void handleFileSelect(selected)}
-                    onClear={handleClear}
-                />
-
-                <div className="flex items-center justify-center" aria-hidden="true">
-                    <IconArrowDown className="text-muted-foreground size-4" stroke={1.8} />
-                </div>
-
-                <OutputPanel
-                    direction={direction}
-                    output={output}
-                    encoding={encrypting ? options.cipherEncoding : options.textEncoding}
-                    encodingItems={encrypting ? binaryEncodingItems : textEncodingItems}
-                    encodingValues={encrypting ? PAYLOAD_BINARY_ENCODINGS : PAYLOAD_TEXT_ENCODINGS}
-                    onEncodingChange={handleOutputEncodingChange}
-                    status={status}
-                    notice={notice}
-                    pending={pending || result === null}
-                    copied={copied === "output"}
-                    onCopy={() => void handleCopy()}
-                    onDownload={handleDownload}
-                    onDownloadBytes={encrypting ? null : handleDownloadBytes}
-                />
             </CardContent>
         </Card>
     );

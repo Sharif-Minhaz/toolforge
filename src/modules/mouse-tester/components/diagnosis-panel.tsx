@@ -13,6 +13,7 @@ import { useId, type ComponentType } from "react";
 
 import { cn } from "@/lib/utils";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import { StepLabel } from "@/modules/tools/components/workbench-step";
 import {
     HOLD_TEST_MS,
     MIN_PRESSES_FOR_VERDICT,
@@ -84,7 +85,7 @@ export function DiagnosisPanel({ diagnosis }: { diagnosis: SessionDiagnosis }) {
     return (
         <section aria-labelledby={titleId} className="flex min-w-0 flex-col gap-2">
             <h3 id={titleId} className="text-sm font-medium">
-                {t("title")}
+                <StepLabel step={2}>{t("title")}</StepLabel>
             </h3>
 
             <StatusStrip

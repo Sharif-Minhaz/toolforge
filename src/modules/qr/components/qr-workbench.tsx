@@ -4,13 +4,14 @@ import { useTranslations } from "next-intl";
 import { useId, useState } from "react";
 import { toast } from "sonner";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { copyText } from "@/modules/tools/domain/clipboard";
 import { saveBlob, saveFile } from "@/modules/tools/domain/file-saver";
+import { RESULT_TRAY, StepLabel } from "@/modules/tools/components/workbench-step";
 import { checkImageFile } from "@/modules/tools/domain/image-file";
 import { createLink } from "@/modules/short-links/actions/create-link";
 import { RecentLinksPanel } from "@/modules/short-links/components/recent-links-panel";
@@ -250,17 +251,7 @@ export function QrWorkbench({
 
     return (
         <div className="flex flex-col gap-6">
-            <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-                <span
-                    aria-hidden="true"
-                    className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-                />
-
-                <CardHeader>
-                    <CardTitle className="text-lg">{t("title")}</CardTitle>
-                    <CardDescription>{t("description")}</CardDescription>
-                </CardHeader>
-
+            <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
                 <CardContent>
                     <Tabs defaultValue="generate">
                         <TabsList className="w-full">
@@ -272,12 +263,9 @@ export function QrWorkbench({
                             <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:gap-8">
                                 <div className="flex min-w-0 flex-col gap-4">
                                     <div className="flex flex-col gap-2">
-                                        <Label
-                                            id={kindLabelId}
-                                            className="text-muted-foreground text-xs"
-                                        >
-                                            <span className="leading-[1.3]">{t("kindLabel")}</span>
-                                        </Label>
+                                        <StepLabel step={1} id={kindLabelId}>
+                                            {t("kindLabel")}
+                                        </StepLabel>
                                         <QrTypeSelector
                                             value={kind}
                                             labelId={kindLabelId}
@@ -332,7 +320,10 @@ export function QrWorkbench({
                                     />
                                 </div>
 
-                                <div className="min-w-0 lg:sticky lg:top-8 lg:self-start">
+                                <div
+                                    className={cn(RESULT_TRAY, "lg:sticky lg:top-8 lg:self-start")}
+                                >
+                                    <StepLabel step={2}>{t("preview.alt")}</StepLabel>
                                     <QrPreview
                                         svg={svg}
                                         matrix={matrix}

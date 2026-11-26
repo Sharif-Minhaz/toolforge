@@ -28,7 +28,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -41,6 +41,7 @@ import { ImageSourceControls } from "@/modules/tools/components/image-source-con
 import { OptionSelect, OptionSwitch } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { ToolNotes } from "@/modules/tools/components/tool-notes";
+import { OptionsDisclosure, StepLabel } from "@/modules/tools/components/workbench-step";
 import { buildZipArchive } from "@/modules/tools/domain/archive";
 import { uniqueFilenames } from "@/modules/tools/domain/filenames";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
@@ -1277,21 +1278,13 @@ export function ImageResizerWorkbench({
         // and it is the whole reason the sticky column works: an ancestor whose
         // overflow is not `visible` becomes the sticky element's scroll
         // container, and a card that never scrolls gives `position: sticky`
-        // nothing to slide against. The hairline below is inset rather than
-        // clipped, which is all the hidden overflow was doing for it.
-        <Card className="relative overflow-visible [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-4 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
-
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-            </CardHeader>
-
+        // nothing to slide against.
+        <Card className="overflow-visible [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
             <CardContent className="flex min-w-0 flex-col gap-5">
                 <div className="flex min-w-0 flex-col gap-2">
+                    <StepLabel step={1} htmlFor={inputId}>
+                        {items.length > 0 ? t("dropMoreTitle") : t("dropTitle")}
+                    </StepLabel>
                     <ImageDropzone
                         inputId={inputId}
                         describedById={hintId}
@@ -1299,7 +1292,7 @@ export function ImageResizerWorkbench({
                         compact={items.length > 0}
                         accept={IMAGE_ACCEPT_ATTRIBUTE}
                         disabled={working}
-                        title={items.length > 0 ? t("dropMoreTitle") : t("dropTitle")}
+                        title={null}
                         hint={t("dropHint", {
                             limit: byteLabel(MAX_IMAGE_BYTES),
                             count: format.number(MAX_FILES),
@@ -1722,6 +1715,7 @@ export function ImageResizerWorkbench({
                                 ) : (
                                     <>
                                         <Button
+                                            variant="outline"
                                             onClick={startCropping}
                                             disabled={working}
                                             className="h-9 px-3.5"
@@ -1748,8 +1742,9 @@ export function ImageResizerWorkbench({
                                             {t("undo")}
                                         </Button>
 
+                                        {/* The one filled press: Export is
+                                            what writes the result. */}
                                         <Button
-                                            variant="outline"
                                             onClick={() => void handleExport()}
                                             disabled={working}
                                             className="h-9 px-3.5"
@@ -2134,165 +2129,6 @@ export function ImageResizerWorkbench({
                                 />
                             )}
 
-                            <OptionSelect<FitMode>
-                                label={t("fitLabel")}
-                                hint={fitMatters ? t(FIT_HINT_KEY[options.fit]) : t("fitHintExact")}
-                                value={options.fit}
-                                values={FIT_MODES}
-                                disabled={settingsLocked || !fitMatters}
-                                items={Object.fromEntries(
-                                    FIT_MODES.map((value) => [value, t(FIT_LABEL_KEY[value])]),
-                                )}
-                                onChange={(next) => patch({ fit: next })}
-                            />
-
-                            {/*
-                             * Under the fit picker, because it is the same
-                             * question one step finer: `fit` decides how the
-                             * picture meets the frame, and this decides how far
-                             * past that it is pushed. Above 100% the overflow is
-                             * cut, which is the whole point — a freely rotated
-                             * photograph has transparent corners, and zooming
-                             * until they leave the frame is how they go away.
-                             */}
-                            <div className="flex min-w-0 flex-col gap-1.5">
-                                <div className="flex min-w-0 items-center justify-between gap-2">
-                                    <span
-                                        id={zoomId}
-                                        className="text-muted-foreground text-xs leading-[1.3]"
-                                    >
-                                        {t("zoomLabel")}
-                                    </span>
-                                    {options.zoom !== DEFAULT_ZOOM && (
-                                        <button
-                                            type="button"
-                                            disabled={settingsLocked}
-                                            onClick={() => patch({ zoom: DEFAULT_ZOOM })}
-                                            className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-md text-[0.6875rem] underline underline-offset-2 transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:opacity-55"
-                                        >
-                                            {t("zoomReset")}
-                                        </button>
-                                    )}
-                                </div>
-                                <div className="flex min-w-0 items-center gap-2">
-                                    {/*
-                                     * A press either side of the drag, because
-                                     * the last five percent of a zoom is the
-                                     * part that matters and a 20 rem slider is
-                                     * about three pixels per step. Bounded by
-                                     * the same clamp the slider is, so neither
-                                     * button can walk past an end.
-                                     */}
-                                    <IconPress
-                                        label={t("zoomOut", { step: format.number(ZOOM_STEP) })}
-                                        disabled={settingsLocked || options.zoom <= MIN_ZOOM}
-                                        onClick={() => nudgeZoom(-ZOOM_STEP)}
-                                        className="size-7"
-                                    >
-                                        <IconMinus
-                                            className="size-4"
-                                            stroke={2}
-                                            aria-hidden="true"
-                                        />
-                                    </IconPress>
-
-                                    <Slider
-                                        aria-labelledby={zoomId}
-                                        value={options.zoom}
-                                        min={MIN_ZOOM}
-                                        max={MAX_ZOOM}
-                                        disabled={settingsLocked}
-                                        onValueChange={(next) =>
-                                            patch({
-                                                zoom: clampZoom(
-                                                    Array.isArray(next)
-                                                        ? (next[0] ?? options.zoom)
-                                                        : next,
-                                                ),
-                                            })
-                                        }
-                                        className="min-w-0 flex-1"
-                                    />
-
-                                    <IconPress
-                                        label={t("zoomIn", { step: format.number(ZOOM_STEP) })}
-                                        disabled={settingsLocked || options.zoom >= MAX_ZOOM}
-                                        onClick={() => nudgeZoom(ZOOM_STEP)}
-                                        className="size-7"
-                                    >
-                                        <IconPlus
-                                            className="size-4"
-                                            stroke={2}
-                                            aria-hidden="true"
-                                        />
-                                    </IconPress>
-
-                                    <span className="w-11 shrink-0 text-right font-mono text-sm tabular-nums">
-                                        {options.zoom}%
-                                    </span>
-                                </div>
-                                <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                                    {plan !== null && plan.clips
-                                        ? t("zoomHintClips", {
-                                              value: format.number(options.zoom),
-                                          })
-                                        : options.zoom === DEFAULT_ZOOM
-                                          ? t("zoomHintExact")
-                                          : t("zoomHintPads", {
-                                                value: format.number(options.zoom),
-                                            })}
-                                </p>
-                            </div>
-
-                            <div className="flex min-w-0 flex-col gap-1.5">
-                                <OptionSelect<BackgroundKind>
-                                    label={t("backgroundLabel")}
-                                    hint={
-                                        !backgroundLive
-                                            ? t("backgroundDisabledHint")
-                                            : supportsAlpha(outputFormat)
-                                              ? t("backgroundHint")
-                                              : t("backgroundJpegHint")
-                                    }
-                                    value={options.background}
-                                    values={BACKGROUND_KINDS}
-                                    disabled={settingsLocked || !backgroundLive}
-                                    items={Object.fromEntries(
-                                        BACKGROUND_KINDS.map((value) => [
-                                            value,
-                                            t(BACKGROUND_LABEL_KEY[value]),
-                                        ]),
-                                    )}
-                                    onChange={(next) => patch({ background: next })}
-                                />
-
-                                {options.background === "color" && (
-                                    <div className="flex min-w-0 items-center gap-2">
-                                        <Label
-                                            htmlFor={colorId}
-                                            className="text-muted-foreground text-xs"
-                                        >
-                                            <span className="leading-[1.3]">
-                                                {t("backgroundColorLabel")}
-                                            </span>
-                                        </Label>
-                                        <input
-                                            id={colorId}
-                                            type="color"
-                                            value={options.backgroundColor}
-                                            disabled={settingsLocked || !backgroundLive}
-                                            onChange={(event) =>
-                                                patch({ backgroundColor: event.target.value })
-                                            }
-                                            className="border-border/80 size-8 shrink-0 cursor-pointer rounded-md border bg-transparent"
-                                        />
-                                        <span className="text-muted-foreground font-mono text-[0.75rem] uppercase">
-                                            {options.backgroundColor}
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-
                             <OptionSelect<OutputFormat>
                                 label={t("formatLabel")}
                                 hint={tFormats(`${options.format}Hint`)}
@@ -2305,55 +2141,240 @@ export function ImageResizerWorkbench({
                                 onChange={(next) => patch({ format: next })}
                             />
 
-                            <div className="flex min-w-0 flex-col gap-1.5">
-                                <span
-                                    id={qualityId}
-                                    className="text-muted-foreground text-xs leading-[1.3]"
-                                >
-                                    {t("qualityLabel")}
-                                </span>
-                                <div className="flex min-w-0 items-center gap-3">
-                                    <Slider
-                                        aria-labelledby={qualityId}
-                                        value={options.quality}
-                                        min={MIN_QUALITY}
-                                        max={MAX_QUALITY}
-                                        disabled={settingsLocked || !qualityLive}
-                                        onValueChange={(next) =>
-                                            patch({
-                                                quality: clampQuality(
-                                                    Array.isArray(next)
-                                                        ? (next[0] ?? options.quality)
-                                                        : next,
-                                                ),
-                                            })
+                            {/* The finer questions — how the shapes meet, the fill,
+                                the encoder — wait behind a fold: the defaults give a
+                                sound first result. */}
+                            <OptionsDisclosure>
+                                <div className="flex min-w-0 flex-col gap-4">
+                                    <OptionSelect<FitMode>
+                                        label={t("fitLabel")}
+                                        hint={
+                                            fitMatters
+                                                ? t(FIT_HINT_KEY[options.fit])
+                                                : t("fitHintExact")
                                         }
-                                        className="min-w-0 flex-1"
+                                        value={options.fit}
+                                        values={FIT_MODES}
+                                        disabled={settingsLocked || !fitMatters}
+                                        items={Object.fromEntries(
+                                            FIT_MODES.map((value) => [
+                                                value,
+                                                t(FIT_LABEL_KEY[value]),
+                                            ]),
+                                        )}
+                                        onChange={(next) => patch({ fit: next })}
                                     />
-                                    <span className="w-8 shrink-0 text-right font-mono text-sm tabular-nums">
-                                        {options.quality}
-                                    </span>
-                                </div>
-                                <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                                    {qualityLive
-                                        ? t("qualityHint", {
-                                              value: format.number(options.quality),
-                                          })
-                                        : t("qualityHintLossless")}
-                                </p>
-                            </div>
 
-                            <OptionSwitch
-                                label={t("densityLabel")}
-                                hint={
-                                    densityAvailable
-                                        ? t("densityHint", { dpi: format.number(options.dpi) })
-                                        : t("densityUnavailable")
-                                }
-                                checked={options.embedDensity && densityAvailable}
-                                disabled={settingsLocked || !densityAvailable}
-                                onCheckedChange={(next) => patch({ embedDensity: next })}
-                            />
+                                    {/*
+                                     * Under the fit picker, because it is the same
+                                     * question one step finer: `fit` decides how the
+                                     * picture meets the frame, and this decides how far
+                                     * past that it is pushed. Above 100% the overflow is
+                                     * cut, which is the whole point — a freely rotated
+                                     * photograph has transparent corners, and zooming
+                                     * until they leave the frame is how they go away.
+                                     */}
+                                    <div className="flex min-w-0 flex-col gap-1.5">
+                                        <div className="flex min-w-0 items-center justify-between gap-2">
+                                            <span
+                                                id={zoomId}
+                                                className="text-muted-foreground text-xs leading-[1.3]"
+                                            >
+                                                {t("zoomLabel")}
+                                            </span>
+                                            {options.zoom !== DEFAULT_ZOOM && (
+                                                <button
+                                                    type="button"
+                                                    disabled={settingsLocked}
+                                                    onClick={() => patch({ zoom: DEFAULT_ZOOM })}
+                                                    className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-md text-[0.6875rem] underline underline-offset-2 transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:opacity-55"
+                                                >
+                                                    {t("zoomReset")}
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="flex min-w-0 items-center gap-2">
+                                            {/*
+                                             * A press either side of the drag, because
+                                             * the last five percent of a zoom is the
+                                             * part that matters and a 20 rem slider is
+                                             * about three pixels per step. Bounded by
+                                             * the same clamp the slider is, so neither
+                                             * button can walk past an end.
+                                             */}
+                                            <IconPress
+                                                label={t("zoomOut", {
+                                                    step: format.number(ZOOM_STEP),
+                                                })}
+                                                disabled={
+                                                    settingsLocked || options.zoom <= MIN_ZOOM
+                                                }
+                                                onClick={() => nudgeZoom(-ZOOM_STEP)}
+                                                className="size-7"
+                                            >
+                                                <IconMinus
+                                                    className="size-4"
+                                                    stroke={2}
+                                                    aria-hidden="true"
+                                                />
+                                            </IconPress>
+
+                                            <Slider
+                                                aria-labelledby={zoomId}
+                                                value={options.zoom}
+                                                min={MIN_ZOOM}
+                                                max={MAX_ZOOM}
+                                                disabled={settingsLocked}
+                                                onValueChange={(next) =>
+                                                    patch({
+                                                        zoom: clampZoom(
+                                                            Array.isArray(next)
+                                                                ? (next[0] ?? options.zoom)
+                                                                : next,
+                                                        ),
+                                                    })
+                                                }
+                                                className="min-w-0 flex-1"
+                                            />
+
+                                            <IconPress
+                                                label={t("zoomIn", {
+                                                    step: format.number(ZOOM_STEP),
+                                                })}
+                                                disabled={
+                                                    settingsLocked || options.zoom >= MAX_ZOOM
+                                                }
+                                                onClick={() => nudgeZoom(ZOOM_STEP)}
+                                                className="size-7"
+                                            >
+                                                <IconPlus
+                                                    className="size-4"
+                                                    stroke={2}
+                                                    aria-hidden="true"
+                                                />
+                                            </IconPress>
+
+                                            <span className="w-11 shrink-0 text-right font-mono text-sm tabular-nums">
+                                                {options.zoom}%
+                                            </span>
+                                        </div>
+                                        <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                                            {plan !== null && plan.clips
+                                                ? t("zoomHintClips", {
+                                                      value: format.number(options.zoom),
+                                                  })
+                                                : options.zoom === DEFAULT_ZOOM
+                                                  ? t("zoomHintExact")
+                                                  : t("zoomHintPads", {
+                                                        value: format.number(options.zoom),
+                                                    })}
+                                        </p>
+                                    </div>
+
+                                    <div className="flex min-w-0 flex-col gap-1.5">
+                                        <OptionSelect<BackgroundKind>
+                                            label={t("backgroundLabel")}
+                                            hint={
+                                                !backgroundLive
+                                                    ? t("backgroundDisabledHint")
+                                                    : supportsAlpha(outputFormat)
+                                                      ? t("backgroundHint")
+                                                      : t("backgroundJpegHint")
+                                            }
+                                            value={options.background}
+                                            values={BACKGROUND_KINDS}
+                                            disabled={settingsLocked || !backgroundLive}
+                                            items={Object.fromEntries(
+                                                BACKGROUND_KINDS.map((value) => [
+                                                    value,
+                                                    t(BACKGROUND_LABEL_KEY[value]),
+                                                ]),
+                                            )}
+                                            onChange={(next) => patch({ background: next })}
+                                        />
+
+                                        {options.background === "color" && (
+                                            <div className="flex min-w-0 items-center gap-2">
+                                                <Label
+                                                    htmlFor={colorId}
+                                                    className="text-muted-foreground text-xs"
+                                                >
+                                                    <span className="leading-[1.3]">
+                                                        {t("backgroundColorLabel")}
+                                                    </span>
+                                                </Label>
+                                                <input
+                                                    id={colorId}
+                                                    type="color"
+                                                    value={options.backgroundColor}
+                                                    disabled={settingsLocked || !backgroundLive}
+                                                    onChange={(event) =>
+                                                        patch({
+                                                            backgroundColor: event.target.value,
+                                                        })
+                                                    }
+                                                    className="border-border/80 size-8 shrink-0 cursor-pointer rounded-md border bg-transparent"
+                                                />
+                                                <span className="text-muted-foreground font-mono text-[0.75rem] uppercase">
+                                                    {options.backgroundColor}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="flex min-w-0 flex-col gap-1.5">
+                                        <span
+                                            id={qualityId}
+                                            className="text-muted-foreground text-xs leading-[1.3]"
+                                        >
+                                            {t("qualityLabel")}
+                                        </span>
+                                        <div className="flex min-w-0 items-center gap-3">
+                                            <Slider
+                                                aria-labelledby={qualityId}
+                                                value={options.quality}
+                                                min={MIN_QUALITY}
+                                                max={MAX_QUALITY}
+                                                disabled={settingsLocked || !qualityLive}
+                                                onValueChange={(next) =>
+                                                    patch({
+                                                        quality: clampQuality(
+                                                            Array.isArray(next)
+                                                                ? (next[0] ?? options.quality)
+                                                                : next,
+                                                        ),
+                                                    })
+                                                }
+                                                className="min-w-0 flex-1"
+                                            />
+                                            <span className="w-8 shrink-0 text-right font-mono text-sm tabular-nums">
+                                                {options.quality}
+                                            </span>
+                                        </div>
+                                        <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                                            {qualityLive
+                                                ? t("qualityHint", {
+                                                      value: format.number(options.quality),
+                                                  })
+                                                : t("qualityHintLossless")}
+                                        </p>
+                                    </div>
+
+                                    <OptionSwitch
+                                        label={t("densityLabel")}
+                                        hint={
+                                            densityAvailable
+                                                ? t("densityHint", {
+                                                      dpi: format.number(options.dpi),
+                                                  })
+                                                : t("densityUnavailable")
+                                        }
+                                        checked={options.embedDensity && densityAvailable}
+                                        disabled={settingsLocked || !densityAvailable}
+                                        onCheckedChange={(next) => patch({ embedDensity: next })}
+                                    />
+                                </div>
+                            </OptionsDisclosure>
                         </div>
                     </div>
                 )}

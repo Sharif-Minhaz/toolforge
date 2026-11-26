@@ -6,7 +6,7 @@ import { useId, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
@@ -25,6 +25,7 @@ import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input
 import { OptionSwitch } from "@/modules/tools/components/option-controls";
 import { StatusStrip } from "@/modules/tools/components/status-strip";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
+import { RESULT_TRAY, StepLabel } from "@/modules/tools/components/workbench-step";
 import { copyText } from "@/modules/tools/domain/clipboard";
 import {
     DEFAULT_DRAFT,
@@ -185,24 +186,16 @@ export function ShortenerWorkbench({
 
     return (
         <div className="flex flex-col gap-6">
-            <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-                <span
-                    aria-hidden="true"
-                    className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-                />
-
-                <CardHeader>
-                    <CardTitle className="text-lg">{t("title")}</CardTitle>
-                    <CardDescription>{t("description")}</CardDescription>
-                </CardHeader>
-
+            <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
                 <CardContent className="flex flex-col gap-5">
                     {created !== null ? (
                         <>
-                            <CreatedLinkCard
-                                link={created}
-                                onCopy={(value) => void handleCopy(value)}
-                            />
+                            <div className={RESULT_TRAY}>
+                                <CreatedLinkCard
+                                    link={created}
+                                    onCopy={(value) => void handleCopy(value)}
+                                />
+                            </div>
                             <Button
                                 type="button"
                                 variant="outline"
@@ -217,12 +210,9 @@ export function ShortenerWorkbench({
                         <>
                             <div className="flex flex-col gap-1.5">
                                 <div className="flex flex-wrap items-center justify-between gap-2">
-                                    <Label
-                                        htmlFor={targetId}
-                                        className="text-muted-foreground text-xs"
-                                    >
-                                        <span className="leading-[1.3]">{t("targetLabel")}</span>
-                                    </Label>
+                                    <StepLabel step={1} htmlFor={targetId}>
+                                        {t("targetLabel")}
+                                    </StepLabel>
                                     <InputLimitMeter reading={targetLimit} />
                                 </div>
                                 <div className="flex flex-col gap-2 sm:flex-row">
@@ -240,11 +230,11 @@ export function ShortenerWorkbench({
                                         onChange={(event) =>
                                             patchDraft({ target: event.target.value })
                                         }
-                                        className="min-w-0 flex-1"
+                                        className="h-11 min-w-0 flex-1 text-base md:text-base"
                                     />
                                     <Button
                                         type="button"
-                                        className="shrink-0"
+                                        className="h-11 shrink-0 px-5"
                                         disabled={
                                             !available ||
                                             creating ||
@@ -273,6 +263,42 @@ export function ShortenerWorkbench({
                                     {t("targetHint")}
                                 </p>
                             </div>
+
+                            {available && turnstileSiteKey !== null && (
+                                // The widget has a fixed intrinsic width and
+                                // should never stretch to the card. The height
+                                // is reserved so nothing below jumps once
+                                // Cloudflare's script finishes loading.
+                                <div className="min-h-16 w-full max-w-82 min-w-0">
+                                    <TurnstileWidget
+                                        siteKey={turnstileSiteKey}
+                                        action={TURNSTILE_ACTION}
+                                        resetSignal={challengeReset}
+                                        onVerify={setChallengeToken}
+                                        onExpire={() => setChallengeToken(null)}
+                                        onError={() => setChallengeToken(null)}
+                                    />
+                                </div>
+                            )}
+
+                            {failure !== null && (
+                                <StatusStrip id={errorId} tone="error" message={tErrors(failure)} />
+                            )}
+
+                            {failure === null && !available && (
+                                <StatusStrip
+                                    tone="warning"
+                                    message={
+                                        storageReady
+                                            ? t("challengeUnavailable")
+                                            : t("storageUnavailable")
+                                    }
+                                />
+                            )}
+
+                            {failure === null && available && challengeToken === null && (
+                                <StatusStrip tone="pending" message={t("challengePending")} />
+                            )}
 
                             <div className="grid gap-2 sm:grid-cols-3">
                                 <OptionSwitch
@@ -408,42 +434,6 @@ export function ShortenerWorkbench({
                                         {t("scheduleHint")}
                                     </p>
                                 </div>
-                            )}
-
-                            {available && turnstileSiteKey !== null && (
-                                // The widget has a fixed intrinsic width and
-                                // should never stretch to the card. The height
-                                // is reserved so nothing below jumps once
-                                // Cloudflare's script finishes loading.
-                                <div className="min-h-16 w-full max-w-82 min-w-0">
-                                    <TurnstileWidget
-                                        siteKey={turnstileSiteKey}
-                                        action={TURNSTILE_ACTION}
-                                        resetSignal={challengeReset}
-                                        onVerify={setChallengeToken}
-                                        onExpire={() => setChallengeToken(null)}
-                                        onError={() => setChallengeToken(null)}
-                                    />
-                                </div>
-                            )}
-
-                            {failure !== null && (
-                                <StatusStrip id={errorId} tone="error" message={tErrors(failure)} />
-                            )}
-
-                            {failure === null && !available && (
-                                <StatusStrip
-                                    tone="warning"
-                                    message={
-                                        storageReady
-                                            ? t("challengeUnavailable")
-                                            : t("storageUnavailable")
-                                    }
-                                />
-                            )}
-
-                            {failure === null && available && challengeToken === null && (
-                                <StatusStrip tone="pending" message={t("challengePending")} />
                             )}
                         </>
                     )}

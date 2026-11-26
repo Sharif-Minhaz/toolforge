@@ -71,8 +71,6 @@ export function PdfOptions({ format, options, onChange }: PdfOptionsProps) {
 
     return (
         <section className="flex flex-col gap-4" aria-label={t("optionsTitle")}>
-            <h3 className="text-muted-foreground text-xs font-medium">{t("optionsTitle")}</h3>
-
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <OptionSelect<PdfPageSize>
                     label={t("pageSizeLabel")}

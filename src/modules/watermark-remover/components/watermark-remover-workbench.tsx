@@ -4,7 +4,7 @@ import { IconPhoto, IconSparkles, IconVideo } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { WatermarkMode } from "../types";
 import { GeminiPanel } from "./gemini-panel";
@@ -45,17 +45,7 @@ export function WatermarkRemoverWorkbench({
     const [mode, setMode] = useState<WatermarkMode>("image");
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
-
-            <CardHeader>
-                <CardTitle className="text-lg">{t(`${mode}Title`)}</CardTitle>
-                <CardDescription>{t(`${mode}Description`)}</CardDescription>
-            </CardHeader>
-
+        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
             <CardContent className="flex min-w-0 flex-col gap-5">
                 <Tabs
                     value={mode}

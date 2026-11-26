@@ -82,7 +82,7 @@ export function LatexPreview({ latex, display, pending, labelledBy }: LatexPrevi
             role="figure"
             aria-labelledby={labelledBy}
             className={cn(
-                "bg-muted/40 ring-border/70 flex min-h-32 flex-col items-center justify-center rounded-xl px-4 py-6 ring-1 ring-inset",
+                "bg-card ring-border/70 flex min-h-32 flex-col items-center justify-center rounded-xl px-4 py-6 ring-1 ring-inset",
                 "transition-opacity duration-200",
                 pending && "opacity-55",
             )}

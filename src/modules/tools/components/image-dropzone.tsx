@@ -115,14 +115,17 @@ export function ImageDropzone({
                     aria-hidden="true"
                 />
                 <span className={cn("flex min-w-0 flex-col", compact ? "gap-0.5" : "gap-2")}>
-                    <span
-                        className={cn(
-                            "leading-[1.4] font-medium",
-                            compact ? "text-[0.8125rem]" : "text-[0.9375rem]",
-                        )}
-                    >
-                        {title}
-                    </span>
+                    {/* Null when the caller stamps the title on a step label above. */}
+                    {title === null ? null : (
+                        <span
+                            className={cn(
+                                "leading-[1.4] font-medium",
+                                compact ? "text-[0.8125rem]" : "text-[0.9375rem]",
+                            )}
+                        >
+                            {title}
+                        </span>
+                    )}
                     <span
                         className={cn(
                             "text-muted-foreground leading-normal",

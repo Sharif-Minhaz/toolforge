@@ -5,15 +5,19 @@ import { useFormatter, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { LIVE_UPDATE_DEBOUNCE_MS } from "@/hooks/use-debounced-value";
 import { logEvent } from "@/modules/observability/domain/logger";
 import { OptionSelect, OptionSwitch } from "@/modules/tools/components/option-controls";
 import { StatusStrip } from "@/modules/tools/components/status-strip";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
+import {
+    OptionsDisclosure,
+    RESULT_TRAY,
+    StepLabel,
+} from "@/modules/tools/components/workbench-step";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import {
     ALPHABETS,
@@ -214,207 +218,227 @@ export function PasswordWorkbench({ initialOptions }: PasswordWorkbenchProps) {
     }
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
+        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+            <CardContent className="flex min-w-0 flex-col gap-6">
+                {/* What shapes the password, then the rarer settings folded
+                    away, so the choice and its result are the first things on
+                    screen. */}
+                <div className="flex min-w-0 flex-col gap-3">
+                    <div className="grid gap-5 md:grid-cols-2 md:gap-6">
+                        <div className="flex min-w-0 flex-col gap-2">
+                            <StepLabel step={1} id={modeLabelId}>
+                                {t("modeLabel")}
+                            </StepLabel>
+                            <ModeSelector
+                                value={options.mode}
+                                onChange={handleModeChange}
+                                labelId={modeLabelId}
+                            />
+                        </div>
 
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-            </CardHeader>
+                        <div className="flex min-w-0 flex-col gap-1.5">
+                            <Label id={lengthLabelId} className="text-muted-foreground text-xs">
+                                <span className="leading-[1.3]">
+                                    {t(`lengthLabel.${options.mode}`)}
+                                </span>
+                            </Label>
+                            <div className="flex h-10 min-w-0 items-center gap-3">
+                                <Slider
+                                    aria-labelledby={lengthLabelId}
+                                    value={[options.length]}
+                                    min={range.min}
+                                    max={range.max}
+                                    step={1}
+                                    onValueChange={handleLengthChange}
+                                    className="min-w-0 flex-1"
+                                />
+                                <span className="w-9 shrink-0 text-right font-mono text-sm tabular-nums">
+                                    {options.length}
+                                </span>
+                            </div>
+                            <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                                {t("lengthHint", { min: range.min, max: range.max })}
+                            </p>
+                        </div>
+                    </div>
 
-            <CardContent className="flex min-w-0 flex-col gap-5">
-                <PasswordOutput
-                    password={result?.password ?? null}
-                    stale={pending}
-                    copied={copied === "password"}
-                    spinToken={spinToken}
-                    disabled={noClassSelected}
-                    onCopy={handleCopy}
-                    onRegenerate={handleRegenerate}
-                />
+                    <OptionsDisclosure>
+                        <div className="flex min-w-0 flex-col gap-5">
+                            <div className="flex min-w-0 flex-col gap-2">
+                                <GroupLabel>{t("charactersGroup")}</GroupLabel>
 
-                {result !== null && crackTime !== null && (
-                    <StrengthMeter
-                        strength={result.strength}
-                        crackTime={crackTime}
-                        attack={options.attack}
+                                <div className="grid gap-2 sm:grid-cols-2">
+                                    {CHARACTER_CLASSES.map((name) => (
+                                        <OptionSwitch
+                                            key={name}
+                                            label={t(`classes.${name}`)}
+                                            hint={
+                                                poolAvailable
+                                                    ? CLASS_HINTS[name]
+                                                    : t("classesUnavailable")
+                                            }
+                                            checked={options[name]}
+                                            disabled={!poolAvailable}
+                                            onCheckedChange={(checked) =>
+                                                applyOptions({ ...options, [name]: checked }, true)
+                                            }
+                                        />
+                                    ))}
+                                </div>
+
+                                {noClassSelected && (
+                                    <StatusStrip
+                                        tone="error"
+                                        message={tErrors("noCharacterClass")}
+                                    />
+                                )}
+                            </div>
+
+                            <div className="flex min-w-0 flex-col gap-2">
+                                <GroupLabel>{t("exclusionsGroup")}</GroupLabel>
+
+                                <div className="grid gap-2 sm:grid-cols-2">
+                                    <OptionSwitch
+                                        label={t("excludeSimilar")}
+                                        hint={
+                                            poolAvailable
+                                                ? SIMILAR_CHARACTERS
+                                                : t("classesUnavailable")
+                                        }
+                                        checked={options.excludeSimilar}
+                                        disabled={!poolAvailable}
+                                        onCheckedChange={(excludeSimilar) =>
+                                            applyOptions({ ...options, excludeSimilar }, true)
+                                        }
+                                    />
+                                    <OptionSwitch
+                                        label={t("excludeAmbiguous")}
+                                        hint={
+                                            poolAvailable
+                                                ? AMBIGUOUS_CHARACTERS
+                                                : t("classesUnavailable")
+                                        }
+                                        checked={options.excludeAmbiguous}
+                                        disabled={!poolAvailable}
+                                        onCheckedChange={(excludeAmbiguous) =>
+                                            applyOptions({ ...options, excludeAmbiguous }, true)
+                                        }
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex min-w-0 flex-col gap-2">
+                                <GroupLabel>{t("passphraseGroup")}</GroupLabel>
+
+                                <div className="grid gap-2 sm:grid-cols-2">
+                                    <OptionSelect<PasswordSeparator>
+                                        label={t("separatorLabel")}
+                                        hint={
+                                            wordsAvailable
+                                                ? tSeparators(`${options.separator}.hint`)
+                                                : t("passphraseUnavailable")
+                                        }
+                                        value={options.separator}
+                                        items={Object.fromEntries(
+                                            PASSWORD_SEPARATORS.map((separator) => [
+                                                separator,
+                                                tSeparators(`${separator}.label`),
+                                            ]),
+                                        )}
+                                        values={PASSWORD_SEPARATORS}
+                                        disabled={!wordsAvailable}
+                                        onChange={(separator) =>
+                                            applyOptions({ ...options, separator }, true)
+                                        }
+                                    />
+
+                                    <div className="grid gap-2">
+                                        <OptionSwitch
+                                            label={t("capitalize")}
+                                            hint={
+                                                wordsAvailable
+                                                    ? t("capitalizeHint")
+                                                    : t("passphraseUnavailable")
+                                            }
+                                            checked={options.capitalize}
+                                            disabled={!wordsAvailable}
+                                            onCheckedChange={(capitalize) =>
+                                                applyOptions({ ...options, capitalize }, true)
+                                            }
+                                        />
+                                        <OptionSwitch
+                                            label={t("includeNumber")}
+                                            hint={
+                                                wordsAvailable
+                                                    ? t("includeNumberHint")
+                                                    : t("passphraseUnavailable")
+                                            }
+                                            checked={options.includeNumber}
+                                            disabled={!wordsAvailable}
+                                            onCheckedChange={(includeNumber) =>
+                                                applyOptions({ ...options, includeNumber }, true)
+                                            }
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="md:max-w-[calc(50%-0.75rem)]">
+                                <OptionSelect<AttackModel>
+                                    label={t("attackLabel")}
+                                    hint={tAttacks(`${options.attack}.hint`)}
+                                    value={options.attack}
+                                    items={Object.fromEntries(
+                                        ATTACK_MODELS.map((model) => [
+                                            model,
+                                            tAttacks(`${model}.label`),
+                                        ]),
+                                    )}
+                                    values={ATTACK_MODELS}
+                                    // Changing the attacker asks a different
+                                    // question about the same password, so it
+                                    // must not mint a new one.
+                                    onChange={(attack) =>
+                                        setOptions((current) => ({ ...current, attack }))
+                                    }
+                                />
+                            </div>
+                        </div>
+                    </OptionsDisclosure>
+                </div>
+
+                <div className={RESULT_TRAY}>
+                    <StepLabel step={2}>{t("resultLabel")}</StepLabel>
+
+                    <PasswordOutput
+                        password={result?.password ?? null}
                         stale={pending}
+                        copied={copied === "password"}
+                        spinToken={spinToken}
+                        disabled={noClassSelected}
+                        onCopy={handleCopy}
+                        onRegenerate={handleRegenerate}
                     />
-                )}
 
-                {/* Says what changed, never the value: a password read aloud is a
-                    password overheard. */}
-                <p role="status" className="sr-only">
-                    {result === null
-                        ? ""
-                        : t("announcement", {
-                              count: result.password.length,
-                              strength: tStrengths(result.strength),
-                          })}
-                </p>
-
-                <Separator />
-
-                <div className="grid gap-5 md:grid-cols-2 md:gap-6">
-                    <div className="flex min-w-0 flex-col gap-1.5">
-                        <Label id={modeLabelId} className="text-muted-foreground text-xs">
-                            <span className="leading-[1.3]">{t("modeLabel")}</span>
-                        </Label>
-                        <ModeSelector
-                            value={options.mode}
-                            onChange={handleModeChange}
-                            labelId={modeLabelId}
+                    {result !== null && crackTime !== null && (
+                        <StrengthMeter
+                            strength={result.strength}
+                            crackTime={crackTime}
+                            attack={options.attack}
+                            stale={pending}
                         />
-                    </div>
-
-                    <div className="flex min-w-0 flex-col gap-1.5">
-                        <Label id={lengthLabelId} className="text-muted-foreground text-xs">
-                            <span className="leading-[1.3]">
-                                {t(`lengthLabel.${options.mode}`)}
-                            </span>
-                        </Label>
-                        <div className="flex h-10 min-w-0 items-center gap-3">
-                            <Slider
-                                aria-labelledby={lengthLabelId}
-                                value={[options.length]}
-                                min={range.min}
-                                max={range.max}
-                                step={1}
-                                onValueChange={handleLengthChange}
-                                className="min-w-0 flex-1"
-                            />
-                            <span className="w-9 shrink-0 text-right font-mono text-sm tabular-nums">
-                                {options.length}
-                            </span>
-                        </div>
-                        <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                            {t("lengthHint", { min: range.min, max: range.max })}
-                        </p>
-                    </div>
-                </div>
-
-                <Separator />
-
-                <div className="flex min-w-0 flex-col gap-2">
-                    <GroupLabel>{t("charactersGroup")}</GroupLabel>
-
-                    <div className="grid gap-2 sm:grid-cols-2">
-                        {CHARACTER_CLASSES.map((name) => (
-                            <OptionSwitch
-                                key={name}
-                                label={t(`classes.${name}`)}
-                                hint={poolAvailable ? CLASS_HINTS[name] : t("classesUnavailable")}
-                                checked={options[name]}
-                                disabled={!poolAvailable}
-                                onCheckedChange={(checked) =>
-                                    applyOptions({ ...options, [name]: checked }, true)
-                                }
-                            />
-                        ))}
-                    </div>
-
-                    {noClassSelected && (
-                        <StatusStrip tone="error" message={tErrors("noCharacterClass")} />
                     )}
-                </div>
 
-                <div className="flex min-w-0 flex-col gap-2">
-                    <GroupLabel>{t("exclusionsGroup")}</GroupLabel>
-
-                    <div className="grid gap-2 sm:grid-cols-2">
-                        <OptionSwitch
-                            label={t("excludeSimilar")}
-                            hint={poolAvailable ? SIMILAR_CHARACTERS : t("classesUnavailable")}
-                            checked={options.excludeSimilar}
-                            disabled={!poolAvailable}
-                            onCheckedChange={(excludeSimilar) =>
-                                applyOptions({ ...options, excludeSimilar }, true)
-                            }
-                        />
-                        <OptionSwitch
-                            label={t("excludeAmbiguous")}
-                            hint={poolAvailable ? AMBIGUOUS_CHARACTERS : t("classesUnavailable")}
-                            checked={options.excludeAmbiguous}
-                            disabled={!poolAvailable}
-                            onCheckedChange={(excludeAmbiguous) =>
-                                applyOptions({ ...options, excludeAmbiguous }, true)
-                            }
-                        />
-                    </div>
-                </div>
-
-                <div className="flex min-w-0 flex-col gap-2">
-                    <GroupLabel>{t("passphraseGroup")}</GroupLabel>
-
-                    <div className="grid gap-2 sm:grid-cols-2">
-                        <OptionSelect<PasswordSeparator>
-                            label={t("separatorLabel")}
-                            hint={
-                                wordsAvailable
-                                    ? tSeparators(`${options.separator}.hint`)
-                                    : t("passphraseUnavailable")
-                            }
-                            value={options.separator}
-                            items={Object.fromEntries(
-                                PASSWORD_SEPARATORS.map((separator) => [
-                                    separator,
-                                    tSeparators(`${separator}.label`),
-                                ]),
-                            )}
-                            values={PASSWORD_SEPARATORS}
-                            disabled={!wordsAvailable}
-                            onChange={(separator) => applyOptions({ ...options, separator }, true)}
-                        />
-
-                        <div className="grid gap-2">
-                            <OptionSwitch
-                                label={t("capitalize")}
-                                hint={
-                                    wordsAvailable
-                                        ? t("capitalizeHint")
-                                        : t("passphraseUnavailable")
-                                }
-                                checked={options.capitalize}
-                                disabled={!wordsAvailable}
-                                onCheckedChange={(capitalize) =>
-                                    applyOptions({ ...options, capitalize }, true)
-                                }
-                            />
-                            <OptionSwitch
-                                label={t("includeNumber")}
-                                hint={
-                                    wordsAvailable
-                                        ? t("includeNumberHint")
-                                        : t("passphraseUnavailable")
-                                }
-                                checked={options.includeNumber}
-                                disabled={!wordsAvailable}
-                                onCheckedChange={(includeNumber) =>
-                                    applyOptions({ ...options, includeNumber }, true)
-                                }
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                <Separator />
-
-                <div className="grid gap-5 md:grid-cols-2 md:gap-6">
-                    <OptionSelect<AttackModel>
-                        label={t("attackLabel")}
-                        hint={tAttacks(`${options.attack}.hint`)}
-                        value={options.attack}
-                        items={Object.fromEntries(
-                            ATTACK_MODELS.map((model) => [model, tAttacks(`${model}.label`)]),
-                        )}
-                        values={ATTACK_MODELS}
-                        // Changing the attacker asks a different question about
-                        // the same password, so it must not mint a new one.
-                        onChange={(attack) => setOptions((current) => ({ ...current, attack }))}
-                    />
+                    {/* Says what changed, never the value: a password read aloud
+                        is a password overheard. */}
+                    <p role="status" className="sr-only">
+                        {result === null
+                            ? ""
+                            : t("announcement", {
+                                  count: result.password.length,
+                                  strength: tStrengths(result.strength),
+                              })}
+                    </p>
 
                     {result !== null && (
                         <dl
@@ -438,41 +462,37 @@ export function PasswordWorkbench({ initialOptions }: PasswordWorkbenchProps) {
                             />
                         </dl>
                     )}
-                </div>
 
-                {result !== null && (
-                    <dl
-                        aria-label={t("compositionLabel")}
-                        className={cn(
-                            "grid grid-cols-2 gap-2 transition-opacity duration-200 sm:grid-cols-4",
-                            pending && "opacity-55",
-                        )}
-                    >
-                        {CHARACTER_CLASSES.map((name) => (
-                            <Stat
-                                key={name}
-                                label={t(`classes.${name}`)}
-                                value={formatter.number(result.composition[name])}
-                            />
-                        ))}
-                    </dl>
-                )}
+                    {result !== null && (
+                        <dl
+                            aria-label={t("compositionLabel")}
+                            className={cn(
+                                "grid grid-cols-2 gap-2 transition-opacity duration-200 sm:grid-cols-4",
+                                pending && "opacity-55",
+                            )}
+                        >
+                            {CHARACTER_CLASSES.map((name) => (
+                                <Stat
+                                    key={name}
+                                    label={t(`classes.${name}`)}
+                                    value={formatter.number(result.composition[name])}
+                                />
+                            ))}
+                        </dl>
+                    )}
+                </div>
             </CardContent>
         </Card>
     );
 }
 
 function GroupLabel({ children }: { children: string }) {
-    return (
-        <p className="text-muted-foreground/85 text-[0.6875rem] font-semibold tracking-[0.09em] uppercase">
-            {children}
-        </p>
-    );
+    return <p className="text-muted-foreground/85 text-xs font-medium">{children}</p>;
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
     return (
-        <div className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-0.5 rounded-xl px-3 py-2 ring-1 ring-inset">
+        <div className="bg-card ring-border/70 flex min-w-0 flex-col gap-0.5 rounded-xl px-3 py-2 ring-1 ring-inset">
             <dt className="text-muted-foreground text-[0.6875rem] leading-[1.4]">{label}</dt>
             <dd className="truncate font-mono text-sm tabular-nums">{value}</dd>
         </div>

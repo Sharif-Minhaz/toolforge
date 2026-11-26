@@ -16,7 +16,7 @@ import { useState, useTransition } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { TOOL_ACCENT_VARS, TOOL_ICON_TILE } from "@/modules/tools/components/tool-accent";
+import { TOOL_ICON_TILE } from "@/modules/tools/components/tool-accent";
 import { WORKSPACE_NAME_LENGTH } from "../domain/constants";
 
 import type { WorkspaceSummary } from "../types";
@@ -135,8 +135,7 @@ export function WorkspaceCard({
         <li
             className={cn(
                 "border-border/70 bg-card group/card rounded-2xl border p-4 shadow-xs transition-colors",
-                TOOL_ACCENT_VARS.violet,
-                !disabled && "hover:border-[var(--tool-accent)]/40",
+                !disabled && "hover:border-border",
             )}
         >
             <div className="flex items-start gap-3">
@@ -227,7 +226,7 @@ export function WorkspaceCard({
             <div className="mt-3 flex flex-wrap items-center gap-2">
                 <Link
                     href={`/mock/${workspace.id}`}
-                    className={cn(buttonVariants({ size: "sm" }), "gap-1.5")}
+                    className={cn(buttonVariants({ size: "sm", variant: "outline" }), "gap-1.5")}
                 >
                     {t("open")}
                     <IconArrowRight className="size-4" aria-hidden="true" />

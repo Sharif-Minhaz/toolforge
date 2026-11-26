@@ -113,7 +113,7 @@ export function CompressionRow({
                     </p>
                 ) : (
                     <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                        <span className="bg-muted text-muted-foreground rounded-md px-1.5 py-0.5 text-[0.625rem] leading-[1.3] font-medium uppercase">
+                        <span className="bg-muted text-muted-foreground rounded-md px-1.5 py-0.5 text-xs leading-[1.3] font-medium">
                             {tFormats(item.result.format)}
                         </span>
                         <span

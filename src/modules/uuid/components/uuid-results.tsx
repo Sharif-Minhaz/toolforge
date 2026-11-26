@@ -38,7 +38,7 @@ export function UuidResults({ uuids, generationId, copiedIndex, onCopy }: UuidRe
                 <motion.div
                     key={generationId}
                     {...entrance}
-                    className="group bg-muted/45 ring-border/80 relative flex items-center gap-3 overflow-hidden rounded-xl px-4 py-5 ring-1 ring-inset sm:px-6 sm:py-7"
+                    className="group bg-card ring-border/80 relative flex items-center gap-3 overflow-hidden rounded-xl px-4 py-5 ring-1 ring-inset sm:px-6 sm:py-7"
                 >
                     {!reduceMotion && (
                         <span

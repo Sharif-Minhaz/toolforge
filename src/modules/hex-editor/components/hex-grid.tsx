@@ -227,7 +227,7 @@ export function HexGrid() {
                     )}
                     style={{ ...HEX_GRID_STYLE, height: HEADER_HEIGHT }}
                 >
-                    <span className="flex h-full items-center pl-3 uppercase" role="columnheader">
+                    <span className="flex h-full items-center pl-3" role="columnheader">
                         {t("offsetHeader")}
                     </span>
                     {Array.from({ length: BYTES_PER_ROW }, (_, index) => (

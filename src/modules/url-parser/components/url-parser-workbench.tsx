@@ -6,9 +6,8 @@ import { useId, useState } from "react";
 import { toast } from "sonner";
 
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
@@ -17,6 +16,7 @@ import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
+import { RESULT_TRAY, StepLabel } from "@/modules/tools/components/workbench-step";
 import { MAX_URL_INPUT_LENGTH, SAMPLE_URL } from "../domain/constants";
 import { buildUrlParserJson, createUrlParserExportFile } from "../domain/export";
 import { applyParams } from "../domain/params";
@@ -165,23 +165,13 @@ export function UrlParserWorkbench({ initialUrl, initialView }: UrlParserWorkben
     }
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
-
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-            </CardHeader>
-
-            <CardContent className="flex flex-col gap-5">
-                <div className="flex flex-col gap-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                        <Label htmlFor={inputId} className="text-muted-foreground text-xs">
-                            <span className="leading-[1.3]">{t("inputLabel")}</span>
-                        </Label>
+        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+            <CardContent className="flex flex-col gap-6">
+                <div className="flex flex-col gap-3">
+                    <div className="flex min-h-7 flex-wrap items-center justify-between gap-2">
+                        <StepLabel step={1} htmlFor={inputId}>
+                            {t("inputLabel")}
+                        </StepLabel>
                         <div className="flex items-center gap-1.5">
                             <InputLimitMeter reading={urlLimit} />
                             <Button variant="ghost" size="sm" onClick={() => setUrl(SAMPLE_URL)}>
@@ -244,56 +234,72 @@ export function UrlParserWorkbench({ initialUrl, initialView }: UrlParserWorkben
                     )}
                 </div>
 
-                <Tabs defaultValue={initialView}>
-                    <TabsList className="w-full max-w-72">
-                        <TabsTrigger value="params">{t("tabs.params")}</TabsTrigger>
-                        <TabsTrigger value="detail">{t("tabs.detail")}</TabsTrigger>
-                    </TabsList>
+                {/* The second editor over the same link, and the ways to take
+                    it, on one tray. Full width: the parts table needs it. */}
+                <div className={RESULT_TRAY}>
+                    <Tabs defaultValue={initialView}>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <TabsList className="w-full max-w-72">
+                                <TabsTrigger value="params">{t("tabs.params")}</TabsTrigger>
+                                <TabsTrigger value="detail">{t("tabs.detail")}</TabsTrigger>
+                            </TabsList>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                                <Button
+                                    size="sm"
+                                    onClick={handleCopyUrl}
+                                    disabled={url.length === 0}
+                                >
+                                    <IconClipboardCheck
+                                        className="size-3.5"
+                                        stroke={1.8}
+                                        aria-hidden="true"
+                                    />
+                                    {t("copyUrl")}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleCopyJson}
+                                    disabled={!parsed.ok}
+                                >
+                                    <IconCode
+                                        className="size-3.5"
+                                        stroke={1.8}
+                                        aria-hidden="true"
+                                    />
+                                    {t("copyJson")}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleDownload}
+                                    disabled={!parsed.ok}
+                                >
+                                    <IconDownload
+                                        className="size-3.5"
+                                        stroke={1.8}
+                                        aria-hidden="true"
+                                    />
+                                    {t("download")}
+                                </Button>
+                            </div>
+                        </div>
 
-                    <TabsContent value="params" className="pt-4">
-                        <QueryParamsPanel
-                            params={parsed.ok ? parsed.params : null}
-                            onChange={handleParamsChange}
-                        />
-                    </TabsContent>
+                        <TabsContent value="params" className="pt-4">
+                            <QueryParamsPanel
+                                params={parsed.ok ? parsed.params : null}
+                                onChange={handleParamsChange}
+                            />
+                        </TabsContent>
 
-                    <TabsContent value="detail" className="pt-4">
-                        <UrlPartsPanel
-                            parts={parsed.ok ? parsed.parts : null}
-                            copied={copied === "url" || copied === "json" ? null : copied}
-                            onCopy={handleCopyPart}
-                        />
-                    </TabsContent>
-                </Tabs>
-
-                <div className="flex flex-wrap items-center gap-1.5">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleCopyUrl}
-                        disabled={url.length === 0}
-                    >
-                        <IconClipboardCheck className="size-3.5" stroke={1.8} aria-hidden="true" />
-                        {t("copyUrl")}
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleCopyJson}
-                        disabled={!parsed.ok}
-                    >
-                        <IconCode className="size-3.5" stroke={1.8} aria-hidden="true" />
-                        {t("copyJson")}
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleDownload}
-                        disabled={!parsed.ok}
-                    >
-                        <IconDownload className="size-3.5" stroke={1.8} aria-hidden="true" />
-                        {t("download")}
-                    </Button>
+                        <TabsContent value="detail" className="pt-4">
+                            <UrlPartsPanel
+                                parts={parsed.ok ? parsed.parts : null}
+                                copied={copied === "url" || copied === "json" ? null : copied}
+                                onCopy={handleCopyPart}
+                            />
+                        </TabsContent>
+                    </Tabs>
                 </div>
             </CardContent>
         </Card>

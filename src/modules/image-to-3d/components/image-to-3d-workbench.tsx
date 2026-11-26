@@ -7,7 +7,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useOnline } from "@/hooks/use-online";
@@ -18,6 +18,11 @@ import { ImageDropzone } from "@/modules/tools/components/image-dropzone";
 import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
+import {
+    OptionsDisclosure,
+    RESULT_TRAY,
+    StepLabel,
+} from "@/modules/tools/components/workbench-step";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
 import { toFilenameStem } from "@/modules/tools/domain/filenames";
 import { useCutoutQuality } from "@/modules/tools/components/use-cutout-quality";
@@ -494,19 +499,37 @@ export function ImageTo3dWorkbench({
 
     return (
         <Card>
-            <CardHeader>
-                <CardTitle>{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-            </CardHeader>
+            <CardContent className="flex min-w-0 flex-col gap-6">
+                {/* Every setting has a default that builds a model, so the
+                    panel is folded above the intake instead of standing
+                    between the picture and its mesh. */}
+                <OptionsDisclosure>
+                    <ModelOptionsPanel
+                        options={{ ...geometry, format }}
+                        cutout={cutout}
+                        cutoutDownloadLabel={byteLabel(cutoutBytes)}
+                        depthDownloadLabel={byteLabel(DEPTH_FIRST_RUN_BYTES)}
+                        cutoutAlreadyTransparent={picked?.source.hadAlpha ?? false}
+                        cutoutOffline={cutoutOffline}
+                        depthOffline={depthOffline}
+                        disabled={picked === null || reading}
+                        onPatch={patchOptions}
+                        onCutoutChange={toggleCutout}
+                    />
+                </OptionsDisclosure>
 
-            <CardContent className="flex min-w-0 flex-col gap-5">
                 <div className="flex min-w-0 flex-col gap-2">
+                    <StepLabel step={1} htmlFor={inputId}>
+                        {t("dropTitle")}
+                    </StepLabel>
                     <ImageDropzone
                         inputId={inputId}
                         describedById={hintId}
                         accept={IMAGE_ACCEPT_ATTRIBUTE}
                         disabled={reading}
-                        title={t("dropTitle")}
+                        // The step label above carries the title and labels the
+                        // same input; the box keeps the hint.
+                        title={null}
                         hint={t("dropHint", { limit: byteLabel(MAX_SOURCE_BYTES) })}
                         onFiles={accept}
                     />
@@ -519,19 +542,6 @@ export function ImageTo3dWorkbench({
 
                     <StatusStrip id={hintId} tone={status.tone} message={status.message} />
                 </div>
-
-                <ModelOptionsPanel
-                    options={{ ...geometry, format }}
-                    cutout={cutout}
-                    cutoutDownloadLabel={byteLabel(cutoutBytes)}
-                    depthDownloadLabel={byteLabel(DEPTH_FIRST_RUN_BYTES)}
-                    cutoutAlreadyTransparent={picked?.source.hadAlpha ?? false}
-                    cutoutOffline={cutoutOffline}
-                    depthOffline={depthOffline}
-                    disabled={picked === null || reading}
-                    onPatch={patchOptions}
-                    onCutoutChange={toggleCutout}
-                />
 
                 <div ref={resultRef} className="scroll-mt-24">
                     {picked === null ? (
@@ -605,11 +615,11 @@ export function ImageTo3dWorkbench({
                     )}
                 </div>
 
-                <div className="border-border/70 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-end sm:justify-between">
+                {/* The tray holds where the file is taken from, not the
+                    viewport above it: a drag-to-turn canvas stays a canvas. */}
+                <div className={cn(RESULT_TRAY, "sm:flex-row sm:items-end sm:justify-between")}>
                     <div className="flex min-w-0 flex-col gap-1">
-                        <p className="text-muted-foreground text-xs font-medium">
-                            {t("statsTitle")}
-                        </p>
+                        <StepLabel step={2}>{t("statsTitle")}</StepLabel>
                         <p className="text-sm tabular-nums">
                             {stats === null
                                 ? "—"

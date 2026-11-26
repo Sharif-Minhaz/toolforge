@@ -2,7 +2,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * The workbench card while it waits: the fallback for the request-time half of
- * the page, and the matching block in `loading.tsx`.
+ * the page, and the matching block in `loading.tsx`. Mode on top, then the
+ * pattern (1) and test string (2) beside the explanation and matches (3).
  */
 export function RegexWorkbenchSkeleton() {
     return (
@@ -10,11 +11,6 @@ export function RegexWorkbenchSkeleton() {
             aria-hidden="true"
             className="bg-card ring-border/70 flex flex-col gap-5 rounded-xl p-5 ring-1 ring-inset sm:p-6"
         >
-            <div className="flex flex-col gap-1.5">
-                <Skeleton className="h-5 w-56" />
-                <Skeleton className="h-4 w-80" />
-            </div>
-
             <div className="flex flex-col gap-2">
                 <Skeleton className="h-3.5 w-12" />
                 <Skeleton className="h-12 w-full rounded-xl" />
@@ -24,7 +20,7 @@ export function RegexWorkbenchSkeleton() {
                 <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-2">
                         <div className="flex items-center justify-between gap-2">
-                            <Skeleton className="h-3.5 w-32" />
+                            <Skeleton className="h-5 w-40" />
                             <div className="flex gap-1.5">
                                 {Array.from({ length: 3 }, (_, index) => (
                                     <Skeleton key={index} className="h-6 w-20 rounded-lg" />
@@ -38,9 +34,10 @@ export function RegexWorkbenchSkeleton() {
 
                     <div className="flex flex-col gap-2">
                         <div className="flex items-center justify-between gap-2">
-                            <Skeleton className="h-3.5 w-20" />
+                            <Skeleton className="h-5 w-28" />
                             <div className="flex gap-1.5">
                                 <Skeleton className="h-7 w-16 rounded-lg" />
+                                <Skeleton className="h-7 w-20 rounded-lg" />
                                 <Skeleton className="h-7 w-24 rounded-lg" />
                             </div>
                         </div>

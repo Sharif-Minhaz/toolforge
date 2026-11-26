@@ -4,14 +4,14 @@ import { IconDice5, IconDownload, IconX } from "@tabler/icons-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useId } from "react";
 
-import { buttonVariants } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { IconCopyButton } from "@/modules/tools/components/copy-button";
+import { CopyIconSwap } from "@/modules/tools/components/copy-button";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import { RESULT_TRAY, StepLabel } from "@/modules/tools/components/workbench-step";
 import {
     ALGORITHM_LABELS,
     getHashFamily,
@@ -92,12 +92,12 @@ export function GeneratePanel({
                 {t("description")}
             </p>
 
-            <div className="grid min-w-0 gap-5 xl:grid-cols-2 xl:gap-6">
+            <div className="grid min-w-0 gap-4 lg:grid-cols-2">
                 <div className="flex min-w-0 flex-col gap-2">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                        <Label htmlFor={inputId} className="text-muted-foreground text-xs">
-                            <span className="leading-[1.3]">{t("inputLabel")}</span>
-                        </Label>
+                        <StepLabel step={1} htmlFor={inputId}>
+                            {t("inputLabel")}
+                        </StepLabel>
                         <div className="flex items-center gap-1.5">
                             <span className="text-muted-foreground font-mono text-[0.6875rem] tabular-nums">
                                 {format.number(text.length)}
@@ -151,11 +151,11 @@ export function GeneratePanel({
                     </div>
                 </div>
 
-                <div className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-2 rounded-xl p-3 ring-1 ring-inset">
+                <div className={RESULT_TRAY}>
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                        <Label htmlFor={outputId} className="text-muted-foreground text-xs">
-                            <span className="leading-[1.3]">{t("outputLabel")}</span>
-                        </Label>
+                        <StepLabel step={2} htmlFor={outputId}>
+                            {t("outputLabel")}
+                        </StepLabel>
                         <div className="flex items-center gap-1.5">
                             <button
                                 type="button"
@@ -173,19 +173,22 @@ export function GeneratePanel({
                                 />
                                 {t("download")}
                             </button>
-                            <IconCopyButton
-                                copied={copied}
+                            <Button
+                                size="sm"
                                 onClick={onCopy}
                                 disabled={hash.length === 0}
-                                aria-label={t("copyOutput")}
-                            />
+                                className="h-7 px-2 text-[0.6875rem]"
+                            >
+                                <CopyIconSwap copied={copied} />
+                                {t("copyOutput")}
+                            </Button>
                         </div>
                     </div>
 
                     <output
                         id={outputId}
                         className={cn(
-                            "bg-muted/40 min-h-32 rounded-lg px-2.5 py-2",
+                            "bg-card min-h-32 rounded-lg px-2.5 py-2",
                             "font-mono text-[0.8125rem] leading-6 break-all",
                             "transition-opacity duration-200",
                             // Dimmed rather than blanked: a stale hash is more

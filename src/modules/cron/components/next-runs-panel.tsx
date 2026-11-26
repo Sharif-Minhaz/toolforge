@@ -38,7 +38,7 @@ export function NextRunsPanel({
         return (
             <p
                 role="status"
-                className="text-muted-foreground bg-muted/40 ring-border/70 flex items-start gap-2 rounded-xl px-3 py-2.5 text-[0.8125rem] leading-normal ring-1 ring-inset"
+                className="text-muted-foreground bg-card ring-border/70 flex items-start gap-2 rounded-xl px-3 py-2.5 text-[0.8125rem] leading-normal ring-1 ring-inset"
             >
                 <IconClockPause
                     className="mt-0.5 size-4 shrink-0"
@@ -66,7 +66,7 @@ export function NextRunsPanel({
                     return (
                         <li
                             key={epochMs}
-                            className="bg-card/60 ring-border/70 flex items-center gap-3 rounded-xl px-3 py-2 ring-1 ring-inset"
+                            className="bg-card ring-border/70 flex items-center gap-3 rounded-xl px-3 py-2 ring-1 ring-inset"
                         >
                             <span className="text-muted-foreground w-6 shrink-0 text-right font-mono text-xs tabular-nums">
                                 {index + 1}

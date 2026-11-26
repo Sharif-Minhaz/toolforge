@@ -6,8 +6,9 @@ import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useOnline } from "@/hooks/use-online";
+import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { ImageDropzone } from "@/modules/tools/components/image-dropzone";
@@ -17,6 +18,11 @@ import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
+import {
+    OptionsDisclosure,
+    RESULT_TRAY,
+    StepLabel,
+} from "@/modules/tools/components/workbench-step";
 import { copyText } from "@/modules/tools/domain/clipboard";
 import { checkImageFile } from "@/modules/tools/domain/image-file";
 import {
@@ -455,6 +461,8 @@ export function ImageToTextWorkbench({
                           : t("resultPlaceholder")
                 }
                 readOnly={read === null}
+                // One filled Copy on screen: several boxes share the outline.
+                primary={images.length === 1}
                 copied={copied === key}
                 onCopy={() => void handleCopy(key, read?.text ?? "")}
                 onChange={(text) => {
@@ -475,17 +483,7 @@ export function ImageToTextWorkbench({
     const intakeDisabled = running || languageMissing;
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
-
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-            </CardHeader>
-
+        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
             <CardContent className="flex min-w-0 flex-col gap-5">
                 <div className="grid min-w-0 gap-3 sm:grid-cols-2">
                     <OptionSelect<OcrLanguage>
@@ -499,23 +497,35 @@ export function ImageToTextWorkbench({
                         )}
                         onChange={setLanguage}
                     />
-                    {/* A view of the same reads, so it can change mid-batch. */}
-                    <OptionSelect<ResultLayout>
-                        label={t("layoutLabel")}
-                        hint={t("layoutHint")}
-                        value={layout}
-                        values={RESULT_LAYOUTS}
-                        items={Object.fromEntries(
-                            RESULT_LAYOUTS.map((value) => [value, t(`layouts.${value}`)]),
-                        )}
-                        onChange={setLayout}
-                    />
+                    <div className="sm:col-span-2">
+                        <OptionsDisclosure>
+                            {/* A view of the same reads, so it can change mid-batch. */}
+                            <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+                                <OptionSelect<ResultLayout>
+                                    label={t("layoutLabel")}
+                                    hint={t("layoutHint")}
+                                    value={layout}
+                                    values={RESULT_LAYOUTS}
+                                    items={Object.fromEntries(
+                                        RESULT_LAYOUTS.map((value) => [
+                                            value,
+                                            t(`layouts.${value}`),
+                                        ]),
+                                    )}
+                                    onChange={setLayout}
+                                />
+                            </div>
+                        </OptionsDisclosure>
+                    </div>
                 </div>
 
                 <div className="flex min-w-0 flex-col gap-2">
+                    <StepLabel step={1} htmlFor={inputId}>
+                        {t("dropTitle")}
+                    </StepLabel>
                     <ImageDropzone
                         inputId={inputId}
-                        title={t("dropTitle")}
+                        title={null}
                         hint={t("dropHint", {
                             limit: byteLabel(MAX_IMAGE_BYTES),
                             count: MAX_IMAGES,
@@ -553,7 +563,7 @@ export function ImageToTextWorkbench({
                     <section
                         ref={resultRef}
                         aria-labelledby={picturesId}
-                        className="flex min-w-0 scroll-mt-24 flex-col gap-3"
+                        className={cn(RESULT_TRAY, "scroll-mt-24")}
                     >
                         <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
                             <h3

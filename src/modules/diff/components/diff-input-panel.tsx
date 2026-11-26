@@ -5,10 +5,10 @@ import { useTranslations } from "next-intl";
 import type { ChangeEvent } from "react";
 
 import { buttonVariants } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
+import { StepLabel } from "@/modules/tools/components/workbench-step";
 import { MAX_DIFF_INPUT_LENGTH } from "../domain/constants";
 import type { DiffSide } from "../types";
 
@@ -53,11 +53,11 @@ export function DiffInputPanel({
     }
 
     return (
-        <div className="flex min-w-0 flex-col gap-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <Label htmlFor={inputId} className="text-muted-foreground text-xs">
-                    <span className="leading-[1.3]">{label}</span>
-                </Label>
+        <div className="flex min-w-0 flex-col gap-3">
+            <div className="flex min-h-7 flex-wrap items-center justify-between gap-2">
+                <StepLabel step={side === "left" ? 1 : 2} htmlFor={inputId}>
+                    {label}
+                </StepLabel>
 
                 <div className="flex items-center gap-1">
                     <InputLimitMeter reading={reading} className="mr-1" />

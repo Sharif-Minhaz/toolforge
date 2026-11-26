@@ -2,7 +2,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * The lookup card while it waits: the fallback for the request-time half of
- * the page, and the matching block in `loading.tsx`.
+ * the page, and the matching block in `loading.tsx`. Note, domain, lookup,
+ * status.
  */
 export function SubdomainLookupWorkbenchSkeleton() {
     return (
@@ -10,17 +11,13 @@ export function SubdomainLookupWorkbenchSkeleton() {
             aria-hidden="true"
             className="bg-card ring-border/70 flex flex-col gap-5 rounded-xl p-5 ring-1 ring-inset sm:p-6"
         >
-            <div className="flex flex-col gap-1.5">
-                <Skeleton className="h-5 w-44" />
-                <Skeleton className="h-4 w-80 max-w-full" />
-            </div>
-
-            {/* The disclosure panel, which is always painted. */}
-            <Skeleton className="h-32 w-full rounded-xl" />
+            <Skeleton className="h-4 w-full max-w-xl" />
+            {/* The third-party disclosure panel. */}
+            <Skeleton className="h-20 w-full rounded-xl" />
 
             <div className="flex flex-col gap-2">
-                <Skeleton className="h-3 w-20" />
-                <Skeleton className="h-9 w-full rounded-xl" />
+                <Skeleton className="h-5 w-24" />
+                <Skeleton className="h-11 w-full rounded-xl" />
                 <Skeleton className="h-3 w-72 max-w-full" />
             </div>
 

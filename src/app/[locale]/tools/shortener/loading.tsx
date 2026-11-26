@@ -18,7 +18,7 @@ export default function ShortenerLoading() {
                 </div>
                 <div className="flex gap-1.5">
                     {Array.from({ length: 3 }, (_, index) => (
-                        <Skeleton key={index} className="h-6 w-28 rounded-full" />
+                        <Skeleton key={index} className="h-4 w-28" />
                     ))}
                 </div>
             </div>

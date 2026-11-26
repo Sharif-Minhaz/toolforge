@@ -39,7 +39,7 @@ export function KeyPanel({ kind, value, stale, copied, onCopy, onDownload }: Key
     const empty = value === null || value.text.length === 0;
 
     return (
-        <div className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-2 rounded-xl p-3 ring-1 ring-inset">
+        <div className="bg-card ring-border/70 flex min-w-0 flex-col gap-2 rounded-xl p-3 ring-1 ring-inset">
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-2">
                     <Label htmlFor={outputId} className="text-muted-foreground text-xs">

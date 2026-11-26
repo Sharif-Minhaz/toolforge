@@ -51,8 +51,6 @@ export function ConversionOptions({ source, target, options, onChange }: Convers
 
     return (
         <div className="flex flex-col gap-4">
-            <p className="text-muted-foreground text-xs">{t("optionsTitle")}</p>
-
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <OptionSelect
                     label={t("encoding")}

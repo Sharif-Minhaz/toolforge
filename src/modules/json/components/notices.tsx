@@ -24,7 +24,7 @@ function NoticeBlock({ title, tone, children }: NoticeBlockProps) {
 
     return (
         <section className="bg-card/60 ring-border/70 flex flex-col gap-2 rounded-xl px-3 py-2.5 ring-1 ring-inset">
-            <h3 className="text-muted-foreground flex items-center gap-1.5 text-[0.6875rem] leading-[1.4] font-semibold tracking-[0.06em] uppercase">
+            <h3 className="text-muted-foreground flex items-center gap-1.5 text-xs leading-[1.4] font-medium tracking-[0.06em]">
                 <Icon className="size-3.5 shrink-0" stroke={1.9} aria-hidden="true" />
                 {title}
             </h3>

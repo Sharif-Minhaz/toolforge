@@ -41,7 +41,7 @@ export function ColorScaleStrip({ stops, copied, onCopy }: ColorScaleStripProps)
                             type="button"
                             onClick={() => onCopy(stop)}
                             className={cn(
-                                "focus-visible:ring-ring flex h-16 w-full flex-col justify-between rounded-lg p-2 text-left ring-1 ring-black/10 transition-transform duration-200 ring-inset hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:outline-none",
+                                "focus-visible:ring-ring flex h-16 w-full flex-col justify-between rounded-lg p-2 text-left ring-1 ring-black/10 transition-shadow duration-150 ring-inset hover:ring-black/30 focus-visible:ring-2 focus-visible:outline-none",
                                 stop.isBase && "ring-2 ring-[var(--tool-accent)]",
                             )}
                             style={{ background: stop.hex, color: labelColor(stop) }}

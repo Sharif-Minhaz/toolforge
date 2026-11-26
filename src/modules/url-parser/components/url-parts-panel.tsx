@@ -37,7 +37,7 @@ export function UrlPartsPanel({ parts, copied, onCopy }: UrlPartsPanelProps) {
                         </dt>
                         <dd
                             className={cn(
-                                "bg-muted/40 ring-border/70 min-w-0 rounded-lg px-3 py-2 ring-1 ring-inset",
+                                "bg-card ring-border/70 min-w-0 rounded-lg px-3 py-2 ring-1 ring-inset",
                                 "font-mono text-[0.8125rem] leading-[1.4] break-all",
                             )}
                         >

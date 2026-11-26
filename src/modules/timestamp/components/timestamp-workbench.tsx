@@ -14,6 +14,11 @@ import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
 import type { StatusTone } from "@/modules/tools/components/status-strip";
 import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
+import {
+    OptionsDisclosure,
+    RESULT_TRAY,
+    StepLabel,
+} from "@/modules/tools/components/workbench-step";
 import { ZonePicker } from "@/modules/tools/components/zone-picker";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
@@ -254,17 +259,7 @@ export function TimestampWorkbench({
 
     return (
         <div className={cn("flex flex-col gap-6", TOOL_ACCENT_VARS.cyan)}>
-            <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-                <span
-                    aria-hidden="true"
-                    className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-                />
-
-                <CardHeader>
-                    <CardTitle className="text-lg">{t("title")}</CardTitle>
-                    <CardDescription>{t("description")}</CardDescription>
-                </CardHeader>
-
+            <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
                 <CardContent className="flex flex-col gap-5">
                     <TimestampInput
                         value={input}
@@ -287,12 +282,16 @@ export function TimestampWorkbench({
                     />
 
                     {result.ok && (
-                        <div className="flex flex-col gap-2">
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                                <h3 className="text-[0.9375rem] leading-[1.3] font-medium">
-                                    {t("epochTitle")}
+                        <div className={RESULT_TRAY}>
+                            <div className="flex min-h-7 flex-wrap items-center justify-between gap-2">
+                                {/* Still a heading for the outline; the stamp marks
+                                    it as where the answer lands. */}
+                                <h3>
+                                    <StepLabel step={2}>{t("epochTitle")}</StepLabel>
                                 </h3>
-                                <Button variant="outline" size="sm" onClick={handleDownload}>
+                                {/* The one filled button: the export is where the
+                                    tool ends. */}
+                                <Button size="sm" onClick={handleDownload}>
                                     <IconDownload
                                         className="size-3.5"
                                         stroke={1.8}
@@ -312,15 +311,17 @@ export function TimestampWorkbench({
                         </div>
                     )}
 
-                    <ReadingOptions
-                        unit={unit}
-                        inputTimeZone={inputTimeZone}
-                        inputRegion={inputRegion}
-                        zoneApplies={result.ok && result.usedInputZone}
-                        onUnitChange={setUnit}
-                        onInputRegionChange={setInputRegion}
-                        onInputTimeZoneChange={setInputTimeZone}
-                    />
+                    <OptionsDisclosure label={t("readingOptionsTitle")}>
+                        <ReadingOptions
+                            unit={unit}
+                            inputTimeZone={inputTimeZone}
+                            inputRegion={inputRegion}
+                            zoneApplies={result.ok && result.usedInputZone}
+                            onUnitChange={setUnit}
+                            onInputRegionChange={setInputRegion}
+                            onInputTimeZoneChange={setInputTimeZone}
+                        />
+                    </OptionsDisclosure>
                 </CardContent>
             </Card>
 

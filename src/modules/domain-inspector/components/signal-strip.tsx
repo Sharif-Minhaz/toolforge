@@ -3,6 +3,7 @@
 import { useFormatter, useTranslations } from "next-intl";
 
 import { cn } from "@/lib/utils";
+import { StepLabel } from "@/modules/tools/components/workbench-step";
 import { summarizeReadings, type Reading, type ReadingTone } from "../domain/summary";
 import type { DomainReport } from "../types";
 
@@ -66,9 +67,7 @@ export function SignalStrip({ report }: { report: DomainReport }) {
             className="bg-card ring-border/70 panel-sheen relative flex min-w-0 flex-col overflow-hidden rounded-2xl ring-1 ring-inset"
         >
             <header className="flex min-w-0 flex-col gap-1 px-5 pt-5 pb-4 sm:px-6 sm:pt-6">
-                <p className="text-muted-foreground text-[0.625rem] leading-normal tracking-[0.16em] uppercase">
-                    {t("label")}
-                </p>
+                <StepLabel step={2}>{t("label")}</StepLabel>
                 {/*
                  * The mono face is the display face here. On a tool that reads
                  * DNS, the monospace hostname is the most characteristic thing
@@ -108,7 +107,7 @@ export function SignalStrip({ report }: { report: DomainReport }) {
                                 TONE_RULE[reading.tone],
                             )}
                         />
-                        <dt className="text-muted-foreground text-[0.625rem] leading-normal tracking-[0.14em] uppercase">
+                        <dt className="text-muted-foreground text-xs leading-normal">
                             {t(reading.id)}
                         </dt>
                         <dd

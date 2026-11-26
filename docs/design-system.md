@@ -39,7 +39,9 @@ comment where you write it — see
 - Shared-layout indicators need a unique `layoutId`. Components rendered in both
   the desktop rail and the mobile drawer take a `layoutIdPrefix` prop — duplicate
   ids make the indicator jump between the two copies.
-- Respect `useReducedMotion()`; return the plain element rather than animating.
+- Respect `useReducedMotion()` by zeroing the transition (`{ duration: 0 }`), never by
+  returning a plain element: the server renders the motion element's `opacity: 0`, React
+  does not patch attributes on hydration, and the content stays invisible.
 
 ### Animating a server component
 
@@ -59,7 +61,8 @@ Everything lives in `src/components/motion/`:
   `staggerDelay()`. Framework-free, so server and client read the same numbers.
   Never import React or `motion` here.
 - `reveal.tsx` — `Reveal` (fades up on scroll into view) and `FadeIn` (fades in
-  on mount, for above-the-fold content). Both carry the reduced-motion gate.
+  on mount, for above-the-fold content). Both carry the reduced-motion gate
+  (duration zero, same element).
 - `motion-primitives.tsx` — `MotionDiv`, the escape hatch for a one-off neither
   wrapper covers. It has no reduced-motion gate, so you own accessibility when
   you use it. Need another tag? Add a sibling export.
@@ -78,8 +81,7 @@ Rules:
   `useReducedMotion()`, so the accessibility gate is unreachable.
 - Pass `as` when the wrapper sits somewhere a `<div>` is invalid. A wrapper
   directly inside `<ul>` must be `as="li"` — otherwise the markup is invalid and
-  screen readers drop the list semantics. The reduced-motion branch honours `as`
-  too.
+  screen readers drop the list semantics. The wrapper honours `as`.
 - Stagger with `staggerDelay(index)`, never inline arithmetic. It caps the delay
   so a long list does not leave the last card waiting a full second.
 - Read durations from `MOTION_DURATION` and easing from `MOTION_EASE`. A literal
@@ -170,5 +172,24 @@ the answer would have been.**
 - Article prose and page-header subtitles run the full width of the page column — no
   `max-w-[68ch]` cap. Short hint text inside a workbench may still cap. Tables scroll inside
   `overflow-x-auto`.
+- One accent, `--primary`, marks selection and the single filled button in a workbench.
+  `--tool-accent` resolves to it for every tool; icon tiles are neutral (`TOOL_ICON_TILE`).
+  The home page's cards use `KEYCAP_ICON` — one neutral keycap plate for every tool, glyph
+  turning `--primary` on hover; never a hue per tool (tried; it read as noise). Only the mock-server graph keeps per-kind hues
+  (`CATEGORY_HUE_VARS`), where they mean something. Home section headings carry a
+  `--primary` bar; the first one under the hero is larger and colours its last word instead.
+- No glows, radial washes, blurred blobs, gradient text, frosted glass, hover lifts or
+  `hover:scale`. Depth comes from surface steps and hairline borders; hover is a colour step.
+  The one exception is the home hero banner (`overview-hero.tsx`), which keeps its grid,
+  aurora blobs, `text-gradient` headline, frosted preview and tracked preview label; the
+  decoration renders **from `md` up only**.
+- Nothing that repaints per scroll frame below `md`: no `backdrop-blur`, animated blurred
+  layers or gradient text on phones. They make scrolling stutter; the mobile header is solid
+  for the same reason. Gate decoration with `md:` (`md:text-gradient`, `md:backdrop-blur`).
+- Labels are sentence case at 12px or more — no uppercase with wide tracking.
+- Focus: one solid 2px `--ring` outline on every focusable element, from an unlayered rule
+  in `globals.css` so it beats vendor `outline-none`. Text fields keep their ring-coloured
+  border instead, and a framed field marks its frame with `data-focus-frame`.
+- Workbench layout: [`patterns/workbench-layout.md`](patterns/workbench-layout.md).
 - A page header's subtitle is at most two lines on desktop: 150 characters in either locale,
   enforced by `tools/tests/messages.test.ts`. Details belong in the workbench, not the header.

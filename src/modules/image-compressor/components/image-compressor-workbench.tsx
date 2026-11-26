@@ -13,7 +13,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
@@ -24,6 +24,11 @@ import { ImageSourceControls } from "@/modules/tools/components/image-source-con
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { ToolNotes } from "@/modules/tools/components/tool-notes";
+import {
+    OptionsDisclosure,
+    RESULT_TRAY,
+    StepLabel,
+} from "@/modules/tools/components/workbench-step";
 import { buildZipArchive } from "@/modules/tools/domain/archive";
 import { uniqueFilenames } from "@/modules/tools/domain/filenames";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
@@ -457,19 +462,8 @@ export function ImageCompressorWorkbench({
     return (
         // `overflow-visible` overrides the vendor Card's own `overflow-hidden`
         // so the settings column can be sticky: an ancestor whose overflow is
-        // not `visible` becomes the sticky element's scroll container. The
-        // hairline below is inset rather than clipped for the same reason.
-        <Card className="relative overflow-visible [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-4 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
-
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-            </CardHeader>
-
+        // not `visible` becomes the sticky element's scroll container.
+        <Card className="overflow-visible [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
             <CardContent className="flex min-w-0 flex-col gap-5">
                 <div className="grid min-w-0 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem]">
                     {/*
@@ -491,6 +485,9 @@ export function ImageCompressorWorkbench({
                                 items.length === 0 && "flex-1",
                             )}
                         >
+                            <StepLabel step={1} htmlFor={inputId}>
+                                {items.length > 0 ? t("dropMoreTitle") : t("dropTitle")}
+                            </StepLabel>
                             <ImageDropzone
                                 inputId={inputId}
                                 describedById={hintId}
@@ -499,7 +496,7 @@ export function ImageCompressorWorkbench({
                                 className={items.length === 0 ? "min-h-52 flex-1" : undefined}
                                 accept={IMAGE_ACCEPT_ATTRIBUTE}
                                 disabled={working}
-                                title={items.length > 0 ? t("dropMoreTitle") : t("dropTitle")}
+                                title={null}
                                 hint={t("dropHint", {
                                     limit: byteLabel(MAX_IMAGE_BYTES),
                                     count: format.number(MAX_FILES),
@@ -517,10 +514,7 @@ export function ImageCompressorWorkbench({
                         </div>
 
                         {items.length > 0 && (
-                            <section
-                                aria-labelledby={queueHeadingId}
-                                className="flex min-w-0 flex-col gap-2.5"
-                            >
+                            <section aria-labelledby={queueHeadingId} className={RESULT_TRAY}>
                                 <ImageQueueHeader
                                     id={queueHeadingId}
                                     count={items.length}
@@ -619,7 +613,7 @@ export function ImageCompressorWorkbench({
                     <div
                         role="group"
                         aria-labelledby={settingsHeadingId}
-                        className="bg-muted/30 ring-border/70 flex min-w-0 flex-col gap-4 rounded-xl p-4 ring-1 ring-inset lg:sticky lg:top-6"
+                        className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-6"
                     >
                         <h3
                             id={settingsHeadingId}
@@ -678,22 +672,24 @@ export function ImageCompressorWorkbench({
                             onChange={(next) => patchOptions({ format: next })}
                         />
 
-                        <OptionSelect<string>
-                            label={t("resizeLabel")}
-                            hint={t("resizeHint")}
-                            value={fromMaxEdge(options.maxEdge)}
-                            values={RESIZE_VALUES}
-                            disabled={working}
-                            items={Object.fromEntries(
-                                RESIZE_VALUES.map((value) => [
-                                    value,
-                                    value === ORIGINAL_EDGE
-                                        ? t("resizeOriginal")
-                                        : t("resizePreset", { value }),
-                                ]),
-                            )}
-                            onChange={(next) => patchOptions({ maxEdge: toMaxEdge(next) })}
-                        />
+                        <OptionsDisclosure>
+                            <OptionSelect<string>
+                                label={t("resizeLabel")}
+                                hint={t("resizeHint")}
+                                value={fromMaxEdge(options.maxEdge)}
+                                values={RESIZE_VALUES}
+                                disabled={working}
+                                items={Object.fromEntries(
+                                    RESIZE_VALUES.map((value) => [
+                                        value,
+                                        value === ORIGINAL_EDGE
+                                            ? t("resizeOriginal")
+                                            : t("resizePreset", { value }),
+                                    ]),
+                                )}
+                                onChange={(next) => patchOptions({ maxEdge: toMaxEdge(next) })}
+                            />
+                        </OptionsDisclosure>
 
                         {working && (
                             <div

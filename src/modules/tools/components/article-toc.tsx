@@ -55,9 +55,7 @@ export function ArticleToc({ title, items }: ArticleTocProps) {
             aria-label={title}
             className="bg-card/70 ring-border/70 rounded-xl p-3 ring-1 ring-inset xl:sticky xl:top-8 xl:bg-transparent xl:p-0 xl:ring-0"
         >
-            <p className="text-muted-foreground/85 px-2 pb-2 text-[0.6875rem] font-semibold tracking-[0.09em] uppercase">
-                {title}
-            </p>
+            <p className="text-muted-foreground/85 px-2 pb-2 text-xs font-medium">{title}</p>
             <ul className="flex flex-col gap-0.5">
                 {items.map((item) => {
                     const active = item.id === activeId;

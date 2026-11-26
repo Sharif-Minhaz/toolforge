@@ -12,6 +12,8 @@ import Link from "next/link";
 
 import { staggerDelay } from "@/components/motion/motion-tokens";
 import { Reveal } from "@/components/motion/reveal";
+import { cn } from "@/lib/utils";
+import { KEYCAP_ICON } from "@/modules/tools/components/tool-accent";
 import { SectionHeading } from "./section-heading";
 
 export async function QuickActions() {
@@ -24,7 +26,6 @@ export async function QuickActions() {
             title: t("uuidSingle.title"),
             description: t("uuidSingle.description"),
             Icon: IconBolt,
-            accent: "[--tool-accent:var(--brand-violet)]",
         },
         {
             key: "base64Decode",
@@ -32,7 +33,6 @@ export async function QuickActions() {
             title: t("base64Decode.title"),
             description: t("base64Decode.description"),
             Icon: IconBinary,
-            accent: "[--tool-accent:var(--brand-emerald)]",
         },
         {
             key: "jwtDecode",
@@ -40,7 +40,6 @@ export async function QuickActions() {
             title: t("jwtDecode.title"),
             description: t("jwtDecode.description"),
             Icon: IconKey,
-            accent: "[--tool-accent:var(--brand-rose)]",
         },
         {
             key: "jsonBeautify",
@@ -48,7 +47,6 @@ export async function QuickActions() {
             title: t("jsonBeautify.title"),
             description: t("jsonBeautify.description"),
             Icon: IconBraces,
-            accent: "[--tool-accent:var(--brand-violet)]",
         },
         {
             key: "faviconPack",
@@ -56,7 +54,6 @@ export async function QuickActions() {
             title: t("faviconPack.title"),
             description: t("faviconPack.description"),
             Icon: IconTransform,
-            accent: "[--tool-accent:var(--brand-emerald)]",
         },
         // The list is capped at six. The HTML / Markdown converter made way for
         // this one at popularity 85 against 86, being the lowest-popularity tool
@@ -80,7 +77,6 @@ export async function QuickActions() {
             title: t("wordToPdf.title"),
             description: t("wordToPdf.description"),
             Icon: IconFileTypePdf,
-            accent: "[--tool-accent:var(--brand-cyan)]",
         },
     ];
 
@@ -93,14 +89,15 @@ export async function QuickActions() {
                     <Reveal key={action.key} as="li" delay={staggerDelay(index)} className="h-full">
                         <Link
                             href={action.href}
-                            className={`group/action bg-card ring-border/70 hover:ring-border focus-visible:ring-ring relative flex h-full items-start gap-3 overflow-hidden rounded-2xl p-4 ring-1 transition-all duration-200 ring-inset hover:-translate-y-0.5 hover:shadow-[0_8px_28px_-14px_oklch(0_0_0/0.35)] focus-visible:ring-2 focus-visible:outline-none ${action.accent}`}
+                            className={`group/action bg-card ring-border/70 hover:ring-border focus-visible:ring-ring relative flex h-full items-start gap-3 overflow-hidden rounded-2xl p-4 ring-1 transition duration-200 ring-inset focus-visible:ring-2 focus-visible:outline-none`}
                         >
                             <span
-                                aria-hidden="true"
-                                className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,color-mix(in_oklch,var(--tool-accent)_16%,transparent),transparent_70%)] opacity-0 transition-opacity duration-300 group-hover/action:opacity-100"
-                            />
-                            <span className="relative grid size-9 shrink-0 place-items-center rounded-[0.6rem] bg-[color-mix(in_oklch,var(--tool-accent)_13%,transparent)] text-[--tool-accent] ring-1 ring-[color-mix(in_oklch,var(--tool-accent)_20%,transparent)] ring-inset">
-                                <action.Icon className="size-4.5" stroke={1.8} aria-hidden="true" />
+                                className={cn(
+                                    KEYCAP_ICON,
+                                    "group-hover/action:text-primary size-10",
+                                )}
+                            >
+                                <action.Icon className="size-5" stroke={1.8} aria-hidden="true" />
                             </span>
                             <span className="relative flex min-w-0 flex-1 flex-col gap-1">
                                 <span className="text-[0.9375rem] font-medium tracking-tight">

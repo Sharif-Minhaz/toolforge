@@ -16,6 +16,7 @@ import { IconCopyButton } from "@/modules/tools/components/copy-button";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
+import { RESULT_TRAY, StepLabel } from "@/modules/tools/components/workbench-step";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
 import { getKeyFormat, isUnsecuredAlgorithm, resolveExpectedAlgorithm } from "../domain/algorithms";
@@ -257,13 +258,15 @@ export function JwtDecoder({ initialNow, example }: JwtDecoderProps) {
                 <ExampleGenerator onGenerate={handleExample} />
             </div>
 
-            <div className="grid min-w-0 gap-5 xl:grid-cols-2 xl:gap-6">
-                <div className="flex min-w-0 flex-col gap-4">
+            {/* The token and the key that checks it on one side, what it says
+                on the other from `lg` up; stacked on a narrow screen. */}
+            <div className="grid min-w-0 gap-4 lg:grid-cols-2">
+                <div className="flex min-w-0 flex-col gap-5">
                     <div className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-2 rounded-xl p-3 ring-1 ring-inset">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                            <Label htmlFor={tokenId} className="text-muted-foreground text-xs">
-                                <span className="leading-[1.3]">{tDecoder("tokenLabel")}</span>
-                            </Label>
+                            <StepLabel step={1} htmlFor={tokenId}>
+                                {tDecoder("tokenLabel")}
+                            </StepLabel>
                             <div className="flex items-center gap-1">
                                 <InputLimitMeter reading={tokenLimit} className="mr-1" />
 
@@ -310,88 +313,6 @@ export function JwtDecoder({ initialNow, example }: JwtDecoderProps) {
                             )}
                         />
                     </div>
-
-                    <section className="flex min-w-0 flex-col gap-2">
-                        <h3 className="text-[0.8125rem] leading-[1.3] font-medium">
-                            {tDecoder("findingsTitle")}
-                        </h3>
-                        <SecurityFindings
-                            findings={decoded.ok ? inspectSecurity(decoded, now) : []}
-                        />
-                        <p className="text-muted-foreground text-[0.6875rem] leading-normal">
-                            {tDecoder("notEncryptedNote")}
-                        </p>
-                    </section>
-                </div>
-
-                <div className="flex min-w-0 flex-col gap-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span id={viewLabelId} className="text-muted-foreground text-xs">
-                            {tDecoder("decodedLabel")}
-                        </span>
-                        <div className="flex items-center gap-1.5">
-                            <ViewToggle value={view} onChange={setView} labelId={viewLabelId} />
-                            <button
-                                type="button"
-                                onClick={handleDownload}
-                                disabled={!decoded.ok}
-                                className={cn(
-                                    buttonVariants({ variant: "outline", size: "sm" }),
-                                    "h-7 px-2 text-[0.6875rem]",
-                                )}
-                            >
-                                <IconDownload
-                                    className="size-3.5"
-                                    stroke={1.8}
-                                    aria-hidden="true"
-                                />
-                                {tDecoder("download")}
-                            </button>
-                        </div>
-                    </div>
-
-                    {view === "json" ? (
-                        <>
-                            <JsonBox
-                                id={headerId}
-                                label={tDecoder("headerLabel")}
-                                part="header"
-                                value={headerJson}
-                                readOnly
-                                limit={null}
-                                placeholder={tDecoder("decodedPlaceholder")}
-                                copyLabel={tDecoder("copyHeader")}
-                                copied={copied === "header"}
-                                onCopy={() => void handleCopy("header", headerJson)}
-                            />
-                            <JsonBox
-                                id={payloadId}
-                                label={tDecoder("payloadLabel")}
-                                part="payload"
-                                value={payloadJson}
-                                readOnly
-                                limit={null}
-                                placeholder={tDecoder("decodedPlaceholder")}
-                                copyLabel={tDecoder("copyPayload")}
-                                copied={copied === "payload"}
-                                onCopy={() => void handleCopy("payload", payloadJson)}
-                            />
-                        </>
-                    ) : decoded.ok ? (
-                        <div className="flex min-w-0 flex-col gap-3">
-                            <HeaderClaimsTable rows={buildHeaderRows(decoded.header)} />
-                            <PayloadClaimsTable
-                                rows={buildPayloadRows(decoded.payload, now)}
-                                now={now}
-                            />
-                        </div>
-                    ) : (
-                        <p className="text-muted-foreground ring-border/70 bg-muted/40 rounded-xl px-3 py-6 text-center text-[0.8125rem] leading-normal ring-1 ring-inset">
-                            {tDecoder("decodedPlaceholder")}
-                        </p>
-                    )}
-
-                    <Separator />
 
                     <section className="flex min-w-0 flex-col gap-3">
                         <div className="flex flex-col gap-1">
@@ -440,6 +361,90 @@ export function JwtDecoder({ initialNow, example }: JwtDecoderProps) {
                         />
 
                         <StatusStrip tone={verifyStatus.tone} message={verifyStatus.message} />
+                    </section>
+                </div>
+
+                <div className={RESULT_TRAY}>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <StepLabel step={2} id={viewLabelId}>
+                            {tDecoder("decodedLabel")}
+                        </StepLabel>
+                        <div className="flex items-center gap-1.5">
+                            <ViewToggle value={view} onChange={setView} labelId={viewLabelId} />
+                            <button
+                                type="button"
+                                onClick={handleDownload}
+                                disabled={!decoded.ok}
+                                className={cn(
+                                    buttonVariants({ variant: "outline", size: "sm" }),
+                                    "h-7 px-2 text-[0.6875rem]",
+                                )}
+                            >
+                                <IconDownload
+                                    className="size-3.5"
+                                    stroke={1.8}
+                                    aria-hidden="true"
+                                />
+                                {tDecoder("download")}
+                            </button>
+                        </div>
+                    </div>
+
+                    {view === "json" ? (
+                        <>
+                            <JsonBox
+                                id={headerId}
+                                label={tDecoder("headerLabel")}
+                                part="header"
+                                value={headerJson}
+                                readOnly
+                                limit={null}
+                                placeholder={tDecoder("decodedPlaceholder")}
+                                copyLabel={tDecoder("copyHeader")}
+                                copied={copied === "header"}
+                                onCopy={() => void handleCopy("header", headerJson)}
+                                className="bg-card"
+                            />
+                            <JsonBox
+                                id={payloadId}
+                                label={tDecoder("payloadLabel")}
+                                part="payload"
+                                value={payloadJson}
+                                readOnly
+                                limit={null}
+                                placeholder={tDecoder("decodedPlaceholder")}
+                                copyLabel={tDecoder("copyPayload")}
+                                copied={copied === "payload"}
+                                onCopy={() => void handleCopy("payload", payloadJson)}
+                                className="bg-card"
+                            />
+                        </>
+                    ) : decoded.ok ? (
+                        <div className="flex min-w-0 flex-col gap-3">
+                            <HeaderClaimsTable rows={buildHeaderRows(decoded.header)} />
+                            <PayloadClaimsTable
+                                rows={buildPayloadRows(decoded.payload, now)}
+                                now={now}
+                            />
+                        </div>
+                    ) : (
+                        <p className="text-muted-foreground ring-border/70 bg-card rounded-xl px-3 py-6 text-center text-[0.8125rem] leading-normal ring-1 ring-inset">
+                            {tDecoder("decodedPlaceholder")}
+                        </p>
+                    )}
+
+                    <Separator />
+
+                    <section className="flex min-w-0 flex-col gap-2">
+                        <h3 className="text-[0.8125rem] leading-[1.3] font-medium">
+                            {tDecoder("findingsTitle")}
+                        </h3>
+                        <SecurityFindings
+                            findings={decoded.ok ? inspectSecurity(decoded, now) : []}
+                        />
+                        <p className="text-muted-foreground text-[0.6875rem] leading-normal">
+                            {tDecoder("notEncryptedNote")}
+                        </p>
                     </section>
                 </div>
             </div>

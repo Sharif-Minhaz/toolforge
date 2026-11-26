@@ -417,6 +417,7 @@ Reuse what exists rather than rebuilding it:
 | Tool card, accent and status          | `@/modules/tools/components/tool-card`              |
 | Article section, prose widths         | `@/modules/tools/components/article-section`        |
 | Article loading skeleton              | `@/modules/tools/components/article-skeleton`       |
+| Workbench steps, result tray, options | `@/modules/tools/components/workbench-step`         |
 | FAQ                                   | `@/modules/tools/components/faq-accordion`          |
 | Copy button                           | `@/modules/tools/components/copy-button`            |
 | Accent vars, icon tile                | `@/modules/tools/components/tool-accent`            |

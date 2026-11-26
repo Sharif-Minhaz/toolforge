@@ -41,7 +41,7 @@ export function EpochPanel({ epochs, isoUtc, pending, copiedField, onCopy }: Epo
             {rows.map((row) => (
                 <div
                     key={row.field}
-                    className="bg-muted/45 ring-border/50 flex min-w-0 items-center gap-2 rounded-xl py-2 pr-1.5 pl-3 ring-1 ring-inset"
+                    className="bg-card ring-border/50 flex min-w-0 items-center gap-2 rounded-xl py-2 pr-1.5 pl-3 ring-1 ring-inset"
                 >
                     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                         <dt className="text-muted-foreground text-[0.6875rem] leading-[1.3]">

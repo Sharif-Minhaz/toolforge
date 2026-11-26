@@ -1,13 +1,13 @@
 "use client";
 
-import { IconAdjustmentsHorizontal, IconX } from "@tabler/icons-react";
+import { IconX } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import { StepLabel } from "@/modules/tools/components/workbench-step";
 import { ZonePicker } from "@/modules/tools/components/zone-picker";
 import { EXAMPLE_INPUTS, MAX_INPUT_LENGTH } from "../domain/constants";
 import { EPOCH_UNITS, type EpochUnit } from "../types";
@@ -30,9 +30,9 @@ type TimestampInputProps = {
  *
  * The knobs used to sit between the input and the answer, three identical
  * selects in a row, which made a page with one job look like a form with four.
- * They now live in a muted panel under the result: they are needed rarely,
- * `auto` detection covers almost every input, and demoting them lets the eye
- * run straight from what was typed to what it means.
+ * They now fold away under the result: they are needed rarely, `auto`
+ * detection covers almost every input, and demoting them lets the eye run
+ * straight from what was typed to what it means.
  */
 export function TimestampInput({
     value,
@@ -49,9 +49,9 @@ export function TimestampInput({
     return (
         <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                <Label htmlFor={inputId} className="text-muted-foreground text-xs">
-                    <span className="leading-[1.3]">{t("inputLabel")}</span>
-                </Label>
+                <StepLabel step={1} htmlFor={inputId}>
+                    {t("inputLabel")}
+                </StepLabel>
                 {clock}
             </div>
 
@@ -146,10 +146,10 @@ type ReadingOptionsProps = {
 
 /**
  * How the input is read, rather than what comes out of it. Kept in its own
- * muted panel with a heading of its own: the page carries two region-and-city
- * pickers, and without a label saying which is which, the one that decides how
- * a zone-less string is *read* is indistinguishable from the one that adds a
- * zone to the comparison board.
+ * muted panel, folded under a summary that names it: the page carries two
+ * region-and-city pickers, and without a label saying which is which, the one
+ * that decides how a zone-less string is *read* is indistinguishable from the
+ * one that adds a zone to the comparison board.
  */
 export function ReadingOptions({
     unit,
@@ -169,17 +169,6 @@ export function ReadingOptions({
             aria-label={t("readingOptionsTitle")}
             className="bg-muted/40 ring-border/60 flex flex-col gap-3 rounded-xl p-3 ring-1 ring-inset sm:p-4"
         >
-            <div className="flex items-center gap-1.5">
-                <IconAdjustmentsHorizontal
-                    className="text-muted-foreground size-3.5 shrink-0"
-                    stroke={1.9}
-                    aria-hidden="true"
-                />
-                <h3 className="text-[0.8125rem] leading-[1.3] font-medium">
-                    {t("readingOptionsTitle")}
-                </h3>
-            </div>
-
             <div className="grid gap-3 lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
                 <OptionSelect<EpochUnit>
                     label={t("unitLabel")}

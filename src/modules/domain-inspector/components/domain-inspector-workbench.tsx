@@ -13,7 +13,7 @@ import { useId, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
@@ -24,6 +24,7 @@ import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
+import { OptionsDisclosure, StepLabel } from "@/modules/tools/components/workbench-step";
 import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
@@ -39,10 +40,6 @@ import {
 } from "../types";
 import { DomainReportView } from "./report-panels";
 import { ScanRadar } from "@/modules/tools/components/scan-radar";
-
-/** The small-caps label the result panels use, so the form matches them. */
-const FIELD_LABEL =
-    "text-muted-foreground text-[0.625rem] leading-normal tracking-[0.14em] uppercase";
 
 /** The lookups actually in flight, cycled under the sweep. Message keys. */
 const SCAN_STAGES = ["dns", "registry", "network", "tls", "page"] as const;
@@ -256,23 +253,13 @@ export function DomainInspectorWorkbench({
                 TOOL_ACCENT_VARS.emerald,
             )}
         >
-            <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-                <span
-                    aria-hidden="true"
-                    className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-                />
-
-                <CardHeader>
-                    <CardTitle className="text-lg">{t("title")}</CardTitle>
-                    <CardDescription>{t("description")}</CardDescription>
-                </CardHeader>
-
+            <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
                 <CardContent className="flex min-w-0 flex-col gap-5">
                     <div className="flex min-w-0 flex-col gap-2">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                            <label htmlFor={inputId} className={FIELD_LABEL}>
+                            <StepLabel step={1} htmlFor={inputId}>
                                 {t("hostLabel")}
-                            </label>
+                            </StepLabel>
                             <InputLimitMeter reading={hostLimit} />
                         </div>
                         {/*
@@ -282,10 +269,13 @@ export function DomainInspectorWorkbench({
                          * this page is, and the focus ring moves to the frame so
                          * the whole unit lights up together.
                          */}
-                        <div className="ring-border/70 bg-background/40 focus-within:ring-ring/60 flex min-w-0 flex-col rounded-xl ring-1 transition-[box-shadow] duration-200 ring-inset focus-within:ring-2">
-                            <div className="flex min-w-0 items-center gap-1.5 p-1.5">
+                        <div
+                            data-focus-frame
+                            className="ring-border bg-background/40 focus-within:ring-ring flex min-w-0 flex-col rounded-xl ring-1 transition-[box-shadow] duration-200 ring-inset focus-within:ring-2"
+                        >
+                            <div className="flex min-w-0 items-center gap-2 p-2">
                                 <IconWorldSearch
-                                    className="text-muted-foreground ml-2 size-4 shrink-0"
+                                    className="text-muted-foreground ml-2 size-5 shrink-0"
                                     stroke={1.7}
                                     aria-hidden="true"
                                 />
@@ -311,12 +301,12 @@ export function DomainInspectorWorkbench({
                                     inputMode="url"
                                     aria-describedby={hintId}
                                     placeholder={t("hostPlaceholder")}
-                                    className="h-8 min-w-0 flex-1 border-0 bg-transparent px-1 font-mono shadow-none focus-visible:ring-0"
+                                    className="h-11 min-w-0 flex-1 border-0 bg-transparent px-1 font-mono text-base shadow-none focus-visible:ring-0 md:text-base dark:bg-transparent"
                                 />
                                 <Button
                                     onClick={() => void handleInspect()}
                                     disabled={!canInspect}
-                                    className="h-8 shrink-0 px-3"
+                                    className="h-11 shrink-0 px-5 text-sm"
                                 >
                                     {running ? (
                                         <IconLoader2
@@ -343,37 +333,6 @@ export function DomainInspectorWorkbench({
                         </div>
                     </div>
 
-                    {/*
-                     * The select is wrapped so it carries the same card the
-                     * switch draws for itself. A bare control beside a boxed one
-                     * reads as one setting and one afterthought.
-                     */}
-                    <div className="grid min-w-0 gap-3 sm:grid-cols-2">
-                        <div className="bg-card/60 ring-border/70 rounded-xl px-3 py-2.5 ring-1 ring-inset">
-                            <OptionSelect
-                                label={t("resolverLabel")}
-                                hint={t("resolverHint")}
-                                value={options.resolver}
-                                values={DNS_RESOLVERS}
-                                items={Object.fromEntries(
-                                    DNS_RESOLVERS.map((resolver) => [
-                                        resolver,
-                                        tResolvers(resolver),
-                                    ]),
-                                )}
-                                disabled={running}
-                                onChange={(resolver) => patch({ resolver })}
-                            />
-                        </div>
-                        <OptionSwitch
-                            label={t("probeLabel")}
-                            hint={t("probeHint")}
-                            checked={options.probeSite}
-                            disabled={running}
-                            onCheckedChange={(probeSite) => patch({ probeSite })}
-                        />
-                    </div>
-
                     {siteKey !== null && (
                         <div className="min-h-16 w-full max-w-82 min-w-0">
                             <TurnstileWidget
@@ -392,6 +351,39 @@ export function DomainInspectorWorkbench({
                             />
                         </div>
                     )}
+
+                    <OptionsDisclosure>
+                        {/*
+                         * The select is wrapped so it carries the same card the
+                         * switch draws for itself. A bare control beside a boxed one
+                         * reads as one setting and one afterthought.
+                         */}
+                        <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+                            <div className="bg-card/60 ring-border/70 rounded-xl px-3 py-2.5 ring-1 ring-inset">
+                                <OptionSelect
+                                    label={t("resolverLabel")}
+                                    hint={t("resolverHint")}
+                                    value={options.resolver}
+                                    values={DNS_RESOLVERS}
+                                    items={Object.fromEntries(
+                                        DNS_RESOLVERS.map((resolver) => [
+                                            resolver,
+                                            tResolvers(resolver),
+                                        ]),
+                                    )}
+                                    disabled={running}
+                                    onChange={(resolver) => patch({ resolver })}
+                                />
+                            </div>
+                            <OptionSwitch
+                                label={t("probeLabel")}
+                                hint={t("probeHint")}
+                                checked={options.probeSite}
+                                disabled={running}
+                                onCheckedChange={(probeSite) => patch({ probeSite })}
+                            />
+                        </div>
+                    </OptionsDisclosure>
 
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
                         <Button

@@ -120,9 +120,10 @@ the article, and here that rule bites in **both** directions: a reader who has
 seen "the square you mark is uploaded" and then drops a clip in deserves to be
 told the opposite is now true, not to assume the worse of the two.
 
-So each tab carries its own privacy note, its own rights note, its own failure
-vocabulary and its own heading and description — `workbench.imageTitle` and
-`workbench.videoTitle`, not one shared `title`. **A tab strip over two panels is
+So each tab carries its own privacy note, its own rights note and its own failure
+vocabulary. The image tab's note that the marked square is uploaded is the first
+line of that tab, above its controls; the Gemini and video tabs say "stays in
+this tab" beside theirs. **A tab strip over two panels is
 one component; it is not one set of promises.**
 
 The failure reasons are separate lists (`WATERMARK_FAILURE_REASONS` and

@@ -77,7 +77,9 @@ function NavRow({
             <span
                 className={cn(
                     TOOL_ICON_TILE,
-                    "size-7 transition-transform duration-200 group-hover/row:scale-[1.06]",
+                    "size-7 transition-[transform,color,background-color] duration-200 group-hover/row:scale-[1.06]",
+                    // The open page's icon carries the accent too, not only its row.
+                    active && "bg-primary/15 text-primary ring-primary/30",
                 )}
             >
                 {icon}
@@ -196,7 +198,7 @@ function SectionLabel({ children, trailing, ruleWhenCollapsed }: SectionLabelPro
     return (
         <>
             <div className="flex items-center justify-between gap-2 px-2 pt-5 pb-1.5 group-data-[collapsed=true]/shell:sr-only">
-                <span className="text-muted-foreground/85 flex items-center gap-1.5 text-[0.6875rem] font-semibold tracking-[0.09em] uppercase">
+                <span className="text-muted-foreground/85 flex items-center gap-1.5 text-xs font-medium">
                     {children}
                 </span>
                 {trailing}
@@ -518,7 +520,7 @@ export function SidebarNav({
                         <SectionLabel
                             ruleWhenCollapsed
                             trailing={
-                                <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 font-mono text-[0.625rem] leading-none tabular-nums">
+                                <span className="text-muted-foreground font-mono text-xs leading-none tabular-nums">
                                     {format.number(matchedSectionIds.size)}
                                 </span>
                             }
@@ -595,7 +597,7 @@ export function SidebarNav({
                             <SectionLabel
                                 ruleWhenCollapsed
                                 trailing={
-                                    <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 font-mono text-[0.625rem] leading-none tabular-nums">
+                                    <span className="text-muted-foreground font-mono text-xs leading-none tabular-nums">
                                         {format.number(filtered.length)}
                                     </span>
                                 }
@@ -625,7 +627,7 @@ export function SidebarNav({
                             <SectionLabel
                                 ruleWhenCollapsed
                                 trailing={
-                                    <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 font-mono text-[0.625rem] leading-none tabular-nums">
+                                    <span className="text-muted-foreground font-mono text-xs leading-none tabular-nums">
                                         {format.number(group.tools.length)}
                                     </span>
                                 }

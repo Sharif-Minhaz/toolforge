@@ -13,9 +13,8 @@ import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
-import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
@@ -26,6 +25,11 @@ import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { ToolNotes } from "@/modules/tools/components/tool-notes";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
+import {
+    OptionsDisclosure,
+    RESULT_TRAY,
+    StepLabel,
+} from "@/modules/tools/components/workbench-step";
 import { buildZipArchive } from "@/modules/tools/domain/archive";
 import { copyText } from "@/modules/tools/domain/clipboard";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
@@ -128,6 +132,7 @@ export function ImageConverterWorkbench({
     urlImportEnabled,
 }: ImageConverterWorkbenchProps) {
     const t = useTranslations("imageConverter.workbench");
+    const tCommon = useTranslations("common");
     const tTargets = useTranslations("imageConverter.targets");
     const tBackgrounds = useTranslations("imageConverter.backgrounds");
     const tErrors = useTranslations("imageConverter.errors");
@@ -140,7 +145,6 @@ export function ImageConverterWorkbench({
     const hintId = useId();
     const qualityId = useId();
     const queueHeadingId = useId();
-    const settingsHeadingId = useId();
 
     const [items, setItems] = useState<readonly QueueItem[]>([]);
     const [options, setOptions] = useState<ConversionOptions>(initialOptions);
@@ -541,189 +545,12 @@ export function ImageConverterWorkbench({
     const status = describeStatus();
 
     return (
-        // `overflow-visible` overrides the vendor Card's own `overflow-hidden`
-        // so the settings column can be sticky: an ancestor whose overflow is
-        // not `visible` becomes the sticky element's scroll container. The
-        // hairline below is inset rather than clipped for the same reason.
-        <Card className="relative overflow-visible [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-4 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
-
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-            </CardHeader>
-
-            <CardContent className="flex min-w-0 flex-col gap-5">
-                <div className="grid min-w-0 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem]">
-                    {/*
-                     * The picked files sit directly under the intake, not under
-                     * the settings: "did that pick work" is the first thing a
-                     * reader wants answered, and under six controls the list
-                     * used to start below the fold.
-                     */}
-                    {/*
-                     * Stretched to the settings column's height, and with an
-                     * empty queue the dropzone grows into it — otherwise the
-                     * intake is a short strip beside a tall panel, with a hole
-                     * underneath it.
-                     */}
-                    <div className="flex min-w-0 flex-col gap-4 lg:self-stretch">
-                        <div
-                            className={cn(
-                                "flex min-w-0 flex-col gap-2",
-                                items.length === 0 && "flex-1",
-                            )}
-                        >
-                            <ImageDropzone
-                                inputId={inputId}
-                                describedById={hintId}
-                                multiple
-                                compact={items.length > 0}
-                                className={items.length === 0 ? "min-h-52 flex-1" : undefined}
-                                accept={IMAGE_ACCEPT_ATTRIBUTE}
-                                disabled={working}
-                                title={items.length > 0 ? t("dropMoreTitle") : t("dropTitle")}
-                                hint={t("dropHint", {
-                                    limit: byteLabel(MAX_IMAGE_BYTES),
-                                    count: format.number(MAX_FILES),
-                                })}
-                                onFiles={handlePick}
-                            />
-
-                            <ImageSourceControls
-                                onFiles={handlePick}
-                                disabled={working}
-                                urlImportEnabled={urlImportEnabled}
-                            />
-
-                            <StatusStrip id={hintId} tone={status.tone} message={status.message} />
-                        </div>
-
-                        {items.length > 0 && (
-                            <section
-                                aria-labelledby={queueHeadingId}
-                                className="flex min-w-0 flex-col gap-2.5"
-                            >
-                                <ImageQueueHeader
-                                    id={queueHeadingId}
-                                    count={items.length}
-                                    totalBytes={totalBytes}
-                                    actions={
-                                        <Button
-                                            variant="ghost"
-                                            onClick={handleClear}
-                                            disabled={working}
-                                            className="h-8 px-2.5 text-[0.8125rem]"
-                                        >
-                                            <IconTrash
-                                                className="size-4"
-                                                stroke={1.8}
-                                                aria-hidden="true"
-                                            />
-                                            {t("clear")}
-                                        </Button>
-                                    }
-                                />
-
-                                {/*
-                                 * Not dimmed when a row is stale, unlike the rows
-                                 * themselves. Every file counted here is one the
-                                 * reader keeps, whatever the panel says now.
-                                 */}
-                                {finished.length > 0 && (
-                                    <div className="bg-card/60 ring-border/70 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 rounded-xl px-3 py-2.5 ring-1 ring-inset">
-                                        <span className="text-[0.8125rem] leading-[1.3] font-medium">
-                                            {t("summaryFiles", { count: finished.length })}
-                                        </span>
-                                        <span className="text-muted-foreground text-[0.8125rem] leading-[1.3]">
-                                            {t("summaryOutputs", { count: outputCount })}
-                                        </span>
-                                        <span className="text-muted-foreground text-[0.8125rem] leading-[1.3] tabular-nums">
-                                            {byteLabel(
-                                                finished.reduce(
-                                                    (total, item) =>
-                                                        total + (item.result?.totalBytes ?? 0),
-                                                    0,
-                                                ),
-                                            )}
-                                        </span>
-                                    </div>
-                                )}
-
-                                <ul className="flex min-w-0 flex-col gap-2">
-                                    {items.map((item) => (
-                                        <ConversionRow
-                                            key={item.id}
-                                            item={{
-                                                id: item.id,
-                                                name: item.file.name,
-                                                bytes: item.file.size,
-                                                type: item.type,
-                                                dimensions: item.dimensions,
-                                                previewUrl: item.previewUrl,
-                                                status: item.status,
-                                                result: item.result,
-                                                reason: item.reason,
-                                                stale:
-                                                    item.result !== null &&
-                                                    item.signature !== signature,
-                                            }}
-                                            busy={working}
-                                            describeFailure={describeFailure}
-                                            onReconvert={handleReconvert}
-                                            onDownload={(id) => void handleDownload(id)}
-                                            onRemove={handleRemove}
-                                        />
-                                    ))}
-                                </ul>
-                            </section>
-                        )}
-
-                        {options.target === "favicon" && (
-                            <div className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-2 rounded-xl px-3 py-2.5 ring-1 ring-inset">
-                                <div className="flex min-w-0 items-start justify-between gap-2">
-                                    <span className="flex min-w-0 flex-col gap-0.5">
-                                        <span className="text-[0.8125rem] leading-[1.3] font-medium">
-                                            {t("snippetTitle")}
-                                        </span>
-                                        <span className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                                            {t("snippetDescription")}
-                                        </span>
-                                    </span>
-                                    <IconCopyButton
-                                        copied={copied === SNIPPET_KEY}
-                                        aria-label={t("snippetCopy")}
-                                        onClick={() => void handleCopySnippet()}
-                                    />
-                                </div>
-                                <pre className="min-w-0 overflow-x-auto font-mono text-[0.6875rem] leading-[1.6]">
-                                    <code>{buildFaviconHeadHtml().trimEnd()}</code>
-                                </pre>
-                            </div>
-                        )}
-                    </div>
-
-                    {/*
-                     * Sticky, and `self-start` (from `items-start` on the grid)
-                     * is what makes that work: a stretched grid item leaves
-                     * nothing for `position: sticky` to slide against. With a
-                     * long queue the button that runs it stays in reach.
-                     */}
-                    <div
-                        role="group"
-                        aria-labelledby={settingsHeadingId}
-                        className="bg-muted/30 ring-border/70 flex min-w-0 flex-col gap-4 rounded-xl p-4 ring-1 ring-inset lg:sticky lg:top-6"
-                    >
-                        <h3
-                            id={settingsHeadingId}
-                            className="text-[0.875rem] leading-[1.3] font-medium"
-                        >
-                            {t("settingsTitle")}
-                        </h3>
-
+        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+            <CardContent className="flex min-w-0 flex-col gap-6">
+                {/* What to convert to, then how — the how folded away, so the
+                    intake and the queue are the first things on screen. */}
+                <div className="flex min-w-0 flex-col gap-3">
+                    <div className="grid min-w-0 gap-3 sm:grid-cols-2">
                         <OptionSelect<ConversionTarget>
                             label={t("targetLabel")}
                             hint={tTargets(`${options.target}Hint`)}
@@ -735,181 +562,219 @@ export function ImageConverterWorkbench({
                             )}
                             onChange={(next) => patchOptions({ target: next })}
                         />
+                    </div>
 
-                        <div className="flex min-w-0 flex-col gap-1.5">
-                            <span
-                                id={qualityId}
-                                className="text-muted-foreground text-xs leading-[1.3]"
-                            >
-                                {t("qualityLabel")}
-                            </span>
-                            <div className="flex min-w-0 items-center gap-3">
-                                <Slider
-                                    aria-labelledby={qualityId}
-                                    value={options.quality}
-                                    min={MIN_QUALITY}
-                                    max={MAX_QUALITY}
-                                    disabled={working || !qualityLive}
-                                    onValueChange={(next) =>
+                    <OptionsDisclosure label={t("settingsTitle")}>
+                        <div className="flex min-w-0 flex-col gap-4">
+                            <div className="flex min-w-0 flex-col gap-1.5 sm:max-w-sm">
+                                <span
+                                    id={qualityId}
+                                    className="text-muted-foreground text-xs leading-[1.3]"
+                                >
+                                    {t("qualityLabel")}
+                                </span>
+                                <div className="flex min-w-0 items-center gap-3">
+                                    <Slider
+                                        aria-labelledby={qualityId}
+                                        value={options.quality}
+                                        min={MIN_QUALITY}
+                                        max={MAX_QUALITY}
+                                        disabled={working || !qualityLive}
+                                        onValueChange={(next) =>
+                                            patchOptions({
+                                                quality: clampQuality(
+                                                    Array.isArray(next)
+                                                        ? (next[0] ?? options.quality)
+                                                        : next,
+                                                    MIN_QUALITY,
+                                                    MAX_QUALITY,
+                                                ),
+                                            })
+                                        }
+                                        className="min-w-0 flex-1"
+                                    />
+                                    <span className="w-8 shrink-0 text-right font-mono text-sm tabular-nums">
+                                        {options.quality}
+                                    </span>
+                                </div>
+                                <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                                    {vector
+                                        ? t("qualityHintVector")
+                                        : qualityLive
+                                          ? t("qualityHint")
+                                          : options.target === "png"
+                                            ? t("qualityHintLossless")
+                                            : t("qualityHintIcon")}
+                                </p>
+                            </div>
+
+                            <div className="grid min-w-0 gap-x-3 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+                                <OptionSelect<BackgroundChoice>
+                                    label={t("backgroundLabel")}
+                                    hint={
+                                        options.target === "jpeg"
+                                            ? t("backgroundHintJpeg")
+                                            : t("backgroundHint")
+                                    }
+                                    value={options.background}
+                                    values={backgrounds}
+                                    disabled={working}
+                                    items={Object.fromEntries(
+                                        backgrounds.map((value) => [value, tBackgrounds(value)]),
+                                    )}
+                                    onChange={(next) => patchOptions({ background: next })}
+                                />
+
+                                <OptionSelect<string>
+                                    label={t("resizeLabel")}
+                                    hint={
+                                        resizeLive
+                                            ? t("resizeHint")
+                                            : vector
+                                              ? t("resizeHintVector")
+                                              : t("resizeHintIcon")
+                                    }
+                                    value={fromMaxEdge(options.maxEdge)}
+                                    values={RESIZE_VALUES}
+                                    disabled={working || !resizeLive}
+                                    items={Object.fromEntries(
+                                        RESIZE_VALUES.map((value) => [
+                                            value,
+                                            value === ORIGINAL_EDGE
+                                                ? t("resizeOriginal")
+                                                : t("resizePreset", { value }),
+                                        ]),
+                                    )}
+                                    onChange={(next) => patchOptions({ maxEdge: toMaxEdge(next) })}
+                                />
+
+                                <IconSizeMenu
+                                    value={shownSizes}
+                                    disabled={working || !sizesLive}
+                                    hint={sizesLive ? t("sizesHint") : t("sizesHintFixed")}
+                                    onToggle={toggleIconSize}
+                                />
+
+                                <OptionSelect<string>
+                                    label={t("colorsLabel")}
+                                    hint={colorsLive ? t("colorsHint") : t("colorsHintIdle")}
+                                    value={String(options.colors)}
+                                    values={COLOR_VALUES}
+                                    disabled={working || !colorsLive}
+                                    items={Object.fromEntries(
+                                        COLOR_VALUES.map((value) => [
+                                            value,
+                                            t("colorsValue", { count: value }),
+                                        ]),
+                                    )}
+                                    onChange={(next) =>
                                         patchOptions({
-                                            quality: clampQuality(
-                                                Array.isArray(next)
-                                                    ? (next[0] ?? options.quality)
-                                                    : next,
-                                                MIN_QUALITY,
-                                                MAX_QUALITY,
-                                            ),
+                                            colors: toColorCount(next, options.colors),
                                         })
                                     }
-                                    className="min-w-0 flex-1"
-                                />
-                                <span className="w-8 shrink-0 text-right font-mono text-sm tabular-nums">
-                                    {options.quality}
-                                </span>
-                            </div>
-                            <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                                {vector
-                                    ? t("qualityHintVector")
-                                    : qualityLive
-                                      ? t("qualityHint")
-                                      : options.target === "png"
-                                        ? t("qualityHintLossless")
-                                        : t("qualityHintIcon")}
-                            </p>
-                        </div>
-
-                        {/*
-                         * Paired rows: four controls at full width pushed the
-                         * Convert button below the fold of a laptop screen.
-                         */}
-                        <div className="grid min-w-0 grid-cols-2 gap-x-3 gap-y-4">
-                            <OptionSelect<BackgroundChoice>
-                                label={t("backgroundLabel")}
-                                hint={
-                                    options.target === "jpeg"
-                                        ? t("backgroundHintJpeg")
-                                        : t("backgroundHint")
-                                }
-                                value={options.background}
-                                values={backgrounds}
-                                disabled={working}
-                                items={Object.fromEntries(
-                                    backgrounds.map((value) => [value, tBackgrounds(value)]),
-                                )}
-                                onChange={(next) => patchOptions({ background: next })}
-                            />
-
-                            <OptionSelect<string>
-                                label={t("resizeLabel")}
-                                hint={
-                                    resizeLive
-                                        ? t("resizeHint")
-                                        : vector
-                                          ? t("resizeHintVector")
-                                          : t("resizeHintIcon")
-                                }
-                                value={fromMaxEdge(options.maxEdge)}
-                                values={RESIZE_VALUES}
-                                disabled={working || !resizeLive}
-                                items={Object.fromEntries(
-                                    RESIZE_VALUES.map((value) => [
-                                        value,
-                                        value === ORIGINAL_EDGE
-                                            ? t("resizeOriginal")
-                                            : t("resizePreset", { value }),
-                                    ]),
-                                )}
-                                onChange={(next) => patchOptions({ maxEdge: toMaxEdge(next) })}
-                            />
-                        </div>
-
-                        <div className="grid min-w-0 grid-cols-2 gap-x-3 gap-y-4">
-                            <IconSizeMenu
-                                value={shownSizes}
-                                disabled={working || !sizesLive}
-                                hint={sizesLive ? t("sizesHint") : t("sizesHintFixed")}
-                                onToggle={toggleIconSize}
-                            />
-
-                            <OptionSelect<string>
-                                label={t("colorsLabel")}
-                                hint={colorsLive ? t("colorsHint") : t("colorsHintIdle")}
-                                value={String(options.colors)}
-                                values={COLOR_VALUES}
-                                disabled={working || !colorsLive}
-                                items={Object.fromEntries(
-                                    COLOR_VALUES.map((value) => [
-                                        value,
-                                        t("colorsValue", { count: value }),
-                                    ]),
-                                )}
-                                onChange={(next) =>
-                                    patchOptions({ colors: toColorCount(next, options.colors) })
-                                }
-                            />
-                        </div>
-
-                        {working && (
-                            <div
-                                role="progressbar"
-                                aria-valuemin={0}
-                                aria-valuemax={progress.total}
-                                aria-valuenow={progress.done}
-                                aria-label={t("working", {
-                                    done: format.number(progress.done + 1),
-                                    total: format.number(progress.total),
-                                })}
-                                className="bg-muted h-1 w-full overflow-hidden rounded-full"
-                            >
-                                <span
-                                    className="bg-primary block h-full rounded-full transition-[width] duration-300"
-                                    style={{
-                                        width: `${progress.total === 0 ? 0 : (progress.done / progress.total) * 100}%`,
-                                    }}
                                 />
                             </div>
+                        </div>
+                    </OptionsDisclosure>
+                </div>
+
+                <div className="flex min-w-0 flex-col gap-2">
+                    <StepLabel step={1} htmlFor={inputId}>
+                        {items.length > 0 ? t("dropMoreTitle") : t("dropTitle")}
+                    </StepLabel>
+                    <ImageDropzone
+                        inputId={inputId}
+                        describedById={hintId}
+                        multiple
+                        compact={items.length > 0}
+                        className={items.length === 0 ? "min-h-52" : undefined}
+                        accept={IMAGE_ACCEPT_ATTRIBUTE}
+                        disabled={working}
+                        // The step label above carries the title and labels the
+                        // same input; the box keeps the hint.
+                        title={null}
+                        hint={t("dropHint", {
+                            limit: byteLabel(MAX_IMAGE_BYTES),
+                            count: format.number(MAX_FILES),
+                        })}
+                        onFiles={handlePick}
+                    />
+
+                    <ImageSourceControls
+                        onFiles={handlePick}
+                        disabled={working}
+                        urlImportEnabled={urlImportEnabled}
+                    />
+
+                    <StatusStrip id={hintId} tone={status.tone} message={status.message} />
+                </div>
+
+                {/* The press sits between what goes in and what comes out. */}
+                <div className="flex min-w-0 flex-col gap-2">
+                    {working && (
+                        <div
+                            role="progressbar"
+                            aria-valuemin={0}
+                            aria-valuemax={progress.total}
+                            aria-valuenow={progress.done}
+                            aria-label={t("working", {
+                                done: format.number(progress.done + 1),
+                                total: format.number(progress.total),
+                            })}
+                            className="bg-muted h-1 w-full overflow-hidden rounded-full"
+                        >
+                            <span
+                                className="bg-primary block h-full rounded-full transition-[width] duration-300"
+                                style={{
+                                    width: `${progress.total === 0 ? 0 : (progress.done / progress.total) * 100}%`,
+                                }}
+                            />
+                        </div>
+                    )}
+
+                    <Button
+                        onClick={handleConvert}
+                        disabled={!canConvert}
+                        className="h-10 self-start px-4"
+                    >
+                        {working ? (
+                            <IconLoader2 className="size-4 animate-spin" aria-hidden="true" />
+                        ) : (
+                            <IconTransform className="size-4" stroke={1.9} aria-hidden="true" />
                         )}
+                        {working
+                            ? t("working", {
+                                  done: format.number(progress.done + 1),
+                                  total: format.number(progress.total),
+                              })
+                            : t("convert")}
+                    </Button>
+                </div>
 
-                        <div className="flex min-w-0 flex-col gap-2">
-                            <Button
-                                onClick={handleConvert}
-                                disabled={!canConvert}
-                                className="h-10 w-full"
-                            >
-                                {working ? (
-                                    <IconLoader2
-                                        className="size-4 animate-spin"
-                                        aria-hidden="true"
-                                    />
-                                ) : (
-                                    <IconTransform
-                                        className="size-4"
-                                        stroke={1.9}
-                                        aria-hidden="true"
-                                    />
-                                )}
-                                {working
-                                    ? t("working", {
-                                          done: format.number(progress.done + 1),
-                                          total: format.number(progress.total),
-                                      })
-                                    : t("convert")}
-                            </Button>
+                {/*
+                 * The picked files and their results are one list: each row is
+                 * where its own converted file is taken from, so the queue is
+                 * step 2's tray.
+                 */}
+                {items.length > 0 && (
+                    <section aria-labelledby={queueHeadingId} className={RESULT_TRAY}>
+                        <div className="flex min-h-7 min-w-0 flex-wrap items-center justify-between gap-2">
+                            <StepLabel step={2}>{tCommon("download")}</StepLabel>
 
                             <Button
                                 variant="outline"
+                                size="sm"
                                 onClick={() => void handleDownloadAll()}
                                 disabled={finished.length === 0 || packing || working}
-                                className="h-9 w-full"
                             >
                                 {packing ? (
                                     <IconLoader2
-                                        className="size-4 animate-spin"
+                                        className="size-3.5 animate-spin"
                                         aria-hidden="true"
                                     />
                                 ) : (
                                     <IconFileZip
-                                        className="size-4"
+                                        className="size-3.5"
                                         stroke={1.8}
                                         aria-hidden="true"
                                     />
@@ -917,8 +782,97 @@ export function ImageConverterWorkbench({
                                 {packing ? t("packing") : t("downloadAll")}
                             </Button>
                         </div>
+
+                        <ImageQueueHeader
+                            id={queueHeadingId}
+                            count={items.length}
+                            totalBytes={totalBytes}
+                            actions={
+                                <Button
+                                    variant="ghost"
+                                    onClick={handleClear}
+                                    disabled={working}
+                                    className="h-8 px-2.5 text-[0.8125rem]"
+                                >
+                                    <IconTrash className="size-4" stroke={1.8} aria-hidden="true" />
+                                    {t("clear")}
+                                </Button>
+                            }
+                        />
+
+                        {/*
+                         * Not dimmed when a row is stale, unlike the rows
+                         * themselves. Every file counted here is one the
+                         * reader keeps, whatever the panel says now.
+                         */}
+                        {finished.length > 0 && (
+                            <div className="bg-card ring-border/70 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 rounded-xl px-3 py-2.5 ring-1 ring-inset">
+                                <span className="text-[0.8125rem] leading-[1.3] font-medium">
+                                    {t("summaryFiles", { count: finished.length })}
+                                </span>
+                                <span className="text-muted-foreground text-[0.8125rem] leading-[1.3]">
+                                    {t("summaryOutputs", { count: outputCount })}
+                                </span>
+                                <span className="text-muted-foreground text-[0.8125rem] leading-[1.3] tabular-nums">
+                                    {byteLabel(
+                                        finished.reduce(
+                                            (total, item) => total + (item.result?.totalBytes ?? 0),
+                                            0,
+                                        ),
+                                    )}
+                                </span>
+                            </div>
+                        )}
+
+                        <ul className="flex min-w-0 flex-col gap-2">
+                            {items.map((item) => (
+                                <ConversionRow
+                                    key={item.id}
+                                    item={{
+                                        id: item.id,
+                                        name: item.file.name,
+                                        bytes: item.file.size,
+                                        type: item.type,
+                                        dimensions: item.dimensions,
+                                        previewUrl: item.previewUrl,
+                                        status: item.status,
+                                        result: item.result,
+                                        reason: item.reason,
+                                        stale: item.result !== null && item.signature !== signature,
+                                    }}
+                                    busy={working}
+                                    describeFailure={describeFailure}
+                                    onReconvert={handleReconvert}
+                                    onDownload={(id) => void handleDownload(id)}
+                                    onRemove={handleRemove}
+                                />
+                            ))}
+                        </ul>
+                    </section>
+                )}
+
+                {options.target === "favicon" && (
+                    <div className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-2 rounded-xl px-3 py-2.5 ring-1 ring-inset">
+                        <div className="flex min-w-0 items-start justify-between gap-2">
+                            <span className="flex min-w-0 flex-col gap-0.5">
+                                <span className="text-[0.8125rem] leading-[1.3] font-medium">
+                                    {t("snippetTitle")}
+                                </span>
+                                <span className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                                    {t("snippetDescription")}
+                                </span>
+                            </span>
+                            <IconCopyButton
+                                copied={copied === SNIPPET_KEY}
+                                aria-label={t("snippetCopy")}
+                                onClick={() => void handleCopySnippet()}
+                            />
+                        </div>
+                        <pre className="min-w-0 overflow-x-auto font-mono text-[0.6875rem] leading-[1.6]">
+                            <code>{buildFaviconHeadHtml().trimEnd()}</code>
+                        </pre>
                     </div>
-                </div>
+                )}
 
                 <ToolNotes
                     notes={[

@@ -45,7 +45,7 @@ export function CronFieldGrid({ expression, pending }: CronFieldGridProps) {
                     key={name}
                     className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-1 rounded-xl px-3 py-2.5 ring-1 ring-inset"
                 >
-                    <span className="text-muted-foreground text-[0.625rem] leading-[1.4] font-medium tracking-wide uppercase">
+                    <span className="text-muted-foreground text-xs leading-[1.4] font-medium">
                         {t(`fields.${name}`)}
                     </span>
                     <span className="text-primary truncate font-mono text-sm">

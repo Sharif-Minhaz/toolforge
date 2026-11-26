@@ -5,9 +5,9 @@ import { useTranslations } from "next-intl";
 import type { ChangeEvent } from "react";
 
 import { buttonVariants } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { StepLabel } from "@/modules/tools/components/workbench-step";
 import { ByteSize, useByteLabel } from "@/modules/tools/components/byte-size";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { MAX_URL_INPUT_BYTES } from "../domain/constants";
@@ -58,11 +58,11 @@ export function InputPanel({
     }
 
     return (
-        <div className="flex flex-col gap-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <Label htmlFor={inputId} className="text-muted-foreground text-xs">
+        <div className="flex min-w-0 flex-col gap-3">
+            <div className="flex min-h-7 flex-wrap items-center justify-between gap-2">
+                <StepLabel step={1} htmlFor={inputId}>
                     {t("inputLabel")}
-                </Label>
+                </StepLabel>
 
                 <div className="flex items-center gap-1.5">
                     {/* Against the ceiling rather than a bare size, so the

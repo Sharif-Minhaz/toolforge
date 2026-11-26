@@ -6,6 +6,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
+import { RESULT_TRAY, StepLabel } from "@/modules/tools/components/workbench-step";
 import type { PixelSize } from "@/modules/tools/types";
 
 import { keepsAlpha } from "../domain/filenames";
@@ -52,30 +53,9 @@ export function CompositeActions({
     const scaledDown = size.width < sourceSize.width || size.height < sourceSize.height;
 
     return (
-        <div className="flex min-w-0 flex-col gap-3">
-            <dl className="grid min-w-0 grid-cols-2 gap-2">
-                <div className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-0.5 rounded-xl px-3 py-2 ring-1 ring-inset">
-                    <dt className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                        {t("dimensions")}
-                    </dt>
-                    <dd className="font-mono text-sm tabular-nums">
-                        {t("pixels", {
-                            width: formatter.number(size.width),
-                            height: formatter.number(size.height),
-                        })}
-                    </dd>
-                </div>
-
-                <div className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-0.5 rounded-xl px-3 py-2 ring-1 ring-inset">
-                    <dt className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                        {t("size")}
-                    </dt>
-                    <dd className="font-mono text-sm tabular-nums">{byteLabel(resultBytes)}</dd>
-                </div>
-            </dl>
-
+        <div className={RESULT_TRAY}>
             <div className="flex min-w-0 flex-col gap-1.5">
-                <span className="text-muted-foreground text-xs leading-[1.3]">{t("format")}</span>
+                <StepLabel step={2}>{t("format")}</StepLabel>
 
                 <Tabs
                     value={format}
@@ -109,6 +89,27 @@ export function CompositeActions({
                     </p>
                 )}
             </div>
+
+            <dl className="grid min-w-0 grid-cols-2 gap-2">
+                <div className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-0.5 rounded-xl px-3 py-2 ring-1 ring-inset">
+                    <dt className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                        {t("dimensions")}
+                    </dt>
+                    <dd className="font-mono text-sm tabular-nums">
+                        {t("pixels", {
+                            width: formatter.number(size.width),
+                            height: formatter.number(size.height),
+                        })}
+                    </dd>
+                </div>
+
+                <div className="bg-card/60 ring-border/70 flex min-w-0 flex-col gap-0.5 rounded-xl px-3 py-2 ring-1 ring-inset">
+                    <dt className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                        {t("size")}
+                    </dt>
+                    <dd className="font-mono text-sm tabular-nums">{byteLabel(resultBytes)}</dd>
+                </div>
+            </dl>
 
             <div className="flex flex-wrap items-center gap-2">
                 <Button

@@ -43,7 +43,7 @@ const VERDICT_RULE = {
     idle: "bg-border",
 } as const;
 
-const LABEL = "text-muted-foreground text-[0.625rem] leading-normal tracking-[0.14em] uppercase";
+const LABEL = "text-muted-foreground text-xs leading-normal";
 
 export function PropagationCard({ propagation }: { propagation: DomainReport["propagation"] }) {
     const t = useTranslations("domainInspector.propagation");

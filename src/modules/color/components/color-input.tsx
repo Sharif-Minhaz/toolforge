@@ -6,9 +6,9 @@ import { useId } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useIsHydrated } from "@/hooks/use-is-hydrated";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import { StepLabel } from "@/modules/tools/components/workbench-step";
 import { MAX_COLOR_INPUT_LENGTH } from "../domain/constants";
 import { CHECKERBOARD } from "./channel-slider";
 
@@ -80,9 +80,9 @@ export function ColorInput({
 
     return (
         <div className="flex flex-col gap-2">
-            <Label htmlFor={inputId} className="text-muted-foreground text-xs">
+            <StepLabel step={1} htmlFor={inputId}>
                 {t("inputLabel")}
-            </Label>
+            </StepLabel>
 
             <div className="flex flex-wrap items-center gap-2">
                 <span
@@ -122,7 +122,8 @@ export function ColorInput({
                         <IconDice5 className="size-3.5" stroke={1.8} aria-hidden="true" />
                         {t("random")}
                     </Button>
-                    <Button variant="outline" size="sm" onClick={onDownload}>
+                    {/* The one filled button: the export is where the tool ends. */}
+                    <Button size="sm" onClick={onDownload}>
                         <IconDownload className="size-3.5" stroke={1.8} aria-hidden="true" />
                         {t("download")}
                     </Button>

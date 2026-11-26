@@ -10,20 +10,14 @@ export function ImageToTextWorkbenchSkeleton() {
             aria-hidden="true"
             className="bg-card ring-border/70 flex flex-col gap-5 rounded-xl p-5 ring-1 ring-inset sm:p-6"
         >
-            <div className="flex flex-col gap-1.5">
-                <Skeleton className="h-5 w-52" />
-                <Skeleton className="h-4 w-96 max-w-full" />
-            </div>
-
-            {/* The language and text-layout pickers. */}
+            {/* The language picker, then the folded text-layout option. */}
             <div className="grid gap-3 sm:grid-cols-2">
-                {Array.from({ length: 2 }, (_, index) => (
-                    <div key={index} className="flex flex-col gap-1.5">
-                        <Skeleton className="h-3.5 w-28" />
-                        <Skeleton className="h-9 w-full rounded-xl" />
-                        <Skeleton className="h-3 w-56 max-w-full" />
-                    </div>
-                ))}
+                <div className="flex flex-col gap-1.5">
+                    <Skeleton className="h-3.5 w-28" />
+                    <Skeleton className="h-9 w-full rounded-xl" />
+                    <Skeleton className="h-3 w-56 max-w-full" />
+                </div>
+                <Skeleton className="h-5 w-24 sm:col-span-2" />
             </div>
 
             {/* Drop zone, paste and link row, status line. */}

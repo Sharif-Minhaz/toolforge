@@ -11,12 +11,26 @@ import { InstallAppButton } from "@/modules/pwa/components/install-app-button";
 import { SITE_REPOSITORY } from "@/modules/seo/domain/site";
 import { generateUuid } from "@/modules/uuid/domain/generate";
 
+/**
+ * Below `sm` the two secondary actions drop their labels so all three sit on
+ * one row. The label stays for screen readers; and when the install button
+ * renders nothing (server render, installed, unsupported) "Browse" is first
+ * in the row and keeps its visible label.
+ */
+const CTA = "h-10 px-4 text-[0.9375rem]";
+const ICON_ONLY_ON_PHONE = "max-sm:w-10 max-sm:px-0";
+
 export async function OverviewHero() {
     const [t, tNav] = await Promise.all([getTranslations("overview.hero"), getTranslations("nav")]);
 
     return (
         <section className="bg-card/60 ring-border/70 relative isolate overflow-hidden rounded-3xl ring-1 ring-inset">
-            <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
+            {/* From `md` only: animated blurred blobs, backdrop blur and the
+                gradient headline repaint on every scroll frame on a phone. */}
+            <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 -z-10 hidden md:block"
+            >
                 <div className="bg-grid absolute inset-0 [mask-image:radial-gradient(120%_100%_at_50%_0%,#000,transparent_72%)] [--grid-size:3rem]" />
                 <div className="animate-aurora absolute -top-32 -left-16 size-96 rounded-full bg-[radial-gradient(circle,var(--brand-violet),transparent_65%)] opacity-18 blur-3xl" />
                 <div className="animate-drift absolute -right-16 -bottom-32 size-96 rounded-full bg-[radial-gradient(circle,var(--brand-cyan),transparent_65%)] opacity-16 blur-3xl" />
@@ -24,13 +38,14 @@ export async function OverviewHero() {
 
             <div className="grid gap-10 px-6 py-12 sm:px-10 sm:py-14 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-center lg:gap-12 lg:py-16">
                 <FadeIn className="flex min-w-0 flex-col items-start gap-6">
-                    <span className="bg-background/70 text-muted-foreground ring-border/70 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ring-1 backdrop-blur ring-inset">
+                    <span className="bg-background/70 text-muted-foreground ring-border/70 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset md:backdrop-blur">
                         <IconBolt className="text-primary size-3.5" stroke={2} aria-hidden="true" />
                         {t("badge")}
                     </span>
 
                     <h1 className="text-4xl leading-[1.08] font-semibold tracking-tight sm:text-5xl lg:text-[3.25rem]">
-                        {t("titleLead")} <span className="text-gradient">{t("titleAccent")}</span>
+                        {t("titleLead")}{" "}
+                        <span className="md:text-gradient">{t("titleAccent")}</span>
                     </h1>
 
                     <p className="text-muted-foreground max-w-xl text-[0.9375rem] leading-7 sm:text-base">
@@ -38,16 +53,20 @@ export async function OverviewHero() {
                     </p>
 
                     <div className="flex flex-wrap items-center gap-2.5">
-                        <InstallAppButton className="h-10 px-4 text-[0.9375rem]" />
+                        <InstallAppButton className={CTA} />
                         <Link
                             href="#featured-tools"
                             className={cn(
                                 buttonVariants({ variant: "outline" }),
-                                "h-10 px-4 text-[0.9375rem]",
+                                CTA,
+                                ICON_ONLY_ON_PHONE,
+                                "max-sm:first:w-auto max-sm:first:px-4",
                             )}
                         >
                             <IconLayoutGrid className="size-4" stroke={1.9} aria-hidden="true" />
-                            {t("secondaryCta")}
+                            <span className="max-sm:sr-only max-sm:[a:first-child>&]:not-sr-only">
+                                {t("secondaryCta")}
+                            </span>
                         </Link>
                         <a
                             href={SITE_REPOSITORY}
@@ -58,17 +77,18 @@ export async function OverviewHero() {
                             aria-label={tNav("repository")}
                             className={cn(
                                 buttonVariants({ variant: "outline" }),
-                                "h-10 px-4 text-[0.9375rem]",
+                                CTA,
+                                ICON_ONLY_ON_PHONE,
                             )}
                         >
                             <IconBrandGithub className="size-4" stroke={1.9} aria-hidden="true" />
-                            {t("repoCta")}
+                            <span className="max-sm:sr-only">{t("repoCta")}</span>
                         </a>
                     </div>
                 </FadeIn>
 
                 <FadeIn delay={0.1} className="w-full min-w-0">
-                    <div className="panel-sheen bg-background/70 ring-border/80 rounded-2xl p-4 ring-1 backdrop-blur-xl ring-inset">
+                    <div className="bg-background/70 ring-border/80 md:panel-sheen rounded-2xl p-4 ring-1 ring-inset md:backdrop-blur-xl">
                         <div className="flex items-center gap-2 pb-3">
                             <span className="relative flex size-2">
                                 <span className="absolute inline-flex size-full animate-ping rounded-full bg-[var(--color-success)] opacity-60" />

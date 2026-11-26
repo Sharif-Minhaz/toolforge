@@ -6,7 +6,7 @@ import { useEffect, useId, useRef, useState, type DragEvent } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
@@ -18,6 +18,7 @@ import { ImageSourceControls } from "@/modules/tools/components/image-source-con
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { ToolNotes } from "@/modules/tools/components/tool-notes";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
+import { OptionsDisclosure, StepLabel } from "@/modules/tools/components/workbench-step";
 import { copyText } from "@/modules/tools/domain/clipboard";
 import { fitComponents, parseAspectRatio } from "../domain/aspect";
 import {
@@ -366,34 +367,117 @@ export function BlurPlaceholderWorkbench({
     const status = describeStatus();
 
     return (
-        <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <span
-                aria-hidden="true"
-                className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-            />
+        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+            <CardContent className="flex min-w-0 flex-col gap-6">
+                {/* Which way round, then how — the how folded away, so the
+                    input and its placeholder are the first things on screen. */}
+                <div className="flex min-w-0 flex-col gap-3">
+                    <div className="flex min-w-0 flex-col gap-1.5">
+                        <span
+                            id={modeLabelId}
+                            className="text-muted-foreground text-xs leading-[1.3]"
+                        >
+                            {t("modeLabel")}
+                        </span>
+                        <ModeSelector
+                            value={mode}
+                            onChange={handleModeChange}
+                            labelId={modeLabelId}
+                        />
+                    </div>
 
-            <CardHeader>
-                <CardTitle className="text-lg">{t("title")}</CardTitle>
-                <CardDescription>{t("description")}</CardDescription>
-            </CardHeader>
+                    <OptionsDisclosure>
+                        <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            <OptionSelect<string>
+                                label={t("componentXLabel")}
+                                hint={decoding ? t("componentsHintDecode") : t("componentXHint")}
+                                value={String(shownComponentX)}
+                                values={COMPONENT_VALUES}
+                                disabled={decoding}
+                                items={Object.fromEntries(
+                                    COMPONENT_VALUES.map((value) => [value, value]),
+                                )}
+                                onChange={(next) => chooseDetail({ componentX: Number(next) })}
+                            />
 
-            <CardContent className="flex min-w-0 flex-col gap-5">
-                <div className="flex min-w-0 flex-col gap-1.5">
-                    <span id={modeLabelId} className="text-muted-foreground text-xs leading-[1.3]">
-                        {t("modeLabel")}
-                    </span>
-                    <ModeSelector value={mode} onChange={handleModeChange} labelId={modeLabelId} />
+                            <OptionSelect<string>
+                                label={t("componentYLabel")}
+                                hint={decoding ? t("componentsHintDecode") : t("componentYHint")}
+                                value={String(shownComponentY)}
+                                values={COMPONENT_VALUES}
+                                disabled={decoding}
+                                items={Object.fromEntries(
+                                    COMPONENT_VALUES.map((value) => [value, value]),
+                                )}
+                                onChange={(next) => chooseDetail({ componentY: Number(next) })}
+                            />
+
+                            <OptionSelect<AspectRatio>
+                                label={t("ratioLabel")}
+                                hint={decoding ? t("ratioHint") : t("ratioHintEncode")}
+                                value={options.ratio}
+                                values={ASPECT_RATIOS}
+                                disabled={!decoding}
+                                items={Object.fromEntries(
+                                    ASPECT_RATIOS.map((value) => [value, value]),
+                                )}
+                                onChange={(next) => patchOptions({ ratio: next })}
+                            />
+
+                            <OptionSelect<string>
+                                label={t("edgeLabel")}
+                                hint={t("edgeHint")}
+                                value={String(options.edge)}
+                                values={EDGE_VALUES}
+                                items={Object.fromEntries(
+                                    EDGE_VALUES.map((value) => [value, t("edgeValue", { value })]),
+                                )}
+                                onChange={(next) =>
+                                    patchOptions({ edge: Number(next) as PlaceholderEdge })
+                                }
+                            />
+
+                            <div className="flex min-w-0 flex-col gap-1.5">
+                                <span
+                                    id={punchId}
+                                    className="text-muted-foreground text-xs leading-[1.3]"
+                                >
+                                    {t("punchLabel")}
+                                </span>
+                                <div className="flex min-w-0 items-center gap-3">
+                                    <Slider
+                                        aria-labelledby={punchId}
+                                        value={options.punch}
+                                        min={MIN_PUNCH}
+                                        max={MAX_PUNCH}
+                                        step={PUNCH_STEP}
+                                        onValueChange={(next) =>
+                                            patchOptions({
+                                                punch: Array.isArray(next)
+                                                    ? (next[0] ?? options.punch)
+                                                    : next,
+                                            })
+                                        }
+                                        className="min-w-0 flex-1"
+                                    />
+                                    <span className="w-8 shrink-0 text-right font-mono text-sm tabular-nums">
+                                        {options.punch.toFixed(1)}
+                                    </span>
+                                </div>
+                                <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                                    {t("punchHint")}
+                                </p>
+                            </div>
+                        </div>
+                    </OptionsDisclosure>
                 </div>
 
                 <div className="flex min-w-0 flex-col gap-2">
                     {decoding ? (
                         <>
-                            <label
-                                htmlFor={hashId}
-                                className="text-muted-foreground text-xs leading-[1.3]"
-                            >
+                            <StepLabel step={1} htmlFor={hashId}>
                                 {t("hashInputLabel")}
-                            </label>
+                            </StepLabel>
                             <Textarea
                                 id={hashId}
                                 value={hashInput}
@@ -408,6 +492,11 @@ export function BlurPlaceholderWorkbench({
                         </>
                     ) : (
                         <>
+                            {/* The title sits on the step label, which labels
+                                the same input as the box under it. */}
+                            <StepLabel step={1} htmlFor={inputId}>
+                                {t("dropTitle")}
+                            </StepLabel>
                             <input
                                 id={inputId}
                                 type="file"
@@ -441,9 +530,6 @@ export function BlurPlaceholderWorkbench({
                                     stroke={1.6}
                                     aria-hidden="true"
                                 />
-                                <span className="text-[0.9375rem] leading-[1.4] font-medium">
-                                    {t("dropTitle")}
-                                </span>
                                 <span className="text-muted-foreground text-[0.8125rem] leading-normal">
                                     {t("dropHint", { limit: byteLabel(MAX_IMAGE_BYTES) })}
                                 </span>
@@ -487,78 +573,6 @@ export function BlurPlaceholderWorkbench({
                         </Button>
                     </div>
                 )}
-
-                <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    <OptionSelect<string>
-                        label={t("componentXLabel")}
-                        hint={decoding ? t("componentsHintDecode") : t("componentXHint")}
-                        value={String(shownComponentX)}
-                        values={COMPONENT_VALUES}
-                        disabled={decoding}
-                        items={Object.fromEntries(COMPONENT_VALUES.map((value) => [value, value]))}
-                        onChange={(next) => chooseDetail({ componentX: Number(next) })}
-                    />
-
-                    <OptionSelect<string>
-                        label={t("componentYLabel")}
-                        hint={decoding ? t("componentsHintDecode") : t("componentYHint")}
-                        value={String(shownComponentY)}
-                        values={COMPONENT_VALUES}
-                        disabled={decoding}
-                        items={Object.fromEntries(COMPONENT_VALUES.map((value) => [value, value]))}
-                        onChange={(next) => chooseDetail({ componentY: Number(next) })}
-                    />
-
-                    <OptionSelect<AspectRatio>
-                        label={t("ratioLabel")}
-                        hint={decoding ? t("ratioHint") : t("ratioHintEncode")}
-                        value={options.ratio}
-                        values={ASPECT_RATIOS}
-                        disabled={!decoding}
-                        items={Object.fromEntries(ASPECT_RATIOS.map((value) => [value, value]))}
-                        onChange={(next) => patchOptions({ ratio: next })}
-                    />
-
-                    <OptionSelect<string>
-                        label={t("edgeLabel")}
-                        hint={t("edgeHint")}
-                        value={String(options.edge)}
-                        values={EDGE_VALUES}
-                        items={Object.fromEntries(
-                            EDGE_VALUES.map((value) => [value, t("edgeValue", { value })]),
-                        )}
-                        onChange={(next) => patchOptions({ edge: Number(next) as PlaceholderEdge })}
-                    />
-
-                    <div className="flex min-w-0 flex-col gap-1.5">
-                        <span id={punchId} className="text-muted-foreground text-xs leading-[1.3]">
-                            {t("punchLabel")}
-                        </span>
-                        <div className="flex min-w-0 items-center gap-3">
-                            <Slider
-                                aria-labelledby={punchId}
-                                value={options.punch}
-                                min={MIN_PUNCH}
-                                max={MAX_PUNCH}
-                                step={PUNCH_STEP}
-                                onValueChange={(next) =>
-                                    patchOptions({
-                                        punch: Array.isArray(next)
-                                            ? (next[0] ?? options.punch)
-                                            : next,
-                                    })
-                                }
-                                className="min-w-0 flex-1"
-                            />
-                            <span className="w-8 shrink-0 text-right font-mono text-sm tabular-nums">
-                                {options.punch.toFixed(1)}
-                            </span>
-                        </div>
-                        <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
-                            {t("punchHint")}
-                        </p>
-                    </div>
-                </div>
 
                 {shown !== null && (
                     <PlaceholderOutput

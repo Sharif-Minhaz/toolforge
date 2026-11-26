@@ -5,6 +5,7 @@ import {
     IconChevronLeft,
     IconChevronRight,
     IconDownload,
+    IconInfoCircle,
     IconLoader2,
     IconSearch,
     IconSitemap,
@@ -15,7 +16,7 @@ import { useId, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ import { ScanRadar } from "@/modules/tools/components/scan-radar";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
+import { StepLabel } from "@/modules/tools/components/workbench-step";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
 import { checkHostSyntax } from "@/modules/tools/domain/host-syntax";
@@ -46,10 +48,6 @@ import {
     type SubdomainSort,
 } from "../types";
 import { SubdomainTable } from "./subdomain-table";
-
-/** Small-caps label, matching the result panels the form sits above. */
-const FIELD_LABEL =
-    "text-muted-foreground text-[0.625rem] leading-normal tracking-[0.14em] uppercase";
 
 /**
  * Complaints about the *input*, which belong beside the input. Everything else
@@ -252,22 +250,34 @@ export function SubdomainLookupWorkbench({
 
     return (
         <div className={cn("flex flex-col gap-6", TOOL_ACCENT_VARS.cyan)}>
-            <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-                <span
-                    aria-hidden="true"
-                    className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-                />
-
-                <CardHeader>
-                    <CardTitle className="text-lg">{t("title")}</CardTitle>
-                    <CardDescription>{t("description")}</CardDescription>
-                </CardHeader>
-
+            <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
                 <CardContent className="flex flex-col gap-5">
+                    {/* The only line on the form saying what the index is, and
+                        that the lookup probes nothing. */}
+                    <p className="text-muted-foreground text-sm">{t("description")}</p>
+
+                    {/* Rule 32: the domain leaves the browser for a third party,
+                        so the reader is told before the controls. */}
+                    <div className="bg-muted/40 ring-border flex items-start gap-2.5 rounded-xl px-3.5 py-3 ring-1 ring-inset">
+                        <IconInfoCircle
+                            className="text-muted-foreground mt-0.5 size-4 shrink-0"
+                            stroke={1.75}
+                            aria-hidden="true"
+                        />
+                        <div className="flex min-w-0 flex-col gap-1">
+                            <p className="text-[0.8125rem] leading-[1.4] font-medium">
+                                {t("disclosureTitle")}
+                            </p>
+                            <p className="text-muted-foreground text-[0.8125rem] leading-relaxed">
+                                {t("disclosure")}
+                            </p>
+                        </div>
+                    </div>
+
                     <div className="flex flex-col gap-2">
-                        <Label htmlFor={apexId} className={FIELD_LABEL}>
-                            <span className="leading-[1.3]">{t("apexLabel")}</span>
-                        </Label>
+                        <StepLabel step={1} htmlFor={apexId}>
+                            {t("apexLabel")}
+                        </StepLabel>
 
                         <Input
                             id={apexId}
@@ -288,7 +298,7 @@ export function SubdomainLookupWorkbench({
                                     void handleLookup();
                                 }
                             }}
-                            className="font-mono text-[0.8125rem]"
+                            className="h-11 font-mono text-base md:text-base"
                         />
 
                         <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
@@ -370,7 +380,7 @@ export function SubdomainLookupWorkbench({
                 {!running && report !== null && (
                     <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
                         <CardHeader>
-                            <CardTitle className="text-base">{t("resultsTitle")}</CardTitle>
+                            <StepLabel step={2}>{t("resultsTitle")}</StepLabel>
                             <CardDescription className="font-mono text-[0.75rem]">
                                 {report.apex}
                                 {` · ${t("fetchedAt", {

@@ -654,9 +654,7 @@ function DeclaredGroup({ label, fields }: { label: string; fields: readonly Decl
 
     return (
         <div className="flex min-w-0 flex-col gap-1">
-            <span className="text-muted-foreground text-[0.625rem] font-semibold tracking-[0.09em] uppercase">
-                {label}
-            </span>
+            <span className="text-muted-foreground text-xs font-medium">{label}</span>
             <ul className="flex flex-wrap gap-1">
                 {fields.map((field) => (
                     <li

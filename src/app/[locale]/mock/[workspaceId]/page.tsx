@@ -11,15 +11,13 @@ import { headers } from "next/headers";
 import Link from "next/link";
 
 import { FadeIn, Reveal } from "@/components/motion/reveal";
-import { cn } from "@/lib/utils";
 import { getServers } from "@/modules/mock-server/actions/servers";
 import { getWorkspaceOverview } from "@/modules/mock-server/actions/workspaces";
 import { ServerGrid } from "@/modules/mock-server/components/server-grid";
-import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
 import { MOCK_SERVICE } from "@/modules/mock-server/domain/constants";
 import { SITE_URL } from "@/modules/seo/domain/site";
 import { serviceBase } from "@/modules/tools/domain/service-hosts";
-import { enterLocale, type LocaleParams } from "@/i18n/route-locale";
+import { enterLocale } from "@/i18n/route-locale";
 
 /**
  * One workspace's servers.
@@ -59,27 +57,23 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
 
     const workspace = overview.workspaces.find((candidate) => candidate.id === workspaceId);
 
-    // One row, one hue each, so the three are told apart by colour before they
-    // are read. They were three stacked links, which is three lines of header
-    // for what is a single row of chips.
+    // One row of chips, told apart by icon and label. They were three stacked
+    // links, which is three lines of header for what is a single row.
     const shortcuts = [
         {
             href: `/mock/${workspaceId}/logs`,
             label: tLogs("title"),
             Icon: IconHistory,
-            accent: "cyan",
         },
         {
             href: `/mock/${workspaceId}/environments`,
             label: tVars("title"),
             Icon: IconVariable,
-            accent: "amber",
         },
         {
             href: `/mock/${workspaceId}/import`,
             label: tImport("title"),
             Icon: IconFileImport,
-            accent: "emerald",
         },
     ] as const;
 
@@ -95,32 +89,21 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
                         {t("back")}
                     </Link>
 
-                    <p className="text-muted-foreground text-[0.6875rem] font-semibold tracking-[0.09em] uppercase">
-                        {t("eyebrow")}
-                    </p>
+                    <p className="text-muted-foreground text-xs font-medium">{t("eyebrow")}</p>
                     <h1 className="text-foreground text-2xl leading-[1.2] font-semibold text-balance sm:text-3xl">
                         {workspace?.name ?? tWorkspace("title")}
                     </h1>
                     <p className="text-muted-foreground text-sm leading-relaxed">{t("subtitle")}</p>
 
                     <nav aria-label={t("shortcuts")} className="mt-1 flex flex-wrap gap-2">
-                        {shortcuts.map(({ href, label, Icon, accent }) => (
+                        {shortcuts.map(({ href, label, Icon }) => (
                             <Link
                                 key={href}
                                 href={href}
-                                className={cn(
-                                    // The hue tints the icon, the border and the
-                                    // hover wash — never the label. A brand hue
-                                    // measures under 4.5:1 at this size on a light
-                                    // card, which is the whole reason the syntax
-                                    // set exists; the label stays `text-foreground`
-                                    // and the colour stays decoration.
-                                    "border-border/70 bg-card text-foreground focus-visible:ring-ring inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs transition-colors hover:border-[var(--tool-accent)]/50 hover:bg-[var(--tool-accent)]/8 focus-visible:ring-2 focus-visible:outline-none",
-                                    TOOL_ACCENT_VARS[accent],
-                                )}
+                                className="border-border/70 bg-card text-foreground focus-visible:ring-ring hover:border-border hover:bg-muted/40 inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
                             >
                                 <Icon
-                                    className="size-3.5 shrink-0 text-[var(--tool-accent)]"
+                                    className="text-muted-foreground size-3.5 shrink-0"
                                     stroke={1.9}
                                     aria-hidden="true"
                                 />

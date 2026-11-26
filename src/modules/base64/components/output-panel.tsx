@@ -4,10 +4,10 @@ import { IconAlertTriangle, IconClipboardCheck, IconDownload } from "@tabler/ico
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { ByteSize } from "@/modules/tools/components/byte-size";
+import { RESULT_TRAY, StepLabel } from "@/modules/tools/components/workbench-step";
 
 type OutputPanelProps = {
     outputId: string;
@@ -34,11 +34,11 @@ export function OutputPanel({
     const empty = output.length === 0;
 
     return (
-        <div className="flex flex-col gap-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <Label htmlFor={outputId} className="text-muted-foreground text-xs">
+        <div className={RESULT_TRAY}>
+            <div className="flex min-h-7 flex-wrap items-center justify-between gap-2">
+                <StepLabel step={2} htmlFor={outputId}>
                     {t("outputLabel")}
-                </Label>
+                </StepLabel>
 
                 <div className="flex items-center gap-1.5">
                     {error === null && (
@@ -47,7 +47,7 @@ export function OutputPanel({
                             className="text-muted-foreground mr-1 font-mono text-[0.6875rem] tabular-nums"
                         />
                     )}
-                    <Button variant="outline" size="sm" onClick={onCopy} disabled={empty}>
+                    <Button size="sm" onClick={onCopy} disabled={empty}>
                         <IconClipboardCheck className="size-3.5" stroke={1.8} aria-hidden="true" />
                         {t("copy")}
                     </Button>
@@ -68,7 +68,7 @@ export function OutputPanel({
                     // Dimmed rather than emptied while the debounce settles, so
                     // the panel never flashes between two valid results.
                     className={cn(
-                        "bg-muted/45 max-h-72 min-h-32 resize-y rounded-xl font-mono text-[0.8125rem] leading-6 break-all",
+                        "bg-card max-h-72 min-h-32 resize-y rounded-lg font-mono text-[0.8125rem] leading-6 break-all",
                         "transition-opacity duration-200",
                         pending && "opacity-55",
                     )}

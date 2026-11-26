@@ -4,13 +4,14 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
+import type { StatusTone } from "@/modules/tools/components/status-strip";
 import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
-import type { StatusTone } from "@/modules/tools/components/status-strip";
+import { OptionsDisclosure, RESULT_TRAY } from "@/modules/tools/components/workbench-step";
 import { copyText, type CopyResult } from "@/modules/tools/domain/clipboard";
 import { saveFile } from "@/modules/tools/domain/file-saver";
 import { createColorExportFile } from "../domain/export";
@@ -169,17 +170,7 @@ export function ColorWorkbench({ initialColor, initialOptions }: ColorWorkbenchP
 
     return (
         <div className={`flex flex-col gap-6 ${TOOL_ACCENT_VARS.rose}`}>
-            <Card className="relative overflow-hidden [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-                <span
-                    aria-hidden="true"
-                    className="via-primary/45 pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent"
-                />
-
-                <CardHeader>
-                    <CardTitle className="text-lg">{t("title")}</CardTitle>
-                    <CardDescription>{t("description")}</CardDescription>
-                </CardHeader>
-
+            <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
                 <CardContent className="flex flex-col gap-6">
                     <ColorInput
                         value={inputValue}
@@ -193,14 +184,20 @@ export function ColorWorkbench({ initialColor, initialOptions }: ColorWorkbenchP
                     />
 
                     <div className="grid gap-6 lg:grid-cols-2">
+                        {/* The conversions are the answer, so they sit on the
+                            result tray; how they spell themselves folds away. */}
                         <div className="flex min-w-0 flex-col gap-4">
-                            <FormatRows
-                                rows={inspection.formats}
-                                copied={copiedFormat}
-                                pending={pending}
-                                onCopy={handleCopyFormat}
-                            />
-                            <ColorOptions options={options} onChange={updateOptions} />
+                            <div className={RESULT_TRAY}>
+                                <FormatRows
+                                    rows={inspection.formats}
+                                    copied={copiedFormat}
+                                    pending={pending}
+                                    onCopy={handleCopyFormat}
+                                />
+                            </div>
+                            <OptionsDisclosure>
+                                <ColorOptions options={options} onChange={updateOptions} />
+                            </OptionsDisclosure>
                         </div>
 
                         <div className="min-w-0">

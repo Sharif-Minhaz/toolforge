@@ -13,6 +13,7 @@ import { Reveal } from "@/components/motion/reveal";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { SITE_REPOSITORY } from "@/modules/seo/domain/site";
+import { KEYCAP_ICON } from "@/modules/tools/components/tool-accent";
 
 const CONTRIBUTING_URL = `${SITE_REPOSITORY}/blob/main/CONTRIBUTING.md`;
 
@@ -26,7 +27,6 @@ export async function OpenSource() {
             title: t("ways.star.title"),
             description: t("ways.star.description"),
             Icon: IconStar,
-            accent: "[--tool-accent:var(--brand-amber)]",
         },
         {
             key: "issue",
@@ -34,7 +34,6 @@ export async function OpenSource() {
             title: t("ways.issue.title"),
             description: t("ways.issue.description"),
             Icon: IconBug,
-            accent: "[--tool-accent:var(--brand-rose)]",
         },
         {
             key: "pullRequest",
@@ -42,7 +41,6 @@ export async function OpenSource() {
             title: t("ways.pullRequest.title"),
             description: t("ways.pullRequest.description"),
             Icon: IconGitPullRequest,
-            accent: "[--tool-accent:var(--brand-emerald)]",
         },
     ];
 
@@ -52,11 +50,6 @@ export async function OpenSource() {
             aria-labelledby="open-source-title"
             className="bg-card/60 ring-border/70 relative isolate overflow-hidden rounded-3xl ring-1 ring-inset"
         >
-            <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
-                <div className="bg-grid absolute inset-0 [mask-image:radial-gradient(120%_100%_at_50%_0%,#000,transparent_72%)] [--grid-size:3rem]" />
-                <div className="absolute -top-28 right-0 size-96 rounded-full bg-[radial-gradient(circle,var(--brand-violet),transparent_65%)] opacity-14 blur-3xl" />
-            </div>
-
             <div className="flex flex-col gap-8 px-6 py-10 sm:px-10 sm:py-12">
                 <Reveal className="flex min-w-0 flex-col items-start gap-4">
                     <span className="bg-background/70 text-muted-foreground ring-border/70 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ring-1 backdrop-blur ring-inset">
@@ -117,18 +110,18 @@ export async function OpenSource() {
                                 target="_blank"
                                 rel="noreferrer noopener"
                                 className={cn(
-                                    "group/way bg-background/70 ring-border/70 hover:ring-border focus-visible:ring-ring relative flex h-full flex-col gap-2 overflow-hidden rounded-2xl p-4 ring-1 transition-all duration-200 ring-inset hover:-translate-y-0.5 hover:shadow-[0_8px_28px_-14px_oklch(0_0_0/0.35)] focus-visible:ring-2 focus-visible:outline-none",
-                                    way.accent,
+                                    "group/way bg-background/70 ring-border/70 hover:ring-border focus-visible:ring-ring relative flex h-full flex-col gap-2 overflow-hidden rounded-2xl p-4 ring-1 transition duration-200 ring-inset focus-visible:ring-2 focus-visible:outline-none",
                                 )}
                             >
-                                <span
-                                    aria-hidden="true"
-                                    className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,color-mix(in_oklch,var(--tool-accent)_16%,transparent),transparent_70%)] opacity-0 transition-opacity duration-300 group-hover/way:opacity-100"
-                                />
                                 <span className="relative flex items-center gap-2.5">
-                                    <span className="grid size-9 shrink-0 place-items-center rounded-[0.6rem] bg-[color-mix(in_oklch,var(--tool-accent)_13%,transparent)] text-[--tool-accent] ring-1 ring-[color-mix(in_oklch,var(--tool-accent)_20%,transparent)] ring-inset">
+                                    <span
+                                        className={cn(
+                                            KEYCAP_ICON,
+                                            "group-hover/way:text-primary size-10",
+                                        )}
+                                    >
                                         <way.Icon
-                                            className="size-4.5"
+                                            className="size-5"
                                             stroke={1.8}
                                             aria-hidden="true"
                                         />

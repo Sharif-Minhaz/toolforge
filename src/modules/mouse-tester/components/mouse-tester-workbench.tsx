@@ -15,6 +15,7 @@ import { Card } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
+import { OptionsDisclosure, StepLabel } from "@/modules/tools/components/workbench-step";
 import { saveFile } from "@/modules/tools/domain/file-saver";
 import {
     FAULT_WINDOW_STEP_MS,
@@ -195,6 +196,10 @@ export function MouseTesterWorkbench({ initialFaultWindow }: MouseTesterWorkbenc
                     measured, and nothing it does leaves: no Back, no Forward,
                     no context menu, no autoscroll, no page scroll. */}
                 <div className="border-border/70 flex flex-col gap-3 border-b p-4 sm:p-5 lg:border-r lg:border-b-0">
+                    {/* The way in. The area keeps its own `aria-label`, so this
+                        names it for the eye without changing what it announces. */}
+                    <StepLabel step={1}>{t("zoneLabel")}</StepLabel>
+
                     {/* Above the area, not in the article: a phone reader has
                         to learn before touching anything that nothing here
                         will count a finger. */}
@@ -226,7 +231,7 @@ export function MouseTesterWorkbench({ initialFaultWindow }: MouseTesterWorkbenc
                         aria-describedby={zoneHintId}
                         className={cn(
                             "relative flex min-h-80 cursor-crosshair flex-col items-center justify-center gap-3 rounded-2xl p-4 select-none sm:min-h-96",
-                            "bg-[radial-gradient(circle_at_50%_40%,color-mix(in_oklch,var(--primary)_7%,transparent),transparent_70%)]",
+                            "bg-muted/30",
                             "border-2 border-dashed transition-colors duration-200",
                             capture.inside ? "border-primary/60" : "border-border",
                         )}
@@ -270,7 +275,7 @@ export function MouseTesterWorkbench({ initialFaultWindow }: MouseTesterWorkbenc
                     </div>
 
                     <div className="bg-muted/40 ring-border/60 flex flex-col items-center gap-0.5 rounded-xl px-3 py-2.5 text-center ring-1 ring-inset">
-                        <span className="text-muted-foreground text-[0.6875rem] font-medium tracking-wider uppercase">
+                        <span className="text-muted-foreground text-xs font-medium">
                             {t("currentAction")}
                         </span>
                         <span aria-live="polite" className="text-base font-medium">
@@ -328,7 +333,7 @@ export function MouseTesterWorkbench({ initialFaultWindow }: MouseTesterWorkbenc
                     >
                         <h3
                             id={`${zoneHintId}-buttons`}
-                            className="text-muted-foreground text-[0.6875rem] font-medium tracking-wider uppercase"
+                            className="text-muted-foreground text-xs font-medium"
                         >
                             {t("liveStatistics")}
                         </h3>
@@ -381,7 +386,7 @@ export function MouseTesterWorkbench({ initialFaultWindow }: MouseTesterWorkbenc
 
                     <div className="grid gap-2 sm:grid-cols-2">
                         <div className="ring-border/60 flex flex-col gap-1 rounded-xl px-3 py-2.5 ring-1 ring-inset">
-                            <span className="text-muted-foreground text-[0.6875rem] font-medium tracking-wider uppercase">
+                            <span className="text-muted-foreground text-xs font-medium">
                                 {t("pollingRate")}
                             </span>
                             <span className="font-mono text-xl font-semibold tabular-nums">
@@ -404,7 +409,7 @@ export function MouseTesterWorkbench({ initialFaultWindow }: MouseTesterWorkbenc
                             </span>
                         </div>
                         <div className="ring-border/60 flex flex-col gap-1 rounded-xl px-3 py-2.5 ring-1 ring-inset">
-                            <span className="text-muted-foreground text-[0.6875rem] font-medium tracking-wider uppercase">
+                            <span className="text-muted-foreground text-xs font-medium">
                                 {t("pollingStability")}
                             </span>
                             <span className="font-mono text-xl font-semibold tabular-nums">
@@ -433,29 +438,32 @@ export function MouseTesterWorkbench({ initialFaultWindow }: MouseTesterWorkbenc
                         faultWindowMs={faultWindowMs}
                     />
 
-                    <div className="flex flex-col gap-2">
-                        <div className="flex items-center justify-between gap-2">
-                            <span id={windowLabelId} className="text-muted-foreground text-xs">
-                                {t("faultWindow")}
-                            </span>
-                            <span className="font-mono text-xs tabular-nums">
-                                {t("ms", { value: formatter.number(faultWindowMs) })}
-                            </span>
+                    {/* A tuning control, not a step: folded so the readings lead. */}
+                    <OptionsDisclosure>
+                        <div className="flex flex-col gap-2">
+                            <div className="flex items-center justify-between gap-2">
+                                <span id={windowLabelId} className="text-muted-foreground text-xs">
+                                    {t("faultWindow")}
+                                </span>
+                                <span className="font-mono text-xs tabular-nums">
+                                    {t("ms", { value: formatter.number(faultWindowMs) })}
+                                </span>
+                            </div>
+                            <Slider
+                                aria-labelledby={windowLabelId}
+                                min={MIN_FAULT_WINDOW_MS}
+                                max={MAX_FAULT_WINDOW_MS}
+                                step={FAULT_WINDOW_STEP_MS}
+                                value={faultWindowMs}
+                                onValueChange={(value) =>
+                                    setFaultWindowMs(Array.isArray(value) ? value[0] : value)
+                                }
+                            />
+                            <p className="text-muted-foreground text-[0.6875rem] leading-normal">
+                                {t("faultWindowHint")}
+                            </p>
                         </div>
-                        <Slider
-                            aria-labelledby={windowLabelId}
-                            min={MIN_FAULT_WINDOW_MS}
-                            max={MAX_FAULT_WINDOW_MS}
-                            step={FAULT_WINDOW_STEP_MS}
-                            value={faultWindowMs}
-                            onValueChange={(value) =>
-                                setFaultWindowMs(Array.isArray(value) ? value[0] : value)
-                            }
-                        />
-                        <p className="text-muted-foreground text-[0.6875rem] leading-normal">
-                            {t("faultWindowHint")}
-                        </p>
-                    </div>
+                    </OptionsDisclosure>
                 </div>
             </div>
 
@@ -466,8 +474,9 @@ export function MouseTesterWorkbench({ initialFaultWindow }: MouseTesterWorkbenc
                     <div className="flex flex-wrap items-center justify-between gap-2">
                         <h3 className="text-sm font-medium">{t("eventLog")}</h3>
                         <div className="flex items-center gap-1.5">
+                            {/* The one filled button: the report is what the reader
+                                takes away. */}
                             <Button
-                                variant="outline"
                                 size="sm"
                                 onClick={handleDownload}
                                 disabled={latest === undefined}

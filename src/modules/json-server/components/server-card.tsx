@@ -7,7 +7,6 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { DocumentUsageBar } from "@/modules/tools/components/document-usage-bar";
-import { TOOL_ACCENT_VARS } from "@/modules/tools/components/tool-accent";
 
 import type { JsonServerSummary } from "../types";
 
@@ -29,14 +28,9 @@ export function ServerCard({ server }: ServerCardProps) {
     const format = useFormatter();
 
     return (
-        <li
-            className={cn(
-                "border-border/70 bg-card flex min-w-0 flex-col gap-3 rounded-2xl border p-4 shadow-xs",
-                TOOL_ACCENT_VARS.amber,
-            )}
-        >
+        <li className="border-border/70 bg-card flex min-w-0 flex-col gap-3 rounded-2xl border p-4 shadow-xs">
             <div className="flex min-w-0 items-start gap-3">
-                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--tool-accent)]/10 text-[var(--tool-accent)]">
+                <span className="bg-muted text-muted-foreground ring-border grid size-9 shrink-0 place-items-center rounded-xl ring-1 ring-inset">
                     <IconDatabase className="size-4.5" stroke={1.75} aria-hidden="true" />
                 </span>
 

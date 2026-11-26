@@ -661,7 +661,7 @@ function TechnologiesPanel({ technologies }: { technologies: DomainReport["techn
                                     key={group.category}
                                     className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] items-baseline gap-x-4 py-2.5"
                                 >
-                                    <h4 className="text-muted-foreground pt-px text-[0.625rem] leading-normal tracking-[0.14em] uppercase">
+                                    <h4 className="text-muted-foreground pt-px text-xs leading-normal">
                                         {tCategories(group.category)}
                                     </h4>
                                     <ul className="flex min-w-0 flex-col gap-2">

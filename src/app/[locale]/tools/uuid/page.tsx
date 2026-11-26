@@ -1,4 +1,4 @@
-import { IconChevronRight, IconShieldCheck, IconSparkles, IconWorldOff } from "@tabler/icons-react";
+import { IconChevronRight, IconShieldCheck, IconKey, IconWorldOff } from "@tabler/icons-react";
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import Link from "next/link";
@@ -53,7 +53,7 @@ export default async function UuidToolPage({ params, searchParams }: UuidPagePro
     const badges = [
         { label: t("badgeRfc"), Icon: IconShieldCheck },
         { label: t("badgeOffline"), Icon: IconWorldOff },
-        { label: t("badgeCrypto"), Icon: IconSparkles },
+        { label: t("badgeCrypto"), Icon: IconKey },
     ];
 
     return (
@@ -97,17 +97,13 @@ export default async function UuidToolPage({ params, searchParams }: UuidPagePro
                         </p>
                     </div>
 
-                    <ul className="flex flex-wrap items-center gap-1.5">
+                    <ul className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
                         {badges.map(({ label, Icon }) => (
                             <li
                                 key={label}
-                                className="bg-card/70 text-muted-foreground ring-border/70 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset"
+                                className="text-muted-foreground inline-flex items-center gap-1.5 text-xs"
                             >
-                                <Icon
-                                    className="text-primary size-3.5"
-                                    stroke={1.9}
-                                    aria-hidden="true"
-                                />
+                                <Icon className="size-3.5" stroke={1.9} aria-hidden="true" />
                                 {label}
                             </li>
                         ))}

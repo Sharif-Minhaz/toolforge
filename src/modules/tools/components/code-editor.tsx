@@ -108,7 +108,7 @@ export function CodeEditor({
         <div
             className={cn(
                 // `grid` rather than the default block: see the note above.
-                "bg-card/70 ring-border/70 focus-within:ring-ring/60 relative grid min-h-32 min-w-0 rounded-xl ring-1 transition-shadow duration-200 ring-inset focus-within:ring-2",
+                "bg-card/70 ring-border/70 focus-within:ring-ring relative grid min-h-32 min-w-0 rounded-xl ring-1 transition-shadow duration-200 ring-inset focus-within:ring-2",
                 className,
             )}
         >

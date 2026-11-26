@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import { StepLabel } from "@/modules/tools/components/workbench-step";
 
 import { createServer, deleteServer, pauseServer } from "../actions/servers";
 import { MAX_SERVERS_PER_WORKSPACE, SERVER_NAME_LENGTH } from "../domain/constants";
@@ -156,9 +157,9 @@ export function ServerGrid({ workspaceId, servers, base }: ServerGridProps) {
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     <div className="flex flex-col gap-1.5">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                            <Label htmlFor={nameId} className="text-xs">
+                            <StepLabel step={1} htmlFor={nameId}>
                                 {t("nameLabel")}
-                            </Label>
+                            </StepLabel>
                             <InputLimitMeter reading={nameLimit} />
                         </div>
                         <Input
@@ -174,7 +175,8 @@ export function ServerGrid({ workspaceId, servers, base }: ServerGridProps) {
 
                     <div className="flex flex-col gap-1.5">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                            <Label htmlFor={keyId} className="text-xs">
+                            {/* Step height, so both inputs start on the same line. */}
+                            <Label htmlFor={keyId} className="min-h-5 text-xs">
                                 {t("keyLabel")}
                             </Label>
                             <InputLimitMeter reading={keyLimit} />
@@ -224,10 +226,7 @@ export function ServerGrid({ workspaceId, servers, base }: ServerGridProps) {
             </section>
 
             <section aria-labelledby="servers-heading">
-                <h2
-                    id="servers-heading"
-                    className="text-muted-foreground text-[0.6875rem] font-semibold tracking-[0.09em] uppercase"
-                >
+                <h2 id="servers-heading" className="text-muted-foreground text-xs font-medium">
                     {t("heading")}
                 </h2>
 
@@ -333,7 +332,7 @@ export function ServerGrid({ workspaceId, servers, base }: ServerGridProps) {
                                         <Link
                                             href={`/mock/${workspaceId}/servers/${server.id}`}
                                             className={cn(
-                                                buttonVariants({ size: "sm" }),
+                                                buttonVariants({ size: "sm", variant: "outline" }),
                                                 "gap-1.5",
                                             )}
                                         >

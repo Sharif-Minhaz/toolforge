@@ -27,14 +27,14 @@ export default function ServerLoading() {
 
             <div className="grid gap-5 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
                 <div className="flex min-w-0 flex-col gap-3">
-                    <Skeleton className="h-3 w-20" />
+                    <Skeleton className="h-5 w-24" />
                     <Skeleton className="h-32 rounded-2xl" />
                     <Skeleton className="h-10 rounded-xl" />
                     <Skeleton className="h-10 rounded-xl" />
                     <Skeleton className="h-10 rounded-xl" />
                 </div>
                 <div className="flex min-w-0 flex-col gap-3">
-                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-5 w-28" />
                     <Skeleton className="h-[32rem] rounded-2xl" />
                 </div>
             </div>

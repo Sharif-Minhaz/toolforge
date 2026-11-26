@@ -179,7 +179,7 @@ function ViewerFrame({ stale, scroll, children }: ViewerFrameProps) {
     return (
         <div
             className={cn(
-                "ring-border/70 overflow-hidden rounded-xl ring-1 transition-opacity duration-200 ring-inset",
+                "bg-card ring-border/70 overflow-hidden rounded-xl ring-1 transition-opacity duration-200 ring-inset",
                 stale && "opacity-55",
             )}
         >

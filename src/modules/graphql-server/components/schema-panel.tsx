@@ -225,10 +225,7 @@ export function SchemaPanel({ schema, sdl, serverKey }: SchemaPanelProps) {
             </div>
 
             <section aria-labelledby="relations-heading" className="flex flex-col gap-2">
-                <h4
-                    id="relations-heading"
-                    className="text-muted-foreground text-[0.6875rem] font-semibold tracking-[0.09em] uppercase"
-                >
+                <h4 id="relations-heading" className="text-muted-foreground text-xs font-medium">
                     {t("relationsHeading")}
                 </h4>
                 {relations.length === 0 ? (
@@ -322,10 +319,7 @@ export function SchemaPanel({ schema, sdl, serverKey }: SchemaPanelProps) {
 
             <section aria-labelledby="sdl-heading" className="flex min-w-0 flex-col gap-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h4
-                        id="sdl-heading"
-                        className="text-muted-foreground text-[0.6875rem] font-semibold tracking-[0.09em] uppercase"
-                    >
+                    <h4 id="sdl-heading" className="text-muted-foreground text-xs font-medium">
                         {t("sdlLabel")}
                     </h4>
                     <div className="flex flex-wrap gap-2">

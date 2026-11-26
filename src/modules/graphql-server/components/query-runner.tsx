@@ -13,6 +13,7 @@ import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input
 import { JsonViewer } from "@/modules/tools/components/json-viewer";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
+import { RESULT_TRAY, StepLabel } from "@/modules/tools/components/workbench-step";
 
 import { GRAPHQL_EXECUTION_PREFIX, MAX_QUERY_LENGTH } from "../domain/constants";
 
@@ -155,9 +156,9 @@ export function QueryRunner({ serverKey, starterQuery, isPaused }: QueryRunnerPr
             <div className="grid min-w-0 gap-4 lg:grid-cols-[3fr_2fr]">
                 <div className="flex min-w-0 flex-col gap-1.5">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                        <Label htmlFor={queryId} className="text-xs">
+                        <StepLabel step={1} htmlFor={queryId}>
                             {t("queryLabel")}
-                        </Label>
+                        </StepLabel>
                         <InputLimitMeter reading={queryLimit} />
                     </div>
                     {/*
@@ -177,7 +178,8 @@ export function QueryRunner({ serverKey, starterQuery, isPaused }: QueryRunnerPr
                 </div>
 
                 <div className="flex min-w-0 flex-col gap-1.5">
-                    <Label htmlFor={variablesId} className="text-xs">
+                    {/* Step height, so both editors start on the same line. */}
+                    <Label htmlFor={variablesId} className="min-h-5 text-xs">
                         {t("variablesLabel")}
                     </Label>
                     <CodeEditor
@@ -222,14 +224,11 @@ export function QueryRunner({ serverKey, starterQuery, isPaused }: QueryRunnerPr
                 ) : null}
             </div>
 
-            <div ref={resultRef} className="flex min-w-0 scroll-mt-6 flex-col gap-1.5">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <p
-                        id={responseId}
-                        className="text-muted-foreground text-[0.6875rem] font-semibold tracking-[0.09em] uppercase"
-                    >
+            <div ref={resultRef} className={cn(RESULT_TRAY, "scroll-mt-6")}>
+                <div className="flex min-h-7 flex-wrap items-center justify-between gap-2">
+                    <StepLabel step={2} id={responseId}>
                         {t("responseLabel")}
-                    </p>
+                    </StepLabel>
                     {answer !== null ? (
                         <p className="flex flex-wrap gap-x-3 text-[0.6875rem] tabular-nums">
                             <span
