@@ -63,6 +63,7 @@ docs/
 | The service worker, offline, a model or CDN | [`docs/patterns/offline.md`](docs/patterns/offline.md)                                                             |
 | `aes`                                       | [`docs/case-studies/aes.md`](docs/case-studies/aes.md)                                                             |
 | `background-remover`                        | [`docs/case-studies/background-remover.md`](docs/case-studies/background-remover.md)                               |
+| `bijoy-unicode`                             | [`docs/case-studies/bijoy-unicode.md`](docs/case-studies/bijoy-unicode.md)                                         |
 | `blur-placeholder`                          | [`docs/case-studies/blurhash.md`](docs/case-studies/blurhash.md)                                                   |
 | `bson`                                      | [`docs/case-studies/bson.md`](docs/case-studies/bson.md)                                                           |
 | `curl`                                      | [`docs/case-studies/curl.md`](docs/case-studies/curl.md)                                                           |
@@ -83,6 +84,7 @@ docs/
 | `mock-server`                               | [`docs/case-studies/mock-server.md`](docs/case-studies/mock-server.md)                                             |
 | `keyboard-tester`                           | [`docs/case-studies/keyboard-tester.md`](docs/case-studies/keyboard-tester.md)                                     |
 | `mouse-tester`                              | [`docs/case-studies/mouse-tester.md`](docs/case-studies/mouse-tester.md)                                           |
+| `number-to-words`                           | [`docs/case-studies/number-to-words.md`](docs/case-studies/number-to-words.md)                                     |
 | `pdf-converter`                             | [`docs/case-studies/pdf-converter.md`](docs/case-studies/pdf-converter.md)                                         |
 | `port-scanner`                              | [`docs/case-studies/port-scanner.md`](docs/case-studies/port-scanner.md)                                           |
 | `refresh-rate-tester`                       | [`docs/case-studies/refresh-rate-tester.md`](docs/case-studies/refresh-rate-tester.md)                             |

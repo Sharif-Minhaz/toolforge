@@ -1,6 +1,7 @@
 import type { McpTool } from "../types";
 import { aesCryptTool } from "./aes";
 import { base64ConvertTool } from "./base64";
+import { bijoyUnicodeConvertTool } from "./bijoy-unicode";
 import { bsonConvertTool } from "./bson";
 import { catalogListTool } from "./catalog";
 import { chmodConvertTool } from "./chmod";
@@ -19,6 +20,7 @@ import { jsonFormatTool } from "./json";
 import { jwtDecodeTool, jwtSignTool, jwtVerifyTool } from "./jwt";
 import { loremGenerateTool } from "./lorem";
 import { markdownAnalyzeTool } from "./markdown";
+import { numberToWordsConvertTool } from "./number-to-words";
 import { passwordGenerateTool } from "./password";
 import { pdfConverterConvertTool } from "./pdf-converter";
 import { qrGenerateTool } from "./qr";
@@ -139,6 +141,7 @@ import { uuidGenerateTool } from "./uuid";
 export const MCP_TOOLS: readonly McpTool[] = [
     aesCryptTool,
     base64ConvertTool,
+    bijoyUnicodeConvertTool,
     bsonConvertTool,
     catalogListTool,
     chmodConvertTool,
@@ -163,6 +166,7 @@ export const MCP_TOOLS: readonly McpTool[] = [
     jwtVerifyTool,
     loremGenerateTool,
     markdownAnalyzeTool,
+    numberToWordsConvertTool,
     passwordGenerateTool,
     pdfConverterConvertTool,
     qrGenerateTool,

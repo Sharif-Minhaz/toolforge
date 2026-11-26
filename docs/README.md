@@ -82,6 +82,7 @@ docs/
 ├── case-studies/               what one subsystem cost, and what it taught
 │   ├── aes.md
 │   ├── background-remover.md
+│   ├── bijoy-unicode.md
 │   ├── blurhash.md
 │   ├── bson.md
 │   ├── curl.md
@@ -98,6 +99,7 @@ docs/
 │   ├── mock-server.md
 │   ├── keyboard-tester.md
 │   ├── mouse-tester.md
+│   ├── number-to-words.md
 │   ├── pdf-converter.md
 │   ├── port-scanner.md
 │   ├── qr.md
@@ -144,6 +146,7 @@ records a defect that was expensive to find and is easy to reintroduce.
 | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `aes`                                    | [`case-studies/aes.md`](case-studies/aes.md)                                                                                       |
 | `background-remover`                     | [`case-studies/background-remover.md`](case-studies/background-remover.md)                                                         |
+| `bijoy-unicode`                          | [`case-studies/bijoy-unicode.md`](case-studies/bijoy-unicode.md)                                                                   |
 | `blur-placeholder`                       | [`case-studies/blurhash.md`](case-studies/blurhash.md)                                                                             |
 | `bson`                                   | [`case-studies/bson.md`](case-studies/bson.md)                                                                                     |
 | `curl`                                   | [`case-studies/curl.md`](case-studies/curl.md)                                                                                     |
@@ -163,6 +166,7 @@ records a defect that was expensive to find and is easy to reintroduce.
 | `mock-server`                            | [`case-studies/mock-server.md`](case-studies/mock-server.md), [`mock-server-studio.md`](mock-server-studio.md)                     |
 | `keyboard-tester`                        | [`case-studies/keyboard-tester.md`](case-studies/keyboard-tester.md)                                                               |
 | `mouse-tester`                           | [`case-studies/mouse-tester.md`](case-studies/mouse-tester.md)                                                                     |
+| `number-to-words`                        | [`case-studies/number-to-words.md`](case-studies/number-to-words.md)                                                               |
 | `pdf-converter`                          | [`case-studies/pdf-converter.md`](case-studies/pdf-converter.md), [`patterns/format-conversion.md`](patterns/format-conversion.md) |
 | `port-scanner`                           | [`case-studies/port-scanner.md`](case-studies/port-scanner.md)                                                                     |
 | `qr`                                     | [`case-studies/qr.md`](case-studies/qr.md)                                                                                         |

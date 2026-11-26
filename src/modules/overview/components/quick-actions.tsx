@@ -70,7 +70,9 @@ export async function QuickActions() {
         // instead. Raise its popularity when the traffic says so, and it takes
         // pdf-converter's place here. Text to Speech arrived at 70 and stayed
         // out for the same reason, as did the Mouse Tester at 72, the
-        // Keyboard Tester at 73, Image to Text at 76 and What Is My IP at 82.
+        // Keyboard Tester at 73, Image to Text at 76, What Is My IP at 82, the
+        // Number to Words converter at 76 and the Bijoy ↔ Unicode Converter at
+        // 80.
         {
             key: "wordToPdf",
             href: "/tools/pdf-converter",

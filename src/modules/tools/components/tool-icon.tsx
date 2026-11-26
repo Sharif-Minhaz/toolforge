@@ -1,4 +1,5 @@
 import {
+    IconAlphabetBangla,
     IconArrowsMinimize,
     IconBackground,
     IconBinary,
@@ -34,6 +35,7 @@ import {
     IconMarkdown,
     IconMathFunction,
     IconNetwork,
+    IconNumber123,
     IconPalette,
     IconPhotoScan,
     IconQrcode,
@@ -120,6 +122,8 @@ const ICONS: Record<ToolIconName, ComponentType<IconProps>> = {
     "file-pdf": IconFileTypePdf,
     "world-pin": IconWorldPin,
     "lock-access": IconLockAccess,
+    bangla: IconAlphabetBangla,
+    number: IconNumber123,
 };
 
 type ToolIconProps = {

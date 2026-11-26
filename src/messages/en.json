@@ -358,6 +358,14 @@
             "name": "Chmod Calculator",
             "description": "Work out a Unix file mode from checkboxes, octal or an ls -l string, and copy the chmod command."
         },
+        "bijoy-unicode": {
+            "name": "Bijoy ↔ Unicode Converter",
+            "description": "Convert Bangla typed in Bijoy and SutonnyMJ to Unicode, and Unicode back to Bijoy."
+        },
+        "number-to-words": {
+            "name": "Number to Words",
+            "description": "Spell a number or a cheque amount out in English and Bangla at once, in lakhs and crores or in millions."
+        },
         "mock-server": {
             "name": "Mock Server Studio",
             "description": "Build mock REST APIs visually and call them from a real URL. No account — a recovery key moves a workspace between browsers."
@@ -7347,6 +7355,187 @@
                 "a5": "No — this page sets whole modes only. <code>u+x</code> changes whatever mode a file already has, so its result depends on a file this page cannot see, and a umask is taken away from the mode a program asks for when it creates one. The assignment form, <code>u=rwx,g=rx,o=rx</code>, is the symbolic way to state the whole mode.",
                 "q6": "Can I paste a line from ls -l?",
                 "a6": "Paste its first column. <code>drwxr-sr-x</code> works, file-type letter and all, and so does the trailing <code>.</code>, <code>+</code> or <code>@</code> that SELinux, ACLs and macOS extended attributes add. Case matters, because <code>s</code> and <code>S</code> are different modes."
+            }
+        }
+    },
+    "bijoyUnicode": {
+        "meta": {
+            "title": "Bijoy to Unicode Converter — SutonnyMJ to Unicode Bangla and Back",
+            "description": "Convert Bangla typed in Bijoy and SutonnyMJ to Unicode that works on the web, in Word and on any phone — and Unicode back to Bijoy for print and design software that only draws Bijoy fonts. Puts vowel signs and rephs back in spoken order, reads every conjunct, and never leaves your browser."
+        },
+        "hero": {
+            "eyebrow": "Text",
+            "title": "Bijoy ↔ Unicode Converter",
+            "subtitle": "Paste Bangla typed in SutonnyMJ or any other Bijoy font and get Unicode — or go the other way for software that only draws Bijoy.",
+            "badgeBothWays": "Both directions",
+            "badgeConjuncts": "Conjuncts and reph",
+            "badgeOffline": "Works offline"
+        },
+        "workbench": {
+            "directionLabel": "Direction",
+            "directions": {
+                "to-unicode": "Bijoy → Unicode",
+                "to-bijoy": "Unicode → Bijoy"
+            },
+            "directionHints": {
+                "to-unicode": "For a document typed in SutonnyMJ or another Bijoy font. Outside that font it looks like Latin letters: Avgvi †mvbvi.",
+                "to-bijoy": "For print, signage or design software that only draws Bangla through a Bijoy font such as SutonnyMJ."
+            },
+            "inputLabel": "Text",
+            "placeholders": {
+                "to-unicode": "Paste Bijoy text, such as Avgvi †mvbvi evsjv",
+                "to-bijoy": "Paste Unicode Bangla, such as আমার সোনার বাংলা"
+            },
+            "sample": "Sample",
+            "sampleLabel": "Fill the box with a sample sentence",
+            "clear": "Clear the text",
+            "swap": "Swap",
+            "swapLabel": "Use the result as the input and reverse the direction",
+            "outputLabel": "Result",
+            "outputPlaceholder": "The converted text appears here",
+            "copy": "Copy",
+            "download": "Download",
+            "stats": "{characters} characters · {words} words · {lines} lines",
+            "statusEmpty": "Paste some text to convert it.",
+            "statusReady": {
+                "to-unicode": "Converted to Unicode: {characters} characters, ready to paste anywhere.",
+                "to-bijoy": "Converted to Bijoy: {characters} characters. Set the text in SutonnyMJ to read it."
+            },
+            "notices": {
+                "alreadyUnicode": "This text already holds Unicode Bangla, and that part was left as it was. To turn it into Bijoy, switch the direction.",
+                "noBangla": "There is no Unicode Bangla here, so nothing changed. If this is Bijoy text, switch the direction."
+            }
+        },
+        "errors": {
+            "tooLong": "That is longer than {max} characters. Convert it in parts."
+        },
+        "toast": {
+            "copied": "Text copied",
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The download could not start.",
+            "copyFailedEmpty": "There is nothing to copy yet.",
+            "copyFailedUnsupported": "This browser will not let the page reach the clipboard.",
+            "copyFailedDenied": "Clipboard access was refused. Copy from the box instead."
+        },
+        "article": {
+            "understanding": {
+                "title": "Why Bijoy text has to be converted at all",
+                "p1": "For two decades most Bangla typed in Bangladesh was typed in Bijoy, and what it left behind is not Bangla to a computer. A SutonnyMJ font draws Bangla shapes in the slots an ordinary font keeps for Latin letters, so the file underneath says <code>Avgvi †mvbvi evsjv</code> and only that font turns it into আমার সোনার বাংলা. Paste it into a browser, a phone or a search box and the Latin letters are all anybody sees.",
+                "example": "Avgvi †mvbvi evsjv → আমার সোনার বাংলা",
+                "p2": "Converting it takes more than swapping letters. Bijoy stores text in the order it is drawn, so the <code>ি</code> of কি comes before the <code>ক</code>, and a reph comes after the letter it sits on. This tool reads each code as the glyph it draws, puts the vowel signs and rephs back in the order the language is spoken, and does it all inside your browser: nothing you paste is uploaded."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Does my text get uploaded anywhere?",
+                "a1": "No. Both directions run in your browser, on the text in the box, and the page makes no request while you type. It keeps working with your connection turned off.",
+                "q2": "Which fonts does it work with?",
+                "a2": "SutonnyMJ, and the other Bijoy fonts whose names end in <code>MJ</code>, which share its layout. Older legacy fonts that put the Bangla glyphs in places of their own are a different encoding, and their text will not come out right here.",
+                "q3": "Why does the Unicode → Bijoy result look like Latin letters?",
+                "a3": "Because that is what Bijoy is. The result reads as Bangla only once it is set in SutonnyMJ or another Bijoy font: paste it into your document, select it, and change the font. Any English in the same passage turns into Bangla shapes too, because Bijoy cannot tell the two apart, so set those words back in an ordinary font afterwards.",
+                "q4": "What happens to English words and numbers in a Bijoy document?",
+                "a4": "They are read as Bijoy as well. In a Bijoy file an English word and a Bangla one are the same Latin letters, and only the font they were set in told them apart — which the pasted text no longer carries. Digits become Bangla numerals for the same reason. If your document mixed in English set in an ordinary font, convert the Bangla passages on their own, or retype the English afterwards.",
+                "q5": "A few symbols came out wrong. Why?",
+                "a5": "Some Bijoy codes mean two things. <code>’</code> is ্থ after a half-letter and a closing quote anywhere else; <code>©</code> is a reph after a letter and a copyright sign on its own; <code>°</code> is ক্ক in a word and a degree sign after a number. The tool decides from the characters around each one, which is right in ordinary text and can be wrong where Bangla runs straight into a symbol. Fix the odd one by hand.",
+                "q6": "How much text can I convert at once?",
+                "a6": "Up to {max} characters — a whole document pasted from Word. Past that the tool refuses rather than freezing the tab, and the counter above the box starts warning you well before you reach it."
+            }
+        }
+    },
+    "numberToWords": {
+        "meta": {
+            "title": "Number to Words — English and Bangla, Lakh and Crore, Cheque Amounts",
+            "description": "Write any number in words in English and Bangla at once: 1,25,000 is one lakh twenty-five thousand and এক লক্ষ পঁচিশ হাজার. Spells cheque and invoice amounts in taka, rupees, dollars, euros or pounds with the paisa and “only”, counts in lakhs and crores or in millions, and never leaves your browser."
+        },
+        "hero": {
+            "eyebrow": "Text",
+            "title": "Number to Words",
+            "subtitle": "Type a number and read it in English and Bangla words side by side — as a plain number, or as the amount on a cheque.",
+            "badgeBilingual": "English and Bangla",
+            "badgeCheque": "Cheque amounts",
+            "badgeOffline": "Works offline"
+        },
+        "workbench": {
+            "formatLabel": "Read it as",
+            "formats": {
+                "cardinal": "Number",
+                "currency": "Amount"
+            },
+            "formatHints": {
+                "cardinal": "The number itself, with decimals read digit by digit: three point one four.",
+                "currency": "Money, the way a cheque writes it: taka and paisa, ending in “only”."
+            },
+            "inputLabel": "Number",
+            "placeholder": "1,250,500.75",
+            "inputHint": "Western or Bangla digits. Commas, spaces or underscores between digit groups are fine.",
+            "clear": "Clear the number",
+            "currencyLabel": "Currency",
+            "currencyHint": "Names the units on both lines.",
+            "currencyHintUnavailable": "Only an amount has a currency. Read it as an amount to choose one.",
+            "scaleLabel": "English counts in",
+            "scales": {
+                "international": "Millions and billions",
+                "south-asian": "Lakhs and crores"
+            },
+            "scaleHint": "Bangla always counts in lakhs and crores. This sets the English line and how the number is grouped.",
+            "letterCaseLabel": "English letter case",
+            "letterCases": {
+                "lower": "lower case",
+                "sentence": "Sentence case",
+                "title": "Title Case",
+                "upper": "UPPER CASE"
+            },
+            "letterCaseHint": "Bangla has no letter case, so only the English line changes.",
+            "britishAndLabel": "British “and”",
+            "britishAndHint": "One hundred and five, rather than one hundred five.",
+            "onlyLabel": "End with “only”",
+            "onlyHint": "Adds only and মাত্র after the amount, so nothing can be written in after it.",
+            "onlyHintUnavailable": "Only an amount ends in “only”. Read it as an amount to use it.",
+            "outputLabel": "In words",
+            "englishLabel": "English",
+            "banglaLabel": "Bangla",
+            "copyEnglish": "Copy the English",
+            "copyBangla": "Copy the Bangla",
+            "statusEmpty": "Type a number to read it out.",
+            "statusReady": "Read {numeral} in English and Bangla."
+        },
+        "errors": {
+            "invalidCharacter": "Character {position} is not part of a number. Use digits, one decimal point, and commas or spaces between groups.",
+            "misplacedSign": "The sign at character {position} has to come first.",
+            "misplacedSeparator": "The separator at character {position} has to sit between two digits of the whole number.",
+            "tooManyPoints": "There is a second decimal point at character {position}.",
+            "noDigits": "There are no digits in this yet.",
+            "tooManyDigits": "That is more than {max} digits before the point, past the largest number English has a standard name for.",
+            "tooManyDecimals": "That has more than {max} digits after the point.",
+            "tooManyDecimalsAmount": "An amount has at most {max} decimals. Round it to the paisa first.",
+            "negativeAmount": "An amount cannot be negative. Remove the minus sign, or read it as a number."
+        },
+        "toast": {
+            "copied": "Words copied",
+            "copyFailedEmpty": "There is nothing to copy yet.",
+            "copyFailedUnsupported": "This browser will not let the page reach the clipboard.",
+            "copyFailedDenied": "Clipboard access was refused. Select the words and copy them instead."
+        },
+        "article": {
+            "understanding": {
+                "title": "Writing a number the way a cheque needs it",
+                "p1": "A number in words is the version nobody can quietly change, which is why a cheque, a deed or an invoice spells the amount out beneath the digits. In Bangladesh it often has to be right twice: <code>12,50,500</code> is twelve lakh fifty thousand five hundred in English and বারো লক্ষ পঞ্চাশ হাজার পাঁচ শত in Bangla, and both can go on the same form.",
+                "example": "12,50,500.75 → twelve lakh fifty thousand five hundred taka and seventy-five paisa only",
+                "p2": "Bangla is the harder half. Every number below a hundred has a word of its own — twenty-one is একুশ, not বিশ এক — so there is no rule to fall back on, only a table that has to be right. This tool writes both lines at once, counts in lakhs and crores or in millions, and does it all inside your browser."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Is the number sent anywhere?",
+                "a1": "No. The words are worked out in your browser as you type, and the page makes no request while you do. It keeps working with your connection turned off.",
+                "q2": "What is the difference between Number and Amount?",
+                "a2": "Number reads the value itself, so <code>10.5</code> is ten point five. Amount reads it as money, so the same <code>10.5</code> is ten taka and fifty paisa — the decimals are hundredths rather than digits — and the line ends in “only”, as a cheque's does.",
+                "q3": "How are numbers above a crore written?",
+                "a3": "On the South Asian ladder every step after the thousand is a hundred times the last: lakh, crore, then arab (ten to the ninth), kharab, neel, padma and shankh (ten to the seventeenth). Past a shankh the count of shankhs is itself a number, so ten to the nineteenth is one hundred shankh. The Bangla line always counts this way — আরব, খরব, নীল, পদ্ম, শঙ্খ — and the English line does too when it is set to lakhs and crores.",
+                "q4": "Why শত and লক্ষ rather than শো and লাখ?",
+                "a4": "Because a number in words is usually going onto something formal, and the written register uses শত and লক্ষ: এক লক্ষ পঁচিশ হাজার পাঁচ শত. শো and লাখ are what people say aloud, and both are good Bangla — they are just not what a cheque or a deed is written in.",
+                "q5": "Why was an amount with three decimals refused?",
+                "a5": "Because taka, rupees, dollars, euros and pounds all divide into a hundred, so a third decimal is not something anybody can pay. Rounding it would put a sum on the cheque that nobody wrote down, so the tool asks you to decide instead.",
+                "q6": "How large a number can it read?",
+                "a6": "Up to {digits} digits before the decimal point — 999 duotrigintillion on the international scale, past a googol — and {decimals} after it. Exactly ten to the hundredth reads as one googol. It stops there because that is where the standard English names run out."
             }
         }
     },

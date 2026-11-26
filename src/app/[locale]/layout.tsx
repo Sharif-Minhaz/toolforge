@@ -523,6 +523,16 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
             errors: messages.chmod.errors,
             toast: messages.chmod.toast,
         },
+        bijoyUnicode: {
+            workbench: messages.bijoyUnicode.workbench,
+            errors: messages.bijoyUnicode.errors,
+            toast: messages.bijoyUnicode.toast,
+        },
+        numberToWords: {
+            workbench: messages.numberToWords.workbench,
+            errors: messages.numberToWords.errors,
+            toast: messages.numberToWords.toast,
+        },
         // The studio's own hero and disclosure copy stays on the server; only
         // the launcher island's strings cross.
         mockServer: {

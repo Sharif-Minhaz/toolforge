@@ -74,6 +74,8 @@ export const TOOL_IDS = [
     "mic-tester",
     "my-ip",
     "chmod",
+    "bijoy-unicode",
+    "number-to-words",
 ] as const;
 
 export type ToolId = (typeof TOOL_IDS)[number];
@@ -160,7 +162,9 @@ export type ToolIconName =
     | "camera"
     | "microphone"
     | "world-pin"
-    | "lock-access";
+    | "lock-access"
+    | "bangla"
+    | "number";
 
 export type Tool = {
     readonly id: ToolId;
