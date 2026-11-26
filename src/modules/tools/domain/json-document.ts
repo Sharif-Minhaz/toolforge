@@ -205,7 +205,7 @@ function normalizeDocument(document: JsonObject, maxBytes: number): DocumentResu
  * loses which the JSON Formatter keeps: an integer past 2^53 rounds. It is
  * unavoidable — the document is stored as JSONB and served through
  * `JSON.stringify`, both of which are doubles — so the honest thing is to say so
- * in the article rather than pretend the literal survives.
+ * here rather than pretend the literal survives.
  */
 function toValue(node: JsonNode): JsonValue {
     switch (node.kind) {

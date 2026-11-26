@@ -47,9 +47,9 @@ export function isPercentFormat(numberFormatId: number, formatCode: string | nul
  * A serial number turned into `YYYY-MM-DD`, or `YYYY-MM-DD HH:MM` when it
  * carries a time.
  *
- * ISO order rather than the sheet's own format, and stated in the article. A
- * PDF is read by whoever it is sent to, and `03/04/2026` means two different
- * days depending on which side of an ocean it lands on; `2026-04-03` means one.
+ * ISO order rather than the sheet's own format. A PDF is read by whoever it is
+ * sent to, and `03/04/2026` means two different days depending on which side of
+ * an ocean it lands on; `2026-04-03` means one.
  *
  * The 1900 system counts from 1899-12-31 as day 1 **and** contains Lotus's
  * phantom 29 February 1900, so every serial above 59 is one greater than the

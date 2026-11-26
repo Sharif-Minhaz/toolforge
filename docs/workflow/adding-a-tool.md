@@ -78,8 +78,11 @@ Bring the result into view when a press produces it — see
 
 ## 7. Write the article after the tool
 
-Use semantic sections with stable `id`s and a TOC entry. Cap prose at
-`max-w-[68ch]`; let tables break out inside `overflow-x-auto`.
+Two sections, nothing more: the opening
+([`../patterns/article-openings.md`](../patterns/article-openings.md)) and the
+FAQ. No table of contents. Controls explain themselves through their labels and
+hints in the workbench, not through an article table. The page's `loading.tsx`
+renders `ArticleSkeleton` in the article's place.
 
 If the tool cannot keep the site's "nothing is uploaded" promise, the disclosure
 goes **above the controls**, not in the article — see

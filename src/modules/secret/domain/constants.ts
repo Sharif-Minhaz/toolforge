@@ -17,17 +17,6 @@ export const SECRET_ENCODING_LABELS: Record<SecretEncoding, string> = {
     base32: "base32",
 };
 
-/**
- * The alphabet each encoding draws from, written the way a reference writes it
- * rather than as all sixty-four symbols.
- */
-export const SECRET_ALPHABET_SUMMARY: Record<SecretEncoding, string> = {
-    base64url: "A–Z a–z 0–9 - _",
-    base64: "A–Z a–z 0–9 + /",
-    hex: "0–9 a–f",
-    base32: "A–Z 2–7",
-};
-
 export const SECRET_KEY_USE_LABELS: Record<SecretKeyUse, string> = {
     "aes-128": "AES-128",
     "aes-192": "AES-192",

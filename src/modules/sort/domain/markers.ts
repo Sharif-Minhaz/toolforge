@@ -153,8 +153,8 @@ export function toRoman(value: number): string {
  *
  * Roman and alphabetic have no zero and no negatives, so a list started at `0`
  * falls back to the decimal for that one item rather than emitting an empty
- * label. Documented in the article, and the reason `startNumber` may be zero at
- * all: a code listing is often numbered from it.
+ * label. Said in the start field's hint, and the reason `startNumber` may be
+ * zero at all: a code listing is often numbered from it.
  */
 export function formatOrdinal(style: NumberStyle, value: number, width: number): string {
     switch (style) {

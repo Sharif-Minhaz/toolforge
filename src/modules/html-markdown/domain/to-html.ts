@@ -50,7 +50,6 @@ export function readDocumentTitle(markdown: string, options: HtmlMarkdownOptions
  *
  * `lang` is `en` because the file has to declare one and nothing here knows the
  * document's language — the reader's interface locale is not the same question.
- * The article says so, and says to change it.
  */
 function wrapDocument(body: string, title: string): string {
     return `<!doctype html>

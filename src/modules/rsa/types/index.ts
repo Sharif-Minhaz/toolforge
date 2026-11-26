@@ -67,8 +67,8 @@ export type RsaRenderedKey = {
     readonly text: string;
     /**
      * The PEM header this key was written under, or `null` under DER and JWK
-     * where there is no header. Carried so the article and the download can name
-     * the container without re-deriving it from the options.
+     * where there is no header. Carried so the key panel can name the container
+     * without re-deriving it from the options.
      */
     readonly label: PemLabel | null;
 };

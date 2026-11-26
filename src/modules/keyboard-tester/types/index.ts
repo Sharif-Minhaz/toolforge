@@ -139,7 +139,7 @@ export type KeySettings = {
     readonly faultWindowMs: number;
 };
 
-/** Named so the article and the reader can say "my layout reads as QWERTZ". */
+/** Named so the reader can say "my layout reads as QWERTZ". */
 export const LAYOUT_FAMILIES = [
     "qwerty",
     "qwertz",

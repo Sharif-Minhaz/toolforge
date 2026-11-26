@@ -8,14 +8,18 @@ decided whether the page is the one they wanted.
 Every tool article follows it now. A new one starts here rather than arriving at
 it later.
 
-Everything below it may stay as long as it needs to be. The tables in
-particular are the part readers come back for, and their structure is not up for
-change here.
+**A tool article is this section and the FAQ — nothing else.** No further
+sections and no table of contents. The long-form sections were cut in November
+2026 because readers found every page too verbose: a control explains itself
+through its own label and hint in the workbench, and anything a reader must know
+before using the tool sits above the controls (rule 32). The one exception is
+the Hex Editor's keyboard-shortcut table, kept because the grid's keys are
+documented nowhere else.
 
 **Two halves, different reach.** The _length_ rule below is about the opening
-section only. The _code markup_ rules are about the whole article — paragraphs,
-list items, notes, table cells and FAQ answers alike. A `SHA-512` that is boxed
-in the opening and bare in the table beneath it is worse than neither.
+section. The _code markup_ rules are about the whole article — paragraphs,
+examples and FAQ answers alike. A `SHA-512` that is boxed in the opening and bare
+in an answer beneath it is worse than neither.
 
 ---
 
@@ -31,9 +35,9 @@ The old shape was three to five dense paragraphs of correct prose that nobody
 finished. The example is the part that survives skimming: a reader who reads
 none of the sentences still learns the shape of the output from the line.
 
-Anything the two paragraphs cannot hold has a section of its own further down —
-the opening links to it or trusts the table of contents. Facts do not get
-deleted to make room; they get moved.
+Anything the two paragraphs cannot hold goes into an FAQ answer, if a reader
+will genuinely ask it, or into the hint beside the control it concerns. It does
+not get a section of its own.
 
 ## The example is a line, not a code block
 

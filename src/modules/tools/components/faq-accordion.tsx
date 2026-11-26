@@ -42,7 +42,7 @@ export function FaqAccordion({ items, defaultOpenIndex = 0, className }: FaqAcco
         <Accordion
             hiddenUntilFound
             defaultValue={[defaultOpenIndex]}
-            className={cn("max-w-[68ch] gap-2.5", className)}
+            className={cn("gap-2.5", className)}
         >
             {items.map((item, index) => (
                 <AccordionItem

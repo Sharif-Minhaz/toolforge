@@ -93,7 +93,7 @@ export default async function JsonToolPage({ params, searchParams }: JsonPagePro
                         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                             {t("title")}
                         </h1>
-                        <p className="text-muted-foreground max-w-2xl text-[0.9375rem] leading-7 sm:text-base">
+                        <p className="text-muted-foreground text-[0.9375rem] leading-7 sm:text-base">
                             {t("subtitle")}
                         </p>
                     </div>

@@ -67,8 +67,8 @@ therefore its own flag, and it is a fact about the text rather than about the
 styling.
 
 What that costs is column alignment: the body face is proportional, so an ASCII
-table drawn with spaces will not line up. The article says so and points at the
-Markdown box with a fence, which is the tool that already does that job.
+table drawn with spaces will not line up. A fence in the Markdown box is the
+tool that already does that job.
 
 ---
 
@@ -171,8 +171,8 @@ The consequence for the panel is that `pageSize`, `orientation`, `margin` and
 `fontSize` have nothing to decide for a deck. They are **disabled with a
 reason**, never hidden: a control that vanishes between two documents is a
 control somebody hunts for. `appliesTo(option, format)` in `domain/convert.ts` is
-the single predicate, shared by the panel, the article's options table, the
-coercion an MCP call goes through, and the tests.
+the single predicate, shared by the panel, the coercion an MCP call goes
+through, and the tests.
 
 ---
 

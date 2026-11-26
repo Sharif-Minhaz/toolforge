@@ -4,7 +4,7 @@ import { convertCase } from "./convert";
 
 export type CaseSample = {
     readonly textCase: TextCase;
-    /** `CASE_SAMPLE` put through this case, for the chip and the article table. */
+    /** `CASE_SAMPLE` put through this case, for the chip. */
     readonly sample: string;
 };
 

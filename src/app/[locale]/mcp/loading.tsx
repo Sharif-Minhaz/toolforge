@@ -13,8 +13,8 @@ export default function McpLoading() {
                 <Skeleton className="h-4 w-40" />
                 <Skeleton className="h-9 w-80 sm:h-10" />
                 <div className="flex flex-col gap-2">
-                    <Skeleton className="h-4 w-full max-w-xl" />
-                    <Skeleton className="h-4 w-3/5 max-w-md" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/5" />
                 </div>
                 <div className="flex gap-1.5">
                     {Array.from({ length: 3 }, (_, index) => (
@@ -37,7 +37,7 @@ export default function McpLoading() {
                     {Array.from({ length: 3 }, (_, section) => (
                         <div key={section} className="flex flex-col gap-4">
                             <Skeleton className="h-6 w-56" />
-                            <Skeleton className="h-4 w-full max-w-[68ch]" />
+                            <Skeleton className="h-4 w-full" />
                             <Skeleton className="h-4 w-4/5 max-w-[60ch]" />
                             <Skeleton className="h-24 w-full rounded-xl" />
                         </div>

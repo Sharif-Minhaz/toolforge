@@ -54,7 +54,7 @@ docs/
 | Anything with `useState` in a client island | [`docs/hydration-and-platform-pitfalls.md`](docs/hydration-and-platform-pitfalls.md)                               |
 | Prisma, Supabase, a Server Action           | [`docs/server-and-data.md`](docs/server-and-data.md)                                                               |
 | User-facing text or numbers                 | [`docs/internationalization.md`](docs/internationalization.md)                                                     |
-| The opening section of a tool article       | [`docs/patterns/article-openings.md`](docs/patterns/article-openings.md)                                           |
+| A tool article (opening + FAQ only)         | [`docs/patterns/article-openings.md`](docs/patterns/article-openings.md)                                           |
 | Colours, motion, scroll behaviour           | [`docs/design-system.md`](docs/design-system.md)                                                                   |
 | A format somebody else has to read          | [`docs/testing.md`](docs/testing.md)                                                                               |
 | An outbound request from the server         | [`docs/patterns/outbound-requests.md`](docs/patterns/outbound-requests.md), [`docs/security.md`](docs/security.md) |
@@ -268,7 +268,8 @@ Rules below are graded. Treat them differently:
     saves (rule 40's fourth branch).
 37. Prefer Suspense, streaming, lazy loading and dynamic imports; avoid
     unnecessary client rendering and memoization.
-38. Cap prose at `max-w-[68ch]`; let tables break out inside `overflow-x-auto`.
+38. Article prose and page-header subtitles run full width — no `max-w-[68ch]`; tables
+    scroll inside `overflow-x-auto`.
 39. Leave the codebase cleaner than you found it.
 
 ---

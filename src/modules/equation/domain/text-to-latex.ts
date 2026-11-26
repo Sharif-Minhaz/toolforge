@@ -34,7 +34,7 @@ import { hasUnclosedGroup, tokenize } from "./tokenize";
  * `sum i=1 to n of` at all, and the ASCIIMath family wants its own strict
  * grammar rather than what somebody typed in a hurry. So the rules are here,
  * each one small enough to test on its own — see `tests/text-to-latex.test.ts`,
- * which pins every example the article prints and then hands each result to
+ * which pins each rule's examples and then hands the results to
  * KaTeX, so a rule that produces confident nonsense fails against a parser this
  * file's author did not write.
  *
@@ -232,7 +232,7 @@ function renderWord(text: string): string {
  * limit is one atom.** `integral from 0 to 1 x dx` has to stop the upper limit
  * at `1` somehow, and "everything until a keyword that is not there" would eat
  * the integrand. Writing `of` is how a reader says the limit is longer than
- * that, and the article says so.
+ * that.
  */
 type Limits = {
     readonly sub: string;

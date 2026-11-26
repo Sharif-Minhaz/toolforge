@@ -17,17 +17,14 @@ import { countCharacters } from "./encodings";
  */
 
 /**
- * The two `tr` stages, named.
+ * The base64url `tr` stage, named.
  *
- * Exported because the article explains them one row at a time, and a command
- * fragment quoted in the message catalogue would be a second copy to keep in
- * step — as well as a string ICU has to be told not to read, since an
- * apostrophe there escapes whatever follows it. They are code, so they are
- * data.
+ * Exported because the FAQ quotes it, and a command fragment quoted in the
+ * message catalogue would be a second copy to keep in step — as well as a
+ * string ICU has to be told not to read, since an apostrophe there escapes
+ * whatever follows it. It is code, so it is data.
  */
 export const BASE64URL_SWAP_STAGE = "tr '+/' '-_'";
-
-export const PADDING_STRIP_STAGE = "tr -d '='";
 
 export function randStage(byteLength: number, encoding: SecretEncoding): string {
     return encoding === "base32"
@@ -84,8 +81,8 @@ export function equivalentCommand(
 
     if (encoding === "base32") {
         // `base32` is GNU coreutils, not OpenSSL — it is absent from a stock
-        // macOS. The article says so; there is no portable alternative worth
-        // printing in its place.
+        // macOS. The note under the command says so; there is no portable
+        // alternative worth printing in its place.
         return `${randStage(byteLength, encoding)} | base32${tail}`;
     }
 

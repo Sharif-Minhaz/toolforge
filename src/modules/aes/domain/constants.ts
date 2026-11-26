@@ -48,7 +48,7 @@ export const DEFAULT_GCM_TAG_LENGTH: GcmTagLength = 128;
  * How many bits of the CTR counter block increment. Sixty-four is the usual
  * choice and is what the NIST SP 800-38A vectors assume for messages this
  * short; the value matters to anyone reproducing the output elsewhere, which is
- * why it is a named constant and is documented in the article.
+ * why it is a named constant.
  */
 export const CTR_COUNTER_BITS = 64;
 

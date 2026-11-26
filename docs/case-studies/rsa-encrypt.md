@@ -33,7 +33,7 @@ browser. That is a reason not to ship the feature, not a reason to write one.
 What the page does instead is keep the picker. A select with a single option
 looks odd for about a second and then answers the question a reader actually has
 — _which padding is this?_ — where a hard-coded label would not. The hint under
-it names the absent scheme, and the article gives it a section. This is the same
+it names the absent scheme, and an FAQ answer says why. This is the same
 shape as the AES tool's missing ECB mode: an absence that is documented in place
 is a decision, and one that is silent is a gap.
 

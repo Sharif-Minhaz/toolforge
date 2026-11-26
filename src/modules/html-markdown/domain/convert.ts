@@ -20,8 +20,8 @@ export function exceedsInputLimit(bytes: number): boolean {
  * Nine switches, and each one belongs to a direction — a bullet character has
  * nothing to say while Markdown is being turned into HTML, and `<br>` on every
  * newline has nothing to say on the way back. One predicate rather than two
- * lists, so the panel that hides a control and the article that documents it
- * cannot drift apart.
+ * lists, so the panel that hides a control and the tests that assert it cannot
+ * drift apart.
  */
 export function appliesTo(option: keyof HtmlMarkdownOptions, mode: HtmlMarkdownMode): boolean {
     switch (option) {

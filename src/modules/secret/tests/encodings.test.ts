@@ -69,7 +69,7 @@ describe("countCharacters", () => {
         }
     });
 
-    test("puts the default 32 bytes at the widths the article quotes", () => {
+    test("puts the default 32 bytes at the expected width in each encoding", () => {
         expect(countCharacters(32, "base64url", false)).toBe(43);
         expect(countCharacters(32, "base64", true)).toBe(44);
         expect(countCharacters(32, "hex", false)).toBe(64);

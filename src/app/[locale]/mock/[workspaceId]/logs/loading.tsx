@@ -7,7 +7,7 @@ export default function LogsLoading() {
             <div className="flex flex-col gap-3">
                 <Skeleton className="h-4 w-32" />
                 <Skeleton className="h-8 w-full max-w-sm" />
-                <Skeleton className="h-4 w-full max-w-2xl" />
+                <Skeleton className="h-4 w-full" />
             </div>
 
             <div className="flex flex-col gap-4">

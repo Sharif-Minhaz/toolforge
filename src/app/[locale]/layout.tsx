@@ -549,7 +549,6 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
             resolvers: messages.domainInspector.resolvers,
             overview: messages.domainInspector.overview,
             dns: messages.domainInspector.dns,
-            recordTypes: messages.domainInspector.recordTypes,
             registration: messages.domainInspector.registration,
             hosting: messages.domainInspector.hosting,
             propagation: messages.domainInspector.propagation,

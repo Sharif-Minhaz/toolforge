@@ -41,7 +41,7 @@ export const FAVICON_PNGS: readonly FaviconPngSpec[] = [
  *
  * `name` and `short_name` come from the source filename, because the only other
  * options are to invent a site name or to add a text field for one, and the
- * filename is at least the reader's own word. The article says to edit them.
+ * filename is at least the reader's own word.
  *
  * `purpose` is deliberately `any` rather than `maskable`. A maskable icon has
  * to keep its content inside a safe zone that a launcher may crop to a circle;

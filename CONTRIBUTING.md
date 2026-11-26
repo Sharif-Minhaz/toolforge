@@ -396,8 +396,8 @@ Work in this order. Each step has a rule that is easy to skip.
    options in a single options object with one patch updater, not six `useState` calls. When one
    option makes another meaningless, disable it with an explanatory hint rather than silently
    ignoring it.
-7. **Write the article after the tool.** Semantic sections with stable `id`s and a TOC entry, prose
-   capped at `max-w-[68ch]`, tables breaking out inside `overflow-x-auto`. Document every control.
+7. **Write the article after the tool.** Two sections only — the opening and the FAQ — with no
+   table of contents; prose runs full width. Controls explain themselves in the workbench.
    Close the page with `<RelatedTools toolId="<id>" />` after the article, and give `loading.tsx` a
    matching three-card block — every tool page ends the same way.
 8. **Wire the overview.** Flip the catalog entry to `status: "available"`, extend the client message
@@ -416,7 +416,7 @@ Reuse what exists rather than rebuilding it:
 | Foot-of-page tool suggestions         | `@/modules/tools/components/related-tools`          |
 | Tool card, accent and status          | `@/modules/tools/components/tool-card`              |
 | Article section, prose widths         | `@/modules/tools/components/article-section`        |
-| Sticky table of contents              | `@/modules/tools/components/article-toc`            |
+| Article loading skeleton              | `@/modules/tools/components/article-skeleton`       |
 | FAQ                                   | `@/modules/tools/components/faq-accordion`          |
 | Copy button                           | `@/modules/tools/components/copy-button`            |
 | Accent vars, icon tile                | `@/modules/tools/components/tool-accent`            |

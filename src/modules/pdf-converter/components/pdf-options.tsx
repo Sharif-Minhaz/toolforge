@@ -24,7 +24,7 @@ import {
  * Hiding it makes the panel change shape between two documents and leaves
  * somebody hunting for a switch they used yesterday; disabling it answers the
  * question instead. `appliesTo` in `domain/convert.ts` is the single predicate
- * behind that, shared with the article's options table and the tests.
+ * behind that, shared with the tests.
  */
 
 type PdfOptionsProps = {

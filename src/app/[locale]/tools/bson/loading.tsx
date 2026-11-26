@@ -1,5 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { BsonWorkbenchSkeleton } from "@/modules/bson/components/bson-workbench-skeleton";
+import { ArticleSkeleton } from "@/modules/tools/components/article-skeleton";
 
 /** Mirrors the BSON page: header, workbench card, article, related tools. */
 export default function BsonLoading() {
@@ -9,8 +10,8 @@ export default function BsonLoading() {
                 <Skeleton className="h-4 w-32" />
                 <Skeleton className="h-9 w-80 sm:h-10" />
                 <div className="flex flex-col gap-2">
-                    <Skeleton className="h-4 w-full max-w-xl" />
-                    <Skeleton className="h-4 w-3/5 max-w-md" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/5" />
                 </div>
                 <div className="flex gap-1.5">
                     {Array.from({ length: 3 }, (_, index) => (
@@ -21,26 +22,7 @@ export default function BsonLoading() {
 
             <BsonWorkbenchSkeleton />
 
-            <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_14rem] xl:gap-12">
-                <div className="hidden xl:order-2 xl:block">
-                    <Skeleton className="h-56 w-full rounded-xl" />
-                </div>
-                <div className="flex flex-col gap-10 xl:order-1">
-                    {Array.from({ length: 3 }, (_, section) => (
-                        <div key={section} className="flex flex-col gap-4">
-                            <Skeleton className="h-6 w-64" />
-                            <div className="flex flex-col gap-2.5">
-                                {Array.from({ length: 5 }, (_, line) => (
-                                    <Skeleton
-                                        key={line}
-                                        className={line === 4 ? "h-4 w-2/3" : "h-4 w-full"}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
+            <ArticleSkeleton />
 
             <div className="border-border/70 flex flex-col gap-4 border-t pt-8">
                 <div className="flex flex-col gap-1.5">

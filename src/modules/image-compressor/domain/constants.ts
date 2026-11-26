@@ -7,7 +7,7 @@ export const MAX_QUALITY = 100;
 /**
  * The top of the scale, so nothing is thrown away until the reader chooses to.
  * The saving at 100 comes from the encoder, the format and the size cap; the
- * article says where to take the slider for more.
+ * slider's hint says which way to take it for more.
  */
 export const DEFAULT_QUALITY = 100;
 

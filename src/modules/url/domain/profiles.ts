@@ -63,9 +63,8 @@ export function keepsByteRaw(profile: UrlEncodeProfile, byte: number): boolean {
 }
 
 /**
- * Whether a single ASCII character survives this profile untouched. Used by the
- * reference table in the article, so the documentation cannot drift from the
- * encoder it describes.
+ * Whether a single ASCII character survives this profile untouched — the
+ * character-level view of `keepsByteRaw` the tests pin each profile with.
  */
 export function keepsCharacterRaw(profile: UrlEncodeProfile, character: string): boolean {
     const byte = character.charCodeAt(0);

@@ -88,9 +88,7 @@ export default async function JsonServerStudioPage({ params }: { params: LocaleP
                     <h1 className="text-foreground text-2xl leading-[1.2] font-semibold text-balance sm:text-3xl">
                         {t("title")}
                     </h1>
-                    <p className="text-muted-foreground max-w-[68ch] text-sm leading-relaxed">
-                        {t("subtitle")}
-                    </p>
+                    <p className="text-muted-foreground text-sm leading-relaxed">{t("subtitle")}</p>
 
                     <ul className="mt-1 flex flex-wrap gap-2">
                         {badges.map(({ label, Icon }) => (

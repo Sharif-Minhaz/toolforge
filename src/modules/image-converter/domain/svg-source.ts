@@ -22,7 +22,7 @@ import type { PixelSize } from "@/modules/tools/types";
  * interaction is dispatched. That is why the file is only ever handed to an
  * `<img>` through a blob URL, and never parsed into this page's DOM.
  *
- * Two consequences worth knowing, both of which belong in the article as well:
+ * Two consequences worth knowing:
  * an SVG that pulls a bitmap or a font in over the network loses it, and a
  * browser that fetched one anyway would taint the canvas — `getImageData` then
  * throws, and the file is reported as undecodable rather than half-converted.

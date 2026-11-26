@@ -41,8 +41,7 @@ import { unsupportedScriptsIn } from "./scripts";
  * Nine options and six formats, and most pairs are meaningless: a deck has no
  * page size to choose because the page *is* the slide, and a workbook has no
  * links to print. One predicate rather than a table per surface, so the panel
- * that disables a control, the article that documents it and the tests that
- * assert it cannot drift apart.
+ * that disables a control and the tests that assert it cannot drift apart.
  */
 export function appliesTo(option: keyof PdfConverterOptions, format: PdfSourceFormat): boolean {
     const slides = format === "pptx";

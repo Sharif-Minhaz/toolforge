@@ -17,8 +17,7 @@ import { checkerImage, gradientImage, noiseImage, solidImage } from "./images";
  * So every case below runs through `blurhash`, the reference implementation, and
  * demands the same string and the same bytes. It is a devDependency and ships
  * nowhere; what ships is the implementation in `domain/`, which is a tenth the
- * size of pulling the package in at runtime and can be read alongside the
- * article that explains it.
+ * size of pulling the package in at runtime.
  *
  * The whole component domain is covered, not a sample. The quantiser's scale is
  * chosen from the largest coefficient present, so a picture with almost no

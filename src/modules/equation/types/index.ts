@@ -162,8 +162,7 @@ export type EquationToken =
 
 /**
  * The two ways an equation gets into the tool. A literal union so
- * `equation.sources.<id>` stays statically checkable — and so the island's mode
- * switch and the article's table cannot name different things.
+ * `equation.sources.<id>` stays statically checkable.
  */
 export const EQUATION_SOURCES = ["text", "image"] as const;
 

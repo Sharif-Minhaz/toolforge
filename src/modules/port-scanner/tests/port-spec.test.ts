@@ -167,8 +167,7 @@ describe("the preset catalogue", () => {
     });
 
     test("the top list is the one Nmap reports as most scanned", () => {
-        // Spot-checked against the list in the tool's own article, so the two
-        // cannot drift without a test noticing.
+        // Spot-checked, so the list cannot change without a test noticing.
         expect(presetPorts("top")).toContain(22);
         expect(presetPorts("top")).toContain(502);
         expect(presetPorts("top")).toContain(3389);

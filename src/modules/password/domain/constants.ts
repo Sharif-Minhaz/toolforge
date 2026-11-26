@@ -50,8 +50,7 @@ export const STRENGTH_THRESHOLD_BITS: Record<PasswordStrength, number> = {
  * These are the order of magnitude of published hashcat-class benchmarks for a
  * multi-GPU rig, not measurements taken here. Rounding is the honest choice: a
  * figure like 164,100,000,000 implies a precision this estimate does not have,
- * and GPU generations move it every year. The article says where to look up
- * current numbers.
+ * and GPU generations move it every year.
  */
 export const ATTACK_GUESSES_PER_SECOND: Record<AttackModel, number> = {
     /** A login form that rate-limits. Nothing is leaked; guessing is remote. */

@@ -11,7 +11,7 @@ export default function WorkspaceLoading() {
                 <Skeleton className="h-4 w-32" />
                 <Skeleton className="h-3 w-24" />
                 <Skeleton className="h-8 w-full max-w-md" />
-                <Skeleton className="h-4 w-full max-w-2xl" />
+                <Skeleton className="h-4 w-full" />
                 <div className="mt-1 flex flex-wrap gap-2">
                     <Skeleton className="h-7 w-32 rounded-lg" />
                     <Skeleton className="h-7 w-28 rounded-lg" />

@@ -61,7 +61,7 @@ function detectArgon2(value: string): DetectedHash | null {
  * Digests carry no marker, so length is the only signal. Every algorithm in
  * this set has a distinct output size, which makes the mapping unambiguous
  * here — it does not make it unambiguous in general. A 32-character hex string
- * is equally an MD5, an MD4, or an NTLM hash, and the article says so.
+ * is equally an MD5, an MD4, or an NTLM hash.
  */
 function detectDigest(value: string): DetectedHash | null {
     if (isHex(value)) {

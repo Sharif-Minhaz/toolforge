@@ -58,8 +58,8 @@ export function coverRect(source: PixelSize, target: PixelSize): Rect {
  * panorama blurred by its width would come back looking untouched.
  *
  * Rounded, because `ctx.filter = "blur(7.42px)"` is legal but no browser gives
- * a fractional radius a distinct result, and a whole number is what the article
- * can honestly quote.
+ * a fractional radius a distinct result, and a whole number is what the hint
+ * under the strength slider can honestly quote.
  */
 export function blurRadiusPx(size: PixelSize, strength: number, share = MAX_BLUR_SHARE): number {
     const shorterSide = Math.max(0, Math.min(size.width, size.height));

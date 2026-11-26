@@ -81,7 +81,7 @@ export async function McpArticle() {
                 <div className={PROSE}>
                     <p>{t.rich("examples.p1", ARTICLE_TAGS)}</p>
                 </div>
-                <ul className="mt-4 flex max-w-[68ch] flex-col gap-3">
+                <ul className="mt-4 flex flex-col gap-3">
                     {exampleKeys.map((key) => (
                         <li key={key} className="flex flex-col gap-1">
                             <ArticleExample>
@@ -113,7 +113,7 @@ export async function McpArticle() {
                 <div className={PROSE}>
                     <p>{t.rich("absent.p1", ARTICLE_TAGS)}</p>
                 </div>
-                <dl className="mt-4 flex max-w-[68ch] flex-col gap-4">
+                <dl className="mt-4 flex flex-col gap-4">
                     {absentKeys.map((key) => (
                         <div key={key} className="flex flex-col gap-1">
                             <dt className="text-sm font-semibold">{t(`absent.${key}.title`)}</dt>

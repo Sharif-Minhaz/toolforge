@@ -51,8 +51,7 @@ day after the v2 change. That release cadence is what is being bought.
 update rather than "try again". The fix is a dependency bump. Check the
 `msedge-tts` changelog first, then `edge-tts`'s `drm.py` and `constants.py`.
 
-The page discloses all of this: in the article's limits section, and in the
-refusal itself.
+The page discloses all of this in the refusal itself.
 
 ---
 

@@ -666,7 +666,7 @@ export function runQuery(
  * names the *same document* already contains, so the failure mode of a wrong
  * guess is one embed that comes back empty rather than corrupted data. The
  * common shapes — a trailing `s`, `-ies`, `-es` — are what fixtures actually
- * use. `people` and `children` will not resolve, and the article says so.
+ * use. `people` and `children` will not resolve.
  */
 export function singularize(name: string): string {
     if (name.endsWith("ies") && name.length > 3) {

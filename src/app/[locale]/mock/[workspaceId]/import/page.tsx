@@ -38,9 +38,7 @@ export default async function ImportPage({ params }: ImportPageProps) {
                     <h1 className="text-foreground text-2xl leading-[1.2] font-semibold text-balance sm:text-3xl">
                         {t("title")}
                     </h1>
-                    <p className="text-muted-foreground max-w-[68ch] text-sm leading-relaxed">
-                        {t("subtitle")}
-                    </p>
+                    <p className="text-muted-foreground text-sm leading-relaxed">{t("subtitle")}</p>
                 </header>
             </FadeIn>
 

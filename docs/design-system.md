@@ -167,4 +167,8 @@ the answer would have been.**
   `<Link className={cn(buttonVariants(), …)}>`, not `<Button render={<Link/>}>`.
 - Every verdict on this site appears in a `StatusStrip` under its control — see
   [`patterns/input-limits.md`](patterns/input-limits.md).
-- Prose caps at `max-w-[68ch]`; tables break out inside `overflow-x-auto`.
+- Article prose and page-header subtitles run the full width of the page column — no
+  `max-w-[68ch]` cap. Short hint text inside a workbench may still cap. Tables scroll inside
+  `overflow-x-auto`.
+- A page header's subtitle is at most two lines on desktop: 150 characters in either locale,
+  enforced by `tools/tests/messages.test.ts`. Details belong in the workbench, not the header.

@@ -20,7 +20,8 @@ import type { FieldModel } from "../types";
  * a GraphQL API would choose on its own, and matching them anyway is the point —
  * the same `db.json` can be served through both studios at once, and a document
  * whose records reorder depending on which endpoint you asked is a far worse
- * surprise than one documented quirk. The article says so in both tools.
+ * surprise than one shared quirk. This tool's FAQ says the two agree on how
+ * records sort.
  */
 
 export type FilterValue = Readonly<Record<string, unknown>>;

@@ -330,7 +330,7 @@ That search is biased toward places rather than people, which is a bias and not 
 API cannot exclude photographs of people, so fourteen topic chips search several place words at once
 (`forest trees woodland path`, not `forest`) and anything whose description names a person is dropped
 before the grid is drawn. A picture with no description is kept, since nothing is known about it, so
-the occasional person still gets through — the article says so rather than promising otherwise. With any of
+the occasional person still gets through — the search hint says "toward places rather than people" rather than promising otherwise. With any of
 those blank the search row renders disabled and says so; the blur, the colour swatches and a
 background of your own are untouched and never touch the network at all.
 

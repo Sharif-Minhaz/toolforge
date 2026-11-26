@@ -40,7 +40,7 @@ same checks.
 1. **No new UI or folder patterns.** Every layout, token, and directory already exists.
    If something seems to need a new pattern, you have misread the existing one.
 2. **Reuse the shared components** listed under *What already exists*. Never re-create
-   `ArticleSection`, `ArticleToc`, `FaqAccordion`, `IconCopyButton`, or a copy/download flow.
+   `ArticleSection`, `ArticleSkeleton`, `FaqAccordion`, `IconCopyButton`, or a copy/download flow.
 3. **`domain/` stays framework-free.** No React, no `next-intl`, no I/O. A file that needs
    `getTranslations` is a presenter.
 4. **Both locales, every key.** `en.json` and `bn.json` change in the same edit.
@@ -148,14 +148,13 @@ One `"use client"` component holds state; everything else stays a server compone
 
 ## Step 7 — the article, written after the tool
 
-Semantic sections with stable `id`s, each with a TOC entry, using `ArticleSection`,
-`ArticleToc`, and `FaqAccordion`. Prose caps at `max-w-[68ch]`; tables break out inside
-`overflow-x-auto`.
+Two `ArticleSection`s and nothing else: the opening (`docs/patterns/article-openings.md`)
+and the FAQ through `FaqAccordion`. No table of contents, no options table, no further
+sections — readers found the long articles too verbose. Prose runs full width. The
+route's `loading.tsx` renders `ArticleSkeleton` where the article goes.
 
-**Every control must be documented.** If the tool has more than two or three options, give
-them a dedicated section with an Option / What it does / Reach for it when table, and follow
-it with the caveats a table cannot hold — which options exclude each other, and what the
-defaults assume. See `base64.article.options`.
+**Every control is documented where it sits.** A label and, where needed, a one-line hint
+beside the control; a caveat a reader would ask about becomes an FAQ answer.
 
 ## Step 8 — wire the overview
 
@@ -347,7 +346,7 @@ they should not.
 | Need | Import |
 | --- | --- |
 | Article section, prose widths | `@/modules/tools/components/article-section` |
-| Sticky table of contents | `@/modules/tools/components/article-toc` |
+| Article loading skeleton | `@/modules/tools/components/article-skeleton` |
 | FAQ | `@/modules/tools/components/faq-accordion` |
 | Copy button, copy/check swap | `@/modules/tools/components/copy-button` |
 | Accent vars, icon tile | `@/modules/tools/components/tool-accent` |

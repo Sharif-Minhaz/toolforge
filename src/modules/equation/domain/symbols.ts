@@ -2,9 +2,7 @@
  * The vocabulary the plain-text reader knows.
  *
  * Data, not logic. Every table here is a word somebody types when they cannot
- * type the symbol — and the reason they are tables rather than branches in the
- * translator is that the article prints them: a reader has to be able to see
- * what the tool understands, or they are guessing at a guesser.
+ * type the symbol.
  */
 
 /**

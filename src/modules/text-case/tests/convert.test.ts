@@ -188,9 +188,9 @@ describe("preserveAcronyms", () => {
         );
     });
 
-    test("hands back a fully capitalised paragraph unchanged — the documented trap", () => {
+    test("hands back a fully capitalised paragraph unchanged — the caps-lock trap", () => {
         // Every word is a run of capitals, so every word is an acronym. This is
-        // why the switch is off by default; the article says so too.
+        // why the switch is off by default.
         expect(convert(CAPS_LOCK, { textCase: "sentence", preserveAcronyms: true })).toBe(
             CAPS_LOCK,
         );

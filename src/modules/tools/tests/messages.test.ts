@@ -154,3 +154,23 @@ describe("message catalogues parse as ICU MessageFormat", () => {
         }
     });
 });
+
+/**
+ * A page header's subtitle stays within two lines at desktop widths: about 150
+ * characters fill two lines of the full-width column, and the overview hero's
+ * narrower column still fits them in three at most.
+ */
+const MAX_SUBTITLE_LENGTH = 150;
+
+describe("page-header subtitles", () => {
+    for (const [locale, catalogue] of CATALOGUES) {
+        test(`${locale}.json keeps every hero subtitle to two lines`, () => {
+            const long = flatten(catalogue)
+                .filter(([key]) => key.endsWith(".hero.subtitle"))
+                .filter(([, value]) => value.length > MAX_SUBTITLE_LENGTH)
+                .map(([key, value]) => `${key} (${value.length})`);
+
+            expect(long).toEqual([]);
+        });
+    }
+});

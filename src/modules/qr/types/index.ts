@@ -24,14 +24,6 @@ export const QR_ERROR_LEVELS = ["L", "M", "Q", "H"] as const;
 
 export type QrErrorLevel = (typeof QR_ERROR_LEVELS)[number];
 
-/** Roughly how much of the code each level can lose and still decode. */
-export const QR_ERROR_LEVEL_RECOVERY: Record<QrErrorLevel, number> = {
-    L: 0.07,
-    M: 0.15,
-    Q: 0.25,
-    H: 0.3,
-};
-
 export const QR_DOT_STYLES = ["square", "rounded", "smooth"] as const;
 
 export type QrDotStyle = (typeof QR_DOT_STYLES)[number];
