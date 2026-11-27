@@ -467,10 +467,6 @@ export function RsaCryptWorkbench({ initialDirection, initialOptions }: RsaCrypt
     return (
         <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
             <CardContent className="flex min-w-0 flex-col gap-6">
-                <p className="text-muted-foreground max-w-2xl text-[0.8125rem] leading-normal">
-                    {t("localNotice")}
-                </p>
-
                 <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between gap-2">
                         <Label id={directionLabelId} className="text-muted-foreground text-xs">

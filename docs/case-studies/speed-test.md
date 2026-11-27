@@ -19,18 +19,16 @@ one). It times requests with the browser's Resource Timing API, takes the 90th
 percentile of several file sizes per direction, and measures latency while the
 line is idle and while it is loaded.
 
-Decision tree 45 says depend: the figures are what the reader takes to an ISP.
+Decision tree 44 says depend: the figures are what the reader takes to an ISP.
 
 ## Nothing reported back
 
 The library posts final results to `speed.cloudflare.com/__results` by
 default. `logAimApiUrl: null` and `logMeasurementApiUrl: null` are its
 documented off switches, and both are set. The traffic itself still reaches
-Cloudflare. There is deliberately no disclosure box above the Start button:
-what crosses the wire is random test data, never anything the reader typed
-or chose, so the "nothing is uploaded" promise rule 32 protects is not
-broken. The FAQ says who sees the traffic (a1) and what a run costs on a
-capped plan (a4). `runsOn` is `"server"` because the traffic still leaves
+Cloudflare. What crosses the wire is random test data, never anything the
+reader typed or chose. The FAQ says who sees the traffic (a1) and what a run
+costs on a capped plan (a4). `runsOn` is `"server"` because the traffic still leaves
 the browser, and the catalogue test lists it among the tools that do.
 
 The service worker passes cross-origin requests through untouched except for

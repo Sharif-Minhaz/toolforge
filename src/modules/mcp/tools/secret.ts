@@ -15,7 +15,7 @@ import { refuseWithReason, succeed } from "../domain/result";
 /**
  * Drawn with `crypto.getRandomValues`, on the server, and returned once.
  *
- * The same disclosure the password adapter carries, and for the same reason: a
+ * The same warning the password adapter carries, and for the same reason: a
  * key generated here travels through the caller's conversation and is retained
  * by whatever is holding it. That is a real difference from the page, where the
  * value never leaves the tab, and the description says so — the model relaying

@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 /**
  * The check card while it waits: the fallback for the request-time half of the
  * page, and the matching block in `loading.tsx`. Description, mode switch,
- * disclosure, address, button, status — in the fetch mode's order, which is
+ * address, button, status — in the fetch mode's order, which is
  * the one a link opens on unless it says otherwise.
  */
 export function LinkPreviewWorkbenchSkeleton() {
@@ -18,9 +18,6 @@ export function LinkPreviewWorkbenchSkeleton() {
                 <Skeleton className="h-3 w-32" />
                 <Skeleton className="h-9 w-72 max-w-full rounded-full" />
             </div>
-
-            {/* The not-private disclosure. */}
-            <Skeleton className="h-20 w-full rounded-xl" />
 
             <div className="flex flex-col gap-2">
                 <Skeleton className="h-5 w-32" />

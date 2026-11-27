@@ -6,7 +6,6 @@ import {
     IconFileZip,
     IconInfoCircle,
     IconLoader2,
-    IconShieldCheck,
     IconTrash,
 } from "@tabler/icons-react";
 import { useFormatter, useTranslations } from "next-intl";
@@ -25,6 +24,7 @@ import { ImageSourceControls } from "@/modules/tools/components/image-source-con
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { ToolNotes } from "@/modules/tools/components/tool-notes";
+import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import {
     OptionsDisclosure,
     RESULT_TRAY,
@@ -132,6 +132,7 @@ export function ImageCompressorWorkbench({
     // this component is a per-render source of entropy.
     const nextId = useRef(0);
     const running = useRef(false);
+    const { ref: queueRef, scrollToResult } = useResultScroll<HTMLElement>();
     // Held outside state because the cleanup must see every URL ever handed out,
     // including ones added after the last render this effect closed over.
     const previewUrls = useRef(new Set<string>());
@@ -306,6 +307,10 @@ export function ImageCompressorWorkbench({
             items.filter((item) => needsWork(queueRow(item), signature)),
             options,
         );
+        // Each row's progress and finished size appear in the queue — beside
+        // the settings on a laptop, above them on a phone, where the button is
+        // at the bottom. It is never empty when the button is enabled.
+        scrollToResult();
     }
 
     /** One row, on request — the only path that replaces a result already in hand. */
@@ -518,7 +523,11 @@ export function ImageCompressorWorkbench({
                         </div>
 
                         {items.length > 0 && (
-                            <section aria-labelledby={queueHeadingId} className={RESULT_TRAY}>
+                            <section
+                                ref={queueRef}
+                                aria-labelledby={queueHeadingId}
+                                className={cn(RESULT_TRAY, "scroll-mt-6")}
+                            >
                                 <ImageQueueHeader
                                     id={queueHeadingId}
                                     count={items.length}
@@ -782,13 +791,6 @@ export function ImageCompressorWorkbench({
 
                 <ToolNotes
                     notes={[
-                        {
-                            key: "privacy",
-                            icon: IconShieldCheck,
-                            tone: "success",
-                            title: t("privacyTitle"),
-                            body: t("privacyNote"),
-                        },
                         {
                             key: "metadata",
                             icon: IconInfoCircle,

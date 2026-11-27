@@ -11,16 +11,12 @@ from the feature being hard.
 
 ---
 
-## Name the property you cannot keep, in the tool, above the controls
+## The property it cannot keep
 
 This site's promise is that nothing is uploaded. A page cannot open a raw socket,
 so a port scan has to run on the server, and the host being scanned sees _our_
 address in its logs. That makes the tool an attribution-laundering service by
 default.
-
-The disclosure panel therefore sits **above the form**, not in the article
-underneath it — a reader deserves to know whose name lands in the target's log
-before they press anything, not after.
 
 ---
 

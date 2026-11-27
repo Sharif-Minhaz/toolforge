@@ -87,10 +87,6 @@ FAQ. No table of contents. Controls explain themselves through their labels and
 hints in the workbench, not through an article table. The page's `loading.tsx`
 renders `ArticleSkeleton` in the article's place.
 
-If the tool cannot keep the site's "nothing is uploaded" promise, the disclosure
-goes **above the controls**, not in the article — see
-[`../engineering-principles.md`](../engineering-principles.md#say-what-you-cannot-keep).
-
 ## 8. Update the repository documentation in the same change
 
 A tool is not shipped until the docs stop describing the repository as it was

@@ -5,7 +5,6 @@ import {
     IconChevronLeft,
     IconChevronRight,
     IconDownload,
-    IconInfoCircle,
     IconLoader2,
     IconSearch,
     IconSitemap,
@@ -105,7 +104,7 @@ export function SubdomainLookupWorkbench({
         [report, sort],
     );
 
-    // Deliberately **not** debounced. Decision 43: a filter over data already in
+    // Deliberately **not** debounced. Decision 42: a filter over data already in
     // memory must never lag, because a list that trails the box by 300 ms reads
     // as broken rather than as considered. Filtering is a substring test over an
     // already-ordered array, which is cheap enough to run on every keystroke.
@@ -202,6 +201,9 @@ export function SubdomainLookupWorkbench({
             toast.error(tErrors("upstream_unavailable"));
         } finally {
             setRunning(false);
+            // Again on landing, for the list that replaces the radar; a no-op
+            // when the slot is already on screen or came back empty.
+            scrollToResult();
         }
     }
 
@@ -255,24 +257,6 @@ export function SubdomainLookupWorkbench({
                     {/* The only line on the form saying what the index is, and
                         that the lookup probes nothing. */}
                     <p className="text-muted-foreground text-sm">{t("description")}</p>
-
-                    {/* Rule 32: the domain leaves the browser for a third party,
-                        so the reader is told before the controls. */}
-                    <div className="bg-muted/40 ring-border flex items-start gap-2.5 rounded-xl px-3.5 py-3 ring-1 ring-inset">
-                        <IconInfoCircle
-                            className="text-muted-foreground mt-0.5 size-4 shrink-0"
-                            stroke={1.75}
-                            aria-hidden="true"
-                        />
-                        <div className="flex min-w-0 flex-col gap-1">
-                            <p className="text-[0.8125rem] leading-[1.4] font-medium">
-                                {t("disclosureTitle")}
-                            </p>
-                            <p className="text-muted-foreground text-[0.8125rem] leading-relaxed">
-                                {t("disclosure")}
-                            </p>
-                        </div>
-                    </div>
 
                     <div className="flex flex-col gap-2">
                         <StepLabel step={1} htmlFor={apexId}>

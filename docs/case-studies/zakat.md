@@ -28,7 +28,7 @@ The two presets in `domain/rules.ts` are starting points. Changing any one
 rule turns the view to `custom`, and `compareViews` shows the same holdings
 under the other presets and under one-change variants, so a reader sees how
 much rests on which opinion. The page says above the controls that this is not
-a fatwa (`CLAUDE.md` rule 32).
+a fatwa.
 
 ## Exact arithmetic, one rounding, upwards
 

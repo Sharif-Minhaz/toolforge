@@ -31,7 +31,7 @@ assessment:
 That is five breaks in two years. A client written for this repository against
 the November 2024 scheme was tried on 2026-10-16 and failed on the handshake,
 three days after the last change. Hence **depend, don't implement**, against
-decision tree 45's usual answer for output only this site reads: the protocol is
+decision tree 44's usual answer for output only this site reads: the protocol is
 not the hard part, keeping up with a counterparty who changes it on purpose is.
 
 Four Node clients were run against the live service the same day:
@@ -58,9 +58,9 @@ The page discloses all of this in the refusal itself.
 ## It has to run on the server
 
 A browser cannot set `Origin` on a WebSocket, and the service checks it. So the
-text goes through `POST /api/text-to-speech`, and rule 32's disclosure sits above
-both tabs. The route is a Route Handler, not a Server Action, because the answer
-streams: five thousand characters take over a minute to speak.
+text goes through `POST /api/text-to-speech`. The route is a Route Handler, not
+a Server Action, because the answer streams: five thousand characters take over
+a minute to speak.
 
 ### Measured on 2026-10-16
 

@@ -14,9 +14,9 @@ import type { PdfConversionNotes } from "../types";
  * is a warning rather than an error: the PDF is real and usable, and this is
  * what is not in it.
  *
- * Shown above the button rather than after the download, which is `CLAUDE.md`
- * rule 32's shape: a limitation the reader would want to know about belongs
- * beside the control, not in the article underneath.
+ * Shown above the button rather than after the download: a limitation the
+ * reader would want to know about belongs beside the control, not in the
+ * article underneath.
  */
 
 type ConversionNotesProps = {

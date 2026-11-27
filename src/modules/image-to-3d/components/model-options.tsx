@@ -92,7 +92,7 @@ export function ModelOptionsPanel({
                 <OptionSelect<HeightSource>
                     label={t("sourceName")}
                     // The one source that fetches a model says what it costs, on
-                    // the control rather than in the article — `CLAUDE.md` rule 32.
+                    // the control rather than only in the article.
                     hint={
                         options.source === "depth"
                             ? t("sourceDepthHint", { size: depthDownloadLabel })
@@ -210,9 +210,7 @@ export function ModelOptionsPanel({
                     <OptionSwitch
                         label={t("cutoutName")}
                         // The one control on this page that can reach the network,
-                        // and it says what that costs before it is switched on —
-                        // `CLAUDE.md` rule 32 puts that here rather than in the
-                        // article.
+                        // and it says what that costs before it is switched on.
                         hint={
                             cutoutAlreadyTransparent
                                 ? t("cutoutHintTransparent")

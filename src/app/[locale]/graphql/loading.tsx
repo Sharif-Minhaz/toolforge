@@ -3,10 +3,9 @@ import { ArticleSkeleton } from "@/modules/tools/components/article-skeleton";
 
 /**
  * Matches `page.tsx` block for block: header, badge row, the create/import card
- * with its document editor, the server grid, the disclosure panel, then the
- * article. A skeleton that does not agree with what
- * replaces it reads as a layout shift rather than as loading — which is why
- * this file changes whenever that page reorders.
+ * with its document editor, the server grid, then the article. A skeleton that
+ * does not agree with what replaces it reads as a layout shift rather than as
+ * loading — which is why this file changes whenever that page reorders.
  *
  * The recovery-key panel has no skeleton: it only ever appears in response to a
  * press, never on first paint.
@@ -38,8 +37,6 @@ export default function GraphqlServerStudioLoading() {
                     </div>
                 </div>
             </div>
-
-            <Skeleton className="h-24 w-full rounded-2xl" />
 
             <ArticleSkeleton />
         </div>

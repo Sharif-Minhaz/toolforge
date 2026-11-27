@@ -912,7 +912,7 @@ const TOOLS: readonly Tool[] = [
         status: "available",
         // Everything it does happens in the tab. Pulling a picture in by its
         // public address does not, because a cross-origin image taints the
-        // canvas — the URL field says so above the controls.
+        // canvas, so the bytes are fetched through this server.
         runsOn: "hybrid",
         accent: "emerald",
         icon: "compress",
@@ -947,7 +947,7 @@ const TOOLS: readonly Tool[] = [
         status: "available",
         // Everything it does happens in the tab. Pulling a picture in by its
         // public address does not, because a cross-origin image taints the
-        // canvas — the URL field says so above the controls.
+        // canvas, so the bytes are fetched through this server.
         runsOn: "hybrid",
         accent: "cyan",
         icon: "transform",
@@ -1023,7 +1023,7 @@ const TOOLS: readonly Tool[] = [
         status: "available",
         // Cropping and resizing never leave the tab. Pulling a picture in by
         // its public address does, because a cross-origin image taints the
-        // canvas — the URL field says so above the controls.
+        // canvas, so the bytes are fetched through this server.
         runsOn: "hybrid",
         accent: "violet",
         icon: "crop",
@@ -1071,8 +1071,7 @@ const TOOLS: readonly Tool[] = [
         // the reader's own tab, so no photograph ever leaves it. Two things do
         // reach the network and neither carries the picture: the model weights
         // come from a CDN on first use, and searching for a stock background
-        // asks Pexels through this server. Both are disclosed above the
-        // controls, not only in the article.
+        // asks Pexels through this server.
         runsOn: "hybrid",
         accent: "rose",
         icon: "background",
@@ -1110,7 +1109,7 @@ const TOOLS: readonly Tool[] = [
         status: "available",
         // Everything it does happens in the tab. Pulling a picture in by its
         // public address does not, because a cross-origin image taints the
-        // canvas — the URL field says so above the controls.
+        // canvas, so the bytes are fetched through this server.
         runsOn: "hybrid",
         accent: "violet",
         icon: "blur",
@@ -1194,7 +1193,7 @@ const TOOLS: readonly Tool[] = [
         status: "available",
         // Tesseract compiled to WebAssembly, in a worker in the reader's own tab:
         // the picture never leaves it. The engine and the language data come
-        // from jsDelivr on first use, which is disclosed above the controls.
+        // from jsDelivr on first use.
         runsOn: "browser",
         accent: "cyan",
         icon: "scan",
@@ -1575,7 +1574,7 @@ const TOOLS: readonly Tool[] = [
         category: "network",
         status: "available",
         // Test traffic goes to Cloudflare, so the input leaves the machine by
-        // design; the disclosure sits above the Start button.
+        // design.
         runsOn: "server",
         accent: "cyan",
         icon: "speedtest",
@@ -1848,7 +1847,7 @@ const TOOLS: readonly Tool[] = [
         // picture or a model: the cut-out's segmentation weights come from a
         // CDN on first use — its size is on the control that spends it — and
         // pulling a source picture in by its public address goes through this
-        // server, disclosed exactly as the other image tools disclose it.
+        // server, exactly as it does for the other image tools.
         runsOn: "hybrid",
         accent: "cyan",
         icon: "cube",

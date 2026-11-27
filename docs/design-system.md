@@ -124,8 +124,16 @@ Three rules it encodes, and none of them is optional if you hand-roll it instead
   state; a `requestAnimationFrame` runs after React commits, so the target is
   measurable by the time it is scrolled to.
 - **Never scroll something already on screen.** Yanking the page when the answer
-  is already visible is worse than not scrolling. The hook skips when the target
-  is at least 40% in view.
+  is already visible is worse than not scrolling. The hook leaves a target that
+  fits the viewport and is wholly on screen, or one taller than the viewport
+  that already covers 60% of it — `tools/domain/result-visibility.ts`, tested.
+  It used to skip anything 40% visible, and that is what left results below the
+  fold: a scan's progress panel with its lower half under the fold counted as
+  "in view", so the press moved nothing, and the table that replaced it landed
+  with only its heading on screen.
+- **Never scroll to a gap.** A target not mounted yet, or with nothing in it, is
+  re-measured for a few frames (a commit inside a transition can land after the
+  first one) and then left alone.
 - **Honour `prefers-reduced-motion`.** Smooth scrolling is vestibular motion. The
   query is read at call time, not at render, so a reader who changes the setting
   mid-session is respected without a re-render.
@@ -133,7 +141,21 @@ Three rules it encodes, and none of them is optional if you hand-roll it instead
 Call it where the result _appears_ — for most tools, inside the success branch,
 after the early return that handles failure. **Only for discrete actions**, never
 for a derived-during-render result, where it would drag the page on every
-keystroke.
+keystroke. A file pick counts as a press; a camera that decodes a code on its
+own counts as the result arriving.
+
+**Anything that takes a while scrolls twice.** If the press mounts a progress
+panel in the slot the result will take — a `ScanRadar`, a queue whose rows show
+their own progress, a cut-out stage with its progress drawn on it — call
+`scrollToResult()` on the press so the reader watches the work, and again when
+the result lands (in `finally`, for the scan tools) so a reader who scrolled
+away mid-run is brought back and a result taller than its progress panel is
+framed. The second call is free when the first already put the slot on screen.
+If the progress sits _beside the button_ instead, the press needs no scroll —
+unless the button is at the bottom of its step, in which case a second
+`useResultScroll` targets the whole step (Text to Speech does this so Cancel
+stays on screen above the progress line, rather than scrolling the line to the
+top and the button off it).
 
 ### Never scroll to a destination that can turn out empty
 

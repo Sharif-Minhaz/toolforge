@@ -11,7 +11,7 @@ import { collapseWhitespace, dropEmptyBlocks, normalizeRuns, trimRuns } from "./
  * `.docx` is HTML once Mammoth has. One reader means one answer to "what does a
  * nested list inside a table cell become", instead of four.
  *
- * The parser is depended on rather than written, under decision tree 45's first
+ * The parser is depended on rather than written, under decision tree 44's first
  * branch read backwards: the *input* is authored by everybody — a scraper, a
  * CMS, Word's own exporter — and a hand-rolled tokeniser would meet its first
  * unclosed `<p>` inside somebody's saved page rather than in a test.

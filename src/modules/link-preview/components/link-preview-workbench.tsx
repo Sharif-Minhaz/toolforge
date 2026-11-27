@@ -4,7 +4,6 @@ import {
     IconAlertTriangle,
     IconClipboardText,
     IconDownload,
-    IconInfoCircle,
     IconLoader2,
     IconRuler,
     IconShare,
@@ -118,7 +117,7 @@ export function LinkPreviewWorkbench({
     const { ref: resultRef, scrollToResult } = useResultScroll();
 
     // Debounced: re-reading a pasted head and re-running eight platforms'
-    // rules is the expensive derivation decision 43 debounces. The editor
+    // rules is the expensive derivation decision 42 debounces. The editor
     // itself is never debounced — it paints behind the caret.
     const settledHtml = useDebouncedValue(html);
     const settledBase = useDebouncedValue(base);
@@ -392,25 +391,6 @@ export function LinkPreviewWorkbench({
 
                     {mode === "fetch" ? (
                         <>
-                            {/* Rule 32: the page and its picture are fetched by
-                                this server, so the reader is told before the
-                                controls, not in the article. */}
-                            <div className="bg-muted/40 ring-border flex items-start gap-2.5 rounded-xl px-3.5 py-3 ring-1 ring-inset">
-                                <IconInfoCircle
-                                    className="text-muted-foreground mt-0.5 size-4 shrink-0"
-                                    stroke={1.75}
-                                    aria-hidden="true"
-                                />
-                                <div className="flex min-w-0 flex-col gap-1">
-                                    <p className="text-[0.8125rem] leading-[1.4] font-medium">
-                                        {t("disclosureTitle")}
-                                    </p>
-                                    <p className="text-muted-foreground text-[0.8125rem] leading-relaxed">
-                                        {t("disclosure")}
-                                    </p>
-                                </div>
-                            </div>
-
                             <div className="flex flex-col gap-2">
                                 <StepLabel step={1} htmlFor={urlId}>
                                     {t("urlLabel")}
@@ -680,7 +660,7 @@ export function LinkPreviewWorkbench({
                                 >
                                     {t("cardsTitle")}
                                 </h2>
-                                <div className="grid gap-6 md:grid-cols-2 2xl:grid-cols-4">
+                                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                                     {PREVIEW_PLATFORMS.map((platform) => {
                                         const card = view.analysis.cards.find(
                                             (entry) => entry.platform === platform,

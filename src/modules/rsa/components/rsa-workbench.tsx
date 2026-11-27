@@ -308,7 +308,7 @@ export function RsaWorkbench({ initialOptions }: RsaWorkbenchProps) {
             <CardContent className="flex min-w-0 flex-col gap-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                     <p className="text-muted-foreground max-w-2xl min-w-0 flex-1 text-[0.8125rem] leading-normal">
-                        {t("localNotice")}
+                        {t("saveNotice")}
                     </p>
                     {/* Quiet until there is something to undo, so it never reads
                         as a button that might do nothing. */}

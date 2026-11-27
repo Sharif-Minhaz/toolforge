@@ -87,23 +87,11 @@ broken", which trains people to ignore the signal. See
 
 ---
 
-## Say what you cannot keep
+## Copy that overstates
 
-This site's standing promise is that nothing is uploaded. A tool that cannot keep
-that promise carries the correction **in its own copy, above its controls** —
-what is sent, to whom, and what the far end will see in its log — rather than
-leaving the site-wide claim to cover it.
-
-The Port Scanner's disclosure panel sits above the form, not in the article
-underneath: a reader deserves to know whose name lands in the target's log before
-they press anything, not after. See
-[`case-studies/port-scanner.md`](case-studies/port-scanner.md) and
-[`case-studies/domain-inspector.md`](case-studies/domain-inspector.md).
-
-The same rule at a smaller scale: **copy that overstates teaches readers to skip
-the copy that does not.** Once the browser keeps a copy of an edit URL, "shown
-once, save it now or lose it forever" is no longer true and must stop being said.
-See [`patterns/browser-persistence.md`](patterns/browser-persistence.md).
+**Copy that overstates teaches readers to skip the copy that does not.** Once
+the browser keeps a copy of an edit URL, "shown once, save it now or lose it
+forever" is no longer true and must stop being said. See [`patterns/browser-persistence.md`](patterns/browser-persistence.md).
 
 ---
 

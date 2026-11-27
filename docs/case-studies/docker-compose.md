@@ -7,7 +7,7 @@ this file is what is specific to Docker.
 ---
 
 ## Depend or implement
-`composerize` / `decomposerize` (MIT) were the candidates. Rule 45 says the output is
+`composerize` / `decomposerize` (MIT) were the candidates. Rule 44 says the output is
 read by somebody else, so depend on the _reference_ — but neither is the reference.
 The references are the Docker CLI and compose-go, both Go. The npm ports pull
 `composeverter` at the unpinned tag `latest`, `core-js@2` and a CLI prompt library

@@ -1,4 +1,4 @@
-import { IconCloudUpload, IconKey, IconTopologyStar3, IconTransform } from "@tabler/icons-react";
+import { IconKey, IconTopologyStar3, IconTransform } from "@tabler/icons-react";
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 
@@ -31,15 +31,8 @@ export async function generateMetadata({ params }: { params: LocaleParams }): Pr
 }
 
 /**
- * The way in to the GraphQL Server Studio.
- *
- * Everything interactive is one island. The disclosure — this is one of the few
- * parts of the site that does not run in your browser — is a server component,
- * so it never depends on JavaScript arriving. It sits *below* the launcher: the
- * three badges in the header already carry the short form of the same claim, and
- * a full panel between the reader and the create form costs more space than the
- * warning buys. What it must not become is optional, which is why it is plain
- * page copy rather than a collapsed panel.
+ * The way in to the GraphQL Server Studio. Everything interactive is one
+ * island; the header and the article around it stay on the server.
  */
 export default async function GraphqlServerStudioPage({ params }: { params: LocaleParams }) {
     await enterLocale(params);
@@ -100,28 +93,6 @@ export default async function GraphqlServerStudioPage({ params }: { params: Loca
 
             <Reveal>
                 <ServerLauncher overview={overview} turnstileSiteKey={turnstileSiteKey} />
-            </Reveal>
-
-            <Reveal>
-                <section
-                    aria-labelledby="disclosure-heading"
-                    className="border-border/70 bg-muted/30 rounded-2xl border p-4"
-                >
-                    <h2
-                        id="disclosure-heading"
-                        className="text-foreground flex items-center gap-2 text-xs leading-[1.3] font-semibold"
-                    >
-                        <IconCloudUpload
-                            className="text-muted-foreground size-4 shrink-0"
-                            stroke={1.75}
-                            aria-hidden="true"
-                        />
-                        {t("disclosureTitle")}
-                    </h2>
-                    <p className="text-muted-foreground mt-1.5 max-w-[68ch] text-xs leading-relaxed">
-                        {t("disclosureBody")}
-                    </p>
-                </section>
             </Reveal>
 
             <Reveal className="mt-4">

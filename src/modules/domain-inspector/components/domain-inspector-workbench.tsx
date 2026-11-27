@@ -191,6 +191,9 @@ export function DomainInspectorWorkbench({
         } finally {
             setRunning(false);
             renewChallenge();
+            // Again on landing, for the report that replaces the radar; a no-op
+            // when the slot is already on screen or came back empty.
+            scrollToResult();
         }
     }
 
@@ -418,10 +421,6 @@ export function DomainInspectorWorkbench({
                             {t("clear")}
                         </Button>
                     </div>
-
-                    <p className="text-muted-foreground text-[0.6875rem] leading-normal">
-                        {t("serverNote")}
-                    </p>
                 </CardContent>
             </Card>
 

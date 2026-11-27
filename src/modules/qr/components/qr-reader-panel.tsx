@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
 import { StatusStrip } from "@/modules/tools/components/status-strip";
+import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import { copyText } from "@/modules/tools/domain/clipboard";
 import { loadImageElement } from "@/modules/tools/domain/image-element";
 import { checkImageFile } from "@/modules/tools/domain/image-file";
@@ -61,6 +62,7 @@ export function QrReaderPanel({ onDecoded }: QrReaderPanelProps) {
     const scanningRef = useRef(false);
     const fileRef = useRef<HTMLInputElement>(null);
     const dropLabelId = useId();
+    const { ref: resultRef, scrollToResult } = useResultScroll();
 
     const [scanning, setScanning] = useState(false);
     const [decoding, setDecoding] = useState(false);
@@ -97,6 +99,9 @@ export function QrReaderPanel({ onDecoded }: QrReaderPanelProps) {
         setFailure(null);
         setCopied(false);
         onDecoded?.(payload);
+        // The decoded card sits under the camera's 16:9 frame, below the fold
+        // on a laptop — whether the code came from a pick or from the camera.
+        scrollToResult();
     }
 
     async function tick() {
@@ -371,7 +376,10 @@ export function QrReaderPanel({ onDecoded }: QrReaderPanelProps) {
             {failure !== null && <StatusStrip tone="error" message={t(`errors.${failure}`)} />}
 
             {result !== null && (
-                <div className="bg-card/60 ring-border/70 flex flex-col gap-3 rounded-xl p-3.5 ring-1 ring-inset">
+                <div
+                    ref={resultRef}
+                    className="bg-card/60 ring-border/70 flex scroll-mt-6 flex-col gap-3 rounded-xl p-3.5 ring-1 ring-inset"
+                >
                     <div className="flex items-center justify-between gap-2">
                         <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-[0.6875rem] leading-[1.3] font-medium">
                             {tKinds(result.kind)}

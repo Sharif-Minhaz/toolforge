@@ -23,13 +23,8 @@ import { useImagePaste } from "./use-image-paste";
  *
  * Shared rather than repeated because six tools take a picture, and every one
  * of them wants both — the pitfall this avoids is six subtly different answers
- * to "what is a pasted file called" and six copies of the disclosure below.
- *
- * The disclosure is the reason this component owns its own copy instead of
- * being a hook: the URL import is the single path in the image tools that
- * leaves the browser, and `CLAUDE.md` rule 31 says a limitation on the site's
- * "nothing is uploaded" promise sits above the controls rather than in the
- * article. It renders only when the URL row does.
+ * to "what is a pasted file called", and six copies of the URL row's server
+ * round trip and its error vocabulary.
  */
 
 type ImageSourceControlsProps = {
@@ -41,9 +36,9 @@ type ImageSourceControlsProps = {
     readonly disabled?: boolean;
     /**
      * Resolved on the server, because whether the importer has a database and a
-     * salt is not something the browser can know. False hides the URL row and
-     * its disclosure entirely: a control that cannot work is worse than an
-     * absent one, and there is nothing the reader could do about it.
+     * salt is not something the browser can know. False hides the URL row
+     * entirely: a control that cannot work is worse than an absent one, and
+     * there is nothing the reader could do about it.
      */
     readonly urlImportEnabled: boolean;
     readonly className?: string;

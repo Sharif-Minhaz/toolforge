@@ -13,7 +13,7 @@ import {
 /**
  * HTML in, Markdown out, through Turndown.
  *
- * Depended on rather than written, for the reason in decision tree 45: what
+ * Depended on rather than written, for the reason in decision tree 44: what
  * comes out of here is read by GitHub, by a static-site generator, by whatever
  * the reader pastes it into. A hand-rolled walker would be a second answer to a
  * question that already has a settled one, and every edge case it got wrong —

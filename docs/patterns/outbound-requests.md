@@ -85,14 +85,6 @@ everything else is dropped.**
 The outbound direction drops `authorization`, `cookie` and `host` for the mirror
 reason, and any header value containing a **newline**, which is request splitting.
 
-## Say the tool is not private, in the tool
-
-Everything else here runs in the browser and the site says so on its front page.
-One that cannot must carry that in its own copy — what is sent, to whom, and what
-the inspected host will see in its log — rather than leaving the site-wide promise
-to cover it. See
-[`../engineering-principles.md`](../engineering-principles.md#say-what-you-cannot-keep).
-
 ---
 
 ## Part two: a service we own

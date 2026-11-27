@@ -36,7 +36,7 @@ src/modules/mcp/
 
 ### Depend on the SDK, not on our own JSON-RPC
 
-Decision tree 45: somebody else reads the output, so depend on the reference
+Decision tree 44: somebody else reads the output, so depend on the reference
 implementation. `@modelcontextprotocol/sdk` owns the envelope, the handshake,
 capability negotiation and the Zod-to-JSON-Schema conversion the client actually
 consumes. What we own is the part above it — which tools exist and what they do.
@@ -222,10 +222,9 @@ than reporting that ToolForge cannot.
 ## The promise this breaks, and where that is said
 
 Every tool page does its work in the tab. MCP does not: arguments travel to the
-server, and the networked tool reaches out from here. That is a limitation the
-site's own front page implicitly denies, so rule 32 applies — the disclosure
-sits above the controls on `/mcp`, not in an article underneath, and the
-`password_generate` and `jwt_sign` descriptions repeat it where it matters most.
+server, and the networked tool reaches out from here. The `password_generate`
+and `jwt_sign` descriptions say so where it matters most: to the model relaying
+the result, which is in a position to warn the person who asked.
 
 ---
 

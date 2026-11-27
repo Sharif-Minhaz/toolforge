@@ -6,7 +6,6 @@ import {
     IconDownload,
     IconLoader2,
     IconRadar2,
-    IconShieldLock,
 } from "@tabler/icons-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useId, useState } from "react";
@@ -231,6 +230,11 @@ export function PortScannerWorkbench({
         } finally {
             setRunning(false);
             renewChallenge();
+            // Again on landing: the table is several times the radar's height,
+            // and a reader who scrolled away mid-scan is brought back to it. A
+            // no-op when the radar already put the slot on screen, and when the
+            // complaint went beside the field the slot is empty and stays put.
+            scrollToResult();
         }
     }
 
@@ -276,31 +280,6 @@ export function PortScannerWorkbench({
         <div className={cn("flex flex-col gap-6", TOOL_ACCENT_VARS.rose)}>
             <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
                 <CardContent className="flex flex-col gap-5">
-                    {/*
-                     * Above the form, not below it. This tool cannot keep the
-                     * promise the rest of the site makes — a scan has to leave
-                     * a server — and a reader deserves to know whose address
-                     * lands in the target's log before they press anything.
-                     */}
-                    <div className="ring-brand-amber/30 bg-brand-amber/8 flex items-start gap-2.5 rounded-xl px-3.5 py-3 ring-1 ring-inset">
-                        <IconShieldLock
-                            className="text-brand-amber mt-0.5 size-4 shrink-0"
-                            stroke={1.8}
-                            aria-hidden="true"
-                        />
-                        <div className="flex min-w-0 flex-col gap-1">
-                            <p className="text-[0.8125rem] leading-[1.4] font-medium">
-                                {t("disclosureTitle")}
-                            </p>
-                            <p className="text-muted-foreground text-[0.8125rem] leading-relaxed">
-                                {t("disclosure")}
-                            </p>
-                            <p className="text-muted-foreground text-[0.8125rem] leading-relaxed">
-                                {t("authorization")}
-                            </p>
-                        </div>
-                    </div>
-
                     <div className="flex flex-col gap-2">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <StepLabel step={1} htmlFor={hostId}>

@@ -23,7 +23,7 @@ Three formats stay out of that path, each for its own reason: a workbook is a
 grid, a deck is a set of boxes at coordinates, and plain text is the subject of
 the next section.
 
-Decision tree 45 was applied twice with different answers, and both are worth
+Decision tree 44 was applied twice with different answers, and both are worth
 recording:
 
 | Format           | Depended on, or written                                       | Why                                                                                                                                                                                                                                                                                                                                                                                 |
@@ -32,7 +32,7 @@ recording:
 | HTML             | [node-html-parser](https://github.com/taoqf/node-html-parser) | The _input_ is authored by everybody — a scraper, a CMS, Word's own exporter. A hand-rolled tokeniser meets its first unclosed `<p>` in somebody's saved page.                                                                                                                                                                                                                      |
 | `.docx`          | [Mammoth](https://github.com/mwilliamson/mammoth.js)          | A `.docx` is not one format. It is numbering definitions, a style hierarchy with inheritance, a relationship graph, and fifteen years of what Word emits rather than what ECMA-376 says.                                                                                                                                                                                            |
 | plain text       | written, in forty lines                                       | There is nothing to depend on. A `.txt` has no grammar, so the whole job is deciding what its blank lines and indentation mean — see below.                                                                                                                                                                                                                                         |
-| `.xlsx`, `.pptx` | written, on `fflate` and `@xmldom/xmldom`                     | Narrow reads — sheet order, shared strings, cell values, shape transforms — consumed by nothing but this tool's own renderer. And the maintained alternative for spreadsheets is not maintained: SheetJS's last release on the public registry is `0.18.5` from 2022, because the project moved distribution off npm. Rule 45 says check who maintains it _before_ depending on it. |
+| `.xlsx`, `.pptx` | written, on `fflate` and `@xmldom/xmldom`                     | Narrow reads — sheet order, shared strings, cell values, shape transforms — consumed by nothing but this tool's own renderer. And the maintained alternative for spreadsheets is not maintained: SheetJS's last release on the public registry is `0.18.5` from 2022, because the project moved distribution off npm. Rule 44 says check who maintains it _before_ depending on it. |
 
 ---
 

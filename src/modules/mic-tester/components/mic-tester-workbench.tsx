@@ -2,7 +2,6 @@
 
 import {
     IconLoader2,
-    IconLock,
     IconMicrophone,
     IconPlayerRecordFilled,
     IconPlayerStop,
@@ -91,17 +90,6 @@ export function MicTesterWorkbench({ initialProcessing }: MicTesterWorkbenchProp
             <div className="grid lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
                 <div className="border-border/70 flex min-w-0 flex-col gap-3 border-b p-4 sm:p-5 lg:border-r lg:border-b-0">
                     <StepLabel step={1}>{t("inputLabel")}</StepLabel>
-
-                    {/* Above the controls, not in the article: a reader deciding
-                        whether to allow a microphone is owed this first. */}
-                    <p className="text-muted-foreground flex items-start gap-1.5 text-[0.75rem] leading-5">
-                        <IconLock
-                            className="mt-0.5 size-3.5 shrink-0 text-(--color-success)"
-                            stroke={1.9}
-                            aria-hidden="true"
-                        />
-                        {t("privacy")}
-                    </p>
 
                     <LevelMeter stream={stream}>
                         {failure !== null ? (

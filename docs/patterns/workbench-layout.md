@@ -44,8 +44,6 @@ The primitives live in `src/modules/tools/components/workbench-step.tsx`.
 - **Side by side from `lg`** when input and result are text panels of similar
   size: `lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]` with the swap button
   in the middle column. Stacked below `lg`, input first.
-- A disclosure that data leaves the browser still sits above the controls
-  (rule 32) — removing the card header never removes one.
 
 ## Generators and interactive tools
 

@@ -20,11 +20,7 @@ export default function TextToSpeechLoading() {
             </div>
 
             <div className="bg-card ring-border/70 flex flex-col gap-4 rounded-xl p-5 ring-1 ring-inset sm:p-6">
-                {/* The disclosure, then the tabs. */}
-                <div className="flex flex-col gap-1.5">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-2/3" />
-                </div>
+                {/* The tabs. */}
                 <Skeleton className="h-8 w-full rounded-lg" />
 
                 {/* Step label and meter on the left, Pauses and Clear on the right. */}

@@ -2,6 +2,8 @@
 
 import { useCallback, useRef } from "react";
 
+import { decideResultScroll } from "../domain/result-visibility";
+
 /**
  * Brings a tool's result into view after the press that produced it.
  *
@@ -22,24 +24,27 @@ import { useCallback, useRef } from "react";
  *   re-render.
  * - **It never scrolls a target that is already in view.** Yanking the page
  *   when the answer is already on screen is worse than not scrolling at all.
+ *   "In view" means wholly on screen, or — for a result taller than the
+ *   screen — covering most of it; the rule and its reasons are in
+ *   `domain/result-visibility.ts`.
+ * - **It never scrolls to a gap.** A target that is not mounted yet, or has
+ *   nothing in it, is re-measured for a few frames — a commit inside a
+ *   transition can land after the first one — and then left alone.
+ *
+ * Calling it more than once per operation is the intended use for anything
+ * that takes a while: once on the press, when a progress panel mounts in the
+ * slot the result will take, and again when the result lands. The second call
+ * costs nothing when the first already brought the slot into view.
  */
 
-/** Anything at least this visible is already being read; leave it alone. */
-const ALREADY_VISIBLE_RATIO = 0.4;
+/** How many frames an empty or unmounted target is re-measured before giving up. */
+const MAX_WAIT_FRAMES = 10;
 
 export function prefersReducedMotion(): boolean {
     return (
         typeof window !== "undefined" &&
         window.matchMedia("(prefers-reduced-motion: reduce)").matches
     );
-}
-
-function isMostlyVisible(element: HTMLElement): boolean {
-    const box = element.getBoundingClientRect();
-    const viewport = window.innerHeight || 0;
-    const visible = Math.min(box.bottom, viewport) - Math.max(box.top, 0);
-
-    return box.height > 0 && visible / Math.min(box.height, viewport) >= ALREADY_VISIBLE_RATIO;
 }
 
 export function useResultScroll<T extends HTMLElement = HTMLDivElement>() {
@@ -50,10 +55,23 @@ export function useResultScroll<T extends HTMLElement = HTMLDivElement>() {
             return;
         }
 
-        window.requestAnimationFrame(() => {
-            const target = ref.current;
+        let waited = 0;
 
-            if (target === null || isMostlyVisible(target)) {
+        const attempt = () => {
+            const target = ref.current;
+            const decision =
+                target === null
+                    ? "wait"
+                    : decideResultScroll(target.getBoundingClientRect(), window.innerHeight || 0);
+
+            if (decision === "wait" && waited < MAX_WAIT_FRAMES) {
+                waited += 1;
+                window.requestAnimationFrame(attempt);
+
+                return;
+            }
+
+            if (decision !== "scroll" || target === null) {
                 return;
             }
 
@@ -61,7 +79,9 @@ export function useResultScroll<T extends HTMLElement = HTMLDivElement>() {
                 behavior: prefersReducedMotion() ? "auto" : "smooth",
                 block: "start",
             });
-        });
+        };
+
+        window.requestAnimationFrame(attempt);
     }, []);
 
     return { ref, scrollToResult } as const;

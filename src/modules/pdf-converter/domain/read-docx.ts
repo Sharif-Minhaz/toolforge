@@ -8,7 +8,7 @@ import { readHtml, type HtmlReadOptions } from "./read-html";
  * Word in, blocks out, by way of HTML.
  *
  * Mammoth is depended on rather than written, and this is the clearest case in
- * the module for decision tree 45. A `.docx` is not one format: it is numbering
+ * the module for decision tree 44. A `.docx` is not one format: it is numbering
  * definitions, a style hierarchy with inheritance, a relationship graph, and
  * fifteen years of what Word actually emits rather than what the ECMA standard
  * says it should. Getting a heading level right means resolving a style's

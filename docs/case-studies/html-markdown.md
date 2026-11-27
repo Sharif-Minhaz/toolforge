@@ -6,7 +6,7 @@ directions.
 The two-notation shape is in
 [`../patterns/format-conversion.md`](../patterns/format-conversion.md) — but note
 where this tool leaves it. curl and BSON parse into a model this repo owns;
-this one does not, because decision tree 45 says so. Both formats are read by
+this one does not, because decision tree 44 says so. Both formats are read by
 somebody else — GitHub, a static-site generator, whatever the reader pastes into
 — so the parsers are depended on rather than written:
 [Turndown](https://github.com/mixmark-io/turndown) writes the Markdown,
@@ -34,7 +34,7 @@ A page's JavaScript becomes a paragraph of the article. So does a stylesheet's
 selector list, and so does everything in `<head>`.
 
 `STRIPPED_ELEMENTS` in `domain/constants.ts` is the divergence, and it is
-deliberate under decision tree 46's third branch: no working client emits
+deliberate under decision tree 45's third branch: no working client emits
 `<script>` expecting it to be read as prose. The removal is registered as a
 **filter function rather than a tag list**, so the pass that drops an element
 also records that it did — `HtmlMarkdownSuccess.removed` is what keeps a

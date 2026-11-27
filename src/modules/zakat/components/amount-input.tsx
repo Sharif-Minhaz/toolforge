@@ -13,7 +13,7 @@ type AmountInputProps = Omit<ComponentProps<typeof Input>, "type" | "inputMode" 
 };
 
 /**
- * One amount. A short identity field, so it is capped (`CLAUDE.md` rule 42):
+ * One amount. A short identity field, so it is capped (`CLAUDE.md` rule 41):
  * no real amount needs more characters than the cap, and refusing a keystroke
  * past it costs nothing. Text rather than `type="number"`, which would drop
  * the lakh grouping, Bangla digits and a trailing point mid-typing; the domain

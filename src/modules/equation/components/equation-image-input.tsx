@@ -52,10 +52,6 @@ type EquationImageInputProps = {
  * consumes `ConvertedEquation[]` and cannot tell where an equation came from.
  * Swapping the recognizer means editing `repository/math-ocr.ts` and this
  * component's action call, and nothing else.
- *
- * The disclosure sits above the controls rather than in the article, because
- * this is where the site's "nothing is uploaded" promise stops holding and a
- * reader has to be told before they choose a file, not after.
  */
 export function EquationImageInput({
     siteKey,
@@ -190,12 +186,6 @@ export function EquationImageInput({
 
     return (
         <div className="flex min-w-0 flex-col gap-3">
-            {/* Above the controls, never in the article: this is the one path in
-                this tool that sends what the reader chose to a server. */}
-            <p className="text-muted-foreground bg-muted/50 ring-border/60 rounded-xl px-3 py-2 text-[0.75rem] leading-[1.5] ring-1 ring-inset">
-                {t("disclosure")}
-            </p>
-
             <div className="flex min-w-0 flex-col gap-2">
                 {/* The title sits on the step label, which labels the same
                     input as the box under it. */}

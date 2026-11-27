@@ -6,7 +6,6 @@ import {
     IconPhotoPlus,
     IconRefresh,
     IconScale,
-    IconShieldCheck,
     IconTrash,
 } from "@tabler/icons-react";
 import { useFormatter, useTranslations } from "next-intl";
@@ -623,13 +622,6 @@ export function GeminiPanel({ active }: GeminiPanelProps) {
                         icon: IconScale,
                         title: t("rightsTitle"),
                         body: t("rightsNote"),
-                    },
-                    {
-                        key: "privacy",
-                        icon: IconShieldCheck,
-                        tone: "success",
-                        title: t("privacyTitle"),
-                        body: t("privacyNote"),
                     },
                 ]}
             />

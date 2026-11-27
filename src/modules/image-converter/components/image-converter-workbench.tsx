@@ -5,7 +5,6 @@ import {
     IconFileZip,
     IconInfoCircle,
     IconLoader2,
-    IconShieldCheck,
     IconTransform,
     IconTrash,
 } from "@tabler/icons-react";
@@ -16,6 +15,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
+import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
@@ -26,6 +26,7 @@ import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { ToolNotes } from "@/modules/tools/components/tool-notes";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
+import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import {
     OptionsDisclosure,
     RESULT_TRAY,
@@ -157,6 +158,7 @@ export function ImageConverterWorkbench({
     // this component is a per-render source of entropy.
     const nextId = useRef(0);
     const running = useRef(false);
+    const { ref: queueRef, scrollToResult } = useResultScroll<HTMLElement>();
     // Held outside state because the cleanup must see every URL ever handed out,
     // including ones added after the last render this effect closed over.
     const previewUrls = useRef(new Set<string>());
@@ -346,6 +348,9 @@ export function ImageConverterWorkbench({
             items.filter((item) => needsWork(queueRow(item), signature)),
             options,
         );
+        // The queue under the button is where each row's progress and finished
+        // file appear, and it is never empty when the button is enabled.
+        scrollToResult();
     }
 
     /** One row, on request — the only path that replaces a result already in hand. */
@@ -760,7 +765,11 @@ export function ImageConverterWorkbench({
                  * step 2's tray.
                  */}
                 {items.length > 0 && (
-                    <section aria-labelledby={queueHeadingId} className={RESULT_TRAY}>
+                    <section
+                        ref={queueRef}
+                        aria-labelledby={queueHeadingId}
+                        className={cn(RESULT_TRAY, "scroll-mt-6")}
+                    >
                         <div className="flex min-h-7 min-w-0 flex-wrap items-center justify-between gap-2">
                             <StepLabel step={2}>{tCommon("download")}</StepLabel>
 
@@ -893,13 +902,6 @@ export function ImageConverterWorkbench({
 
                 <ToolNotes
                     notes={[
-                        {
-                            key: "privacy",
-                            icon: IconShieldCheck,
-                            tone: "success",
-                            title: t("privacyTitle"),
-                            body: t("privacyNote"),
-                        },
                         {
                             key: "metadata",
                             icon: IconInfoCircle,

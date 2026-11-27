@@ -6,7 +6,7 @@ import { readHtml, type HtmlReadOptions, type HtmlReadResult } from "./read-html
 /**
  * Markdown and MDX both become HTML first, and then blocks.
  *
- * Marked writes the HTML, for the reason decision tree 45 gives and the
+ * Marked writes the HTML, for the reason decision tree 44 gives and the
  * Markdown preview already relies on: CommonMark plus GitHub's extensions is a
  * specification with a settled implementation, and a second one written here
  * would differ from it in somebody's README rather than in a test.

@@ -27,7 +27,7 @@ consequences shape everything here:
 
 ## Depend or implement: implemented, and why
 
-Decision tree 45 says to depend on the reference implementation when somebody
+Decision tree 44 says to depend on the reference implementation when somebody
 else reads the output — and a SutonnyMJ font does. There is no reference. The
 candidates on npm when this shipped were single-maintainer packages with no
 stars, one of them thirteen days old. None is the format's owner; Bijoy has no

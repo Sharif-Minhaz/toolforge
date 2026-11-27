@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { createLink } from "@/modules/short-links/actions/create-link";
 import { CreatedLinkCard } from "@/modules/short-links/components/created-link-card";
@@ -25,6 +26,7 @@ import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input
 import { OptionSwitch } from "@/modules/tools/components/option-controls";
 import { StatusStrip } from "@/modules/tools/components/status-strip";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
+import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import { RESULT_TRAY, StepLabel } from "@/modules/tools/components/workbench-step";
 import { copyText } from "@/modules/tools/domain/clipboard";
 import {
@@ -91,6 +93,7 @@ export function ShortenerWorkbench({
     const [challengeReset, setChallengeReset] = useState(0);
     const [creating, setCreating] = useState(false);
     const [created, setCreated] = useState<ShortLinkCreatedView | null>(null);
+    const { ref: createdRef, scrollToResult } = useResultScroll();
     const [failure, setFailure] = useState<ShortLinkFailureReason | null>(null);
 
     // Every one of these caps at `maxLength`, so none can ever read "over" —
@@ -146,6 +149,9 @@ export function ShortenerWorkbench({
             }
 
             setCreated(result.value);
+            // The link replaces the form, which collapses under a reader who
+            // scrolled down to the options or the challenge to press create.
+            scrollToResult();
             history.remember({
                 slug: result.value.slug,
                 shortUrl: result.value.shortUrl,
@@ -190,7 +196,7 @@ export function ShortenerWorkbench({
                 <CardContent className="flex flex-col gap-5">
                     {created !== null ? (
                         <>
-                            <div className={RESULT_TRAY}>
+                            <div ref={createdRef} className={cn(RESULT_TRAY, "scroll-mt-6")}>
                                 <CreatedLinkCard
                                     link={created}
                                     onCopy={(value) => void handleCopy(value)}

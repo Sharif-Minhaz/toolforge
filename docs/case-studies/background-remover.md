@@ -55,7 +55,7 @@ library facts against the shipped bundle.
 
 `toSegmentationInput` and `composeResult` in `domain/canvas.ts`. The fit
 arithmetic is `fitWithinEdge` in `tools/domain/pixels.ts` — this module had its
-own copy of it for a while, which is rule 40 step one going unread.
+own copy of it for a while, which is rule 39 step one going unread.
 
 This is the same rule the Watermark Remover's case study states as **"send the
 smallest thing that answers the question"** — applied with no network anywhere in

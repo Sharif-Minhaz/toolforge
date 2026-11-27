@@ -518,3 +518,132 @@
 .mock-canvas .react-flow__attribution {
     background: transparent;
 }
+
+/* Link Preview's platform skins. Each card is drawn in the colours its platform
+   paints that card with — feed, bubble, embed, link blue — in the platform's own
+   light or dark theme, following this site's. They are the thing being
+   previewed, so they are brand values rather than this site's palette; nothing
+   outside `link-preview/components/platform-card.tsx` may use them. */
+:root {
+    --lp-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --lp-font-google: Arial, "Helvetica Neue", Helvetica, sans-serif;
+
+    /* The platform marks beside each card's name: brand colours, one value
+       for both themes except X, which is ink on either. */
+    --lp-brand-facebook: #0866ff;
+    --lp-brand-x: var(--foreground);
+    --lp-brand-linkedin: #0a66c2;
+    --lp-brand-whatsapp: #25d366;
+    --lp-brand-slack: #e01e5a;
+    --lp-brand-discord: #5865f2;
+    --lp-brand-telegram: #26a5e4;
+    --lp-brand-google: #4285f4;
+
+    --lp-fb-canvas: #f0f2f5;
+    --lp-fb-surface: #ffffff;
+    --lp-fb-meta: #f0f2f5;
+    --lp-fb-border: #dadde1;
+    --lp-fb-title: #050505;
+    --lp-fb-muted: #65676b;
+
+    --lp-x-canvas: #ffffff;
+    --lp-x-border: #cfd9de;
+    --lp-x-title: #0f1419;
+    --lp-x-muted: #536471;
+    --lp-x-overlay: rgb(0 0 0 / 0.77);
+    --lp-x-overlay-fg: #ffffff;
+
+    --lp-li-canvas: #f4f2ee;
+    --lp-li-surface: #ffffff;
+    --lp-li-meta: #eef3f8;
+    --lp-li-border: #e0dfdc;
+    --lp-li-title: #191919;
+    --lp-li-muted: #666666;
+
+    --lp-wa-canvas: #efeae2;
+    --lp-wa-bubble: #d9fdd3;
+    --lp-wa-meta: #d1f4cc;
+    --lp-wa-title: #111b21;
+    --lp-wa-muted: #667781;
+    --lp-wa-link: #027eb5;
+
+    --lp-slack-canvas: #ffffff;
+    --lp-slack-bar: #dddddd;
+    --lp-slack-text: #1d1c1d;
+    --lp-slack-muted: #616061;
+    --lp-slack-link: #1264a3;
+
+    --lp-dc-canvas: #ffffff;
+    --lp-dc-embed: #f2f3f5;
+    --lp-dc-bar: #e3e5e8;
+    --lp-dc-text: #313338;
+    --lp-dc-muted: #4e5058;
+    --lp-dc-link: #006ce7;
+
+    --lp-tg-canvas: #c9dcb4;
+    --lp-tg-bubble: #ffffff;
+    --lp-tg-accent: #3390ec;
+    --lp-tg-text: #000000;
+    --lp-tg-muted: #707579;
+
+    --lp-g-canvas: #ffffff;
+    --lp-g-site: #202124;
+    --lp-g-url: #4d5156;
+    --lp-g-link: #1a0dab;
+    --lp-g-text: #474747;
+    --lp-g-favicon: #f1f3f4;
+}
+
+.dark {
+    --lp-fb-canvas: #18191a;
+    --lp-fb-surface: #242526;
+    --lp-fb-meta: #3a3b3c;
+    --lp-fb-border: #3e4042;
+    --lp-fb-title: #e4e6eb;
+    --lp-fb-muted: #b0b3b8;
+
+    --lp-x-canvas: #000000;
+    --lp-x-border: #2f3336;
+    --lp-x-title: #e7e9ea;
+    --lp-x-muted: #71767b;
+
+    --lp-li-canvas: #000000;
+    --lp-li-surface: #1b1f23;
+    --lp-li-meta: #38434f;
+    --lp-li-border: #38434f;
+    --lp-li-title: #e6e6e6;
+    --lp-li-muted: #a3a3a3;
+
+    --lp-wa-canvas: #0b141a;
+    --lp-wa-bubble: #005c4b;
+    --lp-wa-meta: #025144;
+    --lp-wa-title: #e9edef;
+    --lp-wa-muted: #b3c3bf;
+    --lp-wa-link: #53bdeb;
+
+    --lp-slack-canvas: #1a1d21;
+    --lp-slack-bar: #565856;
+    --lp-slack-text: #d1d2d3;
+    --lp-slack-muted: #ababad;
+    --lp-slack-link: #1d9bd1;
+
+    --lp-dc-canvas: #313338;
+    --lp-dc-embed: #2b2d31;
+    --lp-dc-bar: #1e1f22;
+    --lp-dc-text: #dbdee1;
+    --lp-dc-muted: #b5bac1;
+    --lp-dc-link: #00a8fc;
+
+    --lp-tg-canvas: #0e1621;
+    --lp-tg-bubble: #182533;
+    --lp-tg-accent: #6ab3f3;
+    --lp-tg-text: #f5f5f5;
+    --lp-tg-muted: #708499;
+
+    --lp-g-canvas: #1f1f1f;
+    --lp-g-site: #dadce0;
+    --lp-g-url: #bdc1c6;
+    --lp-g-link: #99c3ff;
+    --lp-g-text: #bfbfbf;
+    --lp-g-favicon: #303134;
+}

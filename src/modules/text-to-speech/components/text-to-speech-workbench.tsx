@@ -3,7 +3,6 @@
 import {
     IconArrowBackUp,
     IconFileText,
-    IconInfoCircle,
     IconLanguage,
     IconLoader2,
     IconPlayerStop,
@@ -26,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import {
     InputLimitMeter,
     useInputLimit,
@@ -147,6 +147,11 @@ export function TextToSpeechWorkbench({
     const generation = useSpeechGeneration();
     const translation = useTextTranslation();
     const { ref: resultRef, scrollToResult } = useResultScroll();
+    // The progress line mounts under the Generate button, which sits at the
+    // bottom of the card — so on a laptop a minute-long wait would run below
+    // the fold. The whole step is the target, not the line, so Cancel stays
+    // on screen above it: a second target for the same hook, on the press.
+    const { ref: progressRef, scrollToResult: scrollToProgress } = useResultScroll();
 
     const settings = draft ?? stored ?? DEFAULT_SPEECH_SETTINGS;
     const reading = useInputLimit(measureCharacters(text), MAX_SPEECH_CHARACTERS);
@@ -395,6 +400,7 @@ export function TextToSpeechWorkbench({
         const spent = token;
 
         renewChallenge();
+        scrollToProgress();
 
         if (await generation.generate({ text, voice, settings }, spent)) {
             scrollToResult();
@@ -442,17 +448,6 @@ export function TextToSpeechWorkbench({
     return (
         <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
             <CardContent className="flex min-w-0 flex-col gap-5">
-                {/* Rule 32: the text leaves the browser, so the reader is told
-                    before the controls, not only in the article. */}
-                <p className="text-muted-foreground flex items-start gap-2 text-[0.8125rem] leading-relaxed">
-                    <IconInfoCircle
-                        className="mt-0.5 size-4 shrink-0"
-                        stroke={1.75}
-                        aria-hidden="true"
-                    />
-                    {t("disclosure")}
-                </p>
-
                 <Tabs
                     value={mode}
                     onValueChange={(next) => setMode(next === "file" ? "file" : "text")}
@@ -645,7 +640,7 @@ export function TextToSpeechWorkbench({
                          * check and button side by side on a wide screen so
                          * neither floats alone.
                          */}
-                        <div className={RESULT_TRAY}>
+                        <div ref={progressRef} className={cn(RESULT_TRAY, "scroll-mt-6")}>
                             <StepLabel step={2}>{tResult("label")}</StepLabel>
 
                             <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">

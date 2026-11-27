@@ -170,7 +170,7 @@ describe("blurredBackgroundRect", () => {
 /**
  * There is deliberately no `segmentationSize` here any more. It was a second
  * copy of `fitWithinEdge` in `tools/domain/pixels.ts`, which already had its own
- * tests — `CLAUDE.md` rule 40, step one: search before writing.
+ * tests — `CLAUDE.md` rule 39, step one: search before writing.
  */
 describe("scaleFactor", () => {
     test("is one when nothing was scaled", () => {

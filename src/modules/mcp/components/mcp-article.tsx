@@ -63,11 +63,10 @@ export async function getMcpTocItems(): Promise<TocItem[]> {
  * The prose half of the page: what MCP is, what asking for a tool looks like in
  * practice, what the limits are, and what is deliberately not here.
  *
- * The "what is not here" section is not an apology. It is the disclosure rule:
- * a reader who asks their assistant to compress a photograph and is told
- * ToolForge cannot has been failed by this page, not by the endpoint. Naming
- * the three groups and why each one is absent is what turns a missing feature
- * into a known boundary.
+ * The "what is not here" section is not an apology. A reader who asks their
+ * assistant to compress a photograph and is told ToolForge cannot has been
+ * failed by this page, not by the endpoint. Naming the three groups and why
+ * each one is absent is what turns a missing feature into a known boundary.
  */
 export async function McpArticle() {
     const [t, faqs] = await Promise.all([getTranslations("mcp.article"), getMcpFaqEntries()]);

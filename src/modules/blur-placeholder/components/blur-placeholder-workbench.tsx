@@ -1,6 +1,6 @@
 "use client";
 
-import { IconPhotoPlus, IconShieldCheck, IconTrash } from "@tabler/icons-react";
+import { IconPhotoPlus, IconTrash } from "@tabler/icons-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState, type DragEvent } from "react";
 import { toast } from "sonner";
@@ -16,8 +16,8 @@ import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
-import { ToolNotes } from "@/modules/tools/components/tool-notes";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
+import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import { OptionsDisclosure, StepLabel } from "@/modules/tools/components/workbench-step";
 import { copyText } from "@/modules/tools/domain/clipboard";
 import { fitComponents, parseAspectRatio } from "../domain/aspect";
@@ -116,6 +116,7 @@ export function BlurPlaceholderWorkbench({
     );
 
     const nextId = useRef(0);
+    const { ref: outputRef, scrollToResult } = useResultScroll();
     // Held outside state so the unmount cleanup sees every URL ever handed out.
     const previewUrls = useRef(new Set<string>());
 
@@ -328,6 +329,9 @@ export function BlurPlaceholderWorkbench({
 
                 return { id: (nextId.current += 1), source: outcome.source, previewUrl: url };
             });
+            // A pick is a press: the picture and its blur are drawn in the panel
+            // under the intake, which the options above push below the fold.
+            scrollToResult();
         } finally {
             setReading(false);
         }
@@ -575,33 +579,23 @@ export function BlurPlaceholderWorkbench({
                 )}
 
                 {shown !== null && (
-                    <PlaceholderOutput
-                        placeholder={shown}
-                        punch={options.punch}
-                        sourceWidth={snippetSize.width}
-                        sourceHeight={snippetSize.height}
-                        filename={fromPicture ? `/${picked.source.name}` : SAMPLE_FILENAME}
-                        sourceUrl={fromPicture ? picked.previewUrl : null}
-                        sourceName={fromPicture ? picked.source.name : null}
-                        snippet={snippet}
-                        stale={placeholder === null || typing}
-                        copied={copied}
-                        onSnippetChange={setSnippet}
-                        onCopy={(target, value) => void handleCopy(target, value)}
-                    />
+                    <div ref={outputRef} className="min-w-0 scroll-mt-6">
+                        <PlaceholderOutput
+                            placeholder={shown}
+                            punch={options.punch}
+                            sourceWidth={snippetSize.width}
+                            sourceHeight={snippetSize.height}
+                            filename={fromPicture ? `/${picked.source.name}` : SAMPLE_FILENAME}
+                            sourceUrl={fromPicture ? picked.previewUrl : null}
+                            sourceName={fromPicture ? picked.source.name : null}
+                            snippet={snippet}
+                            stale={placeholder === null || typing}
+                            copied={copied}
+                            onSnippetChange={setSnippet}
+                            onCopy={(target, value) => void handleCopy(target, value)}
+                        />
+                    </div>
                 )}
-
-                <ToolNotes
-                    notes={[
-                        {
-                            key: "privacy",
-                            icon: IconShieldCheck,
-                            tone: "success",
-                            title: t("privacyTitle"),
-                            body: t("privacyNote"),
-                        },
-                    ]}
-                />
             </CardContent>
         </Card>
     );

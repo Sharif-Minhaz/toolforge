@@ -112,19 +112,12 @@ The video tab strips the sparkle Gemini and Veo sign their clips with. It runs
 entirely in the browser, through WebCodecs and `mediabunny`, and it is not a
 model.
 
-### One tool, two promises — say them both, at the controls
+### One tool, separate panels
 
 The picture tab uploads a square to a Cloudflare Worker. The video tab uploads
-nothing. Rule 32 says a limitation is disclosed above the controls rather than in
-the article, and here that rule bites in **both** directions: a reader who has
-seen "the square you mark is uploaded" and then drops a clip in deserves to be
-told the opposite is now true, not to assume the worse of the two.
-
-So each tab carries its own privacy note, its own rights note and its own failure
-vocabulary. The image tab's note that the marked square is uploaded is the first
-line of that tab, above its controls; the Gemini and video tabs say "stays in
-this tab" beside theirs. **A tab strip over two panels is
-one component; it is not one set of promises.**
+nothing. So each tab carries its own rights note and its own failure vocabulary.
+**A tab strip over two panels is one component; it is not one set of
+promises.**
 
 The failure reasons are separate lists (`WATERMARK_FAILURE_REASONS` and
 `VIDEO_FAILURE_REASONS`) for the same reason. One tab fails at a worker over the
@@ -349,7 +342,7 @@ AAC encoder, and the result **says which one it wrote**.
 about behaviour has to be run.** This one was wrong for two rounds because it
 was only ever reasoned about.
 
-**Rule 45 in its second form.** "Depend or implement" is usually asked about
+**Rule 44 in its second form.** "Depend or implement" is usually asked about
 output somebody else reads. Ask it about _input_ handling too: a container's
 edge cases — edit lists, priming, negative timestamps — are somebody else's
 twenty years of bug reports, and a pump written in an afternoon has none of them.

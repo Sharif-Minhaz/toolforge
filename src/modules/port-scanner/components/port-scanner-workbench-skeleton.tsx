@@ -2,8 +2,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * The workbench card while it waits: the fallback for the request-time half of
- * the page, and the matching block in `loading.tsx`. Disclosure, host,
- * challenge, the scan, then the folded port options.
+ * the page, and the matching block in `loading.tsx`. Host, challenge,
+ * the scan, then the folded port options.
  */
 export function PortScannerWorkbenchSkeleton() {
     return (
@@ -11,9 +11,6 @@ export function PortScannerWorkbenchSkeleton() {
             aria-hidden="true"
             className="bg-card ring-border/70 flex flex-col gap-5 rounded-xl p-5 ring-1 ring-inset sm:p-6"
         >
-            {/* The disclosure panel, which is always painted. */}
-            <Skeleton className="h-24 w-full rounded-xl" />
-
             <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between gap-2">
                     <Skeleton className="h-5 w-36" />

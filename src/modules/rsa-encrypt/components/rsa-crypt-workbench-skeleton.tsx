@@ -2,9 +2,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * The encrypt / decrypt card while it waits: the fallback for the request-time
- * half of the page, and the matching block in `loading.tsx`. Notice and
- * direction on top, then the payload with its key beside the result from `lg`
- * up.
+ * half of the page, and the matching block in `loading.tsx`. Direction on top,
+ * then the payload with its key beside the result from `lg` up.
  */
 export function RsaCryptWorkbenchSkeleton() {
     return (
@@ -12,8 +11,6 @@ export function RsaCryptWorkbenchSkeleton() {
             aria-hidden="true"
             className="bg-card ring-border/70 flex flex-col gap-6 rounded-xl p-5 ring-1 ring-inset sm:p-6"
         >
-            <Skeleton className="h-4 w-full max-w-xl" />
-
             {/* Encrypt / Decrypt, and Reset. */}
             <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between gap-2">

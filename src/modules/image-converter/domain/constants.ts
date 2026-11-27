@@ -30,7 +30,7 @@ export const MAX_PIXELS = 40_000_000;
  * SVG is not on the shared list on purpose: it is not decoded like the others.
  * It is markup, rendered by the browser at a size this tool chooses, and only
  * this tool has a reason to want that — the compressor has nothing to compress,
- * and the URL importer refuses it for a separate reason of its own. Rule 40's
+ * and the URL importer refuses it for a separate reason of its own. Rule 39's
  * second branch: exactly one feature needs it, so it stays here.
  */
 export const ACCEPTED_IMAGE_TYPES = [...DECODABLE_IMAGE_TYPES, SVG_MIME_TYPE] as const;

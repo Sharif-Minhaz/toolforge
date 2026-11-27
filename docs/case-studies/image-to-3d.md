@@ -114,7 +114,7 @@ assumes millimetres. glTF is not unitless — its unit is the metre, and there i
 no field to say otherwise. So the same 100 mm plate is `100` in three files and
 `0.1` in the GLB.
 
-This is decision tree 45/46 landing on **match the specification**: the output is
+This is decision tree 44/45 landing on **match the specification**: the output is
 read by other people's software, so diverging to make Blender's first impression
 nicer would be wrong by a factor of a thousand everywhere the unit is respected.
 What that buys is a disclosure obligation — the line under the format picker says

@@ -13,7 +13,6 @@ export function WebcamTesterWorkbenchSkeleton() {
             <div className="grid lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
                 <div className="border-border/70 flex flex-col gap-3 border-b p-4 sm:p-5 lg:border-r lg:border-b-0">
                     <Skeleton className="h-5 w-36" />
-                    <Skeleton className="h-4 w-4/5" />
                     <Skeleton className="aspect-video w-full rounded-2xl" />
                     <Skeleton className="h-9 w-36 rounded-lg" />
                     <div className="grid gap-3 sm:grid-cols-2">

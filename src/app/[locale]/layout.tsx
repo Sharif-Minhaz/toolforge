@@ -591,7 +591,7 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
             workbench: messages.speedTest.workbench,
             toast: messages.speedTest.toast,
         },
-        // The studio's own hero and disclosure copy stays on the server; only
+        // The studio's own hero copy stays on the server; only
         // the launcher island's strings cross.
         mockServer: {
             launcher: messages.mockServer.launcher,

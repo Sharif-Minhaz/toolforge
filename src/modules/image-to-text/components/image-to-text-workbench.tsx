@@ -256,6 +256,10 @@ export function ImageToTextWorkbench({
         setRunning(true);
         setBatchFailure(null);
         setReadLanguage(batchLanguage);
+        // Each picture's progress is drawn on its own row in the tray below the
+        // intake, which a batch always fills — so the tray comes into view as
+        // the reading starts, not only when the text lands.
+        scrollToResult();
 
         const failure = await recognizeImages(
             batch.map((image) => image.file),

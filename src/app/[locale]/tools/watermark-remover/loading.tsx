@@ -22,9 +22,6 @@ export default function WatermarkRemoverLoading() {
             <div className="bg-card ring-border/70 flex flex-col gap-5 rounded-xl p-5 ring-1 ring-inset sm:p-6">
                 <Skeleton className="h-8 w-full rounded-lg" />
 
-                {/* The image tab's upload disclosure line. */}
-                <Skeleton className="h-4 w-full max-w-xl" />
-
                 <div className="flex flex-col gap-2">
                     <Skeleton className="h-32 w-full rounded-xl" />
                     <Skeleton className="h-3.5 w-64" />

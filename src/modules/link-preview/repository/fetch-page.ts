@@ -29,7 +29,7 @@ import type { FetchHop, PageFacts, PageFetchFailure } from "../types";
  * `tools/repository/remote-image.ts`, and kept beside it rather than merged
  * with it. The two differ in what they accept, how they stop reading, and what
  * they hand back, and a shared version would need all three injected — decision
- * 40's fourth branch, where the duplication costs less than the abstraction.
+ * 39's fourth branch, where the duplication costs less than the abstraction.
  *
  * - **Resolve first, then connect to the address that was checked**, through
  *   `lookup`, because `fetch` cannot be told which address to use and a name

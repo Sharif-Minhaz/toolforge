@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { CodeEditor } from "@/modules/tools/components/code-editor";
 import {
@@ -19,6 +20,7 @@ import {
 } from "@/modules/tools/components/input-limit-meter";
 
 import { StatusStrip } from "@/modules/tools/components/status-strip";
+import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import { RESULT_TRAY, StepLabel } from "@/modules/tools/components/workbench-step";
 
 import { importDocument, type ImportReport } from "../actions/openapi";
@@ -107,6 +109,7 @@ export function ImportPanel({ workspaceId }: ImportPanelProps) {
     const [report, setReport] = useState<ImportReport | null>(null);
     const [failure, setFailure] = useState<NamedFailure | null>(null);
     const [pending, startTransition] = useTransition();
+    const { ref: reportRef, scrollToResult } = useResultScroll<HTMLElement>();
 
     const filled = text !== "" || name !== "" || report !== null || failure !== null;
 
@@ -194,6 +197,9 @@ export function ImportPanel({ workspaceId }: ImportPanelProps) {
             }
 
             setReport(result);
+            // The report — and its Open button, the next press — sits under
+            // the editor, which is tall enough to put it below the fold.
+            scrollToResult();
             router.refresh();
         });
     }
@@ -400,7 +406,11 @@ export function ImportPanel({ workspaceId }: ImportPanelProps) {
             </div>
 
             {report !== null ? (
-                <section aria-labelledby="import-report" className={RESULT_TRAY}>
+                <section
+                    ref={reportRef}
+                    aria-labelledby="import-report"
+                    className={cn(RESULT_TRAY, "scroll-mt-6")}
+                >
                     <h2 id="import-report">
                         <StepLabel step={2}>{t("reportTitle")}</StepLabel>
                     </h2>

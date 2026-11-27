@@ -3,7 +3,7 @@ import { ArticleSkeleton } from "@/modules/tools/components/article-skeleton";
 
 /**
  * Matches `page.tsx` block for block: header, badge row, the create/import card,
- * the workspace grid, the disclosure panel, then the article. A skeleton that
+ * the workspace grid, then the article. A skeleton that
  * does not agree with what replaces it reads as a layout shift rather than as
  * loading — which is why this file changes whenever that page reorders.
  *
@@ -36,8 +36,6 @@ export default function MockStudioLoading() {
                     </div>
                 </div>
             </div>
-
-            <Skeleton className="h-24 w-full rounded-2xl" />
 
             <ArticleSkeleton />
         </div>

@@ -159,7 +159,6 @@ decommissioned years ago; the index never deletes anything. And a name that is
 missing is not absent from the internet — a subdomain behind a wildcard
 certificate publishes nothing.
 
-Both facts sit in the tool's own copy rather than only in the article, alongside
-the disclosure that the domain reaches a third party. A tool that reads as an
+Both facts sit in the tool's own copy rather than only in the article. A tool that reads as an
 inventory of what is live, when it is a history of what was published, is wrong in
 a way no amount of correct code fixes.

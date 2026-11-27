@@ -1,4 +1,4 @@
-# Link Preview & OG Checker
+# Link Preview Checker
 
 `src/modules/link-preview/` — fetching a stranger's page the way a crawler does,
 and reproducing eight platforms' card rules without pretending to know more of
@@ -18,7 +18,7 @@ The page fetch (`repository/fetch-page.ts`) and the shared picture fetch
 connect to the checked address, re-guard every hop, cap while streaming — and
 still live apart. They differ in what they accept (`text/html` against
 `image/*`), how they stop (at `</head>` against at the byte ceiling) and what
-they return, and a shared version would need all three injected. Decision 40's
+they return, and a shared version would need all three injected. Decision 39's
 fourth branch: the duplication is cheaper than the abstraction.
 
 The picture side reused the shared fetcher instead, with two new optional
@@ -86,6 +86,21 @@ Action as a data URL and is drawn from that, so the reader's address does not
 reach the site and hotlink protection cannot break the card. The MCP adapter
 strips the data URL and keeps the measurement: a model has no use for eight
 megabytes of base64.
+
+## Each card in its platform's skin
+
+The first draft drew all eight cards in this site's own tokens, on the theory
+that only the shape mattered. In use, eight identical dark cards did not read
+as Facebook, X or WhatsApp at all, and the reader could not tell at a glance
+which one they were looking at. Each card now sits on its platform's surface —
+the feed, the chat bubble, the embed — in that platform's light or dark theme,
+following the site's, with the platform's mark beside its name.
+
+The colours are the `--lp-*` tokens at the end of `globals.css`, and only
+`platform-card.tsx` may use them. They are brand values on purpose: they are
+the thing being previewed. The arrangement is the platform's too — a feed puts
+the picture above the text, Slack, Discord and Telegram put it below. The real
+favicon is never drawn, for the reason in the section above.
 
 ## One analysis, two modes
 

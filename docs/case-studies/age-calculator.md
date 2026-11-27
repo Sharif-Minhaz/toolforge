@@ -55,7 +55,7 @@ The two reference implementations disagree on month-end days. Python's
 31 Jan → 28 Feb a whole month. `java.time.Period` says 11 months 30 days and
 28 days, which matches the subtraction Bangladesh teaches by hand. The `dateutil`
 reading would make a leap-day child 18 one day early on a minimum-age check, so
-it is not followed (decision tree 46: a control the reader turns, implemented
+it is not followed (decision tree 45: a control the reader turns, implemented
 correctly). `tests/age.test.ts` holds sixty vectors produced by OpenJDK 21. If
 you regenerate them, use Java, not Python.
 

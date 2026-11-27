@@ -17,7 +17,7 @@ import { readRelationships, resolvePackagePath } from "./package";
  * A workbook read straight out of its package.
  *
  * Implemented rather than depended on, which is the opposite call to the one
- * made for Word — and decision tree 45 is why. What comes out of here is read
+ * made for Word — and decision tree 44 is why. What comes out of here is read
  * by nobody but this tool's own renderer, and what has to be read *in* is
  * narrow: the sheet order, the shared string table, each cell's value, and just
  * enough of the style table to know a date from the number underneath it.
@@ -25,7 +25,7 @@ import { readRelationships, resolvePackagePath } from "./package";
  * The maintained alternative on the public registry is SheetJS, whose last
  * release there is `0.18.5` from 2022 — the project moved its distribution off
  * npm, so the package a lockfile would pin is a version its own authors no
- * longer ship. Decision tree 45 says to check who maintains it *before*
+ * longer ship. Decision tree 44 says to check who maintains it *before*
  * depending on it. Nobody maintains that one.
  */
 

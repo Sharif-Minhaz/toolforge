@@ -11,10 +11,9 @@ it later.
 **A tool article is this section and the FAQ — nothing else.** No further
 sections and no table of contents. The long-form sections were cut in November
 2026 because readers found every page too verbose: a control explains itself
-through its own label and hint in the workbench, and anything a reader must know
-before using the tool sits above the controls (rule 32). The one exception is
-the Hex Editor's keyboard-shortcut table, kept because the grid's keys are
-documented nowhere else.
+through its own label and hint in the workbench. The one exception is the Hex
+Editor's keyboard-shortcut table, kept because the grid's keys are documented
+nowhere else.
 
 **Two halves, different reach.** The _length_ rule below is about the opening
 section. The _code markup_ rules are about the whole article — paragraphs,
@@ -145,9 +144,8 @@ and stays ASCII in both. Outside it, Bangla prose takes Bangla digits — ২৫
 বাইট, ৬৪টি হেক্স অক্ষর — the same rule as everywhere else
 ([`../internationalization.md`](../internationalization.md)).
 
-## A disclosure is not a paragraph you can cut
+## Where the data goes is not a paragraph you can cut
 
 If the opening was where a tool said "nothing is uploaded", the trimmed opening
-still says it — folded into `p2` rather than given a paragraph. Rule 32 is about
-where a limitation appears, and the article's first section is often the only
-place it appeared.
+still says it — folded into `p2` rather than given a paragraph. The article's
+first section is often the only place it appears.

@@ -21,6 +21,7 @@ import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input
 import { MAX_TYPED_RECOVERY_KEY_LENGTH } from "@/modules/tools/domain/recovery-key";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
+import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import { StepLabel } from "@/modules/tools/components/workbench-step";
 import { copyText } from "@/modules/tools/domain/clipboard";
 
@@ -79,6 +80,7 @@ export function WorkspaceLauncher({ overview, turnstileSiteKey }: WorkspaceLaunc
     // two it opens, and a key filed against the wrong workspace is a key that
     // does not work when it is finally needed.
     const [issued, setIssued] = useState<{ key: string; name: string } | null>(null);
+    const { ref: recoveryRef, scrollToResult } = useResultScroll<HTMLElement>();
     const [keyCopied, setKeyCopied] = useState(false);
     const [keyAcknowledged, setKeyAcknowledged] = useState(false);
 
@@ -122,6 +124,9 @@ export function WorkspaceLauncher({ overview, turnstileSiteKey }: WorkspaceLaunc
                 setIssued({ key: result.recoveryKey, name: result.workspace.name });
                 setKeyCopied(false);
                 setKeyAcknowledged(false);
+                // Shown once and only here, under a form tall enough to put it
+                // below the fold — the one result here that must not be missed.
+                scrollToResult();
                 setName("");
                 toast.success(tToast("created"));
             } else {
@@ -371,8 +376,9 @@ export function WorkspaceLauncher({ overview, turnstileSiteKey }: WorkspaceLaunc
 
             {issued !== null && !keyAcknowledged ? (
                 <section
+                    ref={recoveryRef}
                     aria-labelledby="recovery-heading"
-                    className="border-brand-amber/45 bg-brand-amber/6 rounded-2xl border p-5"
+                    className="border-brand-amber/45 bg-brand-amber/6 scroll-mt-6 rounded-2xl border p-5"
                 >
                     <div className="flex items-start gap-3">
                         <IconKey

@@ -108,7 +108,7 @@ test. `tests/format.test.ts` pins it.
 ## Search runs on a press, not on a debounce
 
 This repository debounces typed input at 300 ms
-([decision tree 43](../../CLAUDE.md#43-debounce-this-input)). The search box here
+([decision tree 42](../../CLAUDE.md#42-debounce-this-input)). The search box here
 deliberately does not, and the comment in `hex-store.ts` says so.
 
 A scan is linear in the file. On a few hundred megabytes, a 300 ms debounce still
@@ -206,9 +206,8 @@ and a file that arrived by drag and drop never comes with one. Where there is no
 handle, Save is a download — an edited _copy_, in the downloads folder, under a
 name the browser may have changed.
 
-That is a limitation of the tool, so it is disclosed **above the grid**, not in
-the article ([rule 32](../../CLAUDE.md#strong-conventions)). The capability is
-probed inside the handler and behind `useIsHydrated`, never during render: a
+That is a limitation of the tool, so it is said **above the grid**, not in the
+article. The capability is probed inside the handler and behind `useIsHydrated`, never during render: a
 capability probe on the client that the server cannot make is the definition of a
 hydration mismatch.
 

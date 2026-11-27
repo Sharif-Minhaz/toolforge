@@ -3,7 +3,7 @@
  *
  * This list is not ours. It is the one from John Gruber's `titlecase.pl`, the
  * script most "title case" implementations on the web descend from, and it is
- * copied rather than improved on for the reason rule 45 gives: the output is
+ * copied rather than improved on for the reason rule 44 gives: the output is
  * read by somebody else, who is comparing it against what every other converter
  * produced. A list we thought was better would make this tool the odd one out
  * on `and`, `nor` or `per` and give no way to tell which answer was right.

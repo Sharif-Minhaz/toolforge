@@ -66,9 +66,7 @@ curl -s "https://data.jsdelivr.com/v1/packages/npm/tesseract.js-core@7.0.0?struc
 ```
 
 Upgrading `tesseract.js` or its data packages means reading these again. The
-figure used to sit above the controls as well; it was removed at the user's
-request. That is allowed because rule 32 is about the promise that nothing is
-uploaded, and the picture still never leaves the tab — only the engine comes in.
+picture never leaves the tab — only the engine comes in.
 
 ## Many pictures, one worker, and edits that survive
 

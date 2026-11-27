@@ -26,7 +26,7 @@ type WatermarkRemoverWorkbenchProps = {
  * and has a known blend arithmetically undone; a clip never leaves the browser
  * and has one fixed corner rebuilt from its own surroundings, frame by frame.
  * Keeping them as separate panels under one strip is what lets each say the
- * truth about itself — the privacy note, the failures, the controls all differ —
+ * truth about itself — the failures and the controls all differ —
  * without a single component growing three of everything.
  *
  * The order is deliberate: the two picture tabs sit next to each other, because

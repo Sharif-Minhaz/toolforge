@@ -18,7 +18,6 @@ import {
     IconRefresh,
     IconRotate,
     IconRotateClockwise,
-    IconShieldCheck,
     IconTrash,
     IconUnlink,
     IconX,
@@ -2381,13 +2380,6 @@ export function ImageResizerWorkbench({
 
                 <ToolNotes
                     notes={[
-                        {
-                            key: "privacy",
-                            icon: IconShieldCheck,
-                            tone: "success",
-                            title: t("privacyTitle"),
-                            body: t("privacyNote"),
-                        },
                         {
                             key: "metadata",
                             icon: IconInfoCircle,

@@ -115,7 +115,7 @@ export function SpeechFilePanel({ disabled, onExtracted }: SpeechFilePanelProps)
             };
         }
 
-        return { tone: "idle" as const, message: t("privacy") };
+        return { tone: "idle" as const, message: t("idle") };
     })();
 
     return (

@@ -107,7 +107,7 @@ export function IpGlobeWorkbench({
     const { ref: resultRef, scrollToResult } = useResultScroll();
 
     // Debounced: re-parsing the whole box on every keystroke is the expensive
-    // derivation of decision 43, and nothing downstream of it is a control the
+    // derivation of decision 42, and nothing downstream of it is a control the
     // reader is typing into, so a settled value cannot revert a keystroke.
     const settled = useDebouncedValue(text, 300);
 
@@ -196,6 +196,9 @@ export function IpGlobeWorkbench({
             toast.error(tErrors("lookup_failed"));
         } finally {
             setRunning(false);
+            // Again on landing, for the globe that replaces the radar; a no-op
+            // when the slot is already on screen or came back empty.
+            scrollToResult();
         }
     }
 

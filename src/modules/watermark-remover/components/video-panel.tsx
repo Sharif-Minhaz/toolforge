@@ -5,7 +5,6 @@ import {
     IconLoader2,
     IconRefresh,
     IconScale,
-    IconShieldCheck,
     IconTrash,
     IconVideoPlus,
     IconX,
@@ -601,13 +600,6 @@ export function VideoPanel() {
                         icon: IconScale,
                         title: t("rightsTitle"),
                         body: t("rightsNote"),
-                    },
-                    {
-                        key: "privacy",
-                        icon: IconShieldCheck,
-                        tone: "success",
-                        title: t("privacyTitle"),
-                        body: t("privacyNote"),
                     },
                 ]}
             />

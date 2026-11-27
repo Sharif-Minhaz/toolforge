@@ -25,8 +25,6 @@ export function DomainInspectorWorkbenchSkeleton() {
                     <Skeleton className="h-9 w-28 rounded-lg" />
                     <Skeleton className="h-9 w-20 rounded-lg" />
                 </div>
-
-                <Skeleton className="h-3 w-full max-w-lg" />
             </div>
 
             {/* The propagation card: verdict, then the node list beside the map. */}

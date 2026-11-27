@@ -20,8 +20,7 @@ import { refuseWithReason, succeed } from "../domain/result";
  * the page: a secret generated here travels through the caller's conversation
  * and is retained by whatever is holding that conversation. The description
  * says so, since the model relaying it is in a position to warn the person who
- * asked — and a tool that quietly weakens the site's own promise would be the
- * kind of limitation `CLAUDE.md` forbids disclosing only in an article.
+ * asked, which is more than a sentence in an article could do.
  */
 export const passwordGenerateTool = defineMcpTool({
     toolId: "password",

@@ -269,29 +269,26 @@ Rules below are graded. Treat them differently:
     never scroll to a destination that can turn out empty.
 31. **Add to `tools/` the moment a second tool needs it**, whole, in the same
     change. Do not add to `lib/`.
-32. **Do not disclose a limitation only in the article.** If a tool cannot keep
-    the site's "nothing is uploaded" promise, the disclosure sits above the
-    controls.
-33. **Prettier is the source of truth.** Format, organize imports, remove unused
+32. **Prettier is the source of truth.** Format, organize imports, remove unused
     ones.
 
 ## Guidelines
 
-34. Think before writing code; prefer simplicity and single responsibility.
-35. Functions do one thing. Early returns. Avoid deep nesting. Explicit names.
-36. Refactor duplication immediately — unless removing it costs more than it
-    saves (rule 40's fourth branch).
-37. Prefer Suspense, streaming, lazy loading and dynamic imports; avoid
+33. Think before writing code; prefer simplicity and single responsibility.
+34. Functions do one thing. Early returns. Avoid deep nesting. Explicit names.
+35. Refactor duplication immediately — unless removing it costs more than it
+    saves (rule 39's fourth branch).
+36. Prefer Suspense, streaming, lazy loading and dynamic imports; avoid
     unnecessary client rendering and memoization.
-38. Article prose and page-header subtitles run full width — no `max-w-[68ch]`; tables
+37. Article prose and page-header subtitles run full width — no `max-w-[68ch]`; tables
     scroll inside `overflow-x-auto`.
-39. Leave the codebase cleaner than you found it.
+38. Leave the codebase cleaner than you found it.
 
 ---
 
 ## Decision trees
 
-### 40. Should this be shared?
+### 39. Should this be shared?
 
 ```
 1. Search src/modules/tools/ and neighbouring modules.
@@ -303,7 +300,7 @@ Rules below are graded. Treat them differently:
 
 → [`docs/architecture.md`](docs/architecture.md#when-to-lift-something-into-the-shared-layer)
 
-### 41. Server component, client island, or action?
+### 40. Server component, client island, or action?
 
 ```
 Does it need browser APIs, state, animation or an event handler?
@@ -316,7 +313,7 @@ Does it need browser APIs, state, animation or an event handler?
 
 → [`docs/server-and-data.md`](docs/server-and-data.md)
 
-### 42. Cap the field, or warn?
+### 41. Cap the field, or warn?
 
 ```
 Short identity field (name, alias, hostname, key, colour, header)?
@@ -331,7 +328,7 @@ Content box (db.json, curl command, JWT, Markdown, OpenAPI)?
 
 → [`docs/patterns/input-limits.md`](docs/patterns/input-limits.md)
 
-### 43. Debounce this input?
+### 42. Debounce this input?
 
 ```
 Expensive derivation?                          → 300 ms. (the default)
@@ -343,7 +340,7 @@ Sits behind a caret (highlighting)?            → never. Use a length ceiling.
 Where a debounce is deliberately absent, say so in a comment.
 → [`docs/engineering-principles.md`](docs/engineering-principles.md#match-the-mechanism-to-the-cost)
 
-### 44. Which way should this gate fail?
+### 43. Which way should this gate fail?
 
 ```
 If the gate is bypassed, what does the service become?
@@ -355,7 +352,7 @@ If the gate is bypassed, what does the service become?
 
 → [`docs/security.md`](docs/security.md#decide-which-way-a-gate-fails)
 
-### 45. Implement it, or depend on it?
+### 44. Implement it, or depend on it?
 
 ```
 Who reads the output?
@@ -367,7 +364,7 @@ Who reads the output?
 
 → [`docs/engineering-principles.md`](docs/engineering-principles.md#depend-or-implement)
 
-### 46. The reference implementation has a bug. Match it?
+### 45. The reference implementation has a bug. Match it?
 
 ```
 Does it change bytes or responses other people read?
@@ -382,7 +379,7 @@ Does it change bytes or responses other people read?
 
 → [`docs/engineering-principles.md`](docs/engineering-principles.md#cloning-behaviour-match-diverge-or-refuse)
 
-### 47. Where does this new knowledge go?
+### 46. Where does this new knowledge go?
 
 ```
 A rule the next author must not break?  → one line here + reasoning in docs/.

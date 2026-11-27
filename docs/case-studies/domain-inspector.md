@@ -29,15 +29,6 @@ Two implementation details worth keeping in view here:
 
 ---
 
-## Say the tool is not private, in the tool
-
-Everything else on this site runs in the browser and the site says so on its front
-page. One that cannot must carry that in its **own copy** — what is sent, to whom,
-and what the inspected host will see in its log — rather than leaving the
-site-wide promise to cover it.
-
----
-
 ## A signature table is code, not a dependency
 
 Detecting what a site runs is a list of patterns and something to run them over
