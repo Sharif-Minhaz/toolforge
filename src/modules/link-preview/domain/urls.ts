@@ -105,6 +105,19 @@ export function picturesToProbe(tags: PreviewTags, base: URL | null): string[] {
 }
 
 /**
+ * The favicon a search result would draw: the page's own `rel="icon"` (then
+ * `apple-touch-icon`), else `/favicon.ico` at the page's origin, which every
+ * browser and Google ask for when nothing is declared.
+ */
+export function faviconAddress(tags: PreviewTags, base: URL | null): string | null {
+    if (tags.document.icon !== null) {
+        return resolveTagUrl(tags.document.icon, base).absolute;
+    }
+
+    return base === null ? null : new URL("/favicon.ico", base).toString();
+}
+
+/**
  * What the reader typed, as an address to fetch: trimmed, and given `https://`
  * when it has no scheme at all — `example.com/post` is what people paste from
  * an address bar that hides the scheme. Anything with a scheme is left alone,

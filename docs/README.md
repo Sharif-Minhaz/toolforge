@@ -100,6 +100,7 @@ docs/
 │   ├── mock-server.md
 │   ├── keyboard-tester.md
 │   ├── mouse-tester.md
+│   ├── my-ip.md
 │   ├── land-measurement.md
 │   ├── link-preview.md
 │   ├── number-to-words.md
@@ -131,7 +132,7 @@ docs/
 | Writing anything that touches Prisma or Supabase | [`server-and-data.md`](server-and-data.md)                                                                               |
 | Writing a client component                       | [`hydration-and-platform-pitfalls.md`](hydration-and-platform-pitfalls.md), [`coding-standards.md`](coding-standards.md) |
 | Adding user-facing text                          | [`internationalization.md`](internationalization.md)                                                                     |
-| Laying out a tool's workbench | [`patterns/workbench-layout.md`](patterns/workbench-layout.md) |
+| Laying out a tool's workbench                    | [`patterns/workbench-layout.md`](patterns/workbench-layout.md)                                                           |
 | Writing a tool article's opening section         | [`patterns/article-openings.md`](patterns/article-openings.md)                                                           |
 | Styling or animating                             | [`design-system.md`](design-system.md)                                                                                   |
 | Writing tests                                    | [`testing.md`](testing.md)                                                                                               |
@@ -172,6 +173,7 @@ records a defect that was expensive to find and is easy to reintroduce.
 | `mock-server`                            | [`case-studies/mock-server.md`](case-studies/mock-server.md), [`mock-server-studio.md`](mock-server-studio.md)                     |
 | `keyboard-tester`                        | [`case-studies/keyboard-tester.md`](case-studies/keyboard-tester.md)                                                               |
 | `mouse-tester`                           | [`case-studies/mouse-tester.md`](case-studies/mouse-tester.md)                                                                     |
+| `my-ip`                                  | [`case-studies/my-ip.md`](case-studies/my-ip.md)                                                                                   |
 | `land-measurement`                       | [`case-studies/land-measurement.md`](case-studies/land-measurement.md)                                                             |
 | `link-preview`                           | [`case-studies/link-preview.md`](case-studies/link-preview.md)                                                                     |
 | `number-to-words`                        | [`case-studies/number-to-words.md`](case-studies/number-to-words.md)                                                               |

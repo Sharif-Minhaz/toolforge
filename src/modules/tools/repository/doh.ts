@@ -1,7 +1,7 @@
 import "server-only";
 
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
-import { DNS_STATUS_NOERROR, DNS_STATUS_NXDOMAIN, type DohAnswer } from "../domain/dns";
+import { dohStatusFailure, type DohAnswer } from "../domain/dns";
 import { DNS_TIMEOUT_MS, DNS_TYPE_CODES, RESOLVER_ENDPOINTS } from "../domain/network-constants";
 import type { DnsFailureReason, DnsResolver } from "../types/network";
 import { dohResponseSchema } from "../validation/network";
@@ -83,12 +83,10 @@ export async function queryDnsAt(
             return { ok: false, reason: "unreadable_response" };
         }
 
-        if (parsed.data.Status === DNS_STATUS_NXDOMAIN) {
-            return { ok: false, reason: "nxdomain" };
-        }
+        const failure = dohStatusFailure(parsed.data.Status);
 
-        if (parsed.data.Status !== DNS_STATUS_NOERROR) {
-            return { ok: false, reason: "no_records" };
+        if (failure !== null) {
+            return { ok: false, reason: failure };
         }
 
         return {

@@ -1,11 +1,69 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+    dohStatusFailure,
     parseCymruAsName,
     parseCymruOrigin,
+    readReverseAnswer,
     stripRootDot,
     unquoteTxt,
 } from "@/modules/tools/domain/dns";
+
+describe("dohStatusFailure", () => {
+    test("NOERROR is an answer", () => {
+        expect(dohStatusFailure(0)).toBeNull();
+    });
+
+    test("NXDOMAIN keeps its own name", () => {
+        expect(dohStatusFailure(3)).toBe("nxdomain");
+    });
+
+    test("SERVFAIL and REFUSED are server failures, not empty zones", () => {
+        expect(dohStatusFailure(2)).toBe("server_failure");
+        expect(dohStatusFailure(5)).toBe("server_failure");
+    });
+});
+
+describe("readReverseAnswer", () => {
+    const ptr = {
+        name: "219.199.86.103.in-addr.arpa.",
+        type: 12,
+        TTL: 604800,
+        data: "host219.maishabd.net.",
+    };
+
+    test("reads the PTR name without its root dot", () => {
+        expect(readReverseAnswer({ ok: true, answers: [ptr] })).toEqual({
+            kind: "found",
+            name: "host219.maishabd.net",
+        });
+    });
+
+    test("skips the CNAME a classless delegation answers with first", () => {
+        const cname = { ...ptr, type: 5, data: "219.192-26.199.86.103.in-addr.arpa." };
+
+        expect(readReverseAnswer({ ok: true, answers: [cname, ptr] })).toEqual({
+            kind: "found",
+            name: "host219.maishabd.net",
+        });
+    });
+
+    test("an empty answer and NXDOMAIN are absent", () => {
+        expect(readReverseAnswer({ ok: true, answers: [] })).toEqual({ kind: "absent" });
+        expect(readReverseAnswer({ ok: false, reason: "nxdomain" })).toEqual({ kind: "absent" });
+    });
+
+    test("a timeout or a server failure is failed, never absent", () => {
+        for (const reason of [
+            "timeout",
+            "network_error",
+            "unreadable_response",
+            "server_failure",
+        ]) {
+            expect(readReverseAnswer({ ok: false, reason })).toEqual({ kind: "failed" });
+        }
+    });
+});
 
 describe("unquoteTxt", () => {
     test("strips the quotes a JSON API adds", () => {

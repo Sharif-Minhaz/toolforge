@@ -42,6 +42,8 @@ type PlatformCardProps = {
     card: PreviewCard;
     /** Translated platform name. */
     name: string;
+    /** The Google card's favicon as a data URL, when the server fetched it. */
+    favicon: string | null;
 };
 
 const CLAMP: Readonly<Record<number, string>> = {
@@ -496,18 +498,30 @@ function Telegram({ card }: { card: PreviewCard }) {
     );
 }
 
-function Google({ card }: { card: PreviewCard }) {
+function Google({ card, favicon }: { card: PreviewCard; favicon: string | null }) {
     const rules = PLATFORM_RULES[card.platform];
 
     return (
         <div className="flex min-w-0 flex-col gap-1 bg-(--lp-g-canvas) p-4 font-(family-name:--lp-font-google)">
             <div className="flex min-w-0 items-center gap-2.5">
-                {/* The favicon's place, left empty: drawing the real one would
-                    have the reader's browser contact the inspected site. */}
+                {/* The favicon comes back from the server as a data URL, so the
+                    reader's browser never contacts the inspected site. Without
+                    one — pasted markup, or no icon to find — the circle stays
+                    blank, as Google's own does. A plain `<img>` for the
+                    picture's reason: nothing for `next/image` to optimise. */}
                 <span
-                    className="size-7 shrink-0 rounded-full bg-(--lp-g-favicon)"
+                    className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-(--lp-g-favicon)"
                     aria-hidden="true"
-                />
+                >
+                    {favicon !== null && (
+                        <img
+                            src={favicon}
+                            alt=""
+                            className="size-[1.125rem] object-contain"
+                            draggable={false}
+                        />
+                    )}
+                </span>
                 <div className="min-w-0">
                     <p className="truncate text-[0.875rem] text-(--lp-g-site)">
                         {card.siteName ?? card.host}
@@ -529,7 +543,7 @@ function Google({ card }: { card: PreviewCard }) {
     );
 }
 
-function CardBody({ card }: { card: PreviewCard }) {
+function CardBody({ card, favicon }: { card: PreviewCard; favicon: string | null }) {
     switch (card.platform) {
         case "facebook":
             return <Facebook card={card} />;
@@ -546,11 +560,11 @@ function CardBody({ card }: { card: PreviewCard }) {
         case "telegram":
             return <Telegram card={card} />;
         case "google":
-            return <Google card={card} />;
+            return <Google card={card} favicon={favicon} />;
     }
 }
 
-export function PlatformCard({ card, name }: PlatformCardProps) {
+export function PlatformCard({ card, name, favicon }: PlatformCardProps) {
     const t = useTranslations("linkPreview.workbench");
     const tSources = useTranslations("linkPreview.sources");
     const rules = PLATFORM_RULES[card.platform];
@@ -580,7 +594,7 @@ export function PlatformCard({ card, name }: PlatformCardProps) {
                 // The stage: the platform's own surface, clipped to this
                 // site's card radius so eight skins still read as one grid.
                 <div className="ring-border/70 overflow-hidden rounded-xl font-(family-name:--lp-font) ring-1">
-                    <CardBody card={card} />
+                    <CardBody card={card} favicon={favicon} />
                 </div>
             )}
 

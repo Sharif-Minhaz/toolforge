@@ -6,7 +6,7 @@ import { request as httpsRequest } from "node:https";
 
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { SITE_NAME, SITE_URL } from "@/modules/seo/domain/site";
-import type { DecodableImageType } from "@/modules/tools/types";
+import { DECODABLE_IMAGE_TYPES, type DecodableImageType } from "@/modules/tools/types";
 
 import { checkPublicUrl } from "../domain/public-url";
 import {
@@ -47,11 +47,11 @@ import { guardAddresses } from "./address-guard";
  * which the copy in the tool says plainly.
  */
 
-export type RemoteImageFetch =
+export type RemoteImageFetch<T extends string = DecodableImageType> =
     | {
           readonly ok: true;
           readonly bytes: Buffer;
-          readonly type: DecodableImageType;
+          readonly type: T;
           readonly url: URL;
       }
     | { readonly ok: false; readonly reason: RemoteImageProblem };
@@ -68,13 +68,28 @@ export type RemoteImageOptions = {
     readonly userAgent?: string;
 };
 
-export async function fetchRemoteImage(
+export function fetchRemoteImage(
     rawUrl: string,
     options: RemoteImageOptions = {},
 ): Promise<RemoteImageFetch> {
-    const limits: HopLimits = {
+    return fetchRemotePicture(rawUrl, DECODABLE_IMAGE_TYPES, options);
+}
+
+/**
+ * The same fetch, accepting a different set of declared types — the Link
+ * Preview debugger's favicon is often an ICO or an SVG, which a browser draws
+ * from a data URL but no decoder here takes in. Every guard above applies
+ * unchanged; only the content-type allowlist moves.
+ */
+export async function fetchRemotePicture<T extends string>(
+    rawUrl: string,
+    types: readonly T[],
+    options: RemoteImageOptions = {},
+): Promise<RemoteImageFetch<T>> {
+    const limits: HopLimits<T> = {
         maxBytes: Math.min(options.maxBytes ?? MAX_REMOTE_IMAGE_BYTES, MAX_REMOTE_IMAGE_BYTES),
         userAgent: options.userAgent ?? `${SITE_NAME}-ImageImport/1.0 (+${SITE_URL})`,
+        types,
     };
     let target = rawUrl;
 
@@ -137,31 +152,32 @@ async function resolveGuarded(
     }
 }
 
-type HopOutcome =
+type HopOutcome<T extends string> =
     | { readonly ok: true; readonly kind: "redirect"; readonly location: string }
     | {
           readonly ok: true;
           readonly kind: "body";
           readonly bytes: Buffer;
-          readonly type: DecodableImageType;
+          readonly type: T;
       }
     | { readonly ok: false; readonly reason: RemoteImageProblem };
 
-type HopLimits = {
+type HopLimits<T extends string> = {
     readonly maxBytes: number;
     readonly userAgent: string;
+    readonly types: readonly T[];
 };
 
-function sendOnce(
+function sendOnce<T extends string>(
     url: URL,
     resolved: { address: string; family: 4 | 6 },
-    limits: HopLimits,
-): Promise<HopOutcome> {
+    limits: HopLimits<T>,
+): Promise<HopOutcome<T>> {
     return new Promise((resolve) => {
         const send = url.protocol === "https:" ? httpsRequest : httpRequest;
         let settled = false;
 
-        function finish(outcome: HopOutcome) {
+        function finish(outcome: HopOutcome<T>) {
             if (!settled) {
                 settled = true;
                 resolve(outcome);
@@ -215,7 +231,7 @@ function sendOnce(
                     return;
                 }
 
-                const type = remoteImageType(response.headers["content-type"]);
+                const type = remoteImageType(response.headers["content-type"], limits.types);
 
                 // Refused on the header rather than after the download: a URL
                 // pointing at a 200 MB video is a mistake worth catching before

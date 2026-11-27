@@ -316,7 +316,16 @@ export type PreviewReport = {
     readonly page: PageFacts;
     readonly tags: PreviewTags;
     readonly images: readonly ImageProbe[];
+    /** The Google card's favicon, fetched here so the reader's browser never asks for it. */
+    readonly favicon: PreviewFavicon | null;
     readonly fetchedAt: string;
+};
+
+/** A favicon the server fetched: the address it answered at, and its bytes. */
+export type PreviewFavicon = {
+    /** The card's `icon`, which this is matched to. */
+    readonly url: string;
+    readonly dataUrl: string;
 };
 
 export type InspectionResult =

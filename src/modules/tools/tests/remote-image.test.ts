@@ -11,27 +11,43 @@ import { DECODABLE_IMAGE_TYPES } from "@/modules/tools/types";
 describe("remoteImageType", () => {
     test("accepts every type this site can decode", () => {
         for (const type of DECODABLE_IMAGE_TYPES) {
-            expect(remoteImageType(type)).toBe(type);
+            expect(remoteImageType(type, DECODABLE_IMAGE_TYPES)).toBe(type);
         }
     });
 
     test("strips parameters and casing", () => {
-        expect(remoteImageType("IMAGE/JPEG; charset=binary")).toBe("image/jpeg");
-        expect(remoteImageType("  image/png  ")).toBe("image/png");
+        expect(remoteImageType("IMAGE/JPEG; charset=binary", DECODABLE_IMAGE_TYPES)).toBe(
+            "image/jpeg",
+        );
+        expect(remoteImageType("  image/png  ", DECODABLE_IMAGE_TYPES)).toBe("image/png");
     });
 
     test("refuses an image format nothing here decodes", () => {
-        expect(remoteImageType("image/tiff")).toBeNull();
-        expect(remoteImageType("image/svg+xml")).toBeNull();
+        expect(remoteImageType("image/tiff", DECODABLE_IMAGE_TYPES)).toBeNull();
+        expect(remoteImageType("image/svg+xml", DECODABLE_IMAGE_TYPES)).toBeNull();
     });
 
     test("refuses the HTML error page served with a 200", () => {
-        expect(remoteImageType("text/html; charset=utf-8")).toBeNull();
+        expect(remoteImageType("text/html; charset=utf-8", DECODABLE_IMAGE_TYPES)).toBeNull();
     });
 
     test("refuses a missing header rather than guessing", () => {
-        expect(remoteImageType(undefined)).toBeNull();
-        expect(remoteImageType("")).toBeNull();
+        expect(remoteImageType(undefined, DECODABLE_IMAGE_TYPES)).toBeNull();
+        expect(remoteImageType("", DECODABLE_IMAGE_TYPES)).toBeNull();
+    });
+});
+
+describe("remoteImageType with a caller's own list", () => {
+    const FAVICONS = [...DECODABLE_IMAGE_TYPES, "image/x-icon", "image/svg+xml"] as const;
+
+    test("accepts what the caller adds, normalised", () => {
+        expect(remoteImageType("image/x-icon", FAVICONS)).toBe("image/x-icon");
+        expect(remoteImageType("Image/SVG+XML; charset=utf-8", FAVICONS)).toBe("image/svg+xml");
+    });
+
+    test("still refuses everything outside it", () => {
+        expect(remoteImageType("text/html", FAVICONS)).toBeNull();
+        expect(remoteImageType("application/octet-stream", FAVICONS)).toBeNull();
     });
 });
 

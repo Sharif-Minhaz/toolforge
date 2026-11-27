@@ -3,18 +3,19 @@ import "server-only";
 import { after } from "next/server";
 
 import { checkPublicUrl } from "@/modules/tools/domain/public-url";
-import { fetchRemoteImage } from "@/modules/tools/repository/remote-image";
+import { fetchRemoteImage, fetchRemotePicture } from "@/modules/tools/repository/remote-image";
 
-import { MAX_PREVIEW_IMAGE_BYTES } from "../domain/constants";
+import { FAVICON_TYPES, MAX_FAVICON_BYTES, MAX_PREVIEW_IMAGE_BYTES } from "../domain/constants";
 import { readImageSize } from "../domain/image-size";
 import { readPreviewTags } from "../domain/tags";
-import { picturesToProbe } from "../domain/urls";
+import { faviconAddress, picturesToProbe } from "../domain/urls";
 import type {
     ImageProbe,
     ImageProbeFailure,
     ImageProbeResult,
     InspectionResult,
     PreviewAllowance,
+    PreviewFavicon,
 } from "../types";
 import { fetchPreviewPage, LINK_PREVIEW_USER_AGENT } from "./fetch-page";
 import { isPreviewQuotaConfigured, spendPreviewQuota, sweepPreviewQuotaRows } from "./quota";
@@ -126,6 +127,26 @@ async function probeImage(url: string): Promise<ImageProbe> {
     };
 }
 
+/**
+ * Fetches the favicon so the Google card can draw it from a data URL. A
+ * missing or refused icon is not a finding — the card falls back to the blank
+ * circle a search result shows too — so a failure is simply `null`.
+ */
+async function fetchFavicon(url: string | null): Promise<PreviewFavicon | null> {
+    if (url === null) {
+        return null;
+    }
+
+    const fetched = await fetchRemotePicture(url, FAVICON_TYPES, {
+        maxBytes: MAX_FAVICON_BYTES,
+        userAgent: LINK_PREVIEW_USER_AGENT,
+    });
+
+    return fetched.ok
+        ? { url, dataUrl: `data:${fetched.type};base64,${fetched.bytes.toString("base64")}` }
+        : null;
+}
+
 export async function runPreviewInspection(run: InspectionRun): Promise<InspectionResult> {
     const now = run.now ?? new Date();
     const checked = checkPublicUrl(run.url);
@@ -147,15 +168,18 @@ export async function runPreviewInspection(run: InspectionRun): Promise<Inspecti
     }
 
     const tags = readPreviewTags(fetched.html);
-    const images = await Promise.all(
-        picturesToProbe(tags, new URL(fetched.facts.finalUrl)).map(probeImage),
-    );
+    const pageUrl = new URL(fetched.facts.finalUrl);
+    const [images, favicon] = await Promise.all([
+        Promise.all(picturesToProbe(tags, pageUrl).map(probeImage)),
+        fetchFavicon(faviconAddress(tags, pageUrl)),
+    ]);
 
     return {
         ok: true,
         page: fetched.facts,
         tags,
         images,
+        favicon,
         fetchedAt: now.toISOString(),
         allowance: spent.allowance,
     };

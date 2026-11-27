@@ -1,10 +1,20 @@
 import "server-only";
 
-import { parseCymruAsName, parseCymruOrigin, stripRootDot } from "../domain/dns";
+import {
+    parseCymruAsName,
+    parseCymruOrigin,
+    readReverseAnswer,
+    type ReverseOutcome,
+} from "../domain/dns";
 import { detectIpVersion } from "../domain/ip";
-import { CYMRU_AS_ZONE } from "../domain/network-constants";
+import {
+    CYMRU_AS_ZONE,
+    RESOLVER_ENDPOINTS,
+    REVERSE_FALLBACK_RESOLVER,
+    REVERSE_RETRY_TIMEOUT_MS,
+} from "../domain/network-constants";
 import { cymruOriginName, reverseArpaName } from "../domain/reverse-names";
-import { queryDns, queryTxtValue } from "./doh";
+import { queryDns, queryDnsAt, queryTxtValue } from "./doh";
 import { fetchNetworkInfo } from "./rdap";
 import type { DnsResolver, HostAddress, HostRouting } from "../types/network";
 
@@ -18,7 +28,9 @@ import type { DnsResolver, HostAddress, HostRouting } from "../types/network";
  * be checked, unlike a geo-IP database's guess at a city.
  *
  * Every source is optional. A missing PTR or a registry that declines to answer
- * leaves a `null` field, never a failed lookup.
+ * leaves a `null` field, never a failed lookup. The reverse name also carries
+ * `reverseFailed`, because a PTR that could not be fetched and one that does
+ * not exist both arrive as `null`, and only the second may be shown as absent.
  */
 export async function describeAddress(ip: string, resolver: DnsResolver): Promise<HostAddress> {
     const [routing, network] = await Promise.all([
@@ -50,7 +62,9 @@ export async function describeRouting(ip: string, resolver: DnsResolver): Promis
     const originName = cymruOriginName(ip);
 
     const [reverse, origin] = await Promise.all([
-        arpa === null ? Promise.resolve(null) : lookupReverse(arpa, resolver),
+        arpa === null
+            ? Promise.resolve<ReverseOutcome>({ kind: "absent" })
+            : lookupReverse(arpa, resolver),
         originName === null ? Promise.resolve(null) : queryTxtValue(originName, resolver),
     ]);
 
@@ -65,7 +79,8 @@ export async function describeRouting(ip: string, resolver: DnsResolver): Promis
     return {
         ip,
         version: detectIpVersion(ip) ?? 4,
-        reverse,
+        reverse: reverse.kind === "found" ? reverse.name : null,
+        reverseFailed: reverse.kind === "failed",
         asn: parsedOrigin?.asn ?? null,
         asName,
         prefix: parsedOrigin?.prefix ?? null,
@@ -74,12 +89,26 @@ export async function describeRouting(ip: string, resolver: DnsResolver): Promis
     };
 }
 
-async function lookupReverse(arpaName: string, resolver: DnsResolver): Promise<string | null> {
-    const result = await queryDns(arpaName, "PTR", resolver);
+/**
+ * The PTR record, asked of a second resolver when the first gets no answer.
+ * An `absent` answer is final; only a failed one is worth asking again.
+ */
+async function lookupReverse(arpaName: string, resolver: DnsResolver): Promise<ReverseOutcome> {
+    const first = readReverseAnswer(await queryDns(arpaName, "PTR", resolver));
 
-    if (!result.ok || result.answers.length === 0) {
-        return null;
+    if (first.kind !== "failed") {
+        return first;
     }
 
-    return stripRootDot(result.answers[0].data);
+    const fallback = REVERSE_FALLBACK_RESOLVER[resolver];
+
+    return readReverseAnswer(
+        await queryDnsAt(
+            RESOLVER_ENDPOINTS[fallback],
+            fallback,
+            arpaName,
+            "PTR",
+            REVERSE_RETRY_TIMEOUT_MS,
+        ),
+    );
 }

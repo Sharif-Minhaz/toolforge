@@ -28,6 +28,7 @@ function address(country: string | null, overrides: Partial<HostAddress> = {}): 
         ip: "203.0.113.1",
         version: 4,
         reverse: null,
+        reverseFailed: false,
         asn: 64_500,
         asName: "EXAMPLE-AS",
         prefix: "203.0.113.0/24",

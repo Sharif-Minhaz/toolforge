@@ -410,7 +410,10 @@ function HostingPanel({ hosting }: { hosting: DomainReport["hosting"] }) {
                                             : `AS${address.asn}${address.asName === null ? "" : ` · ${address.asName}`}`}
                                     </Row>
                                     <Row label={t("prefix")}>{address.prefix ?? absent}</Row>
-                                    <Row label={t("reverse")}>{address.reverse ?? absent}</Row>
+                                    <Row label={t("reverse")}>
+                                        {address.reverse ??
+                                            (address.reverseFailed ? t("reverseFailed") : absent)}
+                                    </Row>
                                     <Row label={t("org")}>{address.org ?? absent}</Row>
                                 </Rows>
                             </li>

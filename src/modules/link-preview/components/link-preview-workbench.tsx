@@ -46,6 +46,7 @@ import type {
     InspectionFailure,
     PreviewAllowance,
     PreviewAnalysis,
+    PreviewFavicon,
     PreviewReport,
     PreviewTags,
 } from "../types";
@@ -81,6 +82,7 @@ type View = {
     readonly tags: PreviewTags;
     readonly pageUrl: URL | null;
     readonly images: readonly ImageProbe[];
+    readonly favicon: PreviewFavicon | null;
 };
 
 export function LinkPreviewWorkbench({
@@ -150,6 +152,9 @@ export function LinkPreviewWorkbench({
                     tags: pastedTags,
                     pageUrl: baseUrl,
                     images: probes,
+                    // Pasted markup is never fetched for its icon: Measure
+                    // spends the quota on the pictures the findings are about.
+                    favicon: null,
                     analysis: analyzePreview({
                         tags: pastedTags,
                         pageUrl: baseUrl,
@@ -264,6 +269,7 @@ export function LinkPreviewWorkbench({
                 page: result.page,
                 tags: result.tags,
                 images: result.images,
+                favicon: result.favicon,
                 fetchedAt: result.fetchedAt,
             });
         } catch (caught) {
@@ -660,20 +666,36 @@ export function LinkPreviewWorkbench({
                                 >
                                     {t("cardsTitle")}
                                 </h2>
-                                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                                    {PREVIEW_PLATFORMS.map((platform) => {
-                                        const card = view.analysis.cards.find(
-                                            (entry) => entry.platform === platform,
-                                        );
+                                {/* Hairlines between cells, at any column count:
+                                    every cell draws its own top and left edge,
+                                    the grid is pulled up and left by 1px, and
+                                    the clipping wrapper hides the outer edges.
+                                    A short last row leaves no stray line in its
+                                    empty slots. The -m-4 cancels the cells'
+                                    padding so the content still lines up with
+                                    the heading and the note. */}
+                                <div className="-m-4 overflow-hidden">
+                                    <div className="*:border-border -mt-px -ml-px grid *:border-t *:border-l *:p-4 md:grid-cols-2 xl:grid-cols-3">
+                                        {PREVIEW_PLATFORMS.map((platform) => {
+                                            const card = view.analysis.cards.find(
+                                                (entry) => entry.platform === platform,
+                                            );
 
-                                        return card === undefined ? null : (
-                                            <PlatformCard
-                                                key={platform}
-                                                card={card}
-                                                name={platformName(platform)}
-                                            />
-                                        );
-                                    })}
+                                            return card === undefined ? null : (
+                                                <PlatformCard
+                                                    key={platform}
+                                                    card={card}
+                                                    name={platformName(platform)}
+                                                    favicon={
+                                                        view.favicon !== null &&
+                                                        view.favicon.url === card.icon
+                                                            ? view.favicon.dataUrl
+                                                            : null
+                                                    }
+                                                />
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                                 <p className="text-muted-foreground/80 text-[0.6875rem] leading-[1.4]">
                                     {t("cardsNote")}
@@ -787,6 +809,7 @@ function fetchedView(report: PreviewReport): View {
         tags: report.tags,
         pageUrl,
         images: report.images,
+        favicon: report.favicon,
         analysis: analyzePreview({
             tags: report.tags,
             pageUrl,

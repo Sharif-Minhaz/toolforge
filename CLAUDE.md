@@ -85,6 +85,7 @@ docs/
 | `mock-server`                               | [`docs/case-studies/mock-server.md`](docs/case-studies/mock-server.md)                                             |
 | `keyboard-tester`                           | [`docs/case-studies/keyboard-tester.md`](docs/case-studies/keyboard-tester.md)                                     |
 | `mouse-tester`                              | [`docs/case-studies/mouse-tester.md`](docs/case-studies/mouse-tester.md)                                           |
+| `my-ip`                                     | [`docs/case-studies/my-ip.md`](docs/case-studies/my-ip.md)                                                         |
 | `land-measurement`                          | [`docs/case-studies/land-measurement.md`](docs/case-studies/land-measurement.md)                                   |
 | `link-preview`                              | [`docs/case-studies/link-preview.md`](docs/case-studies/link-preview.md)                                           |
 | `number-to-words`                           | [`docs/case-studies/number-to-words.md`](docs/case-studies/number-to-words.md)                                     |

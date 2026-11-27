@@ -25,7 +25,7 @@ import {
     type TitleSource,
 } from "./platforms";
 import { clipGraphemes, clipUtf8Bytes, countGraphemes, countUtf8Bytes, type Clipped } from "./text";
-import { displayHost, isSamePage, resolveTagUrl } from "./urls";
+import { displayHost, faviconAddress, isSamePage, resolveTagUrl } from "./urls";
 
 /**
  * Tags plus measurements in, one card per platform and a list of findings out.
@@ -270,15 +270,6 @@ function lastThemeColour(tags: PreviewTags): string | null {
     return last !== null && DISCORD_COLOUR.test(last) ? last : null;
 }
 
-function iconFor(tags: PreviewTags, pageUrl: URL | null): string | null {
-    if (tags.document.icon !== null) {
-        return resolveTagUrl(tags.document.icon, pageUrl).absolute;
-    }
-
-    // Every browser and Google asks for `/favicon.ico` when nothing is declared.
-    return pageUrl === null ? null : new URL("/favicon.ico", pageUrl).toString();
-}
-
 function cardFor(
     platform: PreviewPlatform,
     input: AnalysisInput,
@@ -310,7 +301,7 @@ function cardFor(
             host: pageUrl === null ? null : displayHost(pageUrl),
             accent: platform === "discord" ? lastThemeColour(tags) : null,
             labels: platform === "slack" ? tags.twitter.labels : [],
-            icon: platform === "google" ? iconFor(tags, pageUrl) : null,
+            icon: platform === "google" ? faviconAddress(tags, pageUrl) : null,
         },
         verdict,
     };

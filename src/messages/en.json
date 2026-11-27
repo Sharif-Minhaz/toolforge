@@ -6498,6 +6498,7 @@
             "asn": "AS",
             "prefix": "Prefix",
             "reverse": "Reverse name",
+            "reverseFailed": "Lookup failed — the name server did not answer",
             "org": "Organisation"
         },
         "propagation": {
@@ -6600,6 +6601,7 @@
             "no_records": "Nothing is published here.",
             "unsupported_tld": "This registry runs no RDAP service, so its records are only available through its own WHOIS.",
             "unreadable_response": "The answer came back in a shape this could not read.",
+            "server_failure": "The name server returned an error instead of an answer.",
             "no_address": "This name resolves to no address, so there was nothing to connect to.",
             "blocked_address": "This name resolves only to private or reserved addresses, which are never connected to.",
             "tls_failed": "No TLS connection could be made on port 443.",
@@ -7217,6 +7219,7 @@
             "registry": "Registry",
             "country": "Allocated to",
             "notFound": "Not found",
+            "lookupFailed": "Lookup failed — the network's name server did not answer",
             "notPublic": "A private address has no public route or owner to look up.",
             "empty": "No reverse name or route announcement was found for this address."
         },

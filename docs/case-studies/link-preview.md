@@ -87,6 +87,18 @@ reach the site and hotlink protection cannot break the card. The MCP adapter
 strips the data URL and keeps the measurement: a model has no use for eight
 megabytes of base64.
 
+The Google card's favicon travels the same way. The first draft left its
+circle blank rather than let the reader's browser ask the site for it, and
+every check then looked like a site with no icon. The server now fetches the
+declared `rel="icon"` (else `/favicon.ico`) alongside the pictures, under the
+same check's quota, capped at 512 KB. Favicons are mostly ICO or SVG, which the
+shared fetcher refuses for the image tools, so it takes a per-caller type list
+(`fetchRemotePicture`) and only this fetch widens it. A server that sends a
+favicon as `application/octet-stream` is still refused on the header, and the
+circle stays blank — the same blank Google draws. Pasted markup gets no
+favicon: Measure spends the quota on the pictures the findings are about. The
+MCP report never carries it.
+
 ## Each card in its platform's skin
 
 The first draft drew all eight cards in this site's own tokens, on the theory
@@ -100,7 +112,7 @@ The colours are the `--lp-*` tokens at the end of `globals.css`, and only
 `platform-card.tsx` may use them. They are brand values on purpose: they are
 the thing being previewed. The arrangement is the platform's too — a feed puts
 the picture above the text, Slack, Discord and Telegram put it below. The real
-favicon is never drawn, for the reason in the section above.
+favicon is drawn from the server's copy, for the reason in the section above.
 
 ## One analysis, two modes
 

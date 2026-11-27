@@ -22,7 +22,7 @@ export type DnsResolver = (typeof DNS_RESOLVERS)[number];
  * The ways a lookup can stop short.
  *
  * Each one is a distinct finding a caller may want to word differently, which
- * is why they are eight names rather than one `failed`. A tool that can fail in
+ * is why they are nine names rather than one `failed`. A tool that can fail in
  * ways of its own widens this union rather than replacing it, so a reason
  * raised down in the transport keeps its name all the way to the message
  * catalogue.
@@ -34,6 +34,8 @@ export const DNS_FAILURE_REASONS = [
     "no_records",
     "unsupported_tld",
     "unreadable_response",
+    /** SERVFAIL, REFUSED and every other RCODE that is neither an answer nor NXDOMAIN. */
+    "server_failure",
     "no_address",
     "blocked_address",
 ] as const;
@@ -54,6 +56,12 @@ export type HostRouting = {
     readonly ip: string;
     readonly version: IpVersion;
     readonly reverse: string | null;
+    /**
+     * `true` when no resolver answered the PTR query. Only then is a `null`
+     * `reverse` unknown rather than absent, so a panel must not word it as
+     * "not found".
+     */
+    readonly reverseFailed: boolean;
     readonly asn: number | null;
     readonly asName: string | null;
     readonly prefix: string | null;

@@ -1,6 +1,6 @@
-import { DECODABLE_IMAGE_TYPES, type DecodableImageType } from "../types";
+import type { DecodableImageType } from "../types";
 import { toFilenameStem } from "./filenames";
-import { normalizeImageType, withImageExtension } from "./image-file";
+import { isAllowedImageType, normalizeImageType, withImageExtension } from "./image-file";
 
 /**
  * The rules a "paste a picture's address" import has to satisfy, kept pure so
@@ -98,24 +98,30 @@ export type RemoteImageResult =
     | { readonly ok: false; readonly reason: RemoteImageProblem };
 
 /**
- * The image type a response declares, or `null` if it declared something else.
+ * The image type a response declares, or `null` if it declared something
+ * outside `allowed`.
  *
  * The header is trusted only to *refuse*, never to decode: nothing here acts on
  * the type beyond naming the file, and the decoder in the reader's tab reads
  * the bytes themselves. Parameters (`image/jpeg; charset=binary`) and odd
  * casing are stripped, because a correct server sending an unusual header is
  * not a reason to turn a picture away.
+ *
+ * `allowed` is the caller's: the image importer passes the types this site can
+ * decode, the Link Preview debugger's favicon fetch adds ICO and SVG, which a
+ * browser draws but no canvas pipeline here takes in.
  */
-export function remoteImageType(contentType: string | undefined): DecodableImageType | null {
+export function remoteImageType<T extends string>(
+    contentType: string | undefined,
+    allowed: readonly T[],
+): T | null {
     if (contentType === undefined) {
         return null;
     }
 
     const type = normalizeImageType(contentType);
 
-    return (DECODABLE_IMAGE_TYPES as readonly string[]).includes(type)
-        ? (type as DecodableImageType)
-        : null;
+    return isAllowedImageType(type, allowed) ? type : null;
 }
 
 /**

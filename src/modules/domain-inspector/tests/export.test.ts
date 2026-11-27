@@ -60,6 +60,7 @@ const REPORT: DomainReport = {
                 ip: "93.184.216.34",
                 version: 4,
                 reverse: null,
+                reverseFailed: false,
                 asn: 15133,
                 asName: "EDGECAST, US",
                 prefix: "93.184.216.0/24",

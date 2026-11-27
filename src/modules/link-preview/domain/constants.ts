@@ -1,3 +1,5 @@
+import { DECODABLE_IMAGE_TYPES } from "@/modules/tools/types";
+
 /**
  * Every limit the Link Preview debugger enforces, in one place.
  */
@@ -34,6 +36,26 @@ export const MAX_PREVIEW_IMAGE_BYTES = 8 * 1024 * 1024;
  * different file, the `twitter:image`. Those are the only two any card picks.
  */
 export const MAX_PROBED_IMAGES = 2;
+
+/**
+ * The largest favicon fetched. A multi-size `favicon.ico` runs to a few
+ * hundred kilobytes at most; anything past this is not a favicon a search
+ * result would draw at 28 px, and it would travel back to the reader as base64.
+ */
+export const MAX_FAVICON_BYTES = 512 * 1024;
+
+/**
+ * What a favicon may be declared as. The pictures any card measures, plus the
+ * two formats favicons mostly are: ICO under both its registered and its
+ * customary name, and SVG. All of them are drawn by the reader's browser from
+ * a data URL inside an `<img>`, where an SVG's scripts never run.
+ */
+export const FAVICON_TYPES = [
+    ...DECODABLE_IMAGE_TYPES,
+    "image/x-icon",
+    "image/vnd.microsoft.icon",
+    "image/svg+xml",
+] as const;
 
 /** Followed by hand and re-guarded each time. Covers `http → https → www → canonical`. */
 export const MAX_PAGE_REDIRECTS = 4;

@@ -30,6 +30,23 @@ export const RESOLVER_ENDPOINTS: Record<DnsResolver, string> = {
 
 /** Each lookup gets its own budget, so one slow upstream cannot stall the rest. */
 export const DNS_TIMEOUT_MS = 6_000;
+
+/**
+ * Where a failed reverse lookup asks a second time, and how long it waits.
+ *
+ * Reverse zones are often served by one small name server at the ISP that
+ * answers in five seconds or not at all, and public resolvers cache it per
+ * node. So the first resolver can time out while a different provider, with a
+ * separate cache and a separate route to that server, answers. Only reverse
+ * names get this retry: every other lookup is a claim about the resolver the
+ * reader chose, and asking a different one would change that claim.
+ */
+export const REVERSE_FALLBACK_RESOLVER: Record<DnsResolver, DnsResolver> = {
+    cloudflare: "google",
+    google: "cloudflare",
+    dnssb: "cloudflare",
+};
+export const REVERSE_RETRY_TIMEOUT_MS = 3_000;
 export const RDAP_TIMEOUT_MS = 8_000;
 
 /**

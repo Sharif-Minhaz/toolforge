@@ -8,8 +8,10 @@ import {
     countGraphemes,
     countUtf8Bytes,
 } from "@/modules/link-preview/domain/text";
+import { readPreviewTags } from "@/modules/link-preview/domain/tags";
 import {
     displayHost,
+    faviconAddress,
     isSamePage,
     normalizeTypedUrl,
     resolveTagUrl,
@@ -195,5 +197,28 @@ describe("normalizeTypedUrl", () => {
 
     test("leaves empty input empty", () => {
         expect(normalizeTypedUrl("   ")).toBe("");
+    });
+});
+
+describe("faviconAddress", () => {
+    const page = new URL("https://www.example.com/blog/post?id=1");
+
+    test("resolves a declared icon against the page", () => {
+        const tags = readPreviewTags('<head><link rel="shortcut icon" href="/static/icon.svg">');
+
+        expect(faviconAddress(tags, page)).toBe("https://www.example.com/static/icon.svg");
+    });
+
+    test("falls back to apple-touch-icon, then /favicon.ico at the origin", () => {
+        const touch = readPreviewTags('<head><link rel="apple-touch-icon" href="touch.png">');
+
+        expect(faviconAddress(touch, page)).toBe("https://www.example.com/blog/touch.png");
+        expect(faviconAddress(readPreviewTags("<head></head>"), page)).toBe(
+            "https://www.example.com/favicon.ico",
+        );
+    });
+
+    test("has nothing to ask for without a page address", () => {
+        expect(faviconAddress(readPreviewTags("<head></head>"), null)).toBeNull();
     });
 });

@@ -39,7 +39,8 @@ async function askNode(
 
     // `no_records` and `nxdomain` are answers, not failures: a resolver that
     // says "this name has no address" has told us what it knows, and that is
-    // exactly the state a half-propagated deletion is in.
+    // exactly the state a half-propagated deletion is in. `server_failure`
+    // (SERVFAIL, REFUSED) is not: that resolver could not tell us anything.
     if (!result.ok) {
         const answered = result.reason === "no_records" || result.reason === "nxdomain";
 
