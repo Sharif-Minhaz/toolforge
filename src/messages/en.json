@@ -7902,7 +7902,6 @@
             "badgeHistory": "History stays on your device"
         },
         "workbench": {
-            "disclosure": "The test downloads and uploads random data to Cloudflare's nearest server (speed.cloudflare.com), which sees your IP address as any website does. Results are not reported to Cloudflare or to us; they stay in this browser. On a fast line one run moves a few hundred megabytes, so mind a mobile data cap.",
             "startLabel": "Run the test",
             "start": "Start test",
             "again": "Test again",
@@ -7922,6 +7921,11 @@
             "failed": "The test could not measure a download. Check the connection and try again — a VPN, an ad blocker or a firewall that blocks speed.cloudflare.com will stop it.",
             "statusIdle": "Press start to measure this connection.",
             "statusDone": "Measured at {time}.",
+            "figureIdle": "Ready when you are",
+            "nodeYou": "You",
+            "nodeEdge": "Cloudflare edge",
+            "tileMeasuring": "measuring now",
+            "traceTitle": "Every request in this run, in the order it finished",
             "resultsLabel": "What it means",
             "bloatTitle": "Lag under load",
             "bloatGrade": "Grade {grade}",
