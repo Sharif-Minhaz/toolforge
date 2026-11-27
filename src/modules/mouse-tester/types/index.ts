@@ -162,3 +162,86 @@ export type PollingSummary = {
     readonly rateClass: number | null;
     readonly samples: number;
 };
+
+/**
+ * What this page does with a mouse: check every button and the wheel, or
+ * measure how well the hand behind it aims. One page, because a mouse that
+ * passes the first and still feels wrong is usually a question for the second.
+ */
+export const MOUSE_TESTER_MODES = ["buttons", "aim"] as const;
+
+export type MouseTesterMode = (typeof MOUSE_TESTER_MODES)[number];
+
+/** How long an aim run lasts, in seconds. */
+export const AIM_DURATIONS = [30, 60] as const;
+
+export type AimDuration = (typeof AIM_DURATIONS)[number];
+
+/** Target sizes, largest first. */
+export const AIM_TARGET_SIZES = ["large", "medium", "small"] as const;
+
+export type AimTargetSize = (typeof AIM_TARGET_SIZES)[number];
+
+/** A position in arena units — see `AIM_ARENA` — never in screen pixels. */
+export type AimPoint = { readonly x: number; readonly y: number };
+
+export type AimTarget = AimPoint & {
+    readonly id: number;
+    readonly radius: number;
+    /** `performance.now()` when it appeared. */
+    readonly spawnedAt: number;
+    /** Where the pointer was judged to be when it appeared: the last shot, or the start. */
+    readonly from: AimPoint;
+};
+
+export type AimShot = {
+    readonly at: number;
+    readonly hit: boolean;
+    /** Shot minus target centre, as a fraction of the radius: 1 is the rim. */
+    readonly offset: AimPoint;
+    /** For a hit: appearance to hit. */
+    readonly timeMs: number;
+    /** Fitts's index of difficulty, log₂(D / W + 1), for a hit. */
+    readonly difficulty: number;
+};
+
+export type AimRun = {
+    readonly startedAt: number | null;
+    readonly endedAt: number | null;
+    readonly target: AimTarget | null;
+    /** Oldest first; capped at `MAX_AIM_SHOTS`. */
+    readonly shots: readonly AimShot[];
+    readonly nextId: number;
+};
+
+export type AimSummary = {
+    readonly hits: number;
+    readonly misses: number;
+    /** 0–1, hits over every shot; 0 before the first. */
+    readonly accuracy: number;
+    readonly medianTimeMs: number | null;
+    readonly bestTimeMs: number | null;
+    /** Mean of ID / MT over every hit, in bits per second; `null` before the first. */
+    readonly throughput: number | null;
+    /** Mean hit offset, as a fraction of the radius — which way the hand pulls. */
+    readonly bias: AimPoint | null;
+    /** Mean distance of a hit from centre, as a fraction of the radius: 0 is dead centre. */
+    readonly spread: number | null;
+    /** Hit offsets, for the grouping plot. */
+    readonly offsets: readonly AimPoint[];
+};
+
+/** Which way a grouping sits from centre, as a reader would say it. */
+export const AIM_BIAS_DIRECTIONS = [
+    "centred",
+    "high",
+    "low",
+    "left",
+    "right",
+    "highLeft",
+    "highRight",
+    "lowLeft",
+    "lowRight",
+] as const;
+
+export type AimBiasDirection = (typeof AIM_BIAS_DIRECTIONS)[number];

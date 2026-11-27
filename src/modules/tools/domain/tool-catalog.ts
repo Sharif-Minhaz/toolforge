@@ -1638,6 +1638,53 @@ const TOOLS: readonly Tool[] = [
         ],
     },
     {
+        id: "zakat-calculator",
+        href: "/tools/zakat-calculator",
+        category: "calculators",
+        status: "available",
+        // The arithmetic runs in the tab, and nothing entered leaves it. The
+        // server only reads gold, silver and exchange-rate prices, on the page
+        // request itself, from feeds no reader's input reaches.
+        runsOn: "browser",
+        accent: "emerald",
+        icon: "coins",
+        addedOn: "2026-11-27",
+        featured: true,
+        popularity: 84,
+        keywords: [
+            "zakat calculator",
+            "zakah calculator",
+            "zakat on gold",
+            "zakat on gold jewellery",
+            "zakat on silver",
+            "nisab",
+            "nisab today",
+            "gold price today",
+            "silver price today",
+            "bajus gold price",
+            "hanafi zakat",
+            "zakat 2.5%",
+            "hawl",
+            "zakat on savings",
+            "zakat on shares",
+            "zakat on crypto",
+            "zakat on provident fund",
+            "zakat on dps",
+            "zakat on sanchayapatra",
+            "vori",
+            "bhori",
+            "tola",
+            "যাকাত ক্যালকুলেটর",
+            "জাকাত ক্যালকুলেটর",
+            "যাকাতের হিসাব",
+            "জাকাতের হিসাব",
+            "নিসাব",
+            "স্বর্ণের যাকাত",
+            "আজকের সোনার দাম",
+            "ভরি",
+        ],
+    },
+    {
         id: "mock-server",
         // A section, not a page: the studio is a route tree under /mock with
         // its own navigation, so it opts out of the /tools/<id> rule and out of
@@ -1797,6 +1844,7 @@ const TOOLS: readonly Tool[] = [
         id: "keyboard-tester",
         href: "/tools/keyboard-tester",
         category: "hardware",
+        desktopOnly: true,
         status: "available",
         // Every key is read and judged in the tab, and the report is written
         // there; nothing typed into the test leaves it.
@@ -1833,6 +1881,7 @@ const TOOLS: readonly Tool[] = [
         id: "mouse-tester",
         href: "/tools/mouse-tester",
         category: "hardware",
+        desktopOnly: true,
         status: "available",
         // Every event is read and judged in the tab; the report is written there
         // too. Nothing about the mouse, or the person holding it, is sent.

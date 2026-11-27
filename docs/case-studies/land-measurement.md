@@ -24,7 +24,7 @@ are offered: বিঘা 52 (Faridpur), 48 (Dinajpur), 60 (Rangpur); কান�
 (Comilla/Noakhali), 160 (Chittagong).
 
 The rule that makes them usable is in `squareFeetPerUnit`: a region sets the
-size of the *top* of a chain, and the subdivision is kept — 20 কাঠা to the
+size of the _top_ of a chain, and the subdivision is kept — 20 কাঠা to the
 বিঘা, 20 গণ্ডা to the কানি — because that is the part every district agrees on.
 It also makes the tables agree with themselves: a 120-শতাংশ কানি gives a
 6-শতাংশ গণ্ডা, which is the Noakhali গণ্ডা Banglapedia prints separately, and a
@@ -97,3 +97,34 @@ pitch grid below.
 - Lines use `vector-effect: non-scaling-stroke` — set on every shape with
   `[&_*]:`, because the property is not inherited from a `<g>` — so a pitch in a
   30-pitch grid and a pitch drawn alone have the same 1 px lines.
+
+## On a phone
+
+A designer's review put it plainly: on a 360 px screen the tool read as a
+textbook — the input, seventeen rows, then thirty pitches — when the job is
+"convert five কাঠা". The desktop layout stays; below `lg` four things change,
+all by CSS over markup that is the same on server and client:
+
+- **One group at a time.** A `SegmentedControl` (Bangladeshi · International)
+  shows one list; from `lg` both columns sit side by side and the switch is
+  gone. Nothing is dropped — "Copy all" still copies every unit, and the
+  group headings stay for assistive tech.
+- **The input row is sticky** under the 56 px mobile header (`top-14`). It is a
+  direct child of `CardContent`, because a sticky element only slides inside
+  its parent, and the card takes `overflow-visible` for the same reason the
+  image resizer's does. The field is 16 px on a phone so iOS does not zoom it.
+- **Four pitches, then a button** for the rest. The sentence and the
+  "Showing N of M" caption already carry the count; the button says it too.
+  The everyday-object figure is capped at 240 px tall instead of 320.
+- **Copy targets are 36 px**, not 28.
+
+"Copy all" is the share action the review asked for: plain lines from
+`domain/summary.ts`, headed by what was typed, with a district-sized unit
+naming its district so the figure survives being forwarded.
+
+Two suggestions were declined. The numbered `1`/`2` badges are the site's
+signature for the path through a tool
+([`workbench-layout.md`](../patterns/workbench-layout.md)), so they stay —
+but the size comparison lost its `3`, because it is an aside about the result,
+not a step. Unit search was skipped: seventeen units in a select do not need
+one.

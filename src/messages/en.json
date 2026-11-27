@@ -299,11 +299,11 @@
         },
         "keyboard-tester": {
             "name": "Keyboard Tester",
-            "description": "Test every key of a full-size, tenkeyless, 75%, 65% or 60% board, ANSI or ISO, in any layout — with chatter detection for doubled letters, ghosting chords, a 6KRO or NKRO reading, system-key capture and a downloadable report."
+            "description": "Test every key of a full-size, tenkeyless, 75%, 65% or 60% board, ANSI or ISO, in any layout — with chatter detection, ghosting chords, a 6KRO or NKRO reading, a downloadable report and a typing speed test in English or Bangla."
         },
         "mouse-tester": {
             "name": "Mouse Tester",
-            "description": "Test every button, the wheel and the polling rate inside a capture area that blocks Back and Forward, and get a verdict on double-click chatter, drag drops and wheel jump-back you can download as evidence."
+            "description": "Test every button, the wheel and the polling rate inside a capture area that blocks Back and Forward, get a verdict on chatter, drag drops and wheel jump-back, and measure your aim with a Fitts’s-law aim trainer."
         },
         "screen-tester": {
             "name": "Dead Pixel & Screen Tester",
@@ -409,6 +409,10 @@
         "age-calculator": {
             "name": "Age & Bangla Date",
             "description": "Work out an age on a job circular's cut-off date to the day, check it against the age limit, and convert dates between English, বঙ্গাব্দ and Hijri."
+        },
+        "zakat-calculator": {
+            "name": "Zakat Calculator",
+            "description": "Work out zakat on cash, gold and silver, savings, shares, crypto and business stock at today’s gold, silver and BAJUS prices — weighed in vori, ana and rati, under the Hanafi or majority view, with every rule shown and your Hijri due dates."
         }
     },
     "overview": {
@@ -7595,71 +7599,88 @@
             "units": {
                 "bigha": {
                     "name": "Bigha · বিঘা",
-                    "short": "bigha"
+                    "short": "bigha",
+                    "label": "bigha - বিঘা"
                 },
                 "katha": {
                     "name": "Katha · কাঠা",
-                    "short": "katha"
+                    "short": "katha",
+                    "label": "katha - কাঠা"
                 },
                 "chhatak": {
                     "name": "Chhatak · ছটাক",
-                    "short": "chhatak"
+                    "short": "chhatak",
+                    "label": "chhatak - ছটাক"
                 },
                 "kani": {
                     "name": "Kani · কানি",
-                    "short": "kani"
+                    "short": "kani",
+                    "label": "kani - কানি"
                 },
                 "gonda": {
                     "name": "Gonda · গণ্ডা",
-                    "short": "gonda"
+                    "short": "gonda",
+                    "label": "gonda - গণ্ডা"
                 },
                 "kora": {
                     "name": "Kora · কড়া",
-                    "short": "kora"
+                    "short": "kora",
+                    "label": "kora - কড়া"
                 },
                 "kranti": {
                     "name": "Kranti · ক্রান্তি",
-                    "short": "kranti"
+                    "short": "kranti",
+                    "label": "kranti - ক্রান্তি"
                 },
                 "til": {
                     "name": "Til · তিল",
-                    "short": "til"
+                    "short": "til",
+                    "label": "til - তিল"
                 },
                 "decimal": {
                     "name": "Decimal (shotok) · শতাংশ",
-                    "short": "decimal"
+                    "short": "decimal",
+                    "label": "decimal - শতাংশ"
                 },
                 "ojutangsho": {
                     "name": "Ojutangsho · অযুতাংশ",
-                    "short": "ojutangsho"
+                    "short": "ojutangsho",
+                    "label": "ojutangsho - অযুতাংশ"
                 },
                 "square-hand": {
                     "name": "Square hand · বর্গহাত",
-                    "short": "sq hand"
+                    "short": "sq hand",
+                    "label": "square hand - বর্গহাত"
                 },
                 "acre": {
                     "name": "Acre",
-                    "short": "acre"
+                    "short": "acre",
+                    "label": "acre - একর"
                 },
                 "hectare": {
                     "name": "Hectare",
-                    "short": "ha"
+                    "short": "ha",
+                    "label": "hectare - হেক্টর"
                 },
                 "square-kilometer": {
                     "name": "Square kilometre",
-                    "short": "km²"
+                    "short": "km²",
+                    "label": "square kilometre - বর্গকিলোমিটার"
                 },
                 "square-meter": {
                     "name": "Square metre",
-                    "short": "m²"
+                    "short": "m²",
+                    "label": "square metre - বর্গমিটার"
                 },
                 "square-foot": {
                     "name": "Square foot",
-                    "short": "sq ft"
+                    "short": "sq ft",
+                    "label": "square foot - বর্গফুট"
                 },
                 "square-yard": {
                     "name": "Square yard",
-                    "short": "sq yd"
+                    "short": "sq yd",
+                    "label": "square yard - বর্গগজ"
                 }
             },
             "outputLabel": "In every unit",
@@ -7713,7 +7734,12 @@
             "pitchTruncated": "Showing {drawn} of {total} pitches.",
             "legendLand": "Your land",
             "legendLandSquare": "Your land, as a square {meters} m ({feet} ft) a side",
-            "sideMeters": "{meters} m"
+            "sideMeters": "{meters} m",
+            "groupsLabel": "Unit system",
+            "copyAll": "Copy all",
+            "summaryHeading": "{value} {unit} is:",
+            "pitchesAll": "Show all {count} pitches",
+            "pitchesFewer": "Show fewer pitches"
         },
         "errors": {
             "invalidCharacter": "Character {position} is not part of a number. Type the area as digits, with one decimal point at most.",
@@ -7725,6 +7751,7 @@
         },
         "toast": {
             "copied": "Area copied",
+            "copiedAll": "Every unit copied",
             "copyFailedEmpty": "There is nothing to copy yet.",
             "copyFailedUnsupported": "This browser will not let the page reach the clipboard.",
             "copyFailedDenied": "Clipboard access was refused. Select the figure and copy it instead."
@@ -7930,6 +7957,559 @@
                 "a6": "By subtracting the fields and borrowing a month when the day comes out negative — the method taught by hand, and the one <code>java.time</code> uses. Somebody born on 29 February is 11 months 30 days old on 28 February of a common year and a year older on 1 March, which is also the day their birthday counts as for an age limit. Somebody born on 31 January is 1 month 1 day old on 1 March.",
                 "q7": "Whose “today” is today?",
                 "a7": "Bangladesh's. The page works out today's date in Dhaka when it loads, so a reader abroad late at night still gets the date the circular's office counts in."
+            }
+        }
+    },
+    "zakat": {
+        "meta": {
+            "title": "Zakat Calculator — live gold & silver prices, nisab, Hanafi and majority views",
+            "description": "Work out your zakat on cash, gold and silver jewellery, savings, DPS, FDR, Sanchayapatra, shares, crypto and business stock, at today’s gold and silver price or BAJUS rates. Weigh in vori, ana and rati, choose the Hanafi or majority view, see every rule that applied, and get your Hijri due dates. Nothing you enter is uploaded."
+        },
+        "hero": {
+            "eyebrow": "Calculators",
+            "title": "Zakat Calculator",
+            "subtitle": "Enter what you own and owe; the nisab, the rate and every rule that applied are shown beside the figure, at today’s gold and silver price.",
+            "badgePrices": "Live gold, silver and BAJUS prices",
+            "badgeViews": "Hanafi and majority views",
+            "badgeLocal": "Nothing you enter leaves the tab"
+        },
+        "workbench": {
+            "currency": "Currency",
+            "view": "School of thought",
+            "priceBasis": "Gold and silver price",
+            "rules": "Rules",
+            "minor": "This wealth belongs to a child",
+            "minorHint": "Hanafis do not levy zakat on a minor’s wealth; the other schools do, paid by the guardian.",
+            "disclaimer": "This follows published opinions and says which at every step, but it is not a fatwa. For an unusual case — a business, an inheritance, money held for others — confirm with a scholar you trust.",
+            "stepEnter": "What you own and owe",
+            "stepResult": "Your zakat"
+        },
+        "nisabCard": {
+            "title": "Today’s nisab",
+            "infoLabel": "What the nisab is",
+            "info": "The nisab is the least wealth on which zakat becomes due: the value of {gold} g of gold or {silver} g of silver. The figure above is the silver nisab, the one that applies whenever your wealth is not gold alone.",
+            "silverLine": "Silver nisab: {grams} g ({vori} vori) of pure silver, at today’s market price",
+            "goldLine": "Gold nisab: {value} — {grams} g ({vori} vori) of pure gold",
+            "updated": "Prices of {date}"
+        },
+        "views": {
+            "hanafi": "Hanafi",
+            "majority": "Majority (Shafi’i, Maliki, Hanbali)",
+            "custom": "Custom",
+            "hints": {
+                "hanafi": "Followed in Bangladesh, Pakistan, India and Turkey. 7.5 / 52.5 vori nisab; worn jewellery is zakatable.",
+                "majority": "As the large Arab bodies give it. 85 g / 595 g nisab; worn jewellery is exempt.",
+                "custom": "You have changed at least one rule. Pick a view to start from it again."
+            }
+        },
+        "priceBases": {
+            "spot": "International spot price",
+            "bajusResale": "BAJUS, sale value",
+            "bajusRetail": "BAJUS, retail",
+            "custom": "My own price",
+            "hints": {
+                "spot": "The world market price for pure metal, scaled by karat — close to what gold is worth melted down.",
+                "bajusResale": "The Bangladesh Jewellers Association price less what a jeweller deducts to buy it back — what your jewellery would actually fetch. Most scholars, and As-Sunnah Foundation, value at this.",
+                "bajusRetail": "What a jeweller charges to sell. Higher; some prefer it as a precaution in favour of the poor.",
+                "custom": "Enter today’s price per gram of pure gold and pure silver yourself."
+            }
+        },
+        "sections": {
+            "prices": {
+                "title": "Today’s prices",
+                "hint": "Every figure below is valued at these. Check them against your jeweller if you are selling to one."
+            },
+            "cash": {
+                "title": "Cash and bank",
+                "hint": "What you hold on the day your zakat year completes, in any currency."
+            },
+            "gold": {
+                "title": "Gold",
+                "hint": "Each piece by weight and karat. Leave out stones and making charges — only the metal is zakatable."
+            },
+            "silver": {
+                "title": "Silver",
+                "hint": "Each piece by weight and fineness."
+            },
+            "savings": {
+                "title": "Savings and investments",
+                "hint": "Principal only, at what you could encash today. Interest or profit goes under Adjustments."
+            },
+            "business": {
+                "title": "Business",
+                "hint": "Only stock bought to sell. Shop fittings, machines and premises are not zakatable."
+            },
+            "owed": {
+                "title": "Owed to you, and property",
+                "hint": "Your home, car and household goods are not zakatable. Property bought to resell is."
+            },
+            "liabilities": {
+                "title": "What you owe",
+                "hint": "Which of these reduce your zakat depends on the debt rule. A debt the rule does not deduct is still shown."
+            },
+            "adjustments": {
+                "title": "Adjustments",
+                "hint": "Not wealth and not debt, but both change what you pay."
+            }
+        },
+        "fields": {
+            "currencyOf": "Currency of {field}",
+            "notDeducted": "Not deducted under the debt rule you have chosen.",
+            "cash": {
+                "label": "Cash in hand",
+                "hint": "At home, in a locker, in your wallet."
+            },
+            "bank": {
+                "label": "Bank accounts",
+                "hint": "Current and savings balances, including any interest — enter that under Adjustments too."
+            },
+            "mobileWallet": {
+                "label": "Mobile wallets",
+                "hint": "bKash, Nagad, Rocket and the like."
+            },
+            "foreignCash": {
+                "label": "Foreign currency",
+                "hint": "Pick its currency; it is converted at the day’s rate."
+            },
+            "fixedDeposit": {
+                "label": "FDR and DPS",
+                "hint": "Fixed deposits and deposit pension schemes: the principal you have paid in."
+            },
+            "savingsCertificate": {
+                "label": "Sanchayapatra, bonds and prize bonds",
+                "hint": "Savings certificates, bonds, debentures, treasury bills and prize bonds, at the price you paid."
+            },
+            "providentVoluntary": {
+                "label": "Provident fund, voluntary part",
+                "hint": "Only what you chose to pay in above the compulsory deduction. The compulsory part is not zakatable until you receive it."
+            },
+            "insurancePremiums": {
+                "label": "Life insurance premiums paid",
+                "hint": "The premiums you have paid, not the bonus or growth (Darul Uloom Deoband)."
+            },
+            "tradingShares": {
+                "label": "Shares held to trade",
+                "hint": "Shares you bought to sell, at today’s market value."
+            },
+            "mutualFunds": {
+                "label": "Mutual funds",
+                "hint": "At the price you could redeem for today."
+            },
+            "businessCash": {
+                "label": "Business cash and bank",
+                "hint": "Money in the business, not already counted above."
+            },
+            "inventory": {
+                "label": "Stock for sale",
+                "hint": "Ready goods, finished products, raw materials and work in progress, at what they would sell for wholesale or all together."
+            },
+            "businessReceivables": {
+                "label": "Money customers owe",
+                "hint": "Trade debts you expect to be paid."
+            },
+            "partnershipShare": {
+                "label": "Share in a partnership or mudaraba",
+                "hint": "Your share of the business’s net zakatable assets; if that is not known, the capital you put in."
+            },
+            "loansGiven": {
+                "label": "Loans you have given",
+                "hint": "Money lent that you expect back. A loan you have given up on is left out."
+            },
+            "depositsWithOthers": {
+                "label": "Money left with someone in trust",
+                "hint": "Cash you have given someone to keep for you (amanah)."
+            },
+            "securityDeposits": {
+                "label": "Refundable security deposits",
+                "hint": "Advance paid when renting a flat, house or shop, and any other deposit you will get back."
+            },
+            "resaleProperty": {
+                "label": "Property bought to resell",
+                "hint": "Land, flats or plots bought to sell, at today’s market value."
+            },
+            "rentHeld": {
+                "label": "Rent you still hold",
+                "hint": "Rent received and not yet spent. The rented property itself is not zakatable."
+            },
+            "otherAssets": {
+                "label": "Anything else zakatable",
+                "hint": "Money held for a future purpose such as Hajj or a wedding counts too."
+            },
+            "debtsDueNow": {
+                "label": "Debts due now",
+                "hint": "Borrowed money and credit purchases you must repay by your zakat date."
+            },
+            "billsDue": {
+                "label": "Bills and rent due",
+                "hint": "Utility bills, rent and fees already owed."
+            },
+            "wagesDue": {
+                "label": "Wages you owe",
+                "hint": "Pay owed to employees or domestic workers."
+            },
+            "taxDue": {
+                "label": "Tax due now",
+                "hint": "Tax already assessed and payable."
+            },
+            "pastZakatDue": {
+                "label": "Zakat still owed from earlier years",
+                "hint": "Zakat of past years you have not yet paid. It is a debt, so it comes off this year’s wealth — and must still be paid."
+            },
+            "instalmentsYear": {
+                "label": "Personal loans and instalments, next 12 months",
+                "hint": "Medical, household or home and car loans, and goods bought on instalment: only what falls due within a year, without interest."
+            },
+            "businessLoanYear": {
+                "label": "Business loan that bought stock, next 12 months",
+                "hint": "Only a loan used to buy zakatable goods such as stock or raw materials, and only the next year’s repayments. A loan for machinery or premises does not count."
+            },
+            "mahrDue": {
+                "label": "Unpaid mahr to your wife",
+                "hint": "Only the part you firmly intend to pay within the next year."
+            },
+            "longTermRemaining": {
+                "label": "Rest of long-term loans",
+                "hint": "What remains of those loans after the next twelve months. Deducted only under “every debt”."
+            },
+            "interestHeld": {
+                "label": "Interest in the balances above",
+                "hint": "Interest is not your wealth: it is taken out of the total, and must be given away in full."
+            },
+            "advancePaid": {
+                "label": "Zakat already paid this year",
+                "hint": "Paid in advance during the year; it comes off what is left to pay."
+            }
+        },
+        "metals": {
+            "empty": {
+                "gold": "No gold added. Add each piece, or one line for all of it at one karat.",
+                "silver": "No silver added."
+            },
+            "add": {
+                "gold": "Add gold",
+                "silver": "Add silver"
+            },
+            "names": {
+                "gold": "Gold",
+                "silver": "Silver"
+            },
+            "rowLegend": "{metal}, piece {position}",
+            "name": "Name (optional)",
+            "namePlaceholder": {
+                "gold": "Wedding set",
+                "silver": "Anklets"
+            },
+            "weight": "Weight",
+            "unit": "Unit",
+            "units": {
+                "gram": "Grams",
+                "vori": "Vori (bhori, tola)",
+                "ana": "Ana",
+                "rati": "Rati",
+                "ounce": "Troy ounces"
+            },
+            "purity": "Purity",
+            "karat": "{karat} karat",
+            "fineness": "{fineness} fine",
+            "traditional": "Traditional",
+            "use": "Held as",
+            "uses": {
+                "jewellery": "Jewellery that is worn",
+                "savings": "Savings or investment"
+            },
+            "remove": "Remove {metal} piece {position}",
+            "weightHint": "1 vori (bhori) = 16 ana = 96 rati = 11.664 g. Traditional (সনাতনী) gold is priced from BAJUS.",
+            "conversion": "= {grams} g · {vori} vori {ana} ana {rati} rati {point} point",
+            "exemptNote": "Exempt under the jewellery rule you have chosen."
+        },
+        "crypto": {
+            "label": "Cryptocurrency",
+            "add": "Add a coin",
+            "hint": "Amounts in coins; each is priced at the day’s rate. Coins you hold are zakatable at market value whether or not you bought them to sell (NZF).",
+            "amountLabel": "Coin amount {position}",
+            "coinLabel": "Coin {position}",
+            "remove": "Remove coin {position}"
+        },
+        "shares": {
+            "label": "Shares held for the long term",
+            "method": "Zakatable part",
+            "methods": {
+                "full": "All of it",
+                "proxy": "25% (NZF proxy)",
+                "ratio": "Company’s ratio"
+            },
+            "ratio": "Ratio, %",
+            "hints": {
+                "full": "Zakat on the full market value: the simplest, and the precaution.",
+                "proxy": "Only your share of the companies’ zakatable assets counts; NZF puts that at 25% of market value.",
+                "ratio": "(Current assets − liabilities) ÷ total assets, from the company’s balance sheet (IIFA resolution 121)."
+            }
+        },
+        "prices": {
+            "customGold": "Pure (24 karat) gold, {currency} per gram",
+            "customSilver": "Pure silver, {currency} per gram",
+            "caption": "What each grade is worth, in {currency}",
+            "perGram": "Per gram",
+            "perVori": "Per vori",
+            "sources": {
+                "spotLive": "International spot from gold-api.com, {time} UTC.",
+                "spotDaily": "The live price was unavailable; this is yesterday’s fix from currency-api, {time} UTC.",
+                "bajusResale": "BAJUS notice of {date}, less the jeweller’s deduction above. BAJUS prices include VAT; making charges are extra.",
+                "bajusRetail": "BAJUS notice of {date}, VAT included, without making charges.",
+                "undated": "an undated day",
+                "custom": "Your own prices.",
+                "rates": "Converted at {source} rates of {time}."
+            },
+            "grade": "Grade",
+            "gradeName": "{metal}, {purity}",
+            "metals": {
+                "gold": "Gold",
+                "silver": "Silver"
+            },
+            "deduction": "Jeweller’s deduction",
+            "deductionHint": "What a jeweller takes off the BAJUS price to buy a piece back. 17% (a sale value of 83%) is what As-Sunnah Foundation’s calculator uses; BAJUS’s own notice deducts 15% once making charges and stones are removed. Your jewellery is valued net of it; the nisab is not."
+        },
+        "errors": {
+            "invalid_amount": "Not a number this can read. Use digits and one decimal point; commas are fine.",
+            "too_large": "Too large to be a real amount — check for an extra digit.",
+            "missing_metal_price": "Today’s gold and silver prices could not be read. Choose BAJUS, or enter your own price.",
+            "missing_rate": "There is no exchange rate for {code} today. Enter that amount in another currency.",
+            "missing_bajus": "The BAJUS prices could not be read today. Choose the international price, or enter your own.",
+            "invalid_custom_price": "Enter a price above zero for both gold and silver.",
+            "invalid_deduction": "Enter a deduction from 0 to {max} percent.",
+            "invalid_ratio": "Enter a percentage from 0 to 100."
+        },
+        "rules": {
+            "nisabStandard": {
+                "label": "Nisab weights",
+                "options": {
+                    "tola": "87.48 g gold, 612.36 g silver",
+                    "grams": "85 g gold, 595 g silver"
+                },
+                "hints": {
+                    "tola": "7.5 and 52.5 vori (tola): the South Asian Hanafi figures, also used by NZF and Islamic Relief.",
+                    "grams": "Qaradawi’s weighing of the early dinar, used by AAOIFI and most Arab bodies."
+                }
+            },
+            "nisabBasis": {
+                "label": "Nisab test",
+                "options": {
+                    "auto": "One metal alone by weight, otherwise silver",
+                    "silver": "Always silver",
+                    "gold": "Always gold"
+                },
+                "hints": {
+                    "auto": "Hanafi practice: gold alone is weighed against 7.5 vori and silver alone against 52.5 vori; anything mixed — even a little cash — is valued against the silver nisab.",
+                    "silver": "The lower threshold, as the more beneficial to the poor (Muslim World League Fiqh Council).",
+                    "gold": "Qaradawi’s preference: the gold nisab keeps closer to its original value today."
+                }
+            },
+            "karatMethod": {
+                "label": "Gold alloys",
+                "options": {
+                    "majority": "Mostly gold counts in full",
+                    "pure": "Only the pure gold counts"
+                },
+                "hints": {
+                    "majority": "Classical Hanafi: 12 karat and above is gold at its full weight (Ibn ʿAbidin).",
+                    "pure": "Only weight × karat ÷ 24 counts (al-Nawawi, Ibn Qudamah). Affects the gold-only weight test."
+                }
+            },
+            "jewellery": {
+                "label": "Worn jewellery",
+                "options": {
+                    "zakatable": "Zakatable",
+                    "exempt": "Exempt"
+                },
+                "hints": {
+                    "zakatable": "Hanafi, and Ibn Baz and Ibn ʿUthaymeen: worn or not, gold and silver are zakatable.",
+                    "exempt": "The Maliki, Shafi’i and Hanbali majority: jewellery worn for adornment is exempt; jewellery kept as savings is not."
+                }
+            },
+            "year": {
+                "label": "Zakat year",
+                "options": {
+                    "lunar": "Hijri year, 2.5%",
+                    "solar": "Gregorian year, 2.577%",
+                    "solarRounded": "Gregorian year, 2.6%"
+                },
+                "hints": {
+                    "lunar": "The year the rate was set for.",
+                    "solar": "2.5% × 365 ÷ 354, so a solar year pays what a lunar one would (AAOIFI, Dar al-Ifta Egypt).",
+                    "solarRounded": "2.577% rounded up as a precaution, as As-Sunnah Foundation’s calculator does."
+                }
+            },
+            "debts": {
+                "label": "Debts",
+                "options": {
+                    "year": "What falls due in 12 months",
+                    "due": "Only what is due now",
+                    "all": "Every debt"
+                },
+                "hints": {
+                    "year": "Debts due now and a year of instalments on longer loans (NZF, the Bangladesh guideline).",
+                    "due": "Only debts due by your zakat date (Ibn Baz, Ibn ʿUthaymeen).",
+                    "all": "Every debt, immediate and deferred, including the whole of a long loan (Qaradawi)."
+                }
+            },
+            "minors": {
+                "label": "A child’s wealth",
+                "options": {
+                    "exempt": "Exempt",
+                    "zakatable": "Zakatable"
+                },
+                "hints": {
+                    "exempt": "Hanafi: zakat is due only from an adult of sound mind.",
+                    "zakatable": "The other schools: the guardian pays it from the child’s wealth."
+                }
+            }
+        },
+        "result": {
+            "fixField": "One of the amounts cannot be read. It is marked beside the field.",
+            "metalLine": "{metal}, {purity} — {name}",
+            "longTermShares": "Shares held for the long term",
+            "nisab": {
+                "progressLabel": "Wealth against the nisab",
+                "goldWeight": "Your gold alone is weighed against the gold nisab, {grams} g: {counted} g counts after debts.",
+                "silverWeight": "Your silver alone is weighed against the silver nisab, {grams} g: {counted} g counts after debts.",
+                "silverValue": "Tested against the silver nisab: {grams} g of silver, worth {value} today.",
+                "goldValue": "Tested against the gold nisab: {grams} g of gold, worth {value} today."
+            },
+            "figures": {
+                "assets": "Zakatable assets",
+                "deductions": "Deductible debts",
+                "net": "Net zakatable wealth",
+                "rate": "Rate",
+                "zakat": "Zakat",
+                "advance": "Already paid this year",
+                "payable": "Left to pay"
+            },
+            "verdicts": {
+                "due": "Zakat due",
+                "belowNisab": "No zakat due: below the nisab",
+                "minorExempt": "No zakat due: a child’s wealth, under the rule chosen",
+                "nothing": "Nothing zakatable yet"
+            },
+            "verdictsShort": {
+                "due": "Due",
+                "belowNisab": "Below nisab",
+                "minorExempt": "Exempt",
+                "nothing": "Nothing due"
+            },
+            "inGold": "Or {grams} g of pure gold, if you pay in gold.",
+            "interest": "{amount} of interest was taken out of your wealth. It is not zakat: give all of it away, without expecting reward.",
+            "download": "Download report",
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The report could not be saved.",
+            "empty": {
+                "title": "Enter what you own",
+                "body": "Start with cash and gold. The figure, the nisab and every rule that applied appear here as you type."
+            },
+            "breakdown": {
+                "title": "Line by line"
+            },
+            "treatments": {
+                "counted": "Counted in full.",
+                "countedPureContent": "Counted at its sale value; only its pure metal is weighed.",
+                "countedFullWeight": "Counted at its sale value; weighed at full weight, since it is mostly gold or silver.",
+                "exemptJewellery": "Exempt: worn jewellery, under the rule chosen.",
+                "partialShares": "Only the zakatable part of the holding is counted.",
+                "deducted": "Deducted.",
+                "notDeductedRule": "Not deducted under the debt rule chosen.",
+                "excludedInterest": "Taken out: interest is not your wealth."
+            },
+            "compare": {
+                "title": "Under other views",
+                "hint": "The same holdings, at the same prices, with one opinion changed.",
+                "variants": {
+                    "hanafi": "Hanafi",
+                    "majority": "Majority view",
+                    "goldNisab": "With the gold nisab",
+                    "silverNisab": "With the silver nisab",
+                    "solarYear": "Over the other kind of year"
+                }
+            },
+            "report": {
+                "title": "Zakat calculation",
+                "generated": "Prepared {date}",
+                "view": "View: {view}",
+                "verdict": "Result",
+                "figures": "Figures",
+                "prices": "Prices used, per gram of pure metal",
+                "goldPrice": "Gold",
+                "silverPrice": "Silver",
+                "notes": "Notes",
+                "disclaimer": "Calculated by following published opinions; not a fatwa. Confirm an unusual case with a scholar.",
+                "footer": "ToolForge Zakat Calculator — nothing entered left the browser."
+            }
+        },
+        "hawl": {
+            "title": "When your zakat is due",
+            "intro": "Zakat is due on the same Hijri date each year, counted from the day your wealth first reached the nisab.",
+            "startLabel": "Day your wealth first reached the nisab",
+            "startHint": "Not sure? Use your best estimate, or any fixed day you keep each year, such as 1 Ramadan.",
+            "adjustment": "Moon sighting",
+            "adjustmentDays": "{days} days",
+            "hijriDate": "{day} {month} {year} AH",
+            "anniversary": "Your zakat year turns on {date}. Lunar years completed so far: {years}.",
+            "today": "today",
+            "inDays": "in {days} days",
+            "download": "Add to calendar",
+            "downloaded": "Saved {filename}",
+            "downloadFailed": "The calendar file could not be saved.",
+            "errors": {
+                "start_in_future": "That day has not come yet.",
+                "invalid_date": "That date does not exist."
+            },
+            "reminder": {
+                "summary": "Zakat due",
+                "description": "Your zakat year completes today ({date} each year). Recalculate at today’s prices before paying.",
+                "alarm": "Zakat falls due in a week"
+            }
+        },
+        "hijriMonths": {
+            "muharram": "Muharram",
+            "safar": "Safar",
+            "rabiAlAwwal": "Rabi al-Awwal",
+            "rabiAlThani": "Rabi al-Thani",
+            "jumadaAlUla": "Jumada al-Ula",
+            "jumadaAlAkhirah": "Jumada al-Akhirah",
+            "rajab": "Rajab",
+            "shaban": "Sha’ban",
+            "ramadan": "Ramadan",
+            "shawwal": "Shawwal",
+            "dhuAlQadah": "Dhu al-Qa’dah",
+            "dhuAlHijjah": "Dhu al-Hijjah"
+        },
+        "article": {
+            "understanding": {
+                "title": "How zakat is worked out",
+                "p1": "Zakat is 2.5% of the wealth you have held for a full lunar year, once it reaches the nisab — the value of 87.48 g of gold or 612.36 g of silver in the Hanafi reckoning. It is 2.5% of all of it, not only the part above the nisab.",
+                "example": "<code>৳10,00,000</code> cash + <code>2 vori</code> of 22 karat gold − <code>৳50,000</code> due now → well above the silver nisab → 2.5% of the whole net amount",
+                "p2": "What decides the figure is which opinion you follow: whether worn jewellery counts, which nisab applies, which debts come off. Every one of those is a control above, set to the Hanafi view by default, and the result shows what the other views would make of the same holdings."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Do I pay zakat on gold jewellery I wear?",
+                "a1": "In the Hanafi school, yes — worn or not, gold and silver are zakatable, and Ibn Baz and Ibn ʿUthaymeen held the same. The Maliki, Shafi’i and Hanbali majority exempt jewellery worn for adornment. Jewellery kept as savings is zakatable in every school. Stones are never counted.",
+                "q2": "Should I use the gold or the silver nisab?",
+                "a2": "Most bodies — the Muslim World League’s Fiqh Council, NZF, Islamic Relief, Darul Uloom Deoband — use silver for cash and mixed wealth, as the more beneficial to the poor. Hanafis weigh gold that is held entirely on its own against the gold nisab. Qaradawi preferred gold for money. The result shows your figure under both.",
+                "q3": "Which gold price should I use?",
+                "a3": "Most scholars value gold and silver at what they would sell for. In Bangladesh that is the BAJUS price less what a jeweller deducts to buy it back — 17% by default, the 83% sale value As-Sunnah Foundation’s calculator uses; BAJUS’s own notice says 15%. You can set the deduction, choose the retail price as a precaution, or enter your own jeweller’s quote. The nisab itself is always valued at the market price.",
+                "q4": "Why 87.48 g in one place and 85 g in another?",
+                "a4": "Both are 20 mithqal of gold, estimated differently. 87.48 g is 7.5 tola of 11.664 g, the South Asian figure; 85 g is Qaradawi’s weighing of early dinars, used by AAOIFI and most Arab bodies. The difference is about 3%; choose under Rules.",
+                "q5": "Are debts deducted?",
+                "a5": "Usually, but scholars differ on which. The default deducts what you must repay within twelve months, including a year of instalments on a long loan. You can choose to deduct only what is due now, or every debt including the whole of a mortgage.",
+                "q6": "Is zakat due on my provident fund, DPS, FDR or Sanchayapatra?",
+                "a6": "DPS, FDR, Sanchayapatra and prize bonds are yours and zakatable every year on the principal. The compulsory part of a GPF or CPF is not zakatable until you receive it; a voluntary contribution above it is, every year (Darul Uloom Deoband). Interest or profit on them is given away, not counted.",
+                "q7": "What about interest in my bank account?",
+                "a7": "Interest is not your wealth, so it is not zakat either. Enter it under Adjustments: it is taken out of your total and shown apart, to be given away in full without expecting reward.",
+                "q8": "Can I pay on a Gregorian date?",
+                "a8": "Yes. The exact solar rate is 2.577%, which is 2.5% × 365 ÷ 354 (AAOIFI, Dar al-Ifta Egypt); As-Sunnah Foundation rounds it up to 2.6% as a precaution, and both are offered. Paying 2.5% every Gregorian year loses one zakat year in about thirty-three.",
+                "q9": "How exact is the figure?",
+                "a9": "Every step is computed in exact fractions, not floating point, so no rounding builds up between the prices and the total. The amount to pay is rounded up to the smallest coin, so you never underpay by a fraction.",
+                "q10": "Is anything I enter sent anywhere?",
+                "a10": "No. The figure is worked out in this tab. The server only fetches the day’s gold, silver and exchange-rate prices, the same for every visitor; nothing you type is part of that request."
             }
         }
     },
@@ -9461,16 +10041,27 @@
     },
     "keyboardTester": {
         "meta": {
-            "title": "Keyboard Tester — every key, chatter, ghosting and rollover, in any layout",
-            "description": "Test every key on a full-size, tenkeyless, 75%, 65% or 60% board, ANSI or ISO, in any layout or language. Catch chattering switches that double letters, find the chords your matrix blocks, read 6KRO or NKRO, capture Ctrl+W and the Windows key, and download the report. Nothing is uploaded."
+            "title": "Keyboard Tester & Typing Speed Test — every key, chatter, ghosting, WPM",
+            "description": "Test every key on a full-size, tenkeyless, 75%, 65% or 60% board, ANSI or ISO, in any layout or language. Catch chattering switches that double letters, find the chords your matrix blocks, read 6KRO or NKRO, then take a typing speed test in English or Bangla with WPM, accuracy and consistency. Nothing is uploaded."
         },
         "hero": {
             "eyebrow": "Hardware",
             "title": "Keyboard Tester",
-            "subtitle": "Click the board, then press every key. Works in any layout and catches chattering switches and ghosting.",
+            "subtitle": "Click the board, then press every key — or switch to the typing test for your words per minute. Works in any layout, English or Bangla.",
             "badgeLayouts": "Any layout, any language",
             "badgeChatter": "Chatter and ghosting checks",
             "badgeLocal": "Runs in your browser"
+        },
+        "modes": {
+            "label": "Test",
+            "options": {
+                "keys": "Key test",
+                "typing": "Typing speed"
+            },
+            "hints": {
+                "keys": "Every key on the board, with chatter, ghosting and rollover.",
+                "typing": "Words per minute and accuracy, in English or Bangla, on the keyboard you just tested."
+            }
         },
         "sizes": {
             "full": "Full size (100%)",
@@ -9587,6 +10178,39 @@
             "downloaded": "Saved {filename}",
             "downloadFailed": "The download could not start."
         },
+        "typing": {
+            "language": "Words",
+            "languages": {
+                "english": "English",
+                "bangla": "বাংলা"
+            },
+            "duration": "Time",
+            "seconds": "{value}s",
+            "restart": "New text",
+            "stepType": "Type the words — the clock starts on your first key",
+            "timeLeft": "Time left",
+            "wpm": "WPM",
+            "accuracy": "Accuracy",
+            "best": "Your best",
+            "inputLabel": "Type here",
+            "inputLabelWithWord": "Type the word: {word}",
+            "placeholder": "Start typing…",
+            "hint": "Space moves to the next word. Escape starts again with new text. Pasting is turned off.",
+            "again": "Try again",
+            "result": {
+                "title": "Your result",
+                "raw": "Raw WPM",
+                "consistency": "Consistency",
+                "words": "Words",
+                "wordsValue": "{correct} right · {incorrect} wrong",
+                "characters": "Characters",
+                "charactersValue": "{correct} right · {incorrect} wrong · {extra} extra · {missed} missed",
+                "corrections": "Corrections",
+                "newBest": "New personal best",
+                "chart": "Speed over the run (WPM per second)",
+                "chartEmpty": "Type for at least two seconds to see your speed over time."
+            }
+        },
         "article": {
             "understanding": {
                 "title": "What a keyboard tester tells you",
@@ -9609,22 +10233,37 @@
                 "q6": "How do I leave the test with the keyboard?",
                 "a6": "Hold Escape for a second and a half, or click anywhere outside the board.",
                 "q7": "Is anything sent anywhere?",
-                "a7": "No. Every key is read and judged in this tab, and the report is written there too."
+                "a7": "No. Every key is read and judged in this tab, and the report is written there too.",
+                "q8": "How is typing speed worked out?",
+                "a8": "Five characters count as one word. WPM counts only the words you typed correctly, plus the space after each; raw WPM counts everything you typed. Accuracy is correct characters over everything typed or skipped, and consistency is how steady your speed stayed from one second to the next.",
+                "q9": "Does the typing test work with Avro or Bijoy?",
+                "a9": "Yes. Each word is judged when you press space, by what the box holds, so a phonetic keyboard that rewrites letters as you type is judged on the finished word. Both ways of writing য়, ড় and ঢ় count as the same letter."
             }
         }
     },
     "mouseTester": {
         "meta": {
-            "title": "Mouse Tester — buttons, double-click chatter, drag drops, wheel and polling rate",
-            "description": "Test every mouse button, the scroll and tilt wheel and the real polling rate in a capture area that blocks Back, Forward and the context menu. Catch double-click chatter, held buttons that drop mid-drag and a wheel that jumps back, then download the report as warranty evidence. Nothing is uploaded."
+            "title": "Mouse Tester & Aim Trainer — buttons, double-click chatter, polling rate, aim",
+            "description": "Test every mouse button, the scroll and tilt wheel and the real polling rate in a capture area that blocks Back, Forward and the context menu. Catch double-click chatter, drag drops and a jumping wheel, then measure your aim — speed, accuracy, Fitts’s-law throughput and where your shots land. Nothing is uploaded."
         },
         "hero": {
             "eyebrow": "Hardware",
             "title": "Mouse Tester",
-            "subtitle": "Click, hold and scroll inside the capture area to find a chattering switch, a dropping hold or a jumping wheel.",
+            "subtitle": "Click, hold and scroll in the capture area to catch chatter, drops or a jumping wheel — or switch to the aim trainer.",
             "badgeCapture": "Back and Forward blocked",
             "badgeDiagnosis": "Chatter, drop and wheel diagnosis",
             "badgeLocal": "Runs in your browser"
+        },
+        "modes": {
+            "label": "Test",
+            "options": {
+                "buttons": "Button test",
+                "aim": "Aim trainer"
+            },
+            "hints": {
+                "buttons": "Every button, the wheel and the polling rate, with chatter and drop diagnosis.",
+                "aim": "Flick to one target at a time and get your speed, accuracy and where your shots land."
+            }
         },
         "workbench": {
             "zoneLabel": "Mouse test area",
@@ -9767,6 +10406,51 @@
             "downloaded": "Saved {filename}",
             "downloadFailed": "The download could not start."
         },
+        "aim": {
+            "size": "Target size",
+            "sizes": {
+                "large": "Large",
+                "medium": "Medium",
+                "small": "Small"
+            },
+            "duration": "Time",
+            "seconds": "{value}s",
+            "reset": "Reset",
+            "stepShoot": "Click Start, then click each target as fast as you can",
+            "timeLeft": "Time left",
+            "hits": "Hits",
+            "accuracy": "Accuracy",
+            "medianTime": "Time to hit",
+            "best": "Your best",
+            "ms": "{value} ms",
+            "bitsPerSecond": "{value} bits/s",
+            "arenaLabel": "Aim arena",
+            "start": "Start",
+            "hint": "One target at a time, each a fresh flick from where your last shot landed. A click outside the target is a miss. Left button only.",
+            "again": "Go again",
+            "result": {
+                "title": "Your result",
+                "newBest": "New personal best",
+                "throughput": "Throughput",
+                "bestTime": "Fastest hit",
+                "misses": "Misses",
+                "throughputHint": "Throughput is Fitts’s law: how far and how small each target was, over how long it took. It is the figure pointing research uses to compare mice, because it does not reward easy targets — compare your own runs on the same size.",
+                "grouping": "Where your hits landed",
+                "groupingEmpty": "No hits to plot yet.",
+                "groupingSummary": "Your hits land {direction}, on average {spread} of the radius from centre.",
+                "bias": {
+                    "centred": "centred",
+                    "high": "a little high",
+                    "low": "a little low",
+                    "left": "a little left",
+                    "right": "a little right",
+                    "highLeft": "high and to the left",
+                    "highRight": "high and to the right",
+                    "lowLeft": "low and to the left",
+                    "lowRight": "low and to the right"
+                }
+            }
+        },
         "article": {
             "understanding": {
                 "title": "What a mouse tester tells you",
@@ -9789,7 +10473,11 @@
                 "q6": "Is anything sent anywhere?",
                 "a6": "No. Every event is read and judged in this tab, and the report is written there too.",
                 "q7": "Can I test a mouse on my phone?",
-                "a7": "Yes, if a mouse is connected to it by USB-OTG or Bluetooth. Taps on the screen are not counted."
+                "a7": "Yes, if a mouse is connected to it by USB-OTG or Bluetooth. Taps on the screen are not counted.",
+                "q8": "What does the aim trainer measure?",
+                "a8": "How fast and how accurately you reach one target at a time: hits, accuracy, median time to hit, and throughput in bits per second — Fitts’s law, which weighs each hit by how far and how small its target was. The grouping plot shows whether your hits pull to one side.",
+                "q9": "Is a higher aim score a better mouse?",
+                "a9": "Not on its own — it is mostly your hand. It does show what a mouse changes: run it at the same size with two mice, or two sensitivity settings, and compare the throughput."
             }
         }
     },

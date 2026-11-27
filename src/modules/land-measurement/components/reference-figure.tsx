@@ -71,7 +71,7 @@ export function ReferenceFigure({ squareMeters, object, count, sideLabel }: Refe
     return (
         <svg
             viewBox={`${-pad} ${-pad} ${totalWidth + pad * 2} ${totalHeight + pad * 2}`}
-            className="mx-auto block h-auto max-h-80 w-full max-w-3xl [&_*]:[vector-effect:non-scaling-stroke]"
+            className="mx-auto block h-auto max-h-60 w-full max-w-3xl sm:max-h-80 [&_*]:[vector-effect:non-scaling-stroke]"
             aria-hidden="true"
             focusable="false"
         >

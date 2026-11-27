@@ -1,3 +1,5 @@
+import type { AimDuration, AimTargetSize } from "../types";
+
 /**
  * Every threshold the diagnosis uses. Each is a judgement about people and
  * switches, so each says what it assumes.
@@ -92,3 +94,44 @@ export const POLLING_CLASS_TOLERANCE_OCTAVES = 1 / 3;
  * a long press; short enough that a real mouse picked up afterwards is heard.
  */
 export const TOUCH_COMPAT_WINDOW_MS = 800;
+
+/**
+ * The aim arena's own coordinate space. Targets are placed and judged in these
+ * units and the drawing scales them to whatever the box measures, so a run on
+ * a narrow window is the same run, only smaller.
+ */
+export const AIM_ARENA = { width: 1000, height: 560 } as const;
+
+/** Radius in arena units for each target size. */
+export const AIM_TARGET_RADIUS: Readonly<Record<AimTargetSize, number>> = {
+    large: 42,
+    medium: 28,
+    small: 17,
+};
+
+export const DEFAULT_AIM_DURATION: AimDuration = 30;
+
+export const DEFAULT_AIM_TARGET_SIZE: AimTargetSize = "medium";
+
+/**
+ * A new target appears at least this far from where the last shot landed, in
+ * arena units. Anything closer is a nudge, not a flick, and would flatter the
+ * reaction times.
+ */
+export const AIM_MIN_TRAVEL = 220;
+
+/** Draws before the placement gives up on the minimum travel and takes the last. */
+export const AIM_PLACEMENT_ATTEMPTS = 24;
+
+/** Clear space kept between a target and the arena's edge. */
+export const AIM_EDGE_MARGIN = 12;
+
+/** Shots kept per run. Two clicks a second for a minute is 120; this is far past it. */
+export const MAX_AIM_SHOTS = 1000;
+
+/**
+ * A mean offset smaller than this share of the radius, on an axis, is noise
+ * rather than a pull. About an eighth: the grouping of a steady hand over a
+ * few dozen shots wanders that much on its own.
+ */
+export const AIM_BIAS_THRESHOLD = 0.12;

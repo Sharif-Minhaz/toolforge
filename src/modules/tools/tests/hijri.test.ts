@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { civilFromDays, daysFromCivil } from "@/modules/tools/domain/calendar";
-import { fromHijriDate, getHijriMonthLength, toHijriDate } from "../domain/hijri";
+import { fromHijriDate, getHijriMonthLength, toHijriDate } from "@/modules/tools/domain/hijri";
 
 /**
  * ICU's `islamic-civil` is the same tabular calendar, implemented by somebody

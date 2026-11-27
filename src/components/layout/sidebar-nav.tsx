@@ -31,11 +31,13 @@ import {
     removeRecentTool,
     useRecentToolIds,
 } from "@/modules/preferences/components/use-recent-tools";
+import { useIsPhone } from "@/hooks/use-is-phone";
 import { useOnline } from "@/hooks/use-online";
 import { MAX_RECENT_TOOLS } from "@/modules/preferences/domain/recent-tools";
 import { TOOL_ACCENT_VARS, TOOL_ICON_TILE } from "@/modules/tools/components/tool-accent";
 import { ToolIcon } from "@/modules/tools/components/tool-icon";
 import { MAX_TOOL_SEARCH_LENGTH, filterTools } from "@/modules/tools/domain/search";
+import { hiddenOnPhone } from "@/modules/tools/domain/device";
 import { needsNetwork } from "@/modules/tools/domain/network";
 import { TOOL_CATEGORIES, type LocalizedTool } from "@/modules/tools/types";
 
@@ -240,11 +242,16 @@ export function SidebarNav({
     const navRef = useRef<HTMLElement>(null);
     const recentIds = useRecentToolIds();
     const online = useOnline();
-    // Offline, a tool that needs the server is not offered at all — every list
-    // and count below starts from what can still run.
+    const phone = useIsPhone();
+    // Offline, a tool that needs the server is not offered at all, and on a
+    // phone neither is a keyboard or mouse tester — every list and count below
+    // starts from what can still run here.
     const reachable = useMemo(
-        () => (online ? tools : tools.filter((tool) => !needsNetwork(tool))),
-        [tools, online],
+        () =>
+            tools.filter(
+                (tool) => (online || !needsNetwork(tool)) && !(phone && hiddenOnPhone(tool)),
+            ),
+        [tools, online, phone],
     );
 
     /**

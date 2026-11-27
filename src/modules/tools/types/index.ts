@@ -81,6 +81,7 @@ export const TOOL_IDS = [
     "photo-exif",
     "speed-test",
     "age-calculator",
+    "zakat-calculator",
 ] as const;
 
 export type ToolId = (typeof TOOL_IDS)[number];
@@ -173,7 +174,8 @@ export type ToolIconName =
     | "land"
     | "photo-shield"
     | "speedtest"
-    | "calendar-user";
+    | "calendar-user"
+    | "coins";
 
 export type Tool = {
     readonly id: ToolId;
@@ -188,6 +190,12 @@ export type Tool = {
      */
     readonly isSection?: boolean;
     readonly category: ToolCategory;
+    /**
+     * True for a tool that tests a physical keyboard or mouse. A phone has
+     * neither, so the sidebar leaves it out there; the page itself still opens
+     * from a link, for the phone with a mouse plugged in. See `device.ts`.
+     */
+    readonly desktopOnly?: boolean;
     readonly status: ToolStatus;
     readonly runsOn: ToolRuntime;
     readonly accent: ToolAccent;
@@ -226,6 +234,21 @@ export type ZonedFields = {
     readonly minute: number;
     readonly second: number;
     readonly millisecond: number;
+};
+
+/** A day on the proleptic Gregorian calendar, with no time and no zone. */
+export type CivilDate = {
+    readonly year: number;
+    /** 1–12. */
+    readonly month: number;
+    readonly day: number;
+};
+
+/** A day on the tabular Hijri calendar; see `domain/hijri.ts`. */
+export type HijriDate = {
+    readonly year: number;
+    readonly month: number;
+    readonly day: number;
 };
 
 /** Which family an address belongs to. Shared by every tool that reads one. */

@@ -38,6 +38,7 @@ import { textCaseConvertTool } from "./text-case";
 import { timestampConvertTool } from "./timestamp";
 import { urlConvertTool, urlParseTool } from "./url";
 import { uuidGenerateTool } from "./uuid";
+import { zakatCalculatorCalculateTool, zakatCalculatorPricesTool } from "./zakat-calculator";
 
 /**
  * Everything this endpoint exposes, in the order a client will list it.
@@ -197,4 +198,6 @@ export const MCP_TOOLS: readonly McpTool[] = [
     urlConvertTool,
     urlParseTool,
     uuidGenerateTool,
+    zakatCalculatorCalculateTool,
+    zakatCalculatorPricesTool,
 ];

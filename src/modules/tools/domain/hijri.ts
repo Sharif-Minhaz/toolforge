@@ -1,5 +1,5 @@
-import { civilFromDays, daysFromCivil } from "@/modules/tools/domain/calendar";
 import type { CivilDate, HijriDate } from "../types";
+import { civilFromDays, daysFromCivil } from "./calendar";
 
 /**
  * The tabular Islamic calendar — the civil variant, counted from Friday
@@ -15,7 +15,8 @@ import type { CivilDate, HijriDate } from "../types";
  * any arithmetic calendar — which is what `adjustment` is for: the date is
  * read off the day `adjustment` days away.
  *
- * After Reingold & Dershowitz, *Calendrical Calculations*.
+ * After Reingold & Dershowitz, *Calendrical Calculations*. Shared by the Age
+ * Calculator and the Zakat Calculator's hawl (lunar year) tracking.
  */
 
 /** 1 Muharram 1 AH, in days from 1970-01-01. */

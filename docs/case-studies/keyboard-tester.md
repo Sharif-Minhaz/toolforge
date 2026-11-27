@@ -88,3 +88,21 @@ report. On macOS a Caps Lock event
 is also sent to the reducer as a whole press and release, or the key would look
 held for as long as Caps Lock is on. macOS has no Num Lock and always reports
 it off.
+
+## The typing test reads the box, not the keys
+
+`domain/typing.ts` is a reducer over what the input box holds, never over
+`keydown`. A phonetic Bangla keyboard (Avro) types `k`, shows `ক`, and replaces
+it when `h` follows — keystroke by keystroke that is an error and a fix, value
+by value it is the word arriving. A word is judged once, when a space commits
+it, and committed words cannot be reopened. Everything is compared in code
+points after NFC, because `য়`, `ড়` and `ঢ়` each have two spellings and
+keyboards disagree about which they send. Bangla is coloured a word at a time:
+a conjunct split across two spans is shaped as two halves.
+
+The clock's end is derived during render from the last tick (`isExpired` →
+`finishTyping`), not stored, so a run whose reader stopped typing ends without
+another key and without a state update inside an effect. The first text is
+drawn on the server and passed down; a draw in the island would differ across
+hydration. Personal bests live in `tools/domain/personal-best.ts`, shared with
+the mouse tester's aim trainer.

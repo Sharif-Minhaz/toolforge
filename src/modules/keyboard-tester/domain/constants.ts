@@ -1,4 +1,10 @@
-import type { KeyboardSize, KeyboardStandard, KeyLabelSystem } from "../types";
+import type {
+    KeyboardSize,
+    KeyboardStandard,
+    KeyLabelSystem,
+    TypingDuration,
+    TypingLanguage,
+} from "../types";
 
 export const DEFAULT_KEYBOARD_SIZE: KeyboardSize = "full";
 
@@ -50,3 +56,29 @@ export const MODIFIER_CODES: ReadonlySet<string> = new Set([
     "MetaLeft",
     "MetaRight",
 ]);
+
+/** Five characters to a word, the convention every typing test reports in. */
+export const CHARS_PER_WORD = 5;
+
+export const DEFAULT_TYPING_DURATION: TypingDuration = 60;
+
+export const DEFAULT_TYPING_LANGUAGE: TypingLanguage = "english";
+
+/**
+ * Words drawn per second of the run. Four a second is 240 words a minute,
+ * past the fastest sustained typing anybody records, so a run is never cut
+ * short by running out of text.
+ */
+export const TYPING_WORDS_PER_SECOND = 4;
+
+/** Input events the speed chart keeps; past this, a run would grow without bound. */
+export const MAX_TYPING_SNAPSHOTS = 6000;
+
+/**
+ * Longest a single typed word may grow. Holding a key down in one word would
+ * otherwise build a string the display has to lay out letter by letter.
+ */
+export const MAX_TYPED_WORD_LENGTH = 40;
+
+/** Seconds of speed needed before consistency means anything. */
+export const MIN_CONSISTENCY_SECONDS = 3;

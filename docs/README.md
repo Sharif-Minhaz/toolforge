@@ -190,6 +190,7 @@ records a defect that was expensive to find and is easy to reintroduce.
 | `url-parser`                             | [`patterns/derived-state-editors.md`](patterns/derived-state-editors.md)                                                           |
 | `watermark-remover`, `ai-*`              | [`case-studies/watermark-remover.md`](case-studies/watermark-remover.md)                                                           |
 | `webcam-tester`                          | [`case-studies/webcam-tester.md`](case-studies/webcam-tester.md)                                                                   |
+| `zakat-calculator`                       | [`case-studies/zakat.md`](case-studies/zakat.md)                                                                                   |
 | `timestamp`                              | [`hydration-and-platform-pitfalls.md`](hydration-and-platform-pitfalls.md)                                                         |
 
 ## Where new knowledge goes

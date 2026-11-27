@@ -150,3 +150,92 @@ export const LAYOUT_FAMILIES = [
 ] as const;
 
 export type LayoutFamily = (typeof LAYOUT_FAMILIES)[number];
+
+/**
+ * The two things this page does with a keyboard: test every key on it, or
+ * time how fast the reader types on it. One page, because the second is the
+ * question people ask straight after the first.
+ */
+export const KEYBOARD_TESTER_MODES = ["keys", "typing"] as const;
+
+export type KeyboardTesterMode = (typeof KEYBOARD_TESTER_MODES)[number];
+
+/** How long a typing run lasts, in seconds. */
+export const TYPING_DURATIONS = [15, 30, 60, 120] as const;
+
+export type TypingDuration = (typeof TYPING_DURATIONS)[number];
+
+/** Which word list the run draws from. */
+export const TYPING_LANGUAGES = ["english", "bangla"] as const;
+
+export type TypingLanguage = (typeof TYPING_LANGUAGES)[number];
+
+/**
+ * One finished word, compared code point by code point against its target.
+ * `missed` is what was skipped by pressing space early; `extra` is what ran
+ * past the target's end.
+ */
+export type WordScore = {
+    readonly correct: number;
+    readonly incorrect: number;
+    readonly extra: number;
+    readonly missed: number;
+    /** Every code point typed matches, and nothing is missing. */
+    readonly exact: boolean;
+};
+
+/** Running totals after one input event, for the speed-over-time chart. */
+export type TypingSnapshot = {
+    /** Milliseconds since the first keystroke. */
+    readonly at: number;
+    /** Characters that count towards net speed: correct words and their spaces. */
+    readonly netChars: number;
+    /** Every character typed, right or wrong, spaces included. */
+    readonly rawChars: number;
+};
+
+export type TypingRun = {
+    /** The target, already NFC-normalised. */
+    readonly words: readonly string[];
+    /** Committed words, one per target word, in order. */
+    readonly typed: readonly string[];
+    /** The word under the caret, not yet committed with a space. */
+    readonly current: string;
+    /** `performance.now()` at the first keystroke; `null` before it. */
+    readonly startedAt: number | null;
+    /** When the run stopped: the clock ran out, or the last word was typed. */
+    readonly endedAt: number | null;
+    /** Characters deleted, for the "corrections" figure. */
+    readonly corrections: number;
+    /** Oldest first; capped at `MAX_TYPING_SNAPSHOTS`. */
+    readonly snapshots: readonly TypingSnapshot[];
+};
+
+export type TypingCounts = {
+    readonly correct: number;
+    readonly incorrect: number;
+    readonly extra: number;
+    readonly missed: number;
+    readonly correctWords: number;
+    readonly incorrectWords: number;
+    readonly netChars: number;
+    readonly rawChars: number;
+};
+
+export type TypingSummary = TypingCounts & {
+    readonly elapsedMs: number;
+    /** Net words per minute: correct words and their spaces, five characters to a word. */
+    readonly wpm: number;
+    /** Everything typed, five characters to a word, mistakes included. */
+    readonly rawWpm: number;
+    /** 0–1. Correct characters over everything typed or skipped. */
+    readonly accuracy: number;
+    /**
+     * 0–1. One minus the coefficient of variation of the per-second raw speed;
+     * `null` with fewer than three seconds to judge.
+     */
+    readonly consistency: number | null;
+    /** Net words per minute at the end of each whole second, for the chart. */
+    readonly perSecond: readonly number[];
+    readonly corrections: number;
+};

@@ -104,6 +104,7 @@ docs/
 | `url-parser`                                | [`docs/patterns/derived-state-editors.md`](docs/patterns/derived-state-editors.md)                                 |
 | `watermark-remover`, `ai-*`                 | [`docs/case-studies/watermark-remover.md`](docs/case-studies/watermark-remover.md)                                 |
 | `webcam-tester`                             | [`docs/case-studies/webcam-tester.md`](docs/case-studies/webcam-tester.md)                                         |
+| `zakat-calculator`                          | [`docs/case-studies/zakat.md`](docs/case-studies/zakat.md)                                                         |
 
 ---
 

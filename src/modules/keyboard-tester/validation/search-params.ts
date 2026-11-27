@@ -5,14 +5,28 @@ import {
     MAX_KEY_FAULT_WINDOW_MS,
     MIN_KEY_FAULT_WINDOW_MS,
 } from "../domain/constants";
-import { KEY_LABEL_SYSTEMS, KEYBOARD_SIZES, KEYBOARD_STANDARDS } from "../types";
+import {
+    KEY_LABEL_SYSTEMS,
+    KEYBOARD_SIZES,
+    KEYBOARD_STANDARDS,
+    KEYBOARD_TESTER_MODES,
+    TYPING_DURATIONS,
+    TYPING_LANGUAGES,
+} from "../types";
 
 /**
  * `?size=tkl&standard=iso&os=mac&window=30` opens the tester on the reader's
- * own board. Each field falls back on its own, so one wrong value in a shared
+ * own board; `?mode=typing&lang=bangla&time=30` opens the typing test. Each field falls back on its own, so one wrong value in a shared
  * link costs that value and not the page.
  */
 export const keyboardTesterSearchParamsSchema = z.object({
+    mode: z.enum(KEYBOARD_TESTER_MODES).optional().catch(undefined),
+    lang: z.enum(TYPING_LANGUAGES).optional().catch(undefined),
+    time: z.coerce
+        .number()
+        .pipe(z.union(TYPING_DURATIONS.map((value) => z.literal(value))))
+        .optional()
+        .catch(undefined),
     size: z.enum(KEYBOARD_SIZES).optional().catch(undefined),
     standard: z.enum(KEYBOARD_STANDARDS).optional().catch(undefined),
     os: z.enum(KEY_LABEL_SYSTEMS).optional().catch(undefined),

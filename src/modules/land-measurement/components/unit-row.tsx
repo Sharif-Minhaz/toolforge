@@ -69,7 +69,8 @@ export function UnitRow({
                     onClick={onCopy}
                     disabled={value.length === 0}
                     aria-label={copyLabel}
-                    className="shrink-0 disabled:pointer-events-none disabled:opacity-40"
+                    // A thumb needs more than the 28 px a pointer does.
+                    className="shrink-0 disabled:pointer-events-none disabled:opacity-40 max-lg:size-9"
                 />
             </span>
         </li>

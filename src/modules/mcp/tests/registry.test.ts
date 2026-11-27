@@ -91,6 +91,7 @@ describe("the MCP registry", () => {
             "toolforge_domain_inspector_inspect",
             "toolforge_ip_globe_map",
             "toolforge_subdomain_lookup_lookup",
+            "toolforge_zakat_calculator_prices",
         ]);
     });
 

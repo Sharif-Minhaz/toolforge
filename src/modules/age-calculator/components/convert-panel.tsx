@@ -29,7 +29,7 @@ import {
 import { DateFactsCard } from "./date-facts-card";
 import { FieldAction } from "./date-field";
 import { DatePickerButton } from "./date-picker-button";
-import { SegmentedControl } from "./segmented-control";
+import { SegmentedControl } from "@/modules/tools/components/segmented-control";
 import { useCalendarLabels } from "./use-calendar-labels";
 import { useClipboardCopy } from "./use-clipboard-copy";
 

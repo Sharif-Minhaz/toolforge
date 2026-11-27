@@ -20,7 +20,7 @@ import {
     isValidCivilDate,
     parseDateInput,
 } from "./gregorian";
-import { fromHijriDate, toHijriDate } from "./hijri";
+import { fromHijriDate, toHijriDate } from "@/modules/tools/domain/hijri";
 
 /**
  * The two operations the page, the island and the MCP adapter all call. Pure:

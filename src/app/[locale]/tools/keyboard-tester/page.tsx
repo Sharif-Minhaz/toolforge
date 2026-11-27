@@ -9,19 +9,23 @@ import {
     getKeyboardTesterFaqEntries,
     KeyboardTesterArticle,
 } from "@/modules/keyboard-tester/components/keyboard-tester-article";
-import { KeyboardTesterWorkbench } from "@/modules/keyboard-tester/components/keyboard-tester-workbench";
+import { KeyboardTesterModes } from "@/modules/keyboard-tester/components/keyboard-tester-modes";
 import { KeyboardTesterWorkbenchSkeleton } from "@/modules/keyboard-tester/components/keyboard-tester-workbench-skeleton";
 import {
     DEFAULT_KEY_FAULT_WINDOW_MS,
     DEFAULT_KEY_LABEL_SYSTEM,
     DEFAULT_KEYBOARD_SIZE,
     DEFAULT_KEYBOARD_STANDARD,
+    DEFAULT_TYPING_DURATION,
+    DEFAULT_TYPING_LANGUAGE,
 } from "@/modules/keyboard-tester/domain/constants";
+import { drawTypingWords, wordsForDuration } from "@/modules/keyboard-tester/domain/typing";
 import { keyboardTesterSearchParamsSchema } from "@/modules/keyboard-tester/validation/search-params";
 import { JsonLd } from "@/modules/seo/components/json-ld";
 import { buildPageMetadata } from "@/modules/seo/domain/metadata";
 import { buildToolJsonLd } from "@/modules/seo/domain/structured-data";
 import { RelatedTools } from "@/modules/tools/components/related-tools";
+import { cryptoRandomBytes } from "@/modules/tools/domain/random";
 import { getToolById } from "@/modules/tools/domain/tool-catalog";
 import { enterLocale, type LocaleParams } from "@/i18n/route-locale";
 
@@ -137,19 +141,37 @@ export default async function KeyboardTesterPage({
 }
 
 /**
- * The request-time half of the page: reads the layout, label system
- * and fault window a shared link names. Everything around it is prerendered.
+ * The request-time half of the page: reads the mode, layout, label system,
+ * fault window and typing settings a shared link names, and draws the typing
+ * test's first text. Everything around it is prerendered.
  */
 async function KeyboardTesterWorkbenchSection({ searchParams }: { searchParams: SearchParams }) {
     const parsed = keyboardTesterSearchParamsSchema.safeParse(await searchParams);
     const shared = parsed.success ? parsed.data : undefined;
 
+    const language = shared?.lang ?? DEFAULT_TYPING_LANGUAGE;
+    const duration = shared?.time ?? DEFAULT_TYPING_DURATION;
+
     return (
-        <KeyboardTesterWorkbench
-            initialSize={shared?.size ?? DEFAULT_KEYBOARD_SIZE}
-            initialStandard={shared?.standard ?? DEFAULT_KEYBOARD_STANDARD}
-            initialSystem={shared?.os ?? DEFAULT_KEY_LABEL_SYSTEM}
-            initialFaultWindow={shared?.window ?? DEFAULT_KEY_FAULT_WINDOW_MS}
+        <KeyboardTesterModes
+            initialMode={shared?.mode ?? "keys"}
+            keys={{
+                initialSize: shared?.size ?? DEFAULT_KEYBOARD_SIZE,
+                initialStandard: shared?.standard ?? DEFAULT_KEYBOARD_STANDARD,
+                initialSystem: shared?.os ?? DEFAULT_KEY_LABEL_SYSTEM,
+                initialFaultWindow: shared?.window ?? DEFAULT_KEY_FAULT_WINDOW_MS,
+            }}
+            typing={{
+                // Drawn here, after the request data, and passed down: a draw in
+                // the island would differ between the server pass and hydration.
+                initialWords: drawTypingWords(
+                    language,
+                    wordsForDuration(duration),
+                    cryptoRandomBytes,
+                ),
+                initialLanguage: language,
+                initialDuration: duration,
+            }}
         />
     );
 }

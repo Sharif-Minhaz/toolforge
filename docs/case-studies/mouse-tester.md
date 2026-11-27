@@ -75,3 +75,16 @@ mouse. The "no mouse" notice reads `(any-pointer: fine)` through
 `useSyncExternalStore`, with a server snapshot of `true` — a desktop must never
 flash the notice on hydration — and also clears the moment a mouse pointer
 event is seen, because hybrid devices report the query wrongly.
+
+## The aim trainer measures a movement, so it shows one target
+
+`domain/aim.ts` puts up one target at a time, each at least `AIM_MIN_TRAVEL`
+from where the last shot landed. With one target the distance and the time
+belong to one movement, which Fitts's law needs: `log₂(D / W + 1)` over the
+movement time is the throughput in bits per second — W is the diameter, not
+the radius. A field of targets would turn that into a score. Everything is in
+arena units (`AIM_ARENA`), mapped from the SVG's bounding box on each click, so
+a narrow window is the same run drawn smaller. Placement draws from an injected
+random source and gives up on the travel rule after `AIM_PLACEMENT_ATTEMPTS`
+rather than stall. Only the primary button shoots; the button test is where the
+others are counted.

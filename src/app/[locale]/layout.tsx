@@ -448,6 +448,8 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
             rollover: messages.keyboardTester.rollover,
             report: messages.keyboardTester.report,
             toast: messages.keyboardTester.toast,
+            modes: messages.keyboardTester.modes,
+            typing: messages.keyboardTester.typing,
         },
         mouseTester: {
             workbench: messages.mouseTester.workbench,
@@ -458,6 +460,8 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
             log: messages.mouseTester.log,
             report: messages.mouseTester.report,
             toast: messages.mouseTester.toast,
+            modes: messages.mouseTester.modes,
+            aim: messages.mouseTester.aim,
         },
         screenTester: {
             workbench: messages.screenTester.workbench,
@@ -545,6 +549,25 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
             hijriMonths: messages.ageCalculator.hijriMonths,
             gregorianMonths: messages.ageCalculator.gregorianMonths,
             weekdays: messages.ageCalculator.weekdays,
+        },
+        // The article, meta and hero stay on the server; everything the
+        // workbench draws crosses.
+        zakat: {
+            workbench: messages.zakat.workbench,
+            nisabCard: messages.zakat.nisabCard,
+            views: messages.zakat.views,
+            priceBases: messages.zakat.priceBases,
+            sections: messages.zakat.sections,
+            fields: messages.zakat.fields,
+            metals: messages.zakat.metals,
+            crypto: messages.zakat.crypto,
+            shares: messages.zakat.shares,
+            prices: messages.zakat.prices,
+            errors: messages.zakat.errors,
+            rules: messages.zakat.rules,
+            result: messages.zakat.result,
+            hawl: messages.zakat.hawl,
+            hijriMonths: messages.zakat.hijriMonths,
         },
         photoExif: {
             workbench: messages.photoExif.workbench,

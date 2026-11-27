@@ -14,9 +14,13 @@ import {
     getMouseTesterFaqEntries,
     MouseTesterArticle,
 } from "@/modules/mouse-tester/components/mouse-tester-article";
-import { MouseTesterWorkbench } from "@/modules/mouse-tester/components/mouse-tester-workbench";
+import { MouseTesterModes } from "@/modules/mouse-tester/components/mouse-tester-modes";
 import { MouseTesterWorkbenchSkeleton } from "@/modules/mouse-tester/components/mouse-tester-workbench-skeleton";
-import { DEFAULT_FAULT_WINDOW_MS } from "@/modules/mouse-tester/domain/constants";
+import {
+    DEFAULT_AIM_DURATION,
+    DEFAULT_AIM_TARGET_SIZE,
+    DEFAULT_FAULT_WINDOW_MS,
+} from "@/modules/mouse-tester/domain/constants";
 import { mouseTesterSearchParamsSchema } from "@/modules/mouse-tester/validation/settings";
 import { JsonLd } from "@/modules/seo/components/json-ld";
 import { buildPageMetadata } from "@/modules/seo/domain/metadata";
@@ -134,12 +138,21 @@ export default async function MouseTesterPage({ params, searchParams }: MouseTes
 }
 
 /**
- * The request-time half of the page: reads the fault window a shared
- * link names. Everything around it is prerendered.
+ * The request-time half of the page: reads the mode, fault window and aim
+ * settings a shared link names. Everything around it is prerendered.
  */
 async function MouseTesterWorkbenchSection({ searchParams }: { searchParams: SearchParams }) {
     const parsed = mouseTesterSearchParamsSchema.safeParse(await searchParams);
     const shared = parsed.success ? parsed.data : undefined;
 
-    return <MouseTesterWorkbench initialFaultWindow={shared?.window ?? DEFAULT_FAULT_WINDOW_MS} />;
+    return (
+        <MouseTesterModes
+            initialMode={shared?.mode ?? "buttons"}
+            buttons={{ initialFaultWindow: shared?.window ?? DEFAULT_FAULT_WINDOW_MS }}
+            aim={{
+                initialSize: shared?.target ?? DEFAULT_AIM_TARGET_SIZE,
+                initialDuration: shared?.time ?? DEFAULT_AIM_DURATION,
+            }}
+        />
+    );
 }

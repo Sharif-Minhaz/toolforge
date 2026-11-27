@@ -1,9 +1,13 @@
+import type { CivilDate, HijriDate } from "@/modules/tools/types";
+
+/**
+ * A plain calendar date and its Hijri counterpart live in the shared layer
+ * since the Zakat Calculator's hawl needed them too; re-exported so this
+ * module's many imports read as they always have.
+ */
+export type { CivilDate, HijriDate };
+
 /** A proleptic Gregorian date. Months and days count from 1. */
-export type CivilDate = {
-    readonly year: number;
-    readonly month: number;
-    readonly day: number;
-};
 
 /** The two workbench modes: an age on a date, or one date in three calendars. */
 export const AGE_MODES = ["age", "convert"] as const;
@@ -110,12 +114,6 @@ export type BanglaDate = {
      * backwards, and the reader is told the almanac may differ by a day.
      */
     readonly beforeReform: boolean;
-};
-
-export type HijriDate = {
-    readonly year: number;
-    readonly month: number;
-    readonly day: number;
 };
 
 /** One day as all three calendars name it. */

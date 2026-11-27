@@ -5,7 +5,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { useId, useState } from "react";
 import { toast } from "sonner";
 
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,8 +17,10 @@ import {
 } from "@/components/ui/select";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
+import { CopyIconSwap } from "@/modules/tools/components/copy-button";
 import { InputLimitMeter, useInputLimit } from "@/modules/tools/components/input-limit-meter";
 import { OptionSelect } from "@/modules/tools/components/option-controls";
+import { SegmentedControl } from "@/modules/tools/components/segmented-control";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
 import {
@@ -37,6 +39,7 @@ import {
 } from "../domain/constants";
 import { convertLand } from "../domain/convert";
 import { fractionDigitsFor } from "../domain/precision";
+import { buildSummary } from "../domain/summary";
 import { regionOf, squareFeetPerUnit } from "../domain/units";
 import {
     BIGHA_REGIONS,
@@ -46,6 +49,7 @@ import {
     type LandFailure,
     type LandOptions,
     type LandUnit,
+    type LandUnitGroup,
 } from "../types";
 import { SizeComparison } from "./size-comparison";
 import { UnitRow } from "./unit-row";
@@ -64,10 +68,15 @@ export function LandWorkbench({ initialValue, initialOptions }: LandWorkbenchPro
     const inputId = useId();
     const hintId = useId();
     const statusId = useId();
+    const groupLabelId = useId();
+    const groupIndicatorId = useId();
 
     const [value, setValue] = useState(initialValue);
     const [options, setOptions] = useState<LandOptions>(initialOptions);
-    const [copied, markCopied] = useCopyFeedback<LandUnit>();
+    // Below `lg` one group shows at a time; from `lg` both sit side by side
+    // and this is ignored. A constant start, so server and client agree.
+    const [visibleGroup, setVisibleGroup] = useState<LandUnitGroup>("local");
+    const [copied, markCopied] = useCopyFeedback<LandUnit | "all">();
 
     // Not capped: a number cut short by the field is a different area. The
     // domain refuses past the ceiling and the meter warns before it.
@@ -128,8 +137,8 @@ export function LandWorkbench({ initialValue, initialOptions }: LandWorkbenchPro
               message: describeFailure(result),
           };
 
-    async function handleCopy(unit: LandUnit, figure: string) {
-        const copiedText = await copyText(`${figure} ${t(`units.${unit}.short`)}`);
+    async function copyAndConfirm(key: LandUnit | "all", text: string, confirmation: string) {
+        const copiedText = await copyText(text);
 
         if (!copiedText.ok) {
             const message =
@@ -144,8 +153,36 @@ export function LandWorkbench({ initialValue, initialOptions }: LandWorkbenchPro
             return;
         }
 
-        markCopied(unit);
-        toast.success(tToast("copied"));
+        markCopied(key);
+        toast.success(confirmation);
+    }
+
+    function figureFor(unit: LandUnit): string {
+        const conversion = result.ok
+            ? result.conversions.find((row) => row.unit === unit)
+            : undefined;
+
+        return conversion === undefined ? "" : formatArea(conversion.value);
+    }
+
+    function summaryText(): string {
+        if (!result.ok) {
+            return "";
+        }
+
+        return buildSummary(
+            t("summaryHeading", {
+                value: formatArea(result.value),
+                unit: t(`units.${options.unit}.short`),
+            }),
+            options.unit,
+            LAND_UNITS.map((unit) => ({
+                unit,
+                figure: figureFor(unit),
+                short: t(`units.${unit}.short`),
+                region: regionTag(unit),
+            })),
+        );
     }
 
     function regionTag(unit: LandUnit): string | null {
@@ -186,78 +223,88 @@ export function LandWorkbench({ initialValue, initialOptions }: LandWorkbenchPro
         ]),
     );
 
+    const groupOptions = LAND_UNIT_GROUPS.map((group) => ({
+        value: group,
+        label: t(`groups.${group}`),
+    }));
+
     return (
-        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
-            <CardContent className="flex flex-col gap-6">
-                <div className="flex flex-col gap-3">
-                    <div className="flex min-h-7 flex-wrap items-center justify-between gap-2">
-                        <StepLabel step={1} htmlFor={inputId}>
-                            {t("inputLabel")}
-                        </StepLabel>
-                        <div className="flex items-center gap-1.5">
-                            <InputLimitMeter reading={inputLimit} />
-                            <button
-                                type="button"
-                                onClick={() => setValue("")}
-                                disabled={value.length === 0}
-                                aria-label={t("clear")}
-                                className={cn(
-                                    buttonVariants({ variant: "ghost", size: "icon-sm" }),
-                                    "text-muted-foreground hover:text-foreground",
-                                )}
-                            >
-                                <IconX className="size-4" stroke={1.9} aria-hidden="true" />
-                            </button>
-                        </div>
-                    </div>
-                    {/* One row: the number and the unit it is in read as a
-                        single phrase, "5 কাঠা", so they sit together at the
-                        same height rather than as two separate fields. */}
-                    <div className="flex min-w-0 flex-col gap-2">
-                        <div className="flex min-w-0 gap-2">
-                            <Input
-                                id={inputId}
-                                value={value}
-                                onChange={(event) => setValue(event.target.value)}
-                                placeholder={t("placeholder")}
-                                inputMode="decimal"
-                                spellCheck={false}
-                                autoComplete="off"
-                                aria-invalid={!result.ok && result.reason !== "empty"}
-                                aria-describedby={`${hintId} ${statusId}`}
-                                className="h-9 min-w-0 flex-1 font-mono tabular-nums"
-                            />
-                            <Select
-                                items={unitItems}
-                                value={options.unit}
-                                onValueChange={(unit) => {
-                                    if (unit !== null) {
-                                        patch({ unit });
-                                    }
-                                }}
-                            >
-                                <SelectTrigger
-                                    aria-label={t("unitLabel")}
-                                    className="w-40 shrink-0 data-[size=default]:h-9 sm:w-56"
-                                >
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-72">
-                                    {LAND_UNITS.map((unit) => (
-                                        <SelectItem key={unit} value={unit}>
-                                            {t(`units.${unit}.name`)}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <p
-                            id={hintId}
-                            className="text-muted-foreground text-[0.6875rem] leading-[1.4]"
+        // `overflow-visible` overrides the vendor Card's `overflow-hidden`, which
+        // would otherwise become the sticky input row's scroll container and
+        // leave it nothing to slide against.
+        <Card className="overflow-visible [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+            <CardContent className="flex flex-col gap-3">
+                <div className="flex min-h-7 flex-wrap items-center justify-between gap-2">
+                    <StepLabel step={1} htmlFor={inputId}>
+                        {t("inputLabel")}
+                    </StepLabel>
+                    <div className="flex items-center gap-1.5">
+                        <InputLimitMeter reading={inputLimit} />
+                        <button
+                            type="button"
+                            onClick={() => setValue("")}
+                            disabled={value.length === 0}
+                            aria-label={t("clear")}
+                            className={cn(
+                                buttonVariants({ variant: "ghost", size: "icon-sm" }),
+                                "text-muted-foreground hover:text-foreground",
+                            )}
                         >
-                            {t("inputHint")}
-                        </p>
+                            <IconX className="size-4" stroke={1.9} aria-hidden="true" />
+                        </button>
                     </div>
+                </div>
+
+                {/* One row: the number and the unit it is in read as a single
+                    phrase, "5 কাঠা", so they sit together at the same height.
+                    On a phone the row stays pinned under the site header while
+                    the figures scroll beneath it, so a reader can change the
+                    area without scrolling back up. It is a direct child of the
+                    card's content on purpose: a sticky element only slides
+                    within its parent. The negative margin carries its
+                    background to the card's edges. */}
+                <div className="bg-card -mx-5 flex min-w-0 gap-2 px-5 max-lg:sticky max-lg:top-14 max-lg:z-20 max-lg:-my-2 max-lg:py-2 sm:-mx-6 sm:px-6">
+                    <Input
+                        id={inputId}
+                        value={value}
+                        onChange={(event) => setValue(event.target.value)}
+                        placeholder={t("placeholder")}
+                        inputMode="decimal"
+                        spellCheck={false}
+                        autoComplete="off"
+                        aria-invalid={!result.ok && result.reason !== "empty"}
+                        aria-describedby={`${hintId} ${statusId}`}
+                        className="h-10 min-w-0 flex-1 font-mono text-base tabular-nums lg:h-9 lg:text-sm"
+                    />
+                    <Select
+                        items={unitItems}
+                        value={options.unit}
+                        onValueChange={(unit) => {
+                            if (unit !== null) {
+                                patch({ unit });
+                            }
+                        }}
+                    >
+                        <SelectTrigger
+                            aria-label={t("unitLabel")}
+                            className="w-40 shrink-0 data-[size=default]:h-10 sm:w-56 lg:data-[size=default]:h-9"
+                        >
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-72">
+                            {LAND_UNITS.map((unit) => (
+                                <SelectItem key={unit} value={unit}>
+                                    {t(`units.${unit}.name`)}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                    <p id={hintId} className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                        {t("inputHint")}
+                    </p>
 
                     <OptionsDisclosure label={t("regionsLabel")}>
                         <div className="grid gap-3 sm:grid-cols-2">
@@ -281,29 +328,65 @@ export function LandWorkbench({ initialValue, initialOptions }: LandWorkbenchPro
                     </OptionsDisclosure>
                 </div>
 
-                <div className={RESULT_TRAY}>
-                    <div className="flex min-h-7 items-center">
+                <div className={cn(RESULT_TRAY, "mt-3")}>
+                    <div className="flex min-h-7 items-center justify-between gap-2">
                         <StepLabel step={2}>{t("outputLabel")}</StepLabel>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={!result.ok}
+                            onClick={() =>
+                                copyAndConfirm("all", summaryText(), tToast("copiedAll"))
+                            }
+                        >
+                            <CopyIconSwap copied={copied === "all"} />
+                            {t("copyAll")}
+                        </Button>
+                    </div>
+
+                    {/* A phone shows one group at a time rather than seventeen
+                        rows stacked; from `lg` both columns fit side by side
+                        and the switch goes away. Both groups are always in the
+                        markup, so nothing differs between server and client. */}
+                    <div className="lg:hidden">
+                        <span id={groupLabelId} className="sr-only">
+                            {t("groupsLabel")}
+                        </span>
+                        <SegmentedControl
+                            options={groupOptions}
+                            value={visibleGroup}
+                            onChange={setVisibleGroup}
+                            labelId={groupLabelId}
+                            layoutId={`land-group-${groupIndicatorId}`}
+                            size="sm"
+                        />
                     </div>
 
                     <div className="grid gap-4 lg:grid-cols-2">
                         {LAND_UNIT_GROUPS.map((group) => (
-                            <section key={group} className="flex min-w-0 flex-col gap-2">
-                                <h3 className="text-muted-foreground text-xs leading-[1.3] font-medium">
-                                    {t(`groups.${group}`)}
-                                </h3>
+                            <section
+                                key={group}
+                                className={cn(
+                                    "flex min-w-0 flex-col gap-2",
+                                    group !== visibleGroup && "max-lg:hidden",
+                                )}
+                            >
+                                {/* The group's name, and on the right the unit
+                                    the figures were typed in. The switch names
+                                    the group on a phone, so there the heading
+                                    stays for assistive tech only. */}
+                                <div className="flex min-h-4 items-center justify-between gap-2">
+                                    <h3 className="text-muted-foreground text-xs leading-[1.3] font-medium max-lg:sr-only">
+                                        {t(`groups.${group}`)}
+                                    </h3>
+                                    <span className="text-muted-foreground ml-auto text-xs leading-[1.3] font-medium">
+                                        {t(`units.${options.unit}.label`)}
+                                    </span>
+                                </div>
                                 <ul className="flex flex-col gap-1.5">
                                     {LAND_UNITS.filter((unit) => UNIT_GROUPS[unit] === group).map(
                                         (unit) => {
-                                            const conversion = result.ok
-                                                ? result.conversions.find(
-                                                      (row) => row.unit === unit,
-                                                  )
-                                                : undefined;
-                                            const figure =
-                                                conversion === undefined
-                                                    ? ""
-                                                    : formatArea(conversion.value);
+                                            const figure = figureFor(unit);
                                             const typed = unit === options.unit;
                                             const region = regionTag(unit);
                                             const tags = [
@@ -336,7 +419,13 @@ export function LandWorkbench({ initialValue, initialOptions }: LandWorkbenchPro
                                                     })}
                                                     copied={copied === unit}
                                                     dimmed={pending}
-                                                    onCopy={() => handleCopy(unit, figure)}
+                                                    onCopy={() =>
+                                                        copyAndConfirm(
+                                                            unit,
+                                                            `${figure} ${t(`units.${unit}.short`)}`,
+                                                            tToast("copied"),
+                                                        )
+                                                    }
                                                 />
                                             );
                                         },
@@ -354,16 +443,18 @@ export function LandWorkbench({ initialValue, initialOptions }: LandWorkbenchPro
                     />
                 </div>
 
-                <div className="flex flex-col gap-3">
-                    <div className="flex min-h-7 items-center">
-                        <StepLabel step={3}>{t("sizeLabel")}</StepLabel>
-                    </div>
+                {/* Not a numbered step: the path through the tool ends at the
+                    figures, and this is an aside about them. */}
+                <section className="mt-3 flex flex-col gap-3">
+                    <h3 className="flex min-h-7 items-center text-sm font-medium">
+                        {t("sizeLabel")}
+                    </h3>
                     <SizeComparison
                         squareMeters={result.ok ? result.squareMeters : null}
                         pitches={result.ok ? result.pitches : null}
                         dimmed={pending}
                     />
-                </div>
+                </section>
             </CardContent>
         </Card>
     );

@@ -1,6 +1,8 @@
 "use client";
 
+import { IconChevronDown } from "@tabler/icons-react";
 import { useFormatter, useTranslations } from "next-intl";
+import { useId, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { REFERENCE_SIZES } from "../domain/constants";
@@ -8,6 +10,12 @@ import { chooseReference, referenceArea, roundedCount } from "../domain/referenc
 import type { PitchComparison } from "../types";
 import { FootballPitch } from "./football-pitch";
 import { ReferenceFigure } from "./reference-figure";
+
+/**
+ * Pitches a phone draws before the reader asks for the rest: a 2 × 2 block
+ * says "several pitches" as well as thirty do, in a tenth of the scroll.
+ */
+const PHONE_PREVIEW_PITCHES = 4;
 
 type SizeComparisonProps = {
     /** The plot in m², or `null` while the input cannot be read. */
@@ -24,6 +32,8 @@ type SizeComparisonProps = {
 export function SizeComparison({ squareMeters, pitches, dimmed }: SizeComparisonProps) {
     const t = useTranslations("landMeasurement.workbench");
     const formatter = useFormatter();
+    const gridId = useId();
+    const [allPitches, setAllPitches] = useState(false);
 
     if (squareMeters === null || squareMeters === 0) {
         return <p className="text-muted-foreground text-sm leading-[1.5]">{t("sizeEmpty")}</p>;
@@ -57,8 +67,15 @@ export function SizeComparison({ squareMeters, pitches, dimmed }: SizeComparison
             <div role="img" aria-label={sentence}>
                 {object === "football-pitch" && pitches !== null ? (
                     <div
+                        id={gridId}
                         className={cn(
                             "grid gap-2",
+                            // Below `lg` only the preview shows until the reader
+                            // asks; the rest stay in the markup, hidden by CSS,
+                            // so the server and the client draw the same thing.
+                            !allPitches &&
+                                // n+5: everything past PHONE_PREVIEW_PITCHES.
+                                "max-lg:[&>*:nth-child(n+5)]:hidden",
                             pitches.drawnPitches === 1 && "mx-auto max-w-3xl grid-cols-1",
                             pitches.drawnPitches > 1 && pitches.drawnPitches <= 4 && "grid-cols-2",
                             pitches.drawnPitches > 4 &&
@@ -85,6 +102,32 @@ export function SizeComparison({ squareMeters, pitches, dimmed }: SizeComparison
                     />
                 ) : null}
             </div>
+
+            {object === "football-pitch" &&
+                pitches !== null &&
+                pitches.drawnPitches > PHONE_PREVIEW_PITCHES && (
+                    <button
+                        type="button"
+                        aria-expanded={allPitches}
+                        aria-controls={gridId}
+                        onClick={() => setAllPitches((current) => !current)}
+                        className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex min-h-9 items-center gap-1.5 self-start rounded-md text-sm font-medium transition-colors duration-150 focus-visible:ring-2 focus-visible:outline-none lg:hidden"
+                    >
+                        {allPitches
+                            ? t("pitchesFewer")
+                            : t("pitchesAll", {
+                                  count: formatter.number(pitches.drawnPitches),
+                              })}
+                        <IconChevronDown
+                            className={cn(
+                                "size-4 transition-transform duration-150",
+                                allPitches && "rotate-180",
+                            )}
+                            stroke={1.75}
+                            aria-hidden="true"
+                        />
+                    </button>
+                )}
 
             {pitches?.truncated === true && object === "football-pitch" && (
                 <p className="text-muted-foreground text-xs leading-[1.4]">

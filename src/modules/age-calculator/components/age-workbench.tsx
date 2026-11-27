@@ -20,7 +20,7 @@ import {
 const MODE_ICONS = { age: IconCake, convert: IconCalendarRepeat } as const;
 import { AgePanel } from "./age-panel";
 import { ConvertPanel } from "./convert-panel";
-import { SegmentedControl } from "./segmented-control";
+import { SegmentedControl } from "@/modules/tools/components/segmented-control";
 import { useCalendarLabels } from "./use-calendar-labels";
 
 const ADJUSTMENTS: readonly number[] = Array.from(
