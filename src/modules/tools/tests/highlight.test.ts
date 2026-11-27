@@ -524,3 +524,49 @@ describe("highlight — caller ceiling", () => {
         expect(highlight(long, "json", long.length).length).toBeGreaterThan(1);
     });
 });
+
+describe("html", () => {
+    const kinds = (input: string) =>
+        highlight(input, "html").map((token) => `${token.kind}:${token.text}`);
+
+    test("colours tag names, attribute names and quoted values", () => {
+        expect(kinds(`<meta property="og:title" content='Hi'>`)).toEqual([
+            "punctuation:<",
+            "keyword:meta",
+            "plain: ",
+            "property:property",
+            "punctuation:=",
+            'string:"og:title"',
+            "plain: ",
+            "property:content",
+            "punctuation:=",
+            "string:'Hi'",
+            "punctuation:>",
+        ]);
+    });
+
+    test("an unquoted value after = is a string, a bare attribute a property", () => {
+        expect(kinds(`<input disabled value=x>`)).toContain("string:x");
+        expect(kinds(`<input disabled value=x>`)).toContain("property:disabled");
+    });
+
+    test("comments, closing tags and character references", () => {
+        expect(kinds(`<!-- c --></head>&amp;`)).toEqual([
+            "comment:<!-- c -->",
+            "punctuation:</",
+            "keyword:head",
+            "punctuation:>",
+            "number:&amp;",
+        ]);
+    });
+
+    test("an unterminated quote or comment colours to the end rather than failing", () => {
+        for (const input of [`<meta content="half`, `<!-- open`, `<`, `< meta>`, `<a b=`]) {
+            expect(
+                highlight(input, "html")
+                    .map((token) => token.text)
+                    .join(""),
+            ).toBe(input);
+        }
+    });
+});

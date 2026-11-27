@@ -101,6 +101,7 @@ docs/
 │   ├── keyboard-tester.md
 │   ├── mouse-tester.md
 │   ├── land-measurement.md
+│   ├── link-preview.md
 │   ├── number-to-words.md
 │   ├── photo-exif.md
 │   ├── pdf-converter.md
@@ -172,6 +173,7 @@ records a defect that was expensive to find and is easy to reintroduce.
 | `keyboard-tester`                        | [`case-studies/keyboard-tester.md`](case-studies/keyboard-tester.md)                                                               |
 | `mouse-tester`                           | [`case-studies/mouse-tester.md`](case-studies/mouse-tester.md)                                                                     |
 | `land-measurement`                       | [`case-studies/land-measurement.md`](case-studies/land-measurement.md)                                                             |
+| `link-preview`                           | [`case-studies/link-preview.md`](case-studies/link-preview.md)                                                                     |
 | `number-to-words`                        | [`case-studies/number-to-words.md`](case-studies/number-to-words.md)                                                               |
 | `photo-exif`                             | [`case-studies/photo-exif.md`](case-studies/photo-exif.md)                                                                         |
 | `pdf-converter`                          | [`case-studies/pdf-converter.md`](case-studies/pdf-converter.md), [`patterns/format-conversion.md`](patterns/format-conversion.md) |

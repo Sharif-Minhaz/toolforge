@@ -56,7 +56,26 @@ export type RemoteImageFetch =
       }
     | { readonly ok: false; readonly reason: RemoteImageProblem };
 
-export async function fetchRemoteImage(rawUrl: string): Promise<RemoteImageFetch> {
+/**
+ * What a caller may tighten. Both default to the image importer's own values;
+ * the Link Preview debugger passes a lower ceiling — no platform shows a
+ * picture over 8 MB — and a user agent that names it rather than the importer,
+ * so a site owner reading their log can tell the two apart.
+ */
+export type RemoteImageOptions = {
+    /** Never above `MAX_REMOTE_IMAGE_BYTES`; a larger value is clamped to it. */
+    readonly maxBytes?: number;
+    readonly userAgent?: string;
+};
+
+export async function fetchRemoteImage(
+    rawUrl: string,
+    options: RemoteImageOptions = {},
+): Promise<RemoteImageFetch> {
+    const limits: HopLimits = {
+        maxBytes: Math.min(options.maxBytes ?? MAX_REMOTE_IMAGE_BYTES, MAX_REMOTE_IMAGE_BYTES),
+        userAgent: options.userAgent ?? `${SITE_NAME}-ImageImport/1.0 (+${SITE_URL})`,
+    };
     let target = rawUrl;
 
     for (let hop = 0; hop <= MAX_REMOTE_IMAGE_REDIRECTS; hop += 1) {
@@ -72,7 +91,7 @@ export async function fetchRemoteImage(rawUrl: string): Promise<RemoteImageFetch
             return { ok: false, reason: "blocked_address" };
         }
 
-        const hopResult = await sendOnce(checked.url, resolved);
+        const hopResult = await sendOnce(checked.url, resolved, limits);
 
         if (!hopResult.ok) {
             return hopResult;
@@ -128,7 +147,16 @@ type HopOutcome =
       }
     | { readonly ok: false; readonly reason: RemoteImageProblem };
 
-function sendOnce(url: URL, resolved: { address: string; family: 4 | 6 }): Promise<HopOutcome> {
+type HopLimits = {
+    readonly maxBytes: number;
+    readonly userAgent: string;
+};
+
+function sendOnce(
+    url: URL,
+    resolved: { address: string; family: 4 | 6 },
+    limits: HopLimits,
+): Promise<HopOutcome> {
     return new Promise((resolve) => {
         const send = url.protocol === "https:" ? httpsRequest : httpRequest;
         let settled = false;
@@ -158,7 +186,7 @@ function sendOnce(url: URL, resolved: { address: string; family: 4 | 6 }): Promi
                     host: url.host,
                     accept: "image/*",
                     "accept-encoding": "identity",
-                    "user-agent": `${SITE_NAME}-ImageImport/1.0 (+${SITE_URL})`,
+                    "user-agent": limits.userAgent,
                 },
                 servername: url.protocol === "https:" ? url.hostname : undefined,
                 timeout: REMOTE_IMAGE_CONNECT_TIMEOUT_MS,
@@ -202,7 +230,7 @@ function sendOnce(url: URL, resolved: { address: string; family: 4 | 6 }): Promi
 
                 const declared = Number(response.headers["content-length"] ?? Number.NaN);
 
-                if (Number.isFinite(declared) && declared > MAX_REMOTE_IMAGE_BYTES) {
+                if (Number.isFinite(declared) && declared > limits.maxBytes) {
                     response.destroy();
                     finish({ ok: false, reason: "too_large" });
 
@@ -216,7 +244,7 @@ function sendOnce(url: URL, resolved: { address: string; family: 4 | 6 }): Promi
                 response.on("data", (chunk: Buffer) => {
                     // Capped while it streams. A `content-length` is a claim,
                     // not a promise, so the real ceiling is enforced here.
-                    if (received + chunk.length > MAX_REMOTE_IMAGE_BYTES) {
+                    if (received + chunk.length > limits.maxBytes) {
                         overflowed = true;
                         response.destroy();
 

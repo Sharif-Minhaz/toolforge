@@ -6,7 +6,6 @@ import {
     toHeaderMap,
 } from "@/modules/domain-inspector/domain/headers";
 import {
-    decodeEntities,
     readAttribute,
     readDeclaredLicense,
     readGenerator,
@@ -52,20 +51,6 @@ describe("security headers", () => {
             expect(gradeSecurityHeaders(headers)).toBe(expected);
         });
     }
-});
-
-describe("decodeEntities", () => {
-    test("decodes the named entities that actually appear in titles", () => {
-        expect(decodeEntities("Tom &amp; Jerry &lt;3 &quot;x&quot;")).toBe('Tom & Jerry <3 "x"');
-    });
-
-    test("decodes numeric and hex references", () => {
-        expect(decodeEntities("caf&#233; &#x2014; bar")).toBe("café — bar");
-    });
-
-    test("leaves an unknown entity exactly as written", () => {
-        expect(decodeEntities("a &notareal; b")).toBe("a &notareal; b");
-    });
 });
 
 describe("readPageTitle", () => {

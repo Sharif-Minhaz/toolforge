@@ -54,6 +54,7 @@ export const HIGHLIGHT_LANGUAGES = [
     "toon",
     "hex",
     "latex",
+    "html",
     "plain",
 ] as const;
 
@@ -77,6 +78,11 @@ class TokenSink {
         }
 
         this.tokens.push({ kind, text });
+    }
+
+    /** Whether the text pushed so far ends with `suffix`, across merged runs. */
+    endsWith(suffix: string): boolean {
+        return this.tokens.at(-1)?.text.endsWith(suffix) ?? false;
     }
 
     drain(): Token[] {
@@ -830,6 +836,106 @@ function highlightLatex(input: string): Token[] {
     return sink.drain();
 }
 
+/**
+ * Markup, coloured by role: a tag name is a keyword, an attribute name a
+ * property, a quoted value a string, a comment a comment, a character
+ * reference a number. Text between tags is plain.
+ *
+ * Added for the Link Preview debugger's paste box, where what people paste is
+ * a head full of `<meta property="…" content="…">` and the attribute values are
+ * the whole point. Inside a tag the scanner walks attribute by attribute; an
+ * unterminated quote colours to the end of the input, which is what somebody
+ * halfway through typing one has.
+ */
+function highlightHtml(input: string): Token[] {
+    const sink = new TokenSink();
+    let index = 0;
+
+    while (index < input.length) {
+        const rest = input.slice(index);
+
+        if (rest.startsWith("<!--")) {
+            const end = rest.indexOf("-->", 4);
+            const comment = end === -1 ? rest : rest.slice(0, end + 3);
+
+            sink.push("comment", comment);
+            index += comment.length;
+            continue;
+        }
+
+        const opening = /^<\/?[A-Za-z!][\w:-]*/.exec(rest)?.[0];
+
+        if (opening !== undefined) {
+            const slash = opening.startsWith("</") ? 2 : 1;
+
+            sink.push("punctuation", opening.slice(0, slash));
+            sink.push("keyword", opening.slice(slash));
+            index += opening.length;
+            index = highlightHtmlAttributes(input, index, sink);
+            continue;
+        }
+
+        const reference = /^&(?:#\d+|#x[0-9a-f]+|[a-z][a-z0-9]*);/i.exec(rest)?.[0];
+
+        if (reference !== undefined) {
+            sink.push("number", reference);
+            index += reference.length;
+            continue;
+        }
+
+        sink.push("plain", rest[0]);
+        index += 1;
+    }
+
+    return sink.drain();
+}
+
+/** Attributes up to and including the tag's closing `>`; returns the index after it. */
+function highlightHtmlAttributes(input: string, start: number, sink: TokenSink): number {
+    let index = start;
+
+    while (index < input.length) {
+        const character = input[index];
+
+        if (character === ">") {
+            sink.push("punctuation", ">");
+
+            return index + 1;
+        }
+
+        if (character === "/" || character === "=") {
+            sink.push("punctuation", character);
+            index += 1;
+            continue;
+        }
+
+        if (character === '"' || character === "'") {
+            const end = input.indexOf(character, index + 1);
+            const value = end === -1 ? input.slice(index) : input.slice(index, end + 1);
+
+            sink.push("string", value);
+            index += value.length;
+            continue;
+        }
+
+        if (/\s/.test(character)) {
+            sink.push("plain", character);
+            index += 1;
+            continue;
+        }
+
+        // A run of anything else is a name — or, straight after `=`, an
+        // unquoted value. Both stop at whitespace, a quote, `=`, `/` or `>`.
+        const run = /^[^\s"'=/>]+/.exec(input.slice(index))?.[0] ?? character;
+        const afterEquals = sink.endsWith("=");
+
+        sink.push(afterEquals ? "string" : "property", run);
+        index += run.length;
+    }
+
+    return index;
+}
+
 /* --------------------------------------------------------------- public --- */
 
 /**
@@ -877,6 +983,8 @@ export function highlight(
             return highlightHex(input);
         case "latex":
             return highlightLatex(input);
+        case "html":
+            return highlightHtml(input);
     }
 }
 

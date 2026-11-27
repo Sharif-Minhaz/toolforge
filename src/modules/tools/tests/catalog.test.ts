@@ -204,6 +204,8 @@ describe("tool catalog", () => {
             "graphql-server",
             // Test traffic goes to Cloudflare's nearest server by design.
             "speed-test",
+            // The fetch mode reads the page and its og:image from this server.
+            "link-preview",
         ] as const;
 
         for (const id of networked) {

@@ -82,6 +82,7 @@ export const TOOL_IDS = [
     "speed-test",
     "age-calculator",
     "zakat-calculator",
+    "link-preview",
 ] as const;
 
 export type ToolId = (typeof TOOL_IDS)[number];
@@ -175,7 +176,8 @@ export type ToolIconName =
     | "photo-shield"
     | "speedtest"
     | "calendar-user"
-    | "coins";
+    | "coins"
+    | "share";
 
 export type Tool = {
     readonly id: ToolId;

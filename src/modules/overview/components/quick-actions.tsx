@@ -73,8 +73,8 @@ export async function QuickActions() {
         // Keyboard Tester at 73, Image to Text at 76, What Is My IP at 82, the
         // Number to Words converter at 76, the Bijoy ↔ Unicode Converter at
         // 80, Land Measurement at 75, Photo EXIF at 78, the Internet Speed
-        // Test at 84, Age & Bangla Date at 79 and the Zakat Calculator at 84 —
-        // which is featured instead.
+        // Test at 84, Age & Bangla Date at 79, the Zakat Calculator at 84 and
+        // the Link Preview checker at 82 — both featured instead.
         {
             key: "wordToPdf",
             href: "/tools/pdf-converter",

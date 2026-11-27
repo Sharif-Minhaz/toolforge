@@ -500,6 +500,19 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
             errors: messages.subdomainLookup.errors,
             toast: messages.subdomainLookup.toast,
         },
+        // The article and the hero stay on the server. The findings cross whole
+        // because the list renders them in the tab, in both modes.
+        linkPreview: {
+            workbench: messages.linkPreview.workbench,
+            modes: messages.linkPreview.modes,
+            platforms: messages.linkPreview.platforms,
+            sources: messages.linkPreview.sources,
+            severity: messages.linkPreview.severity,
+            findings: messages.linkPreview.findings,
+            errors: messages.linkPreview.errors,
+            imageFailures: messages.linkPreview.imageFailures,
+            toast: messages.linkPreview.toast,
+        },
         // The article and the hero stay on the server; only what the workbench,
         // the globe and the hop table render crosses.
         ipGlobe: {

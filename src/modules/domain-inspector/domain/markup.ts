@@ -1,3 +1,5 @@
+import { decodeEntities } from "@/modules/tools/domain/html-entities";
+
 import type { PageLicense } from "../types";
 
 /**
@@ -11,36 +13,6 @@ import type { PageLicense } from "../types";
  * hostile document to poke at. What it costs is exactness on malformed markup,
  * and a missed `<title>` is a blank field rather than a wrong answer.
  */
-
-const ENTITIES: Readonly<Record<string, string>> = {
-    amp: "&",
-    lt: "<",
-    gt: ">",
-    quot: '"',
-    "#39": "'",
-    apos: "'",
-    nbsp: " ",
-};
-
-export function decodeEntities(text: string): string {
-    return text.replace(/&(#\d+|#x[0-9a-f]+|[a-z]+);/gi, (whole, name: string) => {
-        const named = ENTITIES[name.toLowerCase()];
-
-        if (named !== undefined) {
-            return named;
-        }
-
-        const numeric = /^#x/i.test(name)
-            ? Number.parseInt(name.slice(2), 16)
-            : /^#/.test(name)
-              ? Number.parseInt(name.slice(1), 10)
-              : Number.NaN;
-
-        return Number.isInteger(numeric) && numeric > 0 && numeric <= 0x10ffff
-            ? String.fromCodePoint(numeric)
-            : whole;
-    });
-}
 
 export function readPageTitle(html: string): string | null {
     const matched = /<title[^>]*>([\s\S]{0,300}?)<\/title>/i.exec(html);

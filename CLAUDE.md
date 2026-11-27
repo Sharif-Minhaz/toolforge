@@ -86,6 +86,7 @@ docs/
 | `keyboard-tester`                           | [`docs/case-studies/keyboard-tester.md`](docs/case-studies/keyboard-tester.md)                                     |
 | `mouse-tester`                              | [`docs/case-studies/mouse-tester.md`](docs/case-studies/mouse-tester.md)                                           |
 | `land-measurement`                          | [`docs/case-studies/land-measurement.md`](docs/case-studies/land-measurement.md)                                   |
+| `link-preview`                              | [`docs/case-studies/link-preview.md`](docs/case-studies/link-preview.md)                                           |
 | `number-to-words`                           | [`docs/case-studies/number-to-words.md`](docs/case-studies/number-to-words.md)                                     |
 | `photo-exif`                                | [`docs/case-studies/photo-exif.md`](docs/case-studies/photo-exif.md)                                               |
 | `pdf-converter`                             | [`docs/case-studies/pdf-converter.md`](docs/case-studies/pdf-converter.md)                                         |

@@ -20,6 +20,7 @@ import { ipGlobeMapTool } from "./ip-globe";
 import { jsonFormatTool } from "./json";
 import { jwtDecodeTool, jwtSignTool, jwtVerifyTool } from "./jwt";
 import { landMeasurementConvertTool } from "./land-measurement";
+import { linkPreviewInspectTool, linkPreviewParseTool } from "./link-preview";
 import { loremGenerateTool } from "./lorem";
 import { markdownAnalyzeTool } from "./markdown";
 import { numberToWordsConvertTool } from "./number-to-words";
@@ -177,6 +178,8 @@ export const MCP_TOOLS: readonly McpTool[] = [
     jwtSignTool,
     jwtVerifyTool,
     landMeasurementConvertTool,
+    linkPreviewInspectTool,
+    linkPreviewParseTool,
     loremGenerateTool,
     markdownAnalyzeTool,
     numberToWordsConvertTool,
