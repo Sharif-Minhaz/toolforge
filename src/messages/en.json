@@ -10042,7 +10042,7 @@
     "keyboardTester": {
         "meta": {
             "title": "Keyboard Tester & Typing Speed Test — every key, chatter, ghosting, WPM",
-            "description": "Test every key on a full-size, tenkeyless, 75%, 65% or 60% board, ANSI or ISO, in any layout or language. Catch chattering switches that double letters, find the chords your matrix blocks, read 6KRO or NKRO, then take a typing speed test in English or Bangla with WPM, accuracy and consistency. Nothing is uploaded."
+            "description": "Test every key on a full-size, tenkeyless, 75%, 65% or 60% board, ANSI or ISO, in any layout or language. Catch chattering switches that double letters, find the chords your matrix blocks, read 6KRO or NKRO, then take a typing speed test in English or Bangla with WPM, accuracy and consistency, mixing in capitals, camelCase, symbols and numbers if you like. Nothing is uploaded."
         },
         "hero": {
             "eyebrow": "Hardware",
@@ -10209,6 +10209,17 @@
                 "newBest": "New personal best",
                 "chart": "Speed over the run (WPM per second)",
                 "chartEmpty": "Type for at least two seconds to see your speed over time."
+            },
+            "extras": {
+                "label": "Mix in",
+                "options": {
+                    "capitals": "Capitals",
+                    "camelCase": "camelCase",
+                    "symbols": "Symbols",
+                    "numbers": "Numbers"
+                },
+                "hint": "Each switch adds that kind of word to the text and starts a new run. Capitals and camelCase work the Shift key; Symbols add punctuation, brackets and quotes. Your best is kept per combination.",
+                "hintBangla": "Bangla has no capital letters, so Capitals and camelCase do not apply; Symbols use the dari (।) and Numbers use Bangla digits. Your best is kept per combination."
             }
         },
         "article": {
@@ -10262,7 +10273,7 @@
             },
             "hints": {
                 "buttons": "Every button, the wheel and the polling rate, with chatter and drop diagnosis.",
-                "aim": "Flick to one target at a time and get your speed, accuracy and where your shots land."
+                "aim": "Flick to one villain at a time across a forest, lake, graveyard or village, and get your speed, accuracy and where your shots land."
             }
         },
         "workbench": {
@@ -10414,6 +10425,13 @@
                 "small": "Small"
             },
             "duration": "Time",
+            "scene": "Scene",
+            "scenes": {
+                "forest": "Forest",
+                "lake": "Lake",
+                "graveyard": "Graveyard",
+                "village": "Village"
+            },
             "seconds": "{value}s",
             "reset": "Reset",
             "stepShoot": "Click Start, then click each target as fast as you can",
@@ -10426,7 +10444,7 @@
             "bitsPerSecond": "{value} bits/s",
             "arenaLabel": "Aim arena",
             "start": "Start",
-            "hint": "One target at a time, each a fresh flick from where your last shot landed. A click outside the target is a miss. Left button only.",
+            "hint": "One villain at a time, each a fresh flick from where your last shot landed — hit inside the dashed ring. A click outside it is a miss. Left button only.",
             "again": "Go again",
             "result": {
                 "title": "Your result",

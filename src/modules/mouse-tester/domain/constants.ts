@@ -1,4 +1,4 @@
-import type { AimDuration, AimTargetSize } from "../types";
+import type { AimDuration, AimScene, AimTargetSize } from "../types";
 
 /**
  * Every threshold the diagnosis uses. Each is a judgement about people and
@@ -135,3 +135,5 @@ export const MAX_AIM_SHOTS = 1000;
  * few dozen shots wanders that much on its own.
  */
 export const AIM_BIAS_THRESHOLD = 0.12;
+
+export const DEFAULT_AIM_SCENE: AimScene = "forest";

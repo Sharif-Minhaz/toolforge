@@ -243,3 +243,76 @@ describe("word lists", () => {
         expect(isOnTrack("hello", "hex")).toBe(false);
     });
 });
+
+describe("extras", () => {
+    const ALL = { capitals: true, camelCase: true, symbols: true, numbers: true };
+    const NONE = { capitals: false, camelCase: false, symbols: false, numbers: false };
+    const english = new Set(typingWords("english"));
+
+    /** A seeded xorshift: varied, and the same on every run. */
+    function seededBytes(seed = 0x2545f491): (length: number) => Uint8Array {
+        let state = seed >>> 0;
+
+        return (length) => {
+            const bytes = new Uint8Array(length);
+
+            for (let index = 0; index < length; index += 1) {
+                state ^= state << 13;
+                state ^= state >>> 17;
+                state ^= state << 5;
+                state >>>= 0;
+                bytes[index] = state & 0xff;
+            }
+
+            return bytes;
+        };
+    }
+
+    test("with none, every word is a plain list word", () => {
+        const words = drawTypingWords("english", 400, seededBytes(), NONE);
+
+        expect(words.every((word) => english.has(word))).toBe(true);
+    });
+
+    test("each extra shows up, and only when it is switched on", () => {
+        const only = (extra: keyof typeof NONE) =>
+            drawTypingWords("english", 400, seededBytes(), { ...NONE, [extra]: true });
+
+        expect(only("capitals").some((word) => /^[A-Z][a-z]+$/.test(word))).toBe(true);
+        expect(only("capitals").some((word) => /^[A-Z]{2,}$/.test(word))).toBe(true);
+        expect(only("camelCase").some((word) => /^[a-z]+([A-Z][a-z]+)+$/.test(word))).toBe(true);
+        expect(only("symbols").some((word) => /[^a-z]/.test(word))).toBe(true);
+        expect(only("numbers").some((word) => /^\d+$/.test(word))).toBe(true);
+
+        expect(only("symbols").every((word) => !/[A-Z0-9]/.test(word))).toBe(true);
+        expect(only("camelCase").every((word) => !/[^A-Za-z]/.test(word))).toBe(true);
+    });
+
+    test("every extra together is still mostly words, and every word is typeable", () => {
+        const words = drawTypingWords("english", 600, seededBytes(), ALL);
+        const plain = words.filter((word) => english.has(word)).length;
+
+        expect(plain / words.length).toBeGreaterThan(0.25);
+        expect(words.every((word) => word.length > 0 && !/\s/.test(word))).toBe(true);
+        expect(words.every((word) => word.length <= 40)).toBe(true);
+    });
+
+    test("Bangla has no case: capitals and camelCase change nothing, symbols and numbers use its own marks", () => {
+        const plain = drawTypingWords("bangla", 300, seededBytes(), NONE);
+        const cased = drawTypingWords("bangla", 300, seededBytes(), {
+            ...NONE,
+            capitals: true,
+            camelCase: true,
+        });
+        const marked = drawTypingWords("bangla", 600, seededBytes(), {
+            ...NONE,
+            symbols: true,
+            numbers: true,
+        });
+
+        expect(cased).toEqual(plain);
+        expect(marked.some((word) => word.endsWith("।"))).toBe(true);
+        expect(marked.some((word) => /^[০-৯]+$/.test(word))).toBe(true);
+        expect(marked.every((word) => !/[0-9]/.test(word))).toBe(true);
+    });
+});

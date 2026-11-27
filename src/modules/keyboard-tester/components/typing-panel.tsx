@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { SegmentedControl } from "@/modules/tools/components/segmented-control";
 import { savePersonalBest, usePersonalBests } from "@/modules/tools/components/use-personal-best";
+import { useFitIntoView, useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import { StepLabel } from "@/modules/tools/components/workbench-step";
 import { cryptoRandomBytes } from "@/modules/tools/domain/random";
 import {
@@ -23,9 +24,13 @@ import {
     summarizeTyping,
     wordsForDuration,
 } from "../domain/typing";
+import { DEFAULT_TYPING_EXTRAS } from "../domain/constants";
 import {
     TYPING_DURATIONS,
+    TYPING_EXTRAS,
     TYPING_LANGUAGES,
+    type TypingExtra,
+    type TypingExtras,
     type TypingDuration,
     type TypingLanguage,
     type TypingRun,
@@ -42,17 +47,53 @@ const TICK_MS = 100;
  */
 const LETTER_FEEDBACK: Record<TypingLanguage, boolean> = { english: true, bangla: false };
 
-const personalBestKey = (language: TypingLanguage, duration: TypingDuration) =>
-    `typing:${language}:${duration}`;
+/** A glimpse of each extra on its switch; data, not copy. */
+const EXTRA_SAMPLES: Record<TypingExtra, string> = {
+    capitals: "Aa",
+    camelCase: "aB",
+    symbols: "{;}",
+    numbers: "42",
+};
+
+/** Extras that mean something in a script: Bangla has no case. */
+function activeExtras(language: TypingLanguage, extras: TypingExtras): TypingExtra[] {
+    return TYPING_EXTRAS.filter(
+        (extra) => extras[extra] && (language === "english" || !CASED_EXTRAS.has(extra)),
+    );
+}
+
+const CASED_EXTRAS: ReadonlySet<TypingExtra> = new Set(["capitals", "camelCase"]);
+
+/**
+ * A best is only comparable with the same settings, so the extras are part of
+ * the key. A run with none keeps the key it always had, so bests set before
+ * the extras existed still count.
+ */
+function personalBestKey(
+    language: TypingLanguage,
+    duration: TypingDuration,
+    extras: TypingExtras,
+): string {
+    const active = activeExtras(language, extras);
+
+    return `typing:${language}:${duration}${active.length === 0 ? "" : `:${active.join("+")}`}`;
+}
 
 type TypingPanelProps = {
     /** Drawn on the server, so both renders show the same first text. */
     initialWords: readonly string[];
     initialLanguage: TypingLanguage;
     initialDuration: TypingDuration;
+    /** Whether this mode is the one showing; see the effect that reads it. */
+    active?: boolean;
 };
 
-export function TypingPanel({ initialWords, initialLanguage, initialDuration }: TypingPanelProps) {
+export function TypingPanel({
+    initialWords,
+    initialLanguage,
+    initialDuration,
+    active = false,
+}: TypingPanelProps) {
     const t = useTranslations("keyboardTester.typing");
     const formatter = useFormatter();
     const bests = usePersonalBests();
@@ -61,11 +102,14 @@ export function TypingPanel({ initialWords, initialLanguage, initialDuration }: 
     const textRef = useRef<HTMLDivElement>(null);
     const languageLabelId = useId();
     const durationLabelId = useId();
+    const extrasLabelId = useId();
+    const extrasHintId = useId();
     const inputId = useId();
     const hintId = useId();
 
     const [language, setLanguage] = useState(initialLanguage);
     const [duration, setDuration] = useState(initialDuration);
+    const [extras, setExtras] = useState<TypingExtras>(DEFAULT_TYPING_EXTRAS);
     const [run, setRun] = useState<TypingRun>(() => createTypingRun(initialWords));
     /** `performance.now()` at the last tick or keystroke; `null` until a run starts. */
     const [now, setNow] = useState<number | null>(null);
@@ -77,13 +121,31 @@ export function TypingPanel({ initialWords, initialLanguage, initialDuration }: 
     const [bestBefore, setBestBefore] = useState(0);
 
     const durationMs = duration * 1000;
-    const bestKey = personalBestKey(language, duration);
+    const bestKey = personalBestKey(language, duration, extras);
     // The clock's end is derived, not stored: a run whose reader stopped typing
     // is over the moment a tick passes the deadline, without waiting for a key.
     const settled =
         now !== null && isExpired(run, now, durationMs) ? finishTyping(run, now, durationMs) : run;
     const running = settled.startedAt !== null && settled.endedAt === null;
     const finished = settled.endedAt !== null;
+    const { ref: resultRef, scrollToResult } = useResultScroll();
+    const { ref: stageRef, fitIntoView } = useFitIntoView();
+    // Opening this mode from the switch above frames it on screen and puts the caret in the box,
+    // ready for the first key. Only
+    // on the switch itself — never on load, where a shared link to this mode
+    // should not yank the page — so the last state is held in a ref.
+    const wasActive = useRef(active);
+
+    useEffect(() => {
+        if (active && !wasActive.current) {
+            // Focus without the browser's own jump; the fit below does the framing.
+            inputRef.current?.focus({ preventScroll: true });
+            fitIntoView();
+        }
+
+        wasActive.current = active;
+    }, [active, fitIntoView]);
+
     const summary = summarizeTyping(settled, settled.endedAt ?? now ?? 0, durationMs);
     const finalWpm = finished ? Math.round(summary.wpm) : 0;
     const newBest = finished && finalWpm > bestBefore;
@@ -106,6 +168,15 @@ export function TypingPanel({ initialWords, initialLanguage, initialDuration }: 
             savePersonalBest(bestKey, finalWpm);
         }
     }, [bestKey, finalWpm]);
+
+    // The result is drawn below the arena when the run ends — by the clock or
+    // by the last press — which is below the fold on a laptop. Bring it up
+    // once per finished run; the hook leaves it alone if it is already in view.
+    useEffect(() => {
+        if (finished) {
+            scrollToResult();
+        }
+    }, [finished, scrollToResult]);
 
     // Keeps the word under the caret on the second line of three, by moving
     // the text rather than scrolling a box — a scrolled box would let the
@@ -133,11 +204,12 @@ export function TypingPanel({ initialWords, initialLanguage, initialDuration }: 
                   durationMs - ((settled.endedAt ?? now ?? settled.startedAt) - settled.startedAt),
               );
 
-    function restart(nextLanguage = language, nextDuration = duration) {
+    function restart(nextLanguage = language, nextDuration = duration, nextExtras = extras) {
         const words = drawTypingWords(
             nextLanguage,
             wordsForDuration(nextDuration),
             cryptoRandomBytes,
+            nextExtras,
         );
 
         setRun(createTypingRun(words));
@@ -163,63 +235,118 @@ export function TypingPanel({ initialWords, initialLanguage, initialDuration }: 
 
     return (
         <Card className="gap-0 overflow-hidden p-0">
-            <div className="border-border/70 flex flex-col gap-3 border-b p-4 sm:p-5 lg:flex-row lg:items-end">
-                <div className="grid flex-1 gap-3 sm:grid-cols-2">
-                    <div className="flex min-w-0 flex-col gap-1.5">
-                        <Label id={languageLabelId} className="text-muted-foreground text-xs">
-                            {t("language")}
-                        </Label>
-                        <SegmentedControl
-                            size="sm"
-                            options={TYPING_LANGUAGES.map((value) => ({
-                                value,
-                                label: t(`languages.${value}`),
-                            }))}
-                            value={language}
-                            labelId={languageLabelId}
-                            layoutId="typing-language-indicator"
-                            onChange={(value) => {
-                                setLanguage(value);
-                                restart(value, duration);
-                            }}
-                        />
-                    </div>
-                    <div className="flex min-w-0 flex-col gap-1.5">
-                        <Label id={durationLabelId} className="text-muted-foreground text-xs">
-                            {t("duration")}
-                        </Label>
-                        <SegmentedControl
-                            size="sm"
-                            options={TYPING_DURATIONS.map((value) => ({
-                                value: String(value),
-                                label: t("seconds", { value: formatter.number(value) }),
-                            }))}
-                            value={String(duration)}
-                            labelId={durationLabelId}
-                            layoutId="typing-duration-indicator"
-                            onChange={(value) => {
-                                const next =
-                                    TYPING_DURATIONS.find((option) => String(option) === value) ??
-                                    duration;
+            <div className="border-border/70 flex flex-col gap-4 border-b p-4 sm:p-5">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+                    <div className="grid flex-1 gap-3 sm:grid-cols-2">
+                        <div className="flex min-w-0 flex-col gap-1.5">
+                            <Label id={languageLabelId} className="text-muted-foreground text-xs">
+                                {t("language")}
+                            </Label>
+                            <SegmentedControl
+                                size="sm"
+                                options={TYPING_LANGUAGES.map((value) => ({
+                                    value,
+                                    label: t(`languages.${value}`),
+                                }))}
+                                value={language}
+                                labelId={languageLabelId}
+                                layoutId="typing-language-indicator"
+                                onChange={(value) => {
+                                    setLanguage(value);
+                                    restart(value, duration);
+                                }}
+                            />
+                        </div>
+                        <div className="flex min-w-0 flex-col gap-1.5">
+                            <Label id={durationLabelId} className="text-muted-foreground text-xs">
+                                {t("duration")}
+                            </Label>
+                            <SegmentedControl
+                                size="sm"
+                                options={TYPING_DURATIONS.map((value) => ({
+                                    value: String(value),
+                                    label: t("seconds", { value: formatter.number(value) }),
+                                }))}
+                                value={String(duration)}
+                                labelId={durationLabelId}
+                                layoutId="typing-duration-indicator"
+                                onChange={(value) => {
+                                    const next =
+                                        TYPING_DURATIONS.find(
+                                            (option) => String(option) === value,
+                                        ) ?? duration;
 
-                                setDuration(next);
-                                restart(language, next);
-                            }}
-                        />
+                                    setDuration(next);
+                                    restart(language, next);
+                                }}
+                            />
+                        </div>
                     </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 shrink-0"
+                        onClick={() => restart()}
+                    >
+                        <IconRefresh className="size-3.5" stroke={1.8} aria-hidden="true" />
+                        {t("restart")}
+                    </Button>
                 </div>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 shrink-0"
-                    onClick={() => restart()}
-                >
-                    <IconRefresh className="size-3.5" stroke={1.8} aria-hidden="true" />
-                    {t("restart")}
-                </Button>
+
+                {/* Extras: switches rather than a select, because they combine. */}
+                <div className="flex flex-col gap-1.5">
+                    <span id={extrasLabelId} className="text-muted-foreground text-xs font-medium">
+                        {t("extras.label")}
+                    </span>
+                    <div
+                        role="group"
+                        aria-labelledby={extrasLabelId}
+                        aria-describedby={extrasHintId}
+                        className="flex flex-wrap gap-1.5"
+                    >
+                        {TYPING_EXTRAS.map((extra) => {
+                            const unavailable = language === "bangla" && CASED_EXTRAS.has(extra);
+                            const on = extras[extra] && !unavailable;
+
+                            return (
+                                <button
+                                    key={extra}
+                                    type="button"
+                                    aria-pressed={on}
+                                    disabled={unavailable}
+                                    onClick={() => {
+                                        const next = { ...extras, [extra]: !extras[extra] };
+
+                                        setExtras(next);
+                                        restart(language, duration, next);
+                                    }}
+                                    className={cn(
+                                        "inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[0.8125rem] font-medium ring-1 transition-colors duration-200 ring-inset",
+                                        "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
+                                        "disabled:cursor-not-allowed disabled:opacity-45",
+                                        on
+                                            ? "bg-primary/10 text-primary ring-primary/30"
+                                            : "text-muted-foreground ring-border/70 hover:bg-muted hover:text-foreground",
+                                    )}
+                                >
+                                    <span className="font-mono text-xs" aria-hidden="true">
+                                        {EXTRA_SAMPLES[extra]}
+                                    </span>
+                                    {t(`extras.options.${extra}`)}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    <p
+                        id={extrasHintId}
+                        className="text-muted-foreground text-[0.6875rem] leading-[1.4]"
+                    >
+                        {language === "bangla" ? t("extras.hintBangla") : t("extras.hint")}
+                    </p>
+                </div>
             </div>
 
-            <div className="flex flex-col gap-3 p-4 sm:p-5">
+            <div ref={stageRef} className="flex flex-col gap-3 p-4 sm:p-5">
                 <StepLabel step={1}>{t("stepType")}</StepLabel>
 
                 <div className="flex flex-wrap items-end justify-between gap-3">
@@ -330,38 +457,41 @@ export function TypingPanel({ initialWords, initialLanguage, initialDuration }: 
                 </div>
             </div>
 
-            {finished && (
-                <TypingResult
-                    summary={summary}
-                    newBest={newBest}
-                    labels={{
-                        title: t("result.title"),
-                        wpm: t("wpm"),
-                        raw: t("result.raw"),
-                        accuracy: t("accuracy"),
-                        consistency: t("result.consistency"),
-                        words: t("result.words"),
-                        characters: t("result.characters"),
-                        corrections: t("result.corrections"),
-                        newBest: t("result.newBest"),
-                        chart: t("result.chart"),
-                        chartEmpty: t("result.chartEmpty"),
-                    }}
-                    format={{ whole, percent }}
-                    wordsValue={t("result.wordsValue", {
-                        correct: whole(summary.correctWords),
-                        incorrect: whole(summary.incorrectWords),
-                    })}
-                    charactersValue={t("result.charactersValue", {
-                        correct: whole(summary.correct),
-                        incorrect: whole(summary.incorrect),
-                        extra: whole(summary.extra),
-                        missed: whole(summary.missed),
-                    })}
-                    onRestart={() => restart()}
-                    restartLabel={t("again")}
-                />
-            )}
+            {/* Always mounted, so the scroll has somewhere to aim the moment the result lands. */}
+            <div ref={resultRef}>
+                {finished && (
+                    <TypingResult
+                        summary={summary}
+                        newBest={newBest}
+                        labels={{
+                            title: t("result.title"),
+                            wpm: t("wpm"),
+                            raw: t("result.raw"),
+                            accuracy: t("accuracy"),
+                            consistency: t("result.consistency"),
+                            words: t("result.words"),
+                            characters: t("result.characters"),
+                            corrections: t("result.corrections"),
+                            newBest: t("result.newBest"),
+                            chart: t("result.chart"),
+                            chartEmpty: t("result.chartEmpty"),
+                        }}
+                        format={{ whole, percent }}
+                        wordsValue={t("result.wordsValue", {
+                            correct: whole(summary.correctWords),
+                            incorrect: whole(summary.incorrectWords),
+                        })}
+                        charactersValue={t("result.charactersValue", {
+                            correct: whole(summary.correct),
+                            incorrect: whole(summary.incorrect),
+                            extra: whole(summary.extra),
+                            missed: whole(summary.missed),
+                        })}
+                        onRestart={() => restart()}
+                        restartLabel={t("again")}
+                    />
+                )}
+            </div>
         </Card>
     );
 }

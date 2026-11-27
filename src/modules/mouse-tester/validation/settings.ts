@@ -5,7 +5,7 @@ import {
     MAX_FAULT_WINDOW_MS,
     MIN_FAULT_WINDOW_MS,
 } from "../domain/constants";
-import { AIM_DURATIONS, AIM_TARGET_SIZES, MOUSE_TESTER_MODES } from "../types";
+import { AIM_DURATIONS, AIM_SCENES, AIM_TARGET_SIZES, MOUSE_TESTER_MODES } from "../types";
 
 /**
  * `?window=` opens the tester with a fault window already set, so a support
@@ -21,11 +21,12 @@ export const faultWindowSchema = z.coerce
     // position to show.
     .multipleOf(FAULT_WINDOW_STEP_MS);
 
-/** `?mode=aim&target=small&time=60` opens the aim trainer ready to go. */
+/** `?mode=aim&target=small&time=60&scene=graveyard` opens the aim trainer ready to go. */
 export const mouseTesterSearchParamsSchema = z.object({
     window: faultWindowSchema.optional().catch(undefined),
     mode: z.enum(MOUSE_TESTER_MODES).optional().catch(undefined),
     target: z.enum(AIM_TARGET_SIZES).optional().catch(undefined),
+    scene: z.enum(AIM_SCENES).optional().catch(undefined),
     time: z.coerce
         .number()
         .pipe(z.union(AIM_DURATIONS.map((value) => z.literal(value))))

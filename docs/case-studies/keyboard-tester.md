@@ -106,3 +106,10 @@ another key and without a state update inside an effect. The first text is
 drawn on the server and passed down; a draw in the island would differ across
 hydration. Personal bests live in `tools/domain/personal-best.ts`, shared with
 the mouse tester's aim trainer.
+
+Extras (capitals, camelCase, symbols, numbers) are mixed in when the words are
+drawn, never applied to a run in progress, and each switch starts a new run.
+Capitals and camelCase are skipped for Bangla — and consume no randomness
+there, so the same seed draws the same Bangla text with them on or off. The
+personal-best key carries the active extras; a run with none keeps the original
+key so earlier bests still count.

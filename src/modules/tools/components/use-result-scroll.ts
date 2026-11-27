@@ -66,3 +66,46 @@ export function useResultScroll<T extends HTMLElement = HTMLDivElement>() {
 
     return { ref, scrollToResult } as const;
 }
+
+/**
+ * Brings an interactive surface fully into view — an arena, a canvas — so the
+ * reader is not left playing on half of it.
+ *
+ * Unlike `useResultScroll` it does not settle for "mostly visible": a surface
+ * whose bottom edge is under the fold is one where the next target can appear
+ * out of sight. It centres the surface when it fits the viewport and aligns
+ * its top when it is taller. `instant` exists for the moment a timed run
+ * starts, when a smooth scroll would be counted against the reader's first
+ * reaction.
+ */
+export function useFitIntoView<T extends HTMLElement = HTMLDivElement>() {
+    const ref = useRef<T>(null);
+
+    const fitIntoView = useCallback((motion: "smooth" | "instant" = "smooth") => {
+        if (typeof window === "undefined") {
+            return;
+        }
+
+        window.requestAnimationFrame(() => {
+            const target = ref.current;
+
+            if (target === null) {
+                return;
+            }
+
+            const box = target.getBoundingClientRect();
+            const viewport = window.innerHeight || 0;
+
+            if (box.height === 0 || (box.top >= 0 && box.bottom <= viewport)) {
+                return;
+            }
+
+            target.scrollIntoView({
+                behavior: motion === "instant" || prefersReducedMotion() ? "auto" : "smooth",
+                block: box.height > viewport ? "start" : "center",
+            });
+        });
+    }, []);
+
+    return { ref, fitIntoView } as const;
+}

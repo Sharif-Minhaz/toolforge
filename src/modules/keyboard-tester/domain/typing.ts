@@ -1,9 +1,11 @@
+import { toBanglaDigits } from "@/modules/tools/domain/bangla-digits";
 import { randomIndex } from "@/modules/tools/domain/random";
 import type { RandomBytes } from "@/modules/tools/types";
 
 import type {
     TypingCounts,
     TypingDuration,
+    TypingExtras,
     TypingLanguage,
     TypingRun,
     TypingSnapshot,
@@ -12,9 +14,11 @@ import type {
 } from "../types";
 import {
     CHARS_PER_WORD,
+    DEFAULT_TYPING_EXTRAS,
     MAX_TYPED_WORD_LENGTH,
     MAX_TYPING_SNAPSHOTS,
     MIN_CONSISTENCY_SECONDS,
+    TYPING_EXTRA_CHANCE,
     TYPING_WORDS_PER_SECOND,
 } from "./constants";
 import { typingWords } from "./typing-words";
@@ -38,17 +42,91 @@ function codePoints(text: string): string[] {
     return [...text.normalize("NFC")];
 }
 
-/** Draws `count` words, never the same word twice in a row. */
+/** Trailing marks, by script: a Bangla sentence ends in a dari (।), not a full stop. */
+const PUNCTUATION: Record<TypingLanguage, readonly string[]> = {
+    english: [",", ".", ";", ":", "!", "?"],
+    bangla: [",", "।", ";", "!", "?"],
+};
+
+/** Pairs a word can be wrapped in. */
+const WRAPPERS: readonly (readonly [string, string])[] = [
+    ["(", ")"],
+    ["[", "]"],
+    ["{", "}"],
+    ['"', '"'],
+    ["'", "'"],
+    ["<", ">"],
+];
+
+function chance(percent: number, randomBytes: RandomBytes): boolean {
+    return randomIndex(100, randomBytes) < percent;
+}
+
+function pick<T>(items: readonly T[], randomBytes: RandomBytes): T {
+    return items[randomIndex(items.length, randomBytes)];
+}
+
+const capitalise = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
+
+/** A number of one to four digits, in the script's own digits. */
+function number(language: TypingLanguage, randomBytes: RandomBytes): string {
+    const digits = 1 + randomIndex(4, randomBytes);
+    const value = String(randomIndex(10 ** digits, randomBytes));
+
+    return language === "bangla" ? toBanglaDigits(value) : value;
+}
+
+/**
+ * Draws `count` words, never the same word twice in a row, with any extras
+ * mixed in. Capitals and camelCase are Latin-script ideas and are ignored for
+ * Bangla, which has no case; symbols and numbers apply to both, in each
+ * script's own marks and digits.
+ */
 export function drawTypingWords(
     language: TypingLanguage,
     count: number,
     randomBytes: RandomBytes,
+    extras: TypingExtras = DEFAULT_TYPING_EXTRAS,
 ): string[] {
     const pool = typingWords(language);
+    const cased = language === "english";
     const words: string[] = [];
+    const draw = () => pool[randomIndex(pool.length, randomBytes)];
 
     while (words.length < count) {
-        const word = pool[randomIndex(pool.length, randomBytes)];
+        let word = draw();
+
+        if (extras.numbers && chance(TYPING_EXTRA_CHANCE.numbers, randomBytes)) {
+            word = number(language, randomBytes);
+        } else if (
+            cased &&
+            extras.camelCase &&
+            chance(TYPING_EXTRA_CHANCE.camelCase, randomBytes)
+        ) {
+            const parts = 1 + randomIndex(2, randomBytes);
+
+            for (let index = 0; index < parts; index += 1) {
+                word += capitalise(draw());
+            }
+        }
+
+        if (cased && extras.capitals && /^[a-z]/.test(word)) {
+            if (chance(TYPING_EXTRA_CHANCE.shouted, randomBytes) && !/[A-Z]/.test(word)) {
+                word = word.toUpperCase();
+            } else if (chance(TYPING_EXTRA_CHANCE.capitalised, randomBytes)) {
+                word = capitalise(word);
+            }
+        }
+
+        if (extras.symbols) {
+            if (chance(TYPING_EXTRA_CHANCE.wrapped, randomBytes)) {
+                const [open, close] = pick(WRAPPERS, randomBytes);
+
+                word = `${open}${word}${close}`;
+            } else if (chance(TYPING_EXTRA_CHANCE.punctuated, randomBytes)) {
+                word += pick(PUNCTUATION[language], randomBytes);
+            }
+        }
 
         if (word !== words.at(-1)) {
             words.push(word);

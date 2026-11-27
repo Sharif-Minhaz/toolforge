@@ -88,3 +88,12 @@ a narrow window is the same run drawn smaller. Placement draws from an injected
 random source and gives up on the travel rule after `AIM_PLACEMENT_ATTEMPTS`
 rather than stall. Only the primary button shoots; the button test is where the
 others are counted.
+
+The targets wear characters and the arena has scenery (`aim-villain.tsx`,
+`aim-scene.tsx`), both cosmetic: the domain only picks `variant`, never the
+same one twice running, and the scene is not part of the run or the personal
+best. Each character is drawn in a unit circle scaled to the target over a
+soft disc and a dashed rim, so the visible target is exactly the hit area —
+draw outside it and Fitts's throughput stops meaning anything. The characters
+are original stock archetypes, deliberately not any studio's villains, and
+every colour is a theme token at an opacity so the scenes follow dark mode.

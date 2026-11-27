@@ -57,7 +57,7 @@ export function MouseTesterModes({ initialMode, buttons, aim }: MouseTesterModes
                 <MouseTesterWorkbench {...buttons} />
             </div>
             <div hidden={mode !== "aim"}>
-                <AimPanel {...aim} />
+                <AimPanel {...aim} active={mode === "aim"} />
             </div>
         </div>
     );

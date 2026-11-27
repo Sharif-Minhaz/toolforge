@@ -192,6 +192,8 @@ export type AimTarget = AimPoint & {
     readonly spawnedAt: number;
     /** Where the pointer was judged to be when it appeared: the last shot, or the start. */
     readonly from: AimPoint;
+    /** Which character is drawn on it, `0` to `AIM_VILLAINS.length - 1`. Cosmetic only. */
+    readonly variant: number;
 };
 
 export type AimShot = {
@@ -245,3 +247,25 @@ export const AIM_BIAS_DIRECTIONS = [
 ] as const;
 
 export type AimBiasDirection = (typeof AIM_BIAS_DIRECTIONS)[number];
+
+/**
+ * The characters a target can wear. Original drawings of stock archetypes —
+ * nobody's licensed character — so the arena can be playful without borrowing
+ * somebody else's. Drawing is the UI's business; the domain only picks one.
+ */
+export const AIM_VILLAINS = [
+    "ghost",
+    "zombie",
+    "bandit",
+    "robot",
+    "alien",
+    "bat",
+    "pumpkin",
+] as const;
+
+export type AimVillain = (typeof AIM_VILLAINS)[number];
+
+/** The backdrop the targets appear over. Scenery only: it changes nothing measured. */
+export const AIM_SCENES = ["forest", "lake", "graveyard", "village"] as const;
+
+export type AimScene = (typeof AIM_SCENES)[number];

@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { SegmentedControl } from "@/modules/tools/components/segmented-control";
 import { savePersonalBest, usePersonalBests } from "@/modules/tools/components/use-personal-best";
+import { useFitIntoView, useResultScroll } from "@/modules/tools/components/use-result-scroll";
+import { OptionSelect } from "@/modules/tools/components/option-controls";
 import { StepLabel } from "@/modules/tools/components/workbench-step";
 import { cryptoRandomBytes } from "@/modules/tools/domain/random";
 import {
@@ -25,12 +27,16 @@ import {
 import { AIM_ARENA, AIM_TARGET_RADIUS } from "../domain/constants";
 import {
     AIM_DURATIONS,
+    AIM_SCENES,
     AIM_TARGET_SIZES,
+    type AimScene,
     type AimDuration,
     type AimPoint,
     type AimRun,
     type AimTargetSize,
 } from "../types";
+import { AimSceneBackdrop } from "./aim-scene";
+import { AimVillainTarget } from "./aim-villain";
 import { GroupingPlot } from "./grouping-plot";
 
 /** How often the clock redraws while a run is live. */
@@ -47,6 +53,9 @@ const personalBestKey = (size: AimTargetSize, duration: AimDuration) => `aim:${s
 type AimPanelProps = {
     initialSize: AimTargetSize;
     initialDuration: AimDuration;
+    initialScene: AimScene;
+    /** Whether this mode is the one showing; see the effect that reads it. */
+    active?: boolean;
 };
 
 /** Where a pointer event landed, in arena units. */
@@ -59,7 +68,12 @@ function arenaPoint(event: PointerEvent<SVGSVGElement>): AimPoint {
     };
 }
 
-export function AimPanel({ initialSize, initialDuration }: AimPanelProps) {
+export function AimPanel({
+    initialSize,
+    initialDuration,
+    initialScene,
+    active = false,
+}: AimPanelProps) {
     const t = useTranslations("mouseTester.aim");
     const formatter = useFormatter();
     const bests = usePersonalBests();
@@ -69,6 +83,7 @@ export function AimPanel({ initialSize, initialDuration }: AimPanelProps) {
 
     const [size, setSize] = useState(initialSize);
     const [duration, setDuration] = useState(initialDuration);
+    const [scene, setScene] = useState(initialScene);
     const [run, setRun] = useState<AimRun>(createAimRun);
     const [now, setNow] = useState<number | null>(null);
     /** Shot marks, newest last: where each click landed and whether it hit. */
@@ -84,6 +99,21 @@ export function AimPanel({ initialSize, initialDuration }: AimPanelProps) {
         now !== null && isAimExpired(run, now, durationMs) ? finishAim(run, now, durationMs) : run;
     const running = settled.startedAt !== null && settled.endedAt === null;
     const finished = settled.endedAt !== null;
+    const { ref: resultRef, scrollToResult } = useResultScroll<HTMLElement>();
+    const { ref: arenaRef, fitIntoView } = useFitIntoView();
+
+    // Opening this mode from the switch above frames the arena on screen. Only
+    // on the switch itself — never on load, where a shared link to this mode
+    // should not yank the page — so the last state is held in a ref.
+    const wasActive = useRef(active);
+
+    useEffect(() => {
+        if (active && !wasActive.current) {
+            fitIntoView();
+        }
+
+        wasActive.current = active;
+    }, [active, fitIntoView]);
     const summary = summarizeAim(settled);
     const finalHits = finished ? summary.hits : 0;
     const newBest = finished && finalHits > bestBefore;
@@ -106,6 +136,15 @@ export function AimPanel({ initialSize, initialDuration }: AimPanelProps) {
         }
     }, [bestKey, finalHits]);
 
+    // The result is drawn below the arena when the run ends — by the clock or
+    // by the last press — which is below the fold on a laptop. Bring it up
+    // once per finished run; the hook leaves it alone if it is already in view.
+    useEffect(() => {
+        if (finished) {
+            scrollToResult();
+        }
+    }, [finished, scrollToResult]);
+
     const remainingMs =
         settled.startedAt === null
             ? durationMs
@@ -118,6 +157,9 @@ export function AimPanel({ initialSize, initialDuration }: AimPanelProps) {
         setRun(createAimRun());
         setNow(null);
         setMarks([]);
+        // From the result below, or a setting above: glide back to the arena
+        // so the next Start is already on screen.
+        fitIntoView();
     }
 
     function handlePointerDown(event: PointerEvent<SVGSVGElement>) {
@@ -136,6 +178,9 @@ export function AimPanel({ initialSize, initialDuration }: AimPanelProps) {
                 setBestBefore(best ?? 0);
                 setRun(startAim(AIM_TARGET_RADIUS[size], at, cryptoRandomBytes));
                 setNow(at);
+                // Instant, not smooth: the clock is already running, and a
+                // glide would be timed as part of the first flick.
+                fitIntoView("instant");
             }
 
             return;
@@ -179,7 +224,7 @@ export function AimPanel({ initialSize, initialDuration }: AimPanelProps) {
     return (
         <Card className="gap-0 overflow-hidden p-0">
             <div className="border-border/70 flex flex-col gap-3 border-b p-4 sm:p-5 lg:flex-row lg:items-end">
-                <div className="grid flex-1 gap-3 sm:grid-cols-2">
+                <div className="grid flex-1 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.8fr)]">
                     <div className="flex min-w-0 flex-col gap-1.5">
                         <Label id={sizeLabelId} className="text-muted-foreground text-xs">
                             {t("size")}
@@ -221,6 +266,16 @@ export function AimPanel({ initialSize, initialDuration }: AimPanelProps) {
                             }}
                         />
                     </div>
+                    {/* Scenery only: changing it mid-run keeps the run going. */}
+                    <OptionSelect
+                        label={t("scene")}
+                        value={scene}
+                        values={AIM_SCENES}
+                        items={Object.fromEntries(
+                            AIM_SCENES.map((value) => [value, t(`scenes.${value}`)]),
+                        )}
+                        onChange={setScene}
+                    />
                 </div>
                 <Button
                     variant="outline"
@@ -237,142 +292,106 @@ export function AimPanel({ initialSize, initialDuration }: AimPanelProps) {
             <div className="flex flex-col gap-3 p-4 sm:p-5">
                 <StepLabel step={1}>{t("stepShoot")}</StepLabel>
 
-                <dl className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-                    <Figure
-                        label={t("timeLeft")}
-                        value={t("seconds", {
-                            value: formatter.number(Math.ceil(remainingMs / 1000)),
-                        })}
-                        emphasis={running}
-                    />
-                    <Figure label={t("hits")} value={whole(summary.hits)} />
-                    <Figure
-                        label={t("accuracy")}
-                        value={settled.shots.length === 0 ? "—" : percent(summary.accuracy)}
-                    />
-                    <Figure label={t("medianTime")} value={ms(summary.medianTimeMs)} />
-                    <Figure label={t("best")} value={best === undefined ? "—" : whole(best)} />
-                </dl>
+                {/* The scoreboard and the arena, fitted to the screen together
+                    on Start: playing on half an arena is not a test. */}
+                <div ref={arenaRef} className="flex flex-col gap-3">
+                    <dl className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                        <Figure
+                            label={t("timeLeft")}
+                            value={t("seconds", {
+                                value: formatter.number(Math.ceil(remainingMs / 1000)),
+                            })}
+                            emphasis={running}
+                        />
+                        <Figure label={t("hits")} value={whole(summary.hits)} />
+                        <Figure
+                            label={t("accuracy")}
+                            value={settled.shots.length === 0 ? "—" : percent(summary.accuracy)}
+                        />
+                        <Figure label={t("medianTime")} value={ms(summary.medianTimeMs)} />
+                        <Figure label={t("best")} value={best === undefined ? "—" : whole(best)} />
+                    </dl>
 
-                {/* The arena. A fixed aspect ratio, so arena units map to the
+                    {/* The arena. A fixed aspect ratio, so arena units map to the
                     box the same way at every width and a target is round. */}
-                <div className="bg-muted/20 ring-border/70 relative overflow-hidden rounded-2xl ring-1 ring-inset">
-                    <svg
-                        viewBox={`0 0 ${AIM_ARENA.width} ${AIM_ARENA.height}`}
-                        role="application"
-                        aria-label={t("arenaLabel")}
-                        aria-describedby={hintId}
-                        onPointerDown={handlePointerDown}
-                        onContextMenu={(event) => event.preventDefault()}
-                        className="block h-auto w-full cursor-crosshair touch-none select-none"
-                    >
-                        {/* A faint grid, for a sense of distance and nothing more. */}
-                        {Array.from({ length: 9 }, (_, index) => (
-                            <line
-                                key={`v${index}`}
-                                x1={(index + 1) * 100}
-                                x2={(index + 1) * 100}
-                                y1={0}
-                                y2={AIM_ARENA.height}
-                                className="stroke-border/50"
-                                strokeWidth={1}
-                            />
-                        ))}
-                        {Array.from({ length: 5 }, (_, index) => (
-                            <line
-                                key={`h${index}`}
-                                x1={0}
-                                x2={AIM_ARENA.width}
-                                y1={(index + 1) * 93.33}
-                                y2={(index + 1) * 93.33}
-                                className="stroke-border/50"
-                                strokeWidth={1}
-                            />
-                        ))}
+                    <div className="bg-muted/20 ring-border/70 relative overflow-hidden rounded-2xl ring-1 ring-inset">
+                        <svg
+                            viewBox={`0 0 ${AIM_ARENA.width} ${AIM_ARENA.height}`}
+                            role="application"
+                            aria-label={t("arenaLabel")}
+                            aria-describedby={hintId}
+                            onPointerDown={handlePointerDown}
+                            onContextMenu={(event) => event.preventDefault()}
+                            className="block h-auto w-full cursor-crosshair touch-none select-none"
+                        >
+                            <AimSceneBackdrop scene={scene} />
 
-                        {marks.map((mark) =>
-                            mark.hit ? (
-                                <circle
-                                    key={mark.id}
-                                    cx={mark.x}
-                                    cy={mark.y}
-                                    r={4}
-                                    className="fill-success animate-out fade-out fill-mode-forwards duration-700"
-                                />
-                            ) : (
-                                <g
-                                    key={mark.id}
-                                    className="stroke-destructive animate-out fade-out fill-mode-forwards duration-700"
-                                    strokeWidth={2.5}
-                                    strokeLinecap="round"
-                                >
-                                    <line
-                                        x1={mark.x - 6}
-                                        y1={mark.y - 6}
-                                        x2={mark.x + 6}
-                                        y2={mark.y + 6}
+                            {marks.map((mark) =>
+                                mark.hit ? (
+                                    <circle
+                                        key={mark.id}
+                                        cx={mark.x}
+                                        cy={mark.y}
+                                        r={4}
+                                        className="fill-success animate-out fade-out fill-mode-forwards duration-700"
                                     />
-                                    <line
-                                        x1={mark.x - 6}
-                                        y1={mark.y + 6}
-                                        x2={mark.x + 6}
-                                        y2={mark.y - 6}
+                                ) : (
+                                    <g
+                                        key={mark.id}
+                                        className="stroke-destructive animate-out fade-out fill-mode-forwards duration-700"
+                                        strokeWidth={2.5}
+                                        strokeLinecap="round"
+                                    >
+                                        <line
+                                            x1={mark.x - 6}
+                                            y1={mark.y - 6}
+                                            x2={mark.x + 6}
+                                            y2={mark.y + 6}
+                                        />
+                                        <line
+                                            x1={mark.x - 6}
+                                            y1={mark.y + 6}
+                                            x2={mark.x + 6}
+                                            y2={mark.y - 6}
+                                        />
+                                    </g>
+                                ),
+                            )}
+
+                            {settled.startedAt === null && (
+                                <g className="text-primary pointer-events-none">
+                                    <circle
+                                        cx={ARENA_CENTRE.x}
+                                        cy={ARENA_CENTRE.y}
+                                        r={START_RADIUS}
+                                        className="fill-card/90 stroke-primary"
+                                        strokeWidth={2.5}
                                     />
+                                    <text
+                                        x={ARENA_CENTRE.x}
+                                        y={ARENA_CENTRE.y}
+                                        textAnchor="middle"
+                                        dominantBaseline="central"
+                                        className="fill-primary text-[17px] font-medium"
+                                    >
+                                        {t("start")}
+                                    </text>
                                 </g>
-                            ),
-                        )}
+                            )}
 
-                        {settled.startedAt === null && (
-                            <g className="text-primary pointer-events-none">
-                                <circle
-                                    cx={ARENA_CENTRE.x}
-                                    cy={ARENA_CENTRE.y}
-                                    r={START_RADIUS}
-                                    className="fill-primary/12 stroke-primary"
-                                    strokeWidth={2}
-                                />
-                                <text
-                                    x={ARENA_CENTRE.x}
-                                    y={ARENA_CENTRE.y}
-                                    textAnchor="middle"
-                                    dominantBaseline="central"
-                                    className="fill-primary text-[17px] font-medium"
+                            {target !== null && (
+                                // Keyed by id, so every new target replays the
+                                // entrance rather than sliding from the last spot.
+                                <g
+                                    key={target.id}
+                                    className="animate-in zoom-in-50 fade-in pointer-events-none duration-150"
+                                    style={{ transformOrigin: `${target.x}px ${target.y}px` }}
                                 >
-                                    {t("start")}
-                                </text>
-                            </g>
-                        )}
-
-                        {target !== null && (
-                            // Keyed by id, so every new target replays the
-                            // entrance rather than sliding from the last spot.
-                            <g
-                                key={target.id}
-                                className="animate-in zoom-in-50 fade-in pointer-events-none duration-150"
-                                style={{ transformOrigin: `${target.x}px ${target.y}px` }}
-                            >
-                                <circle
-                                    cx={target.x}
-                                    cy={target.y}
-                                    r={target.radius}
-                                    className="fill-primary/15 stroke-primary"
-                                    strokeWidth={2}
-                                />
-                                <circle
-                                    cx={target.x}
-                                    cy={target.y}
-                                    r={target.radius * 0.55}
-                                    className="fill-primary/30"
-                                />
-                                <circle
-                                    cx={target.x}
-                                    cy={target.y}
-                                    r={Math.max(2.5, target.radius * 0.12)}
-                                    className="fill-primary"
-                                />
-                            </g>
-                        )}
-                    </svg>
+                                    <AimVillainTarget target={target} />
+                                </g>
+                            )}
+                        </svg>
+                    </div>
                 </div>
 
                 <p id={hintId} className="text-muted-foreground text-[0.75rem] leading-5">
@@ -382,6 +401,7 @@ export function AimPanel({ initialSize, initialDuration }: AimPanelProps) {
 
             {finished && (
                 <section
+                    ref={resultRef}
                     aria-label={t("result.title")}
                     className="border-border/70 flex flex-col gap-4 border-t p-4 sm:p-5"
                 >

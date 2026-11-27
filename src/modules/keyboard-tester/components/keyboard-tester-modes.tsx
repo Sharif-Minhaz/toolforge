@@ -59,7 +59,7 @@ export function KeyboardTesterModes({ initialMode, keys, typing }: KeyboardTeste
                 <KeyboardTesterWorkbench {...keys} />
             </div>
             <div hidden={mode !== "typing"}>
-                <TypingPanel {...typing} />
+                <TypingPanel {...typing} active={mode === "typing"} />
             </div>
         </div>
     );

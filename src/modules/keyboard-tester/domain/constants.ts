@@ -3,6 +3,7 @@ import type {
     KeyboardStandard,
     KeyLabelSystem,
     TypingDuration,
+    TypingExtras,
     TypingLanguage,
 } from "../types";
 
@@ -82,3 +83,30 @@ export const MAX_TYPED_WORD_LENGTH = 40;
 
 /** Seconds of speed needed before consistency means anything. */
 export const MIN_CONSISTENCY_SECONDS = 3;
+
+export const DEFAULT_TYPING_EXTRAS: TypingExtras = {
+    capitals: false,
+    camelCase: false,
+    symbols: false,
+    numbers: false,
+};
+
+/**
+ * How often each extra turns up, in percent of words. Enough that a minute's
+ * run meets each one a dozen times or more, few enough that the run is still
+ * mostly words — a test that is all symbols measures the symbol row, not typing.
+ */
+export const TYPING_EXTRA_CHANCE = {
+    /** Of words, a capital first letter. */
+    capitalised: 30,
+    /** Of words, all capitals. */
+    shouted: 5,
+    /** Of words, joined with the next one or two into camelCase. */
+    camelCase: 25,
+    /** Of words, followed by a punctuation mark. */
+    punctuated: 20,
+    /** Of words, wrapped in a pair of brackets or quotes. */
+    wrapped: 8,
+    /** Of words, replaced by a number. */
+    numbers: 12,
+} as const;

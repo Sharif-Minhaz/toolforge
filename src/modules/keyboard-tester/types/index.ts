@@ -239,3 +239,14 @@ export type TypingSummary = TypingCounts & {
     readonly perSecond: readonly number[];
     readonly corrections: number;
 };
+
+/**
+ * What a typing run mixes into plain lower-case words. Each is a switch: the
+ * test is one skill at a time by default, and these add the ones that slow a
+ * programmer or a writer down — the Shift key, joined words, the symbol row.
+ */
+export const TYPING_EXTRAS = ["capitals", "camelCase", "symbols", "numbers"] as const;
+
+export type TypingExtra = (typeof TYPING_EXTRAS)[number];
+
+export type TypingExtras = Readonly<Record<TypingExtra, boolean>>;

@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import {
     ARENA_CENTRE,
     describeBias,
+    pickVariant,
     finishAim,
     placeTarget,
     shootAim,
@@ -14,7 +15,7 @@ import {
     AIM_EDGE_MARGIN,
     AIM_MIN_TRAVEL,
 } from "@/modules/mouse-tester/domain/constants";
-import type { AimRun, AimTarget } from "@/modules/mouse-tester/types";
+import { AIM_VILLAINS, type AimRun, type AimTarget } from "@/modules/mouse-tester/types";
 
 const DURATION = 30_000;
 const RADIUS = 28;
@@ -187,5 +188,37 @@ describe("describeBias", () => {
         expect(describeBias({ x: 0, y: 0.2 })).toBe("low");
         expect(describeBias({ x: 0.2, y: 0.2 })).toBe("lowRight");
         expect(describeBias({ x: -0.2, y: -0.2 })).toBe("highLeft");
+    });
+});
+
+describe("pickVariant", () => {
+    test("covers every character and never repeats the last one", () => {
+        const random = seededBytes();
+        const seen = new Set<number>();
+        let previous: number | null = null;
+
+        for (let index = 0; index < 500; index += 1) {
+            const next = pickVariant(previous, random);
+
+            expect(next).not.toBe(previous);
+            expect(next).toBeGreaterThanOrEqual(0);
+            expect(next).toBeLessThan(AIM_VILLAINS.length);
+            seen.add(next);
+            previous = next;
+        }
+
+        expect(seen.size).toBe(AIM_VILLAINS.length);
+    });
+
+    test("a run's targets change character from one to the next", () => {
+        const random = seededBytes();
+        let run = startAim(RADIUS, 0, random);
+
+        for (let at = 100; at < 2000; at += 100) {
+            const before = targetOf(run).variant;
+
+            run = hitCentre(run, at, random);
+            expect(targetOf(run).variant).not.toBe(before);
+        }
     });
 });

@@ -18,6 +18,7 @@ import { MouseTesterModes } from "@/modules/mouse-tester/components/mouse-tester
 import { MouseTesterWorkbenchSkeleton } from "@/modules/mouse-tester/components/mouse-tester-workbench-skeleton";
 import {
     DEFAULT_AIM_DURATION,
+    DEFAULT_AIM_SCENE,
     DEFAULT_AIM_TARGET_SIZE,
     DEFAULT_FAULT_WINDOW_MS,
 } from "@/modules/mouse-tester/domain/constants";
@@ -139,7 +140,7 @@ export default async function MouseTesterPage({ params, searchParams }: MouseTes
 
 /**
  * The request-time half of the page: reads the mode, fault window and aim
- * settings a shared link names. Everything around it is prerendered.
+ * settings (size, time, scene) a shared link names. Everything around it is prerendered.
  */
 async function MouseTesterWorkbenchSection({ searchParams }: { searchParams: SearchParams }) {
     const parsed = mouseTesterSearchParamsSchema.safeParse(await searchParams);
@@ -152,6 +153,7 @@ async function MouseTesterWorkbenchSection({ searchParams }: { searchParams: Sea
             aim={{
                 initialSize: shared?.target ?? DEFAULT_AIM_TARGET_SIZE,
                 initialDuration: shared?.time ?? DEFAULT_AIM_DURATION,
+                initialScene: shared?.scene ?? DEFAULT_AIM_SCENE,
             }}
         />
     );

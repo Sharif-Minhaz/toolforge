@@ -1,6 +1,7 @@
 import { randomIndex } from "@/modules/tools/domain/random";
 import type { RandomBytes } from "@/modules/tools/types";
 
+import { AIM_VILLAINS } from "../types";
 import type { AimBiasDirection, AimPoint, AimRun, AimShot, AimSummary, AimTarget } from "../types";
 import {
     AIM_ARENA,
@@ -71,6 +72,21 @@ export function placeTarget(from: AimPoint, radius: number, randomBytes: RandomB
     return best;
 }
 
+/**
+ * A character for the next target, never the one just shot — two ghosts in a
+ * row read as the same target that failed to move.
+ */
+export function pickVariant(previous: number | null, randomBytes: RandomBytes): number {
+    if (previous === null) {
+        return randomIndex(AIM_VILLAINS.length, randomBytes);
+    }
+
+    // Draw from the others, then step over the previous one.
+    const draw = randomIndex(AIM_VILLAINS.length - 1, randomBytes);
+
+    return draw >= previous ? draw + 1 : draw;
+}
+
 function spawn(
     run: AimRun,
     from: AimPoint,
@@ -84,6 +100,7 @@ function spawn(
         radius,
         spawnedAt: at,
         from,
+        variant: pickVariant(run.target?.variant ?? null, randomBytes),
     };
 }
 
