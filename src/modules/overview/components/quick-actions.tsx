@@ -72,8 +72,8 @@ export async function QuickActions() {
         // out for the same reason, as did the Mouse Tester at 72, the
         // Keyboard Tester at 73, Image to Text at 76, What Is My IP at 82, the
         // Number to Words converter at 76, the Bijoy ↔ Unicode Converter at
-        // 80, Land Measurement at 75, Photo EXIF at 78 and the Internet Speed
-        // Test at 84.
+        // 80, Land Measurement at 75, Photo EXIF at 78, the Internet Speed
+        // Test at 84 and Age & Bangla Date at 79.
         {
             key: "wordToPdf",
             href: "/tools/pdf-converter",

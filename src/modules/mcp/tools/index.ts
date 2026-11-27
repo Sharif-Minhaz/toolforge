@@ -1,5 +1,6 @@
 import type { McpTool } from "../types";
 import { aesCryptTool } from "./aes";
+import { ageCalculatorCalculateTool, ageCalculatorConvertTool } from "./age-calculator";
 import { base64ConvertTool } from "./base64";
 import { bijoyUnicodeConvertTool } from "./bijoy-unicode";
 import { bsonConvertTool } from "./bson";
@@ -148,6 +149,8 @@ import { uuidGenerateTool } from "./uuid";
  */
 export const MCP_TOOLS: readonly McpTool[] = [
     aesCryptTool,
+    ageCalculatorCalculateTool,
+    ageCalculatorConvertTool,
     base64ConvertTool,
     bijoyUnicodeConvertTool,
     bsonConvertTool,

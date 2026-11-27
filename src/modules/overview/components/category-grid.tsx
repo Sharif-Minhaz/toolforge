@@ -2,6 +2,7 @@ import {
     IconAdjustmentsHorizontal,
     IconAi,
     IconArrowsLeftRight,
+    IconCalculator,
     IconCube,
     IconDeviceDesktop,
     IconPhoto,
@@ -32,6 +33,7 @@ const CATEGORY_ICON: Record<ToolCategory, Icon> = {
     media: IconPhoto,
     ai: IconAi,
     hardware: IconDeviceDesktop,
+    calculators: IconCalculator,
 };
 
 export async function CategoryGrid() {

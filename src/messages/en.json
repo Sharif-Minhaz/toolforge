@@ -146,6 +146,10 @@
         "hardware": {
             "name": "Hardware",
             "description": "Put the devices on your desk through their paces, and find out what is failing."
+        },
+        "calculators": {
+            "name": "Calculators",
+            "description": "Work out what a figure comes to — in another unit, or in words."
         }
     },
     "tools": {
@@ -401,6 +405,10 @@
         "image-to-3d": {
             "name": "Image to 3D Model",
             "description": "Turn a picture into a real 3D model in your browser — brightness, transparency or a depth map becomes height, the relief gets a solid back, and it downloads as GLB, OBJ, STL or PLY for Blender or a 3D printer."
+        },
+        "age-calculator": {
+            "name": "Age & Bangla Date",
+            "description": "Work out an age on a job circular's cut-off date to the day, check it against the age limit, and convert dates between English, বঙ্গাব্দ and Hijri."
         }
     },
     "overview": {
@@ -7742,6 +7750,186 @@
                 "a5": "The largest everyday thing your land is at least as big as, drawn beside it at the same scale: a single bed (1.9 × 0.9 m), a car parking space (5 × 2.5 m), a badminton court (13.4 × 6.1 m), a tennis court (23.77 × 10.97 m), a futsal court (40 × 20 m) or a football pitch (105 × 68 m). So five কাঠা reads as about 1.3 tennis courts rather than a speck on a pitch. Land of a pitch or more is laid out on pitches, up to thirty of them, after which the count says the rest.",
                 "q6": "How accurate are the figures?",
                 "a6": "Exact wherever the units are defined exactly — a foot is exactly 0.3048 m and an acre exactly 43,560 sq ft — and shown to four decimal places, or four significant digits for anything smaller than one. The figure you typed is always shown exactly as you typed it, never as a rounded round trip."
+            }
+        }
+    },
+    "ageCalculator": {
+        "meta": {
+            "title": "Age Calculator for Job Circulars, with Bangla (বঙ্গাব্দ) and Hijri Dates",
+            "description": "Calculate your age on a circular's cut-off date in years, months and days, check it against the minimum and maximum age with the COVID-19 relaxation date, and convert any date to the revised 2019 Bangla calendar (বঙ্গাব্দ) and Hijri. Today is counted in Bangladesh, and nothing leaves your browser."
+        },
+        "hero": {
+            "eyebrow": "Calculators",
+            "title": "Age & Bangla Date",
+            "subtitle": "Find your exact age on a circular's cut-off date and whether it is inside the age limit — with every date named in English, বঙ্গাব্দ and Hijri.",
+            "badgeCircular": "Circular age limits",
+            "badgeBangla": "Revised বঙ্গাব্দ calendar",
+            "badgeOffline": "Works offline"
+        },
+        "workbench": {
+            "modeLabel": "Calculate",
+            "modes": {
+                "age": "Age on a date",
+                "convert": "Convert a date"
+            },
+            "modeHints": {
+                "age": "Your completed years, months and days on one date, and whether they fit a circular's age limit.",
+                "convert": "One day in the English, Bangla (বঙ্গাব্দ) and Hijri calendars."
+            },
+            "birthLabel": "Date of birth",
+            "referenceLabel": "Age on",
+            "datePlaceholder": "DD/MM/YYYY",
+            "dateHint": "Day first, as Bangladesh writes it: 12/05/1998. Bangla digits and 1998-05-12 work too.",
+            "referenceHint": "The circular's cut-off date. Today in Bangladesh is {today}.",
+            "today": "Today",
+            "clearField": "Clear",
+            "limitsLabel": "Age limit",
+            "limitsHint": "From the circular. Leave a side blank to skip it.",
+            "minLabel": "Minimum age",
+            "maxLabel": "Maximum age",
+            "limitHint": "Whole years.",
+            "presetsLabel": "Common limits",
+            "relaxationLabel": "Relaxation date",
+            "relaxationHint": "Only if the circular also counts the maximum on another date — the 2020 COVID-19 notices used 25 March 2020.",
+            "covidPreset": "COVID-19 · 25/03/2020",
+            "hijriAdjustmentLabel": "Hijri adjustment",
+            "hijriAdjustmentHint": "Bangladesh begins each Hijri month on a local moon sighting, a day or two from the arithmetic calendar. Shift it to match the date announced.",
+            "outputLabel": "Result",
+            "emptyResult": "Enter a date of birth and the age appears here.",
+            "ageLabel": "Age on {date}",
+            "ageSpan": "{years, plural, one {# year} other {# years}}, {months, plural, one {# month} other {# months}}, {days, plural, one {# day} other {# days}}",
+            "copyAge": "Copy the age",
+            "totalMonths": "Total months",
+            "totalWeeks": "Total weeks",
+            "totalDays": "Total days",
+            "nextBirthdayLabel": "Next birthday",
+            "nextBirthdayValue": "{date} — turns {age, number}, in {days, plural, one {# day} other {# days}}",
+            "birthdayToday": "Today — turns {age, number}",
+            "bornOnLabel": "Born on",
+            "referenceOnLabel": "Counted on",
+            "relaxationOnLabel": "Relaxation date",
+            "calendars": {
+                "gregorian": "English",
+                "bangla": "Bangla (বঙ্গাব্দ)",
+                "hijri": "Hijri"
+            },
+            "gregorianDate": "{weekday}, {day} {month} {year}",
+            "hijriDate": "{day} {month} {year} AH",
+            "rules": {
+                "2019": "Revised calendar of 2019",
+                "1987": "The 1987 calendar, in force on that day"
+            },
+            "beforeReform": "Before 1394 BS no fixed calendar was official. The 1987 month lengths are applied backwards; the almanac of the time may differ by a day.",
+            "hijriNote": "Arithmetic date. The one announced in Bangladesh can differ by a day or two — shift it under Options.",
+            "eligibility": {
+                "eligible": "Within the age limit",
+                "eligibleByRelaxation": "Within the age limit, through the relaxation date",
+                "ineligible": "Outside the age limit",
+                "minPass": "At least {years, number} on {date}. Anyone born on or before {born} is.",
+                "minFail": "Under {years, number} on {date}. Must be born on or before {born}.",
+                "maxPass": "At most {years, number} on {date}. Anyone born on or after {born} is.",
+                "maxFail": "Over {years, number} on {date}. Must be born on or after {born}.",
+                "edgeRule": "“At most {years, number}” runs up to and including the birthday itself; the day after is over."
+            },
+            "convert": {
+                "calendarLabel": "Calendar",
+                "inputLabel": "Date",
+                "dayLabel": "Day",
+                "monthLabel": "Month",
+                "yearLabel": "Year",
+                "outputLabel": "The same day",
+                "cardTitle": "In every calendar",
+                "emptyResult": "Enter a day, a month and a year, and the same day appears here in all three calendars.",
+                "hints": {
+                    "gregorian": "The English (Gregorian) calendar.",
+                    "bangla": "Bangladesh's calendar: the 2019 revision from 1426 BS, the 1987 calendar before it.",
+                    "hijri": "The arithmetic Hijri calendar, with the adjustment under Options applied."
+                }
+            },
+            "shortDate": "{day} {month} {year}",
+            "datesLabel": "Your dates",
+            "copyDates": "Copy the dates",
+            "pickDate": "Pick from a calendar"
+        },
+        "errors": {
+            "date": {
+                "empty": "Enter a date.",
+                "invalidFormat": "Write the date day first — DD/MM/YYYY.",
+                "invalidDate": "That month has no such day.",
+                "outOfRange": "Pick a year from {min} to {max}."
+            },
+            "birthAfterReference": "The date of birth is after the day the age is counted on.",
+            "minAboveMax": "The minimum age is above the maximum.",
+            "limitOutOfRange": "An age limit is a whole number from 0 to {max}.",
+            "convertInvalidDate": "That month has no such day in this calendar.",
+            "convertOutOfRange": "That day falls outside the years {min} to {max}."
+        },
+        "hijriMonths": {
+            "muharram": "Muharram",
+            "safar": "Safar",
+            "rabiAwwal": "Rabi al-Awwal",
+            "rabiThani": "Rabi al-Thani",
+            "jumadaUla": "Jumada al-Ula",
+            "jumadaAkhirah": "Jumada al-Akhirah",
+            "rajab": "Rajab",
+            "shaban": "Sha'ban",
+            "ramadan": "Ramadan",
+            "shawwal": "Shawwal",
+            "dhulQadah": "Dhu al-Qa'dah",
+            "dhulHijjah": "Dhu al-Hijjah"
+        },
+        "gregorianMonths": {
+            "january": "January",
+            "february": "February",
+            "march": "March",
+            "april": "April",
+            "may": "May",
+            "june": "June",
+            "july": "July",
+            "august": "August",
+            "september": "September",
+            "october": "October",
+            "november": "November",
+            "december": "December"
+        },
+        "weekdays": {
+            "sunday": "Sunday",
+            "monday": "Monday",
+            "tuesday": "Tuesday",
+            "wednesday": "Wednesday",
+            "thursday": "Thursday",
+            "friday": "Friday",
+            "saturday": "Saturday"
+        },
+        "toast": {
+            "copied": "Copied",
+            "copyFailedEmpty": "There is nothing to copy yet.",
+            "copyFailedUnsupported": "This browser will not let the page reach the clipboard.",
+            "copyFailedDenied": "Clipboard access was refused. Select the text and copy it instead."
+        },
+        "article": {
+            "understanding": {
+                "title": "Counting an age the way a circular does",
+                "p1": "A Bangladeshi job circular rarely asks how old you are. It asks how old you were on one date, the cut-off, and turns away anyone a single day outside its limit. The figure it wants is completed years, months and days, and the arithmetic is easy to get wrong by hand at the end of a month.",
+                "example": "<code>12/05/1998</code> on <code>31/12/2026</code> → 28 years, 7 months, 19 days · born on a Tuesday, ২৯ বৈশাখ ১৪০৫ বঙ্গাব্দ",
+                "p2": "Every date is also named in the Bangla calendar under the rule in force on it: Bangla Academy's 2019 revision from 1426 BS, which put 21 February back on ৮ ফাল্গুন and 16 December on ১ পৌষ, and the 1987 calendar before that — so a birth date reads the way a certificate of the time does. The page asks the server for today's date once, and everything else is worked out in your browser."
+            },
+            "faq": {
+                "title": "Frequently asked questions",
+                "q1": "Is the 30th birthday still inside “at most 30”?",
+                "a1": "Yes. A maximum of 30 runs up to 30 years, 0 months and 0 days on the cut-off date, so the 30th birthday itself is inside it and the day after is not. The result names the earliest date of birth that passes, so you can hold your certificate against one date instead of the arithmetic.",
+                "q2": "How does the COVID-19 age relaxation work?",
+                "a2": "The 2020 notices let circulars count the maximum age as of 25 March 2020 as well as on their own date, because recruitment stopped during the lockdown. Enter that date as the relaxation date — the button fills it in — and you pass the maximum if you were inside it on either date. The minimum is still counted on the circular's own date. Whether a relaxation applies, and to which posts, is decided notice by notice; BCS was excluded, so read the circular itself.",
+                "q3": "Why does a birth date in 2000 show a different Bangla day here?",
+                "a3": "Because it is converted under the calendar in force in 2000. From 1987 to 2019 Bangladesh's calendar gave বৈশাখ to ভাদ্র 31 days and ফাল্গুন 30, so 16 December 2000 was ২ পৌষ ১৪০৭. The 2019 revision made আশ্বিন 31 days and ফাল্গুন 29, which moves the same day to ১ পৌষ. Most converters apply the new rule to every year; a certificate issued at the time used the old one.",
+                "q4": "What about dates before 1987?",
+                "a4": "Bangladesh fixed its calendar in 1394 BS, on 14 April 1987. Before that the months followed the almanac (panjika), which set them astronomically, so no rule reproduces them exactly. The 1987 month lengths are applied backwards and those dates are marked; the almanac of the time may differ by a day. West Bengal's calendar is a different, astronomical one, and is not what this converts.",
+                "q5": "Why can the Hijri date be a day off?",
+                "a5": "The Hijri date here is the tabular Islamic calendar — arithmetic, and the same on every device. In Bangladesh each month begins when the new moon is sighted, as the Islamic Foundation announces, which can land a day or two either side. If the date you were told differs, shift it under Options; the shift applies to every date the tool names, in both directions.",
+                "q6": "How is somebody born on 29 February or the 31st counted?",
+                "a6": "By subtracting the fields and borrowing a month when the day comes out negative — the method taught by hand, and the one <code>java.time</code> uses. Somebody born on 29 February is 11 months 30 days old on 28 February of a common year and a year older on 1 March, which is also the day their birthday counts as for an age limit. Somebody born on 31 January is 1 month 1 day old on 1 March.",
+                "q7": "Whose “today” is today?",
+                "a7": "Bangladesh's. The page works out today's date in Dhaka when it loads, so a reader abroad late at night still gets the date the circular's office counts in."
             }
         }
     },

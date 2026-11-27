@@ -62,6 +62,7 @@ docs/
 | A free-text field                           | [`docs/patterns/input-limits.md`](docs/patterns/input-limits.md)                                                   |
 | The service worker, offline, a model or CDN | [`docs/patterns/offline.md`](docs/patterns/offline.md)                                                             |
 | `aes`                                       | [`docs/case-studies/aes.md`](docs/case-studies/aes.md)                                                             |
+| `age-calculator`                            | [`docs/case-studies/age-calculator.md`](docs/case-studies/age-calculator.md)                                       |
 | `background-remover`                        | [`docs/case-studies/background-remover.md`](docs/case-studies/background-remover.md)                               |
 | `bijoy-unicode`                             | [`docs/case-studies/bijoy-unicode.md`](docs/case-studies/bijoy-unicode.md)                                         |
 | `blur-placeholder`                          | [`docs/case-studies/blurhash.md`](docs/case-studies/blurhash.md)                                                   |

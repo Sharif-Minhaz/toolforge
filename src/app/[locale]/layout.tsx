@@ -538,6 +538,14 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
             errors: messages.landMeasurement.errors,
             toast: messages.landMeasurement.toast,
         },
+        ageCalculator: {
+            workbench: messages.ageCalculator.workbench,
+            errors: messages.ageCalculator.errors,
+            toast: messages.ageCalculator.toast,
+            hijriMonths: messages.ageCalculator.hijriMonths,
+            gregorianMonths: messages.ageCalculator.gregorianMonths,
+            weekdays: messages.ageCalculator.weekdays,
+        },
         photoExif: {
             workbench: messages.photoExif.workbench,
             errors: messages.photoExif.errors,

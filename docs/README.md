@@ -81,6 +81,7 @@ docs/
 │
 ├── case-studies/               what one subsystem cost, and what it taught
 │   ├── aes.md
+│   ├── age-calculator.md
 │   ├── background-remover.md
 │   ├── bijoy-unicode.md
 │   ├── blurhash.md
@@ -148,6 +149,7 @@ records a defect that was expensive to find and is easy to reintroduce.
 | Module                                   | Document                                                                                                                           |
 | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `aes`                                    | [`case-studies/aes.md`](case-studies/aes.md)                                                                                       |
+| `age-calculator`                         | [`case-studies/age-calculator.md`](case-studies/age-calculator.md)                                                                 |
 | `background-remover`                     | [`case-studies/background-remover.md`](case-studies/background-remover.md)                                                         |
 | `bijoy-unicode`                          | [`case-studies/bijoy-unicode.md`](case-studies/bijoy-unicode.md)                                                                   |
 | `blur-placeholder`                       | [`case-studies/blurhash.md`](case-studies/blurhash.md)                                                                             |
