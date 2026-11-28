@@ -56,6 +56,8 @@ export const OBJECT_JSON_SCHEMA = {
                         "taper",
                         "profile",
                         "color",
+                        "hollow",
+                        "inner_color",
                         "mirror",
                     ],
                     properties: {
@@ -77,6 +79,8 @@ export const OBJECT_JSON_SCHEMA = {
                             },
                         },
                         color: { type: "string", pattern: "^#[0-9a-fA-F]{6}$" },
+                        hollow: { type: "boolean" },
+                        inner_color: { type: "string", pattern: "^#[0-9a-fA-F]{6}$" },
                         mirror: { type: "boolean" },
                     },
                 },
@@ -101,9 +105,11 @@ Shapes:
 - cone: like a cylinder with taper 0; the point is at the + end of the axis.
 - sphere: an ellipsoid filling the box. Heads, bulbs, knobs, fruit.
 - capsule: a cylinder with rounded ends along its axis. Limbs, fingers, handles of tools.
-- torus: a ring around its axis. The two cross extents are the ring's outer width and height; the axis extent is how deep the tube is, usually thin. A mug or teapot handle is a torus with axis "z" whose centre sits on the body's edge, so half of the ring is hidden inside the body: e.g. size [4, 7, 1.5].
-- lathe: a turned shape around its axis. "profile" lists 3 to ${MAX_PROFILE_POINTS} [radius, height] points tracing the outline of ONE side only, from the bottom of the part to its top, heights always increasing. End at radius 0 if the top is closed. Never trace back down the other side. Units do not matter — the profile is stretched to fill the box. Use lathe for anything that could come off a potter's wheel or a lathe: bottles, vases, bowls, cups, lamp bases, chess pieces, columns, a fire hydrant's body.
+- torus: a ring around its axis. The two cross extents are the ring's outer width and height; the axis extent is the tube's thickness. Use it for every curved handle — mugs, cups, teapots, jugs, pots, baskets. A handle on the side is a torus with axis "z", placed level with where it joins the body: it is attached to the body's surface automatically and only its outer half is built, so give the full ring — twice as wide as the handle sticks out — and a thin tube, about 1 cm for a mug: e.g. size [6, 7, 1].
+- lathe: a turned shape around its axis. "profile" lists 3 to ${MAX_PROFILE_POINTS} [radius, height] points tracing the outline of ONE side only, from the bottom of the part to its top, heights always increasing. End at radius 0 only if the top is closed; a hollow part's profile ends at its rim. Never trace back down the other side. Units do not matter — the profile is stretched to fill the box. Use lathe for anything that could come off a potter's wheel or a lathe: bottles, vases, bowls, cups, lamp bases, chess pieces, columns, a fire hydrant's body.
 "taper" is 1 for every shape except a tapered box or cylinder. "profile" is [] for every shape except lathe.
+
+"hollow": true makes a cylinder or lathe an open container — a thin wall and a floor around an empty inside, open at the top. Use it for every cup, mug, glass, bowl, vase, pot, jar, bucket or planter whose opening is at the top. The inside is built for you: never add separate parts for the interior, the liquid, the opening or the rim, and never cover the top. "inner_color" is the colour of the inside, which is often a different glaze — a blue mug that is white inside has inner_color "#f2efe6". For anything not hollow, inner_color is the same as color.
 
 "mirror": true adds a copy mirrored across x = 0. Use it only for things that really come in identical left/right pairs — legs, arms, ears, eyes, wheels, matching side nozzles — and describe only the one on the +x side. A part that exists once, or on the centre line, is never mirrored: a teapot's handle and its spout are not a pair.
 

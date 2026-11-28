@@ -1,4 +1,5 @@
 import type { Mesh, MeshGroup } from "../types";
+import { filePartLabel } from "./filenames";
 
 /** Enough places for a micrometre on a two-metre model, and no more. */
 function decimal(value: number): string {
@@ -12,10 +13,10 @@ function decimal(value: number): string {
  * the rest of the line is silently dropped or read as a second name. The
  * model's names are plain English with spaces, so they are slugged, and
  * numbered so two parts both called "leg" stay two objects — which is why this
- * needs no `filePartNames`.
+ * needs only `filePartLabel`, not `filePartNames`.
  */
 export function objToken(group: MeshGroup, index: number): string {
-    const slug = (group.mirrored ? `${group.name} mirrored` : group.name)
+    const slug = filePartLabel(group)
         .normalize("NFKD")
         .replace(/[^A-Za-z0-9]+/g, "_")
         .replace(/^_+|_+$/g, "")

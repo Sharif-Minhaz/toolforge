@@ -380,8 +380,10 @@ closed** (`IMAGE_TO_3D_API`, `IMAGE_TO_3D_API_KEY`, `IMAGE_TO_3D_IP_SALT`).
 Only the description crosses back. The mesh is built in the tab from it, so height, smoothness and
 format are free to change. Every primitive is a closed solid facing outward — checked rather than
 claimed, by counting every directed edge by _position_ and demanding each is answered from the other
-side, plus the signed volume, for every shape on every axis at every smoothness. Parts overlap
-rather than being unioned, which slicers accept as they are. The result is a blockout — the right
+side, plus the signed volume, for every shape on every axis at every smoothness. Two things the
+model is bad at are done in code instead: an open vessel is one part with `hollow: true`, built as a
+wall and floor with its own inside colour, and a ring beside a body becomes a half-ring handle set
+into its wall. Parts overlap rather than being unioned, which slicers accept as they are. The result is a blockout — the right
 silhouette, proportions and colours — not a scan, and the article says so.
 
 Its four writers are its own (`src/modules/image-to-3d/domain/{glb,obj,ply,stl}.ts`) and every one

@@ -77,11 +77,12 @@ which revolves into the same solid twice, inside itself. A teapot came back
 with every turned part doubled.
 
 The paragraph is gone. The prompt now says _one side only, heights increasing_,
-and cups are solid: there is no subtraction in this vocabulary, and a solid mug
-is a correct blockout. The **parser** enforces it as well, because a prompt is
-a request and not a contract. `endAtAxis` cuts a profile at its first return to
-radius zero, which turns every traced-back outline the model ever sent into the
-solid it meant. The test uses the exact lid the model sent.
+and the **parser** enforces it as well, because a prompt is a request and not a
+contract. `endAtAxis` cuts a profile at its first return to radius zero, which
+turns every traced-back outline the model ever sent into the solid it meant. The
+test uses the exact lid the model sent.
+
+What replaced the example is lesson seven: the cavity is not the model's to draw.
 
 ## Five — the model describes both sides _and_ marks one mirrored
 
@@ -102,9 +103,45 @@ are written. The mirrored copy says `mirrored` in English, like the rest of the
 model's names, and any name still repeated is numbered. The page shows its own
 localised label instead and writes nothing in English to the screen.
 
+## Seven — a cup is one word and some arithmetic
+
+Readers' first complaint about the rebuilt tool was that every mug was a full
+cylinder. The model had tried three ways to say "open", and each built wrong:
+a cream "mug interior" disc sitting on a solid body, a solid "mug rim" cylinder
+laid across the mouth like a lid, and — once told what "hollow" means — a
+profile that still ended at radius zero across the top, because the prompt
+also said _end at radius 0 if the top is closed_ and it applied that to
+everything.
+
+So the cavity became a flag. `hollow: true` on a cylinder or lathe makes
+`hollowShell` build the outside, a rim, the outline offset inward by a wall of a
+tenth of the radius, and a floor — one closed solid, open at the top, with the
+inside flagged so the assembler can give it `inner_color` as a group of its own
+(a blue cup with a cream glaze). The model sets the flag reliably; all three
+mugs in the next run did. And `tidyVessels` reads the model's older habits as
+intent rather than refusing them: an "interior" part inside a container makes
+the container hollow and lends it its colour; a trailing radius-zero point on a
+hollow lathe is shed; a thin solid "rim" over the mouth becomes a rolled ring —
+an enamel mug's dark lip — and a thick one is dropped as the lid it would be.
+Matched by name, because the name is the only place the model says what a part
+is _for_.
+
+## Eight — a handle is half a ring, set into the wall
+
+A whole ring centred on the body's edge pokes its inner half into a hollow cup,
+and floats wherever the model's estimate of the radius put it. `attachRing`
+finds the biggest upright body level with the ring, moves the ring's centre to
+just inside that body's surface — taking the surface where the body is
+narrowest across the handle's span, so a cup tapering to its foot does not
+leave the lower end standing proud — and builds only the outer half, its cut
+ends capped and buried in the wall. A ring whose hole faces the body (axis
+pointing at it, a coin glued to the side) is turned a quarter first. The tube
+is round and a little under a third of the ring's narrower extent; the first
+version honoured the model's depth and made every handle a thick band.
+
 ---
 
-## Seven — "every edge used once" says nothing about holes
+## Nine — "every edge used once" says nothing about holes
 
 Carried over from the first version, because it still holds and it is still
 cheap to break.
@@ -127,7 +164,7 @@ separate patches, so they get crisp normals, and they share positions but not
 indices. An index-keyed count calls every rim a hole. `+ 0` after `toFixed`
 collapses negative zero, or a seam at `sin(±π)` reads as two places.
 
-## Eight — the reference reader changes your data
+## Ten — the reference reader changes your data
 
 Every writer is read back through three.js's loaders, because these bytes are
 opened by Blender, by slicers and by other people's renderers:
@@ -158,6 +195,7 @@ Measured live on 2026-11-28, thinking off, one pass:
 | drawn mug         | 2     | 7–9     | 19–23   |
 | Utah teapot photo | 5–6   | 19–23   | 34–40   |
 | fire hydrant      | 9     | 18–43   | 31–46   |
+| three mug photos  | 2–3   | 14–16   | 24–27   |
 
 The free plan is 10,000 neurons a day **per Cloudflare account**, and it is
 shared with every worker on that account. The Watermark Remover's FLUX call
@@ -174,7 +212,8 @@ costs ten times over.
   teapot's spout came back pointing at the viewer on every run. A refine pass —
   render, send the render back with the spec, ask for corrections — would
   double the cost and is the obvious next step if the budget allows.
-- **No subtraction.** Cups, bowls and vases are solid.
+- **No general subtraction.** Open vessels are a special case built in code
+  (lesson seven); a hole through a part, a drawer, a window is not expressible.
 - **Faces, animals and clothes** do not reduce to a handful of solids, and the
   article says so rather than letting a reader find out.
 

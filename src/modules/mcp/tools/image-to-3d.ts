@@ -83,6 +83,17 @@ const partSchema = z.object({
         .regex(/^#[0-9a-fA-F]{6}$/)
         .default("#9ca3af")
         .describe("The part's colour as #rrggbb"),
+    hollow: z
+        .boolean()
+        .default(false)
+        .describe(
+            "Cylinder or lathe only: an open container — cup, bowl, vase — built as a thin wall and floor, open at the top. Never add separate interior or lid parts",
+        ),
+    inner_color: z
+        .string()
+        .regex(/^#[0-9a-fA-F]{6}$/)
+        .optional()
+        .describe("The inside of a hollow part as #rrggbb, when it differs from `color`"),
     mirror: z
         .boolean()
         .default(false)
@@ -94,7 +105,7 @@ export const imageTo3dBuildTool = defineMcpTool({
     verb: "build",
     title: "Build a 3D model from primitives",
     description:
-        "Build a 3D model file from a description of an object as simple solids — boxes, cylinders, cones, spheres, capsules, rings and lathed profiles, each with a size, centre, colour and name — and return it as base64 GLB, OBJ (zipped with its material file), STL or PLY. Sizes are centimetres at real-world scale, Y up; the result is stood on the ground and centred whatever positions are given. Every part is a closed solid and becomes its own named, coloured object in GLB and OBJ. This does not look at a picture: describe the object yourself, part by part. GLB is in metres as glTF requires; the other three are in millimetres.",
+        "Build a 3D model file from a description of an object as simple solids — boxes, cylinders, cones, spheres, capsules, rings and lathed profiles, each with a size, centre, colour and name — and return it as base64 GLB, OBJ (zipped with its material file), STL or PLY. Sizes are centimetres at real-world scale, Y up; the result is stood on the ground and centred whatever positions are given. Cups, bowls and vases are one part with `hollow: true`. A ring level with a body and beside it becomes a handle: it is moved onto the body's surface and only its outer half is built. Every part is a closed solid and becomes its own named, coloured object in GLB and OBJ. This does not look at a picture: describe the object yourself, part by part. GLB is in metres as glTF requires; the other three are in millimetres.",
     kind: "offline",
     inputSchema: z.object({
         name: z.string().max(80).default("object").describe("What the object is"),

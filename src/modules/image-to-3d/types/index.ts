@@ -61,6 +61,13 @@ export type ObjectPart = {
     readonly profile: readonly (readonly [number, number])[];
     /** Straight sRGB, 0–255. */
     readonly color: Vector3;
+    /**
+     * Cylinders and lathes only: an open vessel — a cup, a bowl, a vase — built
+     * as a thin wall and a floor around a cavity open at the top.
+     */
+    readonly hollow: boolean;
+    /** The inside of a hollow part, which is often a different glaze. Straight sRGB. */
+    readonly innerColor: Vector3;
     /** Add a copy mirrored across x = 0 — the left leg, the other ear. */
     readonly mirror: boolean;
 };
@@ -108,6 +115,8 @@ export type MeshGroup = {
     readonly shape: PartShape;
     /** The copy `mirror` added. Same name in the file; the page labels it. */
     readonly mirrored: boolean;
+    /** The inside of a hollow part, given its own group for its own colour. */
+    readonly interior: boolean;
     /** Straight sRGB, 0–255. */
     readonly color: Vector3;
     readonly firstVertex: number;

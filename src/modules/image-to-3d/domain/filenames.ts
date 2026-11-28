@@ -27,19 +27,28 @@ export function modelFilename(stem: string, format: ModelFormat): string {
 export const OBJ_ENTRY_NAMES = { obj: "model.obj", mtl: "model.mtl" } as const;
 
 /**
+ * A part's own label in a file: its name, plus what the assembler made of it.
+ * English, like the model's names; the page shows its own localised label.
+ */
+export function filePartLabel(group: MeshGroup): string {
+    return [group.name, group.interior ? "inside" : null, group.mirrored ? "mirrored" : null]
+        .filter((word) => word !== null)
+        .join(" ");
+}
+
+/**
  * Every part's name as written into a file, unique across the model.
  *
  * Unique on purpose: two glTF nodes both called "foot" are renamed by every
  * reader that meets them — three to `foot_1`, Blender to `foot.001` — and the
- * reference test caught exactly that. The mirrored copy says so, in English
- * like the rest of the model's names (the page shows its own localised label),
- * and any name still repeated after that is numbered from its second use.
+ * reference test caught exactly that. Any label still repeated after
+ * `filePartLabel` is numbered from its second use.
  */
 export function filePartNames(groups: readonly MeshGroup[]): string[] {
     const seen = new Map<string, number>();
 
     return groups.map((group) => {
-        const base = group.mirrored ? `${group.name} mirrored` : group.name;
+        const base = filePartLabel(group);
         const uses = (seen.get(base) ?? 0) + 1;
 
         seen.set(base, uses);

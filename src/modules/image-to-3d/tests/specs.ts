@@ -12,6 +12,8 @@ export function part(overrides: Partial<ObjectPart> = {}): ObjectPart {
         taper: 1,
         profile: [],
         color: [200, 40, 30],
+        hollow: false,
+        innerColor: [200, 40, 30],
         mirror: false,
         ...overrides,
     };

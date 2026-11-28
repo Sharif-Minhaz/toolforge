@@ -6284,7 +6284,10 @@
             "detailName": "Smoothness",
             "heightName": "Height (mm)",
             "heightHint": "Starts at the object's real size as the model judged it. Every part scales together.",
-            "heightPendingHint": "Set once there is a model — it starts at the object's own size."
+            "heightPendingHint": "Set once there is a model — it starts at the object's own size.",
+            "generatingTitle": "Building your model…",
+            "generatingStatus": "Sent. Your model is being built below.",
+            "interiorPart": "{name} (inside)"
         },
         "details": {
             "lowName": "Low poly",
@@ -6344,13 +6347,13 @@
             "understanding": {
                 "title": "How a photo becomes a model",
                 "p1": "A vision model looks at your picture and writes down the object in it as simple solids — boxes, cylinders, spheres, rings and turned shapes — each with a size, a position and a colour. Your browser then builds those solids into a mesh and writes the file.",
-                "example": "a drawing of a red mug → <code>mug body</code>, a 12 cm cylinder, and <code>mug handle</code>, a ring — 896 triangles at medium smoothness",
+                "example": "a photo of a blue cup, cream inside → <code>mug body</code>, an 8 cm turned shape made hollow with a cream glaze, and <code>mug handle</code>, a half ring set into its wall — 1,048 triangles at medium smoothness",
                 "p2": "What you get is a blockout: the right silhouette, proportions and colours, the way a game prop or a toy is roughed out. It is not a scan — surface texture, printed text and fine detail are not carried over, and the back is the model's best guess."
             },
             "faq": {
                 "title": "Frequently asked questions",
                 "q1": "Will the model be an exact copy of my object?",
-                "a1": "No. It is rebuilt from simple solids by a model that reads one photograph, so you get the overall shape, the proportions and the colours, not the surface. Expect the occasional part pointing the wrong way — a spout facing you rather than sideways. Every part is its own named object in the file, so it is quick to turn in Blender.",
+                "a1": "No. It is rebuilt from simple solids by a model that reads one photograph, so you get the overall shape, the proportions and the colours, not the surface. Cups, bowls and vases come out hollow, and handles are attached to the body for you. Expect the occasional part pointing the wrong way — a spout facing you rather than sideways. Every part is its own named object in the file, so it is quick to turn in Blender.",
                 "q2": "Does my picture get uploaded?",
                 "a2": "Yes, a copy of it. When you press Generate, a downsized copy — at most 768 pixels across, as a JPEG — goes through this site's server to a vision model running on Cloudflare Workers AI. This site does not store it. The mesh and the file you download are then built in your own browser from the model's description.",
                 "q3": "Why is there a daily limit?",

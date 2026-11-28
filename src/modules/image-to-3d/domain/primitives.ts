@@ -20,6 +20,11 @@ export type Patch = {
     /** `vertexCount * 3`, in the part's own frame. */
     readonly positions: number[];
     readonly indices: number[];
+    /**
+     * True for the inside of a hollow vessel — the walls and floor a reader
+     * sees looking into a cup — which the assembler can give its own colour.
+     */
+    readonly inner?: boolean;
 };
 
 export type HalfExtents = {
@@ -29,7 +34,7 @@ export type HalfExtents = {
 };
 
 /** `[radius as a share of the cross half-extent, height in the part's own units]`. */
-type ProfilePoint = readonly [number, number];
+export type ProfilePoint = readonly [number, number];
 
 /**
  * How sharply a lathe profile may turn and still be shaded as one smooth
@@ -200,6 +205,7 @@ export function revolveProfile(
     profile: readonly ProfilePoint[],
     extents: HalfExtents,
     segments: number,
+    caps: { readonly start: boolean; readonly end: boolean } = { start: true, end: true },
 ): Patch[] {
     const points = dropRepeats(profile);
 
@@ -213,15 +219,87 @@ export function revolveProfile(
     const [bottomRadius, bottomHeight] = points[0];
     const [topRadius, topHeight] = points[points.length - 1];
 
-    if (bottomRadius > 0) {
+    if (caps.start && bottomRadius > 0) {
         patches.push(cap(bottomRadius, bottomHeight, extents, segments, -1));
     }
 
-    if (topRadius > 0) {
+    if (caps.end && topRadius > 0) {
         patches.push(cap(topRadius, topHeight, extents, segments, 1));
     }
 
     return patches;
+}
+
+/** The profile's radius at a height, by straight lines between its points. */
+export function radiusAt(points: readonly ProfilePoint[], height: number): number {
+    for (let index = 1; index < points.length; index += 1) {
+        const [lowRadius, low] = points[index - 1];
+        const [highRadius, high] = points[index];
+
+        if (height >= Math.min(low, high) && height <= Math.max(low, high)) {
+            const span = high - low;
+
+            return span === 0
+                ? Math.max(lowRadius, highRadius)
+                : lowRadius + ((height - low) / span) * (highRadius - lowRadius);
+        }
+    }
+
+    return points[points.length - 1][0];
+}
+
+/**
+ * An open vessel: the profile's outside, a rim, the same outline offset inward
+ * by the wall, and a floor — one closed solid with a cavity open at the top.
+ *
+ * Built here rather than asked of the model. Asked to trace a cup's inside
+ * itself, the model traced whole silhouettes and doubled every turned part;
+ * asked nothing, it modelled the inside as a separate cream-coloured disc
+ * sitting on a solid cylinder. "Hollow: true" is a word it gets right, and the
+ * wall is arithmetic. The inside patches are flagged so the assembler can
+ * paint them a glaze of their own.
+ *
+ * The wall is a tenth of the radius — 4 mm on an 8 cm mug — and the floor at
+ * least as thick, or six percent of the height on a tall one.
+ */
+export function hollowShell(
+    outline: readonly ProfilePoint[],
+    extents: HalfExtents,
+    segments: number,
+): Patch[] {
+    const outer = dropRepeats(outline);
+
+    if (outer.length < 2) {
+        return [];
+    }
+
+    const radius = (extents.hx + extents.hz) / 2;
+    const wall = Math.min(Math.max(0.1 * radius, 0.15), 0.5 * radius) / radius;
+    const bottom = outer[0][1];
+    const top = outer[outer.length - 1][1];
+    const floor = bottom + Math.max(wall * radius, 0.06 * (top - bottom));
+    const inset = (value: number) => Math.max(value - wall, 0.02);
+
+    const outside: ProfilePoint[] = [...outer, [inset(outer[outer.length - 1][0]), top]];
+    const inside: ProfilePoint[] = [
+        [inset(outer[outer.length - 1][0]), top],
+        ...outer
+            .filter(([, height]) => height > floor && height < top)
+            .toReversed()
+            .map(([value, height]) => [inset(value), height] as const),
+        [inset(radiusAt(outer, floor)), floor],
+        [0, floor],
+    ];
+
+    return [
+        // The outside keeps its base; its top ends on the rim's inner edge,
+        // where the inside begins, so the two meet by position and close.
+        ...revolveProfile(outside, extents, segments, { start: true, end: false }),
+        ...revolveProfile(inside, extents, segments, { start: false, end: false }).map((patch) => ({
+            ...patch,
+            inner: true,
+        })),
+    ];
 }
 
 /**
@@ -289,6 +367,11 @@ function capsule(extents: HalfExtents, segments: number, quarter: number): Patch
     return [revolveRun(dropRepeats(profile), extents, segments)];
 }
 
+/** The round tube's radius: a little under a third of the narrower cross extent. */
+export function torusTube(extents: HalfExtents): number {
+    return Math.min(extents.hy, 0.3 * Math.min(extents.hx, extents.hz));
+}
+
 /**
  * A ring around the axis — a handle, a wheel's tyre, a rim.
  *
@@ -296,20 +379,34 @@ function capsule(extents: HalfExtents, segments: number, quarter: number): Patch
  * the first version did and why every handle came out as a doughnut: scaling a
  * round tube by a tall, narrow box makes the tube tall and narrow with it. Here
  * the ring's *path* is an ellipse filling the box's cross extents and the tube
- * is round across the ring, so a 7 cm-tall, 3 cm-wide mug handle is a thin
- * loop of that size. The axis extent is the tube's depth.
+ * is **round**, a little under a third of the narrower cross extent and never
+ * deeper than the box allows along the axis. A mug handle 7 cm tall comes out
+ * with a tube about a centimetre thick, which is what a mug handle has.
+ *
+ * `half`, when given, is the ring's own angle to centre a half ring on — the
+ * side facing away from whatever the handle is attached to. The two cut ends
+ * are capped flat, and they sit inside the body the assembler moved the ring
+ * against, so nothing pokes into a cup.
  */
-function torus(extents: HalfExtents, segments: number, tubeSegments: number): Patch[] {
-    // Never more than a third of the narrower cross extent, so the hole stays
-    // open, and never deeper than the box allows along the axis.
-    const tube = Math.min(extents.hy, 0.35 * Math.min(extents.hx, extents.hz));
+function torus(
+    extents: HalfExtents,
+    segments: number,
+    tubeSegments: number,
+    half: number | null,
+): Patch[] {
+    const tube = torusTube(extents);
     const pathX = extents.hx - tube;
     const pathZ = extents.hz - tube;
+    const closed = half === null;
+    const steps = closed ? segments : Math.max(4, Math.round(segments / 2));
+    const startAngle = closed ? 0 : half - Math.PI / 2;
+    const span = closed ? Math.PI * 2 : Math.PI;
     const patch = emptyPatch();
     const grid: number[][] = [];
+    const centres: [number, number, number][] = [];
 
-    for (let around = 0; around < segments; around += 1) {
-        const angle = (around / segments) * Math.PI * 2;
+    for (let around = 0; around < (closed ? steps : steps + 1); around += 1) {
+        const angle = startAngle + (around / steps) * span;
         const sin = Math.sin(angle);
         const cos = Math.cos(angle);
         // The ellipse's outward normal at this angle, which is the direction
@@ -327,13 +424,14 @@ function torus(extents: HalfExtents, segments: number, tubeSegments: number): Pa
                 pushVertex(
                     patch,
                     pathX * sin + outX * radial,
-                    extents.hy * Math.sin(tubeAngle),
+                    tube * Math.sin(tubeAngle),
                     pathZ * cos + outZ * radial,
                 ),
             );
         }
 
         grid.push(ring);
+        centres.push([pathX * sin, 0, pathZ * cos]);
     }
 
     // The same corner order `revolveRun` uses — a tube step is a profile
@@ -341,8 +439,8 @@ function torus(extents: HalfExtents, segments: number, tubeSegments: number): Pa
     for (let step = 0; step < tubeSegments; step += 1) {
         const nextStep = (step + 1) % tubeSegments;
 
-        for (let around = 0; around < segments; around += 1) {
-            const nextAround = (around + 1) % segments;
+        for (let around = 0; around < steps; around += 1) {
+            const nextAround = closed ? (around + 1) % steps : around + 1;
             const a = grid[around][step];
             const b = grid[nextAround][step];
             const c = grid[nextAround][nextStep];
@@ -352,7 +450,43 @@ function torus(extents: HalfExtents, segments: number, tubeSegments: number): Pa
         }
     }
 
-    return [patch];
+    if (closed) {
+        return [patch];
+    }
+
+    // Each cut end is a flat disc, wound to face along the path away from the
+    // tube: backwards at the start, forwards at the end.
+    const ends = [
+        { ring: grid[0], centre: centres[0], forward: false },
+        { ring: grid[grid.length - 1], centre: centres[centres.length - 1], forward: true },
+    ];
+
+    return [
+        patch,
+        ...ends.map(({ ring, centre, forward }) => {
+            const disc = emptyPatch();
+            const middle = pushVertex(disc, ...centre);
+            const corners = ring.map((vertex) =>
+                pushVertex(
+                    disc,
+                    patch.positions[vertex * 3],
+                    patch.positions[vertex * 3 + 1],
+                    patch.positions[vertex * 3 + 2],
+                ),
+            );
+
+            for (let step = 0; step < corners.length; step += 1) {
+                const current = corners[step];
+                const next = corners[(step + 1) % corners.length];
+
+                // Going round the tube by increasing angle winds the disc to
+                // face *along* the path, which is right for the far end.
+                disc.indices.push(...(forward ? [middle, next, current] : [middle, current, next]));
+            }
+
+            return disc;
+        }),
+    ];
 }
 
 /**
@@ -503,6 +637,10 @@ export type PrimitiveInput = {
     readonly extents: HalfExtents;
     readonly taper: number;
     readonly profile: readonly (readonly [number, number])[];
+    /** Cylinders and lathes only: an open vessel rather than a solid. */
+    readonly hollow: boolean;
+    /** Torus only: build the half ring centred on this angle, in its own frame. */
+    readonly half: number | null;
     readonly detail: MeshDetail;
 };
 
@@ -516,15 +654,16 @@ export function buildPrimitive(input: PrimitiveInput): Patch[] {
             return box(extents, input.taper);
         case "rounded_box":
             return roundedBox(extents, Math.max(2, Math.round(arc / 3)));
-        case "cylinder":
-            return revolveProfile(
-                [
-                    [1, -extents.hy],
-                    [input.taper, extents.hy],
-                ],
-                extents,
-                segments,
-            );
+        case "cylinder": {
+            const outline: ProfilePoint[] = [
+                [1, -extents.hy],
+                [input.taper, extents.hy],
+            ];
+
+            return input.hollow
+                ? hollowShell(outline, extents, segments)
+                : revolveProfile(outline, extents, segments);
+        }
         case "cone":
             return revolveProfile(
                 [
@@ -539,8 +678,13 @@ export function buildPrimitive(input: PrimitiveInput): Patch[] {
         case "capsule":
             return capsule(extents, segments, Math.max(2, Math.round(arc / 2)));
         case "torus":
-            return torus(extents, segments, Math.max(8, arc));
-        case "lathe":
-            return revolveProfile(normaliseProfile(input.profile, extents.hy), extents, segments);
+            return torus(extents, segments, Math.max(8, arc), input.half);
+        case "lathe": {
+            const outline = normaliseProfile(input.profile, extents.hy);
+
+            return input.hollow
+                ? hollowShell(outline, extents, segments)
+                : revolveProfile(outline, extents, segments);
+        }
     }
 }

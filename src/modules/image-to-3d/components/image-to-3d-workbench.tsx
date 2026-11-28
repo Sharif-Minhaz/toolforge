@@ -1,6 +1,7 @@
 "use client";
 
 import {
+    IconAlertTriangle,
     IconCube3dSphere,
     IconDownload,
     IconLoader2,
@@ -52,11 +53,13 @@ import { prepareUpload } from "../domain/upload-image";
 import type {
     GenerationFailureReason,
     MeshDetail,
+    MeshGroup,
     ModelFormat,
     ModelOptions,
     ObjectSpec,
 } from "../types";
 import { ModelOptionsPanel } from "./model-options";
+import { ModelSpinner } from "./model-spinner";
 
 /**
  * Three and a WebGL context are a large chunk of JavaScript to hand to a
@@ -67,6 +70,18 @@ const ModelPreview = dynamic(() => import("./model-preview"), {
     ssr: false,
     loading: () => <Skeleton className="aspect-4/3 w-full rounded-xl" />,
 });
+
+/**
+ * Refusals that are about the picture rather than the model call. These stay
+ * in the status line beside the intake; every other failure is shown where
+ * the model would have appeared.
+ */
+const INPUT_FAILURES: ReadonlySet<GenerationFailureReason> = new Set([
+    "missing_image",
+    "empty_file",
+    "unsupported_type",
+    "too_large",
+]);
 
 /** Why a picked file never reached the button. Checked in the tab, before any upload. */
 type PickFailure = "empty_file" | "unsupported_type" | "source_too_large" | "undecodable";
@@ -257,6 +272,10 @@ export function ImageTo3dWorkbench({
         setElapsed(0);
         stopClock();
         clock.current = window.setInterval(() => setElapsed((seconds) => seconds + 1), 1_000);
+        // Straight to where the model will appear: the section is never empty
+        // from here on — the spinner holds it until the model or the reason it
+        // could not be built replaces it.
+        scrollToResult();
 
         try {
             const upload = await prepareUpload(current.file);
@@ -291,8 +310,6 @@ export function ImageTo3dWorkbench({
 
             setGenerated({ pickedId: current.id, spec: result.spec });
             setHeightOverride(null);
-            // Only now: the destination exists and has a model in it.
-            scrollToResult();
         } catch (caught) {
             setFailure("upstream_unavailable");
             logEvent("error", "image_to_3d.generation_threw", { error: describeError(caught) });
@@ -357,20 +374,32 @@ export function ImageTo3dWorkbench({
         }
     }
 
+    // The model call's own failures, shown in the result section.
+    const operationFailure = failure !== null && !INPUT_FAILURES.has(failure) ? failure : null;
+
+    /** A part's name as the page shows it: the model's words, and what was made of them. */
+    function partLabel(group: MeshGroup): string {
+        const inside = group.interior ? t("interiorPart", { name: group.name }) : group.name;
+
+        return group.mirrored ? t("mirroredPart", { name: inside }) : inside;
+    }
+
     const status = ((): { tone: StatusTone; message: string } => {
         if (!configured || siteKey === null) {
             return { tone: "error", message: tErrors("not_configured") };
         }
 
         if (generating) {
-            return { tone: "pending", message: t("generating", { seconds: elapsed }) };
+            return { tone: "pending", message: t("generatingStatus") };
         }
 
         if (pickFailure !== null) {
             return { tone: "error", message: describeFailure(pickFailure) };
         }
 
-        if (failure !== null) {
+        // Only a complaint about the picture stays beside the picture; one
+        // about the model call is shown where the model would have been.
+        if (failure !== null && INPUT_FAILURES.has(failure)) {
             return { tone: "error", message: describeFailure(failure) };
         }
 
@@ -504,7 +533,32 @@ export function ImageTo3dWorkbench({
                 <div ref={resultRef} className="flex min-w-0 scroll-mt-24 flex-col gap-2">
                     <StepLabel step={2}>{t("resultTitle")}</StepLabel>
 
-                    {built === null || spec === null ? (
+                    {generating ? (
+                        <div
+                            aria-busy="true"
+                            className="bg-muted/30 ring-border/70 flex flex-col items-center gap-3 rounded-xl px-4 py-10 text-center ring-1 ring-inset"
+                        >
+                            <ModelSpinner />
+                            <p className="text-sm font-medium">{t("generatingTitle")}</p>
+                            <p className="text-muted-foreground max-w-[52ch] text-xs leading-[1.5] tabular-nums">
+                                {t("generating", { seconds: elapsed })}
+                            </p>
+                        </div>
+                    ) : operationFailure !== null ? (
+                        <div
+                            role="alert"
+                            className="bg-destructive/8 ring-destructive/30 flex flex-col items-center gap-2 rounded-xl px-4 py-10 text-center ring-1 ring-inset"
+                        >
+                            <IconAlertTriangle
+                                className="text-destructive size-7"
+                                stroke={1.6}
+                                aria-hidden="true"
+                            />
+                            <p className="max-w-[52ch] text-sm leading-[1.5]">
+                                {describeFailure(operationFailure)}
+                            </p>
+                        </div>
+                    ) : built === null || spec === null ? (
                         <div className="text-muted-foreground bg-muted/30 ring-border/70 flex flex-col items-center gap-2 rounded-xl px-4 py-10 text-center text-xs leading-[1.5] ring-1 ring-inset">
                             <IconCube3dSphere
                                 className="size-8 opacity-40"
@@ -550,9 +604,7 @@ export function ImageTo3dWorkbench({
                                                 }}
                                             />
                                             <span className="min-w-0 flex-1 truncate">
-                                                {group.mirrored
-                                                    ? t("mirroredPart", { name: group.name })
-                                                    : group.name}
+                                                {partLabel(group)}
                                             </span>
                                             <span className="text-muted-foreground shrink-0">
                                                 {tShapes(`${group.shape}Name`)}

@@ -7,7 +7,14 @@ import {
     MAX_PROFILE_POINTS,
     MIN_PART_CM,
 } from "../domain/constants";
-import { PART_AXES, PART_SHAPES, type ObjectPart, type ObjectSpec, type Vector3 } from "../types";
+import {
+    PART_AXES,
+    PART_SHAPES,
+    type ObjectPart,
+    type ObjectSpec,
+    type PartShape,
+    type Vector3,
+} from "../types";
 
 /**
  * Reads the model's answer into an `ObjectSpec` the builder can trust.
@@ -40,6 +47,12 @@ const rawPartSchema = z.object({
         .string()
         .regex(/^#[0-9a-f]{6}$/i)
         .catch("#9ca3af"),
+    hollow: z.boolean().catch(false),
+    inner_color: z
+        .string()
+        .regex(/^#[0-9a-f]{6}$/i)
+        .nullish()
+        .catch(null),
     mirror: z.boolean().catch(false),
 });
 
@@ -150,6 +163,8 @@ function readPart(raw: unknown, index: number): ObjectPart | null {
         }
     }
 
+    const color = hexToRgb(part.color);
+
     return {
         name: cleanName(part.name, `part ${index + 1}`),
         shape,
@@ -158,10 +173,167 @@ function readPart(raw: unknown, index: number): ObjectPart | null {
         position,
         tilt,
         taper: clamp(part.taper, 0, 1),
-        profile,
-        color: hexToRgb(part.color),
+        color,
+        // Both the profile and the flag: hollowing may shed a closing point.
+        ...hollowed(part.hollow, shape, profile),
+        innerColor: part.inner_color ? hexToRgb(part.inner_color) : color,
         mirror: part.mirror,
     };
+}
+
+/**
+ * Whether a part is hollow, and the profile it is hollow with.
+ *
+ * Told to end a closed top at radius zero, the model ends *every* lathe there
+ * — a mug it has just marked hollow included, with a final point that runs
+ * flat across the mouth. Live, all three mugs did it. On a hollow part that
+ * point is a lid it did not mean, so trailing points on the axis at the top
+ * are shed before asking whether the mouth is open.
+ */
+function hollowed(
+    asked: boolean,
+    shape: PartShape,
+    profile: readonly (readonly [number, number])[],
+): { hollow: boolean; profile: readonly (readonly [number, number])[] } {
+    if (!asked || shape !== "lathe") {
+        return { hollow: asked && canHollow(shape, profile), profile };
+    }
+
+    const opened = [...profile];
+
+    while (
+        opened.length > 2 &&
+        opened[opened.length - 1][0] === 0 &&
+        opened[opened.length - 1][1] >= opened[opened.length - 2][1]
+    ) {
+        opened.pop();
+    }
+
+    return canHollow(shape, opened)
+        ? { hollow: true, profile: opened }
+        : { hollow: false, profile };
+}
+
+/**
+ * Only something with an open mouth can be hollow. A cylinder always has one;
+ * a lathe has one when its top is at least a third as wide as its widest point
+ * — a bottle that narrows to a cap is a solid, not a vase with no opening.
+ */
+function canHollow(shape: PartShape, profile: readonly (readonly [number, number])[]): boolean {
+    if (shape === "cylinder") {
+        return true;
+    }
+
+    if (shape !== "lathe" || profile.length === 0) {
+        return false;
+    }
+
+    const widest = Math.max(...profile.map(([radius]) => radius));
+
+    return profile[profile.length - 1][0] >= widest / 3;
+}
+
+/** A part the model added to show a vessel's inside, which a hollow part now builds. */
+const INSIDE_NAME = /\b(interior|inside|inner|cavity|opening|hollow)\b/i;
+
+/** A solid disc the model laid over a vessel's mouth, which closes it. */
+const RIM_NAME = /\b(rim|lip|mouth|top)\b/i;
+
+function inFootprint(part: ObjectPart, vessel: ObjectPart): boolean {
+    return (
+        Math.abs(part.position[0] - vessel.position[0]) <= vessel.size[0] / 2 &&
+        Math.abs(part.position[2] - vessel.position[2]) <= vessel.size[2] / 2
+    );
+}
+
+/**
+ * Turns the model's ways of drawing an open vessel into one hollow part.
+ *
+ * Two live runs on mugs, two different mistakes, both readable as intent. One
+ * modelled "mug interior" as a cream lathe sitting on a solid body — so the
+ * body containing it is made hollow, takes the interior's colour as its glaze,
+ * and the interior is dropped. The other laid a solid "mug rim" cylinder across
+ * the mouth — on a hollow vessel that is a lid. A thin one becomes a rolled
+ * ring round the mouth, which is what an enamel mug's dark rim band is; a thick
+ * one is dropped. A part that is already a ring is left alone.
+ *
+ * Matched by name because the name is the only place the model says what a
+ * part is *for*; the geometry of an interior disc and of a lid are identical.
+ */
+export function tidyVessels(parts: readonly ObjectPart[]): ObjectPart[] {
+    const vessels = new Map<ObjectPart, ObjectPart>();
+    const dropped = new Set<ObjectPart>();
+    const containerOf = (part: ObjectPart) =>
+        parts
+            .filter(
+                (candidate) =>
+                    candidate !== part &&
+                    candidate.axis === "y" &&
+                    canHollow(candidate.shape, candidate.profile) &&
+                    inFootprint(part, candidate) &&
+                    candidate.size[0] >= part.size[0] * 0.9,
+            )
+            .toSorted((a, b) => b.size[0] * b.size[2] - a.size[0] * a.size[2])[0];
+
+    for (const part of parts) {
+        if (!INSIDE_NAME.test(part.name)) {
+            continue;
+        }
+
+        const vessel = containerOf(part);
+
+        if (vessel !== undefined) {
+            const current = vessels.get(vessel) ?? vessel;
+
+            vessels.set(vessel, {
+                ...current,
+                hollow: true,
+                // The model's own colour for the inside wins over a default
+                // that merely copied the outside.
+                innerColor: sameRgb(current.innerColor, current.color)
+                    ? part.color
+                    : current.innerColor,
+            });
+            dropped.add(part);
+        }
+    }
+
+    const tidied: ObjectPart[] = parts.map((part) => vessels.get(part) ?? part);
+
+    for (const part of tidied) {
+        if (!RIM_NAME.test(part.name) || part.shape === "torus") {
+            continue;
+        }
+
+        const vessel = tidied.find(
+            (candidate) =>
+                candidate.hollow &&
+                candidate !== part &&
+                inFootprint(part, candidate) &&
+                part.position[1] >= candidate.position[1] + candidate.size[1] * 0.2,
+        );
+
+        if (vessel === undefined) {
+            continue;
+        }
+
+        const index = tidied.indexOf(part);
+
+        // A thin band is a real rim — the dark lip of an enamel mug — and
+        // keeps its colour as a rolled ring round the mouth. Anything thicker
+        // is a lid the model did not mean.
+        if (part.size[1] <= part.size[0] * 0.2) {
+            tidied[index] = { ...part, shape: "torus", axis: "y", hollow: false, profile: [] };
+        } else {
+            dropped.add(parts[index]);
+        }
+    }
+
+    return tidied.filter((_, index) => !dropped.has(parts[index]));
+}
+
+function sameRgb(a: Vector3, b: Vector3): boolean {
+    return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
 }
 
 export type ParsedObjectSpec =
@@ -183,10 +355,12 @@ export function parseObjectSpec(content: string): ParsedObjectSpec {
         return { ok: false, reason: "unreadable_response" };
     }
 
-    const parts = parsed.data.parts
-        .slice(0, MAX_PARTS)
-        .map(readPart)
-        .filter((part): part is ObjectPart => part !== null);
+    const parts = tidyVessels(
+        parsed.data.parts
+            .slice(0, MAX_PARTS)
+            .map(readPart)
+            .filter((part): part is ObjectPart => part !== null),
+    );
 
     if (parts.length === 0) {
         return { ok: false, reason: "no_object" };

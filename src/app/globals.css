@@ -74,6 +74,8 @@
     --animate-drift: drift 26s ease-in-out infinite;
     --animate-sweep: sweep 2.4s ease-in-out infinite;
     --animate-beacon: beacon 2.6s cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
+    --animate-cube-turn: cube-turn 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+    --animate-cube-shadow: cube-shadow 1.6s ease-in-out infinite;
 
     @keyframes aurora {
         0%,
@@ -103,6 +105,40 @@
         }
         100% {
             transform: translateX(210%);
+        }
+    }
+
+    /* The Image to 3D tool's "building" cube: a quarter turn at a time with a
+       pause between, so it reads as something being turned over and looked
+       at rather than a loading wheel. Tilted throughout so three faces show. */
+    @keyframes cube-turn {
+        0% {
+            transform: rotateX(-26deg) rotateY(45deg);
+        }
+        25% {
+            transform: rotateX(-26deg) rotateY(135deg);
+        }
+        50% {
+            transform: rotateX(-26deg) rotateY(225deg);
+        }
+        75% {
+            transform: rotateX(-26deg) rotateY(315deg);
+        }
+        100% {
+            transform: rotateX(-26deg) rotateY(405deg);
+        }
+    }
+
+    /* Its shadow breathes with each quarter turn. */
+    @keyframes cube-shadow {
+        0%,
+        100% {
+            transform: scaleX(1);
+            opacity: 0.35;
+        }
+        50% {
+            transform: scaleX(0.82);
+            opacity: 0.2;
         }
     }
 
