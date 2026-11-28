@@ -2,247 +2,72 @@
 
 import { useTranslations } from "next-intl";
 
-import { OnlineRequiredNote } from "@/modules/tools/components/online-required-note";
-import { OptionSelect, OptionSwitch } from "@/modules/tools/components/option-controls";
+import { OptionSelect } from "@/modules/tools/components/option-controls";
 
+import { MAX_HEIGHT_MM, MIN_HEIGHT_MM } from "../domain/constants";
 import {
-    MAX_BASE_MM,
-    MAX_DETAIL,
-    MAX_DEPTH_MM,
-    MAX_RESOLUTION,
-    MAX_SMOOTHING,
-    MAX_WIDTH_MM,
-    MIN_BASE_MM,
-    MIN_DETAIL,
-    MIN_DEPTH_MM,
-    MIN_RESOLUTION,
-    MIN_SMOOTHING,
-    MIN_WIDTH_MM,
-} from "../domain/constants";
-import {
-    HEIGHT_SOURCES,
+    MESH_DETAILS,
     MODEL_FORMATS,
-    MODEL_SHAPES,
-    type HeightSource,
+    type MeshDetail,
     type ModelFormat,
     type ModelOptions,
-    type ModelShape,
 } from "../types";
 import { MeasureField } from "./measure-field";
 
-/** Millimetres move in tenths; counts move in ones. */
-const MILLIMETRE_STEP = 0.1;
-
-/** Detail is a share, and a twentieth of it is finer than the mesh can show. */
-const DETAIL_STEP = 0.05;
-
 type ModelOptionsPanelProps = {
     readonly options: ModelOptions;
-    /** Whether the subject is being cut away from its background. */
-    readonly cutout: boolean;
-    /** What each one-time model download costs, for the controls' own hints. */
-    readonly cutoutDownloadLabel: string;
-    readonly depthDownloadLabel: string;
-    /** True when the picture arrived with its own alpha, so no model will run. */
-    readonly cutoutAlreadyTransparent: boolean;
-    /** Offline, and the weights each switch would fetch are not on the device. */
-    readonly cutoutOffline: boolean;
-    readonly depthOffline: boolean;
-    readonly disabled: boolean;
+    /** No model yet means no height to change — the default is the object's own. */
+    readonly heightDisabled: boolean;
     readonly onPatch: (patch: Partial<ModelOptions>) => void;
-    readonly onCutoutChange: (next: boolean) => void;
 };
 
-export function ModelOptionsPanel({
-    options,
-    cutout,
-    cutoutDownloadLabel,
-    depthDownloadLabel,
-    cutoutAlreadyTransparent,
-    cutoutOffline,
-    depthOffline,
-    disabled,
-    onPatch,
-    onCutoutChange,
-}: ModelOptionsPanelProps) {
+/**
+ * Everything that shapes the *file*, none of which costs a second model call:
+ * the description comes back once, and size, smoothness and format are all
+ * decided in this tab from it.
+ */
+export function ModelOptionsPanel({ options, heightDisabled, onPatch }: ModelOptionsPanelProps) {
     const t = useTranslations("imageTo3d.workbench");
-    const tSources = useTranslations("imageTo3d.sources");
-    const tShapes = useTranslations("imageTo3d.shapes");
+    const tDetails = useTranslations("imageTo3d.details");
     const tFormats = useTranslations("imageTo3d.formats");
 
-    const sourceItems = Object.fromEntries(
-        HEIGHT_SOURCES.map((source) => [source, tSources(`${source}Name`)]),
-    );
-    const shapeItems = Object.fromEntries(
-        MODEL_SHAPES.map((shape) => [shape, tShapes(`${shape}Name`)]),
+    const detailItems = Object.fromEntries(
+        MESH_DETAILS.map((detail) => [detail, tDetails(`${detail}Name`)]),
     );
     const formatItems = Object.fromEntries(
         MODEL_FORMATS.map((format) => [format, tFormats(`${format}Name`)]),
     );
 
-    // One predicate rather than a rule repeated at three controls: an inflated
-    // body is a closed shape whose thickness is its depth, so a flat backing has
-    // nothing to describe — and the two relief shapes have no silhouette to
-    // hand any detail share to.
-    const inflating = options.shape === "inflate";
-
     return (
         <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="flex min-w-0 flex-col gap-1.5">
-                <OptionSelect<HeightSource>
-                    label={t("sourceName")}
-                    // The one source that fetches a model says what it costs, on
-                    // the control rather than only in the article.
-                    hint={
-                        options.source === "depth"
-                            ? t("sourceDepthHint", { size: depthDownloadLabel })
-                            : t("sourceHint")
-                    }
-                    value={options.source}
-                    items={sourceItems}
-                    values={HEIGHT_SOURCES}
-                    disabled={disabled}
-                    // Only the one source that fetches is refused offline; the
-                    // channels read the picture already in the tab.
-                    disabledValues={depthOffline ? ["depth"] : undefined}
-                    onChange={(source) => onPatch({ source })}
-                />
-                {depthOffline && <OnlineRequiredNote kind="model" />}
-            </div>
-
-            <OptionSelect<ModelShape>
-                label={t("shapeName")}
-                hint={t("shapeHint")}
-                value={options.shape}
-                items={shapeItems}
-                values={MODEL_SHAPES}
-                disabled={disabled}
-                onChange={(shape) => onPatch({ shape })}
-            />
-
             <OptionSelect<ModelFormat>
                 label={t("formatName")}
                 hint={tFormats(`${options.format}Hint`)}
                 value={options.format}
                 items={formatItems}
                 values={MODEL_FORMATS}
-                disabled={disabled}
                 onChange={(format) => onPatch({ format })}
             />
 
-            <MeasureField
-                label={t("resolutionName")}
-                hint={t("resolutionHint")}
-                value={options.resolution}
-                min={MIN_RESOLUTION}
-                max={MAX_RESOLUTION}
-                step={1}
-                disabled={disabled}
-                onChange={(resolution) => onPatch({ resolution })}
-            />
-
-            <MeasureField
-                label={t("smoothingName")}
-                hint={t("smoothingHint")}
-                value={options.smoothing}
-                min={MIN_SMOOTHING}
-                max={MAX_SMOOTHING}
-                step={1}
-                disabled={disabled}
-                onChange={(smoothing) => onPatch({ smoothing })}
-            />
-
-            <MeasureField
-                label={t("widthName")}
-                // The width means a different measurement on a tube, and saying
-                // so where it is set beats a footnote in the article.
-                hint={options.shape === "cylinder" ? t("widthHintCylinder") : t("widthHint")}
-                value={options.width}
-                min={MIN_WIDTH_MM}
-                max={MAX_WIDTH_MM}
-                step={MILLIMETRE_STEP}
-                disabled={disabled}
-                onChange={(width) => onPatch({ width })}
-            />
-
-            <MeasureField
-                label={t("depthName")}
-                hint={t("depthHint")}
-                value={options.depth}
-                min={MIN_DEPTH_MM}
-                max={MAX_DEPTH_MM}
-                step={MILLIMETRE_STEP}
-                disabled={disabled}
-                onChange={(depth) => onPatch({ depth })}
-            />
-
-            <MeasureField
+            <OptionSelect<MeshDetail>
                 label={t("detailName")}
-                // Disabled rather than ignored, and the hint says why.
-                hint={inflating ? t("detailHint") : t("detailDisabledHint")}
+                hint={tDetails(`${options.detail}Hint`)}
                 value={options.detail}
-                min={MIN_DETAIL}
-                max={MAX_DETAIL}
-                step={DETAIL_STEP}
-                disabled={disabled || !inflating}
+                items={detailItems}
+                values={MESH_DETAILS}
                 onChange={(detail) => onPatch({ detail })}
             />
 
             <MeasureField
-                label={t("baseName")}
-                hint={
-                    inflating
-                        ? t("baseDisabledInflateHint")
-                        : options.solid
-                          ? t("baseHint")
-                          : t("baseDisabledHint")
-                }
-                value={options.baseThickness}
-                min={MIN_BASE_MM}
-                max={MAX_BASE_MM}
-                step={MILLIMETRE_STEP}
-                disabled={disabled || inflating || !options.solid}
-                onChange={(baseThickness) => onPatch({ baseThickness })}
+                label={t("heightName")}
+                hint={heightDisabled ? t("heightPendingHint") : t("heightHint")}
+                value={options.height}
+                min={MIN_HEIGHT_MM}
+                max={MAX_HEIGHT_MM}
+                step={1}
+                disabled={heightDisabled}
+                onChange={(height) => onPatch({ height: Math.round(height) })}
             />
-
-            <div className="flex min-w-0 flex-col gap-5">
-                <div className="flex min-w-0 flex-col gap-1.5">
-                    <OptionSwitch
-                        label={t("cutoutName")}
-                        // The one control on this page that can reach the network,
-                        // and it says what that costs before it is switched on.
-                        hint={
-                            cutoutAlreadyTransparent
-                                ? t("cutoutHintTransparent")
-                                : t("cutoutHint", { size: cutoutDownloadLabel })
-                        }
-                        checked={cutout}
-                        // Turning it *off* stays possible offline; only the
-                        // press that would fetch the weights is refused.
-                        disabled={
-                            disabled || cutoutAlreadyTransparent || (cutoutOffline && !cutout)
-                        }
-                        onCheckedChange={onCutoutChange}
-                    />
-                    {cutoutOffline && !cutoutAlreadyTransparent && (
-                        <OnlineRequiredNote kind="model" />
-                    )}
-                </div>
-                <OptionSwitch
-                    label={t("invertName")}
-                    hint={t("invertHint")}
-                    checked={options.invert}
-                    disabled={disabled}
-                    onCheckedChange={(invert) => onPatch({ invert })}
-                />
-                <OptionSwitch
-                    label={t("solidName")}
-                    hint={t("solidHint")}
-                    checked={options.solid}
-                    disabled={disabled}
-                    onCheckedChange={(solid) => onPatch({ solid })}
-                />
-            </div>
         </div>
     );
 }

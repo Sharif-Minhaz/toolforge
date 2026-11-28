@@ -1842,13 +1842,13 @@ const TOOLS: readonly Tool[] = [
         href: "/tools/image-to-3d",
         category: "media",
         status: "available",
-        // The silhouette, the mesh and every exported byte are built in the
-        // reader's own tab. Two things reach the network and neither carries a
-        // picture or a model: the cut-out's segmentation weights come from a
-        // CDN on first use — its size is on the control that spends it — and
-        // pulling a source picture in by its public address goes through this
-        // server, exactly as it does for the other image tools.
-        runsOn: "hybrid",
+        // The picture is the input and it leaves the tab: a downsized copy goes
+        // through this server to a vision model on Cloudflare Workers AI, which
+        // answers with a description of the object as primitives. The mesh and
+        // every exported byte are then built in the reader's own tab from that
+        // description, so a change of size, detail or format never costs a
+        // second call.
+        runsOn: "server",
         accent: "cyan",
         icon: "cube",
         addedOn: "2026-09-06",
@@ -1858,6 +1858,8 @@ const TOOLS: readonly Tool[] = [
             "image to 3d",
             "image to 3d model",
             "photo to 3d",
+            "photo to 3d model",
+            "ai 3d model generator",
             "picture to stl",
             "png to stl",
             "jpg to stl",
@@ -1865,22 +1867,14 @@ const TOOLS: readonly Tool[] = [
             "image to glb",
             "image to gltf",
             "image to ply",
-            "heightmap",
-            "height map to mesh",
-            "displacement map",
-            "depth map to mesh",
-            "bump map",
-            "lithophane",
-            "lithophane generator",
-            "relief model",
-            "bas relief",
+            "low poly model",
+            "blockout",
+            "game prop",
             "3d printable",
             "3d printing",
             "stl generator",
             "mesh generator",
             "blender import",
-            "logo to 3d",
-            "svg to 3d alternative",
             "2d to 3d converter",
         ],
     },

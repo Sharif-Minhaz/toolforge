@@ -194,7 +194,11 @@ Not gaps. Each one is a fact about the tool.
   has no cookie jar, so creating one here would mint something nobody could
   reclaim.
 - **The AI tools** — they spend a third-party API budget per call. A decision
-  about money, belonging to whoever pays.
+  about money, belonging to whoever pays. Where such a tool has a half that
+  does not spend it, that half is exposed: the Equation converter's text half,
+  and the Image to 3D Model's build half (`toolforge_image_to_3d_build`), which
+  takes the description of an object the calling model writes itself — the
+  page pays a vision model only to get that description.
 - **The port scanner** — its function is to touch somebody else's host on ports
   they did not offer. Behind a model that can be talked into things, a token is
   not the protection it looks like.

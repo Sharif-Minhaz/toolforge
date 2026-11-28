@@ -1,6 +1,12 @@
 "use client";
 
-import { IconCube3dSphere, IconDownload, IconTrash } from "@tabler/icons-react";
+import {
+    IconCube3dSphere,
+    IconDownload,
+    IconLoader2,
+    IconSparkles,
+    IconTrash,
+} from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
@@ -9,14 +15,14 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useOnline } from "@/hooks/use-online";
-import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 import { useByteLabel } from "@/modules/tools/components/byte-size";
 import { ImageDropzone } from "@/modules/tools/components/image-dropzone";
 import { ImageSourceControls } from "@/modules/tools/components/image-source-controls";
+import { OnlineRequiredNote } from "@/modules/tools/components/online-required-note";
 import { StatusStrip, type StatusTone } from "@/modules/tools/components/status-strip";
+import { TurnstileWidget } from "@/modules/tools/components/turnstile-widget";
 import { useResultScroll } from "@/modules/tools/components/use-result-scroll";
 import {
     OptionsDisclosure,
@@ -25,386 +31,294 @@ import {
 } from "@/modules/tools/components/workbench-step";
 import { saveBlob } from "@/modules/tools/domain/file-saver";
 import { toFilenameStem } from "@/modules/tools/domain/filenames";
-import { useCutoutQuality } from "@/modules/tools/components/use-cutout-quality";
-import { readFetchedQualities } from "@/modules/tools/domain/cutout-memory";
-import {
-    CUTOUT_MODELS,
-    DOWNLOAD_LABEL_DELAY_MS,
-    RUNTIME_WASM_BYTES,
-} from "@/modules/tools/domain/segmentation";
+import { isDecodableImageType } from "@/modules/tools/domain/image-file";
 
-import { MAX_SOURCE_BYTES } from "../domain/constants";
-import { DEPTH_FIRST_RUN_BYTES, isDepthModelCached } from "../domain/depth";
-import { buildModelDownload } from "../domain/export";
-import { buildModel } from "../domain/model";
+import { describeObject } from "../actions/describe-object";
+import { buildObjectMesh, meshHeight, scaleMesh } from "../domain/assemble";
 import {
+    GENERATION_LIMIT_PER_ADDRESS,
     IMAGE_ACCEPT_ATTRIBUTE,
-    readModelSource,
-    withCutout,
-    withDepth,
-    type ModelSource,
-    type SourceFailureReason,
-    type SourceProgress,
-} from "../domain/source";
+    IMAGE_FORM_FIELD,
+    MAX_HEIGHT_MM,
+    MAX_SOURCE_BYTES,
+    MIN_HEIGHT_MM,
+    TOKEN_FORM_FIELD,
+    TURNSTILE_ACTION,
+} from "../domain/constants";
+import { buildModelDownload } from "../domain/export";
+import { checkUploadImage } from "../domain/generation";
 import { estimateBytes } from "../domain/stats";
-import type { MeshOptions, ModelFormat, ModelOptions, ModelRefusal } from "../types";
+import { prepareUpload } from "../domain/upload-image";
+import type {
+    GenerationFailureReason,
+    MeshDetail,
+    ModelFormat,
+    ModelOptions,
+    ObjectSpec,
+} from "../types";
 import { ModelOptionsPanel } from "./model-options";
 
 /**
- * Three, its loaders and a WebGL context are a large chunk of JavaScript to
- * hand to a reader who has not picked a picture yet — and to every other page
- * that imports nothing of the sort. Loading it here keeps it on this route and
- * behind the first pick.
+ * Three and a WebGL context are a large chunk of JavaScript to hand to a
+ * reader who has not got a model yet — and to every other page. Loading it
+ * here keeps it on this route and behind the first result.
  */
 const ModelPreview = dynamic(() => import("./model-preview"), {
     ssr: false,
     loading: () => <Skeleton className="aspect-4/3 w-full rounded-xl" />,
 });
 
-type PickedSource = {
-    /** Bumped per pick, so replacing a file with itself still counts as new. */
+/** Why a picked file never reached the button. Checked in the tab, before any upload. */
+type PickFailure = "empty_file" | "unsupported_type" | "source_too_large" | "undecodable";
+
+type PickedImage = {
+    /** Bumped per pick, so a result can never be shown beside the wrong picture. */
     readonly id: number;
-    /** Kept so turning the cut-out on later can re-read it without a second drop. */
     readonly file: File;
-    readonly source: ModelSource;
-    readonly previewUrl: string;
-    readonly originalTextureUrl: string | null;
-    readonly cutTextureUrl: string | null;
+    readonly url: string;
+};
+
+type GeneratedModel = {
+    readonly pickedId: number;
+    readonly spec: ObjectSpec;
 };
 
 type ImageTo3dWorkbenchProps = {
     /** Parsed from the search params on the server, so a shared link opens ready. */
-    readonly initialOptions: ModelOptions;
-    readonly initialCutout: boolean;
+    readonly initialDetail: MeshDetail;
+    readonly initialFormat: ModelFormat;
+    /** `null` when `NEXT_PUBLIC_TURNSTILE_KEY` is absent, which disables generating. */
+    readonly siteKey: string | null;
+    /** Worker, key, salt, database and Turnstile secret all present. */
+    readonly configured: boolean;
     /** Whether this deployment can fetch a picture by its address at all. */
     readonly urlImportEnabled: boolean;
 };
 
+function checkPick(file: File): PickFailure | null {
+    if (file.size <= 0) {
+        return "empty_file";
+    }
+
+    if (!isDecodableImageType(file.type)) {
+        return "unsupported_type";
+    }
+
+    return file.size > MAX_SOURCE_BYTES ? "source_too_large" : null;
+}
+
+function clampHeight(millimetres: number): number {
+    return Math.min(MAX_HEIGHT_MM, Math.max(MIN_HEIGHT_MM, Math.round(millimetres)));
+}
+
 export function ImageTo3dWorkbench({
-    initialOptions,
-    initialCutout,
+    initialDetail,
+    initialFormat,
+    siteKey,
+    configured,
     urlImportEnabled,
 }: ImageTo3dWorkbenchProps) {
     const t = useTranslations("imageTo3d.workbench");
     const tErrors = useTranslations("imageTo3d.errors");
     const tFormats = useTranslations("imageTo3d.formats");
+    const tShapes = useTranslations("imageTo3d.shapes");
     const tToast = useTranslations("imageTo3d.toast");
     const byteLabel = useByteLabel();
+    const online = useOnline();
     const { ref: resultRef, scrollToResult } = useResultScroll();
 
     const inputId = useId();
-    const hintId = useId();
+    const statusId = useId();
 
-    // Three states rather than one, and the split is the point. The format is
-    // not a property of the mesh, so it must not sit in the object the builder
-    // is keyed on — folded together, switching GLB to STL rebuilt a hundred
-    // thousand triangles and reset the orbit the reader had just set. The
-    // cut-out is not one either: it changes the *pixels*, which means re-reading
-    // the file rather than rebuilding from it.
-    const [geometry, setGeometry] = useState<MeshOptions>(initialOptions);
-    const [format, setFormat] = useState<ModelFormat>(initialOptions.format);
-    const [cutout, setCutout] = useState(initialCutout);
-    // Starts on the heaviest tier this browser has already fetched — a reader
-    // who cut a photograph out on the Background Remover has that file, and
-    // asking for a lighter one here would download a second model — and on the
-    // shared default otherwise. No picker on this page: the outline is
-    // resampled onto a few hundred points, and the tiers do not differ at that
-    // scale.
-    const [quality] = useCutoutQuality(null);
-    const online = useOnline();
-    // `null` until the Cache API answers, and not knowing is no reason to refuse.
-    const [depthCached, setDepthCached] = useState<boolean | null>(null);
+    const [detail, setDetail] = useState<MeshDetail>(initialDetail);
+    const [format, setFormat] = useState<ModelFormat>(initialFormat);
+    // `null` follows the object's own size; a number is the reader's override.
+    const [heightOverride, setHeightOverride] = useState<number | null>(null);
 
-    useEffect(() => {
-        if (online) {
-            return;
-        }
-
-        let cancelled = false;
-
-        // Set from the promise, never in the effect body — the check is async,
-        // and `react-hooks/set-state-in-effect` is satisfied without disabling.
-        void isDepthModelCached().then((cached) => {
-            if (!cancelled) {
-                setDepthCached(cached);
-            }
-        });
-
-        return () => {
-            cancelled = true;
-        };
-    }, [online]);
-
-    // Storage is read only once offline, which `useOnline` never reports during
-    // hydration — so the server pass and the first client pass still agree.
-    const cutoutOffline = !online && !readFetchedQualities().includes(quality);
-    const depthOffline = !online && depthCached === false;
-
-    const [picked, setPicked] = useState<PickedSource | null>(null);
-    const [reading, setReading] = useState(false);
-    const [progress, setProgress] = useState<SourceProgress | null>(null);
+    const [picked, setPicked] = useState<PickedImage | null>(null);
+    const [pickFailure, setPickFailure] = useState<PickFailure | null>(null);
+    const [generated, setGenerated] = useState<GeneratedModel | null>(null);
+    const [failure, setFailure] = useState<GenerationFailureReason | null>(null);
+    const [generating, setGenerating] = useState(false);
     /**
-     * Whether the model's assets have been arriving long enough to be worth
-     * naming.
-     *
-     * The library reports `fetch:` progress whether the bytes come from the
-     * network or straight back out of the browser cache, so "Fetching the
-     * model…" would otherwise appear on every run — including the ones that are
-     * over in a blink. Elapsed time is the signal that separates the two, and it
-     * is held as state set by a timer rather than read from the clock during
-     * render, which would be an impure call in the render pass.
+     * Seconds since Generate was pressed. A model call takes ten to forty-five
+     * seconds and has no progress of its own to report, so a counting clock is
+     * the honest way to say "still working". Set from an interval started by
+     * the press, never derived from the clock during render.
      */
-    const [slowDownload, setSlowDownload] = useState(false);
+    const [elapsed, setElapsed] = useState(0);
     const [downloading, setDownloading] = useState(false);
-    const [pickFailure, setPickFailure] = useState<SourceFailureReason | null>(null);
+
+    const [token, setToken] = useState<string | null>(null);
+    const [challengeFailed, setChallengeFailed] = useState(false);
+    const [resetSignal, setResetSignal] = useState(0);
 
     const nextId = useRef(0);
-    const downloadLabelTimer = useRef<number | null>(null);
-    // Held outside state so the unmount cleanup sees every URL ever handed out.
-    const objectUrls = useRef(new Set<string>());
+    const clock = useRef<number | null>(null);
+    const pickedUrl = useRef<string | null>(null);
 
-    useEffect(() => {
-        const urls = objectUrls.current;
-
-        return () => {
-            for (const url of urls) {
-                URL.revokeObjectURL(url);
+    useEffect(
+        () => () => {
+            if (clock.current !== null) {
+                window.clearInterval(clock.current);
             }
 
-            urls.clear();
-
-            if (downloadLabelTimer.current !== null) {
-                window.clearTimeout(downloadLabelTimer.current);
+            if (pickedUrl.current !== null) {
+                URL.revokeObjectURL(pickedUrl.current);
             }
-        };
-    }, []);
-
-    // The mesh is the expensive derivation on this page, so it settles before it
-    // is rebuilt. Dragging the depth slider would otherwise rebuild a hundred
-    // thousand triangles for every pixel the thumb moved. The format picker is
-    // a discrete choice and is deliberately not part of this.
-    const settled = useDebouncedValue(geometry);
-    const stale = settled !== geometry;
-
-    // Which pixels the mesh is built from. Both layers are held, so turning the
-    // cut-out off is instant and turning it back on costs nothing either — the
-    // model only runs again for a picture that has never been through it.
-    const layer =
-        picked === null
-            ? null
-            : cutout && picked.source.cut !== null
-              ? picked.source.cut
-              : picked.source.original;
-    const textureUrl =
-        picked === null
-            ? null
-            : layer === picked.source.cut
-              ? picked.cutTextureUrl
-              : picked.originalTextureUrl;
-
-    const depth = picked?.source.depth ?? null;
-    const model = useMemo(
-        () => (layer === null ? null : buildModel(layer.pixels, settled, depth)),
-        [layer, settled, depth],
+        },
+        [],
     );
 
-    const refusal: ModelRefusal | null = model !== null && !model.ok ? model.reason : null;
+    // Only a result for the picture on screen counts; a new pick hides the old
+    // model rather than captioning it with the wrong photograph.
+    const spec = generated !== null && generated.pickedId === picked?.id ? generated.spec : null;
 
-    function trackUrl(url: string): string {
-        objectUrls.current.add(url);
+    // Rebuilt for the detail setting only. The height is a uniform scale applied
+    // at download, so dragging it never tears down the preview the reader has
+    // just finished orbiting.
+    const built = useMemo(
+        () => (spec === null ? null : buildObjectMesh(spec, detail)),
+        [spec, detail],
+    );
+    const naturalHeight = built === null ? null : clampHeight(meshHeight(built.mesh));
+    const height = heightOverride ?? naturalHeight ?? MIN_HEIGHT_MM;
+    const options: ModelOptions = { height, detail, format };
 
-        return url;
+    const challengeReady = token !== null;
+    const canGenerate =
+        configured &&
+        siteKey !== null &&
+        online &&
+        picked !== null &&
+        pickFailure === null &&
+        challengeReady &&
+        !generating;
+
+    /** A Turnstile token is single-use, so every attempt draws a fresh one. */
+    function renewChallenge() {
+        setToken(null);
+        setResetSignal((current) => current + 1);
     }
 
-    function releasePicked(previous: PickedSource | null) {
-        if (previous === null) {
-            return;
+    function replacePicked(next: PickedImage | null) {
+        if (pickedUrl.current !== null) {
+            URL.revokeObjectURL(pickedUrl.current);
         }
 
-        for (const url of [
-            previous.previewUrl,
-            previous.originalTextureUrl,
-            previous.cutTextureUrl,
-        ]) {
-            if (url !== null) {
-                URL.revokeObjectURL(url);
-                objectUrls.current.delete(url);
-            }
-        }
-    }
-
-    function textureUrlFor(texture: { bytes: Uint8Array; mimeType: string } | null): string | null {
-        if (texture === null) {
-            return null;
-        }
-
-        return trackUrl(
-            URL.createObjectURL(new Blob([texture.bytes.slice()], { type: texture.mimeType })),
-        );
-    }
-
-    /** Shared by a fresh read and a later single-model run. */
-    function startWork() {
-        setReading(true);
-        setPickFailure(null);
-        setProgress(null);
-        setSlowDownload(false);
-
-        // A timeout in a ref rather than an effect: this is an event-driven
-        // side effect of a press, and doing it in an effect would trip
-        // `react-hooks/set-state-in-effect`.
-        if (downloadLabelTimer.current !== null) {
-            window.clearTimeout(downloadLabelTimer.current);
-        }
-
-        downloadLabelTimer.current = window.setTimeout(
-            () => setSlowDownload(true),
-            DOWNLOAD_LABEL_DELAY_MS,
-        );
-    }
-
-    function finishWork() {
-        if (downloadLabelTimer.current !== null) {
-            window.clearTimeout(downloadLabelTimer.current);
-            downloadLabelTimer.current = null;
-        }
-
-        setReading(false);
-        setProgress(null);
-        setSlowDownload(false);
-    }
-
-    /**
-     * One model on a picture that is already read. Turning the cut-out on, or
-     * choosing estimated depth, for a picture that has not been through that
-     * model must not decode the file and run the *other* model again.
-     */
-    async function extend(step: (source: ModelSource) => Promise<ModelSource>) {
-        if (picked === null || reading) {
-            return;
-        }
-
-        const current = picked;
-
-        startWork();
-
-        try {
-            const source = await step(current.source);
-
-            setPicked((previous) =>
-                previous === null || previous.id !== current.id
-                    ? previous
-                    : {
-                          ...previous,
-                          source,
-                          cutTextureUrl:
-                              previous.cutTextureUrl ?? textureUrlFor(source.cut?.texture ?? null),
-                      },
-            );
-        } catch (error) {
-            logEvent("error", "image-to-3d.extend", { detail: describeError(error) });
-        } finally {
-            finishWork();
-        }
-    }
-
-    async function read(file: File, wants: { cutout: boolean; depth: boolean }) {
-        if (reading) {
-            return;
-        }
-
-        startWork();
-
-        try {
-            const result = await readModelSource(file, {
-                cutout: wants.cutout,
-                depth: wants.depth,
-                quality,
-                onProgress: setProgress,
-            });
-
-            if (!result.ok) {
-                setPickFailure(result.reason);
-
-                return;
-            }
-
-            nextId.current += 1;
-
-            const entry: PickedSource = {
-                id: nextId.current,
-                file,
-                source: result.source,
-                previewUrl: trackUrl(URL.createObjectURL(file)),
-                originalTextureUrl: textureUrlFor(result.source.original.texture),
-                cutTextureUrl: textureUrlFor(result.source.cut?.texture ?? null),
-            };
-
-            setPicked((previous) => {
-                releasePicked(previous);
-
-                return entry;
-            });
-
-            scrollToResult();
-        } catch (error) {
-            logEvent("error", "image-to-3d.read", { detail: describeError(error) });
-            setPickFailure("undecodable");
-        } finally {
-            finishWork();
-        }
+        pickedUrl.current = next?.url ?? null;
+        setPicked(next);
     }
 
     function accept(files: readonly File[]) {
         const file = files[0];
 
-        if (file !== undefined) {
-            // Offline with a model not on the device, its fetch can only fail —
-            // skip it and build from brightness; the note beside the control says why.
-            void read(file, {
-                cutout: cutout && !cutoutOffline,
-                depth: geometry.source === "depth" && !depthOffline,
-            });
+        if (file === undefined || generating) {
+            return;
+        }
+
+        const problem = checkPick(file);
+
+        setFailure(null);
+        setPickFailure(problem);
+
+        if (problem !== null) {
+            replacePicked(null);
+
+            return;
+        }
+
+        nextId.current += 1;
+        replacePicked({ id: nextId.current, file, url: URL.createObjectURL(file) });
+    }
+
+    function clear() {
+        replacePicked(null);
+        setPickFailure(null);
+        setFailure(null);
+    }
+
+    function stopClock() {
+        if (clock.current !== null) {
+            window.clearInterval(clock.current);
+            clock.current = null;
         }
     }
 
-    function toggleCutout(next: boolean) {
-        setCutout(next);
+    async function generate() {
+        if (!canGenerate || picked === null || token === null) {
+            return;
+        }
 
-        if (next && picked !== null && picked.source.cut === null && !picked.source.hadAlpha) {
-            void extend((source) => withCutout(source, { quality, onProgress: setProgress }));
+        const current = picked;
+
+        setGenerating(true);
+        setFailure(null);
+        setElapsed(0);
+        stopClock();
+        clock.current = window.setInterval(() => setElapsed((seconds) => seconds + 1), 1_000);
+
+        try {
+            const upload = await prepareUpload(current.file);
+
+            if (upload === null) {
+                setPickFailure("undecodable");
+
+                return;
+            }
+
+            const checked = checkUploadImage({ type: upload.type, size: upload.size });
+
+            if (!checked.ok) {
+                setFailure(checked.reason);
+
+                return;
+            }
+
+            const body = new FormData();
+
+            body.set(IMAGE_FORM_FIELD, upload, "upload.jpg");
+            body.set(TOKEN_FORM_FIELD, token);
+
+            const result = await describeObject(body);
+
+            if (!result.ok) {
+                setFailure(result.reason);
+                logEvent("warn", "image_to_3d.generation_failed", { reason: result.reason });
+
+                return;
+            }
+
+            setGenerated({ pickedId: current.id, spec: result.spec });
+            setHeightOverride(null);
+            // Only now: the destination exists and has a model in it.
+            scrollToResult();
+        } catch (caught) {
+            setFailure("upstream_unavailable");
+            logEvent("error", "image_to_3d.generation_threw", { error: describeError(caught) });
+        } finally {
+            stopClock();
+            setGenerating(false);
+            renewChallenge();
         }
     }
 
     function patchOptions(patch: Partial<ModelOptions>) {
-        const { format: nextFormat, ...rest } = patch;
-
-        if (nextFormat !== undefined) {
-            setFormat(nextFormat);
+        if (patch.format !== undefined) {
+            setFormat(patch.format);
         }
 
-        if (Object.keys(rest).length > 0) {
-            setGeometry((current) => ({ ...current, ...rest }));
+        if (patch.detail !== undefined) {
+            setDetail(patch.detail);
         }
 
-        // Choosing estimated depth for a picture that has not been through the
-        // estimator runs it now, and only it.
-        if (rest.source === "depth" && picked !== null && picked.source.depth === null) {
-            void extend((source) => withDepth(source, { onProgress: setProgress }));
+        if (patch.height !== undefined) {
+            setHeightOverride(clampHeight(patch.height));
         }
-    }
-
-    function clear() {
-        setPicked((previous) => {
-            releasePicked(previous);
-
-            return null;
-        });
-        setPickFailure(null);
     }
 
     function download() {
-        if (model === null || !model.ok || layer === null || picked === null || downloading) {
+        if (built === null || spec === null || picked === null || downloading) {
             return;
         }
 
@@ -412,10 +326,10 @@ export function ImageTo3dWorkbench({
 
         try {
             const file = buildModelDownload({
-                mesh: model.mesh,
+                mesh: scaleMesh(built.mesh, height),
                 format,
-                texture: layer.texture,
-                stem: toFilenameStem(picked.source.name),
+                name: spec.name,
+                stem: toFilenameStem(picked.file.name),
                 // The reader's own clock: a ZIP records local time with no
                 // offset, so this is the value that reads correctly in the file
                 // manager that opens it.
@@ -425,227 +339,268 @@ export function ImageTo3dWorkbench({
             saveBlob(file);
             toast.success(tToast("downloaded", { filename: file.filename }));
         } catch (error) {
-            logEvent("error", "image-to-3d.export", { detail: describeError(error) });
+            logEvent("error", "image_to_3d.export", { detail: describeError(error) });
             toast.error(tToast("downloadFailed"));
         } finally {
             setDownloading(false);
         }
     }
 
-    const stats = model !== null && model.ok ? model.stats : null;
-    const cutoutBytes = CUTOUT_MODELS[quality].bytes + RUNTIME_WASM_BYTES.gpu;
+    function describeFailure(reason: GenerationFailureReason | PickFailure): string {
+        switch (reason) {
+            case "source_too_large":
+                return tErrors(reason, { limit: byteLabel(MAX_SOURCE_BYTES) });
+            case "rate_limited":
+                return tErrors(reason, { limit: GENERATION_LIMIT_PER_ADDRESS });
+            default:
+                return tErrors(reason);
+        }
+    }
 
     const status = ((): { tone: StatusTone; message: string } => {
-        if (reading) {
-            if (progress === null) {
-                return { tone: "pending", message: t("reading") };
-            }
+        if (!configured || siteKey === null) {
+            return { tone: "error", message: tErrors("not_configured") };
+        }
 
-            const downloading = progress.progress.phase === "download" && slowDownload;
-
-            if (progress.stage === "depth") {
-                return {
-                    tone: "pending",
-                    message: downloading
-                        ? t("fetchingDepthModel", { size: byteLabel(DEPTH_FIRST_RUN_BYTES) })
-                        : t("estimatingDepth"),
-                };
-            }
-
-            return {
-                tone: "pending",
-                message: downloading
-                    ? t("fetchingModel", { size: byteLabel(cutoutBytes) })
-                    : t("cuttingOut"),
-            };
+        if (generating) {
+            return { tone: "pending", message: t("generating", { seconds: elapsed }) };
         }
 
         if (pickFailure !== null) {
-            return { tone: "error", message: tErrors(pickFailure) };
+            return { tone: "error", message: describeFailure(pickFailure) };
         }
 
-        if (refusal !== null) {
-            return {
-                tone: "error",
-                message: tErrors(refusal, {
-                    count: model !== null && !model.ok ? (model.triangles ?? 0) : 0,
-                }),
-            };
+        if (failure !== null) {
+            return { tone: "error", message: describeFailure(failure) };
         }
 
         if (picked === null) {
             return { tone: "idle", message: t("statusIdle") };
         }
 
-        if (picked.source.cutFailure !== null) {
-            return { tone: "warning", message: tErrors(picked.source.cutFailure) };
+        if (spec !== null && built !== null) {
+            return {
+                tone: "success",
+                message: t("statusBuilt", { name: spec.name, count: built.stats.parts }),
+            };
         }
 
-        // Asked for depth and did not get it: the model still built, from
-        // brightness, and that is worth a warning rather than silence.
-        if (geometry.source === "depth" && picked.source.depthFailure !== null) {
-            return { tone: "warning", message: tErrors(picked.source.depthFailure) };
+        if (challengeFailed) {
+            return { tone: "warning", message: t("challengeFailed") };
         }
 
-        if (picked.source.hadAlpha) {
-            return { tone: "success", message: t("statusHadAlpha") };
-        }
-
-        return {
-            tone: "success",
-            message: picked.source.cut === null ? t("statusWhole") : t("statusCut"),
-        };
+        return challengeReady
+            ? { tone: "success", message: t("ready") }
+            : { tone: "pending", message: t("challengePending") };
     })();
 
     return (
         <Card>
             <CardContent className="flex min-w-0 flex-col gap-6">
-                {/* Every setting has a default that builds a model, so the
-                    panel is folded above the intake instead of standing
-                    between the picture and its mesh. */}
+                {/* Every setting has a default, and none of them costs a second
+                    model call — they shape the file, not the description — so
+                    the panel is folded above the intake. */}
                 <OptionsDisclosure>
                     <ModelOptionsPanel
-                        options={{ ...geometry, format }}
-                        cutout={cutout}
-                        cutoutDownloadLabel={byteLabel(cutoutBytes)}
-                        depthDownloadLabel={byteLabel(DEPTH_FIRST_RUN_BYTES)}
-                        cutoutAlreadyTransparent={picked?.source.hadAlpha ?? false}
-                        cutoutOffline={cutoutOffline}
-                        depthOffline={depthOffline}
-                        disabled={picked === null || reading}
+                        options={options}
+                        heightDisabled={built === null}
                         onPatch={patchOptions}
-                        onCutoutChange={toggleCutout}
                     />
                 </OptionsDisclosure>
 
-                <div className="flex min-w-0 flex-col gap-2">
-                    <StepLabel step={1} htmlFor={inputId}>
-                        {t("dropTitle")}
-                    </StepLabel>
-                    <ImageDropzone
-                        inputId={inputId}
-                        describedById={hintId}
-                        accept={IMAGE_ACCEPT_ATTRIBUTE}
-                        disabled={reading}
-                        // The step label above carries the title and labels the
-                        // same input; the box keeps the hint.
-                        title={null}
-                        hint={t("dropHint", { limit: byteLabel(MAX_SOURCE_BYTES) })}
-                        onFiles={accept}
-                    />
+                <div className="flex min-w-0 flex-col gap-3">
+                    <div className="flex min-w-0 flex-col gap-2">
+                        <StepLabel step={1} htmlFor={inputId}>
+                            {t("dropTitle")}
+                        </StepLabel>
+                        <ImageDropzone
+                            inputId={inputId}
+                            describedById={statusId}
+                            accept={IMAGE_ACCEPT_ATTRIBUTE}
+                            disabled={generating}
+                            // The step label above carries the title and labels
+                            // the same input; the box keeps the hint.
+                            title={null}
+                            hint={t("dropHint", { limit: byteLabel(MAX_SOURCE_BYTES) })}
+                            onFiles={accept}
+                        />
+                        <ImageSourceControls
+                            onFiles={accept}
+                            disabled={generating}
+                            urlImportEnabled={urlImportEnabled}
+                        />
+                    </div>
 
-                    <ImageSourceControls
-                        onFiles={accept}
-                        disabled={reading}
-                        urlImportEnabled={urlImportEnabled}
-                    />
+                    {picked !== null && (
+                        <div className="flex min-w-0 items-center gap-3">
+                            {/* The reader's own picture, from an object URL in
+                                this tab — next/image would be a remote loader
+                                for a local blob. */}
+                            <img
+                                src={picked.url}
+                                alt={t("previewAlt", { name: picked.file.name })}
+                                decoding="async"
+                                className="ring-border/70 bg-muted/40 size-20 shrink-0 rounded-lg object-contain ring-1 ring-inset"
+                            />
+                            <div className="flex min-w-0 flex-1 flex-col gap-1">
+                                <p className="truncate font-mono text-[0.8125rem]">
+                                    {picked.file.name}
+                                </p>
+                                <p className="text-muted-foreground font-mono text-[0.6875rem] tabular-nums">
+                                    {byteLabel(picked.file.size)}
+                                </p>
+                            </div>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                disabled={generating}
+                                onClick={clear}
+                                className="shrink-0"
+                            >
+                                <IconTrash className="size-3.5" stroke={1.8} aria-hidden="true" />
+                                {t("clear")}
+                            </Button>
+                        </div>
+                    )}
 
-                    <StatusStrip id={hintId} tone={status.tone} message={status.message} />
+                    {siteKey !== null && configured && (
+                        // Reserves the widget's height so the button below does
+                        // not jump once Cloudflare's script finishes loading.
+                        <div className="min-h-16 w-full max-w-82 min-w-0">
+                            <TurnstileWidget
+                                siteKey={siteKey}
+                                action={TURNSTILE_ACTION}
+                                resetSignal={resetSignal}
+                                onVerify={(verified) => {
+                                    setChallengeFailed(false);
+                                    setToken(verified);
+                                }}
+                                onExpire={() => setToken(null)}
+                                onError={() => {
+                                    setChallengeFailed(true);
+                                    setToken(null);
+                                }}
+                            />
+                        </div>
+                    )}
+
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button onClick={() => void generate()} disabled={!canGenerate}>
+                            {generating ? (
+                                <IconLoader2 className="size-4 animate-spin" aria-hidden="true" />
+                            ) : (
+                                <IconSparkles className="size-4" stroke={1.8} aria-hidden="true" />
+                            )}
+                            {generating ? t("generatingShort") : t("generate")}
+                        </Button>
+
+                        {!online && <OnlineRequiredNote kind="feature" />}
+                    </div>
+
+                    <StatusStrip id={statusId} tone={status.tone} message={status.message} />
                 </div>
 
-                <div ref={resultRef} className="scroll-mt-24">
-                    {picked === null ? (
-                        <p className="text-muted-foreground bg-muted/30 ring-border/70 rounded-xl px-4 py-8 text-center text-xs leading-[1.5] ring-1 ring-inset">
-                            {t("empty")}
-                        </p>
-                    ) : (
-                        <div
-                            className={cn(
-                                "grid min-w-0 gap-3 transition-opacity duration-200 sm:grid-cols-2",
-                                // Dimmed rather than cleared: a blank panel
-                                // between keystrokes reads as a failure.
-                                stale && "opacity-55",
-                            )}
-                        >
-                            <figure className="flex min-w-0 flex-col gap-1.5">
-                                {/* The reader's own picture, drawn from an object
-                                    URL in this tab — next/image would be a
-                                    remote loader for a local blob. */}
-                                <img
-                                    src={textureUrl ?? picked.previewUrl}
-                                    alt={picked.source.name}
-                                    className="bg-muted/40 ring-border/70 aspect-4/3 w-full rounded-xl object-contain ring-1 ring-inset"
-                                />
-                                <figcaption className="flex min-w-0 items-center justify-between gap-2">
-                                    <span className="text-muted-foreground min-w-0 truncate text-[0.6875rem]">
-                                        {t("sourceSummary", {
-                                            name: picked.source.name,
-                                            width: picked.source.width,
-                                            height: picked.source.height,
-                                        })}
-                                    </span>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-7 shrink-0 px-2 text-xs"
-                                        onClick={clear}
-                                    >
-                                        <IconTrash
-                                            className="size-3.5"
-                                            stroke={1.9}
-                                            aria-hidden="true"
-                                        />
-                                        {t("clear")}
-                                    </Button>
-                                </figcaption>
-                            </figure>
+                <div ref={resultRef} className="flex min-w-0 scroll-mt-24 flex-col gap-2">
+                    <StepLabel step={2}>{t("resultTitle")}</StepLabel>
 
+                    {built === null || spec === null ? (
+                        <div className="text-muted-foreground bg-muted/30 ring-border/70 flex flex-col items-center gap-2 rounded-xl px-4 py-10 text-center text-xs leading-[1.5] ring-1 ring-inset">
+                            <IconCube3dSphere
+                                className="size-8 opacity-40"
+                                stroke={1.4}
+                                aria-hidden="true"
+                            />
+                            <span className="max-w-[46ch]">{t("empty")}</span>
+                        </div>
+                    ) : (
+                        <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
                             <figure className="flex min-w-0 flex-col gap-1.5">
-                                {model !== null && model.ok ? (
-                                    <ModelPreview
-                                        key={picked.id}
-                                        mesh={model.mesh}
-                                        textureUrl={textureUrl}
-                                        className="aspect-4/3 w-full"
-                                    />
-                                ) : (
-                                    <div className="bg-muted/40 ring-border/70 text-muted-foreground flex aspect-4/3 w-full items-center justify-center rounded-xl px-6 text-center text-xs ring-1 ring-inset">
-                                        <IconCube3dSphere
-                                            className="size-8 opacity-40"
-                                            stroke={1.4}
-                                            aria-hidden="true"
-                                        />
-                                    </div>
-                                )}
+                                <ModelPreview
+                                    key={generated?.pickedId}
+                                    mesh={built.mesh}
+                                    className="aspect-4/3 w-full"
+                                />
                                 <figcaption className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
                                     {t("previewHint")}
                                 </figcaption>
                             </figure>
+
+                            {/* The model in words: what each coloured piece is.
+                                The text equivalent of the canvas beside it, and
+                                the list of names the downloaded file carries. */}
+                            <div className="flex min-w-0 flex-col gap-2">
+                                <p className="text-sm font-medium">
+                                    {t("partsTitle", { name: spec.name })}
+                                </p>
+                                <ul className="ring-border/70 divide-border/70 flex max-h-80 min-w-0 flex-col divide-y overflow-y-auto rounded-xl ring-1 ring-inset">
+                                    {built.mesh.groups.map((group, index) => (
+                                        <li
+                                            key={`${index}-${group.name}`}
+                                            className="flex min-w-0 items-center gap-2.5 px-3 py-2 text-xs"
+                                        >
+                                            {/* The part's colour as the model
+                                                read it off the photograph — a
+                                                paint swatch, not a theme colour. */}
+                                            <span
+                                                aria-hidden="true"
+                                                className="ring-border size-3.5 shrink-0 rounded-sm ring-1"
+                                                style={{
+                                                    backgroundColor: `rgb(${group.color.join(" ")})`,
+                                                }}
+                                            />
+                                            <span className="min-w-0 flex-1 truncate">
+                                                {group.mirrored
+                                                    ? t("mirroredPart", { name: group.name })
+                                                    : group.name}
+                                            </span>
+                                            <span className="text-muted-foreground shrink-0">
+                                                {tShapes(`${group.shape}Name`)}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                                <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                                    {t("partsNote")}
+                                </p>
+                            </div>
                         </div>
                     )}
                 </div>
 
-                {/* The tray holds where the file is taken from, not the
-                    viewport above it: a drag-to-turn canvas stays a canvas. */}
-                <div className={cn(RESULT_TRAY, "sm:flex-row sm:items-end sm:justify-between")}>
-                    <div className="flex min-w-0 flex-col gap-1">
-                        <StepLabel step={2}>{t("statsTitle")}</StepLabel>
-                        <p className="text-sm tabular-nums">
-                            {stats === null
-                                ? "—"
-                                : [
-                                      t("statsTriangles", { count: stats.triangles }),
-                                      t("statsVertices", { count: stats.vertices }),
-                                      t("statsSize", {
-                                          size: byteLabel(estimateBytes(stats, format)),
-                                      }),
-                                  ].join(" · ")}
-                        </p>
-                        <p className="text-muted-foreground max-w-[62ch] text-[0.6875rem] leading-[1.4]">
-                            {format === "glb" ? t("unitMetres") : t("unitMillimetres")}
-                        </p>
-                    </div>
+                {/* The tray holds where the file is taken from, not the viewport
+                    above it: a drag-to-turn canvas stays a canvas. */}
+                <div className={RESULT_TRAY}>
+                    <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                        <div className="flex min-w-0 flex-col gap-1">
+                            <p className="text-sm tabular-nums">
+                                {built === null
+                                    ? "—"
+                                    : [
+                                          t("statsHeight", { height }),
+                                          t("statsTriangles", { count: built.stats.triangles }),
+                                          t("statsSize", {
+                                              size: byteLabel(estimateBytes(built.stats, format)),
+                                          }),
+                                      ].join(" · ")}
+                            </p>
+                            <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                                {format === "glb" ? t("unitMetres") : t("unitMillimetres")}
+                            </p>
+                        </div>
 
-                    <Button
-                        onClick={download}
-                        disabled={stats === null || downloading || reading}
-                        className="shrink-0"
-                    >
-                        <IconDownload className="size-4" stroke={1.9} aria-hidden="true" />
-                        {downloading
-                            ? t("preparing")
-                            : `${t("download")} · ${tFormats(`${format}Name`)}`}
-                    </Button>
+                        <Button
+                            variant="outline"
+                            onClick={download}
+                            disabled={built === null || downloading || generating}
+                            className="shrink-0"
+                        >
+                            <IconDownload className="size-4" stroke={1.9} aria-hidden="true" />
+                            {downloading
+                                ? t("preparing")
+                                : `${t("download")} · ${tFormats(`${format}Name`)}`}
+                        </Button>
+                    </div>
                 </div>
             </CardContent>
         </Card>

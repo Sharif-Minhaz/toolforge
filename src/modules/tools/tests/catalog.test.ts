@@ -170,14 +170,14 @@ describe("tool catalog", () => {
         const networked = [
             "qr",
             "shortener",
-            // The five image tools are local in every other respect; each one's
-            // "paste a picture's address" field is what makes it a hybrid. The
-            // 3D converter builds and writes every byte of its mesh in the tab
-            // and is here for that one field alone.
+            // The four image tools are local in every other respect; each one's
+            // "paste a picture's address" field is what makes it a hybrid.
             "image-compressor",
             "image-converter",
             "image-resizer",
             "blur-placeholder",
+            // The picture goes to a vision model that describes the object;
+            // only the mesh built from that description stays in the tab.
             "image-to-3d",
             // The cut-out itself runs in the tab and the photograph never
             // leaves it, but the segmentation weights come from a CDN and the

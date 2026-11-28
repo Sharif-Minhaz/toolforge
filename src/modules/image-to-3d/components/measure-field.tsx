@@ -10,11 +10,11 @@ import { cn } from "@/lib/utils";
 /**
  * A bounded measurement: drag it, or type the exact number.
  *
- * `NumberStepper` in the shared layer is for bounded *integers* with presets,
- * and every dimension here is a length in millimetres with a tenth-millimetre
- * step. Two controls for one value rather than one, because both questions get
- * asked: "roughly how deep" is a drag, and "exactly 1.6 mm because that is four
- * layers" is a keystroke.
+ * `NumberStepper` in the shared layer is for small bounded integers with
+ * presets, and the height here runs from a centimetre to two metres. Two
+ * controls for one value rather than one, because both questions get asked:
+ * "roughly this big" is a drag, and "exactly 80 mm because that is the shelf"
+ * is a keystroke.
  *
  * The field keeps its own raw text so a half-typed "1." is never rewritten
  * under the caret, and commits only when what is typed parses inside the range.

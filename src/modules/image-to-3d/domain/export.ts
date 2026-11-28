@@ -1,9 +1,9 @@
 import { buildZipArchive } from "@/modules/tools/domain/archive";
 import type { ArchiveEntry, BlobDownload } from "@/modules/tools/types";
 
-import type { Mesh, ModelFormat, ModelTexture } from "../types";
+import type { Mesh, ModelFormat } from "../types";
 import { FORMAT_MIME_TYPES } from "./constants";
-import { MODEL_GENERATOR, MODEL_OBJECT_NAME, modelFilename, objEntryNames } from "./filenames";
+import { MODEL_GENERATOR, modelFilename, OBJ_ENTRY_NAMES } from "./filenames";
 import { encodeGlb } from "./glb";
 import { encodeMtl, encodeObj } from "./obj";
 import { encodePly } from "./ply";
@@ -12,13 +12,8 @@ import { encodeStl } from "./stl";
 export type ModelExportInput = {
     readonly mesh: Mesh;
     readonly format: ModelFormat;
-    /**
-     * `null` when the picture could not be re-encoded as PNG or JPEG, which is
-     * the only two things glTF and this ZIP will carry. Every format still
-     * produces a file; GLB and PLY fall back to per-vertex colour and OBJ ships
-     * without a material.
-     */
-    readonly texture: ModelTexture | null;
+    /** The object's name as the model gave it — the GLB's root node. */
+    readonly name: string;
     readonly stem: string;
     /** The reader's own clock, because a ZIP records local time with no offset. */
     readonly generatedAt: Date;
@@ -27,55 +22,36 @@ export type ModelExportInput = {
 /**
  * The bytes for one format, as one file.
  *
- * OBJ is the reason this returns a blob rather than a string: it is three files
- * that only mean anything together, so it is zipped, and a reader who is handed
- * `model.obj` alone gets an untextured grey mesh and no way to tell why.
+ * OBJ is the reason this returns bytes rather than a string: its colours live
+ * in a second file that only means anything beside the first, so the two are
+ * zipped, and a reader handed `model.obj` alone gets a grey model and no way
+ * to tell why.
  */
 export function buildModelBytes(input: ModelExportInput): Uint8Array {
     switch (input.format) {
         case "glb":
-            return encodeGlb(input.mesh, input.texture, {
-                generator: MODEL_GENERATOR,
-                name: MODEL_OBJECT_NAME,
-            });
+            return encodeGlb(input.mesh, { generator: MODEL_GENERATOR, name: input.name });
         case "stl":
             return encodeStl(input.mesh, MODEL_GENERATOR);
         case "ply":
             return encodePly(input.mesh, MODEL_GENERATOR);
         case "obj":
-            return buildZipArchive(objArchiveEntries(input), input.generatedAt);
+            return buildZipArchive(objArchiveEntries(input.mesh), input.generatedAt);
     }
 }
 
-export function objArchiveEntries(input: ModelExportInput): readonly ArchiveEntry[] {
-    const names = objEntryNames(input.texture);
+export function objArchiveEntries(mesh: Mesh): readonly ArchiveEntry[] {
     const encoder = new TextEncoder();
 
-    const entries: ArchiveEntry[] = [
+    return [
         {
-            name: names.obj,
+            name: OBJ_ENTRY_NAMES.obj,
             bytes: encoder.encode(
-                encodeObj(input.mesh, { mtlName: names.mtl, comment: MODEL_GENERATOR }),
+                encodeObj(mesh, { mtlName: OBJ_ENTRY_NAMES.mtl, comment: MODEL_GENERATOR }),
             ),
         },
+        { name: OBJ_ENTRY_NAMES.mtl, bytes: encoder.encode(encodeMtl(mesh)) },
     ];
-
-    if (input.texture !== null) {
-        entries.push(
-            {
-                name: names.mtl,
-                bytes: encoder.encode(
-                    encodeMtl({
-                        textureName: names.texture,
-                        hasAlpha: input.texture.mimeType === "image/png",
-                    }),
-                ),
-            },
-            { name: names.texture, bytes: input.texture.bytes },
-        );
-    }
-
-    return entries;
 }
 
 export function buildModelDownload(input: ModelExportInput): BlobDownload {

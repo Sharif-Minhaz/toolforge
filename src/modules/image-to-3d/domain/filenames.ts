@@ -1,4 +1,4 @@
-import type { ModelFormat, ModelTexture } from "../types";
+import type { MeshGroup, ModelFormat } from "../types";
 import { FORMAT_EXTENSIONS } from "./constants";
 
 /**
@@ -11,26 +11,39 @@ import { FORMAT_EXTENSIONS } from "./constants";
  */
 export const MODEL_GENERATOR = "ToolForge Image to 3D Model";
 
-/** The name of the mesh inside a GLB, and of the object inside an OBJ. */
-export const MODEL_OBJECT_NAME = "relief";
-
 export function modelFilename(stem: string, format: ModelFormat): string {
     return `${stem}.${FORMAT_EXTENSIONS[format]}`;
 }
 
 /**
- * The three names inside an OBJ archive.
+ * The two names inside an OBJ archive.
  *
- * Fixed rather than derived from the reader's filename, and `mtllib` and
- * `map_Kd` name them by exactly these strings. A stem carrying a space or a
- * Bangla vowel sign is legal in a ZIP and legal on disk, but `mtllib` has no
- * quoting rule at all — a space in that line splits it into two filenames, and
- * the material is silently dropped by the importer.
+ * Fixed rather than derived from the reader's filename, because `mtllib` names
+ * the library by exactly this string and has no quoting rule: a stem carrying a
+ * space or a Bangla vowel sign is legal in a ZIP and on disk, and splits that
+ * line into two filenames, and the colours are silently dropped by the
+ * importer.
  */
-export function objEntryNames(texture: ModelTexture | null) {
-    return {
-        obj: "model.obj",
-        mtl: "model.mtl",
-        texture: texture?.mimeType === "image/jpeg" ? "texture.jpg" : "texture.png",
-    };
+export const OBJ_ENTRY_NAMES = { obj: "model.obj", mtl: "model.mtl" } as const;
+
+/**
+ * Every part's name as written into a file, unique across the model.
+ *
+ * Unique on purpose: two glTF nodes both called "foot" are renamed by every
+ * reader that meets them — three to `foot_1`, Blender to `foot.001` — and the
+ * reference test caught exactly that. The mirrored copy says so, in English
+ * like the rest of the model's names (the page shows its own localised label),
+ * and any name still repeated after that is numbered from its second use.
+ */
+export function filePartNames(groups: readonly MeshGroup[]): string[] {
+    const seen = new Map<string, number>();
+
+    return groups.map((group) => {
+        const base = group.mirrored ? `${group.name} mirrored` : group.name;
+        const uses = (seen.get(base) ?? 0) + 1;
+
+        seen.set(base, uses);
+
+        return uses === 1 ? base : `${base} ${uses}`;
+    });
 }

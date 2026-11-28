@@ -28,9 +28,14 @@ const OFFLINE = "/offline";
 const PAGES = new Set(pages);
 const PUBLIC_ASSETS = new Set(assets.filter((url) => !url.startsWith("/_next/")));
 
-// Where the model tools fetch weights and runtimes. Hugging Face is left out on
-// purpose: the Image to 3D tool keeps its depth model in its own Cache API bucket.
+// Where the model tools fetch weights and runtimes.
 const MODEL_HOSTS = new Set(["staticimgly.com", "cdn.jsdelivr.net"]);
+
+// Buckets a retired feature left in readers' browsers. The Image to 3D tool
+// used to keep a 27 MB depth model here; it now asks a server-side model and
+// has nothing to cache, so the bucket is dropped on activation rather than
+// left holding storage nothing will read again.
+const RETIRED_CACHES = new Set([`${PREFIX}depth-model`]);
 
 // Enough parallel requests to finish a warm quickly without queueing hundreds.
 const WARM_CONCURRENCY = 8;
@@ -67,7 +72,11 @@ self.addEventListener("activate", (event) => {
 
             await Promise.all(
                 keys
-                    .filter((key) => key.startsWith(`${PREFIX}static-`) && key !== STATIC)
+                    .filter(
+                        (key) =>
+                            (key.startsWith(`${PREFIX}static-`) && key !== STATIC) ||
+                            RETIRED_CACHES.has(key),
+                    )
                     .map((key) => caches.delete(key)),
             );
             await self.clients.claim();

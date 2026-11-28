@@ -41,8 +41,12 @@ assets never are.
 
 Weights are 27–176 MB and belong to readers who use those tools. The worker
 caches the CDN responses (`staticimgly.com`, `cdn.jsdelivr.net`) the first time
-they are used, in a bucket that survives deploys. Image to 3D keeps its depth
-model in its own Cache API bucket, so Hugging Face is left alone.
+they are used, in a bucket that survives deploys.
+
+A feature that stops caching something must also stop *keeping* it: readers
+still have the old bucket. `RETIRED_CACHES` in `public/sw.js` names buckets the
+worker deletes on activation — the Image to 3D tool's old depth-model bucket is
+the first entry, dropped when the tool moved to a server-side model.
 
 So a model tool offline is one of two states, and the page says which:
 **on the device** (it runs) or **not yet downloaded** (the control is disabled
@@ -52,8 +56,7 @@ and fail with a network error.
 "On the device" is asked the cheapest honest way each store allows: the cut-out
 tiers from `tools/domain/cutout-memory.ts`, OCR languages from
 `image-to-text/domain/language-memory.ts` (both written after a successful
-run), and the depth model from its own Cache API bucket (`isDepthModelCached`).
-Read the two memories only when `useOnline()` is false — it is never false
+run). Read the two memories only when `useOnline()` is false — it is never false
 during hydration, so the server and first client passes still agree.
 
 ## A tool that needs the server

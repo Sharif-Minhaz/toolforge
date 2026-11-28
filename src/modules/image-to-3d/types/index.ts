@@ -1,98 +1,119 @@
 /**
- * Which channel of the picture decides how high a point on the surface sits.
+ * What a part can be built from.
  *
- * `depth` is not a channel the file has: it is estimated by a model that reads
- * the picture as a scene, and it is the one that makes a snout stand nearer
- * than the ears. When the estimate is not to be had the heightfield falls back
- * to brightness and the page says so.
- *
- * A literal union rather than a string so `t(`sources.${source}Name`)` stays
- * type-checked, and so the search-param schema has one place to read from.
+ * Deliberately few. Every shape here is one the vision model already has a
+ * word for and one it can size by eye; a richer vocabulary (booleans, splines,
+ * subdivision) only gave it more ways to answer with something the builder
+ * then had to guess at. `lathe` is the escape hatch for anything turned —
+ * bottles, vases, lamp bases, a hydrant's body — because a profile is a list of
+ * numbers and a list of numbers is something a language model is good at.
  */
-export const HEIGHT_SOURCES = ["depth", "luminance", "alpha", "red", "green", "blue"] as const;
+export const PART_SHAPES = [
+    "box",
+    "rounded_box",
+    "cylinder",
+    "cone",
+    "sphere",
+    "capsule",
+    "torus",
+    "lathe",
+] as const;
 
-export type HeightSource = (typeof HEIGHT_SOURCES)[number];
+export type PartShape = (typeof PART_SHAPES)[number];
 
 /**
- * What the picture is turned into.
+ * Which world axis a part's own long axis runs along.
  *
- * `inflate` is the one that makes a body rather than a plate: the cut-out's
- * outline is pushed out into a rounded solid and mirrored behind itself, so the
- * result has a front, a back and a closed edge. The other two lay the same
- * heightfield on a surface and are what lithophanes, plaques and lamp shades
- * want. See `domain/silhouette.ts` for what inflation can and cannot claim.
+ * Its own field rather than a rotation, and that is the fix for the first live
+ * run: asked for Euler angles, the model sized a hydrant's side nozzles as
+ * upright cylinders and never turned them. Asked which way a part *points*, it
+ * answers correctly — and the size stays a world-aligned box it can read
+ * straight off the photograph.
  */
-export const MODEL_SHAPES = ["inflate", "plane", "cylinder"] as const;
+export const PART_AXES = ["x", "y", "z"] as const;
 
-export type ModelShape = (typeof MODEL_SHAPES)[number];
+export type PartAxis = (typeof PART_AXES)[number];
+
+export type Vector3 = readonly [number, number, number];
+
+/** One primitive, as the model described it and after `parseObjectSpec` bounded it. */
+export type ObjectPart = {
+    readonly name: string;
+    readonly shape: PartShape;
+    readonly axis: PartAxis;
+    /** Centimetres: the part's extent along world x, y and z before any tilt. */
+    readonly size: Vector3;
+    /** Centimetres: the centre of that box. */
+    readonly position: Vector3;
+    /** Degrees about x, y and z, applied in that order after the axis is chosen. */
+    readonly tilt: Vector3;
+    /**
+     * Top width as a share of the bottom one, 0–1, along the part's axis.
+     * Boxes and cylinders only: a box at 0.6 is a frustum, a cylinder at 0 is a
+     * cone. Everything else ignores it.
+     */
+    readonly taper: number;
+    /**
+     * Lathe only: `[radius, height]` pairs from bottom to top, in any unit the
+     * model liked. The builder normalises both to the part's own size, so a
+     * profile written in centimetres and one written in percent come out alike.
+     */
+    readonly profile: readonly (readonly [number, number])[];
+    /** Straight sRGB, 0–255. */
+    readonly color: Vector3;
+    /** Add a copy mirrored across x = 0 — the left leg, the other ear. */
+    readonly mirror: boolean;
+};
+
+export type ObjectSpec = {
+    readonly name: string;
+    /** The object's real height as the model judged it, in centimetres. */
+    readonly heightCm: number;
+    readonly parts: readonly ObjectPart[];
+};
+
+/**
+ * How finely curved parts are divided.
+ *
+ * A setting rather than a constant because the two readers of the file want
+ * opposite things: a printer wants a smooth cylinder, and a game engine wants
+ * the fewest triangles that still read as round.
+ */
+export const MESH_DETAILS = ["low", "medium", "high"] as const;
+
+export type MeshDetail = (typeof MESH_DETAILS)[number];
 
 export const MODEL_FORMATS = ["glb", "obj", "stl", "ply"] as const;
 
 export type ModelFormat = (typeof MODEL_FORMATS)[number];
 
 export type ModelOptions = {
-    readonly source: HeightSource;
-    /** Dark becomes high rather than low — lithophanes, and depth maps written near-is-black. */
-    readonly invert: boolean;
-    /** Blur passes over the heightfield, which is what removes JPEG noise spikes. */
-    readonly smoothing: number;
-    /** Samples along the picture's longest edge. Vertex count grows with its square. */
-    readonly resolution: number;
-    readonly shape: ModelShape;
-    /** Millimetres across. On a cylinder this is the circumference, not the diameter. */
-    readonly width: number;
-    /**
-     * Millimetres between the lowest and highest point of the relief — and, on
-     * an inflated body, the full thickness through its deepest point.
-     */
-    readonly depth: number;
-    /**
-     * How much of an inflated body's bulge is handed over to the picture's own
-     * relief, 0–1. Nothing to do with the other two shapes, which are relief all
-     * the way through.
-     */
-    readonly detail: number;
-    /** Off leaves an open surface with no back and no walls — a sheet, not a solid. */
-    readonly solid: boolean;
-    /** Millimetres of material behind the lowest point of the relief. */
-    readonly baseThickness: number;
+    /** Millimetres from the ground to the top of the model. */
+    readonly height: number;
+    readonly detail: MeshDetail;
     readonly format: ModelFormat;
 };
 
 /**
- * Everything that shapes the mesh — which is `ModelOptions` minus the format.
+ * One part's slice of the mesh.
  *
- * Its own type rather than a comment, because the distinction is load-bearing
- * twice over: the builder must not be handed a reason to re-run when only the
- * download format changed, and the page must not tear down a WebGL scene the
- * reader has just finished orbiting to answer a question about file extensions.
+ * Every part's vertices and triangles are contiguous, which is what lets the
+ * GLB writer give each one its own node and material, and the OBJ writer its
+ * own `o` and `usemtl` — so the file opens in Blender as named, coloured
+ * pieces rather than one grey lump.
  */
-export type MeshOptions = Omit<ModelOptions, "format">;
-
-/**
- * The picture reduced to one height per grid cell, plus the colour that cell
- * averaged to. Row 0 is the top of the picture, as it is in `ImageData`.
- *
- * `colors` rides along rather than being sampled again later because both come
- * from the same box average, and re-sampling would let the two disagree by a
- * rounding on a picture whose grid does not divide its pixels evenly.
- */
-export type Heightfield = {
-    readonly columns: number;
-    readonly rows: number;
-    /** `columns * rows` values in 0..1, row-major. */
-    readonly heights: Float32Array;
-    /** `columns * rows * 3` bytes of straight RGB, row-major. */
-    readonly colors: Uint8Array;
-    /**
-     * `columns * rows` opacities in 0..1, whatever the chosen height source.
-     *
-     * Kept beside the heights rather than derived from them because the
-     * silhouette is a different question from the relief: a body is inflated
-     * from where the subject *is*, and that is the alpha channel even when the
-     * heights are being read out of the green one.
-     */
-    readonly alpha: Float32Array;
+export type MeshGroup = {
+    /** The model's own English name for the part — written into files as it is. */
+    readonly name: string;
+    readonly shape: PartShape;
+    /** The copy `mirror` added. Same name in the file; the page labels it. */
+    readonly mirrored: boolean;
+    /** Straight sRGB, 0–255. */
+    readonly color: Vector3;
+    readonly firstVertex: number;
+    readonly vertexCount: number;
+    readonly firstIndex: number;
+    readonly indexCount: number;
 };
 
 /**
@@ -105,38 +126,47 @@ export type Mesh = {
     readonly positions: Float32Array;
     /** `vertexCount * 3`, unit length. */
     readonly normals: Float32Array;
-    /** `vertexCount * 2`, glTF convention: v grows downward from the picture's top row. */
-    readonly uvs: Float32Array;
-    /** `vertexCount * 3` bytes of straight RGB. */
+    /** `vertexCount * 3` bytes of straight RGB — each vertex carries its part's colour. */
     readonly colors: Uint8Array;
     /** `triangleCount * 3` vertex indices, counter-clockwise seen from outside. */
     readonly indices: Uint32Array;
+    readonly groups: readonly MeshGroup[];
 };
 
 export type MeshStats = {
     readonly vertices: number;
     readonly triangles: number;
+    readonly parts: number;
 };
 
 /**
- * Why a model could not be built. Named for the cause rather than for the
- * control that provoked it — the triangle ceiling is reachable from the
- * resolution stepper and from a very wide picture alike.
+ * Why the action could not answer with a model. Each keeps its own name
+ * because each asks the reader for something different: a better photo, a
+ * different file, a wait until tomorrow, or nothing at all.
  */
-export type ModelRefusal = "empty_image" | "too_many_triangles";
+export const GENERATION_FAILURE_REASONS = [
+    "missing_image",
+    "empty_file",
+    "unsupported_type",
+    "too_large",
+    "challenge_missing",
+    "challenge_failed",
+    "challenge_unavailable",
+    "quota_unavailable",
+    "rate_limited",
+    "site_limited",
+    "not_configured",
+    "unauthorized",
+    "invalid_request",
+    "allowance_spent",
+    "model_retired",
+    "upstream_unavailable",
+    "unreadable_response",
+    "no_object",
+] as const;
 
-export type MeshResult =
-    | { readonly ok: true; readonly mesh: Mesh; readonly stats: MeshStats }
-    | { readonly ok: false; readonly reason: ModelRefusal; readonly triangles?: number };
+export type GenerationFailureReason = (typeof GENERATION_FAILURE_REASONS)[number];
 
-/**
- * The source picture as glTF is allowed to embed it.
- *
- * glTF 2.0 permits exactly two image types, so a WebP or an AVIF has to be
- * re-encoded by the caller before it gets here. Kept as a parameter rather than
- * read from a canvas in this layer, which has none.
- */
-export type ModelTexture = {
-    readonly bytes: Uint8Array;
-    readonly mimeType: "image/png" | "image/jpeg";
-};
+export type GenerationResult =
+    | { readonly ok: true; readonly spec: ObjectSpec }
+    | { readonly ok: false; readonly reason: GenerationFailureReason };

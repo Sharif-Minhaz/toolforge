@@ -3,9 +3,9 @@
  *
  * The face contribution is the raw cross product rather than a normalised one,
  * which is what makes it area-weighted: a large triangle should have more say
- * in the direction a shared vertex faces than a sliver does. On a heightfield
- * the slivers are exactly where the relief is steepest, so normalising first
- * puts the noise in charge of the shading.
+ * in the direction a shared vertex faces than a sliver does. A sphere's pole
+ * fan and a rounded box's corners are all slivers, so normalising first puts
+ * them in charge of the shading.
  *
  * A vertex no triangle touches, or one whose triangles cancel out, is given
  * +Z rather than left at zero: a zero normal makes a renderer paint the
@@ -54,35 +54,4 @@ export function computeNormals(positions: Float32Array, indices: Uint32Array): F
     }
 
     return normals;
-}
-
-/**
- * Makes two vertices that occupy the same point agree on which way they face.
- *
- * A cylinder's first and last columns are one place on the model and two
- * entries in the buffer, because they need different texture coordinates. Left
- * alone, each accumulates from the triangles on its own side only, and the seam
- * shows up as a bright line down the finished model under any light.
- */
-export function weldNormals(normals: Float32Array, pairs: readonly (readonly [number, number])[]) {
-    for (const [first, second] of pairs) {
-        const a = first * 3;
-        const b = second * 3;
-
-        const x = normals[a] + normals[b];
-        const y = normals[a + 1] + normals[b + 1];
-        const z = normals[a + 2] + normals[b + 2];
-        const length = Math.hypot(x, y, z);
-
-        if (length === 0) {
-            continue;
-        }
-
-        normals[a] = x / length;
-        normals[b] = normals[a];
-        normals[a + 1] = y / length;
-        normals[b + 1] = normals[a + 1];
-        normals[a + 2] = z / length;
-        normals[b + 2] = normals[a + 2];
-    }
 }

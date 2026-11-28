@@ -16,6 +16,7 @@ import { equationConvertTool } from "./equation";
 import { hashCompareTool, hashDetectTool, hashGenerateTool } from "./hash";
 import { hexEditorDumpTool, hexEditorFindTool, hexEditorInspectTool } from "./hex-editor";
 import { htmlMarkdownConvertTool } from "./html-markdown";
+import { imageTo3dBuildTool } from "./image-to-3d";
 import { ipGlobeMapTool } from "./ip-globe";
 import { jsonFormatTool } from "./json";
 import { jwtDecodeTool, jwtSignTool, jwtVerifyTool } from "./jwt";
@@ -52,8 +53,8 @@ import { zakatCalculatorCalculateTool, zakatCalculatorPricesTool } from "./zakat
  * **What is deliberately absent, and why.** Three groups, each for a reason
  * that is a fact about the tool rather than a gap in this file:
  *
- * - **The image tools** — compressor, converter, resizer, blur placeholder, the
- *   Image to 3D Model, and the Background Remover. They decode pixels
+ * - **The image tools** — compressor, converter, resizer, blur placeholder,
+ *   and the Background Remover. They decode pixels
  *   in a canvas and re-encode them through WebAssembly codecs built for the
  *   browser. The Favicon Generator is absent for the same reason from the other
  *   end: it draws text on a canvas with the reader's fonts, and its emoji with
@@ -75,8 +76,9 @@ import { zakatCalculatorCalculateTool, zakatCalculatorPricesTool } from "./zakat
  *   posted to it, against an ownership model built on browser cookies. An MCP
  *   caller has no cookie jar and no way to prove it owns what it created, so
  *   exposing creation here would mint unreclaimable resources.
- * - **The AI tools** — the Watermark Remover's *image* half and the Equation
- *   converter's *image* half. They spend a third-party
+ * - **The AI tools** — the Watermark Remover's *image* half, the Equation
+ *   converter's *image* half, and the Image to 3D Model's *picture* half. They
+ *   spend a third-party
  *   API budget per call. That is a decision about money rather than about
  *   capability, and it belongs to whoever is paying rather than to this file.
  *   Note the seam: the
@@ -98,17 +100,14 @@ import { zakatCalculatorCalculateTool, zakatCalculatorPricesTool } from "./zakat
  *   the Gemini half decodes a still to pixels in a canvas and encodes a PNG back
  *   out of one.
  *
- *   The Image to 3D Model is the sharpest case of the same seam. Its
- *   mesh builder and its four format writers are the purest code in this
- *   repository — no canvas, no worker, no network, and already driven by
- *   three.js's own loaders in the tests — but they take a heightfield, and the
- *   only way to get one is to decode a picture in a canvas. An adapter that took
- *   a grid of floats instead would be a tool nobody could call, and one that
- *   took a picture would need a decoder this process does not have. Its default
- *   shape adds the Background Remover's second reason on top of the first: the
- *   outline it inflates comes from the same segmentation weights, fetched into
- *   the *reader's* browser and cached there. Neither exists in a request handler, and neither file leaves the
- *   reader's device in the first place. The arithmetic between those two ends —
+ *   The Image to 3D Model has the Equation tool's seam exactly. Reading a
+ *   picture into a description of the object costs a Workers AI call and is
+ *   withheld; building that description into a GLB, OBJ, STL or PLY is pure
+ *   code and is `toolforge_image_to_3d_build` below. A model calling over MCP
+ *   can look at the picture itself and write the parts, which is what the page
+ *   pays a vision model to do.
+ *
+ *   The Watermark Remover's Gemini-image arithmetic —
  *   `watermark-remover/domain/gemini-image.ts` — is pure and would run here
  *   happily; it is the decode and the encode either side of it that cannot, and
  *   an adapter that took raw RGBA and a pixel box would be a tool nobody could
@@ -172,6 +171,7 @@ export const MCP_TOOLS: readonly McpTool[] = [
     hexEditorFindTool,
     hexEditorInspectTool,
     htmlMarkdownConvertTool,
+    imageTo3dBuildTool,
     ipGlobeMapTool,
     jsonFormatTool,
     jwtDecodeTool,

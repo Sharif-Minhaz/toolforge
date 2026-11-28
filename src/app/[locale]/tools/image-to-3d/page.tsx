@@ -1,4 +1,4 @@
-import { IconCube3dSphere, IconPrinter, IconWorldOff } from "@tabler/icons-react";
+import { IconCube3dSphere, IconPrinter, IconSparkles } from "@tabler/icons-react";
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Suspense } from "react";
@@ -10,7 +10,9 @@ import {
 } from "@/modules/image-to-3d/components/image-to-3d-article";
 import { ImageTo3dWorkbench } from "@/modules/image-to-3d/components/image-to-3d-workbench";
 import { ImageTo3dWorkbenchSkeleton } from "@/modules/image-to-3d/components/image-to-3d-workbench-skeleton";
-import { DEFAULT_OPTIONS } from "@/modules/image-to-3d/domain/constants";
+import { DEFAULT_SETTINGS } from "@/modules/image-to-3d/domain/constants";
+import { isObjectDescriberConfigured } from "@/modules/image-to-3d/repository/object-describer";
+import { isGenerationQuotaConfigured } from "@/modules/image-to-3d/repository/quota";
 import { modelSearchParamsSchema } from "@/modules/image-to-3d/validation/model-options";
 import { JsonLd } from "@/modules/seo/components/json-ld";
 import { buildPageMetadata } from "@/modules/seo/domain/metadata";
@@ -54,7 +56,7 @@ export default async function ImageTo3dToolPage({ params, searchParams }: ImageT
 
     const badges = [
         { label: t("badgeFormats"), Icon: IconCube3dSphere },
-        { label: t("badgeOffline"), Icon: IconWorldOff },
+        { label: t("badgeAi"), Icon: IconSparkles },
         { label: t("badgePrintable"), Icon: IconPrinter },
     ];
 
@@ -97,8 +99,9 @@ export default async function ImageTo3dToolPage({ params, searchParams }: ImageT
 }
 
 /**
- * The request-time half of the page: reads the shared settings from the
- * URL. Everything around it is prerendered.
+ * The request-time half of the page: reads the shared settings from the URL
+ * and what this deployment has configured. Everything around it is
+ * prerendered.
  */
 async function ImageTo3dWorkbenchSection({ searchParams }: { searchParams: SearchParams }) {
     // Parsed on the server and handed down, so a shared link opens on the
@@ -106,30 +109,21 @@ async function ImageTo3dWorkbenchSection({ searchParams }: { searchParams: Searc
     const parsed = modelSearchParamsSchema.safeParse(await searchParams);
     const named = parsed.success ? parsed.data : undefined;
 
-    const initialOptions = {
-        source: named?.src ?? DEFAULT_OPTIONS.source,
-        invert: named?.invert ?? DEFAULT_OPTIONS.invert,
-        smoothing: named?.smooth ?? DEFAULT_OPTIONS.smoothing,
-        resolution: named?.res ?? DEFAULT_OPTIONS.resolution,
-        shape: named?.shape ?? DEFAULT_OPTIONS.shape,
-        width: named?.width ?? DEFAULT_OPTIONS.width,
-        depth: named?.depth ?? DEFAULT_OPTIONS.depth,
-        solid: named?.solid ?? DEFAULT_OPTIONS.solid,
-        baseThickness: named?.base ?? DEFAULT_OPTIONS.baseThickness,
-        detail: named?.detail ?? DEFAULT_OPTIONS.detail,
-        format: named?.format ?? DEFAULT_OPTIONS.format,
-    };
-
-    // On by default: a photograph of an object is mostly not the object, and a
-    // body inflated from the whole frame is a pillow rather than the thing in
-    // it. What that costs — a one-time model download — is disclosed on the
-    // control itself rather than only here.
-    const initialCutout = named?.cut ?? true;
+    // Resolved here rather than in the island: whether a worker, a key, a salt,
+    // a database and a Turnstile secret exist is not something the browser can
+    // know, and a button that cannot work is worse than one that says why.
+    const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_KEY ?? null;
+    const configured =
+        isObjectDescriberConfigured() &&
+        isGenerationQuotaConfigured() &&
+        Boolean(process.env.TURNSTILE_SECRET);
 
     return (
         <ImageTo3dWorkbench
-            initialOptions={initialOptions}
-            initialCutout={initialCutout}
+            initialDetail={named?.detail ?? DEFAULT_SETTINGS.detail}
+            initialFormat={named?.format ?? DEFAULT_SETTINGS.format}
+            siteKey={siteKey}
+            configured={configured}
             urlImportEnabled={isRemoteImageImportConfigured()}
         />
     );

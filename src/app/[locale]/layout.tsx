@@ -473,7 +473,7 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
         },
         imageTo3d: {
             workbench: messages.imageTo3d.workbench,
-            sources: messages.imageTo3d.sources,
+            details: messages.imageTo3d.details,
             shapes: messages.imageTo3d.shapes,
             formats: messages.imageTo3d.formats,
             errors: messages.imageTo3d.errors,

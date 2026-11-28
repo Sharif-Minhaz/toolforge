@@ -1,29 +1,43 @@
-import type { Mesh } from "../types";
+import type { Mesh, MeshGroup } from "../types";
 
-export const OBJ_MATERIAL_NAME = "surface";
-
-/** Enough places for a micrometre on a half-metre plate, and no more. */
+/** Enough places for a micrometre on a two-metre model, and no more. */
 function decimal(value: number): string {
     return String(Number(value.toFixed(6)));
+}
+
+/**
+ * A part's name as an OBJ token.
+ *
+ * `o` and `usemtl` have no quoting rule at all — a space ends the name, and
+ * the rest of the line is silently dropped or read as a second name. The
+ * model's names are plain English with spaces, so they are slugged, and
+ * numbered so two parts both called "leg" stay two objects — which is why this
+ * needs no `filePartNames`.
+ */
+export function objToken(group: MeshGroup, index: number): string {
+    const slug = (group.mirrored ? `${group.name} mirrored` : group.name)
+        .normalize("NFKD")
+        .replace(/[^A-Za-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+        .toLowerCase();
+
+    return `${String(index + 1).padStart(2, "0")}_${slug.length > 0 ? slug : "part"}`;
 }
 
 /**
  * Wavefront OBJ, in millimetres.
  *
  * Text, one-indexed, and the oldest thing here that every program still opens.
- * Two details it is easy to get wrong and hard to notice:
+ * Each part is its own `o` with its own `usemtl`, so Blender, Maya and every
+ * slicer that reads OBJ show named, coloured pieces. Colour lives in the
+ * material library beside it, which is why the download is a ZIP.
  *
- * - `vt` counts from the **bottom** left of the picture while glTF, canvases
- *   and this module's own `uvs` count from the top, so v is flipped on the way
- *   out. Skipping the flip gives a model whose texture is upside down in
- *   Blender and correct in the GLB beside it, which reads as a bug in Blender.
- * - `s 1` turns smoothing groups on. Without it some importers ignore the `vn`
- *   lines and re-derive flat normals, which throws away the shading that makes
- *   a relief look like a relief.
+ * Normals ride along as `vn` and every face names its own with `f a//a`, and
+ * `s 1` keeps importers from re-deriving flat normals over a sphere.
  */
 export function encodeObj(mesh: Mesh, options: { mtlName: string; comment: string }): string {
     const vertices = mesh.positions.length / 3;
-    const lines: string[] = [`# ${options.comment}`, `mtllib ${options.mtlName}`, "o model"];
+    const lines: string[] = [`# ${options.comment}`, `mtllib ${options.mtlName}`];
 
     for (let vertex = 0; vertex < vertices; vertex += 1) {
         lines.push(
@@ -32,24 +46,23 @@ export function encodeObj(mesh: Mesh, options: { mtlName: string; comment: strin
     }
 
     for (let vertex = 0; vertex < vertices; vertex += 1) {
-        lines.push(`vt ${decimal(mesh.uvs[vertex * 2])} ${decimal(1 - mesh.uvs[vertex * 2 + 1])}`);
-    }
-
-    for (let vertex = 0; vertex < vertices; vertex += 1) {
         lines.push(
             `vn ${decimal(mesh.normals[vertex * 3])} ${decimal(mesh.normals[vertex * 3 + 1])} ${decimal(mesh.normals[vertex * 3 + 2])}`,
         );
     }
 
-    lines.push(`usemtl ${OBJ_MATERIAL_NAME}`, "s 1");
+    mesh.groups.forEach((group, groupIndex) => {
+        const token = objToken(group, groupIndex);
 
-    for (let face = 0; face < mesh.indices.length; face += 3) {
-        const a = mesh.indices[face] + 1;
-        const b = mesh.indices[face + 1] + 1;
-        const c = mesh.indices[face + 2] + 1;
+        lines.push(`o ${token}`, `usemtl ${token}`, "s 1");
 
-        lines.push(`f ${a}/${a}/${a} ${b}/${b}/${b} ${c}/${c}/${c}`);
-    }
+        for (let face = 0; face < group.indexCount; face += 3) {
+            const first = group.firstIndex + face;
+            const [a, b, c] = [first, first + 1, first + 2].map((index) => mesh.indices[index] + 1);
+
+            lines.push(`f ${a}//${a} ${b}//${b} ${c}//${c}`);
+        }
+    });
 
     lines.push("");
 
@@ -57,26 +70,29 @@ export function encodeObj(mesh: Mesh, options: { mtlName: string; comment: strin
 }
 
 /**
- * The material file, which is the only reason an OBJ needs a folder.
+ * One material per part, carrying its colour as `Kd`.
  *
- * `illum 2` asks for a lit material rather than a flat one, and `Ks 0 0 0`
- * takes the specular highlight off: a relief lit with a default shininess
- * reads as wet plastic rather than as the picture it came from.
+ * MTL's colours are written as 0–1 and read as sRGB by every importer that
+ * matters — Blender converts them itself — so they go out as picked, not
+ * linearised the way glTF's must be.
  */
-export function encodeMtl(options: { textureName: string; hasAlpha: boolean }): string {
-    return [
-        `newmtl ${OBJ_MATERIAL_NAME}`,
-        "Ka 1.000 1.000 1.000",
-        "Kd 1.000 1.000 1.000",
-        "Ks 0.000 0.000 0.000",
-        "d 1.0",
-        "illum 2",
-        `map_Kd ${options.textureName}`,
-        // `map_d` is the dissolve map: the same picture's alpha channel, so a
-        // cut-out's transparent background is not painted onto the outline
-        // ring as whatever the encoder stored underneath it. Only for a PNG —
-        // a JPEG has no alpha to read.
-        ...(options.hasAlpha ? [`map_d ${options.textureName}`] : []),
-        "",
-    ].join("\n");
+export function encodeMtl(mesh: Mesh): string {
+    const lines: string[] = [];
+
+    mesh.groups.forEach((group, groupIndex) => {
+        const [red, green, blue] = group.color.map((channel) => (channel / 255).toFixed(4));
+
+        lines.push(
+            `newmtl ${objToken(group, groupIndex)}`,
+            "Ka 0.0000 0.0000 0.0000",
+            `Kd ${red} ${green} ${blue}`,
+            "Ks 0.1000 0.1000 0.1000",
+            "Ns 40",
+            "d 1.0",
+            "illum 2",
+            "",
+        );
+    });
+
+    return lines.join("\n");
 }

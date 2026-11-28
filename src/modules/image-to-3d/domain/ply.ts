@@ -11,9 +11,9 @@ const FACE_BYTES = 13;
  *
  * The format that keeps colour without a second file: `red`, `green` and `blue`
  * ride on the vertex itself, so MeshLab, CloudCompare and Blender's own
- * importer show the picture on the model with nothing else in the folder. That
- * is the whole reason it is offered beside STL, which cannot, and OBJ, which
- * can only by carrying a texture alongside.
+ * importer show each part's colour with nothing else in the folder. That is
+ * the whole reason it is offered beside STL, which cannot, and OBJ, which can
+ * only by carrying a material library alongside.
  *
  * `binary_little_endian` rather than `ascii`: the same mesh is roughly a fifth
  * the size and parses without a float round-trip through decimal.

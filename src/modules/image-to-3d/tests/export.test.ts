@@ -1,69 +1,67 @@
 import { describe, expect, test } from "bun:test";
 import { unzipSync } from "fflate";
 
-import { DEFAULT_OPTIONS } from "@/modules/image-to-3d/domain/constants";
+import { buildObjectMesh } from "@/modules/image-to-3d/domain/assemble";
 import { buildModelBytes, buildModelDownload } from "@/modules/image-to-3d/domain/export";
-import { buildModel } from "@/modules/image-to-3d/domain/model";
+import { filePartNames } from "@/modules/image-to-3d/domain/filenames";
 import { encodePly } from "@/modules/image-to-3d/domain/ply";
 import { estimateBytes } from "@/modules/image-to-3d/domain/stats";
-import type { Mesh, ModelTexture } from "@/modules/image-to-3d/types";
-import { MODEL_FORMATS } from "@/modules/image-to-3d/types";
+import { MODEL_FORMATS, type ModelFormat } from "@/modules/image-to-3d/types";
 
-import { rampImage } from "./images";
+import { MUG } from "./specs";
 
-const TEXTURE: ModelTexture = { bytes: Uint8Array.from([1, 2, 3, 4, 5]), mimeType: "image/jpeg" };
+const built = buildObjectMesh(MUG, "medium");
 
-function subject(): { mesh: Mesh; triangles: number } {
-    const result = buildModel(rampImage(96, 64), { ...DEFAULT_OPTIONS, resolution: 24 });
-
-    if (!result.ok) {
-        throw new Error(result.reason);
-    }
-
-    return { mesh: result.mesh, triangles: result.stats.triangles };
+if (built === null) {
+    throw new Error("the fixture built nothing");
 }
 
-const { mesh, triangles } = subject();
+const { mesh, stats } = built;
 
-function input(format: (typeof MODEL_FORMATS)[number], texture: ModelTexture | null = TEXTURE) {
-    return { mesh, format, texture, stem: "sunset", generatedAt: new Date("2026-09-06T10:15:00Z") };
+function input(format: ModelFormat) {
+    return {
+        mesh,
+        format,
+        name: MUG.name,
+        stem: "mug",
+        generatedAt: new Date("2026-11-28T10:15:00Z"),
+    };
 }
 
 describe("buildModelDownload", () => {
     test("names the file after the picture, with the extension the format needs", () => {
-        expect(buildModelDownload(input("glb")).filename).toBe("sunset.glb");
-        expect(buildModelDownload(input("stl")).filename).toBe("sunset.stl");
-        expect(buildModelDownload(input("ply")).filename).toBe("sunset.ply");
-        // Three files that only mean anything together travel as one.
-        expect(buildModelDownload(input("obj")).filename).toBe("sunset.zip");
+        expect(buildModelDownload(input("glb")).filename).toBe("mug.glb");
+        expect(buildModelDownload(input("stl")).filename).toBe("mug.stl");
+        expect(buildModelDownload(input("ply")).filename).toBe("mug.ply");
+        // Two files that only mean anything together travel as one.
+        expect(buildModelDownload(input("obj")).filename).toBe("mug.zip");
     });
 
     test("declares a type a browser will not rename the file over", () => {
         expect(buildModelDownload(input("glb")).blob.type).toBe("model/gltf-binary");
         expect(buildModelDownload(input("obj")).blob.type).toBe("application/zip");
     });
-
-    test("produces bytes for every format, with and without a picture", () => {
-        for (const format of MODEL_FORMATS) {
-            for (const texture of [TEXTURE, null]) {
-                expect(buildModelBytes(input(format, texture)).byteLength).toBeGreaterThan(0);
-            }
-        }
-    });
 });
 
 describe("the OBJ archive", () => {
-    test("holds the three files, and the JPEG keeps its own extension", () => {
+    test("holds the model and the material library it names", () => {
         const zip = unzipSync(buildModelBytes(input("obj")));
 
-        expect(Object.keys(zip).toSorted()).toEqual(["model.mtl", "model.obj", "texture.jpg"]);
-        expect([...zip["texture.jpg"]]).toEqual([...TEXTURE.bytes]);
+        expect(Object.keys(zip).toSorted()).toEqual(["model.mtl", "model.obj"]);
     });
+});
 
-    test("ships the mesh alone rather than a material pointing at nothing", () => {
-        const zip = unzipSync(buildModelBytes(input("obj", null)));
+describe("filePartNames", () => {
+    test("gives every part a name no reader will have to rename", () => {
+        const group = mesh.groups[0];
+        const names = filePartNames([
+            { ...group, name: "leg" },
+            { ...group, name: "leg" },
+            { ...group, name: "leg", mirrored: true },
+            { ...group, name: "leg", mirrored: true },
+        ]);
 
-        expect(Object.keys(zip)).toEqual(["model.obj"]);
+        expect(names).toEqual(["leg", "leg 2", "leg mirrored", "leg mirrored 2"]);
     });
 });
 
@@ -73,8 +71,8 @@ describe("estimateBytes", () => {
         // promise — but a reader told 2 MB who receives 40 would be right to
         // call that a lie rather than an estimate.
         for (const format of MODEL_FORMATS) {
-            const actual = buildModelBytes(input(format, null)).byteLength;
-            const guess = estimateBytes({ vertices: mesh.positions.length / 3, triangles }, format);
+            const actual = buildModelBytes(input(format)).byteLength;
+            const guess = estimateBytes(stats, format);
 
             expect(guess).toBeGreaterThan(actual / 2);
             expect(guess).toBeLessThan(actual * 2);
@@ -84,14 +82,14 @@ describe("estimateBytes", () => {
 
 describe("binary STL", () => {
     test("is exactly 84 bytes plus fifty per triangle, which is how it is read", () => {
-        expect(buildModelBytes(input("stl")).byteLength).toBe(84 + triangles * 50);
+        expect(buildModelBytes(input("stl")).byteLength).toBe(84 + stats.triangles * 50);
     });
 
     test("says how many triangles follow, in the one place a reader looks", () => {
         const bytes = buildModelBytes(input("stl"));
         const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
 
-        expect(view.getUint32(80, true)).toBe(triangles);
+        expect(view.getUint32(80, true)).toBe(stats.triangles);
     });
 });
 
@@ -102,19 +100,19 @@ describe("binary PLY", () => {
         const header = text.slice(0, text.indexOf("end_header\n") + "end_header\n".length);
 
         expect(header.startsWith("ply\nformat binary_little_endian 1.0\n")).toBe(true);
-        expect(header).toContain(`element vertex ${mesh.positions.length / 3}`);
-        expect(header).toContain(`element face ${triangles}`);
+        expect(header).toContain(`element vertex ${stats.vertices}`);
+        expect(header).toContain(`element face ${stats.triangles}`);
     });
 
     test("refuses to let a comment end the header early", () => {
         // A newline inside provenance would close the header, and everything
         // after it would be read as vertex data by a parser that is behaving
         // exactly as the format says it should.
-        const bytes = encodePly(mesh, "Tool\nForge\r\nrelief");
+        const bytes = encodePly(mesh, "Tool\nForge\r\nmodel");
         const text = new TextDecoder().decode(bytes.subarray(0, 300));
         const header = text.slice(0, text.indexOf("end_header"));
 
-        expect(header).toContain("comment Tool Forge relief");
+        expect(header).toContain("comment Tool Forge model");
         expect(header.split("\n").filter((line) => line.startsWith("comment")).length).toBe(1);
     });
 });

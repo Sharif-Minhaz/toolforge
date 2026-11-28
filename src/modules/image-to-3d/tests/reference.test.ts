@@ -1,38 +1,34 @@
 import { describe, expect, test } from "bun:test";
-import { ColorManagement } from "three";
-import type { BufferGeometry, Group, Mesh as ThreeMesh } from "three";
+import { ColorManagement, PropertyBinding } from "three";
+import type { BufferGeometry, Group, MeshStandardMaterial, Mesh as ThreeMesh } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { PLYLoader } from "three/examples/jsm/loaders/PLYLoader.js";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 
-import { DEFAULT_OPTIONS, MILLIMETRES_PER_METRE } from "@/modules/image-to-3d/domain/constants";
+import { buildObjectMesh } from "@/modules/image-to-3d/domain/assemble";
+import { MILLIMETRES_PER_METRE } from "@/modules/image-to-3d/domain/constants";
 import { buildModelBytes, objArchiveEntries } from "@/modules/image-to-3d/domain/export";
-import { buildModel } from "@/modules/image-to-3d/domain/model";
-import type { Mesh, ModelTexture } from "@/modules/image-to-3d/types";
+import { srgbToLinear } from "@/modules/image-to-3d/domain/glb";
+import { filePartNames } from "@/modules/image-to-3d/domain/filenames";
+import { objToken } from "@/modules/image-to-3d/domain/obj";
+import type { Mesh, ModelFormat } from "@/modules/image-to-3d/types";
 
-import { rampImage } from "./images";
+import { MUG } from "./specs";
 
 /**
  * The four writers, read back by something that is not this repository.
  *
  * A `.glb` only this file agrees with is worth nothing: these bytes are opened
  * by Blender, by a slicer, by MeshLab, by three.js in somebody else's page. A
- * wrong chunk length, a stale accessor count, an unflipped texture coordinate —
- * every one of those still produces a file that looks exactly like the format
- * it claims to be, self-consistent and unreadable by any of them.
+ * wrong chunk length, a stale accessor count, an index not rebased to its own
+ * node — every one of those still produces a file that looks exactly like the
+ * format it claims to be, self-consistent and unreadable by any of them.
  *
  * So each format goes back through three.js's own loader, which was written
  * against the specification rather than against this module, and the geometry
- * that comes out is compared with the geometry that went in. `three` is a
- * dependency for the page's preview; using its loaders here costs nothing
- * extra and buys a reader that has no idea what this code intended.
- *
- * One thing the loaders cannot reach here: a GLB's embedded picture is decoded
- * through `createImageBitmap`, which Bun does not have, so `GLTFLoader` reports
- * it could not load the texture and carries on. What the texture path is
- * checked against instead is the file's own JSON chunk and the bytes the image
- * view points at — see the last test in the GLB block.
+ * that comes out is compared with the geometry that went in.
  */
 
 // Off for the whole file. three converts sRGB to its linear working space on
@@ -41,27 +37,22 @@ import { rampImage } from "./images";
 // loader hands back what the file said.
 ColorManagement.enabled = false;
 
-/** A 1×1 opaque PNG — the smallest thing glTF is allowed to embed. */
-const PNG_TEXTURE: ModelTexture = {
-    bytes: Uint8Array.from(
-        atob(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
-        ),
-        (character) => character.codePointAt(0) ?? 0,
-    ),
-    mimeType: "image/png",
-};
+const built = buildObjectMesh(MUG, "low");
 
-const OPTIONS = { ...DEFAULT_OPTIONS, resolution: 24, width: 80, depth: 6, baseThickness: 2 };
+if (built === null) {
+    throw new Error("the fixture built nothing");
+}
 
-function subject(): Mesh {
-    const result = buildModel(rampImage(96, 64), OPTIONS);
+const mesh: Mesh = built.mesh;
 
-    if (!result.ok) {
-        throw new Error(`expected a mesh, got ${result.reason}`);
-    }
-
-    return result.mesh;
+function bytesFor(format: ModelFormat): Uint8Array {
+    return buildModelBytes({
+        mesh,
+        format,
+        name: MUG.name,
+        stem: "reference",
+        generatedAt: new Date("2026-11-28T00:00:00Z"),
+    });
 }
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
@@ -79,59 +70,51 @@ function worstDifference(ours: ArrayLike<number>, theirs: ArrayLike<number>): nu
     return worst;
 }
 
-function firstGeometry(group: Group): BufferGeometry {
-    let found: BufferGeometry | null = null;
+function meshesIn(group: Group): ThreeMesh[] {
+    const found: ThreeMesh[] = [];
 
     group.traverse((node) => {
-        if (found === null && (node as ThreeMesh).isMesh) {
-            found = (node as ThreeMesh).geometry as BufferGeometry;
+        if ((node as ThreeMesh).isMesh) {
+            found.push(node as ThreeMesh);
         }
     });
-
-    if (found === null) {
-        throw new Error("the loader found no mesh at all");
-    }
 
     return found;
 }
 
+/** The mesh's own triangles, expanded to one position per corner, in millimetres. */
+function cornerPositions(firstIndex = 0, indexCount = mesh.indices.length): Float32Array {
+    const expected = new Float32Array(indexCount * 3);
+
+    for (let corner = 0; corner < indexCount; corner += 1) {
+        const vertex = mesh.indices[firstIndex + corner] * 3;
+
+        expected[corner * 3] = mesh.positions[vertex];
+        expected[corner * 3 + 1] = mesh.positions[vertex + 1];
+        expected[corner * 3 + 2] = mesh.positions[vertex + 2];
+    }
+
+    return expected;
+}
+
 describe("STL, through three's STLLoader", () => {
-    const mesh = subject();
-    const geometry = new STLLoader().parse(
-        toArrayBuffer(buildModelBytes({ ...common(mesh), format: "stl" })),
-    );
+    const geometry = new STLLoader().parse(toArrayBuffer(bytesFor("stl")));
 
     test("has every triangle, expanded to three unshared vertices each", () => {
         expect(geometry.getAttribute("position").count).toBe(mesh.indices.length);
     });
 
     test("puts every vertex exactly where the mesh had it, in millimetres", () => {
-        const positions = geometry.getAttribute("position").array;
-        const expected = new Float32Array(mesh.indices.length * 3);
-
-        for (let corner = 0; corner < mesh.indices.length; corner += 1) {
-            const vertex = mesh.indices[corner] * 3;
-
-            expected[corner * 3] = mesh.positions[vertex];
-            expected[corner * 3 + 1] = mesh.positions[vertex + 1];
-            expected[corner * 3 + 2] = mesh.positions[vertex + 2];
-        }
-
-        expect(worstDifference(expected, positions)).toBe(0);
+        expect(worstDifference(cornerPositions(), geometry.getAttribute("position").array)).toBe(0);
     });
 
     test("is read as binary, which is what the header's first five bytes decide", () => {
-        const bytes = buildModelBytes({ ...common(mesh), format: "stl" });
-
-        expect(new TextDecoder().decode(bytes.subarray(0, 5))).not.toBe("solid");
+        expect(new TextDecoder().decode(bytesFor("stl").subarray(0, 5))).not.toBe("solid");
     });
 });
 
 describe("PLY, through three's PLYLoader", () => {
-    const mesh = subject();
-    const geometry = new PLYLoader().parse(
-        toArrayBuffer(buildModelBytes({ ...common(mesh), format: "ply" })),
-    );
+    const geometry = new PLYLoader().parse(toArrayBuffer(bytesFor("ply")));
 
     test("keeps the index buffer, the vertex count and the triangle count", () => {
         expect(geometry.getAttribute("position").count).toBe(mesh.positions.length / 3);
@@ -143,199 +126,141 @@ describe("PLY, through three's PLYLoader", () => {
         expect(worstDifference(mesh.normals, geometry.getAttribute("normal").array)).toBe(0);
     });
 
-    test("carries the picture as per-vertex colour, with no second file", () => {
+    test("carries each part's colour on its vertices, with no second file", () => {
         const colors = geometry.getAttribute("color");
 
         expect(colors.count).toBe(mesh.positions.length / 3);
-
         expect(worstDifference(mesh.colors, colors.array)).toBe(0);
     });
 });
 
-describe("OBJ, through three's OBJLoader", () => {
-    const mesh = subject();
-    const entries = objArchiveEntries({ ...common(mesh), format: "obj" });
-    const text = new TextDecoder().decode(entries[0].bytes);
-    const geometry = firstGeometry(new OBJLoader().parse(text));
+describe("OBJ and MTL, through three's OBJLoader and MTLLoader", () => {
+    const entries = objArchiveEntries(mesh);
+    const objText = new TextDecoder().decode(entries[0].bytes);
+    const mtlText = new TextDecoder().decode(entries[1].bytes);
+    const materials = new MTLLoader().parse(mtlText, "");
+
+    materials.preload();
+
+    const scene = new OBJLoader().setMaterials(materials).parse(objText);
+    const parts = meshesIn(scene);
 
     test("names the material file the archive actually contains", () => {
-        const names = entries.map((entry) => entry.name);
-
-        expect(text).toContain(`mtllib ${names[1]}`);
-        expect(names).toEqual(["model.obj", "model.mtl", "texture.png"]);
-
-        const mtl = new TextDecoder().decode(entries[1].bytes);
-
-        expect(mtl).toContain(`map_Kd ${names[2]}`);
-        // A PNG texture is a cut-out, so its alpha is the dissolve map too.
-        expect(mtl).toContain(`map_d ${names[2]}`);
+        expect(objText).toContain(`mtllib ${entries[1].name}`);
     });
 
-    test("does not name a dissolve map for a JPEG, which has no alpha", () => {
-        const photo = objArchiveEntries({
-            ...common(mesh),
-            texture: { bytes: PNG_TEXTURE.bytes, mimeType: "image/jpeg" },
-            format: "obj",
+    test("comes back as one named object per part, in order", () => {
+        expect(parts.map((part) => part.name)).toEqual(
+            mesh.groups.map((group, index) => objToken(group, index)),
+        );
+    });
+
+    test("puts every part's corners where the mesh had them", () => {
+        mesh.groups.forEach((group, index) => {
+            const positions = (parts[index].geometry as BufferGeometry).getAttribute("position");
+
+            expect(
+                worstDifference(
+                    cornerPositions(group.firstIndex, group.indexCount),
+                    positions.array,
+                ),
+            ).toBeLessThan(1e-4);
         });
-        const mtl = new TextDecoder().decode(photo[1].bytes);
-
-        expect(mtl).toContain("map_Kd texture.jpg");
-        expect(mtl).not.toContain("map_d");
     });
 
-    test("comes back with the same geometry, one vertex per face corner", () => {
-        expect(geometry.getAttribute("position").count).toBe(mesh.indices.length);
+    test("gives each part its own colour through the material library", () => {
+        mesh.groups.forEach((group, index) => {
+            const material = parts[index].material as MeshStandardMaterial;
 
-        const positions = geometry.getAttribute("position").array;
-
-        for (let corner = 0; corner < mesh.indices.length; corner += 1) {
-            const vertex = mesh.indices[corner] * 3;
-
-            for (let axis = 0; axis < 3; axis += 1) {
-                expect(positions[corner * 3 + axis]).toBeCloseTo(mesh.positions[vertex + axis], 4);
-            }
-        }
-    });
-
-    test("flips v back to where a canvas would have put it", () => {
-        const uvs = geometry.getAttribute("uv").array;
-
-        for (let corner = 0; corner < mesh.indices.length; corner += 1) {
-            const vertex = mesh.indices[corner] * 2;
-
-            expect(uvs[corner * 2]).toBeCloseTo(mesh.uvs[vertex], 5);
-            // OBJ counts v up from the bottom of the picture and this module
-            // counts it down from the top, so what comes back is 1 − ours.
-            expect(uvs[corner * 2 + 1]).toBeCloseTo(1 - mesh.uvs[vertex + 1], 5);
-        }
+            expect(material.color.r).toBeCloseTo(group.color[0] / 255, 3);
+            expect(material.color.g).toBeCloseTo(group.color[1] / 255, 3);
+            expect(material.color.b).toBeCloseTo(group.color[2] / 255, 3);
+        });
     });
 });
 
 describe("GLB, through three's GLTFLoader", () => {
-    const mesh = subject();
-
-    async function load(texture: ModelTexture | null) {
-        const bytes = buildModelBytes({ ...common(mesh), texture, format: "glb" });
+    async function load(): Promise<Group> {
         const loader = new GLTFLoader();
 
         return new Promise<Group>((resolve, reject) => {
-            loader.parse(toArrayBuffer(bytes), "", (gltf) => resolve(gltf.scene), reject);
+            loader.parse(toArrayBuffer(bytesFor("glb")), "", (gltf) => resolve(gltf.scene), reject);
         });
     }
 
-    test("parses, and arrives in metres rather than millimetres", async () => {
-        const geometry = firstGeometry(await load(null));
-        const positions = geometry.getAttribute("position").array;
-        const expected = Float32Array.from(mesh.positions, (mm) => mm / MILLIMETRES_PER_METRE);
+    test("parses into one named node per part under the object's own name", async () => {
+        const scene = await load();
+        // three rewrites node names it could not bind an animation to — spaces
+        // become underscores — so the comparison goes through the same rule.
+        const named = (name: string) => PropertyBinding.sanitizeNodeName(name);
 
-        expect(geometry.getAttribute("position").count).toBe(mesh.positions.length / 3);
-        expect(geometry.getIndex()?.count).toBe(mesh.indices.length);
-        expect(worstDifference(expected, positions)).toBeLessThan(1e-9);
+        expect(meshesIn(scene).map((part) => part.name)).toEqual(
+            filePartNames(mesh.groups).map(named),
+        );
+        expect(scene.getObjectByName(named(MUG.name))).toBeDefined();
     });
 
-    test("keeps normals and texture coordinates intact", async () => {
-        const geometry = firstGeometry(await load(null));
+    test("arrives in metres, each part's indices rebased to its own vertices", async () => {
+        const parts = meshesIn(await load());
 
-        expect(worstDifference(mesh.normals, geometry.getAttribute("normal").array)).toBe(0);
-        expect(worstDifference(mesh.uvs, geometry.getAttribute("uv").array)).toBe(0);
-    });
+        mesh.groups.forEach((group, index) => {
+            const geometry = parts[index].geometry as BufferGeometry;
+            const positions = geometry.getAttribute("position").array;
+            const order = geometry.getIndex()?.array ?? [];
+            const corners = new Float32Array(order.length * 3);
 
-    test("puts v = 0 on the picture's top row, which is what glTF means by it", () => {
-        // The first grid row is the top of the picture and the highest Y in
-        // space; its v is 0. three's own loaders honour this by *not* flipping
-        // a GLB's textures — so a preview that flips its texture the default
-        // way shows the picture upside down on a file that is correct.
-        let topY = -Infinity;
-        let topV = Infinity;
-
-        for (let vertex = 0; vertex < mesh.positions.length / 3; vertex += 1) {
-            if (mesh.positions[vertex * 3 + 1] > topY) {
-                topY = mesh.positions[vertex * 3 + 1];
-                topV = mesh.uvs[vertex * 2 + 1];
+            for (let corner = 0; corner < order.length; corner += 1) {
+                for (let axis = 0; axis < 3; axis += 1) {
+                    corners[corner * 3 + axis] = positions[order[corner] * 3 + axis];
+                }
             }
-        }
 
-        expect(topV).toBe(0);
-    });
+            const expected = cornerPositions(group.firstIndex, group.indexCount).map(
+                (mm) => mm / MILLIMETRES_PER_METRE,
+            );
 
-    test("falls back to per-vertex colour when there is no picture to embed", async () => {
-        const geometry = firstGeometry(await load(null));
-
-        expect(geometry.getAttribute("color")).toBeDefined();
-        expect(geometry.getAttribute("color").count).toBe(mesh.positions.length / 3);
-    });
-
-    test("drops COLOR_0 when there is a texture, rather than shipping both", async () => {
-        const geometry = firstGeometry(await load(PNG_TEXTURE));
-
-        // glTF multiplies the two, so a model carrying a picture *and* the same
-        // picture as vertex colour comes out darkened by itself.
-        expect(geometry.getAttribute("color")).toBeUndefined();
-    });
-
-    test("embeds the picture byte for byte, where the JSON chunk says it is", () => {
-        const bytes = buildModelBytes({ ...common(mesh), texture: PNG_TEXTURE, format: "glb" });
-        const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-
-        expect(view.getUint32(0, true)).toBe(0x46546c67);
-        expect(view.getUint32(4, true)).toBe(2);
-        expect(view.getUint32(8, true)).toBe(bytes.byteLength);
-
-        const jsonLength = view.getUint32(12, true);
-        const gltf = JSON.parse(new TextDecoder().decode(bytes.subarray(20, 20 + jsonLength)));
-
-        expect(gltf.images).toEqual([{ bufferView: 4, mimeType: "image/png" }]);
-        expect(gltf.materials[0].pbrMetallicRoughness.baseColorTexture).toEqual({ index: 0 });
-
-        const binStart = 20 + jsonLength + 8;
-        const image = gltf.bufferViews[4];
-        const embedded = bytes.subarray(
-            binStart + image.byteOffset,
-            binStart + image.byteOffset + image.byteLength,
-        );
-
-        expect([...embedded]).toEqual([...PNG_TEXTURE.bytes]);
-    });
-
-    test("masks a cut-out's transparent background rather than painting it", () => {
-        // A PNG texture is a cut-out, and its transparent background hides
-        // whatever RGB the encoder found cheapest to store. OPAQUE — glTF's
-        // default — paints that patchwork onto the outline ring in Blender.
-        const cut = buildModelBytes({ ...common(mesh), texture: PNG_TEXTURE, format: "glb" });
-        const cutJson = JSON.parse(
-            new TextDecoder().decode(
-                cut.subarray(20, 20 + new DataView(cut.buffer, cut.byteOffset).getUint32(12, true)),
-            ),
-        );
-
-        expect(cutJson.materials[0].alphaMode).toBe("MASK");
-        expect(cutJson.materials[0].alphaCutoff).toBe(0.5);
-
-        // A JPEG has no alpha to read, and MASK on it would be a lie to the
-        // renderer about a channel that is not there.
-        const photo = buildModelBytes({
-            ...common(mesh),
-            texture: { bytes: PNG_TEXTURE.bytes, mimeType: "image/jpeg" },
-            format: "glb",
+            expect(worstDifference(expected, corners)).toBeLessThan(1e-9);
         });
-        const photoJson = JSON.parse(
-            new TextDecoder().decode(
-                photo.subarray(
-                    20,
-                    20 + new DataView(photo.buffer, photo.byteOffset).getUint32(12, true),
-                ),
-            ),
-        );
+    });
 
-        expect(photoJson.materials[0].alphaMode).toBeUndefined();
+    test("keeps the normals to the last float", async () => {
+        const parts = meshesIn(await load());
+
+        mesh.groups.forEach((group, index) => {
+            const normals = (parts[index].geometry as BufferGeometry).getAttribute("normal").array;
+
+            expect(
+                worstDifference(
+                    mesh.normals.subarray(
+                        group.firstVertex * 3,
+                        (group.firstVertex + group.vertexCount) * 3,
+                    ),
+                    normals,
+                ),
+            ).toBe(0);
+        });
+    });
+
+    test("writes each part's colour as a linear base colour, which is what glTF means", async () => {
+        const parts = meshesIn(await load());
+
+        mesh.groups.forEach((group, index) => {
+            const material = parts[index].material as MeshStandardMaterial;
+
+            expect(material.color.r).toBeCloseTo(srgbToLinear(group.color[0]), 5);
+            expect(material.color.g).toBeCloseTo(srgbToLinear(group.color[1]), 5);
+            expect(material.color.b).toBeCloseTo(srgbToLinear(group.color[2]), 5);
+        });
     });
 
     test("aligns every chunk and every buffer view to four bytes", () => {
-        const bytes = buildModelBytes({ ...common(mesh), texture: PNG_TEXTURE, format: "glb" });
+        const bytes = bytesFor("glb");
         const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
         const jsonLength = view.getUint32(12, true);
         const gltf = JSON.parse(new TextDecoder().decode(bytes.subarray(20, 20 + jsonLength)));
 
+        expect(view.getUint32(0, true)).toBe(0x46546c67);
+        expect(view.getUint32(8, true)).toBe(bytes.byteLength);
         expect(jsonLength % 4).toBe(0);
         expect(view.getUint32(20 + jsonLength, true) % 4).toBe(0);
 
@@ -344,13 +269,3 @@ describe("GLB, through three's GLTFLoader", () => {
         }
     });
 });
-
-/** The parts of an export input that are the same whatever the format. */
-function common(mesh: Mesh) {
-    return {
-        mesh,
-        texture: PNG_TEXTURE,
-        stem: "reference",
-        generatedAt: new Date("2026-09-06T00:00:00Z"),
-    };
-}

@@ -9,14 +9,15 @@ import { useIsHydrated } from "@/hooks/use-is-hydrated";
 import { cn } from "@/lib/utils";
 import { describeError, logEvent } from "@/modules/observability/domain/logger";
 
+import { srgbToLinear } from "../domain/glb";
 import type { Mesh } from "../types";
 
 /**
  * The mesh itself, turning, rather than a picture of it.
  *
- * Worth the WebGL context: the controls on this page change geometry, and a
- * still image of a relief tells a reader almost nothing about whether the depth
- * is right or whether the smoothing flattened the thing they cared about. It
+ * Worth the WebGL context: a blocked-out object is judged from every side — a
+ * spout that points the wrong way is invisible from the front — and a still
+ * image would hide exactly what the reader needs to check before printing. It
  * loads through `next/dynamic` from the workbench, so three stays out of the
  * bundle of every other page.
  *
@@ -28,8 +29,6 @@ import type { Mesh } from "../types";
 
 type ModelPreviewProps = {
     readonly mesh: Mesh;
-    /** Painted onto the relief when there is one. Per-vertex colour otherwise. */
-    readonly textureUrl: string | null;
     readonly className?: string;
 };
 
@@ -63,7 +62,7 @@ function canRenderWebGl(): boolean {
     }
 }
 
-export default function ModelPreview({ mesh, textureUrl, className }: ModelPreviewProps) {
+export default function ModelPreview({ mesh, className }: ModelPreviewProps) {
     const t = useTranslations("imageTo3d.workbench");
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -97,61 +96,37 @@ export default function ModelPreview({ mesh, textureUrl, className }: ModelPrevi
 
         const geometry = new THREE.BufferGeometry();
 
-        // The buffers are handed over as they are rather than copied: this
-        // component never writes to them, and a million-triangle mesh is not
-        // worth duplicating to prove it.
+        // Positions, normals and indices are handed over as they are rather
+        // than copied: this component never writes to them.
         geometry.setAttribute("position", new THREE.BufferAttribute(mesh.positions, 3));
         geometry.setAttribute("normal", new THREE.BufferAttribute(mesh.normals, 3));
-        geometry.setAttribute("uv", new THREE.BufferAttribute(mesh.uvs, 2));
+        // Each vertex carries its part's colour. three reads vertex colours as
+        // linear and the mesh holds sRGB bytes, so they are converted here —
+        // the same conversion the GLB writer applies to each part's material,
+        // which is what makes the preview and the file agree.
+        geometry.setAttribute(
+            "color",
+            new THREE.BufferAttribute(Float32Array.from(mesh.colors, srgbToLinear), 3),
+        );
         geometry.setIndex(new THREE.BufferAttribute(mesh.indices, 1));
-
-        if (textureUrl === null) {
-            geometry.setAttribute("color", new THREE.BufferAttribute(mesh.colors, 3, true));
-        }
-
         geometry.computeBoundingSphere();
 
-        const texture = textureUrl === null ? null : new THREE.TextureLoader().load(textureUrl);
-
-        if (texture !== null) {
-            texture.colorSpace = THREE.SRGBColorSpace;
-            texture.wrapS = THREE.ClampToEdgeWrapping;
-            texture.wrapT = THREE.ClampToEdgeWrapping;
-            // three flips every loaded texture by default, because its own
-            // convention puts v = 0 at the *bottom* of the picture. The mesh's
-            // texture coordinates follow glTF, with v = 0 at the top — that is
-            // what the exported GLB has to carry — so the flip has to be
-            // switched off here or the preview shows the picture upside down
-            // on a model whose file is the right way up.
-            texture.flipY = false;
-        }
-
         const material = new THREE.MeshStandardMaterial({
-            map: texture,
-            vertexColors: texture === null,
-            // A cut-out's texture is a PNG whose transparent background hides
-            // whatever RGB the encoder found cheapest to store — usually a
-            // patchwork of saturated blocks. The outline ring of the mesh sits
-            // exactly on those texels, so anything below half opacity is
-            // discarded rather than drawn. A cutoff instead of blending keeps
-            // the material opaque, which is what a solid is and what avoids
-            // sort-order artefacts on an orbit.
-            alphaTest: texture === null ? 0 : 0.5,
+            vertexColors: true,
             metalness: 0,
-            roughness: 0.85,
-            // The backing and the walls are wound outward, so back faces are
-            // never meant to be seen — but an open surface has no back at all,
-            // and hiding it would show the reader nothing from behind.
-            side: THREE.DoubleSide,
+            roughness: 0.7,
+            // Every part is closed and wound outward, so a back face is only
+            // ever seen through an overlap — and hiding it there is right.
+            side: THREE.FrontSide,
         });
 
         const model = new THREE.Mesh(geometry, material);
         const scene = new THREE.Scene();
 
         scene.add(model);
-        // Two lights, one soft and one directional. A relief is only legible
-        // because of the shadows in it, so a flat ambient light would hide the
-        // one thing this preview exists to show.
+        // Two lights, one soft and one directional. A blockout is only legible
+        // through its shading — a flat ambient light turns a lathed body and a
+        // cylinder into the same silhouette.
         scene.add(new THREE.HemisphereLight(0xffffff, 0x444455, 2.1));
 
         const key = new THREE.DirectionalLight(0xffffff, 2.4);
@@ -169,9 +144,7 @@ export default function ModelPreview({ mesh, textureUrl, className }: ModelPrevi
          * Without one there is no fixed reference in the frame: the model
          * rotates against a flat colour, and past a certain angle a reader
          * cannot tell whether it moved or the light did. The grid sits under the
-         * model's own lowest point rather than at the origin, because a relief
-         * plate and an inflated body have very different ideas about where zero
-         * is.
+         * model's own lowest point, which the builder puts at zero.
          */
         geometry.computeBoundingBox();
 
@@ -212,10 +185,9 @@ export default function ModelPreview({ mesh, textureUrl, className }: ModelPrevi
         controls.enablePan = false;
         controls.minDistance = radius * 1.05;
         controls.maxDistance = radius * 12;
-        // Aimed at the model rather than at the origin. A relief plate sits
-        // entirely on one side of zero, so orbiting the origin swung it around
-        // the edge of the frame instead of turning it in place — which is what
-        // "it will not rotate properly" actually was.
+        // Aimed at the model rather than at the origin. The model stands on
+        // zero, so orbiting the origin would swing it around the bottom edge
+        // of the frame instead of turning it in place.
         controls.target.copy(centre);
         // The full sphere, both ways round. The defaults stop a little short of
         // straight up and straight down, which reads as the drag sticking.
@@ -262,11 +234,10 @@ export default function ModelPreview({ mesh, textureUrl, className }: ModelPrevi
             groundMaterial.dispose();
             geometry.dispose();
             material.dispose();
-            texture?.dispose();
             renderer.dispose();
             renderer.domElement.remove();
         };
-    }, [mesh, textureUrl, supported]);
+    }, [mesh, supported]);
 
     if (!supported) {
         return (

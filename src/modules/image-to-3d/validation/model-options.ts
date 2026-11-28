@@ -1,110 +1,65 @@
 import { z } from "zod";
 
-import {
-    MAX_BASE_MM,
-    MAX_DETAIL,
-    MAX_DEPTH_MM,
-    MAX_RESOLUTION,
-    MAX_SMOOTHING,
-    MAX_WIDTH_MM,
-    MIN_BASE_MM,
-    MIN_DETAIL,
-    MIN_DEPTH_MM,
-    MIN_RESOLUTION,
-    MIN_SMOOTHING,
-    MIN_WIDTH_MM,
-} from "../domain/constants";
-import { HEIGHT_SOURCES, MODEL_FORMATS, MODEL_SHAPES } from "../types";
+import { MAX_TURNSTILE_TOKEN_LENGTH } from "@/modules/tools/domain/turnstile";
 
-export const heightSourceSchema = z.enum(HEIGHT_SOURCES);
-
-export const modelShapeSchema = z.enum(MODEL_SHAPES);
+import { MAX_HEIGHT_MM, MIN_HEIGHT_MM } from "../domain/constants";
+import { MESH_DETAILS, MODEL_FORMATS } from "../types";
 
 export const modelFormatSchema = z.enum(MODEL_FORMATS);
 
-export const resolutionSchema = z.number().int().min(MIN_RESOLUTION).max(MAX_RESOLUTION);
-
-export const smoothingSchema = z.number().int().min(MIN_SMOOTHING).max(MAX_SMOOTHING);
+export const meshDetailSchema = z.enum(MESH_DETAILS);
 
 /**
- * Millimetres, to one decimal place.
+ * Millimetres, whole.
  *
- * A tenth of a millimetre is finer than any consumer printer's nozzle and finer
- * than any renderer will show, and it is also the smallest step the steppers
- * offer — so a link carrying 5.03 would open on a value its own control cannot
- * return to.
+ * A millimetre is the step the field offers, and finer than anyone sizing a
+ * desk object by eye means. The model's own estimate is rounded to it before
+ * the field shows it, so the default always passes.
  */
-const millimetres = (min: number, max: number) =>
-    z
-        .number()
-        .min(min)
-        .max(max)
-        // Compared with a tolerance rather than `% 1`: 0.1 × 10 is 1.0000000000000002
-        // in binary floating point, and an exact test rejects the minimum depth.
-        .refine((value) => Math.abs(value * 10 - Math.round(value * 10)) < 1e-9, {
-            message: "unsupported precision",
-        });
-
-export const widthSchema = millimetres(MIN_WIDTH_MM, MAX_WIDTH_MM);
-
-export const depthSchema = millimetres(MIN_DEPTH_MM, MAX_DEPTH_MM);
-
-export const baseThicknessSchema = millimetres(MIN_BASE_MM, MAX_BASE_MM);
+export const heightSchema = z.number().int().min(MIN_HEIGHT_MM).max(MAX_HEIGHT_MM);
 
 /**
- * A share of the bulge, in twentieths — the step the slider offers.
+ * Search-param shape for `/tools/image-to-3d?detail=high&format=stl`.
  *
- * Compared with a tolerance for the same reason the millimetres are: 0.05 × 20
- * is 1.0000000000000002, and an exact test rejects the first stop on the track.
- */
-export const detailSchema = z
-    .number()
-    .min(MIN_DETAIL)
-    .max(MAX_DETAIL)
-    .refine((value) => Math.abs(value * 20 - Math.round(value * 20)) < 1e-9, {
-        message: "unsupported precision",
-    });
-
-export const modelOptionsSchema = z.object({
-    source: heightSourceSchema,
-    invert: z.boolean(),
-    smoothing: smoothingSchema,
-    resolution: resolutionSchema,
-    shape: modelShapeSchema,
-    width: widthSchema,
-    depth: depthSchema,
-    solid: z.boolean(),
-    baseThickness: baseThicknessSchema,
-    detail: detailSchema,
-    format: modelFormatSchema,
-});
-
-/** `?on=1` and `?on=true` both mean on; anything else falls back to the default. */
-const booleanParamSchema = z
-    .enum(["1", "0", "true", "false"])
-    .transform((value) => value === "1" || value === "true");
-
-/**
- * Search-param shape for
- * `/tools/image-to-3d?shape=cylinder&res=256&depth=8&format=stl`.
- *
- * Each field catches on its own, so a link with one impossible value opens on
- * that field's default rather than throwing the page away. Nothing here coerces
- * one option against another: `base` is accepted even with `solid=0`, because
- * the reader who then turns the backing on should find the thickness they
- * asked for waiting rather than the default.
+ * Only the two settings that mean something before there is a model. The
+ * height does not travel: it defaults to the size of whatever the picture
+ * turns out to show, and a link cannot know that in advance.
  */
 export const modelSearchParamsSchema = z.object({
-    src: heightSourceSchema.optional().catch(undefined),
-    invert: booleanParamSchema.optional().catch(undefined),
-    smooth: z.coerce.number().pipe(smoothingSchema).optional().catch(undefined),
-    res: z.coerce.number().pipe(resolutionSchema).optional().catch(undefined),
-    shape: modelShapeSchema.optional().catch(undefined),
-    width: z.coerce.number().pipe(widthSchema).optional().catch(undefined),
-    depth: z.coerce.number().pipe(depthSchema).optional().catch(undefined),
-    solid: booleanParamSchema.optional().catch(undefined),
-    base: z.coerce.number().pipe(baseThicknessSchema).optional().catch(undefined),
-    detail: z.coerce.number().pipe(detailSchema).optional().catch(undefined),
-    cut: booleanParamSchema.optional().catch(undefined),
+    detail: meshDetailSchema.optional().catch(undefined),
     format: modelFormatSchema.optional().catch(undefined),
+});
+
+/**
+ * Payload of the `describeObject` server action, read out of a `FormData`.
+ *
+ * The file is only checked for being a file here. Its type and size are the
+ * domain's business — `checkUploadImage` turns each into a reason the reader
+ * can act on, where a Zod refinement would collapse three answers into one.
+ */
+export const describeRequestSchema = z.object({
+    token: z.string().min(1).max(MAX_TURNSTILE_TOKEN_LENGTH),
+    image: z.instanceof(File),
+});
+
+/**
+ * What the worker sends back on success: Workers AI's chat completion, wrapped.
+ *
+ * Only the fields the action reads, and each optional, because a model that
+ * returns an empty choice list still answers 200. `content` is a string the
+ * parser reads as JSON; `finish_reason: "length"` is how a truncated answer
+ * announces itself before the parser finds out the hard way.
+ */
+export const workerResponseSchema = z.object({
+    result: z.object({
+        choices: z
+            .array(
+                z.object({
+                    finish_reason: z.string().nullish(),
+                    message: z.object({ content: z.string().nullish() }),
+                }),
+            )
+            .min(1),
+        usage: z.object({ neurons: z.number().optional() }).optional(),
+    }),
 });

@@ -1,316 +1,288 @@
-# Image to 3D Model — A Mesh Is Only As Good As What Reads It
+# Image to 3D Model — A Model That Describes, a Tab That Builds
 
-`src/modules/image-to-3d/`. Read before touching the mesh builder, any of the
-four writers, or the tests that check them.
+`src/modules/image-to-3d/`. Read before touching the prompt, the schema, the
+parser, the primitive builder, any of the four writers, or the worker.
 
-Seven lessons, in the order they cost time. The first is about a test that passed
-while proving nothing. The second is about a specification everybody gets wrong
-on purpose. The third is about the difference between one place and two. The
-fourth is about what a reference reader does to your data before it hands it
-back.
+The tool was rebuilt in November 2026. The first version turned a picture into
+a heightfield — brightness or an estimated depth map became height, and an
+outline was inflated into a pillow — and readers called it the most broken
+tool on the site, correctly: no amount of relief makes a photo of a mug into a
+mug. The idea that replaced it came from
+[img2threejs](https://github.com/img2threejs/img2threejs), which has a coding
+agent look at a photo and _write_ the object as procedural three.js. That
+project is an agent workflow, not a library, so nothing of it is imported;
+what is borrowed is the split. A vision model reads the picture and answers a
+**description** — named primitives with sizes, positions and colours — and the
+reader's tab builds the mesh from it.
 
 ---
 
-## One — "every edge used once" says nothing about holes
+## The pipeline
 
-The first watertightness test counted directed edges by position and asserted
-every count was exactly one. It passed on both shapes, immediately, and it was
-worthless.
-
-A closed manifold uses every edge once in each direction. But so does an _open_
-sheet: its border edges are used once, in one direction, and never answered. The
-count is one either way. The assertion was true of the solid model, true of the
-open surface, and true of a model with a square hole punched through it.
-
-The half that was missing is the reverse lookup:
-
-```ts
-export function unmatchedEdges(mesh: Mesh): string[] {
-    const counts = directedEdgeCounts(mesh);
-
-    return [...counts.keys()].filter((edge) => {
-        const [from, to] = edge.split("|");
-
-        return (counts.get(`${to}|${from}`) ?? 0) !== counts.get(edge);
-    });
-}
+```
+browser: decode → 768 px JPEG over white → Turnstile token
+action:  file check → challenge → quota (fails closed) → worker
+worker:  bearer key → bounds → gemma-4-26b-a4b-it, thinking off, strict JSON schema
+action:  chat completion → parseObjectSpec → ObjectSpec
+browser: buildObjectMesh → preview, parts list → scaleMesh → writer
 ```
 
-Two separate claims, and the tests now make both: **once each direction** rules
-out two triangles facing opposite ways across one edge, and **answered from the
-other side** rules out a border. Neither implies the other. The open-surface test
-asserts the exact number of unmatched edges rather than merely "some", so the
-solid case cannot quietly start failing in the same direction and still pass.
+Only the description crosses back, so height, smoothness and format never cost
+a second call. The prompt and the schema live in `domain/describe-request.ts`,
+not in the worker. They change with the parser that reads the answer, in a
+commit rather than in a dashboard.
 
-The third check earns its place for a reason neither of those covers: a mesh
-wound entirely inside out satisfies both. `signedVolume` is the divergence
-theorem over the whole index buffer, and a positive result is the only evidence
-that the triangles face out rather than in.
+## One — Gemma 4 thinks by default, and thinking is billed
 
-**Key it on position, never on the index.** Wall quads carry their own four
-vertices so they can be flat-shaded, and a cylinder's first and last columns are
-one place in space with two texture coordinates. An index-keyed edge count calls
-every one of those a hole.
+The first full-schema run took 115 seconds, spent all 6,000 tokens and 170
+neurons, and answered with an empty `content`. The tokens had gone to
+`reasoning_content`, which Workers AI bills and the schema never constrains. The
+switch is `chat_template_kwargs: { enable_thinking: false }`. It is not a
+top-level parameter, and only the model's `sync-input.json` documents it. With
+thinking off, the same photo answered in 18 seconds for 31 neurons.
 
-## Two — negative zero is a second place
+The worker pins it off, so no caller can turn it back on. If the model is ever
+replaced, check the new one's input schema for a reasoning default before
+anything else.
 
-The seam test failed with `-0.0000` on one side and `0.0000` on the other. The
-cylinder's seam sits at `sin(±π)`, which is `∓1.22e-16` — the same point, and two
-different strings once it has been through `toFixed`.
+## Two — ask which way a part points, never for a rotation
 
-That is not a test bug so much as a warning about every position-keyed map in
-this module. `Number(value.toFixed(4)) + 0` collapses it. Without the `+ 0`, the
-watertightness check above would have reported the entire seam as unmatched, and
-with the weak version of that check it reported nothing at all — the two bugs
-hid each other.
+Asked for Euler angles, the model sized a fire hydrant's side nozzles as upright
+cylinders and never turned them. Asked for a **world-aligned box** (`size`) and
+the **axis the part runs along** (`axis: x | y | z`), it got the nozzles right
+first time. A box is something it can read straight off a photograph; a
+rotation is arithmetic it does not do. `tilt` survives for parts that lean, and
+the prompt says it is almost always zero.
 
-## Three — a wrap has to agree with itself
+The same reasoning sets every other definition. A lathe profile is stretched to
+fill its box in whatever unit the model wrote it in, so the model cannot get
+the units wrong. A torus's cross extents are its outer width and height, and
+the axis extent is the tube's depth, because those are the measurements a
+handle visibly has.
 
-A cylinder's column `0` and column `columns - 1` are the same place on the model
-and two entries in every buffer, because they need `u = 0` and `u = 1`
-respectively for the texture to be stretched across exactly once. Two things
-follow, and both were wrong first:
+## Three — scaling a unit torus makes doughnuts
 
-- **The last column takes the first column's height.** Reading its own leaves the
-  two ends of the wrap at different radii, which is a crack, not a seam. It is
-  one line in `heightAt`, and nothing else in the builder knows about it.
-- **Their normals are welded afterwards.** Each vertex accumulates only from the
-  triangles on its own side, so left alone the seam renders as a bright line down
-  the model under any light. `weldNormals` averages the pair and writes it back
-  to both.
+The first torus was a unit torus stretched to fit its box, and every mug handle
+came out fat. Stretching a round tube by a tall, narrow box makes the tube tall
+and narrow with it. `torus` in `primitives.ts` now builds in real units. The ring's
+_path_ is an ellipse filling the cross extents, and the tube is round across
+it, capped at a third of the narrower extent so the hole stays open.
 
-Note what is _not_ fixed: the picture's left and right edges are different pixels
-and the relief steps where they meet. That is inherent to wrapping something that
-does not tile, the mesh is closed there, and the article says so rather than
-pretending otherwise.
+## Four — an example in the prompt is an instruction
 
-## Four — the reference reader is also code, and it changes your data
+To get hollow cups, the prompt once showed a lathe profile going up the outside
+and back down the inside. On the next run the model traced the **whole
+silhouette** of every lathe — up one side, across the axis, down the other —
+which revolves into the same solid twice, inside itself. A teapot came back
+with every turned part doubled.
 
-Every writer is checked by parsing its own output back through three.js's
-loaders, for the reason `blurhash.md` gives: these bytes are read by Blender, by
-a slicer, by somebody else's renderer, and a wrong chunk length still produces a
-file that looks exactly like the format it claims to be.
+The paragraph is gone. The prompt now says _one side only, heights increasing_,
+and cups are solid: there is no subtraction in this vocabulary, and a solid mug
+is a correct blockout. The **parser** enforces it as well, because a prompt is
+a request and not a contract. `endAtAxis` cuts a profile at its first return to
+radius zero, which turns every traced-back outline the model ever sent into the
+solid it meant. The test uses the exact lid the model sent.
 
-Two things about that reader had to be understood before the comparison meant
-anything:
+## Five — the model describes both sides _and_ marks one mirrored
 
-- **three converts sRGB to its linear working space on the way in.** A PLY vertex
-  colour written as `9` comes back as `1`. Correct rendering, useless for asking
-  whether the bytes survived — so the reference test sets
-  `ColorManagement.enabled = false` at module scope, and the comparison is then
-  byte-exact.
-- **`GLTFLoader` cannot decode an embedded picture under Bun**, which has no
-  `createImageBitmap`. It logs that it could not load the texture and carries on,
-  so the geometry assertions still hold. The texture path is checked separately
-  and structurally instead: the GLB's own JSON chunk, the image `bufferView`, and
-  the embedded bytes compared against what went in. Where a loader cannot reach,
-  say what was checked instead rather than letting a passing test imply more than
-  it proved.
+Told to describe only the +x part of a pair and set `mirror`, the model often
+lists the left and the right **and** sets `mirror` on one of them. Copying that
+one lands a third nozzle on top of the second. `placeParts` drops a mirrored
+copy that would land within 30% of its size of an existing part of the same
+shape, and it drops any copy on the centre line, which would only double its
+own triangles.
+
+## Six — a reader renames what it cannot tell apart
+
+The GLB gives each part its own node and material, so it opens in Blender as
+named, coloured pieces. The reference test caught the first version writing
+two nodes called `foot`. three renamed the second to `foot_1`, and Blender
+would have made it `foot.001`. `filePartNames` makes names unique before they
+are written. The mirrored copy says `mirrored` in English, like the rest of the
+model's names, and any name still repeated is numbered. The page shows its own
+localised label instead and writes nothing in English to the screen.
+
+---
+
+## Seven — "every edge used once" says nothing about holes
+
+Carried over from the first version, because it still holds and it is still
+cheap to break.
+
+A closed manifold uses every edge once in each direction. So does an _open_
+sheet: its border edges are used once, in one direction, and never answered.
+`unmatchedEdges` in `tests/geometry.ts` is the reverse lookup, and the
+primitive tests make three separate claims for every shape on every axis at
+every smoothness:
+
+- **once each direction**, which rules out two triangles facing opposite ways
+  across one edge;
+- **answered from the other side**, which rules out a border;
+- **positive signed volume**, which is the only check that catches a part wound
+  entirely inside out. A mirrored copy is exactly that until its winding is
+  reversed.
+
+Key edges on **position, never on index**. A cylinder's wall and its caps are
+separate patches, so they get crisp normals, and they share positions but not
+indices. An index-keyed count calls every rim a hole. `+ 0` after `toFixed`
+collapses negative zero, or a seam at `sin(±π)` reads as two places.
+
+## Eight — the reference reader changes your data
+
+Every writer is read back through three.js's loaders, because these bytes are
+opened by Blender, by slicers and by other people's renderers:
+
+- `ColorManagement.enabled = false` at module scope, or three converts colours
+  on the way in and no comparison means anything. `PLYLoader` then hands back
+  the raw bytes.
+- GLB colours are written **linear** (`srgbToLinear`), as glTF's
+  `baseColorFactor` requires. The preview converts its vertex colours the same
+  way, which is what makes the preview and the file agree. MTL's `Kd` stays
+  sRGB, because importers convert it themselves.
 
 ## The unit, which is not a bug
 
-STL, OBJ and PLY are unitless by specification and every tool that reads them
-assumes millimetres. glTF is not unitless — its unit is the metre, and there is
-no field to say otherwise. So the same 100 mm plate is `100` in three files and
-`0.1` in the GLB.
-
-This is decision tree 44/45 landing on **match the specification**: the output is
-read by other people's software, so diverging to make Blender's first impression
-nicer would be wrong by a factor of a thousand everywhere the unit is respected.
-What that buys is a disclosure obligation — the line under the format picker says
-which unit is being written, in the tab, rather than only in the article.
-
-## Two smaller things worth keeping
-
-- **`estimateMesh` is exact, not approximate.** The page shows the triangle count
-  beside the controls and refuses on it, so an estimate that disagreed with the
-  builder would make the refusal look like a bug. The builder allocates its
-  buffers from that same function, which is what makes the two agree by
-  construction; a test asserts the returned mesh fills them exactly.
-- **Composite over white before averaging, never after.** The colour behind a
-  fully transparent pixel is arbitrary, and letting it into a box average draws a
-  halo around every cut-out. Alpha itself survives untouched, which is what
-  leaves `source: "alpha"` able to see the cut-out at all.
+STL, OBJ and PLY are unitless and every program assumes millimetres. glTF's
+unit is the metre, so the same 100 mm mug is `100` in three files and `0.1` in
+the GLB. The specification wins, and the line under the format picker says
+which unit is being written.
 
 ---
 
-## Five — vertex slots have to be numbered in the order the vertices are written
+## What it costs
 
-Masking cells brought a vertex map: only grid points that a kept cell touches
-become vertices, so every surface needs grid index → vertex slot.
+Measured live on 2026-11-28, thinking off, one pass:
 
-The first version handed out slots while walking cells, `claim(a); claim(b);
-claim(c); claim(d)`. The builder then _emits_ vertices by walking the grid row by
-row. Those are two different orders, so every triangle was wired to the wrong
-corners.
+| Subject           | Parts | Seconds | Neurons |
+| ----------------- | ----- | ------- | ------- |
+| drawn mug         | 2     | 7–9     | 19–23   |
+| Utah teapot photo | 5–6   | 19–23   | 34–40   |
+| fire hydrant      | 9     | 18–43   | 31–46   |
 
-What made it expensive is how it failed. The mesh had exactly the right number of
-vertices and triangles, every normal was a unit vector, every attribute was in
-range, and the preview drew something that looked like a crumpled version of the
-picture — plausible enough to blame on the new inflation maths. The only check
-that named it was the edge count, and only because it counts by _position_.
+The free plan is 10,000 neurons a day **per Cloudflare account**, and it is
+shared with every worker on that account. The Watermark Remover's FLUX call
+alone costs about 1,500. The counters in `constants.ts` — eight a day per
+visitor, sixty for the site — are set so this tool spends a third of the day at
+its worst case, not all of it. The action logs the neurons a truncated answer
+burned, because a model that rambles to the token ceiling is the one case that
+costs ten times over.
 
-Slots are now assigned in a second pass, in grid order. If you ever need a
-different emission order, change both in the same edit or neither.
+## What it cannot do
 
-## Six — closure depends on the outline being exactly zero, everywhere it is
+- **One pass, no review.** img2threejs works because a frontier agent renders
+  its model and looks at it eight times. Here a 26B model answers once. The
+  teapot's spout came back pointing at the viewer on every run. A refine pass —
+  render, send the render back with the spec, ask for corrections — would
+  double the cost and is the obvious next step if the budget allows.
+- **No subtraction.** Cups, bowls and vases are solid.
+- **Faces, animals and clothes** do not reduce to a handful of solids, and the
+  article says so rather than letting a reader find out.
 
-An inflated body has no walls. The front and back halves are mirror images, both
-zero-height on the outline, so their boundary triangles land on the same points
-wound opposite ways and cancel. That is the whole seal, and it is fragile in two
-specific places:
+## Evaluating a prompt change
 
-- **The frame is outside, whatever the picture says.** A distance transform that
-  only treats transparent pixels as outside gives every border point a distance of
-  one step, not zero — so a photograph with no transparency at all, or a subject
-  cropped by the edge, stood a full bulge high against a straight wall with
-  nothing to close it. `buildSilhouette` clips the border ring before the
-  transform. Skip it and the model is open along its entire perimeter.
-- **The relief is multiplied in, never added.** Surface detail scales the bulge:
-  `bulge × (1 − detail + detail × relief)`. Added instead, the outline would lift
-  off zero as soon as the detail slider moved, and the halves would stop meeting.
-  There is a test that fixes this — `inflatedHeight(0, …)` is zero for every
-  combination of the other two arguments — because it is a one-character change to
-  get wrong and nothing else would notice.
+The front view of a blockout hides most of what is wrong with it. Before
+changing the prompt, run it against several photos and render the resulting
+spec from the front, the side, three-quarters and the top. A forty-line
+software rasteriser over `buildObjectMesh` is enough, and it needs no browser.
+Every lesson above was found that way, not by reading JSON.
 
-## Seven — a fixed cell diagonal makes zero-area fins along an outline
+## The worker
 
-Every point on the outline is at exactly zero. So a cell with a single corner
-inside has three corners at zero, and splitting every cell along the same
-diagonal puts all three of them in one triangle. Front and back then emit that
-triangle at identical points: a zero-area fin, invisible and weightless, and an
-edge belonging to four faces to anything asking whether the mesh is manifold.
+Its source lives in the Cloudflare dashboard. It is reproduced here because the
+repository depends on its contract: `{ system, prompt, image, schema,
+max_tokens }` in, `{ model, result }` or `{ error: { code, detail } }` out.
 
-The fix is to split along whichever diagonal carries more height. Both triangles
-then contain both diagonal endpoints, and the chosen diagonal always has a raised
-end, so no triangle can be all-zero. Front and back read the same heights and make
-the same choice, which is what keeps their boundary edges cancelling. On a plate,
-where nothing is exactly zero, it is the ordinary quality heuristic — split along
-the ridge rather than across it — and a flat field ties and splits as it always
-did.
+```js
+const MODEL = "@cf/google/gemma-4-26b-a4b-it";
+const MAX_IMAGE_CHARS = 2_000_000; // base64 data URI, ~1.5 MB
+const MAX_TEXT_CHARS = 20_000;
+const MAX_TOKENS = 6000;
 
-**What is left is a real limit, not a bug to chase.** A feature narrower than one
-sample has no interior for the distance transform to find, so both of its sides
-sit at zero and the halves touch along it: a zero-thickness membrane joining two
-lobes. The model stays sealed — nothing leaks through a membrane — but that edge
-is non-manifold. Raising the resolution is the fix. The tests say exactly this:
-closed and outward-facing on every subject at every grid, manifold only where the
-grid can carry the subject, and one test that pins the pinch so it stays a
-documented shape of the tool rather than something that quietly starts leaking.
+const json = (body, status = 200) =>
+    new Response(JSON.stringify(body), {
+        status,
+        headers: { "content-type": "application/json" },
+    });
+const fail = (code, status, detail = "") => json({ error: { code, detail } }, status);
 
-## What was lifted, and why
+function sameKey(given, expected) {
+    const a = new TextEncoder().encode(given);
+    const b = new TextEncoder().encode(expected);
+    return a.length === b.length && crypto.subtle.timingSafeEqual(a, b);
+}
 
-Two things left this module during the second pass, both under `CLAUDE.md`
-rule 31:
+export default {
+    async fetch(request, env) {
+        if (request.method !== "POST") return fail("METHOD_NOT_ALLOWED", 405);
 
-- **`tools/domain/segmentation.ts`** — the `ISNet` driver, the model table and the
-  `ImageData` trap, which were the Background Remover's. Two tools now ask the
-  same model the same question; a second copy would be a second place for the
-  byte counts to go stale. `tools/domain/canvas.ts` went with it, because
-  `releaseCanvas` is a fact about `<canvas>` rather than about cutting anything
-  out.
-- **`tools/components/image-dropzone.tsx`** — four tools had written out the same
-  dashed panel and hidden input, and the fourth drifted. An intake that does not
-  look like the intake on the tool a reader used yesterday is the first thing
-  they notice, and it was the first thing reported.
+        const auth = request.headers.get("authorization") ?? "";
+        const key = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+        if (!env.API_KEY || !sameKey(key, env.API_KEY)) return fail("UNAUTHORIZED", 401);
 
-## The model is shared between tools only if both ask for the same file
+        let body;
+        try {
+            body = await request.json();
+        } catch {
+            return fail("INVALID_INPUT", 400, "body is not JSON");
+        }
 
-The library fetches each weight file by URL and leans on the browser's HTTP
-cache, which every page of this site shares. That makes the cut-out free on the
-second tool — **provided it asks for the same tier**. The first version here
-defaulted to `fast` on a perfectly good argument (an outline resampled onto a few
-hundred points does not need the fringe fidelity `balanced` buys), and that
-argument would have cost a reader who already had `balanced` from the Background
-Remover a second 44 MB download.
+        const { system, prompt, image, schema } = body ?? {};
+        if (
+            typeof system !== "string" ||
+            typeof prompt !== "string" ||
+            system.length + prompt.length > MAX_TEXT_CHARS
+        )
+            return fail("INVALID_INPUT", 400, "system and prompt must be strings within the limit");
+        if (typeof image !== "string" || !/^data:image\/(png|jpeg|webp);base64,/.test(image))
+            return fail("INVALID_INPUT", 400, "image must be a png/jpeg/webp data URI");
+        if (image.length > MAX_IMAGE_CHARS) return fail("IMAGE_TOO_LARGE", 413);
 
-Two things follow, both in `tools/`:
+        const input = {
+            messages: [
+                { role: "system", content: system },
+                {
+                    role: "user",
+                    content: [
+                        { type: "text", text: prompt },
+                        { type: "image_url", image_url: { url: image } },
+                    ],
+                },
+            ],
+            max_completion_tokens: Math.min(Number(body.max_tokens) || 4096, MAX_TOKENS),
+            temperature: 0.2,
+            // See lesson one.
+            chat_template_kwargs: { enable_thinking: false },
+        };
+        if (schema && typeof schema === "object")
+            input.response_format = { type: "json_schema", json_schema: schema };
 
-- **One default**, `DEFAULT_CUTOUT_QUALITY`, read by both tools. A per-tool
-  opinion about the right tier is a per-tool download.
-- **A memory of what was fetched**, `cutout-memory.ts`, written when a cut-out
-  succeeds and read through `useCutoutQuality` to start either tool on the
-  heaviest tier already on the machine. The cache itself cannot be asked — the
-  CDN is cross-origin and `only-if-cached` is same-origin only — so the fact is
-  written down at the one moment it is known to be true. A link that names a
-  tier still wins, because it is explicit.
+        try {
+            const result = await env.AI.run(MODEL, input);
+            return json({ model: MODEL, result });
+        } catch (error) {
+            const detail = String(error?.message ?? error).slice(0, 500);
+            const code = /4006|daily free allocation/i.test(detail)
+                ? "QUOTA_EXHAUSTED"
+                : /5028|deprecated/i.test(detail)
+                  ? "MODEL_RETIRED"
+                  : "MODEL_ERROR";
+            return fail(code, code === "QUOTA_EXHAUSTED" ? 429 : 502, detail);
+        }
+    },
+};
+```
 
-## The preview flips textures; the file must not
+Bindings: Workers AI as `AI`, and a secret `API_KEY` equal to this deployment's
+`IMAGE_TO_3D_API_KEY`. The worker has no per-address limit of its own: it would
+only ever see this server's address (see the Watermark Remover's case study),
+so the per-visitor counter lives in the action.
 
-three's `TextureLoader` sets `flipY = true` on every texture, because three's
-own convention puts v = 0 at the bottom of the picture. This module's texture
-coordinates follow glTF, with v = 0 at the top, because that is what the exported
-GLB has to carry — and `GLTFLoader` reads a file's UVs verbatim and does _not_
-flip. So the first preview drew the dog upside down on a file that was the right
-way up, and looked exactly like a bug in the mesh. `flipY = false` in the
-preview; the reference test pins which row v = 0 belongs to.
+## What the first version left behind
 
-The saturated patchwork at the ears in the same screenshot was a second bug
-wearing the first one's clothes: a cut-out's PNG texture is transparent outside
-the subject, and PNG encoders store whatever RGB compresses best under an alpha
-of zero. The outline ring of the mesh sits exactly on those texels. Anything that
-draws the picture — the preview's material, the GLB's material, the OBJ's MTL —
-has to honour the alpha: `alphaTest` in three, `alphaMode: "MASK"` in glTF,
-`map_d` in MTL. A JPEG has no alpha and gets none of the three.
-
-## Inflate with Poisson, not with distance
-
-The first inflated body pushed each point out by its distance from the outline,
-normalised by the _global_ deepest point, through a circular profile. It looked
-right from the front and wrong from the side: a sharp crease ran down the middle
-of anything narrower than the widest part, because a distance field peaks in a
-ridge and only the widest part ever reached the rounded top of the profile. The
-scratch renderer in this session's notes is what caught it — the front view
-hides a ridge completely.
-
-`inflationField` now solves ∇²h = −1 inside the outline with h = 0 on it, by
-successive over-relaxation, and takes the square root. On a disc that is an
-exact hemisphere; on a strip an exact half-cylinder; and a part half as wide
-comes out half as thick, which is what an ear beside a head should do. Two
-consequences worth keeping:
-
-- **The frame is a mirror, not an outline.** A subject cropped by the edge of the
-  picture used to wedge to nothing along that edge. Now it keeps its thickness to
-  the frame and the mesh builder caps the open edge with a flat wall — the cut a
-  bust has. The wall segments are only the steps along the frame with a raised
-  end; a step between two outline points already has front and back on the same
-  two points.
-- **The first ring is a cliff unless it is softened.** √ has a vertical tangent at
-  zero, so on a 100 mm model the profile climbs two millimetres inside the first
-  half-millimetre cell, and the mask's staircase becomes teeth. The fractional
-  alpha scales the ring first, _then_ the bulge is blurred, _then_ the outline is
-  put back to exactly zero — that order, because a blur before the ramp leaves
-  the ramp's own cell-to-cell alternation as a beaded equator. What is left is a
-  faint bead along edges at shallow angles; sub-cell placement of the outline
-  vertices was tried and reverted — it introduced non-manifold edges and moved
-  the wrong ring.
-
-## Depth: verify the export on the runtime before believing its name
-
-`model_int8.onnx` is the obvious choice from the model card — smallest, and
-"quantised" — and it does not load: its convolutions are exported as
-`ConvInteger`, which ONNX Runtime Web's WebAssembly build has no kernel for.
-The session refuses to open, and it would have refused in every reader's browser
-too. The q4 export is the same size, keeps its convolutions in full precision
-and packs only the matrix multiplies with `MatMulNBits`, which both backends
-run.
-
-`bun test` cannot reach any of this, so it was verified on Node with the
-installed runtime's own WebAssembly: three exports opened and run, the output
-names and dimensions read back, and the depth map rendered to a PNG and looked
-at. The pinned runtime version is the one thing a unit test _can_ check — the
-WebAssembly is fetched from a CDN by version and the JavaScript that talks to it
-is bundled from `node_modules`, so `tests/depth.test.ts` reads the installed
-version and fails at upgrade time rather than at runtime.
-
-Two more facts about the plumbing that cost a probe each:
-
-- **Hugging Face's canonical URL is `no-store`**, redirecting to a signed address
-  that differs every time. The browser's HTTP cache can never match the second
-  request to the first, so the model is kept in the Cache API under the URL
-  asked for. That is also the only honest answer to "is it already here".
-- **`onnxruntime-web` ships types and hides them.** Its `exports` map has no
-  `types` condition, and `onnxruntime-common`'s has no subpaths. A `paths` entry
-  in `tsconfig.json` reaches them — and is also honoured by Next's bundler, which
-  then tries to bundle a `.d.ts`. `src/onnxruntime-web.d.ts` names the common
-  package's declaration root by relative path instead, which neither map governs.
+`tools/domain/segmentation.ts`, `tools/domain/cutout-memory.ts` and
+`tools/components/image-dropzone.tsx` were lifted out of this module when the
+Background Remover needed them, and they stay. The direct `onnxruntime-web`
+dependency and its type shim existed only for the depth model and were
+removed; the Background Remover's library brings its own copy. Readers who used
+the depth model still had it in a Cache API bucket, so `public/sw.js` deletes
+`toolforge-depth-model` on activation (`RETIRED_CACHES`).
