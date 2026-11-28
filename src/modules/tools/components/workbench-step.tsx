@@ -16,13 +16,22 @@ export const RESULT_TRAY =
  * Settings a reader rarely needs, folded away so the input and the result are
  * the first things on screen. A native `<details>`: keyboard and screen-reader
  * behaviour come from the platform, and nothing differs between server and
- * client render.
+ * client render. `defaultOpen` unfolds it on arrival — for a link that already
+ * fills one of the settings inside, which a folded box would hide.
  */
-export function OptionsDisclosure({ label, children }: { label?: string; children: ReactNode }) {
+export function OptionsDisclosure({
+    label,
+    defaultOpen = false,
+    children,
+}: {
+    label?: string;
+    defaultOpen?: boolean;
+    children: ReactNode;
+}) {
     const t = useTranslations("common");
 
     return (
-        <details className="group/options">
+        <details className="group/options" open={defaultOpen}>
             <summary className="text-muted-foreground hover:text-foreground inline-flex cursor-pointer list-none items-center gap-2 rounded-md text-sm font-medium transition-colors duration-150 [&::-webkit-details-marker]:hidden">
                 <IconAdjustmentsHorizontal className="size-4" stroke={1.75} aria-hidden="true" />
                 {label ?? t("options")}

@@ -51,6 +51,13 @@ Server component by default:
   `openGraph`, and `twitter`.
 - Emit `JsonLd` — `SoftwareApplication`, `BreadcrumbList`, and `FAQPage` when the
   article has an FAQ.
+- Open the page with `<ToolPageHeader toolId="<id>" … />` from
+  `src/modules/tools/components/tool-page-header.tsx` — breadcrumb, title,
+  subtitle, badges, and the "Improve" menu (report a problem, edit on GitHub).
+  Never copy the header markup; `tool-page-header.test.ts` fails a page that
+  does. If the module directory is not named after the id, add it to
+  `MODULE_DIRECTORY_OVERRIDES` in `domain/tool-source.ts`, or the "Edit on
+  GitHub" link 404s and `tool-source.test.ts` says so.
 - Generate initial results **on the server** and pass them to the client island
   as props. Never generate in `useState` initialisers — server and client produce
   different values and hydration breaks. See
@@ -60,7 +67,8 @@ Server component by default:
   its own suggestions — same category first, then popularity — and renders
   nothing rather than a stub heading when there is nothing to suggest.
 - Add `loading.tsx` with skeletons that match the real layout block for block,
-  including the three related-tool cards at the foot. The workbench block is
+  opening with `<ToolPageHeaderSkeleton />` and ending with the three
+  related-tool cards at the foot. The workbench block is
   its own `<tool>-workbench-skeleton.tsx`, shared with the page's `<Suspense>`
   fallback — see [`../patterns/partial-prerendering.md`](../patterns/partial-prerendering.md).
 

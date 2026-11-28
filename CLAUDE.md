@@ -130,6 +130,9 @@ docs/
 
 - Domain layer first, with tests, before any UI.
 - Server component by default; the client island stays small.
+- Every tool page opens with `ToolPageHeader` (and its loading state with
+  `ToolPageHeaderSkeleton`) — never copied header markup. →
+  [`docs/workflow/adding-a-tool.md`](docs/workflow/adding-a-tool.md)
 - Every user-facing string in `en.json` **and** `bn.json`, together.
 - Every free-text field gets a ceiling and a visible countdown.
 - An MCP adapter for anything that runs on the server, beside the tests.

@@ -3,7 +3,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 /**
  * The card while it waits: the fallback for the request-time half of the page,
  * and the matching block in `loading.tsx`. Mode switch and folded options, the
- * two date fields side by side, the age-limit box, then the result tray.
+ * two date fields side by side, the folded age limit, then the result tray —
+ * the age, the body figures, and the two date cards.
  */
 export function AgeWorkbenchSkeleton() {
     return (
@@ -31,18 +32,7 @@ export function AgeWorkbenchSkeleton() {
                         </div>
                     ))}
                 </div>
-                <div className="ring-border/70 flex flex-col gap-4 rounded-xl p-3 ring-1 ring-inset sm:p-4">
-                    <Skeleton className="h-4 w-24" />
-                    <div className="grid gap-4 sm:grid-cols-2">
-                        {Array.from({ length: 2 }, (_, index) => (
-                            <div key={index} className="flex flex-col gap-1.5">
-                                <Skeleton className="h-3.5 w-24" />
-                                <Skeleton className="h-9 w-44 rounded-xl" />
-                            </div>
-                        ))}
-                    </div>
-                    <Skeleton className="h-11 w-full rounded-xl" />
-                </div>
+                <Skeleton className="h-5 w-44" />
             </div>
 
             <div className="bg-muted/40 ring-border flex flex-col gap-3 rounded-xl p-3 ring-1 ring-inset sm:p-4">
@@ -56,6 +46,15 @@ export function AgeWorkbenchSkeleton() {
                         ))}
                     </div>
                     <Skeleton className="h-4 w-64 max-w-full" />
+                </div>
+                <div className="ring-border/70 flex flex-col gap-3 rounded-lg p-3 ring-1 ring-inset sm:p-4">
+                    <Skeleton className="h-3.5 w-40" />
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        {Array.from({ length: 8 }, (_, index) => (
+                            <Skeleton key={index} className="h-14 w-full rounded-xl" />
+                        ))}
+                    </div>
+                    <Skeleton className="h-3.5 w-full max-w-lg" />
                 </div>
                 <div className="grid gap-3 lg:grid-cols-2">
                     {Array.from({ length: 2 }, (_, index) => (

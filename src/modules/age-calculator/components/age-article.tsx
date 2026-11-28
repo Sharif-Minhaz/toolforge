@@ -29,6 +29,7 @@ export async function getAgeFaqEntries(): Promise<FaqEntry[]> {
             answerNode: t.rich("faq.a6", ARTICLE_TAGS),
         },
         { question: t("faq.q7"), answer: t("faq.a7") },
+        { question: t("faq.q8"), answer: t("faq.a8") },
     ];
 }
 

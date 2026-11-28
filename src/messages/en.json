@@ -7764,7 +7764,7 @@
     "ageCalculator": {
         "meta": {
             "title": "Age Calculator for Job Circulars, with Bangla (বঙ্গাব্দ) and Hijri Dates",
-            "description": "Calculate your age on a circular's cut-off date in years, months and days, check it against the minimum and maximum age with the COVID-19 relaxation date, and convert any date to the revised 2019 Bangla calendar (বঙ্গাব্দ) and Hijri. Today is counted in Bangladesh, and nothing leaves your browser."
+            "description": "Calculate your age on a circular's cut-off date in years, months and days, check it against the minimum and maximum age with the COVID-19 relaxation date, and convert any date to the revised 2019 Bangla calendar (বঙ্গাব্দ) and Hijri. See the heartbeats, breaths and hair those days add up to at published averages. Today is counted in Bangladesh, and nothing leaves your browser."
         },
         "hero": {
             "eyebrow": "Calculators",
@@ -7791,8 +7791,8 @@
             "referenceHint": "The circular's cut-off date. Today in Bangladesh is {today}.",
             "today": "Today",
             "clearField": "Clear",
-            "limitsLabel": "Age limit",
-            "limitsHint": "From the circular. Leave a side blank to skip it.",
+            "limitsLabel": "Job circular age limit",
+            "limitsHint": "For a job circular that sets an age range. Enter its minimum and maximum age and put its cut-off date in “Age on” above — the result then says whether this date of birth qualifies. Leave a side blank to skip it.",
             "minLabel": "Minimum age",
             "maxLabel": "Maximum age",
             "limitHint": "Whole years.",
@@ -7857,7 +7857,23 @@
             "shortDate": "{day} {month} {year}",
             "datesLabel": "Your dates",
             "copyDates": "Copy the dates",
-            "pickDate": "Pick from a calendar"
+            "pickDate": "Pick from a calendar",
+            "body": {
+                "title": "Your body by {date}",
+                "heartbeats": "Heartbeats",
+                "blood": "Blood pumped",
+                "breaths": "Breaths",
+                "oxygen": "Oxygen used",
+                "carbonDioxide": "CO₂ breathed out",
+                "hairsShed": "Hairs shed",
+                "hairGrown": "Hair grown",
+                "nailGrown": "Nail grown",
+                "litres": "{value} L",
+                "kilograms": "{value} kg",
+                "centimetres": "{value} cm",
+                "range": "{low}–{high}",
+                "note": "Estimates: published adult daily averages × {days} days lived. Hair and nail mean one scalp hair and one fingernail. Your own figures differ — the sources are in the FAQ below."
+            }
         },
         "errors": {
             "date": {
@@ -7937,7 +7953,9 @@
                 "q6": "How is somebody born on 29 February or the 31st counted?",
                 "a6": "By subtracting the fields and borrowing a month when the day comes out negative — the method taught by hand, and the one <code>java.time</code> uses. Somebody born on 29 February is 11 months 30 days old on 28 February of a common year and a year older on 1 March, which is also the day their birthday counts as for an age limit. Somebody born on 31 January is 1 month 1 day old on 1 March.",
                 "q7": "Whose “today” is today?",
-                "a7": "Bangladesh's. The page works out today's date in Dhaka when it loads, so a reader abroad late at night still gets the date the circular's office counts in."
+                "a7": "Bangladesh's. The page works out today's date in Dhaka when it loads, so a reader abroad late at night still gets the date the circular's office counts in.",
+                "q8": "Where do the heartbeat, breath and hair figures come from?",
+                "a8": "From published daily averages for an adult, multiplied by the days you have lived: about 100,000 heartbeats a day and 5.7 litres of blood pumped a minute (Cleveland Clinic); about 23,000 breaths a day (American Lung Association); 0.72 kg of oxygen used and 0.91 kg of carbon dioxide breathed out on a day without exercise (NASA's Human Integration Design Handbook); 50 to 100 hairs shed a day (American Academy of Dermatology), which is why that figure is a range; 0.35 mm of growth a day for a scalp hair (StatPearls); and 3.47 mm a month for a fingernail (Yaemsiri and colleagues, 2010). They are estimates, not measurements — your own rates differ from the average, and a child's differ from an adult's."
             }
         }
     },
@@ -11260,5 +11278,14 @@
                 "a8": "Because a search result is a link preview too. Google writes its own title link from several sources, but '<'title> and the meta description are the two you control, and it cuts them at about 600 pixels and 920 pixels of width. The card shows roughly where those cuts fall."
             }
         }
+    },
+    "toolSource": {
+        "trigger": "Improve",
+        "menuLabel": "Improve this tool on GitHub",
+        "report": "Report a problem",
+        "reportHint": "Open an issue on GitHub",
+        "edit": "Edit on GitHub",
+        "editHint": "See and change this tool's code",
+        "newTab": "(opens in a new tab)"
     }
 }

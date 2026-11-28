@@ -40,7 +40,8 @@ same checks.
 1. **No new UI or folder patterns.** Every layout, token, and directory already exists.
    If something seems to need a new pattern, you have misread the existing one.
 2. **Reuse the shared components** listed under *What already exists*. Never re-create
-   `ArticleSection`, `ArticleSkeleton`, `FaqAccordion`, `IconCopyButton`, or a copy/download flow.
+   `ToolPageHeader`, `ArticleSection`, `ArticleSkeleton`, `FaqAccordion`, `IconCopyButton`, or a
+   copy/download flow.
 3. **`domain/` stays framework-free.** No React, no `next-intl`, no I/O. A file that needs
    `getTranslations` is a presenter.
 4. **Both locales, every key.** `en.json` and `bn.json` change in the same edit.
@@ -123,11 +124,33 @@ Server component. Mirror `src/app/[locale]/tools/base64/page.tsx`:
   `SoftwareApplication`, `FAQPage`, and `BreadcrumbList` as one graph. Hand-building the graph
   drifts; the helper does not.
 - `await enterLocale(params)` first, in the page and in `generateMetadata`.
+- **The header is `ToolPageHeader`, never hand-written markup.** It draws the breadcrumb, title,
+  subtitle, badges and the GitHub "Improve" menu (Report a problem → a prefilled issue; Edit on
+  GitHub → the tool's module). Pass strings from `<tool>.hero`, an array of `{ label, Icon }`
+  badges, and the catalogue id:
+
+  ```tsx
+  <ToolPageHeader
+      toolId="<id>"
+      eyebrow={t("eyebrow")}
+      title={t("title")}
+      subtitle={t("subtitle")}
+      badges={badges}
+  />
+  ```
+
+  `toolId` must equal the route directory — `tools/tests/tool-page-header.test.ts` fails a page
+  that copies the markup or names another id. The "Edit on GitHub" link opens
+  `src/modules/<id>`; if the module directory has another name, add it to
+  `MODULE_DIRECTORY_OVERRIDES` in `@/modules/tools/domain/tool-source`, or
+  `tool-source.test.ts` fails on the dead link.
 - Parse search params, compute initial state, pass it to the island **as props** — inside a
   `<Tool>WorkbenchSection` wrapped in `<Suspense fallback={<<Tool>WorkbenchSkeleton />}>`, never in
   the prerendered shell. Copy `src/app/[locale]/tools/uuid/page.tsx`; see
   `docs/patterns/partial-prerendering.md`.
-- `loading.tsx` with skeletons matching the real layout block for block.
+- `loading.tsx` with skeletons matching the real layout block for block, opening with
+  `<ToolPageHeaderSkeleton />` (`titleClassName` / `badgeClassName` / `badgeCount` to match the
+  real title and badges). The same test fails a `loading.tsx` without it.
 
 Next **shallow-merges** metadata: a page that declares `openGraph` replaces the layout's entirely,
 image included. That is the whole reason `buildPageMetadata` exists — a page that skips it silently
@@ -345,6 +368,9 @@ they should not.
 
 | Need | Import |
 | --- | --- |
+| Page header (breadcrumb, title, badges, GitHub "Improve" menu) | `@/modules/tools/components/tool-page-header` |
+| Page header loading skeleton | `@/modules/tools/components/tool-page-header-skeleton` |
+| Issue and source links for a tool | `@/modules/tools/domain/tool-source` |
 | Article section, prose widths | `@/modules/tools/components/article-section` |
 | Article loading skeleton | `@/modules/tools/components/article-skeleton` |
 | Workbench steps, result tray, folded options | `@/modules/tools/components/workbench-step` — see `docs/patterns/workbench-layout.md` |

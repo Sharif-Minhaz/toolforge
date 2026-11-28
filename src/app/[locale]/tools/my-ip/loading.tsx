@@ -4,24 +4,13 @@ import {
     MyIpWorkbenchSkeleton,
 } from "@/modules/my-ip/components/my-ip-workbench-skeleton";
 import { ArticleSkeleton } from "@/modules/tools/components/article-skeleton";
+import { ToolPageHeaderSkeleton } from "@/modules/tools/components/tool-page-header-skeleton";
 
 /** Mirrors the What Is My IP page: header, report card, terminal card, article, related tools. */
 export default function MyIpLoading() {
     return (
         <div className="flex flex-col gap-10 lg:gap-12" aria-hidden="true">
-            <div className="flex flex-col gap-4">
-                <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-9 w-72 sm:h-10" />
-                <div className="flex flex-col gap-2">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/5" />
-                </div>
-                <div className="flex gap-1.5">
-                    {Array.from({ length: 3 }, (_, index) => (
-                        <Skeleton key={index} className="h-4 w-40" />
-                    ))}
-                </div>
-            </div>
+            <ToolPageHeaderSkeleton titleClassName="w-72" badgeClassName="w-40" />
 
             <div className="flex flex-col gap-4">
                 <MyIpWorkbenchSkeleton />

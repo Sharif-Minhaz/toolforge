@@ -1,12 +1,6 @@
-import {
-    IconChevronRight,
-    IconTerminal2,
-    IconWorldOff,
-    IconAlertTriangle,
-} from "@tabler/icons-react";
+import { IconTerminal2, IconWorldOff, IconAlertTriangle } from "@tabler/icons-react";
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
-import Link from "next/link";
 import { Suspense } from "react";
 
 import { FadeIn, Reveal } from "@/components/motion/reveal";
@@ -28,6 +22,7 @@ import { buildToolJsonLd } from "@/modules/seo/domain/structured-data";
 import { RelatedTools } from "@/modules/tools/components/related-tools";
 import { getToolById } from "@/modules/tools/domain/tool-catalog";
 import { enterLocale, type LocaleParams } from "@/i18n/route-locale";
+import { ToolPageHeader } from "@/modules/tools/components/tool-page-header";
 
 const TOOL_PATH = "/tools/curl";
 
@@ -53,10 +48,9 @@ type CurlPageProps = {
 
 export default async function CurlToolPage({ params, searchParams }: CurlPageProps) {
     await enterLocale(params);
-    const [t, tTools, tNav, faqs, locale] = await Promise.all([
+    const [t, tTools, faqs, locale] = await Promise.all([
         getTranslations("curl.hero"),
         getTranslations("tools"),
-        getTranslations("nav"),
         getCurlFaqEntries(),
         getLocale(),
     ]);
@@ -81,45 +75,13 @@ export default async function CurlToolPage({ params, searchParams }: CurlPagePro
             />
 
             <div className="flex flex-col gap-10 lg:gap-12">
-                <FadeIn className="flex flex-col gap-4">
-                    <nav aria-label={tNav("breadcrumb")}>
-                        <ol className="text-muted-foreground flex items-center gap-1 text-xs">
-                            <li>
-                                <Link
-                                    href="/"
-                                    className="hover:text-foreground focus-visible:ring-ring rounded transition-colors duration-200 focus-visible:ring-2 focus-visible:outline-none"
-                                >
-                                    {tNav("overview")}
-                                </Link>
-                            </li>
-                            <li aria-hidden="true">
-                                <IconChevronRight className="size-3.5" stroke={2} />
-                            </li>
-                            <li className="text-foreground">{t("eyebrow")}</li>
-                        </ol>
-                    </nav>
-
-                    <div className="flex flex-col gap-3">
-                        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                            {t("title")}
-                        </h1>
-                        <p className="text-muted-foreground text-[0.9375rem] leading-7 sm:text-base">
-                            {t("subtitle")}
-                        </p>
-                    </div>
-
-                    <ul className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-                        {badges.map(({ label, Icon }) => (
-                            <li
-                                key={label}
-                                className="text-muted-foreground inline-flex items-center gap-1.5 text-xs"
-                            >
-                                <Icon className="size-3.5" stroke={1.9} aria-hidden="true" />
-                                <span className="leading-[1.3]">{label}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </FadeIn>
+                <ToolPageHeader
+                    toolId="curl"
+                    eyebrow={t("eyebrow")}
+                    title={t("title")}
+                    subtitle={t("subtitle")}
+                    badges={badges}
+                />
 
                 <FadeIn delay={0.06}>
                     <Suspense fallback={<CurlWorkbenchSkeleton />}>

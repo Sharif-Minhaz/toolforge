@@ -11,6 +11,7 @@ import type {
 } from "../types";
 import { computeAge, computeTotals, nextBirthday } from "./age";
 import { fromBanglaDate, toBanglaDate } from "./bangla-calendar";
+import { lifetimeBodyStats } from "./body-stats";
 import { MAX_HIJRI_ADJUSTMENT } from "./constants";
 import { checkEligibility, hasLimits, validateLimits } from "./eligibility";
 import {
@@ -79,11 +80,13 @@ export function calculateAge(request: AgeRequest): AgeResult {
 
     const relaxationDate = relaxation === null ? null : relaxation.date;
     const adjustment = request.hijriAdjustment;
+    const totals = computeTotals(birth.date, reference.date);
 
     return {
         ok: true,
         age: computeAge(birth.date, reference.date),
-        totals: computeTotals(birth.date, reference.date),
+        totals,
+        body: lifetimeBodyStats(totals.days),
         birth: describeDate(birth.date, adjustment),
         reference: describeDate(reference.date, adjustment),
         nextBirthday: nextBirthday(birth.date, reference.date),

@@ -8,7 +8,11 @@ import { cn } from "@/lib/utils";
 import { IconCopyButton } from "@/modules/tools/components/copy-button";
 import { ReadingTile } from "@/modules/tools/components/reading-tile";
 import { useCopyFeedback } from "@/modules/tools/components/use-copy-feedback";
-import { RESULT_TRAY, StepLabel } from "@/modules/tools/components/workbench-step";
+import {
+    OptionsDisclosure,
+    RESULT_TRAY,
+    StepLabel,
+} from "@/modules/tools/components/workbench-step";
 import { calculateAge } from "../domain/calculate";
 import {
     COVID_RELAXATION_DATE,
@@ -22,6 +26,7 @@ import {
 import { parseLimitInput, validateLimits } from "../domain/eligibility";
 import { formatDayFirst, parseDateInput } from "../domain/gregorian";
 import type { AgeFields, AgeLimits, AgeResult, CivilDate, DateInputFailure } from "../types";
+import { BodyStatsCard } from "./body-stats-card";
 import { DateFactsCard } from "./date-facts-card";
 import { DateField, FieldAction } from "./date-field";
 import { DatePickerButton } from "./date-picker-button";
@@ -127,6 +132,14 @@ export function AgePanel({ today, initialFields, hijriAdjustment }: AgePanelProp
 
     const todayText = formatDayFirst(today);
 
+    // A link that arrives with a limit or a relaxation date opens the box that
+    // holds it, so the reader sees what the eligibility report is checking.
+    const limitsOpenOnArrival = [
+        initialFields.min,
+        initialFields.max,
+        initialFields.relaxation,
+    ].some((value) => value.trim().length > 0);
+
     /** The calendar button for one field: opens on what the field reads as, and a pick applies at once. */
     function picker(field: "birth" | "reference" | "relaxation", fallbackMonth: CivilDate) {
         const read = parseDateInput(fields[field]);
@@ -195,65 +208,65 @@ export function AgePanel({ today, initialFields, hijriAdjustment }: AgePanelProp
                     />
                 </div>
 
-                <fieldset className="border-border/70 flex min-w-0 flex-col gap-4 rounded-xl border border-dashed p-3 sm:p-4">
-                    <legend className="px-1 text-[0.8125rem] leading-[1.3] font-medium">
-                        {t("limitsLabel")}
-                    </legend>
-                    <p className="text-muted-foreground -mt-2 text-[0.6875rem] leading-[1.4]">
-                        {t("limitsHint")}
-                    </p>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                        <LimitField
-                            id={minId}
-                            label={t("minLabel")}
-                            value={fields.min}
-                            presets={MIN_LIMIT_PRESETS}
-                            presetsLabel={t("presetsLabel")}
-                            hint={t("limitHint")}
-                            error={minError}
-                            formatPreset={labels.digits}
-                            onChange={(min) => type({ min })}
-                            onPreset={(min) => press({ min })}
-                        />
-                        <LimitField
-                            id={maxId}
-                            label={t("maxLabel")}
-                            value={fields.max}
-                            presets={MAX_LIMIT_PRESETS}
-                            presetsLabel={t("presetsLabel")}
-                            hint={t("limitHint")}
-                            error={limitError(maxInput)}
-                            formatPreset={labels.digits}
-                            onChange={(max) => type({ max })}
-                            onPreset={(max) => press({ max })}
-                        />
-                    </div>
-                    <DateField
-                        id={relaxationId}
-                        label={t("relaxationLabel")}
-                        value={fields.relaxation}
-                        placeholder={t("datePlaceholder")}
-                        hint={t("relaxationHint")}
-                        error={fieldError("invalid_relaxation")}
-                        actions={
-                            <>
-                                <FieldAction
-                                    pressed={fields.relaxation.trim() === COVID_RELAXATION_DATE}
-                                    onClick={() => press({ relaxation: COVID_RELAXATION_DATE })}
-                                >
-                                    {t("covidPreset")}
-                                </FieldAction>
-                                {fields.relaxation.length > 0 && (
-                                    <FieldAction onClick={() => press({ relaxation: "" })}>
-                                        {t("clearField")}
+                <OptionsDisclosure label={t("limitsLabel")} defaultOpen={limitsOpenOnArrival}>
+                    <fieldset className="flex min-w-0 flex-col gap-4">
+                        <legend className="sr-only">{t("limitsLabel")}</legend>
+                        <p className="text-muted-foreground text-[0.6875rem] leading-[1.4]">
+                            {t("limitsHint")}
+                        </p>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <LimitField
+                                id={minId}
+                                label={t("minLabel")}
+                                value={fields.min}
+                                presets={MIN_LIMIT_PRESETS}
+                                presetsLabel={t("presetsLabel")}
+                                hint={t("limitHint")}
+                                error={minError}
+                                formatPreset={labels.digits}
+                                onChange={(min) => type({ min })}
+                                onPreset={(min) => press({ min })}
+                            />
+                            <LimitField
+                                id={maxId}
+                                label={t("maxLabel")}
+                                value={fields.max}
+                                presets={MAX_LIMIT_PRESETS}
+                                presetsLabel={t("presetsLabel")}
+                                hint={t("limitHint")}
+                                error={limitError(maxInput)}
+                                formatPreset={labels.digits}
+                                onChange={(max) => type({ max })}
+                                onPreset={(max) => press({ max })}
+                            />
+                        </div>
+                        <DateField
+                            id={relaxationId}
+                            label={t("relaxationLabel")}
+                            value={fields.relaxation}
+                            placeholder={t("datePlaceholder")}
+                            hint={t("relaxationHint")}
+                            error={fieldError("invalid_relaxation")}
+                            actions={
+                                <>
+                                    <FieldAction
+                                        pressed={fields.relaxation.trim() === COVID_RELAXATION_DATE}
+                                        onClick={() => press({ relaxation: COVID_RELAXATION_DATE })}
+                                    >
+                                        {t("covidPreset")}
                                     </FieldAction>
-                                )}
-                            </>
-                        }
-                        picker={picker("relaxation", today)}
-                        onChange={(relaxation) => type({ relaxation })}
-                    />
-                </fieldset>
+                                    {fields.relaxation.length > 0 && (
+                                        <FieldAction onClick={() => press({ relaxation: "" })}>
+                                            {t("clearField")}
+                                        </FieldAction>
+                                    )}
+                                </>
+                            }
+                            picker={picker("relaxation", today)}
+                            onChange={(relaxation) => type({ relaxation })}
+                        />
+                    </fieldset>
+                </OptionsDisclosure>
             </div>
 
             <div className={RESULT_TRAY}>
@@ -312,6 +325,13 @@ export function AgePanel({ today, initialFields, hijriAdjustment }: AgePanelProp
                                       })}
                             </p>
                         </section>
+
+                        <BodyStatsCard
+                            body={result.body}
+                            reference={result.reference.gregorian}
+                            labels={labels}
+                            dimmed={pending}
+                        />
 
                         {result.eligibility !== null && (
                             <EligibilityReport

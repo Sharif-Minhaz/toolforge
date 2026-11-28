@@ -1,0 +1,32 @@
+name: Problem with a tool
+description: Something on a ToolForge tool is wrong, broken or confusing.
+body:
+    - type: input
+      id: tool
+      attributes:
+          label: Tool
+          description: Filled in when you arrive from the tool's "Improve" menu.
+          placeholder: age-calculator
+      validations:
+          required: true
+    - type: input
+      id: page
+      attributes:
+          label: Page
+          placeholder: https://toolforge.minhaz.bond/tools/age-calculator
+    - type: textarea
+      id: what-happened
+      attributes:
+          label: What happened?
+          description: Steps to reproduce help most. Please do not paste secrets, keys, tokens or personal data — this issue is public.
+      validations:
+          required: true
+    - type: textarea
+      id: expected
+      attributes:
+          label: What did you expect?
+    - type: input
+      id: browser
+      attributes:
+          label: Browser and device
+          placeholder: Chrome 131 on Android

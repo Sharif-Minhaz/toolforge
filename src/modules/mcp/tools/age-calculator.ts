@@ -70,7 +70,7 @@ export const ageCalculatorCalculateTool = defineMcpTool({
     verb: "calculate",
     title: "Age on a date, against a job circular's age limit",
     description:
-        "Work out an age in completed years, months and days on a cut-off date — the figure Bangladeshi job circulars ask for — and optionally check it against a minimum and maximum age. A maximum of 30 passes up to and including the 30th birthday. A relaxation date (the 2020 COVID-19 notices used `25/03/2020`) is a second date on which the maximum alone may be met. Each check returns the date of birth on its edge. Month-end and 29 February births follow `java.time.Period`: 29 Feb 2000 → 28 Feb 2001 is 11 months 30 days. Every date is also returned in Bangladesh's Bangla calendar (বঙ্গাব্দ) under the revision in force on it — 2019 from 1426 BS, 1987 before — and in the tabular Hijri calendar. When `reference` is omitted it is today in Bangladesh (Asia/Dhaka).",
+        "Work out an age in completed years, months and days on a cut-off date — the figure Bangladeshi job circulars ask for — and optionally check it against a minimum and maximum age. A maximum of 30 passes up to and including the 30th birthday. A relaxation date (the 2020 COVID-19 notices used `25/03/2020`) is a second date on which the maximum alone may be met. Each check returns the date of birth on its edge. Month-end and 29 February births follow `java.time.Period`: 29 Feb 2000 → 28 Feb 2001 is 11 months 30 days. Every date is also returned in Bangladesh's Bangla calendar (বঙ্গাব্দ) under the revision in force on it — 2019 from 1426 BS, 1987 before — and in the tabular Hijri calendar. When `reference` is omitted it is today in Bangladesh (Asia/Dhaka). `body` re-reads the days lived as published adult daily averages — heartbeats (100,000/day) and blood pumped (5.7 L/min, Cleveland Clinic), breaths (23,000/day, American Lung Association), oxygen used and CO2 breathed out (0.72 and 0.91 kg/day without exercise, NASA Human Integration Design Handbook), hairs shed (50–100/day, a range, American Academy of Dermatology), one scalp hair's growth (0.35 mm/day) and one fingernail's (3.47 mm per 30 days, Yaemsiri 2010). These are estimates, not measurements.",
     kind: "offline",
     inputSchema: z.object({
         birth: dateInputSchema.describe(`Date of birth. ${DATE_DESCRIPTION}`),
@@ -133,6 +133,17 @@ export const ageCalculatorCalculateTool = defineMcpTool({
                     months: result.totals.months,
                     weeks: result.totals.weeks,
                     days: result.totals.days,
+                },
+                body: {
+                    days: result.body.days,
+                    heartbeats: result.body.heartbeats,
+                    bloodLitres: result.body.bloodLitres,
+                    breaths: result.body.breaths,
+                    oxygenKg: result.body.oxygenKg,
+                    carbonDioxideKg: result.body.carbonDioxideKg,
+                    hairsShed: { low: result.body.hairsShed.low, high: result.body.hairsShed.high },
+                    hairGrownMm: result.body.hairGrownMm,
+                    nailGrownMm: result.body.nailGrownMm,
                 },
                 nextBirthday: {
                     date: formatIsoDate(result.nextBirthday.date),

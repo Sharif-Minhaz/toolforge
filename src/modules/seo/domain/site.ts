@@ -45,6 +45,9 @@ export const SITE_AUTHOR = "Sharif Minhaz";
 
 export const SITE_REPOSITORY = "https://github.com/Sharif-Minhaz/toolforge";
 
+/** The branch the "Edit on GitHub" links open. */
+export const SITE_REPOSITORY_BRANCH = "main";
+
 /**
  * The shared social card. 1200×630 is the 1.91:1 ratio every platform crops
  * to, and PNG rather than WebP because LinkedIn still refuses WebP previews.

@@ -390,8 +390,10 @@ Work in this order. Each step has a rule that is easy to skip.
 4. **Add Zod schemas** in `validation/` for options, search params, and any Server Action payload.
 5. **Build the page** as a Server Component: `generateMetadata` from `<tool>.meta` with
    `alternates.canonical`, `openGraph`, and `twitter`; `JsonLd` emitting `SoftwareApplication`,
-   `BreadcrumbList`, and `FAQPage`; initial results generated on the server and passed to the island
-   as props; and a `loading.tsx` matching the layout.
+   `BreadcrumbList`, and `FAQPage`; the header through the shared `ToolPageHeader` (it carries the
+   "Improve" menu — report a problem, edit on GitHub); initial results generated on the server and
+   passed to the island as props; and a `loading.tsx` matching the layout, opening with
+   `ToolPageHeaderSkeleton`.
 6. **Keep the client island small.** One interactive component holding state. Hold interacting
    options in a single options object with one patch updater, not six `useState` calls. When one
    option makes another meaningless, disable it with an explanatory hint rather than silently

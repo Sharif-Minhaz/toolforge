@@ -14,7 +14,10 @@ export default function GraphqlServerStudioLoading() {
     return (
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-8 sm:px-6 lg:py-12">
             <div className="flex flex-col gap-3">
-                <Skeleton className="h-3 w-28" />
+                <div className="flex items-center justify-between gap-3">
+                    <Skeleton className="h-3 w-28" />
+                    <Skeleton className="h-7 w-24 rounded-lg" />
+                </div>
                 <Skeleton className="h-8 w-full max-w-md" />
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-full max-w-lg" />

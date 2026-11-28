@@ -97,6 +97,7 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
     // article copy stays server-side instead of shipping in the RSC payload.
     const clientMessages = {
         common: messages.common,
+        toolSource: messages.toolSource,
         nav: messages.nav,
         theme: messages.theme,
         locale: messages.locale,

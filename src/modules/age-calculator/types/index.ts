@@ -149,6 +149,24 @@ export type AgeTotals = {
     readonly days: number;
 };
 
+/**
+ * Published adult daily averages summed over the days lived — see
+ * `domain/body-stats.ts` for each rate's source. Lengths are one strand of
+ * scalp hair and one fingernail.
+ */
+export type BodyStats = {
+    readonly days: number;
+    readonly heartbeats: number;
+    readonly bloodLitres: number;
+    readonly breaths: number;
+    readonly oxygenKg: number;
+    readonly carbonDioxideKg: number;
+    /** The source gives a range, so the total is one too. */
+    readonly hairsShed: { readonly low: number; readonly high: number };
+    readonly hairGrownMm: number;
+    readonly nailGrownMm: number;
+};
+
 export type NextBirthday = {
     readonly date: CivilDate;
     /** 0 on the birthday itself. */
@@ -207,6 +225,7 @@ export type AgeSuccess = {
     readonly ok: true;
     readonly age: AgeSpan;
     readonly totals: AgeTotals;
+    readonly body: BodyStats;
     readonly birth: DateFacts;
     readonly reference: DateFacts;
     readonly nextBirthday: NextBirthday;

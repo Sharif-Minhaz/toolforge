@@ -12,7 +12,9 @@ import { ServerLauncher } from "@/modules/graphql-server/components/server-launc
 import { JsonLd } from "@/modules/seo/components/json-ld";
 import { buildPageMetadata } from "@/modules/seo/domain/metadata";
 import { buildToolJsonLd } from "@/modules/seo/domain/structured-data";
+import { ToolSourceMenu } from "@/modules/tools/components/tool-source-menu";
 import { getToolById } from "@/modules/tools/domain/tool-catalog";
+import { toolSourceLinks } from "@/modules/tools/domain/tool-source";
 import { enterLocale, type LocaleParams } from "@/i18n/route-locale";
 
 const SECTION_PATH = "/graphql";
@@ -67,7 +69,10 @@ export default async function GraphqlServerStudioPage({ params }: { params: Loca
 
             <FadeIn>
                 <header className="flex flex-col gap-3">
-                    <p className="text-muted-foreground text-xs font-medium">{t("eyebrow")}</p>
+                    <div className="flex items-center justify-between gap-3">
+                        <p className="text-muted-foreground text-xs font-medium">{t("eyebrow")}</p>
+                        <ToolSourceMenu links={toolSourceLinks("graphql-server")} />
+                    </div>
                     <h1 className="text-foreground text-2xl leading-[1.2] font-semibold text-balance sm:text-3xl">
                         {t("title")}
                     </h1>

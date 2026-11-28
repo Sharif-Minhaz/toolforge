@@ -103,3 +103,24 @@ Hijri ones. CLDR's Bangla spellings have changed between versions
 (জানুয়ারী / জানুয়ারি), and a server and a browser on different ICU data would
 render different text on each side of hydration. Years go through `digits`
 rather than the number formatter, which would group ১৪৩৩ as ১,৪৩৩.
+
+## The body figures are published rates, never tuned ones
+
+Heartbeats, blood pumped, breaths, oxygen used, CO₂ breathed out, hairs shed,
+and one hair's and one fingernail's growth are the days lived times an adult
+daily average, and every average in `domain/body-stats.ts` carries the source
+it was copied from: Cleveland Clinic (heart, blood), the American Lung
+Association (breaths), NASA's Human Integration Design Handbook via OCHMO
+TB-004 (oxygen and CO₂ on a day without exercise), the American Academy of
+Dermatology (hairs shed), StatPearls (hair growth) and Yaemsiri et al. 2010
+(fingernails). The FAQ names the same sources, and `body-stats.test.ts` pins
+the rates to their wording, so an edit that drifts from a source fails there.
+
+A source that gives a range keeps it: the AAD says 50 to 100 hairs a day, so
+the tile shows a low and a high, not a midpoint nobody published. Do not add a
+figure without a source you can cite beside it, and do not scale the rates for
+childhood — no single published rate covers it, and the note under the tiles
+already says the totals are estimates.
+
+The age-limit controls sit in their own folded `OptionsDisclosure`, opened on
+arrival only when the link already fills a limit or a relaxation date.
